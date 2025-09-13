@@ -1,0 +1,27 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+      - name: Get dependencies
+        run: flutter pub get
+      - name: Set up commands
+        uses: Nikoro/setup-commands@v1
+      - name: Activate commands
+        run: commands --silent
+      - name: Check code formatting
+        run: format --output=none --set-exit-if-changed
+      - name: Static code analysis
+        run: analyze
+      - name: Run unit tests
+        run: tests --fail-fast

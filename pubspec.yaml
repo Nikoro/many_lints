@@ -1,0 +1,19 @@
+name: many_lints
+description: "A useful collection of custom lints for Flutter & Dart projects"
+version: 0.1.0
+repository: https://github.com/Nikoro/many_lints
+issue_tracker: https://github.com/Nikoro/many_lints/issues
+topics: [lint, lints, linter, analyzer, code]
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  analyzer: ^10.0.2
+  analyzer_plugin: ^0.14.2
+  analysis_server_plugin: ^0.3.8
+
+dev_dependencies:
+  test: ^1.29.0
+  analyzer_testing: ^0.1.10
+  test_reflective_loader: ^0.4.0

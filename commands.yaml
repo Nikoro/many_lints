@@ -1,0 +1,21 @@
+format: ## Checks code formatting
+  script: dart format .
+
+analyze: ## Performs static analysis
+  script: dart analyze
+
+tests: ## Run all tests
+  switch:
+    - report: ## Run all tests with html coverage report
+      script: |
+        echo "Generating html report..."
+        rm -rf coverage
+        dart test --test-randomize-ordering-seed=random --coverage=coverage
+        dart run coverage:format_coverage --lcov --in=coverage/test --out=coverage/lcov.info --report-on=lib
+        genhtml coverage/lcov.info -o coverage/html
+        open coverage/html/index.html
+    - default:
+      script: dart test --test-randomize-ordering-seed=random ...args
+
+push: ## Pushes local commits to the remote repository
+  script: git push ...args
