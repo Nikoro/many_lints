@@ -1,0 +1,21 @@
+name: example
+description: Example Flutter project demonstrating many_lints.
+publish_to: none
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_hooks: ^0.21.3
+  flutter_riverpod: ^3.2.1
+  hooks_riverpod: ^3.2.1
+  bloc: ^9.2.0
+  flutter_bloc: ^9.1.1
+  gap: ^3.0.1
+  riverpod: ^3.2.1
+
+dependency_overrides:
+  analyzer: ^10.0.2
+  meta: ^1.18.1

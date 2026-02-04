@@ -1,0 +1,3 @@
+plugins:
+  many_lints:
+    path: ../

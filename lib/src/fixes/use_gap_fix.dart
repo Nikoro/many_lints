@@ -96,7 +96,8 @@ class UseGapFix extends ResolvedCorrectionProducer {
     final childSource = childArg.expression.toSource();
 
     // Determine if Gap goes before or after the child
-    final gapBefore = dirName == 'top' || dirName == 'left' || dirName == 'start';
+    final gapBefore =
+        dirName == 'top' || dirName == 'left' || dirName == 'start';
 
     final replacement = gapBefore
         ? 'Gap($valueSource), $childSource'

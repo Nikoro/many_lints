@@ -79,18 +79,24 @@ All lints are enabled by default as warnings.
 - **use_bloc_suffix**: Enforces the use of the `Bloc` suffix for classes that extend `Bloc`.
 - **use_cubit_suffix**: Enforces the use of the `Cubit` suffix for classes that extend `Cubit`.
 - **use_dedicated_media_query_methods**: Enforces the use of dedicated `MediaQuery` methods instead of `MediaQuery.of(context)`.
+- **use_gap**: Prefer `Gap` widget instead of `SizedBox` or `Padding` for spacing in multi-child widgets.
 - **use_notifier_suffix**: Enforces the use of the `Notifier` suffix for classes that extend `Notifier`.
 
 ### Quick fixes
 
 The following rules include auto-fixable quick fixes:
 
-- `prefer_center_over_align`
-- `prefer_align_over_container`
-- `prefer_padding_over_container`
-- `prefer_any_or_every`
+- `avoid_unnecessary_consumer_widgets`
 - `avoid_unnecessary_hook_widgets`
+- `prefer_align_over_container`
+- `prefer_any_or_every`
+- `prefer_center_over_align`
+- `prefer_padding_over_container`
+- `use_bloc_suffix`
+- `use_cubit_suffix`
 - `use_dedicated_media_query_methods`
+- `use_gap`
+- `use_notifier_suffix`
 
 ## Available Assists
 
@@ -109,17 +115,19 @@ const Align(...);
 
 ## Example
 
+See the [`example/`](example/) directory for a Flutter project that demonstrates every lint rule in action. Each file corresponds to a single rule and contains code that triggers the lint.
+
 ### `use_cubit_suffix`
 
 **DO** use `Cubit` suffix for your cubit names.
 
-**❌ BAD:**
+**BAD:**
 
 ```dart
 class MyClass extends Cubit<bool> {}
 ```
 
-**✅ GOOD:**
+**GOOD:**
 
 ```dart
 class MyClassCubit extends Cubit<bool> {}

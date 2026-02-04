@@ -18,11 +18,10 @@ class UseGap extends AnalysisRule {
   );
 
   UseGap()
-      : super(
-          name: 'use_gap',
-          description:
-              'Prefer Gap widget over SizedBox or Padding for spacing.',
-        );
+    : super(
+        name: 'use_gap',
+        description: 'Prefer Gap widget over SizedBox or Padding for spacing.',
+      );
 
   @override
   LintCode get diagnosticCode => code;
