@@ -16,16 +16,19 @@ class UseBlocSuffix extends AnalysisRule {
   );
 
   UseBlocSuffix()
-      : super(
-          name: 'use_bloc_suffix',
-          description: 'Warns if a Bloc class does not have the Bloc suffix.',
-        );
+    : super(
+        name: 'use_bloc_suffix',
+        description: 'Warns if a Bloc class does not have the Bloc suffix.',
+      );
 
   @override
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
+  ) {
     final visitor = _Visitor(this);
     registry.addClassDeclaration(this, visitor);
   }

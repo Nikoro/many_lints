@@ -16,7 +16,8 @@ class UseDedicatedMediaQueryMethodsFix extends ResolvedCorrectionProducer {
   UseDedicatedMediaQueryMethodsFix({required super.context});
 
   @override
-  CorrectionApplicability get applicability => CorrectionApplicability.singleLocation;
+  CorrectionApplicability get applicability =>
+      CorrectionApplicability.singleLocation;
 
   @override
   FixKind get fixKind => _fixKind;
@@ -37,35 +38,60 @@ class UseDedicatedMediaQueryMethodsFix extends ResolvedCorrectionProducer {
     });
   }
 
-  String? _getReplacementSuggestion(MethodInvocation node, PropertyAccess propertyAccess) {
+  String? _getReplacementSuggestion(
+    MethodInvocation node,
+    PropertyAccess propertyAccess,
+  ) {
     final methodReplacement = _getReplacementMethodName(node, propertyAccess);
     if (methodReplacement == null) return null;
 
-    final contextVariableName = node.argumentList.arguments.firstOrNull?.toString();
+    final contextVariableName = node.argumentList.arguments.firstOrNull
+        ?.toString();
     if (contextVariableName == null) return null;
 
     final usedMaybe = methodReplacement.startsWith('maybe');
-    final shouldAddQuestionMark = usedMaybe && node.parent?.parent is PropertyAccess;
+    final shouldAddQuestionMark =
+        usedMaybe && node.parent?.parent is PropertyAccess;
 
     return 'MediaQuery.$methodReplacement($contextVariableName)${shouldAddQuestionMark ? '?' : ''}';
   }
 
-  String? _getReplacementMethodName(MethodInvocation node, PropertyAccess propertyAccess) {
+  String? _getReplacementMethodName(
+    MethodInvocation node,
+    PropertyAccess propertyAccess,
+  ) {
     final usedGetter = propertyAccess.propertyName.name;
 
     const supportedGetters = {
-      'size', 'orientation', 'devicePixelRatio', 'textScaleFactor', 'textScaler',
-      'platformBrightness', 'padding', 'viewInsets', 'systemGestureInsets', 'viewPadding',
-      'alwaysUse24HourFormat', 'accessibleNavigation', 'invertColors', 'highContrast',
-      'onOffSwitchLabels', 'disableAnimations', 'boldText', 'navigationMode',
-      'gestureSettings', 'displayFeatures', 'supportsShowingSystemContextMenu',
+      'size',
+      'orientation',
+      'devicePixelRatio',
+      'textScaleFactor',
+      'textScaler',
+      'platformBrightness',
+      'padding',
+      'viewInsets',
+      'systemGestureInsets',
+      'viewPadding',
+      'alwaysUse24HourFormat',
+      'accessibleNavigation',
+      'invertColors',
+      'highContrast',
+      'onOffSwitchLabels',
+      'disableAnimations',
+      'boldText',
+      'navigationMode',
+      'gestureSettings',
+      'displayFeatures',
+      'supportsShowingSystemContextMenu',
     };
 
     if (!supportedGetters.contains(usedGetter)) return null;
 
     return switch (node.methodName.name) {
       'of' => '${usedGetter}Of',
-      'maybeOf' => 'maybe${usedGetter[0].toUpperCase()}${usedGetter.substring(1)}Of',
+      'maybeOf' =>
+        'maybe${usedGetter[0].toUpperCase()}${usedGetter.substring(1)}Of',
       _ => null,
     };
   }

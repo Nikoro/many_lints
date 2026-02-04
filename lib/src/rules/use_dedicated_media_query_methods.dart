@@ -16,16 +16,20 @@ class UseDedicatedMediaQueryMethods extends AnalysisRule {
   );
 
   UseDedicatedMediaQueryMethods()
-      : super(
-          name: 'use_dedicated_media_query_methods',
-          description: 'Use MediaQuery dedicated methods instead of MediaQuery.of().property.',
-        );
+    : super(
+        name: 'use_dedicated_media_query_methods',
+        description:
+            'Use MediaQuery dedicated methods instead of MediaQuery.of().property.',
+      );
 
   @override
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
+  ) {
     final visitor = _Visitor(this);
     registry.addMethodInvocation(this, visitor);
   }
@@ -69,7 +73,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (replacementSuggestion == null || parent == null) return;
 
-    rule.reportAtNode(parent, arguments: [node.toSource(), replacementSuggestion]);
+    rule.reportAtNode(
+      parent,
+      arguments: [node.toSource(), replacementSuggestion],
+    );
   }
 
   String? _getReplacementSuggestion(MethodInvocation node) {
@@ -81,12 +88,14 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final usedMaybe = methodReplacement.startsWith('maybe');
     final usedGetter = _getUsedGetter(node);
-    final shouldAddQuestionMark = usedMaybe && usedGetter != null && _isGrandParentPropertyAccess(node);
+    final shouldAddQuestionMark =
+        usedMaybe && usedGetter != null && _isGrandParentPropertyAccess(node);
 
     return 'MediaQuery.$methodReplacement($contextVariableName)${shouldAddQuestionMark ? '?' : ''}';
   }
 
-  bool _isGrandParentPropertyAccess(MethodInvocation node) => node.parent?.parent is PropertyAccess;
+  bool _isGrandParentPropertyAccess(MethodInvocation node) =>
+      node.parent?.parent is PropertyAccess;
 
   String? _getContextVariableName(MethodInvocation node) =>
       node.argumentList.arguments.firstWhereOrNull((e) => true)?.toString();
@@ -94,30 +103,32 @@ class _Visitor extends SimpleAstVisitor<void> {
   String? _getReplacementMethodName(MethodInvocation node) {
     final usedGetter = _getUsedGetter(node);
 
-    if (usedGetter == null || !_supportedGetters.contains(usedGetter)) return null;
+    if (usedGetter == null || !_supportedGetters.contains(usedGetter))
+      return null;
 
     return switch (node.methodName.name) {
       'of' => '${usedGetter}Of',
-      'maybeOf' => 'maybe${usedGetter[0].toUpperCase()}${usedGetter.substring(1)}Of',
+      'maybeOf' =>
+        'maybe${usedGetter[0].toUpperCase()}${usedGetter.substring(1)}Of',
       _ => null,
     };
   }
 
   bool _isValidMediaQueryUsage(MethodInvocation node) => switch (node) {
-        MethodInvocation(
-          target: SimpleIdentifier(name: 'MediaQuery'),
-          methodName: SimpleIdentifier(name: 'of' || 'maybeOf'),
-        ) =>
-          false,
-        _ => true,
-      };
+    MethodInvocation(
+      target: SimpleIdentifier(name: 'MediaQuery'),
+      methodName: SimpleIdentifier(name: 'of' || 'maybeOf'),
+    ) =>
+      false,
+    _ => true,
+  };
 
   String? _getUsedGetter(MethodInvocation node) => switch (node.parent) {
-        PropertyAccess(
-          target: MethodInvocation(target: SimpleIdentifier(name: 'MediaQuery')),
-          propertyName: SimpleIdentifier(name: final propertyName),
-        ) =>
-          propertyName,
-        _ => null,
-      };
+    PropertyAccess(
+      target: MethodInvocation(target: SimpleIdentifier(name: 'MediaQuery')),
+      propertyName: SimpleIdentifier(name: final propertyName),
+    ) =>
+      propertyName,
+    _ => null,
+  };
 }

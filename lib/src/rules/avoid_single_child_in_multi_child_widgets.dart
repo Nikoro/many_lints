@@ -13,20 +13,24 @@ class AvoidSingleChildInMultiChildWidgets extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_single_child_in_multi_child_widgets',
     'Avoid using {0} with a single child.',
-    correctionMessage: 'Remove the {0} and achieve the same result using dedicated widgets.',
+    correctionMessage:
+        'Remove the {0} and achieve the same result using dedicated widgets.',
   );
 
   AvoidSingleChildInMultiChildWidgets()
-      : super(
-          name: 'avoid_single_child_in_multi_child_widgets',
-          description: 'Warns when multi-child widgets have only a single child.',
-        );
+    : super(
+        name: 'avoid_single_child_in_multi_child_widgets',
+        description: 'Warns when multi-child widgets have only a single child.',
+      );
 
   @override
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
+  ) {
     final visitor = _Visitor(this);
     registry.addInstanceCreationExpression(this, visitor);
   }
@@ -43,10 +47,22 @@ class _Visitor extends SimpleAstVisitor<void> {
     ('children', TypeChecker.fromName('Wrap', packageName: 'flutter')),
     ('children', TypeChecker.fromName('Flex', packageName: 'flutter')),
     ('children', TypeChecker.fromName('SliverList', packageName: 'flutter')),
-    ('slivers', TypeChecker.fromName('SliverMainAxisGroup', packageName: 'flutter')),
-    ('slivers', TypeChecker.fromName('SliverCrossAxisGroup', packageName: 'flutter')),
-    ('children', TypeChecker.fromName('MultiSliver', packageName: 'sliver_tools')),
-    ('', TypeChecker.fromName('SliverChildListDelegate', packageName: 'flutter')),
+    (
+      'slivers',
+      TypeChecker.fromName('SliverMainAxisGroup', packageName: 'flutter'),
+    ),
+    (
+      'slivers',
+      TypeChecker.fromName('SliverCrossAxisGroup', packageName: 'flutter'),
+    ),
+    (
+      'children',
+      TypeChecker.fromName('MultiSliver', packageName: 'sliver_tools'),
+    ),
+    (
+      '',
+      TypeChecker.fromName('SliverChildListDelegate', packageName: 'flutter'),
+    ),
   ];
 
   @override
@@ -54,7 +70,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     final constructorName = node.constructorName.type;
     if (constructorName.element case final typeElement?) {
       // is it something we want to complain about?
-      final match = _complain.firstWhereOrNull((e) => e.$2.isExactly(typeElement));
+      final match = _complain.firstWhereOrNull(
+        (e) => e.$2.isExactly(typeElement),
+      );
       if (match == null) return;
 
       // does it have a children argument?
@@ -84,7 +102,10 @@ class _Visitor extends SimpleAstVisitor<void> {
   void _checkInstanceCreation(NamedType constructorName, Expression children) {
     if (children case final ListLiteral list) {
       if (_hasSingleElement(list)) {
-        rule.reportAtNode(constructorName, arguments: [constructorName.name.lexeme]);
+        rule.reportAtNode(
+          constructorName,
+          arguments: [constructorName.name.lexeme],
+        );
       }
     }
   }
@@ -97,7 +118,8 @@ class _Visitor extends SimpleAstVisitor<void> {
         Expression() => true,
         ForElement() || MapLiteralEntry() || SpreadElement() => false,
         IfElement(:final thenElement, :final elseElement) =>
-          checkExpression(thenElement) && (elseElement == null || checkExpression(elseElement)),
+          checkExpression(thenElement) &&
+              (elseElement == null || checkExpression(elseElement)),
         NullAwareElement(:final value) => checkExpression(value),
       };
     }

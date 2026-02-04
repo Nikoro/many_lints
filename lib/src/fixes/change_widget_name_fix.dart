@@ -17,7 +17,9 @@ class ChangeWidgetNameFix extends ResolvedCorrectionProducer {
   }) : _fixKind = fixKind;
 
   /// Factory for creating an Align fix.
-  static ChangeWidgetNameFix alignFix({required CorrectionProducerContext context}) {
+  static ChangeWidgetNameFix alignFix({
+    required CorrectionProducerContext context,
+  }) {
     return ChangeWidgetNameFix._(
       context: context,
       widgetName: 'Align',
@@ -30,7 +32,8 @@ class ChangeWidgetNameFix extends ResolvedCorrectionProducer {
   }
 
   @override
-  CorrectionApplicability get applicability => CorrectionApplicability.singleLocation;
+  CorrectionApplicability get applicability =>
+      CorrectionApplicability.singleLocation;
 
   @override
   FixKind get fixKind => _fixKind;

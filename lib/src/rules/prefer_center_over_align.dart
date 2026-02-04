@@ -16,16 +16,20 @@ class PreferCenterOverAlign extends AnalysisRule {
   );
 
   PreferCenterOverAlign()
-      : super(
-          name: 'prefer_center_over_align',
-          description: 'Use Center widget instead of Align when alignment is center.',
-        );
+    : super(
+        name: 'prefer_center_over_align',
+        description:
+            'Use Center widget instead of Align when alignment is center.',
+      );
 
   @override
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
+  ) {
     final visitor = _Visitor(this);
     registry.addInstanceCreationExpression(this, visitor);
   }
@@ -36,7 +40,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _alignChecker = TypeChecker.fromName('Align', packageName: 'flutter');
+  static const _alignChecker = TypeChecker.fromName(
+    'Align',
+    packageName: 'flutter',
+  );
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
@@ -66,18 +73,19 @@ class _Visitor extends SimpleAstVisitor<void> {
       PrefixedIdentifier(identifier: SimpleIdentifier(name: 'center')) => true,
       InstanceCreationExpression(
         staticType: final type,
-        argumentList: ArgumentList(:final arguments)
+        argumentList: ArgumentList(:final arguments),
       )
-          when type?.getDisplayString() == 'Alignment' && arguments.length == 2 =>
+          when type?.getDisplayString() == 'Alignment' &&
+              arguments.length == 2 =>
         _isEveryValueZero(arguments),
       _ => false,
     };
   }
 
   bool _isEveryValueZero(List<Expression> arguments) => arguments.every(
-        (argument) => switch (argument) {
-          IntegerLiteral(value: 0) || DoubleLiteral(value: 0) => true,
-          _ => false,
-        },
-      );
+    (argument) => switch (argument) {
+      IntegerLiteral(value: 0) || DoubleLiteral(value: 0) => true,
+      _ => false,
+    },
+  );
 }

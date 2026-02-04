@@ -16,16 +16,19 @@ class AvoidUnnecessaryConsumerWidgets extends AnalysisRule {
   );
 
   AvoidUnnecessaryConsumerWidgets()
-      : super(
-          name: 'avoid_unnecessary_consumer_widgets',
-          description: 'Warns when ConsumerWidget does not use WidgetRef.',
-        );
+    : super(
+        name: 'avoid_unnecessary_consumer_widgets',
+        description: 'Warns when ConsumerWidget does not use WidgetRef.',
+      );
 
   @override
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
+  ) {
     final visitor = _Visitor(this);
     registry.addClassDeclaration(this, visitor);
   }
@@ -39,13 +42,15 @@ class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitClassDeclaration(ClassDeclaration cls) {
     final extendsName = cls.extendsClause?.superclass.name.lexeme;
-    if (extendsName != 'ConsumerWidget' && extendsName != 'ConsumerStatefulWidget') {
+    if (extendsName != 'ConsumerWidget' &&
+        extendsName != 'ConsumerStatefulWidget') {
       return;
     }
 
     // Find build method
-    final buildMethod =
-        cls.members.whereType<MethodDeclaration>().firstWhereOrNull((m) => m.name.lexeme == 'build');
+    final buildMethod = cls.members
+        .whereType<MethodDeclaration>()
+        .firstWhereOrNull((m) => m.name.lexeme == 'build');
 
     if (buildMethod == null) return;
 

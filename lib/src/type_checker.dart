@@ -6,20 +6,20 @@ import 'package:analyzer/dart/element/type.dart';
 /// This is a simplified replacement for `TypeChecker` from custom_lint_builder.
 class TypeChecker {
   const TypeChecker.fromName(this._name, {required String packageName})
-      : _packageName = packageName,
-        _url = null,
-        _checkers = null;
+    : _packageName = packageName,
+      _url = null,
+      _checkers = null;
 
   const TypeChecker.fromUrl(String url)
-      : _url = url,
-        _name = null,
-        _packageName = null,
-        _checkers = null;
+    : _url = url,
+      _name = null,
+      _packageName = null,
+      _checkers = null;
 
   const TypeChecker.any(this._checkers)
-      : _name = null,
-        _packageName = null,
-        _url = null;
+    : _name = null,
+      _packageName = null,
+      _url = null;
 
   final String? _name;
   final String? _packageName;

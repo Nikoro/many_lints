@@ -3,8 +3,7 @@ import 'package:many_lints/src/rules/prefer_center_over_align.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
-  defineReflectiveSuite(
-      () => defineReflectiveTests(PreferCenterOverAlignTest));
+  defineReflectiveSuite(() => defineReflectiveTests(PreferCenterOverAlignTest));
 }
 
 @reflectiveTest

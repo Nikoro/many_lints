@@ -40,29 +40,35 @@ void f() {
   }
 
   Future<void> test_any() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 void f() {
   final list = [1, 2, 3];
   list.any((e) => e > 1);
 }
-''', [
-      // any() is not defined on List in the test environment,
-      // but the lint rule should not trigger.
-      error(diag.undefinedMethod, 44, 3),
-    ]);
+''',
+      [
+        // any() is not defined on List in the test environment,
+        // but the lint rule should not trigger.
+        error(diag.undefinedMethod, 44, 3),
+      ],
+    );
   }
 
   Future<void> test_every() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 void f() {
   final list = [1, 2, 3];
   list.every((e) => e > 1);
 }
-''', [
-      // every() is not defined on List in the test environment,
-      // but the lint rule should not trigger.
-      error(diag.undefinedMethod, 44, 5),
-    ]);
+''',
+      [
+        // every() is not defined on List in the test environment,
+        // but the lint rule should not trigger.
+        error(diag.undefinedMethod, 44, 5),
+      ],
+    );
   }
 
   Future<void> test_whereWithLength() async {

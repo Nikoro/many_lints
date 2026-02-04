@@ -18,7 +18,8 @@ class PreferAnyOrEveryFix extends ResolvedCorrectionProducer {
   PreferAnyOrEveryFix({required super.context});
 
   @override
-  CorrectionApplicability get applicability => CorrectionApplicability.singleLocation;
+  CorrectionApplicability get applicability =>
+      CorrectionApplicability.singleLocation;
 
   @override
   FixKind get fixKind => _fixKind;
@@ -40,11 +41,14 @@ class PreferAnyOrEveryFix extends ResolvedCorrectionProducer {
 
     final isNotEmpty = property == 'isNotEmpty';
     final String replacement;
-    
+
     if (isNotEmpty) {
       replacement = '${collection.toSource()}.any(${predicate.toSource()})';
     } else {
-      final everyReplacement = buildEveryReplacement(collection.toSource(), predicate);
+      final everyReplacement = buildEveryReplacement(
+        collection.toSource(),
+        predicate,
+      );
       if (everyReplacement == null) return;
       replacement = everyReplacement;
     }

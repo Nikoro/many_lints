@@ -18,7 +18,8 @@ class PreferPaddingOverContainerFix extends ResolvedCorrectionProducer {
   PreferPaddingOverContainerFix({required super.context});
 
   @override
-  CorrectionApplicability get applicability => CorrectionApplicability.singleLocation;
+  CorrectionApplicability get applicability =>
+      CorrectionApplicability.singleLocation;
 
   @override
   FixKind get fixKind => _fixKind;
@@ -42,7 +43,10 @@ class PreferPaddingOverContainerFix extends ResolvedCorrectionProducer {
       // Replace Container with Padding
       builder.addSimpleReplacement(range.node(targetNode), 'Padding');
       // Replace margin with padding
-      builder.addSimpleReplacement(range.node(marginArgument.name.label), 'padding');
+      builder.addSimpleReplacement(
+        range.node(marginArgument.name.label),
+        'padding',
+      );
     });
   }
 }

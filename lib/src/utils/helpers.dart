@@ -27,12 +27,11 @@ bool isInstanceCreationExpressionOnlyUsingParameter(
   var hasParameter = false;
 
   for (final argument in node.argumentList.arguments) {
-    if (argument
-        case NamedExpression(
-          name: Label(label: SimpleIdentifier(name: final argumentName)),
-          :final expression,
-          :final staticType,
-        )) {
+    if (argument case NamedExpression(
+      name: Label(label: SimpleIdentifier(name: final argumentName)),
+      :final expression,
+      :final staticType,
+    )) {
       if (ignoredParameters.contains(argumentName)) {
         continue;
       } else if (argumentName == parameter &&
@@ -55,8 +54,9 @@ bool isInstanceCreationExpressionOnlyUsingParameter(
 Expression? maybeGetSingleReturnExpression(FunctionBody body) {
   return switch (body) {
     ExpressionFunctionBody(:final expression) ||
-    BlockFunctionBody(block: Block(statements: [ReturnStatement(:final expression?)])) =>
-      expression,
+    BlockFunctionBody(
+      block: Block(statements: [ReturnStatement(:final expression?)]),
+    ) => expression,
     _ => null,
   };
 }

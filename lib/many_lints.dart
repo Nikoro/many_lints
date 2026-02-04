@@ -49,12 +49,27 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(UseDedicatedMediaQueryMethods());
 
     // Register fixes for rules
-    registry.registerFixForRule(PreferCenterOverAlign.code, PreferCenterOverAlignFix.new);
-    registry.registerFixForRule(PreferAlignOverContainer.code, ChangeWidgetNameFix.alignFix);
-    registry.registerFixForRule(PreferPaddingOverContainer.code, PreferPaddingOverContainerFix.new);
+    registry.registerFixForRule(
+      PreferCenterOverAlign.code,
+      PreferCenterOverAlignFix.new,
+    );
+    registry.registerFixForRule(
+      PreferAlignOverContainer.code,
+      ChangeWidgetNameFix.alignFix,
+    );
+    registry.registerFixForRule(
+      PreferPaddingOverContainer.code,
+      PreferPaddingOverContainerFix.new,
+    );
     registry.registerFixForRule(PreferAnyOrEvery.code, PreferAnyOrEveryFix.new);
-    registry.registerFixForRule(AvoidUnnecessaryHookWidgets.code, AvoidUnnecessaryHookWidgetsFix.new);
-    registry.registerFixForRule(UseDedicatedMediaQueryMethods.code, UseDedicatedMediaQueryMethodsFix.new);
+    registry.registerFixForRule(
+      AvoidUnnecessaryHookWidgets.code,
+      AvoidUnnecessaryHookWidgetsFix.new,
+    );
+    registry.registerFixForRule(
+      UseDedicatedMediaQueryMethods.code,
+      UseDedicatedMediaQueryMethodsFix.new,
+    );
 
     // Register assists
     registry.registerAssist(ConvertIterableMapToCollectionFor.new);

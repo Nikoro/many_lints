@@ -4,7 +4,8 @@ import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
   defineReflectiveSuite(
-      () => defineReflectiveTests(UseDedicatedMediaQueryMethodsTest));
+    () => defineReflectiveTests(UseDedicatedMediaQueryMethodsTest),
+  );
 }
 
 @reflectiveTest

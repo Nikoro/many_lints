@@ -18,16 +18,19 @@ class AvoidUnnecessaryHookWidgets extends AnalysisRule {
   );
 
   AvoidUnnecessaryHookWidgets()
-      : super(
-          name: 'avoid_unnecessary_hook_widgets',
-          description: 'Warns when HookWidget does not use hooks.',
-        );
+    : super(
+        name: 'avoid_unnecessary_hook_widgets',
+        description: 'Warns when HookWidget does not use hooks.',
+      );
 
   @override
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
+  ) {
     final visitor = _Visitor(this);
     registry.addClassDeclaration(this, visitor);
     registry.addInstanceCreationExpression(this, visitor);

@@ -16,16 +16,20 @@ class UseNotifierSuffix extends AnalysisRule {
   );
 
   UseNotifierSuffix()
-      : super(
-          name: 'use_notifier_suffix',
-          description: 'Warns if a Notifier class does not have the Notifier suffix.',
-        );
+    : super(
+        name: 'use_notifier_suffix',
+        description:
+            'Warns if a Notifier class does not have the Notifier suffix.',
+      );
 
   @override
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
+  ) {
     final visitor = _Visitor(this);
     registry.addClassDeclaration(this, visitor);
   }
@@ -36,14 +40,18 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _notifierChecker = TypeChecker.fromName('Notifier', packageName: 'riverpod');
+  static const _notifierChecker = TypeChecker.fromName(
+    'Notifier',
+    packageName: 'riverpod',
+  );
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final element = node.declaredFragment?.element;
     if (element == null) return;
 
-    if (_notifierChecker.isSuperOf(element) && !node.name.lexeme.endsWith('Notifier')) {
+    if (_notifierChecker.isSuperOf(element) &&
+        !node.name.lexeme.endsWith('Notifier')) {
       rule.reportAtToken(node.name, arguments: [node.name.lexeme]);
     }
   }

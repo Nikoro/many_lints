@@ -16,16 +16,20 @@ class PreferPaddingOverContainer extends AnalysisRule {
   );
 
   PreferPaddingOverContainer()
-      : super(
-          name: 'prefer_padding_over_container',
-          description: 'Use Padding widget instead of Container when only margin is set.',
-        );
+    : super(
+        name: 'prefer_padding_over_container',
+        description:
+            'Use Padding widget instead of Container when only margin is set.',
+      );
 
   @override
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
+  ) {
     final visitor = _Visitor(this);
     registry.addInstanceCreationExpression(this, visitor);
   }
@@ -36,7 +40,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _containerChecker = TypeChecker.fromName('Container', packageName: 'flutter');
+  static const _containerChecker = TypeChecker.fromName(
+    'Container',
+    packageName: 'flutter',
+  );
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {

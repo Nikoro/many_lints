@@ -18,7 +18,8 @@ class PreferCenterOverAlignFix extends ResolvedCorrectionProducer {
   PreferCenterOverAlignFix({required super.context});
 
   @override
-  CorrectionApplicability get applicability => CorrectionApplicability.singleLocation;
+  CorrectionApplicability get applicability =>
+      CorrectionApplicability.singleLocation;
 
   @override
   FixKind get fixKind => _fixKind;
@@ -39,10 +40,15 @@ class PreferCenterOverAlignFix extends ResolvedCorrectionProducer {
     await builder.addDartFileEdit(file, (builder) {
       // Replace Align with Center
       builder.addSimpleReplacement(range.node(targetNode), 'Center');
-      
+
       // Remove alignment argument if present
       if (alignmentArgument != null) {
-        builder.addDeletion(range.nodeInList(instanceCreation.argumentList.arguments, alignmentArgument));
+        builder.addDeletion(
+          range.nodeInList(
+            instanceCreation.argumentList.arguments,
+            alignmentArgument,
+          ),
+        );
       }
     });
   }
