@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2] - 2026-02-04
+
+### Fixed
+
+- Add `lib/main.dart` re-export for proper `analysis_server_plugin` discovery
+- Replace deprecated analyzer API usages with new equivalents
+
 ## [0.1.1] - 2026-02-04
 
 ### Fixed
