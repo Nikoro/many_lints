@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.1] - 2026-02-04
+
+### Fixed
+
+- Allow passing arguments to the format command
+
 ## [0.1.0] - 2026-02-04
 
 ### Added
