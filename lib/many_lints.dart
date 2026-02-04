@@ -12,6 +12,7 @@ import 'package:many_lints/src/rules/prefer_padding_over_container.dart';
 import 'package:many_lints/src/rules/use_bloc_suffix.dart';
 import 'package:many_lints/src/rules/use_cubit_suffix.dart';
 import 'package:many_lints/src/rules/use_dedicated_media_query_methods.dart';
+import 'package:many_lints/src/rules/use_gap.dart';
 import 'package:many_lints/src/rules/use_notifier_suffix.dart';
 
 // Fixes
@@ -23,6 +24,7 @@ import 'package:many_lints/src/fixes/prefer_any_or_every_fix.dart';
 import 'package:many_lints/src/fixes/prefer_center_over_align_fix.dart';
 import 'package:many_lints/src/fixes/prefer_padding_over_container_fix.dart';
 import 'package:many_lints/src/fixes/use_dedicated_media_query_methods_fix.dart';
+import 'package:many_lints/src/fixes/use_gap_fix.dart';
 
 // Assists
 import 'package:many_lints/src/assists/convert_iterable_map_to_collection_for.dart';
@@ -49,6 +51,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(UseCubitSuffix());
     registry.registerWarningRule(UseNotifierSuffix());
     registry.registerWarningRule(UseDedicatedMediaQueryMethods());
+    registry.registerWarningRule(UseGap());
 
     // Register fixes for rules
     registry.registerFixForRule(
@@ -82,6 +85,7 @@ class ManyLintsPlugin extends Plugin {
       AvoidUnnecessaryConsumerWidgets.code,
       AvoidUnnecessaryConsumerWidgetsFix.new,
     );
+    registry.registerFixForRule(UseGap.code, UseGapFix.new);
 
     // Register assists
     registry.registerAssist(ConvertIterableMapToCollectionFor.new);
