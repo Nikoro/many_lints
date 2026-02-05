@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.1] - 2026-02-05
+
+### Fixed
+
+- Fix invalid dartdoc reference syntax causing pub.dev scoring issues
+- Skip example directory in CI workflow
+
+### Added
+
+- README.md for pub.dev Example tab
+
 ## [0.2.0] - 2026-02-05
 
 ### Added
