@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.0] - 2026-02-05
+
+### Added
+
+- `use_gap` rule to prefer `Gap` widget over `SizedBox` or `Padding` for spacing
+- Quick fixes for suffix rules (`use_bloc_suffix`, `use_cubit_suffix`, `use_notifier_suffix`)
+- Quick fix for `avoid_unnecessary_consumer_widgets` rule
+- Example project demonstrating all lint rules
+- Dartdoc comments to public APIs
+
+### Changed
+
+- Renamed test methods to snake_case for consistency
+- Applied recommended lints from `lints` package
+
 ## [0.1.2] - 2026-02-04
 
 ### Fixed
