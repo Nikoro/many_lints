@@ -103,8 +103,9 @@ class _Visitor extends SimpleAstVisitor<void> {
   String? _getReplacementMethodName(MethodInvocation node) {
     final usedGetter = _getUsedGetter(node);
 
-    if (usedGetter == null || !_supportedGetters.contains(usedGetter))
+    if (usedGetter == null || !_supportedGetters.contains(usedGetter)) {
       return null;
+    }
 
     return switch (node.methodName.name) {
       'of' => '${usedGetter}Of',
