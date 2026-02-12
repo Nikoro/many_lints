@@ -40,17 +40,23 @@ Before writing any code:
 
 ## Adding a New Lint Rule
 
-See [`.claude/skills/new-lint/SKILL.md`](.claude/skills/new-lint/SKILL.md) for the full guide, or use the `/new-lint` skill.
+**📖 Start with the Cookbooks:**
+- [lib/src/rules/CLAUDE.md](lib/src/rules/CLAUDE.md) - Lint rule patterns
+- [lib/src/fixes/CLAUDE.md](lib/src/fixes/CLAUDE.md) - Quick fix patterns
+- [lib/src/assists/CLAUDE.md](lib/src/assists/CLAUDE.md) - Code assist patterns
+
+See [`.claude/skills/new-lint/SKILL.md`](.claude/skills/new-lint/SKILL.md) for the full step-by-step guide, or use the `/new-lint` skill.
 
 Quick summary:
 
-1. Create `lib/src/rules/<rule_name>.dart`
-2. Extend `AnalysisRule`, define a static `LintCode` with `name`, `problemMessage`, `correctionMessage`
-3. Implement `registerNodeProcessors()` to register visitors via `RuleVisitorRegistry`
-4. Create `_Visitor` extending `SimpleAstVisitor`, report issues with `rule.reportAtNode()`
-5. Register the rule in `lib/main.dart` via `registry.registerWarningRule()`
-6. Optionally create a fix in `lib/src/fixes/` extending `ResolvedCorrectionProducer`
-7. Create `test/<rule_name>_test.dart` using `analyzer_testing` patterns
+1. **Consult the cookbooks** for copy-paste ready patterns
+2. Create `lib/src/rules/<rule_name>.dart`
+3. Extend `AnalysisRule`, define a static `LintCode` with `name`, `problemMessage`, `correctionMessage`
+4. Implement `registerNodeProcessors()` to register visitors via `RuleVisitorRegistry`
+5. Create `_Visitor` extending `SimpleAstVisitor`, report issues with `rule.reportAtNode()`
+6. Register the rule in `lib/main.dart` via `registry.registerWarningRule()`
+7. Optionally create a fix in `lib/src/fixes/` extending `ResolvedCorrectionProducer`
+8. Create `test/<rule_name>_test.dart` using `analyzer_testing` patterns
 
 ## Test Pattern
 
@@ -91,6 +97,14 @@ class MyRuleTest extends AnalysisRuleTest {
 - **SDK**: Dart ^3.10.0
 
 ## Key Helpers
+
+### 📖 Implementation Cookbooks (Start Here!)
+
+- **[lib/src/rules/CLAUDE.md](lib/src/rules/CLAUDE.md)** - Lint Rule Implementation Cookbook
+- **[lib/src/fixes/CLAUDE.md](lib/src/fixes/CLAUDE.md)** - Quick Fix Implementation Cookbook
+- **[lib/src/assists/CLAUDE.md](lib/src/assists/CLAUDE.md)** - Code Assist Implementation Cookbook
+
+### 🔧 Utility Files
 
 - `lib/src/type_checker.dart` - Type matching utilities
 - `lib/src/utils/helpers.dart` - AST helpers, expression checking

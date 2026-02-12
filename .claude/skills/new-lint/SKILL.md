@@ -17,17 +17,23 @@ Extract from the `$ARGUMENTS`:
 
 Before writing any code:
 
-1. Read these reference docs to understand the framework:
+1. **📖 ALWAYS START HERE: Read the Lint Rule Cookbook** at `lib/src/rules/CLAUDE.md`
+   - This is your **primary reference** for all implementation patterns
+   - Contains copy-paste ready code for common scenarios
+   - Includes patterns for analyzer ^10.0.2 API usage
+   - **Check the cookbook FIRST** before researching elsewhere
+
+2. Read these reference docs to understand the framework:
    - [Writing a plugin](https://github.com/dart-lang/sdk/blob/main/pkg/analysis_server_plugin/doc/writing_a_plugin.md)
    - [Writing rules](https://github.com/dart-lang/sdk/blob/main/pkg/analysis_server_plugin/doc/writing_rules.md)
    - [Testing rules](https://github.com/dart-lang/sdk/blob/main/pkg/analysis_server_plugin/doc/testing_rules.md)
    - [Writing assists](https://github.com/dart-lang/sdk/blob/main/pkg/analysis_server_plugin/doc/writing_assists.md)
 
-2. Read any reference links the user provided in `$ARGUMENTS`.
+3. Read any reference links the user provided in `$ARGUMENTS`.
 
-3. Read 1-2 existing rules in `lib/src/rules/` and their corresponding fixes in `lib/src/fixes/` and tests in `test/` to understand the codebase patterns. Pick rules that are most similar to the new lint being created.
+4. If the cookbook doesn't cover your specific pattern, read 1-2 existing rules in `lib/src/rules/` and their corresponding fixes in `lib/src/fixes/` and tests in `test/` to understand the codebase patterns. Pick rules that are most similar to the new lint being created.
 
-4. Read `lib/src/type_checker.dart` and `lib/src/utils/helpers.dart` for reusable utilities.
+5. Read `lib/src/type_checker.dart` and `lib/src/utils/helpers.dart` for reusable utilities.
 
 ## Step 3: Ask clarifying questions
 
@@ -105,6 +111,8 @@ Key conventions:
 - Use helpers from `lib/src/utils/helpers.dart` when applicable
 
 ## Step 5: Create the quick fix
+
+**📖 Consult the Quick Fix Cookbook:** See `lib/src/fixes/CLAUDE.md` for comprehensive patterns and examples.
 
 Create `lib/src/fixes/<lint_name>_fix.dart` following this exact pattern:
 
@@ -210,6 +218,46 @@ Key conventions:
 - `lint(offset, length)` — offset is the character position, length is the length of the reported node/token
 - Method names start with `test_` and use camelCase
 
-## Step 8: Verify
+## Step 8: Update the Cookbook (MANDATORY when discovering new patterns)
+
+**🚨 CRITICAL: If you discovered or researched any new patterns NOT documented in `lib/src/rules/CLAUDE.md`, you MUST update it before completing this task.**
+
+You must update the cookbook if you:
+- ✅ Discovered a new analyzer API pattern (e.g., different way to access elements, types, or AST nodes)
+- ✅ Researched AST traversal techniques not shown in the cookbook
+- ✅ Found a new type checking method or TypeChecker usage pattern
+- ✅ Implemented a complex visitor pattern for deep analysis
+- ✅ Created a new helper utility function
+- ✅ Had to dig into analyzer source code or documentation for APIs not covered in the cookbook
+- ✅ Found analyzer ^10.0.2 specific behaviors different from what you "know" from training data
+
+**How to update:**
+1. Open `lib/src/rules/CLAUDE.md`
+2. Find the appropriate section (or create a new one if needed)
+3. Add your pattern with:
+   - Working code example (tested and verified)
+   - File reference to your new implementation (e.g., `[my_rule.dart](my_rule.dart#L45-L60)`)
+   - Brief explanation of when to use this pattern
+   - Any gotchas or common mistakes
+4. Follow the format shown in the Meta-Instructions section of the cookbook
+
+**Example update:**
+```markdown
+### Checking Generic Type Arguments
+
+**Pattern: Extract type argument from generic type**
+```dart
+if (type case InterfaceType(:final typeArguments)) {
+  final firstArg = typeArguments.firstOrNull;
+  // Process type argument
+}
+```
+**When to use:** When you need to analyze the `T` in `List<T>` or similar generics  
+**Reference:** [my_new_rule.dart](my_new_rule.dart#L67-L72)
+```
+
+This keeps the cookbook as a **living document** that improves with each new rule!
+
+## Step 9: Verify
 
 Run `dart test` from the project root to ensure all tests pass. If tests fail, fix the issues and re-run.
