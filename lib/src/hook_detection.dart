@@ -1,8 +1,8 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 
+import 'package:many_lints/src/ast_node_analysis.dart';
 import 'package:many_lints/src/type_checker.dart';
-import 'package:many_lints/src/utils/helpers.dart';
 
 /// Collects hook invocations from AST nodes.
 class _HookExpressionsGatherer extends GeneralizingAstVisitor<void> {

@@ -5,8 +5,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import 'package:many_lints/src/ast_node_analysis.dart';
 import 'package:many_lints/src/type_checker.dart';
-import 'package:many_lints/src/utils/helpers.dart';
 
 /// Warns when multi-child widgets have only a single child.
 class AvoidSingleChildInMultiChildWidgets extends AnalysisRule {

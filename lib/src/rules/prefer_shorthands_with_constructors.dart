@@ -186,6 +186,9 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   /// Gets the expected type from the context where the expression appears.
+  ///
+  /// This uses a pragmatic approach: for arguments, it returns the static type
+  /// of the expression itself rather than trying to infer from parent context.
   DartType? _getContextType(Expression node) {
     AstNode? current = node.parent;
 
@@ -234,10 +237,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     // Don't suggest shorthands for non-interface types (including dynamic)
     if (contextType is! InterfaceType) return false;
 
-    // Get the base type
-    final baseType = contextType;
-
     // Check if the context type matches the class type (ignoring nullability)
-    return baseType.element == classElement;
+    return contextType.element == classElement;
   }
 }

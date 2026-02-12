@@ -5,6 +5,8 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
+import '../text_distance.dart';
+
 /// Fix that appends a suffix to a class name.
 class AddSuffixFix extends ResolvedCorrectionProducer {
   final String suffix;
@@ -91,7 +93,7 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
       if (len <= 0 || len >= name.length) continue;
 
       final tail = name.substring(name.length - len);
-      final distance = _editDistance(tail.toLowerCase(), suffixLower);
+      final distance = computeEditDistance(tail.toLowerCase(), suffixLower);
 
       // Allow up to 2 edits for the suffix to be considered a typo.
       if (distance > 0 && distance <= 2) {
@@ -100,32 +102,5 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
     }
 
     return name;
-  }
-
-  /// Computes the Levenshtein edit distance between two strings.
-  static int _editDistance(String a, String b) {
-    if (a == b) return 0;
-    if (a.isEmpty) return b.length;
-    if (b.isEmpty) return a.length;
-
-    var previous = List.generate(b.length + 1, (i) => i);
-    var current = List.filled(b.length + 1, 0);
-
-    for (var i = 1; i <= a.length; i++) {
-      current[0] = i;
-      for (var j = 1; j <= b.length; j++) {
-        final cost = a[i - 1] == b[j - 1] ? 0 : 1;
-        current[j] = [
-          previous[j] + 1, // deletion
-          current[j - 1] + 1, // insertion
-          previous[j - 1] + cost, // substitution
-        ].reduce((a, b) => a < b ? a : b);
-      }
-      final temp = previous;
-      previous = current;
-      current = temp;
-    }
-
-    return previous[b.length];
   }
 }

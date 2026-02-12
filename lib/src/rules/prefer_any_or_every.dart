@@ -6,8 +6,8 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import 'package:many_lints/src/ast_node_analysis.dart';
 import 'package:many_lints/src/type_checker.dart';
-import 'package:many_lints/src/utils/helpers.dart';
 
 /// Suggests using .any() or .every() instead of .where().isEmpty/.isNotEmpty.
 class PreferAnyOrEvery extends AnalysisRule {

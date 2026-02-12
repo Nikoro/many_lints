@@ -59,9 +59,10 @@ When updating, add:
 Quick navigation to common patterns:
 
 - [Rule Structure Template](#-rule-structure-template)
+- [Reusable Rule Patterns](#reusable-rule-base-classes) ⚡ NEW
 - [Type Checking](#-type-checking-patterns)
 - [AST Navigation](#-ast-navigation-patterns)
-- [Type Inference & Context](#-type-inference--context)
+- [Type Inference & Context](#-type-inference--context) ⚡ UPDATED
 - [Visitor Patterns](#-visitor-patterns)
 - [Reporting Issues & Quick Fixes](#-reporting--quick-fixes)
 - [Utility Functions](#-utility-functions)
@@ -73,9 +74,56 @@ Quick navigation to common patterns:
 
 ## 🎯 Rule Structure Template
 
+### Reusable Rule Base Classes
+
+**⚡ NEW:** For common patterns, use base classes instead of duplicating logic!
+
+**Class Suffix Validator Pattern:**
+
+When enforcing naming conventions for classes extending/implementing a specific type:
+
+```dart
+import 'package:analyzer/error/error.dart';
+
+import '../class_suffix_validator.dart';
+
+class UseBlocSuffix extends ClassSuffixValidator {
+  static final LintCode code = LintCode(
+    'use_bloc_suffix',
+    'Use Bloc suffix',
+    correctionMessage: 'Ex. {0}Bloc',
+  );
+
+  UseBlocSuffix()
+      : super(
+          name: 'use_bloc_suffix',
+          description: 'Warns if a Bloc class does not have the Bloc suffix.',
+          requiredSuffix: 'Bloc',
+          baseClassName: 'Bloc',
+          packageName: 'bloc',
+        );
+}
+```
+
+**That's it!** The base class handles:
+- Type checking with TypeChecker
+- Visitor registration
+- Class name validation
+- Lint code generation
+- Error reporting with parameters
+
+**When to use:** Any rule that validates class name suffixes based on inheritance/implementation.
+
+**Examples:**
+- [use_bloc_suffix.dart](use_bloc_suffix.dart) - ~20 lines (was ~55 lines)
+- [use_cubit_suffix.dart](use_cubit_suffix.dart) - ~20 lines (was ~57 lines)  
+- [use_notifier_suffix.dart](use_notifier_suffix.dart) - ~21 lines (was ~59 lines)
+
+**Reference:** [../class_suffix_validator.dart](../class_suffix_validator.dart) - Reusable base implementation
+
 ### Minimal Lint Rule
 
-Every lint rule follows this structure:
+For custom patterns, every lint rule follows this structure:
 
 ```dart
 import 'package:analyzer/analysis_rule/analysis_rule.dart';
@@ -370,9 +418,55 @@ if (children case final ListLiteral list) {
 
 ## 🎨 Type Inference & Context
 
-### Getting Context Type from Parent
+### ⚡ NEW: Centralized Type Inference Utilities
 
-Complex pattern for determining expected type from context:
+**✨ IMPORTANT:** As of February 2026, type inference logic has been extracted into [../type_inference.dart](../type_inference.dart). **Use these utilities instead of reimplementing context type inference!**
+
+**From [../type_inference.dart](../type_inference.dart):**
+
+```dart
+import '../type_inference.dart';
+
+// Infers expected type from expression context (variables, assignments, returns, etc.)
+final contextType = inferContextType(expression);
+
+// Resolves return type from function/method
+final returnType = resolveReturnType(node);
+
+// Gets switch expression type
+final switchType = resolveSwitchExpressionType(node);
+
+// Gets pattern context type (for switch patterns)
+final patternType = resolvePatternContextType(node);
+
+// Gets collection element type from List<T>, Set<T>
+final elementType = resolveCollectionElementType(collectionNode);
+
+// Checks type compatibility (ignores nullability)
+if (isTypeCompatible(contextType, targetElement)) {
+  // Context type matches target interface element
+}
+```
+
+**When to use:** Any time you need to determine expected type from context (variable declarations, assignments, returns, switch cases, collections, binary expressions, etc.)
+
+**Benefits:**
+- Single source of truth for type inference
+- Handles all common context patterns
+- Well-tested and documented
+- Easier to maintain
+
+**Reference implementations:**
+- [prefer_shorthands_with_enums.dart](prefer_shorthands_with_enums.dart) - Uses `inferContextType()` and `isTypeCompatible()`
+- [prefer_shorthands_with_static_fields.dart](prefer_shorthands_with_static_fields.dart) - Uses `inferContextType()` and `isTypeCompatible()`
+- [prefer_returning_shorthands.dart](prefer_returning_shorthands.dart) - Uses `isTypeCompatible()`
+
+### Legacy Pattern: Getting Context Type from Parent
+
+**⚠️ DEPRECATED:** Use `inferContextType()` from [../type_inference.dart](../type_inference.dart) instead.
+
+<details>
+<summary>Old implementation (for reference only)</summary>
 
 ```dart
 DartType? _getContextType(Expression node) {
@@ -405,40 +499,7 @@ DartType? _getContextType(Expression node) {
 }
 ```
 
-**Reference:** [prefer_shorthands_with_static_fields.dart](prefer_shorthands_with_static_fields.dart#L133-L185)
-
-### Getting Return Type
-
-```dart
-DartType? _getReturnType(AstNode node) {
-  final function = node.thisOrAncestorOfType<FunctionBody>();
-  if (function == null) return null;
-  
-  final parent = function.parent;
-  return switch (parent) {
-    FunctionExpression(:final declaredElement?) => 
-      declaredElement.returnType,
-    MethodDeclaration(:final declaredElement?) => 
-      declaredElement.returnType,
-    _ => null,
-  };
-}
-```
-
-**Reference:** [prefer_shorthands_with_static_fields.dart](prefer_shorthands_with_static_fields.dart#L187-L203)
-
-### Getting Switch Expression Type
-
-```dart
-DartType? _getSwitchExpressionType(SwitchCase caseNode) {
-  final switchStmt = caseNode.parent;
-  if (switchStmt is! SwitchStatement) return null;
-  
-  return switchStmt.expression.staticType;
-}
-```
-
-**Reference:** [prefer_shorthands_with_static_fields.dart](prefer_shorthands_with_static_fields.dart#L205-L212)
+</details>
 
 ---
 
@@ -641,7 +702,93 @@ range.token(token)
 
 ## 🛠️ Utility Functions
 
-### Available Helpers
+### Type Inference Utilities
+
+**From [../type_inference.dart](../type_inference.dart):**
+
+Centralized type inference logic for determining expected types from context.
+
+**1. Infer context type:**
+```dart
+DartType? inferContextType(Expression node)
+```
+Determines the expected type of an expression based on its usage context (variable declaration, assignment, return statement, collection literal, switch case, etc.).
+
+**2. Resolve return type:**
+```dart
+DartType? resolveReturnType(AstNode node)
+```
+Walks up the AST to find the enclosing function/method and returns its declared return type.
+
+**3. Resolve switch expression type:**
+```dart
+DartType? resolveSwitchExpressionType(AstNode node)
+```
+Finds the enclosing switch statement/expression and returns the type being switched on.
+
+**4. Resolve pattern context type:**
+```dart
+DartType? resolvePatternContextType(AstNode node)
+```
+For switch pattern cases, returns the type of the switch expression.
+
+**5. Resolve collection element type:**
+```dart
+DartType? resolveCollectionElementType(AstNode collectionNode)
+```
+Extracts the element type from `List<T>`, `Set<T>`, or `Map<K,V>` (returns first type argument).
+
+**6. Check type compatibility:**
+```dart
+bool isTypeCompatible(DartType contextType, InterfaceElement targetElement)
+```
+Checks if a context type matches a target interface element, ignoring nullability. Returns `false` for non-interface types.
+
+**Usage example:**
+```dart
+import '../type_inference.dart';
+
+@override
+void visitPrefixedIdentifier(PrefixedIdentifier node) {
+  // Get the expected type from context
+  final contextType = inferContextType(node);
+  if (contextType == null) return;
+  
+  // Check if it matches our target
+  final enumElement = node.staticType?.element as EnumElement;
+  if (isTypeCompatible(contextType, enumElement)) {
+    // Context type makes the enum prefix unnecessary
+    rule.reportAtNode(node);
+  }
+}
+```
+
+**Reference:** [prefer_shorthands_with_enums.dart](prefer_shorthands_with_enums.dart#L1-L108), [prefer_shorthands_with_static_fields.dart](prefer_shorthands_with_static_fields.dart#L1-L137)
+
+### String Distance Utilities
+
+**From [../text_distance.dart](../text_distance.dart):**
+
+**Compute edit distance:**
+```dart
+int computeEditDistance(String a, String b)
+```
+Computes the Levenshtein edit distance between two strings (minimum number of single-character edits needed to change one string into another).
+
+**Usage example:**
+```dart
+import '../text_distance.dart';
+
+// Check if a suffix is a typo
+final distance = computeEditDistance('Blok', 'Bloc');
+if (distance > 0 && distance <= 2) {
+  // Likely a typo - strip and replace
+}
+```
+
+**Reference:** [../fixes/add_suffix_fix.dart](../fixes/add_suffix_fix.dart#L85-L98)
+
+### General Helpers
 
 **From [../utils/helpers.dart](../utils/helpers.dart):**
 
@@ -1118,9 +1265,7 @@ class ManyLintsPlugin extends Plugin {
 
 | Date | Agent/Author | Changes |
 |------|-------------|---------|
-| Feb 2026 | Initial creation | Extracted patterns from 18 existing rules |
-
-**Remember:** When you discover new patterns, update this document following the [Meta-Instructions](#-meta-instructions-for-agents).
+| Feb 12, 2026 | Refactoring | **Major refactoring:** Extracted ~370 lines of duplicated code into reusable utilities:<br>• Added [../type_inference.dart](../type_inference.dart) - Centralized type inference (`inferContextType`, `resolveReturnType`, etc.)<br>• Added [../class_suffix_validator.dart](../class_suffix_validator.dart) - Base class for suffix rules<br>• Added [../text_distance.dart](../text_distance.dart) - String distance utilities (`computeEditDistance`)<br>• Updated 7 rules to use new utilities<br>• Reduced suffix rules from ~55 lines to ~20 lines each |
 
 ---
 

@@ -5,8 +5,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import 'package:many_lints/src/ast_node_analysis.dart';
 import 'package:many_lints/src/type_checker.dart';
-import 'package:many_lints/src/utils/helpers.dart';
 
 /// Warns when SizedBox or Padding is used for spacing inside multi-child
 /// widgets. Suggests using the Gap widget instead.

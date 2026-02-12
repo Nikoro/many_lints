@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/utils/helpers.dart';
+import 'package:many_lints/src/ast_node_analysis.dart';
 
 /// Suggests using MediaQuery dedicated methods instead of MediaQuery.of().property.
 class UseDedicatedMediaQueryMethods extends AnalysisRule {

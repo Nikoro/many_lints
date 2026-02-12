@@ -7,6 +7,8 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../type_inference.dart';
+
 /// Suggests returning dot shorthands from an expression function body.
 ///
 /// Function and method declarations already have an explicit return type and in
@@ -126,7 +128,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (typeElement is! InterfaceElement) return;
 
     // Check if the instance type matches the return type (ignoring nullability)
-    if (!_isTypeCompatible(returnType, typeElement)) return;
+    if (!isTypeCompatible(returnType, typeElement)) return;
 
     // Report the lint
     rule.reportAtNode(node.constructorName);
@@ -149,19 +151,10 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (target.name != typeElement.name) return;
 
     // Check if the instance type matches the return type
-    if (!_isTypeCompatible(returnType, typeElement)) return;
+    if (!isTypeCompatible(returnType, typeElement)) return;
 
     // Report the lint - we report at the target but the fix will handle
     // the entire "ClassName.constructorName" range
     rule.reportAtToken(target.token);
-  }
-
-  /// Checks if the context type is compatible with the constructor's class.
-  bool _isTypeCompatible(
-    InterfaceType returnType,
-    InterfaceElement classElement,
-  ) {
-    // Check if the return type matches the class type (ignoring nullability)
-    return returnType.element == classElement;
   }
 }

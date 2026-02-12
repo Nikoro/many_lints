@@ -1,15 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/type_checker.dart';
+import '../class_suffix_validator.dart';
 
 /// Warns if a Cubit class does not have the `Cubit` suffix.
-class UseCubitSuffix extends AnalysisRule {
-  static const LintCode code = LintCode(
+class UseCubitSuffix extends ClassSuffixValidator {
+  static final LintCode code = LintCode(
     'use_cubit_suffix',
     'Use Cubit suffix',
     correctionMessage: 'Ex. {0}Cubit',
@@ -19,39 +14,8 @@ class UseCubitSuffix extends AnalysisRule {
     : super(
         name: 'use_cubit_suffix',
         description: 'Warns if a Cubit class does not have the Cubit suffix.',
+        requiredSuffix: 'Cubit',
+        baseClassName: 'Cubit',
+        packageName: 'bloc',
       );
-
-  @override
-  LintCode get diagnosticCode => code;
-
-  @override
-  void registerNodeProcessors(
-    RuleVisitorRegistry registry,
-    RuleContext context,
-  ) {
-    final visitor = _Visitor(this);
-    registry.addClassDeclaration(this, visitor);
-  }
-}
-
-class _Visitor extends SimpleAstVisitor<void> {
-  final UseCubitSuffix rule;
-
-  _Visitor(this.rule);
-
-  static const _cubitChecker = TypeChecker.fromName(
-    'Cubit',
-    packageName: 'bloc',
-  );
-
-  @override
-  void visitClassDeclaration(ClassDeclaration node) {
-    final element = node.declaredFragment?.element;
-    if (element == null) return;
-
-    final name = node.namePart.typeName;
-    if (_cubitChecker.isSuperOf(element) && !name.lexeme.endsWith('Cubit')) {
-      rule.reportAtToken(name, arguments: [name.lexeme]);
-    }
-  }
 }
