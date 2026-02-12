@@ -146,7 +146,3 @@ test: add coverage for hook widget detection
 - Co-authored-by attributions to AI assistants
 - Vague descriptions like "updates", "changes", "fixes"
 - Emoji in commit messages
-
-## Roadmap
-
-See `TODO.md` for planned lint rules.
