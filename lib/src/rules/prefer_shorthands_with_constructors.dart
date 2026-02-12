@@ -202,18 +202,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return null;
   }
 
-  /// Gets the context type for a named expression.
-  DartType? _getNamedExpressionContextType(NamedExpression namedExpr) {
-    // Not used anymore, but keeping for compatibility
-    return null;
-  }
-
-  /// Gets the context type for a positional argument.
-  DartType? _getPositionalArgumentContextType(Expression argument, ArgumentList argumentList) {
-    // Not used anymore, but keeping for compatibility
-    return null;
-  }
-
   /// Gets the element type from a collection literal's context.
   DartType? _getCollectionElementType(AstNode collectionNode) {
     // Get the static type of the collection

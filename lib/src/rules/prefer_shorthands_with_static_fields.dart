@@ -7,44 +7,56 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
-/// Suggests using dot shorthands instead of explicit enum prefixes.
+/// Suggests using dot shorthands instead of explicit class prefixes for static fields.
 ///
 /// **BAD:**
 /// ```dart
-/// enum MyEnum { first, second }
-/// void fn(MyEnum? e) {
+/// class SomeClass {
+///   final String value;
+///   const SomeClass(this.value);
+///   static const first = SomeClass('first');
+///   static const second = SomeClass('second');
+/// }
+///
+/// void fn(SomeClass? e) {
 ///   switch (e) {
-///     case MyEnum.first:  // LINT
+///     case SomeClass.first:  // LINT
 ///       print(e);
 ///   }
-///   final MyEnum another = MyEnum.first; // LINT
-///   if (e == MyEnum.first) {} // LINT
+///   final SomeClass another = SomeClass.first; // LINT
+///   if (e == SomeClass.first) {} // LINT
 /// }
 /// ```
 ///
 /// **GOOD:**
 /// ```dart
-/// enum MyEnum { first, second }
-/// void fn(MyEnum? e) {
+/// class SomeClass {
+///   final String value;
+///   const SomeClass(this.value);
+///   static const first = SomeClass('first');
+///   static const second = SomeClass('second');
+/// }
+///
+/// void fn(SomeClass? e) {
 ///   switch (e) {
 ///     case .first:
 ///       print(e);
 ///   }
-///   final MyEnum another = .first;
+///   final SomeClass another = .first;
 ///   if (e == .first) {}
 /// }
 /// ```
-class PreferShorthandsWithEnums extends AnalysisRule {
+class PreferShorthandsWithStaticFields extends AnalysisRule {
   static const LintCode code = LintCode(
-    'prefer_shorthands_with_enums',
-    'Prefer dot shorthands instead of explicit enum prefixes.',
-    correctionMessage: 'Try removing the enum prefix.',
+    'prefer_shorthands_with_static_fields',
+    'Prefer dot shorthands instead of explicit class prefixes.',
+    correctionMessage: 'Try removing the prefix.',
   );
 
-  PreferShorthandsWithEnums()
+  PreferShorthandsWithStaticFields()
     : super(
-        name: 'prefer_shorthands_with_enums',
-        description: 'Suggests using dot shorthands instead of explicit enum prefixes.',
+        name: 'prefer_shorthands_with_static_fields',
+        description: 'Suggests using dot shorthands instead of explicit class prefixes for static fields.',
       );
 
   @override
@@ -59,40 +71,56 @@ class PreferShorthandsWithEnums extends AnalysisRule {
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
-  final PreferShorthandsWithEnums rule;
+  final PreferShorthandsWithStaticFields rule;
 
   _Visitor(this.rule);
 
   @override
   void visitPrefixedIdentifier(PrefixedIdentifier node) {
-    _checkEnumReference(node, node.prefix, node.identifier);
+    _checkStaticFieldReference(node, node.prefix, node.identifier);
   }
 
   @override
   void visitPropertyAccess(PropertyAccess node) {
     if (node.target case final target?) {
-      _checkEnumReference(node, target, node.propertyName);
+      _checkStaticFieldReference(node, target, node.propertyName);
     }
   }
 
-  void _checkEnumReference(Expression node, Expression prefixExpression, SimpleIdentifier identifier) {
-    // The static type of the full expression should be an enum type
+  void _checkStaticFieldReference(Expression node, Expression prefixExpression, SimpleIdentifier identifier) {
+    // The static type of the full expression
     final nodeType = node.staticType;
     if (nodeType is! InterfaceType) return;
 
-    final enumElement = nodeType.element;
-    if (enumElement is! EnumElement) return;
+    // Get the field element
+    final element = identifier.element;
+    if (element is! PropertyAccessorElement) return;
 
-    // Verify the prefix is a simple identifier matching the enum name
+    // Check if it's a static field/getter
+    if (!element.isStatic) return;
+
+    // Get the class that declares this static field
+    final enclosingElement = element.enclosingElement;
+    if (enclosingElement is! InterfaceElement) return;
+
+    // Skip enums - they have their own rule (prefer_shorthands_with_enums)
+    if (enclosingElement is EnumElement) return;
+
+    // Verify the prefix is a simple identifier matching the class name
     if (prefixExpression is! SimpleIdentifier) return;
-    if (prefixExpression.name != enumElement.name) return;
+    if (prefixExpression.name != enclosingElement.name) return;
 
-    // Check if context type makes the enum type inferable
+    // The static field's type should match the class it's declared in
+    final fieldType = element.returnType;
+    if (fieldType is! InterfaceType) return;
+    if (fieldType.element != enclosingElement) return;
+
+    // Check if context type makes the field type inferable
     final contextType = _getContextType(node);
     if (contextType == null) return;
 
-    // The shorthand is valid when the context type matches the enum type
-    if (!_isEnumTypeCompatible(contextType, enumElement)) return;
+    // The shorthand is valid when the context type matches the field type
+    if (!_isTypeCompatible(contextType, enclosingElement)) return;
 
     // Report the lint
     rule.reportAtNode(node);
@@ -103,35 +131,35 @@ class _Visitor extends SimpleAstVisitor<void> {
     final parent = node.parent;
 
     return switch (parent) {
-      // Variable declaration: `final MyEnum x = MyEnum.first;`
+      // Variable declaration: `final SomeClass x = SomeClass.first;`
       VariableDeclaration(parent: VariableDeclarationList(:final type?)) => type.type,
 
-      // Assignment: `x = MyEnum.first;`
+      // Assignment: `x = SomeClass.first;`
       AssignmentExpression(:final leftHandSide) => leftHandSide.staticType,
 
       // Named expression (default parameter, named argument, named argument in call)
       NamedExpression() => _getContextType(parent),
 
-      // Default formal parameter: `{MyEnum value = MyEnum.first}`
+      // Default formal parameter: `{SomeClass value = SomeClass.first}`
       DefaultFormalParameter(parameter: SimpleFormalParameter(:final type?)) => type.type,
 
-      // Binary expression (comparison): `e == MyEnum.first`
+      // Binary expression (comparison): `e == SomeClass.first`
       BinaryExpression(:final leftOperand, :final rightOperand) =>
         node == rightOperand ? leftOperand.staticType : rightOperand.staticType,
 
-      // List/Set literal: `[MyEnum.first]` or `{MyEnum.first}`
+      // List/Set literal: `[SomeClass.first]` or `{SomeClass.first}`
       ListLiteral() || SetOrMapLiteral() when parent != null => _getCollectionElementType(parent),
 
-      // Switch case: `case MyEnum.first:`
+      // Switch case: `case SomeClass.first:`
       SwitchCase() => _getSwitchExpressionType(parent),
 
-      // Constant pattern (switch expression): `MyEnum.first =>`
+      // Constant pattern (switch expression): `SomeClass.first =>`
       ConstantPattern() => _getPatternContextType(parent),
 
-      // Expression function body: `MyEnum getEnum() => MyEnum.first;`
+      // Expression function body: `SomeClass getClass() => SomeClass.first;`
       ExpressionFunctionBody() => _getReturnType(parent),
 
-      // Return statement: `return MyEnum.first;`
+      // Return statement: `return SomeClass.first;`
       ReturnStatement() => _getReturnType(parent),
 
       // Parenthesized expression: pass through to parent
@@ -214,14 +242,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     return null;
   }
 
-  /// Checks if the context type is compatible with the enum type.
-  bool _isEnumTypeCompatible(DartType contextType, EnumElement enumElement) {
+  /// Checks if the context type is compatible with the class type.
+  bool _isTypeCompatible(DartType contextType, InterfaceElement classElement) {
     // Get the base type, ignoring nullability
     final baseType = contextType is InterfaceType ? contextType : null;
 
     if (baseType == null) return false;
 
-    // Check if the context type matches the enum type (ignoring nullability)
-    return baseType.element == enumElement;
+    // Check if the context type matches the class type (ignoring nullability)
+    return baseType.element == classElement;
   }
 }
