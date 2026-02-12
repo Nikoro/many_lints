@@ -18,7 +18,8 @@ class PreferShorthandsWithStaticFieldsFix extends ResolvedCorrectionProducer {
   PreferShorthandsWithStaticFieldsFix({required super.context});
 
   @override
-  CorrectionApplicability get applicability => CorrectionApplicability.singleLocation;
+  CorrectionApplicability get applicability =>
+      CorrectionApplicability.singleLocation;
 
   @override
   FixKind get fixKind => _fixKind;

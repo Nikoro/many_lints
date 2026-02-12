@@ -3,7 +3,9 @@ import 'package:many_lints/src/rules/prefer_shorthands_with_enums.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
-  defineReflectiveSuite(() => defineReflectiveTests(PreferShorthandsWithEnumsTest));
+  defineReflectiveSuite(
+    () => defineReflectiveTests(PreferShorthandsWithEnumsTest),
+  );
 }
 
 @reflectiveTest

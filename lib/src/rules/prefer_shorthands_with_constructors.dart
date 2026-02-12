@@ -58,14 +58,18 @@ class PreferShorthandsWithConstructors extends AnalysisRule {
   PreferShorthandsWithConstructors()
     : super(
         name: 'prefer_shorthands_with_constructors',
-        description: 'Suggests using dot shorthand constructor invocations for the configured list of classes.',
+        description:
+            'Suggests using dot shorthand constructor invocations for the configured list of classes.',
       );
 
   @override
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
+  ) {
     final visitor = _Visitor(this);
     registry.addInstanceCreationExpression(this, visitor);
     registry.addMethodInvocation(this, visitor);
@@ -90,7 +94,12 @@ class _Visitor extends SimpleAstVisitor<void> {
   /// - 'TextStyle' (if using const constructors)
   ///
   /// Note: Future versions may support configuration via analysis_options.yaml
-  static const _defaultClasses = {'EdgeInsets', 'BorderRadius', 'Radius', 'Border'};
+  static const _defaultClasses = {
+    'EdgeInsets',
+    'BorderRadius',
+    'Radius',
+    'Border',
+  };
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
@@ -206,7 +215,8 @@ class _Visitor extends SimpleAstVisitor<void> {
   DartType? _getCollectionElementType(AstNode collectionNode) {
     // Get the static type of the collection
     final collectionType = switch (collectionNode) {
-      ListLiteral(:final staticType) || SetOrMapLiteral(:final staticType) => staticType,
+      ListLiteral(:final staticType) ||
+      SetOrMapLiteral(:final staticType) => staticType,
       _ => null,
     };
 

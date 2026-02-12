@@ -7,15 +7,16 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 /// Fix that replaces explicit class constructor invocation with dot shorthand.
 ///
-/// Transforms `EdgeInsets.symmetric(...)` into `.symmetric(...)`.
-class PreferShorthandsWithConstructorsFix extends ResolvedCorrectionProducer {
+/// Transforms `SomeClass('val')` into `.new('val')` and
+/// `SomeClass.named('val')` into `.named('val')`.
+class PreferReturningShorthandsFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
-    'many_lints.fix.preferShorthandsWithConstructors',
+    'many_lints.fix.preferReturningShorthands',
     DartFixKindPriority.standard,
     'Replace with dot shorthand',
   );
 
-  PreferShorthandsWithConstructorsFix({required super.context});
+  PreferReturningShorthandsFix({required super.context});
 
   @override
   CorrectionApplicability get applicability =>
@@ -28,16 +29,16 @@ class PreferShorthandsWithConstructorsFix extends ResolvedCorrectionProducer {
   Future<void> compute(ChangeBuilder builder) async {
     final targetNode = node;
 
-    // Handle MethodInvocation case (e.g., EdgeInsets.symmetric)
+    // Handle MethodInvocation case (e.g., SomeClass.named)
     if (targetNode is SimpleIdentifier) {
       final parent = targetNode.parent;
       if (parent is MethodInvocation && parent.target == targetNode) {
-        // This is the class name part of "EdgeInsets.symmetric"
+        // This is the class name part of "SomeClass.named"
         final methodName = parent.methodName.name;
         final replacement = '.$methodName';
 
         await builder.addDartFileEdit(file, (builder) {
-          // Replace "EdgeInsets.symmetric" with ".symmetric"
+          // Replace "SomeClass.named" with ".named"
           builder.addSimpleReplacement(
             range.startStart(targetNode, parent.argumentList),
             replacement,
@@ -49,10 +50,8 @@ class PreferShorthandsWithConstructorsFix extends ResolvedCorrectionProducer {
 
     // Handle ConstructorName case (for new expressions)
     if (targetNode is ConstructorName) {
-      final constructorNameText = targetNode.name?.name ?? '';
-      final replacement = constructorNameText.isEmpty
-          ? '.'
-          : '.$constructorNameText';
+      final constructorNameText = targetNode.name?.name ?? 'new';
+      final replacement = '.$constructorNameText';
 
       await builder.addDartFileEdit(file, (builder) {
         builder.addSimpleReplacement(range.node(targetNode), replacement);

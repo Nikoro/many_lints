@@ -56,14 +56,18 @@ class PreferShorthandsWithStaticFields extends AnalysisRule {
   PreferShorthandsWithStaticFields()
     : super(
         name: 'prefer_shorthands_with_static_fields',
-        description: 'Suggests using dot shorthands instead of explicit class prefixes for static fields.',
+        description:
+            'Suggests using dot shorthands instead of explicit class prefixes for static fields.',
       );
 
   @override
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
+  ) {
     final visitor = _Visitor(this);
     registry.addPrefixedIdentifier(this, visitor);
     registry.addPropertyAccess(this, visitor);
@@ -87,7 +91,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  void _checkStaticFieldReference(Expression node, Expression prefixExpression, SimpleIdentifier identifier) {
+  void _checkStaticFieldReference(
+    Expression node,
+    Expression prefixExpression,
+    SimpleIdentifier identifier,
+  ) {
     // The static type of the full expression
     final nodeType = node.staticType;
     if (nodeType is! InterfaceType) return;
@@ -132,7 +140,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     return switch (parent) {
       // Variable declaration: `final SomeClass x = SomeClass.first;`
-      VariableDeclaration(parent: VariableDeclarationList(:final type?)) => type.type,
+      VariableDeclaration(parent: VariableDeclarationList(:final type?)) =>
+        type.type,
 
       // Assignment: `x = SomeClass.first;`
       AssignmentExpression(:final leftHandSide) => leftHandSide.staticType,
@@ -141,14 +150,16 @@ class _Visitor extends SimpleAstVisitor<void> {
       NamedExpression() => _getContextType(parent),
 
       // Default formal parameter: `{SomeClass value = SomeClass.first}`
-      DefaultFormalParameter(parameter: SimpleFormalParameter(:final type?)) => type.type,
+      DefaultFormalParameter(parameter: SimpleFormalParameter(:final type?)) =>
+        type.type,
 
       // Binary expression (comparison): `e == SomeClass.first`
       BinaryExpression(:final leftOperand, :final rightOperand) =>
         node == rightOperand ? leftOperand.staticType : rightOperand.staticType,
 
       // List/Set literal: `[SomeClass.first]` or `{SomeClass.first}`
-      ListLiteral() || SetOrMapLiteral() when parent != null => _getCollectionElementType(parent),
+      ListLiteral() || SetOrMapLiteral() when parent != null =>
+        _getCollectionElementType(parent),
 
       // Switch case: `case SomeClass.first:`
       SwitchCase() => _getSwitchExpressionType(parent),
@@ -173,7 +184,8 @@ class _Visitor extends SimpleAstVisitor<void> {
   DartType? _getCollectionElementType(AstNode collectionNode) {
     // Get the static type of the collection
     final collectionType = switch (collectionNode) {
-      ListLiteral(:final staticType) || SetOrMapLiteral(:final staticType) => staticType,
+      ListLiteral(:final staticType) ||
+      SetOrMapLiteral(:final staticType) => staticType,
       _ => null,
     };
 

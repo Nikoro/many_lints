@@ -44,14 +44,18 @@ class PreferShorthandsWithEnums extends AnalysisRule {
   PreferShorthandsWithEnums()
     : super(
         name: 'prefer_shorthands_with_enums',
-        description: 'Suggests using dot shorthands instead of explicit enum prefixes.',
+        description:
+            'Suggests using dot shorthands instead of explicit enum prefixes.',
       );
 
   @override
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
+  ) {
     final visitor = _Visitor(this);
     registry.addPrefixedIdentifier(this, visitor);
     registry.addPropertyAccess(this, visitor);
@@ -75,7 +79,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  void _checkEnumReference(Expression node, Expression prefixExpression, SimpleIdentifier identifier) {
+  void _checkEnumReference(
+    Expression node,
+    Expression prefixExpression,
+    SimpleIdentifier identifier,
+  ) {
     // The static type of the full expression should be an enum type
     final nodeType = node.staticType;
     if (nodeType is! InterfaceType) return;
@@ -104,7 +112,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     return switch (parent) {
       // Variable declaration: `final MyEnum x = MyEnum.first;`
-      VariableDeclaration(parent: VariableDeclarationList(:final type?)) => type.type,
+      VariableDeclaration(parent: VariableDeclarationList(:final type?)) =>
+        type.type,
 
       // Assignment: `x = MyEnum.first;`
       AssignmentExpression(:final leftHandSide) => leftHandSide.staticType,
@@ -113,14 +122,16 @@ class _Visitor extends SimpleAstVisitor<void> {
       NamedExpression() => _getContextType(parent),
 
       // Default formal parameter: `{MyEnum value = MyEnum.first}`
-      DefaultFormalParameter(parameter: SimpleFormalParameter(:final type?)) => type.type,
+      DefaultFormalParameter(parameter: SimpleFormalParameter(:final type?)) =>
+        type.type,
 
       // Binary expression (comparison): `e == MyEnum.first`
       BinaryExpression(:final leftOperand, :final rightOperand) =>
         node == rightOperand ? leftOperand.staticType : rightOperand.staticType,
 
       // List/Set literal: `[MyEnum.first]` or `{MyEnum.first}`
-      ListLiteral() || SetOrMapLiteral() when parent != null => _getCollectionElementType(parent),
+      ListLiteral() || SetOrMapLiteral() when parent != null =>
+        _getCollectionElementType(parent),
 
       // Switch case: `case MyEnum.first:`
       SwitchCase() => _getSwitchExpressionType(parent),
@@ -145,7 +156,8 @@ class _Visitor extends SimpleAstVisitor<void> {
   DartType? _getCollectionElementType(AstNode collectionNode) {
     // Get the static type of the collection
     final collectionType = switch (collectionNode) {
-      ListLiteral(:final staticType) || SetOrMapLiteral(:final staticType) => staticType,
+      ListLiteral(:final staticType) ||
+      SetOrMapLiteral(:final staticType) => staticType,
       _ => null,
     };
 

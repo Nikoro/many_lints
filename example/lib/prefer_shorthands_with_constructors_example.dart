@@ -21,13 +21,19 @@ class PreferShorthandsWithConstructorsExample extends StatelessWidget {
         // === EdgeInsets examples ===
 
         // LINT: Use .symmetric instead of EdgeInsets.symmetric
-        Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12), child: Text('Hello')),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Text('Hello'),
+        ),
 
         // LINT: Use .all instead of EdgeInsets.all
         Padding(padding: EdgeInsets.all(8), child: Text('World')),
 
         // LINT: Use .only instead of EdgeInsets.only
-        Container(margin: EdgeInsets.only(top: 10, left: 20), child: Text('With margin')),
+        Container(
+          margin: EdgeInsets.only(top: 10, left: 20),
+          child: Text('With margin'),
+        ),
 
         // === BorderRadius and Border examples ===
 
@@ -51,7 +57,10 @@ class PreferShorthandsWithConstructorsExample extends StatelessWidget {
         ),
 
         // === Good examples (already using shorthand) ===
-        Padding(padding: .symmetric(horizontal: 16, vertical: 12), child: Text('Good: Using dot shorthand')),
+        Padding(
+          padding: .symmetric(horizontal: 16, vertical: 12),
+          child: Text('Good: Using dot shorthand'),
+        ),
 
         Container(
           decoration: BoxDecoration(
@@ -72,7 +81,11 @@ class PreferShorthandsWithConstructorsExample extends StatelessWidget {
   }
 
   // Example showing why this is useful:
-  Widget _buildCard({required Widget child, required EdgeInsets padding, required BorderRadius borderRadius}) {
+  Widget _buildCard({
+    required Widget child,
+    required EdgeInsets padding,
+    required BorderRadius borderRadius,
+  }) {
     return Container(
       // GOOD: Type is already declared in parameter
       padding: .all(16), // Instead of EdgeInsets.all(16)

@@ -3,7 +3,9 @@ import 'package:many_lints/src/rules/prefer_shorthands_with_static_fields.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
 void main() {
-  defineReflectiveSuite(() => defineReflectiveTests(PreferShorthandsWithStaticFieldsTest));
+  defineReflectiveSuite(
+    () => defineReflectiveTests(PreferShorthandsWithStaticFieldsTest),
+  );
 }
 
 @reflectiveTest
