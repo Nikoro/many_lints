@@ -31,6 +31,7 @@ import 'package:many_lints/src/rules/avoid_unnecessary_hook_widgets.dart';
 import 'package:many_lints/src/rules/prefer_align_over_container.dart';
 import 'package:many_lints/src/rules/prefer_any_or_every.dart';
 import 'package:many_lints/src/rules/prefer_center_over_align.dart';
+import 'package:many_lints/src/rules/prefer_explicit_function_type.dart';
 import 'package:many_lints/src/rules/prefer_padding_over_container.dart';
 import 'package:many_lints/src/rules/prefer_returning_shorthands.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_constructors.dart';
@@ -50,6 +51,7 @@ import 'package:many_lints/src/fixes/avoid_unnecessary_hook_widgets_fix.dart';
 import 'package:many_lints/src/fixes/change_widget_name_fix.dart';
 import 'package:many_lints/src/fixes/prefer_any_or_every_fix.dart';
 import 'package:many_lints/src/fixes/prefer_center_over_align_fix.dart';
+import 'package:many_lints/src/fixes/prefer_explicit_function_type_fix.dart';
 import 'package:many_lints/src/fixes/prefer_padding_over_container_fix.dart';
 import 'package:many_lints/src/fixes/prefer_returning_shorthands_fix.dart';
 import 'package:many_lints/src/fixes/prefer_shorthands_with_constructors_fix.dart';
@@ -75,6 +77,7 @@ class ManyLintsPlugin extends Plugin {
     // Register warning rules (enabled by default)
     registry.registerWarningRule(PreferCenterOverAlign());
     registry.registerWarningRule(PreferAlignOverContainer());
+    registry.registerWarningRule(PreferExplicitFunctionType());
     registry.registerWarningRule(PreferPaddingOverContainer());
     registry.registerWarningRule(PreferReturningShorthands());
     registry.registerWarningRule(PreferShorthandsWithConstructors());
@@ -99,6 +102,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       PreferAlignOverContainer.code,
       ChangeWidgetNameFix.alignFix,
+    );
+    registry.registerFixForRule(
+      PreferExplicitFunctionType.code,
+      PreferExplicitFunctionTypeFix.new,
     );
     registry.registerFixForRule(
       PreferPaddingOverContainer.code,
