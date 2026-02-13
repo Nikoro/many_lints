@@ -260,4 +260,9 @@ This keeps the cookbook as a **living document** that improves with each new rul
 
 ## Step 9: Verify
 
-Run `dart test` from the project root to ensure all tests pass. If tests fail, fix the issues and re-run.
+Run the following commands from the project root to ensure everything works:
+
+1. `dart analyze` - Ensure there are no analyzer errors
+2. `dart test` - Ensure all tests pass
+
+If either command fails, fix the issues and re-run.
