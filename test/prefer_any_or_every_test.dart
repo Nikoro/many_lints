@@ -80,3 +80,70 @@ void f() {
 ''');
   }
 }
+
+@reflectiveTest
+class PreferAnyOrEveryHelperFunctionsTest extends AnalysisRuleTest {
+  @override
+  void setUp() {
+    super.setUp();
+  }
+
+  Future<void> test_buildEveryReplacement_simple() async {
+    await assertDiagnostics(
+      r'''
+void f() {
+  final list = [1, 2, 3];
+  final result = list.where((e) => e > 1).isEmpty;
+}
+''',
+      [lint(54, 36)],
+    );
+  }
+
+  Future<void> test_buildEveryReplacement_with_block_body() async {
+    await assertDiagnostics(
+      r'''
+void f() {
+  final list = [1, 2, 3];
+  final result = list.where((e) { return e > 1; }).isEmpty;
+}
+''',
+      [lint(54, 47)],
+    );
+  }
+
+  Future<void> test_negateExpression_with_double_negation() async {
+    await assertDiagnostics(
+      r'''
+void f() {
+  final list = [true, false];
+  final result = list.where((e) => !!e).isEmpty;
+}
+''',
+      [lint(55, 34)],
+    );
+  }
+
+  Future<void> test_negateExpression_with_binary_expression() async {
+    await assertDiagnostics(
+      r'''
+void f() {
+  final list = [1, 2, 3];
+  final result = list.where((e) => e > 1 && e < 5).isEmpty;
+}
+''',
+      [lint(54, 47)],
+    );
+  }
+
+  Future<void> test_where_isEmpty_on_iterable() async {
+    await assertDiagnostics(
+      r'''
+void f(Iterable<int> iterable) {
+  iterable.where((e) => e > 1).isEmpty;
+}
+''',
+      [lint(35, 32)],
+    );
+  }
+}

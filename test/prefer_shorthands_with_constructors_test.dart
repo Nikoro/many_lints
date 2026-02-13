@@ -262,4 +262,31 @@ Widget f() {
       [lint(85, 14)],
     );
   }
+
+  Future<void> test_in_list_literal() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+void f() {
+  final List<EdgeInsets> paddings = [EdgeInsets.all(8), EdgeInsets.all(16)];
+}
+''',
+      [lint(88, 14), lint(107, 14)],
+    );
+  }
+
+  Future<void> test_method_invocation_in_list() async {
+    // Test method invocation syntax in a collection
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+void f() {
+  final List<EdgeInsets> items = [EdgeInsets.symmetric(horizontal: 8)];
+}
+''',
+      [lint(85, 20)],
+    );
+  }
 }

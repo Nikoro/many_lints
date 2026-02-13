@@ -110,4 +110,70 @@ Widget f() {
       [lint(61, 4)],
     );
   }
+
+  Future<void> test_column_with_if_element_with_else() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+Widget f(bool condition) {
+  return Column(children: [
+    if (condition) Text('true') else Text('false'),
+  ]);
+}
+''',
+      [lint(75, 6)],
+    );
+  }
+
+  Future<void> test_column_with_if_element_without_else() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+Widget f(bool condition) {
+  return Column(children: [
+    if (condition) Text('hello'),
+  ]);
+}
+''',
+      [lint(75, 6)],
+    );
+  }
+
+  Future<void> test_sliver_child_list_delegate_with_single_child() async {
+    newPackage('flutter').addFile('lib/widgets.dart', r'''
+class Widget {}
+class Key {}
+class Column extends Widget {
+  Column({Key? key, List<Widget>? children});
+}
+class Row extends Widget {
+  Row({Key? key, List<Widget>? children});
+}
+class Wrap extends Widget {
+  Wrap({Key? key, List<Widget>? children});
+}
+class Flex extends Widget {
+  Flex({Key? key, List<Widget>? children});
+}
+class SliverList extends Widget {
+  SliverList({Key? key, List<Widget>? children});
+}
+class SliverChildListDelegate {
+  SliverChildListDelegate(List<Widget> children);
+}
+class Container extends Widget {}
+class Text extends Widget {
+  Text(String data);
+}
+''');
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+void f() {
+  SliverChildListDelegate([Text('hello')]);
+}
+''',
+      [lint(52, 23)],
+    );
+  }
 }
