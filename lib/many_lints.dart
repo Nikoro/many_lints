@@ -25,6 +25,7 @@ import 'package:analysis_server_plugin/plugin.dart';
 import 'package:analysis_server_plugin/registry.dart';
 
 // Rules
+import 'package:many_lints/src/rules/avoid_cascade_after_if_null.dart';
 import 'package:many_lints/src/rules/avoid_accessing_collections_by_constant_index.dart';
 import 'package:many_lints/src/rules/avoid_single_child_in_multi_child_widgets.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_consumer_widgets.dart';
@@ -49,6 +50,7 @@ import 'package:many_lints/src/rules/use_gap.dart';
 import 'package:many_lints/src/rules/use_notifier_suffix.dart';
 
 // Fixes
+import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
 import 'package:many_lints/src/fixes/add_suffix_fix.dart';
 import 'package:many_lints/src/fixes/prefer_abstract_final_static_class_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart';
@@ -82,6 +84,7 @@ class ManyLintsPlugin extends Plugin {
   @override
   void register(PluginRegistry registry) {
     // Register warning rules (enabled by default)
+    registry.registerWarningRule(AvoidCascadeAfterIfNull());
     registry.registerWarningRule(AvoidAccessingCollectionsByConstantIndex());
     registry.registerWarningRule(PreferAbstractFinalStaticClass());
     registry.registerWarningRule(PreferCenterOverAlign());
@@ -106,6 +109,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(UseGap());
 
     // Register fixes for rules
+    registry.registerFixForRule(
+      AvoidCascadeAfterIfNull.code,
+      AvoidCascadeAfterIfNullFix.new,
+    );
     registry.registerFixForRule(
       PreferAbstractFinalStaticClass.code,
       PreferAbstractFinalStaticClassFix.new,
