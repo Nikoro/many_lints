@@ -83,11 +83,6 @@ void f() {
 
 @reflectiveTest
 class PreferAnyOrEveryHelperFunctionsTest extends AnalysisRuleTest {
-  @override
-  void setUp() {
-    super.setUp();
-  }
-
   Future<void> test_buildEveryReplacement_simple() async {
     await assertDiagnostics(
       r'''

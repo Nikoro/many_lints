@@ -1,7 +1,6 @@
 ---
 name: new-lint
 description: Creates a new lint rule with quick fix and tests for the many_lints package. Use when the user wants to add a new lint rule.
-user_invocable: true
 ---
 
 You are creating a new lint rule for the **many_lints** Dart linter package. The user will provide context describing what the lint should detect, possibly a lint name, and optionally reference links.
@@ -262,7 +261,7 @@ This keeps the cookbook as a **living document** that improves with each new rul
 
 Run the following commands from the project root to ensure everything works:
 
-1. `dart analyze` - Ensure there are no analyzer errors
+1. `dart analyze` - Ensure there are **no issues at all** (errors, warnings, or infos). Fix any that appear before proceeding.
 2. `dart test` - Ensure all tests pass
 
-If either command fails, fix the issues and re-run.
+If either command fails or reports issues, fix them and re-run until both are fully clean.

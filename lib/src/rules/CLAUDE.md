@@ -879,6 +879,32 @@ final element = node.declaredFragment?.element;
 
 **Reference:** [use_bloc_suffix.dart](use_bloc_suffix.dart#L51)
 
+### Checking Class Modifiers (abstract, final, sealed, etc.)
+
+**Pattern: Access class declaration modifier tokens**
+```dart
+@override
+void visitClassDeclaration(ClassDeclaration node) {
+  final isAbstract = node.abstractKeyword != null;
+  final isFinal = node.finalKeyword != null;
+  final isSealed = node.sealedKeyword != null;
+  final isBase = node.baseKeyword != null;
+  final isInterface = node.interfaceKeyword != null;
+  final isMixin = node.mixinKeyword != null;
+  final classToken = node.classKeyword; // Always non-null
+}
+```
+
+**⚠️ Important:** Use `node.body` (not deprecated `node.members`) to access class members:
+```dart
+final body = node.body;
+if (body is! BlockClassBody) return;
+final members = body.members;
+```
+
+**When to use:** Rules that enforce class-level modifiers or analyze class structure
+**Reference:** [prefer_abstract_final_static_class.dart](prefer_abstract_final_static_class.dart#L45-L78)
+
 ### Getting Class Name Token
 
 **For reporting at class name specifically:**
