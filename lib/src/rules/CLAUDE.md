@@ -1253,6 +1253,7 @@ class ManyLintsPlugin extends Plugin {
 | Method calls | `registry.addMethodInvocation(this, visitor)` |
 | Properties | `registry.addPropertyAccess(this, visitor)` |
 | Prefixed IDs | `registry.addPrefixedIdentifier(this, visitor)` |
+| Binary expressions | `registry.addBinaryExpression(this, visitor)` |
 | Index access | `registry.addIndexExpression(this, visitor)` |
 | Cascade expressions | `registry.addCascadeExpression(this, visitor)` |
 | Switch statements | `registry.addSwitchStatement(this, visitor)` |
@@ -1438,6 +1439,57 @@ void visitCascadeExpression(CascadeExpression node) {
 
 ---
 
+### Recipe: Analyze Binary Expression Operators (==, !=, etc.)
+
+Register `addBinaryExpression` to visit `BinaryExpression` nodes and check the operator token type:
+
+```dart
+import 'package:analyzer/dart/ast/token.dart';
+
+@override
+void registerNodeProcessors(
+  RuleVisitorRegistry registry,
+  RuleContext context,
+) {
+  final visitor = _Visitor(this);
+  registry.addBinaryExpression(this, visitor);
+}
+
+@override
+void visitBinaryExpression(BinaryExpression node) {
+  final op = node.operator.type;
+  if (op != TokenType.EQ_EQ && op != TokenType.BANG_EQ) return;
+
+  final leftType = node.leftOperand.staticType;
+  final rightType = node.rightOperand.staticType;
+  // Analyze operand types...
+}
+```
+
+**Common TokenType values:** `TokenType.EQ_EQ` (`==`), `TokenType.BANG_EQ` (`!=`), `TokenType.PLUS` (`+`), `TokenType.QUESTION_QUESTION` (`??`)
+
+**Checking for const expressions:**
+```dart
+static bool _isConstExpression(Expression expr) {
+  var e = expr;
+  while (e is ParenthesizedExpression) {
+    e = e.expression;
+  }
+  return switch (e) {
+    TypedLiteral(constKeyword: _?) => true,  // const [1] or const {1}
+    InstanceCreationExpression(:final keyword?)
+        when keyword.type == Keyword.CONST => true,
+    NullLiteral() => true,
+    _ => false,
+  };
+}
+```
+
+**When to use:** Rules that analyze equality/comparison operators between specific types
+**Reference:** [avoid_collection_equality_checks.dart](avoid_collection_equality_checks.dart#L64-L90)
+
+---
+
 ## 🔄 Changelog
 
 | Date | Agent/Author | Changes |
@@ -1446,6 +1498,7 @@ void visitCascadeExpression(CascadeExpression node) {
 | Feb 14, 2026 | prefer_iterable_of | Added recipes for factory constructor detection (InstanceCreation vs MethodInvocation duality) and extracting generic element types from collections. |
 | Feb 14, 2026 | avoid_accessing_collections_by_constant_index | Added `addIndexExpression` to cheat sheet, recipes for loop body detection and constant identifier checking (VariableElement vs PropertyAccessorElement). |
 | Feb 14, 2026 | avoid_cascade_after_if_null | Added `addCascadeExpression` to cheat sheet, recipe for analyzing cascade expression targets and operator precedence. |
+| Feb 14, 2026 | avoid_collection_equality_checks | Added `addBinaryExpression` to cheat sheet, recipe for analyzing binary expression operators and checking const expressions. |
 
 ---
 
