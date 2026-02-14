@@ -610,6 +610,9 @@ rule.reportAtNode(node.constructorName);
 
 // Report with message interpolation arguments
 rule.reportAtNode(node, arguments: [value1, value2]);
+
+// Report at arbitrary offset (for non-AST constructs like comments)
+rule.reportAtOffset(offset, length);
 ```
 
 **Use in LintCode:**
@@ -1248,6 +1251,7 @@ class ManyLintsPlugin extends Plugin {
 
 | What to Analyze | Registry Method |
 |----------------|-----------------|
+| Entire file | `registry.addCompilationUnit(this, visitor)` |
 | Classes | `registry.addClassDeclaration(this, visitor)` |
 | Object creation | `registry.addInstanceCreationExpression(this, visitor)` |
 | Method calls | `registry.addMethodInvocation(this, visitor)` |
@@ -1589,6 +1593,102 @@ void visitMethodInvocation(MethodInvocation node) {
 
 ---
 
+### Recipe: Traverse Token Stream for Comment Analysis
+
+Use `addCompilationUnit` to visit the entire file, then walk the token stream to access all comments via `precedingComments`:
+
+```dart
+@override
+void registerNodeProcessors(
+  RuleVisitorRegistry registry,
+  RuleContext context,
+) {
+  final visitor = _Visitor(this);
+  registry.addCompilationUnit(this, visitor);
+}
+
+@override
+void visitCompilationUnit(CompilationUnit node) {
+  Token? token = node.beginToken;
+  while (token != null && !token.isEof) {
+    Token? comment = token.precedingComments;
+    while (comment != null) {
+      if (comment.type == TokenType.SINGLE_LINE_COMMENT) {
+        // Process single-line comment
+      }
+      comment = comment.next;
+    }
+    token = token.next;
+  }
+  // Don't forget EOF token's preceding comments
+  if (token != null && token.isEof) {
+    Token? comment = token.precedingComments;
+    while (comment != null) {
+      // Process comment
+      comment = comment.next;
+    }
+  }
+}
+```
+
+**Key details:**
+- Comments are attached to tokens via `precedingComments`, NOT as AST nodes
+- `precedingComments` returns the first comment; follow `next` for additional comments before the same token
+- `TokenType.SINGLE_LINE_COMMENT` for `//` comments, `TokenType.MULTI_LINE_COMMENT` for `/* */`
+- Doc comments (`///`) are also `SINGLE_LINE_COMMENT` — check `lexeme.startsWith('///')` to distinguish
+- Always check the EOF token, as trailing comments at file end are attached there
+
+**Reporting at offsets (not AST nodes):**
+```dart
+// Use reportAtOffset for non-node-based reporting
+rule.reportAtOffset(token.offset, token.length);
+```
+
+**When to use:** Rules that analyze comments, whitespace, or other non-AST constructs
+**Reference:** [avoid_commented_out_code.dart](avoid_commented_out_code.dart#L47-L97)
+
+---
+
+### Recipe: Delete Source by Offset in Quick Fix
+
+When the diagnostic is reported at an offset (not an AST node), use `diagnosticOffset` and `diagnosticLength` in the fix to locate the source range:
+
+```dart
+@override
+Future<void> compute(ChangeBuilder builder) async {
+  final offset = diagnosticOffset;
+  final length = diagnosticLength;
+  if (offset == null || length == null) return;
+
+  final content = unitResult.content;
+
+  // Extend deletion to full lines
+  var deleteStart = offset;
+  while (deleteStart > 0 && content[deleteStart - 1] != '\n') {
+    deleteStart--;
+  }
+  var deleteEnd = offset + length;
+  while (deleteEnd < content.length && content[deleteEnd] != '\n') {
+    deleteEnd++;
+  }
+  if (deleteEnd < content.length) deleteEnd++; // include trailing \n
+
+  await builder.addDartFileEdit(file, (builder) {
+    builder.addDeletion(SourceRange(deleteStart, deleteEnd - deleteStart));
+  });
+}
+```
+
+**Key details:**
+- `diagnosticOffset` and `diagnosticLength` are available on `ResolvedCorrectionProducer`
+- `unitResult.content` provides the full source text for line-boundary calculations
+- Use `SourceRange` from `package:analyzer/source/source_range.dart` for custom ranges
+
+**When to use:** Fixes for offset-based diagnostics (comments, tokens not tied to AST nodes)
+**Reference:** [../fixes/avoid_commented_out_code_fix.dart](../fixes/avoid_commented_out_code_fix.dart#L27-L49)
+
+---
+
 ## 🔄 Changelog
 
 | Date | Agent/Author | Changes |
@@ -1599,6 +1699,7 @@ void visitMethodInvocation(MethodInvocation node) {
 | Feb 14, 2026 | avoid_cascade_after_if_null | Added `addCascadeExpression` to cheat sheet, recipe for analyzing cascade expression targets and operator precedence. |
 | Feb 14, 2026 | avoid_collection_equality_checks | Added `addBinaryExpression` to cheat sheet, recipe for analyzing binary expression operators and checking const expressions. |
 | Feb 14, 2026 | avoid_collection_methods_with_unrelated_types | Added recipes for checking unrelated types (no subtype relationship), extracting Map key/value types, and analyzing MethodInvocation on collection targets with `realTarget`. |
+| Feb 14, 2026 | avoid_commented_out_code | Added `addCompilationUnit` to cheat sheet, recipes for token stream traversal (comment analysis via `precedingComments`) and offset-based reporting/fixing (`reportAtOffset`, `diagnosticOffset`/`diagnosticLength`, `unitResult.content`). |
 
 ---
 

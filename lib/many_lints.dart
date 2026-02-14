@@ -26,6 +26,7 @@ import 'package:analysis_server_plugin/registry.dart';
 
 // Rules
 import 'package:many_lints/src/rules/avoid_cascade_after_if_null.dart';
+import 'package:many_lints/src/rules/avoid_commented_out_code.dart';
 import 'package:many_lints/src/rules/avoid_collection_equality_checks.dart';
 import 'package:many_lints/src/rules/avoid_collection_methods_with_unrelated_types.dart';
 import 'package:many_lints/src/rules/avoid_accessing_collections_by_constant_index.dart';
@@ -53,6 +54,7 @@ import 'package:many_lints/src/rules/use_notifier_suffix.dart';
 
 // Fixes
 import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
+import 'package:many_lints/src/fixes/avoid_commented_out_code_fix.dart';
 import 'package:many_lints/src/fixes/add_suffix_fix.dart';
 import 'package:many_lints/src/fixes/prefer_abstract_final_static_class_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart';
@@ -87,6 +89,7 @@ class ManyLintsPlugin extends Plugin {
   void register(PluginRegistry registry) {
     // Register warning rules (enabled by default)
     registry.registerWarningRule(AvoidCascadeAfterIfNull());
+    registry.registerWarningRule(AvoidCommentedOutCode());
     registry.registerWarningRule(AvoidAccessingCollectionsByConstantIndex());
     registry.registerWarningRule(AvoidCollectionEqualityChecks());
     registry.registerWarningRule(AvoidCollectionMethodsWithUnrelatedTypes());
@@ -116,6 +119,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidCascadeAfterIfNull.code,
       AvoidCascadeAfterIfNullFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidCommentedOutCode.code,
+      AvoidCommentedOutCodeFix.new,
     );
     registry.registerFixForRule(
       PreferAbstractFinalStaticClass.code,
