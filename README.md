@@ -30,7 +30,7 @@ Add `many_lints` to the **top-level** `plugins` section in your `analysis_option
 
 ```yaml
 plugins:
-  many_lints: ^0.1.2
+  many_lints: ^0.2.1
 ```
 
 That's it — the analysis server will automatically download and resolve the plugin from [pub.dev](https://pub.dev/packages/many_lints). There is no need to add it to your `pubspec.yaml`.
@@ -69,13 +69,27 @@ plugins:
 
 All lints are enabled by default as warnings.
 
+- **avoid_accessing_collections_by_constant_index**: Avoid accessing a collection by a constant index inside a loop.
+- **avoid_cascade_after_if_null**: Cascade after if-null operator without parentheses can produce unexpected results.
+- **avoid_collection_equality_checks**: Comparing collections with `==`/`!=` checks reference equality, not contents.
+- **avoid_collection_methods_with_unrelated_types**: Detects collection method calls with arguments unrelated to the collection's type.
+- **avoid_commented_out_code**: Detects comments that look like commented-out code.
 - **avoid_single_child_in_multi_child_widgets**: Avoid using a single child in widgets that can accept multiple children (e.g., `Row`, `Column`, `Flex`).
 - **avoid_unnecessary_consumer_widgets**: Ensures that a `ConsumerWidget` uses the `ref` parameter.
 - **avoid_unnecessary_hook_widgets**: Ensures that a `HookWidget` uses hooks.
+- **prefer_abstract_final_static_class**: Classes with only static members should be declared as `abstract final`.
 - **prefer_align_over_container**: Enforces the use of `Align` over `Container` with only the alignment parameter.
 - **prefer_any_or_every**: Prefer `.any()` or `.every()` over `.where().isEmpty/.isNotEmpty`.
 - **prefer_center_over_align**: Prefer `Center` over `Align` with `alignment: Alignment.center`.
+- **prefer_explicit_function_type**: Prefer explicit return type and parameter list over bare `Function` type.
+- **prefer_iterable_of**: Prefer `.of()` instead of `.from()` for `List`, `Set`, and `Map` for compile-time type safety.
 - **prefer_padding_over_container**: Enforces the use of `Padding` over `Container` with only margin.
+- **prefer_returning_shorthands**: Prefer dot shorthands when the instance type matches the return type.
+- **prefer_shorthands_with_constructors**: Prefer dot shorthands instead of explicit class instantiations.
+- **prefer_shorthands_with_enums**: Prefer dot shorthands instead of explicit enum prefixes.
+- **prefer_shorthands_with_static_fields**: Prefer dot shorthands instead of explicit class prefixes for static fields.
+- **prefer_switch_expression**: Prefer switch expressions over switch statements when possible.
+- **prefer_type_over_var**: Prefer an explicit type annotation over `var`.
 - **use_bloc_suffix**: Enforces the use of the `Bloc` suffix for classes that extend `Bloc`.
 - **use_cubit_suffix**: Enforces the use of the `Cubit` suffix for classes that extend `Cubit`.
 - **use_dedicated_media_query_methods**: Enforces the use of dedicated `MediaQuery` methods instead of `MediaQuery.of(context)`.
@@ -86,12 +100,23 @@ All lints are enabled by default as warnings.
 
 The following rules include auto-fixable quick fixes:
 
+- `avoid_cascade_after_if_null`
+- `avoid_commented_out_code`
 - `avoid_unnecessary_consumer_widgets`
 - `avoid_unnecessary_hook_widgets`
+- `prefer_abstract_final_static_class`
 - `prefer_align_over_container`
 - `prefer_any_or_every`
 - `prefer_center_over_align`
+- `prefer_explicit_function_type`
+- `prefer_iterable_of`
 - `prefer_padding_over_container`
+- `prefer_returning_shorthands`
+- `prefer_shorthands_with_constructors`
+- `prefer_shorthands_with_enums`
+- `prefer_shorthands_with_static_fields`
+- `prefer_switch_expression`
+- `prefer_type_over_var`
 - `use_bloc_suffix`
 - `use_cubit_suffix`
 - `use_dedicated_media_query_methods`
