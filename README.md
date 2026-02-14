@@ -9,7 +9,7 @@
     <img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/Nikoro/many_lints/ci.yaml?label=build">
   </a>
   <a href="https://github.com/Nikoro/many_lints/actions">
-    <img src="https://img.shields.io/badge/coverage-0%25-red" alt="coverage 0%">
+    <img src="https://img.shields.io/badge/coverage-90%25-brightgreen" alt="coverage 90%">
   </a>
   <a href="https://opensource.org/licenses/MIT">
     <img alt="MIT License" src="https://tinyurl.com/3uf9tzpy">
