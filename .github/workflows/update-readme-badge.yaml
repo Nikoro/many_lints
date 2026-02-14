@@ -9,6 +9,9 @@ concurrency:
   group: update-readme-badges
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   update-badges:
     runs-on: ubuntu-latest
