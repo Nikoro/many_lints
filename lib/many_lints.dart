@@ -25,6 +25,7 @@ import 'package:analysis_server_plugin/plugin.dart';
 import 'package:analysis_server_plugin/registry.dart';
 
 // Rules
+import 'package:many_lints/src/rules/avoid_accessing_collections_by_constant_index.dart';
 import 'package:many_lints/src/rules/avoid_single_child_in_multi_child_widgets.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_consumer_widgets.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_hook_widgets.dart';
@@ -81,6 +82,7 @@ class ManyLintsPlugin extends Plugin {
   @override
   void register(PluginRegistry registry) {
     // Register warning rules (enabled by default)
+    registry.registerWarningRule(AvoidAccessingCollectionsByConstantIndex());
     registry.registerWarningRule(PreferAbstractFinalStaticClass());
     registry.registerWarningRule(PreferCenterOverAlign());
     registry.registerWarningRule(PreferAlignOverContainer());

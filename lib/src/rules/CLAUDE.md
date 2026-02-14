@@ -1253,6 +1253,7 @@ class ManyLintsPlugin extends Plugin {
 | Method calls | `registry.addMethodInvocation(this, visitor)` |
 | Properties | `registry.addPropertyAccess(this, visitor)` |
 | Prefixed IDs | `registry.addPrefixedIdentifier(this, visitor)` |
+| Index access | `registry.addIndexExpression(this, visitor)` |
 | Switch statements | `registry.addSwitchStatement(this, visitor)` |
 
 ### Common AST Checks
@@ -1356,12 +1357,71 @@ DartType? _getIterableElementType(InterfaceType type) {
 
 ---
 
+### Recipe: Check If Node Is Inside a Loop Body
+
+Walk up the AST parent chain to detect if a node is nested inside a loop, stopping at function boundaries:
+
+```dart
+static bool _isInsideLoopBody(AstNode node) {
+  AstNode? current = node.parent;
+  while (current != null) {
+    if (current is ForStatement ||
+        current is WhileStatement ||
+        current is DoStatement) {
+      return true;
+    }
+    // Stop at function boundaries — a loop in an outer function
+    // doesn't make a nested closure's access suspicious.
+    if (current is FunctionExpression ||
+        current is FunctionDeclaration ||
+        current is MethodDeclaration) {
+      return false;
+    }
+    current = current.parent;
+  }
+  return false;
+}
+```
+
+**When to use:** Rules that should only trigger inside loop bodies (for, for-in, while, do-while)
+**Reference:** [avoid_accessing_collections_by_constant_index.dart](avoid_accessing_collections_by_constant_index.dart#L57-L75)
+
+---
+
+### Recipe: Check If an Identifier Refers to a Constant
+
+For `SimpleIdentifier.element`, local variables resolve to `VariableElement` while top-level/static fields resolve to `PropertyAccessorElement` (the synthetic getter). Handle both:
+
+```dart
+import 'package:analyzer/dart/element/element.dart';
+
+static bool _isConstantIdentifier(SimpleIdentifier id) {
+  final element = id.element;
+  // Local const/final variables
+  if (element is VariableElement) {
+    return element.isConst ||
+        (element.isFinal && element.computeConstantValue() != null);
+  }
+  // Top-level / static const fields (resolved as synthetic getter)
+  if (element is PropertyAccessorElement) {
+    return element.variable.isConst;
+  }
+  return false;
+}
+```
+
+**When to use:** Rules that need to distinguish constant vs mutable identifiers
+**Reference:** [avoid_accessing_collections_by_constant_index.dart](avoid_accessing_collections_by_constant_index.dart#L78-L118)
+
+---
+
 ## 🔄 Changelog
 
 | Date | Agent/Author | Changes |
 |------|-------------|---------|
 | Feb 12, 2026 | Refactoring | **Major refactoring:** Extracted ~370 lines of duplicated code into reusable utilities:<br>• Added [../type_inference.dart](../type_inference.dart) - Centralized type inference (`inferContextType`, `resolveReturnType`, etc.)<br>• Added [../class_suffix_validator.dart](../class_suffix_validator.dart) - Base class for suffix rules<br>• Added [../text_distance.dart](../text_distance.dart) - String distance utilities (`computeEditDistance`)<br>• Updated 7 rules to use new utilities<br>• Reduced suffix rules from ~55 lines to ~20 lines each |
 | Feb 14, 2026 | prefer_iterable_of | Added recipes for factory constructor detection (InstanceCreation vs MethodInvocation duality) and extracting generic element types from collections. |
+| Feb 14, 2026 | avoid_accessing_collections_by_constant_index | Added `addIndexExpression` to cheat sheet, recipes for loop body detection and constant identifier checking (VariableElement vs PropertyAccessorElement). |
 
 ---
 
