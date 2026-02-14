@@ -1254,6 +1254,7 @@ class ManyLintsPlugin extends Plugin {
 | Properties | `registry.addPropertyAccess(this, visitor)` |
 | Prefixed IDs | `registry.addPrefixedIdentifier(this, visitor)` |
 | Index access | `registry.addIndexExpression(this, visitor)` |
+| Cascade expressions | `registry.addCascadeExpression(this, visitor)` |
 | Switch statements | `registry.addSwitchStatement(this, visitor)` |
 
 ### Common AST Checks
@@ -1415,6 +1416,28 @@ static bool _isConstantIdentifier(SimpleIdentifier id) {
 
 ---
 
+### Recipe: Analyze Cascade Expression Targets
+
+`CascadeExpression` has a `target` (the expression being cascaded on), `cascadeSections` (the `..method()` parts), and `isNullAware` (whether it's `?..`). Use this to check what the cascade is applied to:
+
+```dart
+@override
+void visitCascadeExpression(CascadeExpression node) {
+  final target = node.target;
+  // Check if cascade follows a specific binary operator
+  if (target is BinaryExpression &&
+      target.operator.type == TokenType.QUESTION_QUESTION) {
+    // Cascade after ?? without parentheses
+    rule.reportAtNode(node);
+  }
+}
+```
+
+**When to use:** Rules that analyze cascade operator precedence or validate cascade targets
+**Reference:** [avoid_cascade_after_if_null.dart](avoid_cascade_after_if_null.dart#L55-L63)
+
+---
+
 ## 🔄 Changelog
 
 | Date | Agent/Author | Changes |
@@ -1422,6 +1445,7 @@ static bool _isConstantIdentifier(SimpleIdentifier id) {
 | Feb 12, 2026 | Refactoring | **Major refactoring:** Extracted ~370 lines of duplicated code into reusable utilities:<br>• Added [../type_inference.dart](../type_inference.dart) - Centralized type inference (`inferContextType`, `resolveReturnType`, etc.)<br>• Added [../class_suffix_validator.dart](../class_suffix_validator.dart) - Base class for suffix rules<br>• Added [../text_distance.dart](../text_distance.dart) - String distance utilities (`computeEditDistance`)<br>• Updated 7 rules to use new utilities<br>• Reduced suffix rules from ~55 lines to ~20 lines each |
 | Feb 14, 2026 | prefer_iterable_of | Added recipes for factory constructor detection (InstanceCreation vs MethodInvocation duality) and extracting generic element types from collections. |
 | Feb 14, 2026 | avoid_accessing_collections_by_constant_index | Added `addIndexExpression` to cheat sheet, recipes for loop body detection and constant identifier checking (VariableElement vs PropertyAccessorElement). |
+| Feb 14, 2026 | avoid_cascade_after_if_null | Added `addCascadeExpression` to cheat sheet, recipe for analyzing cascade expression targets and operator precedence. |
 
 ---
 
