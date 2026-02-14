@@ -17,10 +17,8 @@ tests: ## Run all tests
     - default:
       script: dart test --test-randomize-ordering-seed=random ...args
 
-
 check: ## format analyze and tests
   script: format && analyze && tests
-
 
 push: ## Pushes local commits to the remote repository
   script: git push ...args
