@@ -1490,6 +1490,105 @@ static bool _isConstExpression(Expression expr) {
 
 ---
 
+### Recipe: Check If Two Types Are Unrelated (No Subtype Relationship)
+
+To determine if two types have no subtype relationship in either direction (useful for detecting impossible collection operations):
+
+```dart
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
+
+static bool _areUnrelatedTypes(DartType argType, DartType expectedType) {
+  // Skip dynamic/void — analyzer can't determine actual type
+  if (argType is DynamicType || expectedType is DynamicType) return false;
+  if (argType is VoidType || expectedType is VoidType) return false;
+
+  // Skip generic type parameters — too imprecise
+  if (argType is TypeParameterType || expectedType is TypeParameterType) {
+    return false;
+  }
+
+  // Both must be interface types for meaningful comparison
+  if (argType is! InterfaceType || expectedType is! InterfaceType) {
+    return false;
+  }
+
+  final argElement = argType.element;
+  final expectedElement = expectedType.element;
+
+  return !_isSubtypeOf(argElement, expectedElement) &&
+      !_isSubtypeOf(expectedElement, argElement);
+}
+
+static bool _isSubtypeOf(InterfaceElement a, InterfaceElement b) {
+  if (a == b) return true;
+  for (final supertype in a.allSupertypes) {
+    if (supertype.element == b) return true;
+  }
+  return false;
+}
+```
+
+**When to use:** Rules that detect type mismatches in method arguments (e.g., passing `String` to `List<int>.contains`)
+**Reference:** [avoid_collection_methods_with_unrelated_types.dart](avoid_collection_methods_with_unrelated_types.dart#L201-L235)
+
+---
+
+### Recipe: Extract Map Key/Value Types from `InterfaceType`
+
+To get `K` and `V` from `Map<K, V>`, including when the type is a subclass of Map:
+
+```dart
+static (DartType, DartType)? _getMapTypes(InterfaceType type) {
+  if (type.element.name == 'Map' && type.typeArguments.length == 2) {
+    return (type.typeArguments[0], type.typeArguments[1]);
+  }
+  for (final supertype in type.element.allSupertypes) {
+    if (supertype.element.name == 'Map' &&
+        supertype.typeArguments.length == 2) {
+      return (supertype.typeArguments[0], supertype.typeArguments[1]);
+    }
+  }
+  return null;
+}
+```
+
+**When to use:** Rules that analyze Map operations and need to check key or value types separately
+**Reference:** [avoid_collection_methods_with_unrelated_types.dart](avoid_collection_methods_with_unrelated_types.dart#L173-L184)
+
+---
+
+### Recipe: Analyze `MethodInvocation` on Collection Targets
+
+Register `addMethodInvocation` to visit method calls, use `node.realTarget` to get the collection expression:
+
+```dart
+@override
+void visitMethodInvocation(MethodInvocation node) {
+  final target = node.realTarget;
+  if (target == null) return;
+
+  final targetType = target.staticType;
+  if (targetType is! InterfaceType) return;
+
+  final methodName = node.methodName.name;
+  final args = node.argumentList.arguments;
+  if (args.isEmpty) return;
+
+  final argType = args.first.staticType;
+  if (argType == null) return;
+
+  // Check against collection type parameters...
+}
+```
+
+**⚠️ Important:** Use `node.realTarget` (not `node.target`) — `realTarget` unwraps cascade sections correctly.
+
+**When to use:** Rules that analyze method calls on collection types
+**Reference:** [avoid_collection_methods_with_unrelated_types.dart](avoid_collection_methods_with_unrelated_types.dart#L86-L143)
+
+---
+
 ## 🔄 Changelog
 
 | Date | Agent/Author | Changes |
@@ -1499,6 +1598,7 @@ static bool _isConstExpression(Expression expr) {
 | Feb 14, 2026 | avoid_accessing_collections_by_constant_index | Added `addIndexExpression` to cheat sheet, recipes for loop body detection and constant identifier checking (VariableElement vs PropertyAccessorElement). |
 | Feb 14, 2026 | avoid_cascade_after_if_null | Added `addCascadeExpression` to cheat sheet, recipe for analyzing cascade expression targets and operator precedence. |
 | Feb 14, 2026 | avoid_collection_equality_checks | Added `addBinaryExpression` to cheat sheet, recipe for analyzing binary expression operators and checking const expressions. |
+| Feb 14, 2026 | avoid_collection_methods_with_unrelated_types | Added recipes for checking unrelated types (no subtype relationship), extracting Map key/value types, and analyzing MethodInvocation on collection targets with `realTarget`. |
 
 ---
 
