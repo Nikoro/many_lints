@@ -257,7 +257,42 @@ if (type case InterfaceType(:final typeArguments)) {
 
 This keeps the cookbook as a **living document** that improves with each new rule!
 
-## Step 9: Verify
+## Step 9: Create an example file
+
+Create `example/lib/<lint_name>_example.dart` to demonstrate the lint rule. Look at existing example files in `example/lib/` for the pattern.
+
+The example file should include:
+- A file-level `// ignore_for_file: unused_local_variable` (or similar) to suppress unrelated warnings
+- A comment header with the lint name and brief description
+- **Bad examples** (code that triggers the lint) with `// LINT:` comments explaining each case
+- **Good examples** (correct code that does NOT trigger the lint)
+- **Edge cases** where the lint intentionally does NOT trigger (e.g., when `.from()` is needed for downcasting)
+
+Example structure:
+```dart
+// ignore_for_file: unused_local_variable
+
+// <lint_name>
+//
+// Brief description of what the lint detects.
+
+// ❌ Bad: Description of bad pattern
+class BadExamples {
+  void example() {
+    // LINT: Explanation of why this triggers
+    final x = badCode();
+  }
+}
+
+// ✅ Good: Description of correct pattern
+class GoodExamples {
+  void example() {
+    final x = goodCode();
+  }
+}
+```
+
+## Step 10: Verify
 
 Run the following commands from the project root to ensure everything works:
 

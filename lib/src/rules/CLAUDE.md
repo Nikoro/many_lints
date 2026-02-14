@@ -1285,6 +1285,75 @@ class ManyLintsPlugin extends Plugin {
 - Use [Visitor Patterns](#-visitor-patterns) for deep analysis
 - Leverage [Utility Functions](#-utility-functions) to avoid reinventing wheels
 
+### Recipe: Detect Factory Constructor Calls (with and without type args)
+
+**⚠️ Important:** When detecting factory constructors like `List.from()` or `Set.of()`, the AST representation differs depending on whether explicit type arguments are provided:
+
+- **With type args** (`List<int>.from(x)`): Parsed as `InstanceCreationExpression`
+- **Without type args** (`List.from(x)`): Parsed as `MethodInvocation`
+
+You must register visitors for **both** node types:
+
+```dart
+@override
+void registerNodeProcessors(
+  RuleVisitorRegistry registry,
+  RuleContext context,
+) {
+  final visitor = _Visitor(this);
+  registry.addInstanceCreationExpression(this, visitor);
+  registry.addMethodInvocation(this, visitor);
+}
+```
+
+**Visitor pattern:**
+```dart
+@override
+void visitInstanceCreationExpression(InstanceCreationExpression node) {
+  // List<int>.from(source) — constructorName.name is 'from'
+  final name = node.constructorName.name;
+  if (name == null || name.name != 'from') return;
+  final typeName = node.constructorName.type.name.lexeme; // 'List'
+  _check(node, node.argumentList, node.staticType, typeName);
+}
+
+@override
+void visitMethodInvocation(MethodInvocation node) {
+  // List.from(source) — methodName is 'from', target is 'List'
+  if (node.methodName.name != 'from') return;
+  final target = node.target;
+  if (target is! SimpleIdentifier) return;
+  _check(node, node.argumentList, node.staticType, target.name);
+}
+```
+
+**When to use:** Any rule that analyzes calls to named constructors on core types (`List.from`, `Set.of`, `Map.from`, etc.)
+**Reference:** [prefer_iterable_of.dart](prefer_iterable_of.dart#L53-L76)
+
+---
+
+### Recipe: Extract Element Type from Generic Collection
+
+```dart
+DartType? _getIterableElementType(InterfaceType type) {
+  // Direct type arguments (List<int> → int)
+  if (type.typeArguments.isNotEmpty) {
+    return type.typeArguments.first;
+  }
+  // Walk supertypes for Iterable<T>
+  for (final supertype in type.element.allSupertypes) {
+    if (supertype.element.name == 'Iterable' &&
+        supertype.typeArguments.isNotEmpty) {
+      return supertype.typeArguments.first;
+    }
+  }
+  return null;
+}
+```
+
+**When to use:** When you need the `T` from `List<T>`, `Set<T>`, or any `Iterable<T>` subtype
+**Reference:** [prefer_iterable_of.dart](prefer_iterable_of.dart#L122-L135)
+
 ---
 
 ## 🔄 Changelog
@@ -1292,6 +1361,7 @@ class ManyLintsPlugin extends Plugin {
 | Date | Agent/Author | Changes |
 |------|-------------|---------|
 | Feb 12, 2026 | Refactoring | **Major refactoring:** Extracted ~370 lines of duplicated code into reusable utilities:<br>• Added [../type_inference.dart](../type_inference.dart) - Centralized type inference (`inferContextType`, `resolveReturnType`, etc.)<br>• Added [../class_suffix_validator.dart](../class_suffix_validator.dart) - Base class for suffix rules<br>• Added [../text_distance.dart](../text_distance.dart) - String distance utilities (`computeEditDistance`)<br>• Updated 7 rules to use new utilities<br>• Reduced suffix rules from ~55 lines to ~20 lines each |
+| Feb 14, 2026 | prefer_iterable_of | Added recipes for factory constructor detection (InstanceCreation vs MethodInvocation duality) and extracting generic element types from collections. |
 
 ---
 

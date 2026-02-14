@@ -32,6 +32,7 @@ import 'package:many_lints/src/rules/prefer_abstract_final_static_class.dart';
 import 'package:many_lints/src/rules/prefer_align_over_container.dart';
 import 'package:many_lints/src/rules/prefer_any_or_every.dart';
 import 'package:many_lints/src/rules/prefer_center_over_align.dart';
+import 'package:many_lints/src/rules/prefer_iterable_of.dart';
 import 'package:many_lints/src/rules/prefer_explicit_function_type.dart';
 import 'package:many_lints/src/rules/prefer_padding_over_container.dart';
 import 'package:many_lints/src/rules/prefer_returning_shorthands.dart';
@@ -54,6 +55,7 @@ import 'package:many_lints/src/fixes/avoid_unnecessary_hook_widgets_fix.dart';
 import 'package:many_lints/src/fixes/change_widget_name_fix.dart';
 import 'package:many_lints/src/fixes/prefer_any_or_every_fix.dart';
 import 'package:many_lints/src/fixes/prefer_center_over_align_fix.dart';
+import 'package:many_lints/src/fixes/prefer_iterable_of_fix.dart';
 import 'package:many_lints/src/fixes/prefer_explicit_function_type_fix.dart';
 import 'package:many_lints/src/fixes/prefer_padding_over_container_fix.dart';
 import 'package:many_lints/src/fixes/prefer_returning_shorthands_fix.dart';
@@ -91,6 +93,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferSwitchExpression());
     registry.registerWarningRule(PreferTypeOverVar());
     registry.registerWarningRule(PreferAnyOrEvery());
+    registry.registerWarningRule(PreferIterableOf());
     registry.registerWarningRule(AvoidSingleChildInMultiChildWidgets());
     registry.registerWarningRule(AvoidUnnecessaryHookWidgets());
     registry.registerWarningRule(AvoidUnnecessaryConsumerWidgets());
@@ -122,6 +125,7 @@ class ManyLintsPlugin extends Plugin {
       PreferPaddingOverContainerFix.new,
     );
     registry.registerFixForRule(PreferAnyOrEvery.code, PreferAnyOrEveryFix.new);
+    registry.registerFixForRule(PreferIterableOf.code, PreferIterableOfFix.new);
     registry.registerFixForRule(
       PreferReturningShorthands.code,
       PreferReturningShorthandsFix.new,
