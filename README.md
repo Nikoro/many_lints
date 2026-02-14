@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://pub.dev/packages/many_lints"><img src="https://raw.githubusercontent.com/nikoro/many_lints/main/logo/logo.webp" width="600"/></a>
+  <a href="https://pub.dev/packages/many_lints"><img src="https://raw.githubusercontent.com/nikoro/many_lints/main/logo/logo.webp" width="800"/></a>
 </p>
 <p align="center">
   <a href="https://pub.dev/packages/many_lints">
