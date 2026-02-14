@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.3.0] - 2026-02-14
+
+### Added
+
+- `prefer_shorthands_with_enums` rule to detect enum values replaceable with shorthand constructors
+- `prefer_shorthands_with_constructors` rule to detect constructors replaceable with shorthand syntax
+- `prefer_shorthands_with_static_fields` rule to detect static fields replaceable with shorthand syntax
+- `prefer_returning_shorthands` rule to detect return statements replaceable with shorthand syntax
+- `prefer_switch_expression` rule to suggest using switch expressions over switch statements
+- `prefer_explicit_function_type` rule to prefer explicit function types over `Function`
+- `prefer_type_over_var` rule to prefer explicit type annotations over `var`
+- `prefer_abstract_final_static_class` rule to flag utility classes that should be abstract final
+- `prefer_iterable_of` rule to prefer `Iterable.of` over `Iterable.from` for same-type conversions
+- `avoid_accessing_collections_by_constant_index` rule to flag hardcoded index access on collections
+- `avoid_cascade_after_if_null` rule to detect cascades after if-null operators
+- `avoid_collection_equality_checks` rule to flag equality checks on collections
+- `avoid_collection_methods_with_unrelated_types` rule to flag collection method calls with unrelated types
+- `avoid_commented_out_code` rule to detect commented-out code blocks
+
+### Changed
+
+- Extracted shared utilities, renamed helpers, and refactored suffix rules
+
 ## [0.2.1] - 2026-02-05
 
 ### Fixed
