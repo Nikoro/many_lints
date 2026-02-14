@@ -1,33 +1,77 @@
-name: Update README Badge
+name: Update README Badges
 
 on:
   push:
-    paths:
-      - 'pubspec.yaml'
     branches:
       - main
 
+concurrency:
+  group: update-readme-badges
+  cancel-in-progress: true
+
 jobs:
-  update-badge:
+  update-badges:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dart-lang/setup-dart@v1
+      - uses: subosito/flutter-action@v2
 
       - name: Install dependencies
-        run: dart pub get --no-example
+        run: flutter pub get
 
-      - name: Extract analyzer version from pubspec.lock and update README
+      - name: Run tests with coverage
+        run: dart test --coverage=coverage
+
+      - name: Format coverage to LCOV
         run: |
-          # Extract the version line that comes after "analyzer:" block in pubspec.lock
+          dart pub global activate coverage
+          dart pub global run coverage:format_coverage \
+            --lcov \
+            --in=coverage/test \
+            --out=coverage/lcov.info \
+            --report-on=lib
+
+      - name: Compute coverage percentage and color
+        id: coverage
+        run: |
+          LF=$(grep -oP 'LF:\K\d+' coverage/lcov.info | paste -sd+ | bc)
+          LH=$(grep -oP 'LH:\K\d+' coverage/lcov.info | paste -sd+ | bc)
+
+          if [ "$LF" -eq 0 ]; then
+            PERCENT=0
+          else
+            PERCENT=$((LH * 100 / LF))
+          fi
+
+          if [ "$PERCENT" -lt 40 ]; then
+            COLOR="red"
+          elif [ "$PERCENT" -lt 60 ]; then
+            COLOR="orange"
+          elif [ "$PERCENT" -lt 75 ]; then
+            COLOR="yellow"
+          elif [ "$PERCENT" -lt 90 ]; then
+            COLOR="yellowgreen"
+          else
+            COLOR="brightgreen"
+          fi
+
+          echo "percent=$PERCENT" >> $GITHUB_OUTPUT
+          echo "color=$COLOR" >> $GITHUB_OUTPUT
+          echo "Coverage: ${PERCENT}% (color: $COLOR)"
+
+      - name: Update coverage badge in README
+        run: |
+          PERCENT="${{ steps.coverage.outputs.percent }}"
+          COLOR="${{ steps.coverage.outputs.color }}"
+          sed -i "s|coverage-[0-9]*%25-[a-z]*|coverage-${PERCENT}%25-${COLOR}|g" README.md
+          sed -i "s|coverage [0-9]*%|coverage ${PERCENT}%|g" README.md
+
+      - name: Update analyzer version badge in README
+        run: |
           VERSION=$(awk '/^  analyzer:/{found=1} found && /version:/{print $2; exit}' pubspec.lock | tr -d '"')
           echo "Detected analyzer version: $VERSION"
-          
-          # Update the badge URL
           sed -i "s|analyzer-[0-9.]*-blue|analyzer-${VERSION}-blue|g" README.md
-          
-          # Update the alt text
           sed -i "s|analyzer version [0-9.]*|analyzer version ${VERSION}|g" README.md
 
       - name: Check for changes
@@ -41,5 +85,5 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add README.md
-          git commit -m "chore: update analyzer version badge"
+          git commit -m "chore: update README badges"
           git push
