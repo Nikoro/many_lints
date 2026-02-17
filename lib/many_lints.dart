@@ -27,6 +27,7 @@ import 'package:analysis_server_plugin/registry.dart';
 // Rules
 import 'package:many_lints/src/rules/avoid_cascade_after_if_null.dart';
 import 'package:many_lints/src/rules/avoid_constant_conditions.dart';
+import 'package:many_lints/src/rules/avoid_duplicate_cascades.dart';
 import 'package:many_lints/src/rules/avoid_contradictory_expressions.dart';
 import 'package:many_lints/src/rules/avoid_constant_switches.dart';
 import 'package:many_lints/src/rules/avoid_commented_out_code.dart';
@@ -58,6 +59,7 @@ import 'package:many_lints/src/rules/use_notifier_suffix.dart';
 // Fixes
 import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
 import 'package:many_lints/src/fixes/avoid_commented_out_code_fix.dart';
+import 'package:many_lints/src/fixes/avoid_duplicate_cascades_fix.dart';
 import 'package:many_lints/src/fixes/add_suffix_fix.dart';
 import 'package:many_lints/src/fixes/prefer_abstract_final_static_class_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart';
@@ -93,6 +95,7 @@ class ManyLintsPlugin extends Plugin {
     // Register warning rules (enabled by default)
     registry.registerWarningRule(AvoidCascadeAfterIfNull());
     registry.registerWarningRule(AvoidCommentedOutCode());
+    registry.registerWarningRule(AvoidDuplicateCascades());
     registry.registerWarningRule(AvoidConstantConditions());
     registry.registerWarningRule(AvoidConstantSwitches());
     registry.registerWarningRule(AvoidContradictoryExpressions());
@@ -129,6 +132,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidCommentedOutCode.code,
       AvoidCommentedOutCodeFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidDuplicateCascades.code,
+      AvoidDuplicateCascadesFix.new,
     );
     registry.registerFixForRule(
       PreferAbstractFinalStaticClass.code,

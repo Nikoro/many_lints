@@ -19,13 +19,16 @@ lib/
   many_lints.dart         # Plugin entry point - registers all rules, fixes, and assists
   src/
     type_checker.dart     # Type matching utilities for analyzer
+    type_inference.dart   # Context type inference utilities
+    class_suffix_validator.dart # Base class for suffix naming rules
+    text_distance.dart    # String distance utilities (Levenshtein)
+    hook_detection.dart   # Hook widget detection helpers
+    ast_node_analysis.dart # AST node analysis helpers
     rules/                # Lint rules (AnalysisRule + SimpleAstVisitor pattern)
     fixes/                # Quick fixes (ResolvedCorrectionProducer pattern)
     assists/              # Code assists (ResolvedCorrectionProducer pattern)
-    utils/                # Shared utilities (helpers.dart, hook_helpers.dart)
 test/
-  lib/                    # Test files (analyzer_testing pattern)
-  pubspec.yaml            # Test project dependencies
+  *.dart                  # Test files (analyzer_testing pattern)
 ```
 
 ## Reference Docs
@@ -107,5 +110,8 @@ class MyRuleTest extends AnalysisRuleTest {
 ### 🔧 Utility Files
 
 - `lib/src/type_checker.dart` - Type matching utilities
-- `lib/src/utils/helpers.dart` - AST helpers, expression checking
-- `lib/src/utils/hook_helpers.dart` - Hook widget detection
+- `lib/src/type_inference.dart` - Context type inference (inferContextType, resolveReturnType, etc.)
+- `lib/src/class_suffix_validator.dart` - Base class for suffix naming rules
+- `lib/src/text_distance.dart` - Levenshtein edit distance
+- `lib/src/hook_detection.dart` - Hook widget detection helpers
+- `lib/src/ast_node_analysis.dart` - AST node analysis helpers
