@@ -1260,6 +1260,7 @@ class ManyLintsPlugin extends Plugin {
 | Binary expressions | `registry.addBinaryExpression(this, visitor)` |
 | Index access | `registry.addIndexExpression(this, visitor)` |
 | Cascade expressions | `registry.addCascadeExpression(this, visitor)` |
+| If statements | `registry.addIfStatement(this, visitor)` |
 | Switch statements | `registry.addSwitchStatement(this, visitor)` |
 
 ### Common AST Checks
@@ -1821,6 +1822,64 @@ class _TypeParameterChecker extends RecursiveAstVisitor<void> {
 
 ---
 
+### Recipe: Analyze If-Case Patterns (Dart 3 Pattern Matching)
+
+Register `addIfStatement` to visit `IfStatement` nodes. When using if-case syntax, the `caseClause` property is non-null and contains the pattern AST:
+
+```dart
+@override
+void registerNodeProcessors(
+  RuleVisitorRegistry registry,
+  RuleContext context,
+) {
+  final visitor = _Visitor(this);
+  registry.addIfStatement(this, visitor);
+}
+
+@override
+void visitIfStatement(IfStatement node) {
+  final caseClause = node.caseClause;
+  if (caseClause == null) return; // Not an if-case statement
+
+  final pattern = caseClause.guardedPattern.pattern;
+  final whenClause = caseClause.guardedPattern.whenClause; // Optional guard
+
+  // Analyze the pattern tree
+  if (pattern is LogicalAndPattern) {
+    final left = pattern.leftOperand;   // DartPattern
+    final right = pattern.rightOperand; // DartPattern
+
+    if (left is RelationalPattern) {
+      // left.operator.lexeme → '!=', '==', '>', '<', etc.
+      // left.operand → Expression (e.g., NullLiteral)
+    }
+
+    if (right is DeclaredVariablePattern) {
+      // right.keyword → Token? ('final', 'var', or null)
+      // right.type → TypeAnnotation? (e.g., NamedType for 'String')
+      // right.name → Token (variable name)
+    }
+  }
+}
+```
+
+**Key AST types for patterns:**
+- `CaseClause` — wraps `guardedPattern` (pattern + optional `when` guard)
+- `GuardedPattern` — contains `pattern` (DartPattern) and `whenClause` (WhenClause?)
+- `LogicalAndPattern` — `&&` combinator with `leftOperand` / `rightOperand`
+- `LogicalOrPattern` — `||` combinator with `leftOperand` / `rightOperand`
+- `RelationalPattern` — `!= null`, `> 5`, `== 'foo'` etc. with `operator` (Token) and `operand` (Expression)
+- `DeclaredVariablePattern` — `final field`, `var x`, `final String field` with `keyword`, `type`, `name`
+- `NullCheckPattern` — postfix `?` (e.g., `final field?`)
+- `NullAssertPattern` — postfix `!`
+- `ConstantPattern` — literal values in patterns
+- `WildcardPattern` — `_` pattern
+
+**When to use:** Rules that analyze Dart 3 pattern matching in if-case, switch expressions, or switch statements
+**Reference:** [prefer_simpler_patterns_null_check.dart](prefer_simpler_patterns_null_check.dart#L49-L68)
+
+---
+
 ## 🔄 Changelog
 
 | Date | Agent/Author | Changes |
@@ -1834,6 +1893,7 @@ class _TypeParameterChecker extends RecursiveAstVisitor<void> {
 | Feb 14, 2026 | avoid_commented_out_code | Added `addCompilationUnit` to cheat sheet, recipes for token stream traversal (comment analysis via `precedingComments`) and offset-based reporting/fixing (`reportAtOffset`, `diagnosticOffset`/`diagnosticLength`, `unitResult.content`). |
 | Feb 17, 2026 | avoid_duplicate_cascades | Added recipe for comparing cascade sections for duplicates using pattern matching on section types and `toSource()` equality. Documents all cascade section expression types (AssignmentExpression, MethodInvocation, IndexExpression, PropertyAccess, FunctionReference). |
 | Feb 17, 2026 | avoid_generics_shadowing | Added recipes for getting top-level declaration names with non-deprecated API (ClassDeclaration→namePart.typeName, EnumDeclaration→namePart.typeName, ExtensionTypeDeclaration→primaryConstructor.typeName) and visiting TypeParameter declarations across a file using RecursiveAstVisitor. |
+| Feb 17, 2026 | prefer_simpler_patterns_null_check | Added `addIfStatement` to cheat sheet, recipe for analyzing if-case patterns (CaseClause, GuardedPattern, LogicalAndPattern, RelationalPattern, DeclaredVariablePattern, NullCheckPattern). Documents all key DartPattern subtypes for Dart 3 pattern matching analysis. |
 
 ---
 

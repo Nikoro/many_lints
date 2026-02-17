@@ -49,6 +49,7 @@ import 'package:many_lints/src/rules/prefer_returning_shorthands.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_constructors.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_enums.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_static_fields.dart';
+import 'package:many_lints/src/rules/prefer_simpler_patterns_null_check.dart';
 import 'package:many_lints/src/rules/prefer_switch_expression.dart';
 import 'package:many_lints/src/rules/prefer_type_over_var.dart';
 import 'package:many_lints/src/rules/use_bloc_suffix.dart';
@@ -76,6 +77,7 @@ import 'package:many_lints/src/fixes/prefer_returning_shorthands_fix.dart';
 import 'package:many_lints/src/fixes/prefer_shorthands_with_constructors_fix.dart';
 import 'package:many_lints/src/fixes/prefer_shorthands_with_enums_fix.dart';
 import 'package:many_lints/src/fixes/prefer_shorthands_with_static_fields_fix.dart';
+import 'package:many_lints/src/fixes/prefer_simpler_patterns_null_check_fix.dart';
 import 'package:many_lints/src/fixes/prefer_switch_expression_fix.dart';
 import 'package:many_lints/src/fixes/prefer_type_over_var_fix.dart';
 import 'package:many_lints/src/fixes/use_dedicated_media_query_methods_fix.dart';
@@ -114,6 +116,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferShorthandsWithConstructors());
     registry.registerWarningRule(PreferShorthandsWithEnums());
     registry.registerWarningRule(PreferShorthandsWithStaticFields());
+    registry.registerWarningRule(PreferSimplerPatternsNullCheck());
     registry.registerWarningRule(PreferSwitchExpression());
     registry.registerWarningRule(PreferTypeOverVar());
     registry.registerWarningRule(PreferAnyOrEvery());
@@ -177,6 +180,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       PreferShorthandsWithStaticFields.code,
       PreferShorthandsWithStaticFieldsFix.new,
+    );
+    registry.registerFixForRule(
+      PreferSimplerPatternsNullCheck.code,
+      PreferSimplerPatternsNullCheckFix.new,
     );
     registry.registerFixForRule(
       PreferSwitchExpression.code,
