@@ -249,10 +249,10 @@ if (_iterableChecker.isAssignableFromType(targetType)) {
 
 ### Checking Expression Types
 
-Use the helper function from [../utils/helpers.dart](../utils/helpers.dart):
+Use the helper function from [../ast_node_analysis.dart](../ast_node_analysis.dart):
 
 ```dart
-import 'package:many_lints/src/utils/helpers.dart';
+import 'package:many_lints/src/ast_node_analysis.dart';
 
 // Check if an expression has a specific static type
 if (isExpressionExactlyType(expression, _widgetChecker)) {
@@ -270,7 +270,7 @@ bool isExpressionExactlyType(Expression expression, TypeChecker checker) {
 }
 ```
 
-**Reference:** [../utils/helpers.dart](../utils/helpers.dart#L6-L11), [prefer_center_over_align.dart](prefer_center_over_align.dart#L43)
+**Reference:** [../ast_node_analysis.dart](../ast_node_analysis.dart), [prefer_center_over_align.dart](prefer_center_over_align.dart#L43)
 
 ---
 
@@ -793,7 +793,7 @@ if (distance > 0 && distance <= 2) {
 
 ### General Helpers
 
-**From [../utils/helpers.dart](../utils/helpers.dart):**
+**From [../ast_node_analysis.dart](../ast_node_analysis.dart):**
 
 **1. Check expression type:**
 ```dart
@@ -830,7 +830,7 @@ Expression? maybeGetSingleReturnExpression(FunctionBody body)
 
 Returns the expression if the function body is `=> expr` or `{ return expr; }`, otherwise null.
 
-**Reference:** [../utils/helpers.dart](../utils/helpers.dart#L39-L56)
+**Reference:** [../ast_node_analysis.dart](../ast_node_analysis.dart)
 
 **4. Safe firstWhere with null return:**
 ```dart
@@ -846,11 +846,11 @@ final buildMethod = body.members
     .firstWhereOrNull((m) => m.name.lexeme == 'build');
 ```
 
-**Reference:** [../utils/helpers.dart](../utils/helpers.dart#L96-L104)
+**Reference:** [../ast_node_analysis.dart](../ast_node_analysis.dart)
 
 ### Hook-Specific Helpers
 
-**From [../utils/hook_helpers.dart](../utils/hook_helpers.dart):**
+**From [../hook_detection.dart](../hook_detection.dart):**
 
 **1. Find all hook calls in a tree:**
 ```dart
@@ -1037,7 +1037,7 @@ List<MethodInvocation> findMethodCalls(ClassDeclaration cls, String method) {
 ### Recipe: Check Widget Constructor Parameters
 
 ```dart
-import 'package:many_lints/src/utils/helpers.dart';
+import 'package:many_lints/src/ast_node_analysis.dart';
 
 // Check if Container only uses 'alignment' parameter
 if (node case InstanceCreationExpression(
@@ -1062,7 +1062,7 @@ if (node case InstanceCreationExpression(
 ### Recipe: Extract Single Return Expression
 
 ```dart
-import 'package:many_lints/src/utils/helpers.dart';
+import 'package:many_lints/src/ast_node_analysis.dart';
 
 @override
 void visitMethodDeclaration(MethodDeclaration node) {
@@ -1077,7 +1077,7 @@ void visitMethodDeclaration(MethodDeclaration node) {
 }
 ```
 
-**Reference:** [../utils/helpers.dart](../utils/helpers.dart#L39-L56)
+**Reference:** [../ast_node_analysis.dart](../ast_node_analysis.dart)
 
 ### Recipe: Check for Specific Argument Pattern
 
@@ -1737,6 +1737,90 @@ static String? _sectionKey(Expression section) {
 
 ---
 
+### Recipe: Get Top-Level Declaration Names (Non-Deprecated API)
+
+Different declaration types use different APIs to access their name token in analyzer 10.0.2. Some use `name` (not deprecated), others require `namePart.typeName` or `primaryConstructor.typeName`:
+
+```dart
+final topLevelNames = <String>{};
+for (final declaration in compilationUnit.declarations) {
+  switch (declaration) {
+    case ClassDeclaration(:final namePart):
+      topLevelNames.add(namePart.typeName.lexeme);
+    case MixinDeclaration(:final name):
+      topLevelNames.add(name.lexeme);
+    case EnumDeclaration(:final namePart):
+      topLevelNames.add(namePart.typeName.lexeme);
+    case GenericTypeAlias(:final name):
+      topLevelNames.add(name.lexeme);
+    case FunctionTypeAlias(:final name):
+      topLevelNames.add(name.lexeme);
+    case ExtensionTypeDeclaration(:final primaryConstructor):
+      topLevelNames.add(primaryConstructor.typeName.lexeme);
+    default:
+      break;
+  }
+}
+```
+
+**Key details:**
+- `ClassDeclaration.name` → **DEPRECATED**, use `namePart.typeName`
+- `EnumDeclaration.name` → **DEPRECATED**, use `namePart.typeName`
+- `ExtensionTypeDeclaration.name` → **DEPRECATED**, use `primaryConstructor.typeName`
+- `MixinDeclaration.name` → NOT deprecated, use directly
+- `GenericTypeAlias.name` / `FunctionTypeAlias.name` → NOT deprecated (inherited from `TypeAlias`)
+- `ClassNamePart` (sealed class) has `.typeName` (Token) and `.typeParameters` (TypeParameterList?)
+
+**When to use:** Rules that need to collect or check all type names declared in a file
+**Reference:** [avoid_generics_shadowing.dart](avoid_generics_shadowing.dart#L50-L67)
+
+---
+
+### Recipe: Visit TypeParameter Declarations Across the File
+
+Use `addCompilationUnit` + `RecursiveAstVisitor` to find all `TypeParameter` nodes across the file:
+
+```dart
+@override
+void registerNodeProcessors(
+  RuleVisitorRegistry registry,
+  RuleContext context,
+) {
+  final visitor = _Visitor(this);
+  registry.addCompilationUnit(this, visitor);
+}
+
+// In the CompilationUnit visitor:
+@override
+void visitCompilationUnit(CompilationUnit node) {
+  // Collect context (e.g., top-level names)...
+
+  // Use RecursiveAstVisitor to find all TypeParameter nodes
+  final checker = _TypeParameterChecker(rule, topLevelNames);
+  node.visitChildren(checker);
+}
+
+class _TypeParameterChecker extends RecursiveAstVisitor<void> {
+  @override
+  void visitTypeParameter(TypeParameter node) {
+    final name = node.name.lexeme;
+    // Check the type parameter...
+    super.visitTypeParameter(node);
+  }
+}
+```
+
+**Key details:**
+- `TypeParameter.name` returns a `Token` (the type parameter name)
+- `TypeParameter.parent` is `TypeParameterList`
+- `TypeParameterList.parent` is the declaring scope (ClassDeclaration, MethodDeclaration, etc.)
+- `TypeParameterList.typeParameters` gives all sibling type parameters
+
+**When to use:** Rules that analyze type parameters across all declarations in a file
+**Reference:** [avoid_generics_shadowing.dart](avoid_generics_shadowing.dart#L78-L94)
+
+---
+
 ## 🔄 Changelog
 
 | Date | Agent/Author | Changes |
@@ -1749,6 +1833,7 @@ static String? _sectionKey(Expression section) {
 | Feb 14, 2026 | avoid_collection_methods_with_unrelated_types | Added recipes for checking unrelated types (no subtype relationship), extracting Map key/value types, and analyzing MethodInvocation on collection targets with `realTarget`. |
 | Feb 14, 2026 | avoid_commented_out_code | Added `addCompilationUnit` to cheat sheet, recipes for token stream traversal (comment analysis via `precedingComments`) and offset-based reporting/fixing (`reportAtOffset`, `diagnosticOffset`/`diagnosticLength`, `unitResult.content`). |
 | Feb 17, 2026 | avoid_duplicate_cascades | Added recipe for comparing cascade sections for duplicates using pattern matching on section types and `toSource()` equality. Documents all cascade section expression types (AssignmentExpression, MethodInvocation, IndexExpression, PropertyAccess, FunctionReference). |
+| Feb 17, 2026 | avoid_generics_shadowing | Added recipes for getting top-level declaration names with non-deprecated API (ClassDeclaration→namePart.typeName, EnumDeclaration→namePart.typeName, ExtensionTypeDeclaration→primaryConstructor.typeName) and visiting TypeParameter declarations across a file using RecursiveAstVisitor. |
 
 ---
 

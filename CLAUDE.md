@@ -57,7 +57,7 @@ Quick summary:
 3. Extend `AnalysisRule`, define a static `LintCode` with `name`, `problemMessage`, `correctionMessage`
 4. Implement `registerNodeProcessors()` to register visitors via `RuleVisitorRegistry`
 5. Create `_Visitor` extending `SimpleAstVisitor`, report issues with `rule.reportAtNode()`
-6. Register the rule in `lib/main.dart` via `registry.registerWarningRule()`
+6. Register the rule in `lib/many_lints.dart` via `registry.registerWarningRule()`
 7. Optionally create a fix in `lib/src/fixes/` extending `ResolvedCorrectionProducer`
 8. Create `test/<rule_name>_test.dart` using `analyzer_testing` patterns
 
