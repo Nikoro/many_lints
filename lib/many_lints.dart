@@ -27,6 +27,8 @@ import 'package:analysis_server_plugin/registry.dart';
 // Rules
 import 'package:many_lints/src/rules/avoid_cascade_after_if_null.dart';
 import 'package:many_lints/src/rules/avoid_constant_conditions.dart';
+import 'package:many_lints/src/rules/avoid_contradictory_expressions.dart';
+import 'package:many_lints/src/rules/avoid_constant_switches.dart';
 import 'package:many_lints/src/rules/avoid_commented_out_code.dart';
 import 'package:many_lints/src/rules/avoid_collection_equality_checks.dart';
 import 'package:many_lints/src/rules/avoid_collection_methods_with_unrelated_types.dart';
@@ -92,6 +94,8 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidCascadeAfterIfNull());
     registry.registerWarningRule(AvoidCommentedOutCode());
     registry.registerWarningRule(AvoidConstantConditions());
+    registry.registerWarningRule(AvoidConstantSwitches());
+    registry.registerWarningRule(AvoidContradictoryExpressions());
     registry.registerWarningRule(AvoidAccessingCollectionsByConstantIndex());
     registry.registerWarningRule(AvoidCollectionEqualityChecks());
     registry.registerWarningRule(AvoidCollectionMethodsWithUnrelatedTypes());
