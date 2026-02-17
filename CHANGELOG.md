@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `avoid_constant_conditions` rule to warn when both sides of a comparison are constants
+- `avoid_constant_switches` rule to warn when a switch expression is a constant
+- `avoid_contradictory_expressions` rule to detect contradictory comparisons in `&&` chains
+- `avoid_duplicate_cascades` rule to detect duplicate cascade sections with quick fix
+- `avoid_generics_shadowing` rule to warn when a generic type parameter shadows a top-level declaration with quick fix
+- `prefer_simpler_patterns_null_check` rule to prefer simpler null-check patterns in if-case expressions with quick fix
+
 ## [0.3.0] - 2026-02-14
 
 ### Added

@@ -5,20 +5,17 @@
 ///
 /// ## Usage
 ///
-/// Add `many_lints` to your `pubspec.yaml`:
+/// Add `many_lints` to the top-level `plugins` section in your
+/// `analysis_options.yaml`:
 ///
 /// ```yaml
-/// dev_dependencies:
-///   many_lints: ^0.1.0
+/// plugins:
+///   many_lints: ^0.3.0
 /// ```
 ///
-/// Then enable the plugin in your `analysis_options.yaml`:
-///
-/// ```yaml
-/// analyzer:
-///   plugins:
-///     - many_lints
-/// ```
+/// The analysis server will automatically download and resolve the plugin
+/// from [pub.dev](https://pub.dev/packages/many_lints). There is no need
+/// to add it to your `pubspec.yaml`.
 library;
 
 import 'package:analysis_server_plugin/plugin.dart';

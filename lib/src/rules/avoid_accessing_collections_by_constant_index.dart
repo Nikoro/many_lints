@@ -3,8 +3,8 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
-import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:many_lints/src/constant_expression.dart';
 
 /// Warns when a collection is accessed by a constant index inside a loop body.
 ///
@@ -81,37 +81,17 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     // Simple identifier: list[constIndex]
     if (expression is SimpleIdentifier) {
-      final element = expression.element;
-      if (element is VariableElement) {
-        return element.isConst ||
-            (element.isFinal && element.computeConstantValue() != null);
-      }
-      // Top-level / static const accessed as simple identifier in scope
-      if (element is PropertyAccessorElement) {
-        final variable = element.variable;
-        return variable.isConst;
-      }
-      return false;
+      return isConstantIdentifier(expression);
     }
 
     // Prefixed identifier: SomeClass.constField
     if (expression is PrefixedIdentifier) {
-      final element = expression.identifier.element;
-      if (element is PropertyAccessorElement) {
-        final variable = element.variable;
-        return variable.isConst;
-      }
-      return false;
+      return isConstantIdentifier(expression.identifier);
     }
 
     // Property access: SomeClass.constField (alternative representation)
     if (expression is PropertyAccess) {
-      final element = expression.propertyName.element;
-      if (element is PropertyAccessorElement) {
-        final variable = element.variable;
-        return variable.isConst;
-      }
-      return false;
+      return isConstantIdentifier(expression.propertyName);
     }
 
     return false;

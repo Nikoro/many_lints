@@ -4,8 +4,8 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
-import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:many_lints/src/constant_expression.dart';
 
 /// Warns when a binary comparison has constant operands on both sides.
 ///
@@ -59,72 +59,11 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitBinaryExpression(BinaryExpression node) {
     if (!_comparisonOperators.contains(node.operator.type)) return;
 
-    if (!_isConstantExpression(node.leftOperand) ||
-        !_isConstantExpression(node.rightOperand)) {
+    if (!isConstantExpression(node.leftOperand) ||
+        !isConstantExpression(node.rightOperand)) {
       return;
     }
 
     rule.reportAtNode(node);
-  }
-
-  /// Returns `true` if [expression] is a compile-time constant.
-  static bool _isConstantExpression(Expression expression) {
-    var expr = expression;
-    while (expr is ParenthesizedExpression) {
-      expr = expr.expression;
-    }
-
-    return switch (expr) {
-      // Literals: 1, 'hello', true, false, null
-      IntegerLiteral() => true,
-      DoubleLiteral() => true,
-      SimpleStringLiteral() => true,
-      BooleanLiteral() => true,
-      NullLiteral() => true,
-
-      // const [1, 2] or const {1, 2}
-      TypedLiteral(constKeyword: _?) => true,
-
-      // const MyClass()
-      InstanceCreationExpression(:final keyword?)
-          when keyword.type == Keyword.CONST =>
-        true,
-
-      // Prefix expression on constant: -1, !true
-      PrefixExpression(:final operand) => _isConstantExpression(operand),
-
-      // Simple identifier: const x = 10; / static const field
-      SimpleIdentifier() => _isConstantIdentifier(expr),
-
-      // Prefixed identifier: SomeClass.constField
-      PrefixedIdentifier(:final identifier) => _isConstantIdentifier(
-        identifier,
-      ),
-
-      // Property access: SomeClass.constField (alternative AST shape)
-      PropertyAccess(:final propertyName) => _isConstantIdentifier(
-        propertyName,
-      ),
-
-      _ => false,
-    };
-  }
-
-  /// Returns `true` if the identifier refers to a const variable or field.
-  static bool _isConstantIdentifier(SimpleIdentifier id) {
-    final element = id.element;
-
-    // Local const / final variables
-    if (element is VariableElement) {
-      return element.isConst ||
-          (element.isFinal && element.computeConstantValue() != null);
-    }
-
-    // Top-level / static const fields (resolved as synthetic getter)
-    if (element is PropertyAccessorElement) {
-      return element.variable.isConst;
-    }
-
-    return false;
   }
 }

@@ -77,6 +77,11 @@ All lints are enabled by default as warnings.
 - **avoid_collection_equality_checks**: Comparing collections with `==`/`!=` checks reference equality, not contents.
 - **avoid_collection_methods_with_unrelated_types**: Detects collection method calls with arguments unrelated to the collection's type.
 - **avoid_commented_out_code**: Detects comments that look like commented-out code.
+- **avoid_constant_conditions**: Both sides of a comparison are constants, so the result is always the same.
+- **avoid_constant_switches**: The switch expression is a constant, so the result is always the same.
+- **avoid_contradictory_expressions**: Detects contradictory comparisons in `&&` chains that always evaluate to false.
+- **avoid_duplicate_cascades**: Detects duplicate cascade sections that indicate copy-paste errors.
+- **avoid_generics_shadowing**: Warns when a generic type parameter shadows a top-level declaration in the same file.
 - **avoid_single_child_in_multi_child_widgets**: Avoid using a single child in widgets that can accept multiple children (e.g., `Row`, `Column`, `Flex`).
 - **avoid_unnecessary_consumer_widgets**: Ensures that a `ConsumerWidget` uses the `ref` parameter.
 - **avoid_unnecessary_hook_widgets**: Ensures that a `HookWidget` uses hooks.
@@ -88,6 +93,7 @@ All lints are enabled by default as warnings.
 - **prefer_iterable_of**: Prefer `.of()` instead of `.from()` for `List`, `Set`, and `Map` for compile-time type safety.
 - **prefer_padding_over_container**: Enforces the use of `Padding` over `Container` with only margin.
 - **prefer_returning_shorthands**: Prefer dot shorthands when the instance type matches the return type.
+- **prefer_simpler_patterns_null_check**: Prefer simpler null-check patterns in if-case expressions.
 - **prefer_shorthands_with_constructors**: Prefer dot shorthands instead of explicit class instantiations.
 - **prefer_shorthands_with_enums**: Prefer dot shorthands instead of explicit enum prefixes.
 - **prefer_shorthands_with_static_fields**: Prefer dot shorthands instead of explicit class prefixes for static fields.
@@ -105,6 +111,8 @@ The following rules include auto-fixable quick fixes:
 
 - `avoid_cascade_after_if_null`
 - `avoid_commented_out_code`
+- `avoid_duplicate_cascades`
+- `avoid_generics_shadowing`
 - `avoid_unnecessary_consumer_widgets`
 - `avoid_unnecessary_hook_widgets`
 - `prefer_abstract_final_static_class`
@@ -115,6 +123,7 @@ The following rules include auto-fixable quick fixes:
 - `prefer_iterable_of`
 - `prefer_padding_over_container`
 - `prefer_returning_shorthands`
+- `prefer_simpler_patterns_null_check`
 - `prefer_shorthands_with_constructors`
 - `prefer_shorthands_with_enums`
 - `prefer_shorthands_with_static_fields`

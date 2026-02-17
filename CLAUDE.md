@@ -24,6 +24,7 @@ lib/
     text_distance.dart    # String distance utilities (Levenshtein)
     hook_detection.dart   # Hook widget detection helpers
     ast_node_analysis.dart # AST node analysis helpers
+    constant_expression.dart # Constant expression/identifier checking helpers
     rules/                # Lint rules (AnalysisRule + SimpleAstVisitor pattern)
     fixes/                # Quick fixes (ResolvedCorrectionProducer pattern)
     assists/              # Code assists (ResolvedCorrectionProducer pattern)
@@ -86,3 +87,4 @@ Quick summary:
 - `lib/src/text_distance.dart` - Levenshtein edit distance
 - `lib/src/hook_detection.dart` - Hook widget detection helpers
 - `lib/src/ast_node_analysis.dart` - AST node analysis helpers
+- `lib/src/constant_expression.dart` - Constant expression and identifier checking (isConstantExpression, isConstantIdentifier)
