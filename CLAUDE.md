@@ -43,51 +43,22 @@ Before writing any code:
 
 ## Adding a New Lint Rule
 
-**📖 Start with the Cookbooks:**
-- [lib/src/rules/CLAUDE.md](lib/src/rules/CLAUDE.md) - Lint rule patterns
-- [lib/src/fixes/CLAUDE.md](lib/src/fixes/CLAUDE.md) - Quick fix patterns
-- [lib/src/assists/CLAUDE.md](lib/src/assists/CLAUDE.md) - Code assist patterns
+**Use the `/new-lint` skill** for step-by-step guidance, or see the full cookbooks:
 
-See [`.claude/skills/new-lint/SKILL.md`](.claude/skills/new-lint/SKILL.md) for the full step-by-step guide, or use the `/new-lint` skill.
+- [Rules patterns](.claude/skills/new-lint/rules-patterns.md) - Rule structure, type checking, AST, visitors, reporting
+- [Rules recipes](.claude/skills/new-lint/rules-recipes.md) - 15+ copy-paste recipes for common patterns
+- [Fixes cookbook](.claude/skills/new-lint/fixes-cookbook.md) - Quick fix implementation patterns
+- [Assists cookbook](.claude/skills/new-lint/assists-cookbook.md) - Code assist implementation patterns
 
 Quick summary:
 
-1. **Consult the cookbooks** for copy-paste ready patterns
-2. Create `lib/src/rules/<rule_name>.dart`
-3. Extend `AnalysisRule`, define a static `LintCode` with `name`, `problemMessage`, `correctionMessage`
-4. Implement `registerNodeProcessors()` to register visitors via `RuleVisitorRegistry`
-5. Create `_Visitor` extending `SimpleAstVisitor`, report issues with `rule.reportAtNode()`
-6. Register the rule in `lib/many_lints.dart` via `registry.registerWarningRule()`
-7. Optionally create a fix in `lib/src/fixes/` extending `ResolvedCorrectionProducer`
-8. Create `test/<rule_name>_test.dart` using `analyzer_testing` patterns
-
-## Test Pattern
-
-Tests use `analyzer_testing` with reflective loader:
-
-```dart
-import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
-import 'package:test_reflective_loader/test_reflective_loader.dart';
-
-void main() {
-  defineReflectiveSuite(() => defineReflectiveTests(MyRuleTest));
-}
-
-@reflectiveTest
-class MyRuleTest extends AnalysisRuleTest {
-  @override
-  void setUp() {
-    rule = MyRule();
-    super.setUp();
-  }
-
-  void test_case() async {
-    await assertDiagnostics(r'''
-      // code that triggers lint
-    ''', [lint(offset, length)]);
-  }
-}
-```
+1. Create `lib/src/rules/<rule_name>.dart`
+2. Extend `AnalysisRule`, define a static `LintCode` with `name`, `problemMessage`, `correctionMessage`
+3. Implement `registerNodeProcessors()` to register visitors via `RuleVisitorRegistry`
+4. Create `_Visitor` extending `SimpleAstVisitor`, report issues with `rule.reportAtNode()`
+5. Register the rule in `lib/many_lints.dart` via `registry.registerWarningRule()`
+6. Optionally create a fix in `lib/src/fixes/` extending `ResolvedCorrectionProducer`
+7. Create `test/<rule_name>_test.dart` using `analyzer_testing` patterns
 
 ## Code Conventions
 
@@ -101,11 +72,11 @@ class MyRuleTest extends AnalysisRuleTest {
 
 ## Key Helpers
 
-### 📖 Implementation Cookbooks (Start Here!)
+### 📂 Quick References (For Understanding Existing Code)
 
-- **[lib/src/rules/CLAUDE.md](lib/src/rules/CLAUDE.md)** - Lint Rule Implementation Cookbook
-- **[lib/src/fixes/CLAUDE.md](lib/src/fixes/CLAUDE.md)** - Quick Fix Implementation Cookbook
-- **[lib/src/assists/CLAUDE.md](lib/src/assists/CLAUDE.md)** - Code Assist Implementation Cookbook
+- **[lib/src/rules/CLAUDE.md](lib/src/rules/CLAUDE.md)** - Lint rules quick reference
+- **[lib/src/fixes/CLAUDE.md](lib/src/fixes/CLAUDE.md)** - Quick fixes quick reference
+- **[lib/src/assists/CLAUDE.md](lib/src/assists/CLAUDE.md)** - Code assists quick reference
 
 ### 🔧 Utility Files
 

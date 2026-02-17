@@ -16,11 +16,11 @@ Extract from the `$ARGUMENTS`:
 
 Before writing any code:
 
-1. **📖 ALWAYS START HERE: Read the Lint Rule Cookbook** at `lib/src/rules/CLAUDE.md`
-   - This is your **primary reference** for all implementation patterns
-   - Contains copy-paste ready code for common scenarios
-   - Includes patterns for analyzer ^10.0.2 API usage
-   - **Check the cookbook FIRST** before researching elsewhere
+1. **📖 ALWAYS START HERE: Read the Lint Rule Cookbooks** (in this directory)
+   - [rules-patterns.md](rules-patterns.md) — Rule structure, type checking, AST navigation, visitors, reporting, utilities, analyzer APIs
+   - [rules-recipes.md](rules-recipes.md) — 15+ copy-paste ready recipes for common scenarios, testing, registration
+   - These are your **primary reference** for all implementation patterns
+   - **Check the cookbooks FIRST** before researching elsewhere
 
 2. Read these reference docs to understand the framework:
    - [Writing a plugin](https://github.com/dart-lang/sdk/blob/main/pkg/analysis_server_plugin/doc/writing_a_plugin.md)
@@ -32,7 +32,7 @@ Before writing any code:
 
 4. If the cookbook doesn't cover your specific pattern, read 1-2 existing rules in `lib/src/rules/` and their corresponding fixes in `lib/src/fixes/` and tests in `test/` to understand the codebase patterns. Pick rules that are most similar to the new lint being created.
 
-5. Read `lib/src/type_checker.dart` and `lib/src/utils/helpers.dart` for reusable utilities.
+5. Read `lib/src/type_checker.dart` and `lib/src/ast_node_analysis.dart` for reusable utilities.
 
 ## Step 3: Ask clarifying questions
 
@@ -58,7 +58,7 @@ import 'package:analyzer/error/error.dart';
 
 // Add if needed:
 // import 'package:many_lints/src/type_checker.dart';
-// import 'package:many_lints/src/utils/helpers.dart';
+// import 'package:many_lints/src/ast_node_analysis.dart';
 
 /// <doc comment describing what the rule does>
 class <RuleClass> extends AnalysisRule {
@@ -107,11 +107,11 @@ Key conventions:
 - Rule class name: PascalCase version of lint name (e.g., `use_cubit_suffix` -> `UseCubitSuffix`)
 - Use `TypeChecker.fromName()` or `TypeChecker.fromUrl()` for type checks
 - Use Dart 3.0+ pattern matching for AST analysis
-- Use helpers from `lib/src/utils/helpers.dart` when applicable
+- Use helpers from `lib/src/ast_node_analysis.dart` when applicable
 
 ## Step 5: Create the quick fix
 
-**📖 Consult the Quick Fix Cookbook:** See `lib/src/fixes/CLAUDE.md` for comprehensive patterns and examples.
+**📖 Consult the Quick Fix Cookbook:** See [fixes-cookbook.md](fixes-cookbook.md) for comprehensive patterns and examples.
 
 Create `lib/src/fixes/<lint_name>_fix.dart` following this exact pattern:
 
@@ -217,11 +217,11 @@ Key conventions:
 - `lint(offset, length)` — offset is the character position, length is the length of the reported node/token
 - Method names start with `test_` and use camelCase
 
-## Step 8: Update the Cookbook (MANDATORY when discovering new patterns)
+## Step 8: Update the Cookbooks (MANDATORY when discovering new patterns)
 
-**🚨 CRITICAL: If you discovered or researched any new patterns NOT documented in `lib/src/rules/CLAUDE.md`, you MUST update it before completing this task.**
+**🚨 CRITICAL: If you discovered or researched any new patterns, you MUST update the cookbooks before completing this task.**
 
-You must update the cookbook if you:
+You must update if you:
 - ✅ Discovered a new analyzer API pattern (e.g., different way to access elements, types, or AST nodes)
 - ✅ Researched AST traversal techniques not shown in the cookbook
 - ✅ Found a new type checking method or TypeChecker usage pattern
@@ -230,32 +230,17 @@ You must update the cookbook if you:
 - ✅ Had to dig into analyzer source code or documentation for APIs not covered in the cookbook
 - ✅ Found analyzer ^10.0.2 specific behaviors different from what you "know" from training data
 
-**How to update:**
-1. Open `lib/src/rules/CLAUDE.md`
-2. Find the appropriate section (or create a new one if needed)
-3. Add your pattern with:
-   - Working code example (tested and verified)
-   - File reference to your new implementation (e.g., `[my_rule.dart](my_rule.dart#L45-L60)`)
-   - Brief explanation of when to use this pattern
-   - Any gotchas or common mistakes
-4. Follow the format shown in the Meta-Instructions section of the cookbook
+**How to update (two places):**
 
-**Example update:**
-```markdown
-### Checking Generic Type Arguments
+1. **Full details** — Add to the appropriate cookbook file in this directory:
+   - [rules-patterns.md](rules-patterns.md) for foundational patterns (type checking, AST, visitors, etc.)
+   - [rules-recipes.md](rules-recipes.md) for new recipes (specific use-case patterns)
+   - [fixes-cookbook.md](fixes-cookbook.md) for fix-related patterns
+   - Follow the format in each file's Meta-Instructions section
 
-**Pattern: Extract type argument from generic type**
-```dart
-if (type case InterfaceType(:final typeArguments)) {
-  final firstArg = typeArguments.firstOrNull;
-  // Process type argument
-}
-```
-**When to use:** When you need to analyze the `T` in `List<T>` or similar generics  
-**Reference:** [my_new_rule.dart](my_new_rule.dart#L67-L72)
-```
+2. **Brief mention** — Add a short entry to the lean quick reference at `lib/src/rules/CLAUDE.md` (or `lib/src/fixes/CLAUDE.md` for fix patterns)
 
-This keeps the cookbook as a **living document** that improves with each new rule!
+This keeps the cookbooks as **living documents** that improve with each new rule!
 
 ## Step 9: Create an example file
 
