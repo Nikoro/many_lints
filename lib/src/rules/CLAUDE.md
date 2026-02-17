@@ -1689,6 +1689,54 @@ Future<void> compute(ChangeBuilder builder) async {
 
 ---
 
+### Recipe: Compare Cascade Sections for Duplicates
+
+Cascade sections in `cascadeSections` are `Expression` nodes. Use pattern matching to classify each section type, then compare via `toSource()` to detect duplicates:
+
+```dart
+@override
+void visitCascadeExpression(CascadeExpression node) {
+  final sections = node.cascadeSections;
+  if (sections.length < 2) return;
+
+  final seen = <String>{};
+  for (final section in sections) {
+    final key = _sectionKey(section);
+    if (key == null) continue;
+
+    if (!seen.add(key)) {
+      rule.reportAtNode(section);
+    }
+  }
+}
+
+static String? _sectionKey(Expression section) {
+  return switch (section) {
+    // ..field = value or ..[index] = value
+    AssignmentExpression(:final leftHandSide, :final rightHandSide) =>
+      'assign:${leftHandSide.toSource()}=${rightHandSide.toSource()}',
+    // ..method(args)
+    MethodInvocation(:final methodName, :final argumentList) =>
+      'call:${methodName.name}(${argumentList.arguments.map((a) => a.toSource()).join(',')})',
+    // ..[index]
+    IndexExpression(:final index) => 'index:${index.toSource()}',
+    // ..property
+    PropertyAccess(:final propertyName) => 'prop:${propertyName.name}',
+    _ => null,
+  };
+}
+```
+
+**Key details:**
+- `cascadeSections` contains `Expression` nodes of these types: `AssignmentExpression` (property/index assignment), `MethodInvocation` (method call), `IndexExpression` (index access), `PropertyAccess` (property getter), `FunctionReference` (method tear-off)
+- `toSource()` preserves the original source text, making it reliable for equality comparison
+- Report at the individual section node (not the whole cascade) so the fix can target just the duplicate
+
+**When to use:** Rules that detect repeated or redundant cascade operations
+**Reference:** [avoid_duplicate_cascades.dart](avoid_duplicate_cascades.dart#L65-L95)
+
+---
+
 ## 🔄 Changelog
 
 | Date | Agent/Author | Changes |
@@ -1700,6 +1748,7 @@ Future<void> compute(ChangeBuilder builder) async {
 | Feb 14, 2026 | avoid_collection_equality_checks | Added `addBinaryExpression` to cheat sheet, recipe for analyzing binary expression operators and checking const expressions. |
 | Feb 14, 2026 | avoid_collection_methods_with_unrelated_types | Added recipes for checking unrelated types (no subtype relationship), extracting Map key/value types, and analyzing MethodInvocation on collection targets with `realTarget`. |
 | Feb 14, 2026 | avoid_commented_out_code | Added `addCompilationUnit` to cheat sheet, recipes for token stream traversal (comment analysis via `precedingComments`) and offset-based reporting/fixing (`reportAtOffset`, `diagnosticOffset`/`diagnosticLength`, `unitResult.content`). |
+| Feb 17, 2026 | avoid_duplicate_cascades | Added recipe for comparing cascade sections for duplicates using pattern matching on section types and `toSource()` equality. Documents all cascade section expression types (AssignmentExpression, MethodInvocation, IndexExpression, PropertyAccess, FunctionReference). |
 
 ---
 
