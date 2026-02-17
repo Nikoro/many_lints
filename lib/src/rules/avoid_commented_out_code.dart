@@ -43,6 +43,17 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
+  static final _annotationPattern = RegExp(r'^@[a-zA-Z]+');
+  static final _assignmentPattern = RegExp(
+    r'^[a-zA-Z_]\w*(\.\w+)*\s*[+\-*/]?=\s',
+  );
+  static final _returnPattern = RegExp(r'^return\s');
+  static final _cascadePattern = RegExp(r'^\.\.[a-zA-Z]');
+  static final _functionCallPattern = RegExp(
+    r'^[a-zA-Z_]\w*(\.\w+)*\s*(<[^>]*>)?\s*\(',
+  );
+  static final _whitespacePattern = RegExp(r'\s+');
+
   @override
   void visitCompilationUnit(CompilationUnit node) {
     final allComments = _collectAllComments(node);
@@ -201,18 +212,16 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (_looksLikeFunctionCall(line)) return true;
 
     // Lines that look like annotations: @override, @required, etc.
-    if (RegExp(r'^@[a-zA-Z]+').hasMatch(line)) return true;
+    if (_annotationPattern.hasMatch(line)) return true;
 
     // Lines that look like assignments: word = ...
-    if (RegExp(r'^[a-zA-Z_]\w*(\.\w+)*\s*[+\-*/]?=\s').hasMatch(line)) {
-      return true;
-    }
+    if (_assignmentPattern.hasMatch(line)) return true;
 
     // Lines that look like return statements
-    if (RegExp(r'^return\s').hasMatch(line)) return true;
+    if (_returnPattern.hasMatch(line)) return true;
 
     // Lines that are just a single statement with a dot chain
-    if (RegExp(r'^\.\.[a-zA-Z]').hasMatch(line)) return true;
+    if (_cascadePattern.hasMatch(line)) return true;
 
     return false;
   }
@@ -244,7 +253,7 @@ class _Visitor extends SimpleAstVisitor<void> {
         !line.startsWith('import ') &&
         !line.startsWith('export ')) {
       // If it's mostly words with spaces and no code markers, it's prose.
-      final words = line.split(RegExp(r'\s+'));
+      final words = line.split(_whitespacePattern);
       if (words.length >= 3) return true;
     }
 
@@ -304,6 +313,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Checks if a line looks like a function or method call.
   bool _looksLikeFunctionCall(String line) {
-    return RegExp(r'^[a-zA-Z_]\w*(\.\w+)*\s*(<[^>]*>)?\s*\(').hasMatch(line);
+    return _functionCallPattern.hasMatch(line);
   }
 }

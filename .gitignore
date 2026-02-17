@@ -31,3 +31,5 @@ migrate_working_dir/
 build/
 coverage/
 TODO.md
+.env
+.env.*
