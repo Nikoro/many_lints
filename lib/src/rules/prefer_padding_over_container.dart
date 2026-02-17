@@ -8,18 +8,18 @@ import 'package:analyzer/error/error.dart';
 import 'package:many_lints/src/ast_node_analysis.dart';
 import 'package:many_lints/src/type_checker.dart';
 
-/// Suggests using Padding widget instead of Container with only margin.
+/// Suggests using Padding widget instead of Container with only padding or margin.
 class PreferPaddingOverContainer extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_padding_over_container',
-    'Use Padding widget instead of the Container widget with only the margin parameter',
+    'Use Padding widget instead of the Container widget with only the padding or margin parameter',
   );
 
   PreferPaddingOverContainer()
     : super(
         name: 'prefer_padding_over_container',
         description:
-            'Use Padding widget instead of Container when only margin is set.',
+            'Use Padding widget instead of Container when only padding or margin is set.',
       );
 
   @override
@@ -50,10 +50,15 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (!isExpressionExactlyType(node, _containerChecker)) return;
 
     if (isInstanceCreationExpressionOnlyUsingParameter(
-      node,
-      parameter: 'margin',
-      ignoredParameters: {'key', 'child'},
-    )) {
+          node,
+          parameter: 'margin',
+          ignoredParameters: {'key', 'child'},
+        ) ||
+        isInstanceCreationExpressionOnlyUsingParameter(
+          node,
+          parameter: 'padding',
+          ignoredParameters: {'key', 'child'},
+        )) {
       rule.reportAtNode(node.constructorName);
     }
   }

@@ -21,7 +21,7 @@ class EdgeInsets {
   const EdgeInsets.all(double value);
 }
 class Container extends Widget {
-  Container({Key? key, EdgeInsets? margin, Widget? child, double? width, double? height});
+  Container({Key? key, EdgeInsets? padding, EdgeInsets? margin, Widget? child, double? width, double? height});
 }
 class Padding extends Widget {
   Padding({Key? key, required EdgeInsets padding, Widget? child});
@@ -80,6 +80,60 @@ Widget f() {
 import 'package:flutter/widgets.dart';
 Widget f() {
   return Container(width: 100);
+}
+''');
+  }
+
+  Future<void> test_container_with_only_padding() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+Widget f() {
+  return Container(padding: EdgeInsets.all(8));
+}
+''',
+      [lint(61, 9)],
+    );
+  }
+
+  Future<void> test_container_with_padding_and_child() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+Widget f() {
+  return Container(padding: EdgeInsets.all(8), child: Container());
+}
+''',
+      [lint(61, 9)],
+    );
+  }
+
+  Future<void> test_container_with_padding_and_key() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+Widget f() {
+  return Container(key: Key(), padding: EdgeInsets.all(8));
+}
+''',
+      [lint(61, 9)],
+    );
+  }
+
+  Future<void> test_container_with_padding_and_width() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+Widget f() {
+  return Container(padding: EdgeInsets.all(8), width: 100);
+}
+''');
+  }
+
+  Future<void> test_container_with_padding_and_margin() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+Widget f() {
+  return Container(padding: EdgeInsets.all(8), margin: EdgeInsets.all(8));
 }
 ''');
   }
