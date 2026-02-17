@@ -33,6 +33,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Collection types | [avoid_collection_methods_with_unrelated_types.dart](avoid_collection_methods_with_unrelated_types.dart) | Type relationship checking, `realTarget` |
 | Cascade analysis | [avoid_duplicate_cascades.dart](avoid_duplicate_cascades.dart) | Cascade sections, `toSource()` comparison |
 | If-case patterns | [prefer_simpler_patterns_null_check.dart](prefer_simpler_patterns_null_check.dart) | Dart 3 if-case pattern analysis |
+| Property+method chain | [avoid_map_keys_contains.dart](avoid_map_keys_contains.dart) | PrefixedIdentifier vs PropertyAccess duality |
 
 ## Updating Documentation
 

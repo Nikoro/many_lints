@@ -772,6 +772,58 @@ void visitIfStatement(IfStatement node) {
 
 ---
 
+### Recipe: Detect Property Access on Typed Target (PrefixedIdentifier vs PropertyAccess)
+
+**⚠️ Important:** When analyzing `target.property.method()` patterns, the AST for `target.property` differs depending on the complexity of `target`:
+
+- **Simple identifier** (`map.keys`): Parsed as `PrefixedIdentifier` (prefix=`map`, identifier=`keys`)
+- **Complex expression** (`maps.first.keys`): Parsed as `PropertyAccess` (target=`maps.first`, propertyName=`keys`)
+
+You must handle **both** node types when matching:
+
+```dart
+@override
+void visitMethodInvocation(MethodInvocation node) {
+  if (node.methodName.name != 'contains') return;
+
+  final target = node.target;
+
+  // Simple: map.keys.contains(x) — PrefixedIdentifier
+  if (target case PrefixedIdentifier(
+    identifier: SimpleIdentifier(name: 'keys'),
+    prefix: SimpleIdentifier(staticType: final mapType?),
+  ) when _mapChecker.isAssignableFromType(mapType)) {
+    rule.reportAtNode(node);
+    return;
+  }
+
+  // Complex: expr.keys.contains(x) — PropertyAccess
+  if (target case PropertyAccess(
+    propertyName: SimpleIdentifier(name: 'keys'),
+    target: Expression(staticType: final mapType?),
+  ) when _mapChecker.isAssignableFromType(mapType)) {
+    rule.reportAtNode(node);
+  }
+}
+```
+
+**Similarly in fixes**, extract the map expression differently:
+```dart
+final String mapSource;
+if (keysAccess is PrefixedIdentifier) {
+  mapSource = keysAccess.prefix.toSource();
+} else if (keysAccess is PropertyAccess) {
+  mapSource = keysAccess.target!.toSource();
+} else {
+  return;
+}
+```
+
+**When to use:** Any rule that checks `target.property.method()` where `target` could be a simple variable or a complex expression
+**Reference:** [avoid_map_keys_contains.dart](../../../lib/src/rules/avoid_map_keys_contains.dart#L49-L71), [avoid_map_keys_contains_fix.dart](../../../lib/src/fixes/avoid_map_keys_contains_fix.dart#L30-L41)
+
+---
+
 ## 🧪 Testing & Registration
 
 ### Test Structure
@@ -926,3 +978,4 @@ class ManyLintsPlugin extends Plugin {
 | Feb 17, 2026 | avoid_duplicate_cascades | Added recipe for comparing cascade sections for duplicates using pattern matching on section types and `toSource()` equality. Documents all cascade section expression types (AssignmentExpression, MethodInvocation, IndexExpression, PropertyAccess, FunctionReference). |
 | Feb 17, 2026 | avoid_generics_shadowing | Added recipes for getting top-level declaration names with non-deprecated API (ClassDeclaration→namePart.typeName, EnumDeclaration→namePart.typeName, ExtensionTypeDeclaration→primaryConstructor.typeName) and visiting TypeParameter declarations across a file using RecursiveAstVisitor. |
 | Feb 17, 2026 | prefer_simpler_patterns_null_check | Added `addIfStatement` to cheat sheet, recipe for analyzing if-case patterns (CaseClause, GuardedPattern, LogicalAndPattern, RelationalPattern, DeclaredVariablePattern, NullCheckPattern). Documents all key DartPattern subtypes for Dart 3 pattern matching analysis. |
+| Feb 18, 2026 | avoid_map_keys_contains | Added recipe for PrefixedIdentifier vs PropertyAccess duality when detecting `target.property.method()` patterns. Simple identifiers (`map.keys`) parse as PrefixedIdentifier, complex expressions (`maps.first.keys`) parse as PropertyAccess — must handle both. |
