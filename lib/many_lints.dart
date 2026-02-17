@@ -33,6 +33,7 @@ import 'package:many_lints/src/rules/avoid_collection_methods_with_unrelated_typ
 import 'package:many_lints/src/rules/avoid_accessing_collections_by_constant_index.dart';
 import 'package:many_lints/src/rules/avoid_generics_shadowing.dart';
 import 'package:many_lints/src/rules/avoid_map_keys_contains.dart';
+import 'package:many_lints/src/rules/avoid_misused_test_matchers.dart';
 import 'package:many_lints/src/rules/avoid_single_child_in_multi_child_widgets.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_consumer_widgets.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_hook_widgets.dart';
@@ -105,6 +106,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidAccessingCollectionsByConstantIndex());
     registry.registerWarningRule(AvoidGenericsShadowing());
     registry.registerWarningRule(AvoidMapKeysContains());
+    registry.registerWarningRule(AvoidMisusedTestMatchers());
     registry.registerWarningRule(AvoidCollectionEqualityChecks());
     registry.registerWarningRule(AvoidCollectionMethodsWithUnrelatedTypes());
     registry.registerWarningRule(PreferAbstractFinalStaticClass());
