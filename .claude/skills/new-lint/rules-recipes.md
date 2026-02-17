@@ -824,6 +824,68 @@ if (keysAccess is PrefixedIdentifier) {
 
 ---
 
+### Recipe: Validate Function Call Arguments by Name and Type Category
+
+Register `addMethodInvocation` and match on `methodName.name` to intercept specific function calls (e.g., `expect()`). Then analyze argument types against expected categories:
+
+```dart
+@override
+void visitMethodInvocation(MethodInvocation node) {
+  if (node.methodName.name != 'expect') return;
+
+  final args = node.argumentList.arguments;
+  if (args.length < 2) return;
+
+  final actualType = args[0].staticType;
+  if (actualType == null || actualType is DynamicType) return;
+
+  final matcherExpr = args[1];
+
+  // Resolve matcher name from identifier or method call
+  final String? matcherName;
+  if (matcherExpr is SimpleIdentifier) {
+    matcherName = matcherExpr.name;
+  } else if (matcherExpr is MethodInvocation) {
+    matcherName = matcherExpr.methodName.name;
+  } else {
+    return;
+  }
+
+  // Check compatibility by category
+  if (_isIncompatible(actualType, matcherName)) {
+    rule.reportAtNode(matcherExpr, arguments: [matcherName, ...]);
+  }
+}
+```
+
+**Type category checks:**
+```dart
+// Check nullability
+static bool _isNullable(DartType type) {
+  return type.nullabilitySuffix == NullabilitySuffix.question;
+}
+
+// Check if type is/subtypes a dart:core type by name
+static bool _isOrSubtypeOf(InterfaceType type, String targetName) {
+  if (type.element.name == targetName) return true;
+  for (final supertype in type.element.allSupertypes) {
+    if (supertype.element.name == targetName) return true;
+  }
+  return false;
+}
+```
+
+**Key details:**
+- Import `NullabilitySuffix` from `package:analyzer/dart/element/nullability_suffix.dart`
+- The matcher expression can be `SimpleIdentifier` (e.g., `isNull`) or `MethodInvocation` (e.g., `hasLength(1)`)
+- Use `_isOrSubtypeOf` for checking against dart:core types like `num`, `Iterable`, `Map`, `String`
+- Skip `DynamicType` actual values since the type is unknown at compile time
+
+**When to use:** Rules that validate argument compatibility in specific function calls
+**Reference:** [avoid_misused_test_matchers.dart](../../../lib/src/rules/avoid_misused_test_matchers.dart#L82-L218)
+
+---
+
 ## 🧪 Testing & Registration
 
 ### Test Structure
@@ -979,3 +1041,4 @@ class ManyLintsPlugin extends Plugin {
 | Feb 17, 2026 | avoid_generics_shadowing | Added recipes for getting top-level declaration names with non-deprecated API (ClassDeclaration→namePart.typeName, EnumDeclaration→namePart.typeName, ExtensionTypeDeclaration→primaryConstructor.typeName) and visiting TypeParameter declarations across a file using RecursiveAstVisitor. |
 | Feb 17, 2026 | prefer_simpler_patterns_null_check | Added `addIfStatement` to cheat sheet, recipe for analyzing if-case patterns (CaseClause, GuardedPattern, LogicalAndPattern, RelationalPattern, DeclaredVariablePattern, NullCheckPattern). Documents all key DartPattern subtypes for Dart 3 pattern matching analysis. |
 | Feb 18, 2026 | avoid_map_keys_contains | Added recipe for PrefixedIdentifier vs PropertyAccess duality when detecting `target.property.method()` patterns. Simple identifiers (`map.keys`) parse as PrefixedIdentifier, complex expressions (`maps.first.keys`) parse as PropertyAccess — must handle both. |
+| Feb 18, 2026 | avoid_misused_test_matchers | Added recipe for validating function call arguments by name and type category. Shows pattern for intercepting specific method calls (e.g., `expect()`), resolving matcher expressions (SimpleIdentifier vs MethodInvocation), and checking type compatibility with `NullabilitySuffix` and `_isOrSubtypeOf`. |
