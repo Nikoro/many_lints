@@ -34,6 +34,7 @@ import 'package:many_lints/src/rules/avoid_commented_out_code.dart';
 import 'package:many_lints/src/rules/avoid_collection_equality_checks.dart';
 import 'package:many_lints/src/rules/avoid_collection_methods_with_unrelated_types.dart';
 import 'package:many_lints/src/rules/avoid_accessing_collections_by_constant_index.dart';
+import 'package:many_lints/src/rules/avoid_generics_shadowing.dart';
 import 'package:many_lints/src/rules/avoid_single_child_in_multi_child_widgets.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_consumer_widgets.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_hook_widgets.dart';
@@ -61,6 +62,7 @@ import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
 import 'package:many_lints/src/fixes/avoid_commented_out_code_fix.dart';
 import 'package:many_lints/src/fixes/avoid_duplicate_cascades_fix.dart';
 import 'package:many_lints/src/fixes/add_suffix_fix.dart';
+import 'package:many_lints/src/fixes/avoid_generics_shadowing_fix.dart';
 import 'package:many_lints/src/fixes/prefer_abstract_final_static_class_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_hook_widgets_fix.dart';
@@ -100,6 +102,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidConstantSwitches());
     registry.registerWarningRule(AvoidContradictoryExpressions());
     registry.registerWarningRule(AvoidAccessingCollectionsByConstantIndex());
+    registry.registerWarningRule(AvoidGenericsShadowing());
     registry.registerWarningRule(AvoidCollectionEqualityChecks());
     registry.registerWarningRule(AvoidCollectionMethodsWithUnrelatedTypes());
     registry.registerWarningRule(PreferAbstractFinalStaticClass());
@@ -202,6 +205,10 @@ class ManyLintsPlugin extends Plugin {
       AvoidUnnecessaryConsumerWidgetsFix.new,
     );
     registry.registerFixForRule(UseGap.code, UseGapFix.new);
+    registry.registerFixForRule(
+      AvoidGenericsShadowing.code,
+      AvoidGenericsShadowingFix.new,
+    );
 
     // Register assists
     registry.registerAssist(ConvertIterableMapToCollectionFor.new);
