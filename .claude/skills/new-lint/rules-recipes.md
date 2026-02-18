@@ -1594,3 +1594,35 @@ void visitGenericFunctionType(GenericFunctionType node) {
 - Length of `Future<void> Function()` is **23 characters** (not 24)
 
 **Ref:** [prefer_async_callback.dart](../../../lib/src/rules/prefer_async_callback.dart#L60-L85)
+
+### Verify Target Resolves to a dart: SDK Class
+
+When detecting calls like `Isolate.run()`, a user might define their own `Isolate` class. Verify the identifier resolves to the actual SDK class by checking `element.library.identifier`:
+
+```dart
+@override
+void visitMethodInvocation(MethodInvocation node) {
+  if (node.methodName.name != 'run') return;
+
+  final target = node.target;
+  if (target is! SimpleIdentifier) return;
+  if (target.name != 'Isolate') return;
+
+  // Verify the target resolves to dart:isolate's Isolate class
+  final element = target.element;
+  if (element == null) return;
+  final library = element.library;
+  if (library == null) return;
+  if (!library.identifier.startsWith('dart:isolate')) return;
+
+  rule.reportAtNode(node);
+}
+```
+
+**Key details:**
+- `SimpleIdentifier.element` resolves to the referenced element (class, function, etc.)
+- `element.library.identifier` returns the library URI string (e.g., `dart:isolate`, `dart:core`, `package:flutter/...`)
+- Use `startsWith('dart:isolate')` for dart: libraries
+- This prevents false positives when users define their own class with the same name
+
+**Ref:** [prefer_compute_over_isolate_run.dart](../../../lib/src/rules/prefer_compute_over_isolate_run.dart#L60-L75)
