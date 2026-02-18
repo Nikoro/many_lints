@@ -35,6 +35,7 @@ import 'package:many_lints/src/rules/avoid_generics_shadowing.dart';
 import 'package:many_lints/src/rules/avoid_map_keys_contains.dart';
 import 'package:many_lints/src/rules/avoid_misused_test_matchers.dart';
 import 'package:many_lints/src/rules/avoid_only_rethrow.dart';
+import 'package:many_lints/src/rules/prefer_test_matchers.dart';
 import 'package:many_lints/src/rules/avoid_single_child_in_multi_child_widgets.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_consumer_widgets.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_hook_widgets.dart';
@@ -137,6 +138,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(UseNotifierSuffix());
     registry.registerWarningRule(UseDedicatedMediaQueryMethods());
     registry.registerWarningRule(UseGap());
+    registry.registerWarningRule(PreferTestMatchers());
 
     // Register fixes for rules
     registry.registerFixForRule(
