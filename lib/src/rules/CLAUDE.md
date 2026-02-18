@@ -55,6 +55,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | File-level class counting | [prefer_single_widget_per_file.dart](prefer_single_widget_per_file.dart) | Use `addCompilationUnit` to count public widget classes (skip `_`-prefixed), report 2nd+ occurrences via `reportAtToken(namePart.typeName)` |
 | Multi-pattern detection | [prefer_spacing.dart](prefer_spacing.dart) | Detect SizedBox spacers via 3 patterns (direct list, `.separatedBy()`, `.expand()`), handle both `InstanceCreationExpression` and `MethodInvocation` for constructors, walk chained method calls via target parent, use `isExactlyType` on `staticType` |
 | Lifecycle method ordering | [proper_super_calls.dart](proper_super_calls.dart) | Use `addMethodDeclaration` to visit methods directly, check super call position in block body via statement index, navigate `BlockClassBody.parent` to find enclosing class |
+| Outer scope variable detection | [use_closest_build_context.dart](use_closest_build_context.dart) | Detect outer variable usage inside nested closures with shadowing params; resolve untyped param types via `param.declaredFragment?.element.type`; multi-level RecursiveAstVisitor (finder→usage checker) with function boundary stopping |
 
 ## Updating Documentation
 

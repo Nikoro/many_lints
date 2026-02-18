@@ -1160,3 +1160,79 @@ static int _findSuperCallIndex(NodeList<Statement> stmts, String name) {
 **When to use:** Rules that validate statement ordering within specific methods (lifecycle, setup/teardown).
 
 **Ref:** [proper_super_calls.dart](../../../lib/src/rules/proper_super_calls.dart#L70-L130)
+
+### Detect Outer Scope Variable Usage Inside Nested Closures
+
+Register `addMethodDeclaration`. Find a parameter of the outer method, then use nested `RecursiveAstVisitor`s to find closures that shadow the same type and check if the outer variable is referenced:
+
+```dart
+@override
+void visitMethodDeclaration(MethodDeclaration node) {
+  final contextParam = _findParamOfType(node.parameters?.parameters, _checker);
+  if (contextParam == null) return;
+  final contextName = contextParam.name?.lexeme;
+  if (contextName == null) return;
+
+  final finder = _NestedClosureFinder(rule, contextName);
+  node.body.visitChildren(finder);
+}
+
+class _NestedClosureFinder extends RecursiveAstVisitor<void> {
+  final MyRule rule;
+  final String outerName;
+  _NestedClosureFinder(this.rule, this.outerName);
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {
+    final innerParam = _findParamOfType(node.parameters?.parameters, _checker);
+    if (innerParam != null) {
+      final innerName = innerParam.name?.lexeme;
+      if (innerName != outerName) {
+        // Inner closure shadows the type but not the name — check for outer usage
+        final usageFinder = _UsageFinder(rule, outerName);
+        node.body.visitChildren(usageFinder);
+      }
+    }
+    super.visitFunctionExpression(node);
+  }
+}
+
+class _UsageFinder extends RecursiveAstVisitor<void> {
+  final MyRule rule;
+  final String name;
+  _UsageFinder(this.rule, this.name);
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (node.name == name) rule.reportAtNode(node);
+    super.visitSimpleIdentifier(node);
+  }
+
+  // Stop at nested closures that also shadow the type
+  @override
+  void visitFunctionExpression(FunctionExpression node) {
+    if (_hasParamOfType(node.parameters?.parameters, _checker)) return;
+    super.visitFunctionExpression(node);
+  }
+}
+```
+
+**Resolving untyped parameters:** When closure params have no type annotation (e.g., `(_)` inferred from context), use the resolved element type:
+
+```dart
+static bool _isTargetType(FormalParameter param) {
+  // Try explicit type annotation first
+  if (param is SimpleFormalParameter) {
+    final type = param.type?.type;
+    if (type != null) return _checker.isExactlyType(type);
+  }
+  // Fall back to resolved element type (for untyped params)
+  final element = param.declaredFragment?.element;
+  if (element != null) return _checker.isExactlyType(element.type);
+  return false;
+}
+```
+
+**When to use:** Rules that detect incorrect variable scoping (e.g., using outer BuildContext when an inner one is available).
+
+**Ref:** [use_closest_build_context.dart](../../../lib/src/rules/use_closest_build_context.dart#L52-L180)
