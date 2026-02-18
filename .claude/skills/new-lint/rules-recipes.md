@@ -1338,6 +1338,156 @@ void _checkPattern(DartPattern pattern) {
 
 ---
 
+### Recipe: Cross-Method Call Pairing (addListener/removeListener Across Methods)
+
+Register `addClassDeclaration` and use `RecursiveAstVisitor` collectors to gather method calls from different class methods, then pair them by comparing `toSource()` of target and arguments:
+
+```dart
+@override
+void visitClassDeclaration(ClassDeclaration node) {
+  final element = node.declaredFragment?.element;
+  if (element == null) return;
+  if (!_stateChecker.isSuperOf(element)) return;
+
+  final body = node.body;
+  if (body is! BlockClassBody) return;
+  final methods = body.members.whereType<MethodDeclaration>();
+
+  // Collect calls from one method (e.g., dispose)
+  final disposeMethod = methods.where((m) => m.name.lexeme == 'dispose').firstOrNull;
+  final removeCalls = <_ListenerCall>{};
+  if (disposeMethod != null) {
+    final collector = _MethodCallCollector('removeListener', stopAtFunctions: true);
+    disposeMethod.body.visitChildren(collector);
+    removeCalls.addAll(collector.calls);
+  }
+
+  // Check calls from other methods (e.g., initState)
+  for (final method in methods) {
+    if (method.name.lexeme != 'initState') continue;
+    final collector = _MethodCallCollector('addListener', stopAtFunctions: true);
+    method.body.visitChildren(collector);
+
+    for (final addCall in collector.calls) {
+      if (!_hasMatch(addCall, removeCalls)) {
+        rule.reportAtNode(addCall.node);
+      }
+    }
+  }
+}
+
+// Match by comparing toSource() of target and first argument:
+static bool _hasMatch(_ListenerCall addCall, Set<_ListenerCall> removeCalls) {
+  return removeCalls.any((r) =>
+      r.targetSource == addCall.targetSource &&
+      r.listenerSource == addCall.listenerSource);
+}
+```
+
+**Collector with function boundary stopping:**
+```dart
+class _MethodCallCollector extends RecursiveAstVisitor<void> {
+  final String methodName;
+  final bool stopAtFunctions;
+  final List<_ListenerCall> calls = [];
+
+  _MethodCallCollector(this.methodName, {this.stopAtFunctions = false});
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.methodName.name == methodName && node.argumentList.arguments.isNotEmpty) {
+      final target = node.realTarget;
+      calls.add(_ListenerCall(
+        node: node,
+        targetSource: target?.toSource() ?? 'this',
+        listenerSource: node.argumentList.arguments.first.toSource(),
+      ));
+    }
+    super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {
+    if (stopAtFunctions) return;
+    super.visitFunctionExpression(node);
+  }
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    if (stopAtFunctions) return;
+    super.visitFunctionDeclaration(node);
+  }
+}
+```
+
+**Key details:**
+- Use `node.realTarget?.toSource() ?? 'this'` to get the object the method is called on
+- Use `args.first.toSource()` to get the callback argument as source text
+- Compare source strings for matching (handles field references, method tear-offs, stored callbacks)
+- Stop at function boundaries to avoid false positives from closures/nested functions
+- `firstOrNull` (from Dart 3) works on `Iterable` directly — no extension needed
+
+**When to use:** Rules that need to verify paired method calls across different class methods (e.g., addListener/removeListener, subscribe/unsubscribe, open/close)
+**Reference:** [always_remove_listener.dart](../../../lib/src/rules/always_remove_listener.dart#L66-L102)
+
+---
+
+### Recipe: Check If Widget Is Direct Child of Specific Parent Widget
+
+Walk the AST parent chain from an `InstanceCreationExpression` through intermediate nodes (`ListLiteral`, `NamedExpression`) up to the nearest `ArgumentList` to find the enclosing widget constructor and check its type:
+
+```dart
+static bool _isDirectChildOfFlex(InstanceCreationExpression node) {
+  AstNode? current = node.parent;
+  while (current != null) {
+    // Skip list literals (children: [Flexible(...)])
+    if (current is ListLiteral) {
+      current = current.parent;
+      continue;
+    }
+
+    // Skip named expressions (child: Flexible(...) or children: [...])
+    if (current is NamedExpression) {
+      current = current.parent;
+      continue;
+    }
+
+    // We've reached an argument list — check the parent constructor
+    if (current is ArgumentList) {
+      final parent = current.parent;
+      if (parent is InstanceCreationExpression) {
+        final parentElement = parent.constructorName.type.element;
+        if (parentElement != null && _flexChecker.isSuperOf(parentElement)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // Stop at function/method boundaries
+    if (current is FunctionExpression ||
+        current is FunctionDeclaration ||
+        current is MethodDeclaration) {
+      return false;
+    }
+
+    current = current.parent;
+  }
+  return false;
+}
+```
+
+**Key details:**
+- A widget passed as `child:` has the parent chain: `NamedExpression` → `ArgumentList` → `InstanceCreationExpression`
+- A widget in `children: [...]` has the chain: `ListLiteral` → `NamedExpression` → `ArgumentList` → `InstanceCreationExpression`
+- Always stop at function/method boundaries to avoid false positives from nested closures
+- Use `TypeChecker.isSuperOf()` on the parent constructor's element to check against a type hierarchy (e.g., `Flex` covers `Row`, `Column`, `Flex`)
+
+**When to use:** Rules that validate widget placement in the widget tree (e.g., Flexible must be inside Flex, Positioned must be inside Stack)
+**Reference:** [avoid_flexible_outside_flex.dart](../../../lib/src/rules/avoid_flexible_outside_flex.dart#L80-L119)
+
+---
+
 ## 🧪 Testing & Registration
 
 ### Test Structure
@@ -1501,3 +1651,5 @@ class ManyLintsPlugin extends Plugin {
 | Feb 18, 2026 | prefer_contains | Added recipe for detecting negative integer literals (`-1` is `PrefixExpression(MINUS, IntegerLiteral(1))`, NOT `IntegerLiteral(-1)`). Combined with BinaryExpression for `.indexOf() == -1` pattern detection with reversed operand handling. |
 | Feb 18, 2026 | prefer_overriding_parent_equality | Added recipe for checking if ancestors override specific members (== and hashCode) using `InterfaceType.methods`/`InterfaceType.getters` + AST-level `MethodDeclaration.isOperator`/`MethodDeclaration.isGetter`. Also documented that `InstanceElement` has `getters`/`methods`/`fields` (NOT `accessors`), `FieldElement.isOriginDeclaration` replaces deprecated `isSynthetic`, and `declaredFragment?.element` returns `ClassElement` with type promotion limitations. |
 | Feb 18, 2026 | prefer_wildcard_pattern | Added `addSwitchExpression` to cheat sheet, recipe for detecting ObjectPattern by type name in switch/if-case patterns. Documents `ObjectPattern.type.name.lexeme` + `fields.isEmpty` check, recursive pattern walking through `LogicalAndPattern`/`LogicalOrPattern`, and `SwitchPatternCase` vs `SwitchExpressionCase` access patterns. |
+| Feb 18, 2026 | always_remove_listener | Added recipe for cross-method call pairing (tracking addListener/removeListener across lifecycle methods). Uses RecursiveAstVisitor collectors with function boundary stopping, `realTarget?.toSource()` matching, and `args.first.toSource()` for callback comparison. |
+| Feb 18, 2026 | avoid_flexible_outside_flex | Added recipe for checking if a widget is a direct child of a specific parent widget type by walking the AST parent chain through ListLiteral/NamedExpression/ArgumentList to the enclosing InstanceCreationExpression. |
