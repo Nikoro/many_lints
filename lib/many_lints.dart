@@ -27,6 +27,7 @@ import 'package:many_lints/src/rules/avoid_cascade_after_if_null.dart';
 import 'package:many_lints/src/rules/avoid_border_all.dart';
 import 'package:many_lints/src/rules/avoid_expanded_as_spacer.dart';
 import 'package:many_lints/src/rules/avoid_returning_widgets.dart';
+import 'package:many_lints/src/rules/avoid_shrink_wrap_in_lists.dart';
 import 'package:many_lints/src/rules/avoid_single_field_destructuring.dart';
 import 'package:many_lints/src/rules/avoid_flexible_outside_flex.dart';
 import 'package:many_lints/src/rules/avoid_constant_conditions.dart';
@@ -220,6 +221,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidBorderAll());
     registry.registerWarningRule(AvoidExpandedAsSpacer());
     registry.registerWarningRule(AvoidReturningWidgets());
+    registry.registerWarningRule(AvoidShrinkWrapInLists());
 
     // Register fixes for rules
     registry.registerFixForRule(
