@@ -1667,3 +1667,59 @@ if (!_hasPaddingParam(childType)) return;
 - Works for any widget/class, not just Flutter-specific types
 
 **Ref:** [avoid_wrapping_in_padding.dart](../../../lib/src/rules/avoid_wrapping_in_padding.dart#L106-L112)
+
+### Detect Functional List Building Patterns (map/toList, spread+map, List.generate, fold)
+
+Register multiple visitors to detect different patterns. Key: suppress duplicate diagnostics when patterns overlap (e.g., `.map().toList()` inside a `SpreadElement`):
+
+```dart
+registry.addMethodInvocation(this, visitor);
+registry.addInstanceCreationExpression(this, visitor);
+registry.addListLiteral(this, visitor);
+
+// Pattern 1: iterable.map((e) => ...).toList()
+@override
+void visitMethodInvocation(MethodInvocation node) {
+  if (node.methodName.name == 'toList') {
+    // Skip if inside a spread — Pattern 2 handles that case
+    if (node.parent is SpreadElement) return;
+    final target = node.target;
+    if (target is! MethodInvocation) return;
+    if (target.methodName.name != 'map') return;
+    final args = target.argumentList.arguments;
+    if (args.isEmpty || args.first is! FunctionExpression) return;
+    rule.reportAtNode(node);
+  }
+}
+
+// Pattern 2: [...iterable.map((e) => ...)] in list literals
+@override
+void visitListLiteral(ListLiteral node) {
+  for (final element in node.elements) {
+    if (element is SpreadElement) {
+      var expr = element.expression;
+      // Unwrap optional .toList()
+      if (expr is MethodInvocation && expr.methodName.name == 'toList') {
+        expr = expr.target!;
+      }
+      if (expr is! MethodInvocation || expr.methodName.name != 'map') continue;
+      final args = expr.argumentList.arguments;
+      if (args.isEmpty || args.first is! FunctionExpression) continue;
+      rule.reportAtNode(element);
+    }
+  }
+}
+
+// Pattern 3: List.generate(n, (i) => ...) — MethodInvocation without type args
+// Also handle List<T>.generate() as InstanceCreationExpression with type args
+
+// Pattern 4: iterable.fold([], (list, e) { ... }) — empty list literal as first arg
+```
+
+**Key points:**
+- `List.generate()` without type args → `MethodInvocation`; with type args → `InstanceCreationExpression`
+- Verify `List` resolves to `dart:core` via `element.library.identifier.startsWith('dart:core')`
+- Use `registry.addListLiteral` to visit `ListLiteral` nodes and inspect `SpreadElement` children
+- Check `node.parent is SpreadElement` to avoid double-reporting when both patterns match
+
+**Ref:** [prefer_for_loop_in_children.dart](../../../lib/src/rules/prefer_for_loop_in_children.dart#L43-L166)
