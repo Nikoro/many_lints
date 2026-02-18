@@ -55,6 +55,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Widget replacement | [avoid_expanded_as_spacer_fix.dart](avoid_expanded_as_spacer_fix.dart) | Replace entire widget with simpler alternative; selectively preserve named args (key, flex); handle both node types; preserve const keyword |
 | Delete constructor | [avoid_state_constructors_fix.dart](avoid_state_constructors_fix.dart) | Delete entire `ConstructorDeclaration` node via `range.node()` + `addDeletion()` |
 | Replace + add import | [prefer_async_callback_fix.dart](prefer_async_callback_fix.dart) | Replace type annotation + `builder.importLibrary(Uri.parse('package:...'))` to auto-add import |
+| Callback transform + import | [prefer_compute_over_isolate_run_fix.dart](prefer_compute_over_isolate_run_fix.dart) | Replace method call + transform callback arg (add `_` param) + `importLibrary`; handle closures vs function references differently |
 
 ## Updating Documentation
 
