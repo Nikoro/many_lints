@@ -1771,6 +1771,95 @@ static bool _isInsideEventHandlerCallback(AstNode node) {
 
 ---
 
+### Recipe: Correlate Two Related Class Declarations (StatefulWidget + State)
+
+Register `addCompilationUnit` to visit the entire file, collect classes into categories, then correlate pairs by matching type arguments in extends clauses:
+
+```dart
+@override
+void registerNodeProcessors(
+  RuleVisitorRegistry registry,
+  RuleContext context,
+) {
+  final visitor = _Visitor(this);
+  registry.addCompilationUnit(this, visitor);
+}
+
+@override
+void visitCompilationUnit(CompilationUnit node) {
+  final statefulWidgets = <ClassDeclaration>[];
+  final stateClasses = <ClassDeclaration>[];
+
+  for (final declaration in node.declarations) {
+    if (declaration is! ClassDeclaration) continue;
+    final element = declaration.declaredFragment?.element;
+    if (element == null) continue;
+
+    if (_statefulWidgetChecker.isSuperOf(element)) {
+      statefulWidgets.add(declaration);
+    } else if (_stateChecker.isSuperOf(element)) {
+      stateClasses.add(declaration);
+    }
+  }
+
+  // Correlate: find State<WidgetName> for each StatefulWidget
+  for (final widget in statefulWidgets) {
+    final widgetName = widget.namePart.typeName.lexeme;
+    final stateClass = _findStateClass(stateClasses, widgetName);
+    if (stateClass == null) continue;
+
+    if (_isUnnecessaryState(stateClass)) {
+      rule.reportAtToken(widget.namePart.typeName);
+    }
+  }
+}
+
+static ClassDeclaration? _findStateClass(
+  List<ClassDeclaration> stateClasses,
+  String widgetName,
+) {
+  for (final stateClass in stateClasses) {
+    final superclass = stateClass.extendsClause?.superclass;
+    if (superclass == null) continue;
+
+    final typeArgs = superclass.typeArguments?.arguments;
+    if (typeArgs != null && typeArgs.length == 1) {
+      final typeArg = typeArgs.first;
+      if (typeArg is NamedType && typeArg.name.lexeme == widgetName) {
+        return stateClass;
+      }
+    }
+  }
+  return null;
+}
+```
+
+**Checking mutable fields in a class (skip final/static/const):**
+```dart
+static bool _hasMutableFields(BlockClassBody body) {
+  for (final member in body.members) {
+    if (member is! FieldDeclaration) continue;
+    if (member.isStatic) continue;
+    final fields = member.fields;
+    if (fields.isConst || fields.isFinal) continue;
+    return true; // Non-final, non-const, non-static = mutable
+  }
+  return false;
+}
+```
+
+**Key details:**
+- Use `addCompilationUnit` when you need to correlate multiple top-level declarations in the same file
+- `NamedType.typeArguments?.arguments` gives the type arguments (e.g., `State<MyWidget>` → `MyWidget`)
+- `FieldDeclaration.isStatic` checks for static keyword; `VariableDeclarationList.isFinal`/`isConst` check for final/const
+- `FieldDeclaration.fields` returns `VariableDeclarationList` which has `isFinal`, `isConst`, `isLate` properties
+- To find `setState` calls, use `RecursiveAstVisitor` to traverse the entire State class body
+
+**When to use:** Rules that need to analyze relationships between multiple class declarations in the same file (e.g., StatefulWidget + State, Factory + Product, etc.)
+**Reference:** [avoid_unnecessary_stateful_widgets.dart](../../../lib/src/rules/avoid_unnecessary_stateful_widgets.dart#L66-L148)
+
+---
+
 ## 🧪 Testing & Registration
 
 ### Test Structure
@@ -1940,3 +2029,4 @@ class ManyLintsPlugin extends Plugin {
 | Feb 18, 2026 | avoid_mounted_in_setstate | Added recipe for searching callback argument body for specific identifiers. Shows handling of three identifier forms: bare SimpleIdentifier (with parent exclusion), PrefixedIdentifier (`context.mounted`), and PropertyAccess (`this.mounted`). |
 | Feb 18, 2026 | avoid_unnecessary_overrides | Added recipe for detecting unnecessary overrides across five patterns: abstract members (check `isAbstract` BEFORE `isGetter`/`isSetter`), getters (PropertyAccess on super), setters (AssignmentExpression to super), operators (BinaryExpression with SuperExpression, NOT MethodInvocation), and regular methods with arg pass-through validation. |
 | Feb 18, 2026 | avoid_unnecessary_setstate | Added recipe for detecting method calls inside specific lifecycle methods with event handler callback exemption. Walk parent chain stopping at function boundaries (FunctionExpression/FunctionDeclaration) to find enclosing lifecycle method, use NamedExpression parent check to exempt event handler callbacks in build. |
+| Feb 18, 2026 | avoid_unnecessary_stateful_widgets | Added recipe for correlating two related class declarations (StatefulWidget + State) using `addCompilationUnit`. Match State to Widget via `NamedType.typeArguments?.arguments` in extends clause. Check mutable fields via `FieldDeclaration.isStatic`/`VariableDeclarationList.isFinal`/`isConst`. Use `RecursiveAstVisitor` to find `setState` calls in State class body. |
