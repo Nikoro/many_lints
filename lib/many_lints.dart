@@ -30,6 +30,7 @@ import 'package:many_lints/src/rules/avoid_returning_widgets.dart';
 import 'package:many_lints/src/rules/prefer_async_callback.dart';
 import 'package:many_lints/src/rules/prefer_compute_over_isolate_run.dart';
 import 'package:many_lints/src/rules/prefer_const_border_radius.dart';
+import 'package:many_lints/src/rules/avoid_wrapping_in_padding.dart';
 import 'package:many_lints/src/rules/prefer_constrained_box_over_container.dart';
 import 'package:many_lints/src/rules/avoid_shrink_wrap_in_lists.dart';
 import 'package:many_lints/src/rules/avoid_state_constructors.dart';
@@ -130,6 +131,7 @@ import 'package:many_lints/src/fixes/prefer_iterable_of_fix.dart';
 import 'package:many_lints/src/fixes/prefer_async_callback_fix.dart';
 import 'package:many_lints/src/fixes/prefer_compute_over_isolate_run_fix.dart';
 import 'package:many_lints/src/fixes/prefer_const_border_radius_fix.dart';
+import 'package:many_lints/src/fixes/avoid_wrapping_in_padding_fix.dart';
 import 'package:many_lints/src/fixes/prefer_constrained_box_over_container_fix.dart';
 import 'package:many_lints/src/fixes/prefer_explicit_function_type_fix.dart';
 import 'package:many_lints/src/fixes/prefer_overriding_parent_equality_fix.dart';
@@ -236,6 +238,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferAsyncCallback());
     registry.registerWarningRule(PreferComputeOverIsolateRun());
     registry.registerWarningRule(PreferConstBorderRadius());
+    registry.registerWarningRule(AvoidWrappingInPadding());
     registry.registerWarningRule(PreferConstrainedBoxOverContainer());
 
     // Register fixes for rules
@@ -433,6 +436,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       PreferConstrainedBoxOverContainer.code,
       PreferConstrainedBoxOverContainerFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidWrappingInPadding.code,
+      AvoidWrappingInPaddingFix.new,
     );
 
     // Register assists

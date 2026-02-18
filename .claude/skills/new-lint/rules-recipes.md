@@ -1626,3 +1626,44 @@ void visitMethodInvocation(MethodInvocation node) {
 - This prevents false positives when users define their own class with the same name
 
 **Ref:** [prefer_compute_over_isolate_run.dart](../../../lib/src/rules/prefer_compute_over_isolate_run.dart#L60-L75)
+
+### Check If a Widget's Constructor Has a Specific Named Parameter
+
+Use `InterfaceType.element.constructors` to dynamically check if a type's constructor accepts a particular named parameter. Useful when the rule should apply to *any* widget that supports a parameter (e.g., `padding`), not just a hardcoded list:
+
+```dart
+static bool _hasPaddingParam(InterfaceType type) {
+  for (final constructor in type.element.constructors) {
+    for (final param in constructor.formalParameters) {
+      if (param.isNamed && param.name == 'padding') return true;
+    }
+  }
+  return false;
+}
+```
+
+**Getting type info from both InstanceCreationExpression and MethodInvocation children:**
+```dart
+static (String?, ArgumentList?) _getChildInfo(Expression expr) {
+  if (expr is InstanceCreationExpression) {
+    return (expr.constructorName.type.name.lexeme, expr.argumentList);
+  }
+  if (expr is MethodInvocation) {
+    return (expr.methodName.name, expr.argumentList);
+  }
+  return (null, null);
+}
+
+// Then check the static type:
+final childType = childExpr.staticType;
+if (childType is! InterfaceType) return;
+if (!_hasPaddingParam(childType)) return;
+```
+
+**Key API notes:**
+- `InterfaceType.element.constructors` returns `List<ConstructorElement>`
+- `ConstructorElement.formalParameters` returns `List<FormalParameterElement>`
+- `FormalParameterElement.isNamed` and `.name` for checking named parameters
+- Works for any widget/class, not just Flutter-specific types
+
+**Ref:** [avoid_wrapping_in_padding.dart](../../../lib/src/rules/avoid_wrapping_in_padding.dart#L106-L112)
