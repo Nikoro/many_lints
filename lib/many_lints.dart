@@ -24,6 +24,7 @@ import 'package:analysis_server_plugin/registry.dart';
 // Rules
 import 'package:many_lints/src/rules/always_remove_listener.dart';
 import 'package:many_lints/src/rules/avoid_cascade_after_if_null.dart';
+import 'package:many_lints/src/rules/avoid_single_field_destructuring.dart';
 import 'package:many_lints/src/rules/avoid_flexible_outside_flex.dart';
 import 'package:many_lints/src/rules/avoid_constant_conditions.dart';
 import 'package:many_lints/src/rules/avoid_duplicate_cascades.dart';
@@ -88,6 +89,7 @@ import 'package:many_lints/src/rules/use_notifier_suffix.dart';
 import 'package:many_lints/src/fixes/always_remove_listener_fix.dart';
 import 'package:many_lints/src/fixes/dispose_fields_fix.dart';
 import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
+import 'package:many_lints/src/fixes/avoid_single_field_destructuring_fix.dart';
 import 'package:many_lints/src/fixes/avoid_commented_out_code_fix.dart';
 import 'package:many_lints/src/fixes/avoid_incomplete_copy_with_fix.dart';
 import 'package:many_lints/src/fixes/avoid_incorrect_image_opacity_fix.dart';
@@ -206,6 +208,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferClassDestructuring());
     registry.registerWarningRule(UseClosestBuildContext());
     registry.registerWarningRule(UseExistingVariable());
+    registry.registerWarningRule(AvoidSingleFieldDestructuring());
 
     // Register fixes for rules
     registry.registerFixForRule(
@@ -369,6 +372,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       UseExistingVariable.code,
       UseExistingVariableFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidSingleFieldDestructuring.code,
+      AvoidSingleFieldDestructuringFix.new,
     );
 
     // Register assists

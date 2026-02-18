@@ -1028,6 +1028,8 @@ if (node case InstanceCreationExpression(
 | Try statements | `registry.addTryStatement(this, visitor)` |
 | Methods | `registry.addMethodDeclaration(this, visitor)` |
 | Mixins | `registry.addMixinDeclaration(this, visitor)` |
+| Pattern variable decl | `registry.addPatternVariableDeclaration(this, visitor)` |
+| Pattern variable stmt | `registry.addPatternVariableDeclarationStatement(this, visitor)` |
 
 ### Common AST Checks
 
