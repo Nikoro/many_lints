@@ -1488,6 +1488,127 @@ static bool _isDirectChildOfFlex(InstanceCreationExpression node) {
 
 ---
 
+### Recipe: Detect Wrapper Widget with Specific Child Type (InstanceCreation + MethodInvocation)
+
+**⚠️ Important:** Widget constructors without `new`/`const` and without explicit type arguments (e.g., `Opacity(...)`, `Image.asset(...)`) are parsed as `MethodInvocation`, NOT `InstanceCreationExpression`. You must register visitors for **both** node types:
+
+```dart
+@override
+void registerNodeProcessors(
+  RuleVisitorRegistry registry,
+  RuleContext context,
+) {
+  final visitor = _Visitor(this);
+  registry.addInstanceCreationExpression(this, visitor);
+  registry.addMethodInvocation(this, visitor);
+}
+
+@override
+void visitInstanceCreationExpression(InstanceCreationExpression node) {
+  final element = node.constructorName.type.element;
+  if (element == null || !_wrapperChecker.isExactly(element)) return;
+
+  _checkChildArgument(node.argumentList, node.constructorName);
+}
+
+@override
+void visitMethodInvocation(MethodInvocation node) {
+  final type = node.staticType;
+  if (type == null || !_wrapperChecker.isExactlyType(type)) return;
+
+  _checkChildArgument(node.argumentList, node.methodName);
+}
+
+void _checkChildArgument(ArgumentList argumentList, AstNode reportNode) {
+  for (final arg in argumentList.arguments.whereType<NamedExpression>()) {
+    if (arg.name.label.name == 'child') {
+      final childType = arg.expression.staticType;
+      if (childType != null &&
+          _childChecker.isAssignableFromType(childType)) {
+        rule.reportAtNode(reportNode);
+      }
+      return;
+    }
+  }
+}
+```
+
+**Key details:**
+- For `InstanceCreationExpression`: check via `node.constructorName.type.element` and report at `node.constructorName`
+- For `MethodInvocation`: check via `node.staticType` and report at `node.methodName`
+- The child expression's `staticType` works regardless of whether the child is `InstanceCreationExpression` or `MethodInvocation`
+- In the fix, handle both `ConstructorName` and `SimpleIdentifier` as the reported node type
+
+**When to use:** Rules that detect widget wrapping patterns (e.g., Opacity wrapping Image, Container wrapping only a child)
+**Reference:** [avoid_incorrect_image_opacity.dart](../../../lib/src/rules/avoid_incorrect_image_opacity.dart#L62-L88)
+
+---
+
+### Recipe: Search for Specific Identifiers Inside a Callback Argument
+
+Register `addMethodInvocation` to visit a specific method call (e.g., `setState`), extract the callback argument as `FunctionExpression`, and use `RecursiveAstVisitor` to search its body for specific identifier references. Handle all three forms: bare identifier, prefixed (`context.mounted`), and property access (`this.mounted`):
+
+```dart
+@override
+void visitMethodInvocation(MethodInvocation node) {
+  if (node.methodName.name != 'setState') return;
+
+  // Get the callback argument
+  final args = node.argumentList.arguments;
+  if (args.isEmpty) return;
+  final callback = args.first;
+  if (callback is! FunctionExpression) return;
+
+  // Search for the identifier inside the callback body
+  final finder = _IdentifierFinder(rule);
+  callback.body.visitChildren(finder);
+}
+
+class _IdentifierFinder extends RecursiveAstVisitor<void> {
+  final MyRule rule;
+  _IdentifierFinder(this.rule);
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (node.name == 'mounted') {
+      // Exclude cases handled by visitPrefixedIdentifier/visitPropertyAccess
+      final parent = node.parent;
+      if (parent is PrefixedIdentifier && parent.identifier == node) return;
+      if (parent is PropertyAccess && parent.propertyName == node) return;
+      rule.reportAtNode(node);
+    }
+    super.visitSimpleIdentifier(node);
+  }
+
+  @override
+  void visitPrefixedIdentifier(PrefixedIdentifier node) {
+    if (node.identifier.name == 'mounted') {
+      rule.reportAtNode(node); // context.mounted
+    }
+    super.visitPrefixedIdentifier(node);
+  }
+
+  @override
+  void visitPropertyAccess(PropertyAccess node) {
+    if (node.propertyName.name == 'mounted') {
+      rule.reportAtNode(node); // this.mounted
+    }
+    super.visitPropertyAccess(node);
+  }
+}
+```
+
+**Key details:**
+- `SimpleIdentifier` catches bare `mounted` — but also fires for `context.mounted` and `this.mounted` children, so exclude those via parent type checks
+- `PrefixedIdentifier` catches `context.mounted` (simple variable prefix)
+- `PropertyAccess` catches `this.mounted` and complex expressions like `widget.context.mounted`
+- The callback argument `args.first` may be a `FunctionExpression` (inline closure) or another expression (method reference) — only analyze closures
+
+**When to use:** Rules that search for specific identifier/property usage inside a callback argument of a method call
+**Reference:** [avoid_mounted_in_setstate.dart](../../../lib/src/rules/avoid_mounted_in_setstate.dart#L59-L124)
+
+---
+
 ## 🧪 Testing & Registration
 
 ### Test Structure
@@ -1651,5 +1772,7 @@ class ManyLintsPlugin extends Plugin {
 | Feb 18, 2026 | prefer_contains | Added recipe for detecting negative integer literals (`-1` is `PrefixExpression(MINUS, IntegerLiteral(1))`, NOT `IntegerLiteral(-1)`). Combined with BinaryExpression for `.indexOf() == -1` pattern detection with reversed operand handling. |
 | Feb 18, 2026 | prefer_overriding_parent_equality | Added recipe for checking if ancestors override specific members (== and hashCode) using `InterfaceType.methods`/`InterfaceType.getters` + AST-level `MethodDeclaration.isOperator`/`MethodDeclaration.isGetter`. Also documented that `InstanceElement` has `getters`/`methods`/`fields` (NOT `accessors`), `FieldElement.isOriginDeclaration` replaces deprecated `isSynthetic`, and `declaredFragment?.element` returns `ClassElement` with type promotion limitations. |
 | Feb 18, 2026 | prefer_wildcard_pattern | Added `addSwitchExpression` to cheat sheet, recipe for detecting ObjectPattern by type name in switch/if-case patterns. Documents `ObjectPattern.type.name.lexeme` + `fields.isEmpty` check, recursive pattern walking through `LogicalAndPattern`/`LogicalOrPattern`, and `SwitchPatternCase` vs `SwitchExpressionCase` access patterns. |
+| Feb 18, 2026 | avoid_incorrect_image_opacity | Added recipe for detecting wrapper widget with specific child type. Constructors without `new`/`const`/type args are parsed as `MethodInvocation` — must register both `addInstanceCreationExpression` and `addMethodInvocation`. Use `staticType` on the child expression for type checking regardless of AST node type. |
 | Feb 18, 2026 | always_remove_listener | Added recipe for cross-method call pairing (tracking addListener/removeListener across lifecycle methods). Uses RecursiveAstVisitor collectors with function boundary stopping, `realTarget?.toSource()` matching, and `args.first.toSource()` for callback comparison. |
 | Feb 18, 2026 | avoid_flexible_outside_flex | Added recipe for checking if a widget is a direct child of a specific parent widget type by walking the AST parent chain through ListLiteral/NamedExpression/ArgumentList to the enclosing InstanceCreationExpression. |
+| Feb 18, 2026 | avoid_mounted_in_setstate | Added recipe for searching callback argument body for specific identifiers. Shows handling of three identifier forms: bare SimpleIdentifier (with parent exclusion), PrefixedIdentifier (`context.mounted`), and PropertyAccess (`this.mounted`). |

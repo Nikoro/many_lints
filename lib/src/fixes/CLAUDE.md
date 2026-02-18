@@ -44,6 +44,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Add catch params | [avoid_throw_in_catch_block_fix.dart](avoid_throw_in_catch_block_fix.dart) | Replace throw + add stack trace param to catch clause |
 | Generate overrides | [prefer_overriding_parent_equality_fix.dart](prefer_overriding_parent_equality_fix.dart) | Generate `==`/`hashCode` stubs from instance fields, insert before closing brace |
 | Insert in/create method | [always_remove_listener_fix.dart](always_remove_listener_fix.dart) | Insert statement into existing dispose() or create it; find super.dispose() for insertion point |
+| Unwrap+add param | [avoid_incorrect_image_opacity_fix.dart](avoid_incorrect_image_opacity_fix.dart) | Unwrap child from wrapper widget + add parameter via string insertion; handle both ConstructorName and SimpleIdentifier report nodes |
 
 ## Updating Documentation
 
