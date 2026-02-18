@@ -1213,6 +1213,59 @@ static bool _isIndexOfCall(Expression expr) {
 
 ---
 
+### Recipe: Check If Ancestor Overrides Specific Members (== and hashCode)
+
+Walk `element.allSupertypes` to check if any ancestor defines specific methods/getters. Use `InterfaceType.methods` and `InterfaceType.getters` (NOT `.accessors` which doesn't exist in 10.0.2). For the current class, use AST-level checks via `MethodDeclaration.isOperator` and `MethodDeclaration.isGetter`:
+
+```dart
+@override
+void visitClassDeclaration(ClassDeclaration node) {
+  final element = node.declaredFragment?.element;
+  if (element == null) return;
+
+  // Check ancestors via InterfaceType
+  for (final supertype in element.allSupertypes) {
+    if (supertype.element.name == 'Object') continue;
+
+    // Check methods on the type
+    final hasEqualsOp = supertype.methods.any(
+      (m) => m.name == '==' && !m.isAbstract,
+    );
+    // Check getters on the type
+    final hasHashCode = supertype.getters.any(
+      (g) => g.name == 'hashCode' && !g.isAbstract,
+    );
+
+    if (hasEqualsOp && hasHashCode) { /* ancestor overrides equality */ }
+  }
+
+  // Check current class via AST
+  final body = node.body;
+  if (body is! BlockClassBody) return;
+
+  final overridesEquals = body.members.any(
+    (m) => m is MethodDeclaration && m.isOperator && m.name.lexeme == '==',
+  );
+  final overridesHashCode = body.members.any(
+    (m) => m is MethodDeclaration && m.isGetter && m.name.lexeme == 'hashCode',
+  );
+}
+```
+
+**Key details:**
+- `InterfaceType.methods` → `List<MethodElement>` (not deprecated in 10.0.2)
+- `InterfaceType.getters` → `List<GetterElement>` (replaces old `accessors`)
+- `MethodElement.name` / `GetterElement.name` → `String?`
+- `MethodDeclaration.isOperator` → true for `operator ==`
+- `MethodDeclaration.isGetter` → true for `get hashCode`
+- `element.allSupertypes` includes the full chain (grandparent, mixins, etc.)
+- Skip `Object` to avoid false positives on default `==`/`hashCode`
+
+**When to use:** Rules that check inheritance patterns for specific member overrides
+**Reference:** [prefer_overriding_parent_equality.dart](../../../lib/src/rules/prefer_overriding_parent_equality.dart#L68-L97)
+
+---
+
 ## 🧪 Testing & Registration
 
 ### Test Structure
@@ -1374,3 +1427,4 @@ class ManyLintsPlugin extends Plugin {
 | Feb 18, 2026 | avoid_throw_in_catch_block | Added recipe for finding specific expressions inside catch blocks using RecursiveAstVisitor with function boundary stopping (ThrowExpression vs RethrowExpression distinction). Also added recipe for adding parameters to catch clauses in quick fixes (CatchClauseParameter manipulation). |
 | Feb 18, 2026 | avoid_unassigned_stream_subscriptions | Added recipe for detecting unassigned method invocation return values using `node.staticType` (return type) + `node.parent is ExpressionStatement` (discarded value). Shows dart:async type checking via `library.identifier`. |
 | Feb 18, 2026 | prefer_contains | Added recipe for detecting negative integer literals (`-1` is `PrefixExpression(MINUS, IntegerLiteral(1))`, NOT `IntegerLiteral(-1)`). Combined with BinaryExpression for `.indexOf() == -1` pattern detection with reversed operand handling. |
+| Feb 18, 2026 | prefer_overriding_parent_equality | Added recipe for checking if ancestors override specific members (== and hashCode) using `InterfaceType.methods`/`InterfaceType.getters` + AST-level `MethodDeclaration.isOperator`/`MethodDeclaration.isGetter`. Also documented that `InstanceElement` has `getters`/`methods`/`fields` (NOT `accessors`), `FieldElement.isOriginDeclaration` replaces deprecated `isSynthetic`, and `declaredFragment?.element` returns `ClassElement` with type promotion limitations. |

@@ -48,6 +48,7 @@ import 'package:many_lints/src/rules/prefer_center_over_align.dart';
 import 'package:many_lints/src/rules/prefer_contains.dart';
 import 'package:many_lints/src/rules/prefer_iterable_of.dart';
 import 'package:many_lints/src/rules/prefer_explicit_function_type.dart';
+import 'package:many_lints/src/rules/prefer_overriding_parent_equality.dart';
 import 'package:many_lints/src/rules/prefer_padding_over_container.dart';
 import 'package:many_lints/src/rules/prefer_return_await.dart';
 import 'package:many_lints/src/rules/prefer_returning_shorthands.dart';
@@ -81,6 +82,7 @@ import 'package:many_lints/src/fixes/prefer_center_over_align_fix.dart';
 import 'package:many_lints/src/fixes/prefer_contains_fix.dart';
 import 'package:many_lints/src/fixes/prefer_iterable_of_fix.dart';
 import 'package:many_lints/src/fixes/prefer_explicit_function_type_fix.dart';
+import 'package:many_lints/src/fixes/prefer_overriding_parent_equality_fix.dart';
 import 'package:many_lints/src/fixes/prefer_padding_over_container_fix.dart';
 import 'package:many_lints/src/fixes/prefer_return_await_fix.dart';
 import 'package:many_lints/src/fixes/prefer_returning_shorthands_fix.dart';
@@ -126,6 +128,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferCenterOverAlign());
     registry.registerWarningRule(PreferAlignOverContainer());
     registry.registerWarningRule(PreferExplicitFunctionType());
+    registry.registerWarningRule(PreferOverridingParentEquality());
     registry.registerWarningRule(PreferPaddingOverContainer());
     registry.registerWarningRule(PreferReturnAwait());
     registry.registerWarningRule(PreferReturningShorthands());
@@ -244,6 +247,10 @@ class ManyLintsPlugin extends Plugin {
       AvoidMapKeysContainsFix.new,
     );
     registry.registerFixForRule(AvoidOnlyRethrow.code, AvoidOnlyRethrowFix.new);
+    registry.registerFixForRule(
+      PreferOverridingParentEquality.code,
+      PreferOverridingParentEqualityFix.new,
+    );
     registry.registerFixForRule(
       AvoidThrowInCatchBlock.code,
       AvoidThrowInCatchBlockFix.new,

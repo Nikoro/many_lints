@@ -42,6 +42,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Widget dispatch | [use_gap_fix.dart](use_gap_fix.dart) | Different fix logic per widget type |
 | Unwrap try body | [avoid_only_rethrow_fix.dart](avoid_only_rethrow_fix.dart) | Remove try-catch, keep body statements |
 | Add catch params | [avoid_throw_in_catch_block_fix.dart](avoid_throw_in_catch_block_fix.dart) | Replace throw + add stack trace param to catch clause |
+| Generate overrides | [prefer_overriding_parent_equality_fix.dart](prefer_overriding_parent_equality_fix.dart) | Generate `==`/`hashCode` stubs from instance fields, insert before closing brace |
 
 ## Updating Documentation
 
