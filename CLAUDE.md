@@ -47,7 +47,7 @@ Before writing any code:
 **Use the `/new-lint` skill** for step-by-step guidance, or see the full cookbooks:
 
 - [Rules patterns](.claude/skills/new-lint/rules-patterns.md) - Rule structure, type checking, AST, visitors, reporting
-- [Rules recipes](.claude/skills/new-lint/rules-recipes.md) - 25+ copy-paste recipes for common patterns
+- [Rules recipes](.claude/skills/new-lint/rules-recipes.md) - 30+ copy-paste recipes for common patterns
 - [Fixes cookbook](.claude/skills/new-lint/fixes-cookbook.md) - Quick fix implementation patterns
 - [Assists cookbook](.claude/skills/new-lint/assists-cookbook.md) - Code assist implementation patterns
 

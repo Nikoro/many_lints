@@ -1266,6 +1266,78 @@ void visitClassDeclaration(ClassDeclaration node) {
 
 ---
 
+### Recipe: Detect ObjectPattern by Type Name in Switch/If-Case Patterns
+
+Register `addSwitchExpression`, `addSwitchStatement`, and `addIfStatement` to visit all contexts where patterns appear. Walk the pattern tree recursively to find `ObjectPattern` nodes matching a specific type:
+
+```dart
+@override
+void registerNodeProcessors(
+  RuleVisitorRegistry registry,
+  RuleContext context,
+) {
+  final visitor = _Visitor(this);
+  registry.addSwitchExpression(this, visitor);
+  registry.addSwitchStatement(this, visitor);
+  registry.addIfStatement(this, visitor);
+}
+
+@override
+void visitSwitchExpression(SwitchExpression node) {
+  for (final caseNode in node.cases) {
+    _checkPattern(caseNode.guardedPattern.pattern);
+  }
+}
+
+@override
+void visitSwitchStatement(SwitchStatement node) {
+  for (final member in node.members) {
+    if (member is SwitchPatternCase) {
+      _checkPattern(member.guardedPattern.pattern);
+    }
+  }
+}
+
+@override
+void visitIfStatement(IfStatement node) {
+  final caseClause = node.caseClause;
+  if (caseClause == null) return;
+  _checkPattern(caseClause.guardedPattern.pattern);
+}
+
+void _checkPattern(DartPattern pattern) {
+  if (pattern is ObjectPattern &&
+      pattern.type.name.lexeme == 'Object' &&
+      pattern.fields.isEmpty) {
+    rule.reportAtNode(pattern);
+    return;
+  }
+
+  // Walk nested patterns
+  if (pattern is LogicalAndPattern) {
+    _checkPattern(pattern.leftOperand);
+    _checkPattern(pattern.rightOperand);
+  }
+  if (pattern is LogicalOrPattern) {
+    _checkPattern(pattern.leftOperand);
+    _checkPattern(pattern.rightOperand);
+  }
+}
+```
+
+**Key AST types for ObjectPattern:**
+- `ObjectPattern` — matches `Type()` or `Type(field: pattern)` syntax
+  - `type: NamedType` — the type name (access via `type.name.lexeme`)
+  - `fields: NodeList<PatternField>` — field destructurings (empty for bare `Object()`)
+- `SwitchExpressionCase.guardedPattern.pattern` — the pattern in switch expression cases
+- `SwitchPatternCase.guardedPattern.pattern` — the pattern in switch statement cases (Dart 3 style)
+- `SwitchPatternCase` is a `SwitchMember` — use type check when iterating `node.members`
+
+**When to use:** Rules that analyze pattern types in switch expressions, switch statements, and if-case patterns
+**Reference:** [prefer_wildcard_pattern.dart](../../../lib/src/rules/prefer_wildcard_pattern.dart#L59-L98)
+
+---
+
 ## 🧪 Testing & Registration
 
 ### Test Structure
@@ -1428,3 +1500,4 @@ class ManyLintsPlugin extends Plugin {
 | Feb 18, 2026 | avoid_unassigned_stream_subscriptions | Added recipe for detecting unassigned method invocation return values using `node.staticType` (return type) + `node.parent is ExpressionStatement` (discarded value). Shows dart:async type checking via `library.identifier`. |
 | Feb 18, 2026 | prefer_contains | Added recipe for detecting negative integer literals (`-1` is `PrefixExpression(MINUS, IntegerLiteral(1))`, NOT `IntegerLiteral(-1)`). Combined with BinaryExpression for `.indexOf() == -1` pattern detection with reversed operand handling. |
 | Feb 18, 2026 | prefer_overriding_parent_equality | Added recipe for checking if ancestors override specific members (== and hashCode) using `InterfaceType.methods`/`InterfaceType.getters` + AST-level `MethodDeclaration.isOperator`/`MethodDeclaration.isGetter`. Also documented that `InstanceElement` has `getters`/`methods`/`fields` (NOT `accessors`), `FieldElement.isOriginDeclaration` replaces deprecated `isSynthetic`, and `declaredFragment?.element` returns `ClassElement` with type promotion limitations. |
+| Feb 18, 2026 | prefer_wildcard_pattern | Added `addSwitchExpression` to cheat sheet, recipe for detecting ObjectPattern by type name in switch/if-case patterns. Documents `ObjectPattern.type.name.lexeme` + `fields.isEmpty` check, recursive pattern walking through `LogicalAndPattern`/`LogicalOrPattern`, and `SwitchPatternCase` vs `SwitchExpressionCase` access patterns. |
