@@ -1023,6 +1023,7 @@ if (node case InstanceCreationExpression(
 | Cascade expressions | `registry.addCascadeExpression(this, visitor)` |
 | If statements | `registry.addIfStatement(this, visitor)` |
 | Switch statements | `registry.addSwitchStatement(this, visitor)` |
+| Switch expressions | `registry.addSwitchExpression(this, visitor)` |
 | Return statements | `registry.addReturnStatement(this, visitor)` |
 | Try statements | `registry.addTryStatement(this, visitor)` |
 

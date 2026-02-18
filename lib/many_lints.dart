@@ -57,6 +57,7 @@ import 'package:many_lints/src/rules/prefer_shorthands_with_enums.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_static_fields.dart';
 import 'package:many_lints/src/rules/prefer_simpler_patterns_null_check.dart';
 import 'package:many_lints/src/rules/prefer_switch_expression.dart';
+import 'package:many_lints/src/rules/prefer_wildcard_pattern.dart';
 import 'package:many_lints/src/rules/prefer_type_over_var.dart';
 import 'package:many_lints/src/rules/use_bloc_suffix.dart';
 import 'package:many_lints/src/rules/use_cubit_suffix.dart';
@@ -91,6 +92,7 @@ import 'package:many_lints/src/fixes/prefer_shorthands_with_enums_fix.dart';
 import 'package:many_lints/src/fixes/prefer_shorthands_with_static_fields_fix.dart';
 import 'package:many_lints/src/fixes/prefer_simpler_patterns_null_check_fix.dart';
 import 'package:many_lints/src/fixes/prefer_switch_expression_fix.dart';
+import 'package:many_lints/src/fixes/prefer_wildcard_pattern_fix.dart';
 import 'package:many_lints/src/fixes/prefer_type_over_var_fix.dart';
 import 'package:many_lints/src/fixes/use_dedicated_media_query_methods_fix.dart';
 import 'package:many_lints/src/fixes/use_gap_fix.dart';
@@ -137,6 +139,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferShorthandsWithStaticFields());
     registry.registerWarningRule(PreferSimplerPatternsNullCheck());
     registry.registerWarningRule(PreferSwitchExpression());
+    registry.registerWarningRule(PreferWildcardPattern());
     registry.registerWarningRule(PreferTypeOverVar());
     registry.registerWarningRule(PreferAnyOrEvery());
     registry.registerWarningRule(PreferContains());
@@ -214,6 +217,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       PreferSwitchExpression.code,
       PreferSwitchExpressionFix.new,
+    );
+    registry.registerFixForRule(
+      PreferWildcardPattern.code,
+      PreferWildcardPatternFix.new,
     );
     registry.registerFixForRule(
       PreferTypeOverVar.code,
