@@ -826,6 +826,88 @@ class ManyLintsPlugin extends Plugin {
 
 ---
 
+## Insert Statement Into Existing or New Method
+
+### Pattern: Add Statement to Existing Method or Create It
+
+When a fix needs to insert a statement into an existing method (e.g., `dispose()`) or create the method if it doesn't exist:
+
+```dart
+@override
+Future<void> compute(ChangeBuilder builder) async {
+  final targetNode = node;
+  if (targetNode is! MethodInvocation) return;
+
+  // Build the statement to insert
+  final removeCall = '${target}.removeListener(${listener})';
+
+  // Find enclosing class
+  final classDecl = _findEnclosingClass(targetNode);
+  if (classDecl == null) return;
+  final body = classDecl.body;
+  if (body is! BlockClassBody) return;
+
+  // Find existing target method
+  final disposeMethod = body.members
+      .whereType<MethodDeclaration>()
+      .where((m) => m.name.lexeme == 'dispose')
+      .firstOrNull;
+
+  await builder.addDartFileEdit(file, (builder) {
+    if (disposeMethod != null) {
+      // Insert into existing method
+      final disposeBody = disposeMethod.body;
+      if (disposeBody is BlockFunctionBody) {
+        final block = disposeBody.block;
+        final superDispose = _findSuperDispose(block);
+
+        if (superDispose != null) {
+          // Insert before super.dispose()
+          builder.addSimpleInsertion(superDispose.offset, '    $removeCall;\n');
+        } else {
+          // Insert at end of body
+          builder.addSimpleInsertion(block.rightBracket.offset, '    $removeCall;\n  ');
+        }
+      }
+    } else {
+      // Create new method at end of class body
+      builder.addSimpleInsertion(body.rightBracket.offset,
+        '\n\n  @override\n  void dispose() {\n    $removeCall;\n    super.dispose();\n  }\n',
+      );
+    }
+  });
+}
+```
+
+**Finding super.dispose() call:**
+```dart
+static Statement? _findSuperDispose(Block block) {
+  for (final statement in block.statements) {
+    if (statement is ExpressionStatement) {
+      final expr = statement.expression;
+      if (expr is MethodInvocation &&
+          expr.methodName.name == 'dispose' &&
+          expr.target is SuperExpression) {
+        return statement;
+      }
+    }
+  }
+  return null;
+}
+```
+
+**Key details:**
+- Use `body.rightBracket.offset` for insertion before the closing `}` of a class or block
+- `Statement.offset` gives the start position for inserting before a specific statement
+- For method creation, include proper indentation and newlines in the string
+- Check for `SuperExpression` target to find `super.dispose()` / `super.initState()` calls
+- Use `addSimpleInsertion` (not `addSimpleReplacement`) when adding new code without removing existing code
+
+**When to use:** Fixes that add cleanup code to lifecycle methods, or generate missing lifecycle methods
+**Reference:** [always_remove_listener_fix.dart](../../../lib/src/fixes/always_remove_listener_fix.dart#L29-L94)
+
+---
+
 ## Quick Fix Implementation Checklist
 
 1. Import standard packages (analysis_server_plugin, analyzer, analyzer_plugin)

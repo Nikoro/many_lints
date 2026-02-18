@@ -43,6 +43,8 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Negative literal detection | [prefer_contains.dart](prefer_contains.dart) | `-1` is `PrefixExpression(MINUS, IntegerLiteral(1))`, BinaryExpression with reversed operands |
 | Ancestor member override | [prefer_overriding_parent_equality.dart](prefer_overriding_parent_equality.dart) | Walk `allSupertypes` via `InterfaceType.methods`/`getters`, AST-level current class check |
 | ObjectPattern analysis | [prefer_wildcard_pattern.dart](prefer_wildcard_pattern.dart) | `ObjectPattern.type.name.lexeme` + `fields.isEmpty` check, recursive pattern walking |
+| Cross-method pairing | [always_remove_listener.dart](always_remove_listener.dart) | Track addListener/removeListener across lifecycle methods using RecursiveAstVisitor collectors, `toSource()` matching |
+| Widget hierarchy check | [avoid_flexible_outside_flex.dart](avoid_flexible_outside_flex.dart) | Walk parent chain through ListLiteral/NamedExpression/ArgumentList to find enclosing widget constructor |
 
 ## Updating Documentation
 

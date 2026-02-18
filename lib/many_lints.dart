@@ -22,7 +22,9 @@ import 'package:analysis_server_plugin/plugin.dart';
 import 'package:analysis_server_plugin/registry.dart';
 
 // Rules
+import 'package:many_lints/src/rules/always_remove_listener.dart';
 import 'package:many_lints/src/rules/avoid_cascade_after_if_null.dart';
+import 'package:many_lints/src/rules/avoid_flexible_outside_flex.dart';
 import 'package:many_lints/src/rules/avoid_constant_conditions.dart';
 import 'package:many_lints/src/rules/avoid_duplicate_cascades.dart';
 import 'package:many_lints/src/rules/avoid_contradictory_expressions.dart';
@@ -66,6 +68,7 @@ import 'package:many_lints/src/rules/use_gap.dart';
 import 'package:many_lints/src/rules/use_notifier_suffix.dart';
 
 // Fixes
+import 'package:many_lints/src/fixes/always_remove_listener_fix.dart';
 import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
 import 'package:many_lints/src/fixes/avoid_commented_out_code_fix.dart';
 import 'package:many_lints/src/fixes/avoid_duplicate_cascades_fix.dart';
@@ -111,6 +114,7 @@ class ManyLintsPlugin extends Plugin {
   @override
   void register(PluginRegistry registry) {
     // Register warning rules (enabled by default)
+    registry.registerWarningRule(AlwaysRemoveListener());
     registry.registerWarningRule(AvoidCascadeAfterIfNull());
     registry.registerWarningRule(AvoidCommentedOutCode());
     registry.registerWarningRule(AvoidDuplicateCascades());
@@ -124,6 +128,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidOnlyRethrow());
     registry.registerWarningRule(AvoidThrowInCatchBlock());
     registry.registerWarningRule(AvoidUnassignedStreamSubscriptions());
+    registry.registerWarningRule(AvoidFlexibleOutsideFlex());
     registry.registerWarningRule(AvoidCollectionEqualityChecks());
     registry.registerWarningRule(AvoidCollectionMethodsWithUnrelatedTypes());
     registry.registerWarningRule(PreferAbstractFinalStaticClass());
@@ -155,6 +160,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferTestMatchers());
 
     // Register fixes for rules
+    registry.registerFixForRule(
+      AlwaysRemoveListener.code,
+      AlwaysRemoveListenerFix.new,
+    );
     registry.registerFixForRule(
       AvoidCascadeAfterIfNull.code,
       AvoidCascadeAfterIfNullFix.new,
