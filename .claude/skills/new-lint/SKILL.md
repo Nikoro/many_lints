@@ -18,7 +18,7 @@ Before writing any code:
 
 1. **📖 ALWAYS START HERE: Read the Lint Rule Cookbooks** (in this directory)
    - [rules-patterns.md](rules-patterns.md) — Rule structure, type checking, AST navigation, visitors, reporting, utilities, analyzer APIs
-   - [rules-recipes.md](rules-recipes.md) — 15+ copy-paste ready recipes for common scenarios, testing, registration
+   - [rules-recipes.md](rules-recipes.md) — Copy-paste ready recipes for common scenarios
    - These are your **primary reference** for all implementation patterns
    - **Check the cookbooks FIRST** before researching elsewhere
 
