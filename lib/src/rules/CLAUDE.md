@@ -49,6 +49,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Callback body search | [avoid_mounted_in_setstate.dart](avoid_mounted_in_setstate.dart) | Search callback arg of MethodInvocation for identifiers (bare, prefixed, property access) using RecursiveAstVisitor |
 | Super-only override | [avoid_unnecessary_overrides_in_state.dart](avoid_unnecessary_overrides_in_state.dart) | Check overridden methods in State subclasses for bodies that only call super (block and expression forms) |
 | General override check | [avoid_unnecessary_overrides.dart](avoid_unnecessary_overrides.dart) | Detect unnecessary overrides in any class/mixin: super-only methods (with arg pass-through), getter/setter delegates, abstract redeclarations, operator overrides via BinaryExpression |
+| Lifecycle method context | [avoid_unnecessary_setstate.dart](avoid_unnecessary_setstate.dart) | Detect method calls in specific lifecycle contexts by walking parent chain with function boundary stopping, event handler callback exemption via NamedExpression parent check |
 
 ## Updating Documentation
 
