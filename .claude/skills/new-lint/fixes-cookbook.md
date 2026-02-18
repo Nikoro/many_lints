@@ -997,6 +997,32 @@ void _addStackTraceParameter(dynamic builder, CatchClause catchClause, String st
 
 ---
 
+## Add Import with Fix
+
+### Pattern: importLibrary
+
+Use `builder.importLibrary()` inside `addDartFileEdit` to ensure a library is imported. It automatically adds the import if missing and handles existing imports:
+
+```dart
+await builder.addDartFileEdit(file, (builder) {
+  builder.importLibrary(
+    Uri.parse('package:flutter/foundation.dart'),
+  );
+  builder.addSimpleReplacement(range.node(targetNode), 'AsyncCallback');
+});
+```
+
+**API:** `String importLibrary(Uri uri, {String? prefix, String? showName, bool useShow = false})`
+- Returns the URI text that will be used in the import directive
+- If the library is already imported, returns the existing import prefix
+- `prefix`: forces a prefix (e.g., `import '...' as foundation;`)
+- `showName` + `useShow`: creates a show combinator (e.g., `import '...' show AsyncCallback;`)
+
+**When to use:** Fixes that replace code with types/functions from external packages
+**Reference:** [prefer_async_callback_fix.dart](../../../lib/src/fixes/prefer_async_callback_fix.dart#L33-L36)
+
+---
+
 ## Learning Path
 
 **For new fix implementers:**

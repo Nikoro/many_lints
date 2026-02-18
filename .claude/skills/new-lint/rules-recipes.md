@@ -1555,3 +1555,42 @@ void visitClassDeclaration(ClassDeclaration node) {
 - `ConstructorDeclaration.name` → `SimpleIdentifier` (class name), `.period` → `Token?` (for named constructors)
 
 **Ref:** [avoid_state_constructors.dart](../../../lib/src/rules/avoid_state_constructors.dart#L55-L77)
+
+### Analyze GenericFunctionType Annotations (e.g., `Future<void> Function()`)
+
+Register `addGenericFunctionType` to visit explicit function type annotations. Key properties:
+
+```dart
+@override
+void visitGenericFunctionType(GenericFunctionType node) {
+  // Skip typedef definitions (the GenericFunctionType inside a typedef is the definition itself)
+  if (node.parent is GenericTypeAlias) return;
+
+  final returnType = node.returnType;       // TypeAnnotation? (e.g., NamedType for 'Future<void>')
+  final params = node.parameters;           // FormalParameterList (e.g., '()')
+  final typeParams = node.typeParameters;   // TypeParameterList? (e.g., '<T>')
+  final isNullable = node.question != null; // Token? for trailing '?'
+
+  // Example: match Future<void> Function()
+  if (returnType is NamedType && returnType.name.lexeme == 'Future') {
+    final typeArgs = returnType.typeArguments;
+    if (typeArgs != null && typeArgs.arguments.length == 1) {
+      final typeArg = typeArgs.arguments.first;
+      if (typeArg is NamedType && typeArg.name.lexeme == 'void') {
+        if (params.parameters.isEmpty && typeParams == null) {
+          rule.reportAtNode(node);
+        }
+      }
+    }
+  }
+}
+```
+
+**Key notes:**
+- `GenericFunctionType` represents `ReturnType Function(Params)` syntax in type annotations
+- Bare `Function` (without return/params) is `NamedType`, NOT `GenericFunctionType`
+- Skip `node.parent is GenericTypeAlias` to avoid flagging typedef definitions
+- `node.question` is the `?` token for nullable function types like `void Function()?`
+- Length of `Future<void> Function()` is **23 characters** (not 24)
+
+**Ref:** [prefer_async_callback.dart](../../../lib/src/rules/prefer_async_callback.dart#L60-L85)
