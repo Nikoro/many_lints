@@ -936,6 +936,45 @@ if (type != null) {
 
 **Reference:** Multiple rules use this pattern
 
+### InstanceElement Member Access (analyzer 10.0.2)
+
+**⚠️ Important:** In analyzer 10.0.2, `InstanceElement` has `getters`, `methods`, `fields` — NOT `accessors`.
+
+```dart
+// Access class members via element
+final element = node.declaredFragment?.element;
+if (element == null) return;
+
+// Methods (List<MethodElement>)
+for (final method in element.methods) {
+  if (method.name == '==') { ... }
+}
+
+// Getters (List<GetterElement>) — replaces old 'accessors'
+for (final getter in element.getters) {
+  if (getter.name == 'hashCode') { ... }
+}
+
+// Fields (List<FieldElement>)
+final instanceFields = element.fields
+    .where((f) => !f.isStatic && f.isOriginDeclaration);
+```
+
+**Similarly on `InterfaceType`:**
+```dart
+// InterfaceType also has methods, getters, element
+for (final method in type.methods) { ... }
+for (final getter in type.getters) { ... }
+final el = type.element;  // InterfaceElement
+```
+
+**⚠️ Key differences from older analyzer versions:**
+- No `accessors` property — use `getters` and `setters` separately
+- `FieldElement.isSynthetic` is DEPRECATED → use `f.isOriginDeclaration` instead
+- `declaredFragment?.element` returns `ClassElement` (nullable) — use null check, not `is InterfaceElement` (type promotion doesn't work well here)
+
+**Reference:** [prefer_overriding_parent_equality.dart](../../../lib/src/rules/prefer_overriding_parent_equality.dart#L68-L97)
+
 ### Pattern Matching Features
 
 Analyzer 10.0.2 works well with Dart 3 pattern matching:
