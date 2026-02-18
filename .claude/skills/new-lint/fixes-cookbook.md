@@ -908,6 +908,72 @@ static Statement? _findSuperDispose(Block block) {
 
 ---
 
+## Offset-Based Fixes (Non-AST Diagnostics)
+
+### Pattern: Delete Source by Offset
+
+When the diagnostic is reported at an offset (not an AST node), use `diagnosticOffset` and `diagnosticLength` to locate the source range:
+
+```dart
+@override
+Future<void> compute(ChangeBuilder builder) async {
+  final offset = diagnosticOffset;
+  final length = diagnosticLength;
+  if (offset == null || length == null) return;
+
+  final content = unitResult.content;
+
+  // Extend deletion to full lines
+  var deleteStart = offset;
+  while (deleteStart > 0 && content[deleteStart - 1] != '\n') deleteStart--;
+  var deleteEnd = offset + length;
+  while (deleteEnd < content.length && content[deleteEnd] != '\n') deleteEnd++;
+  if (deleteEnd < content.length) deleteEnd++; // include trailing \n
+
+  await builder.addDartFileEdit(file, (builder) {
+    builder.addDeletion(SourceRange(deleteStart, deleteEnd - deleteStart));
+  });
+}
+```
+
+- `diagnosticOffset` / `diagnosticLength` are available on `ResolvedCorrectionProducer`
+- `unitResult.content` provides the full source text for line-boundary calculations
+- Use `SourceRange` from `package:analyzer/source/source_range.dart`
+
+**Reference:** [avoid_commented_out_code_fix.dart](../../../lib/src/fixes/avoid_commented_out_code_fix.dart#L27-L49)
+
+---
+
+### Pattern: Add Parameters to Catch Clauses
+
+When a fix needs to add a stack trace parameter (or exception parameter) to a catch clause:
+
+```dart
+void _addStackTraceParameter(dynamic builder, CatchClause catchClause, String stackParam) {
+  final exceptionParam = catchClause.exceptionParameter;
+
+  if (exceptionParam != null) {
+    // Has exception parameter: `catch (e)` → `catch (e, stackTrace)`
+    builder.addSimpleInsertion(exceptionParam.end, ', $stackParam');
+  } else if (catchClause.catchKeyword != null) {
+    // Has `catch` keyword but no params
+    builder.addSimpleInsertion(catchClause.catchKeyword!.end, ' (_, $stackParam)');
+  } else {
+    // Only `on Type` without `catch`: add `catch (_, stackTrace)` before body
+    builder.addSimpleInsertion(catchClause.body.leftBracket.offset, 'catch (_, $stackParam) ');
+  }
+}
+```
+
+- `CatchClause.exceptionParameter` → `CatchClauseParameter?`
+- `CatchClause.stackTraceParameter` → `CatchClauseParameter?`
+- `CatchClause.catchKeyword` → `Token?` (null when only `on Type`)
+- `CatchClauseParameter.end` → character offset right after the parameter name
+
+**Reference:** [avoid_throw_in_catch_block_fix.dart](../../../lib/src/fixes/avoid_throw_in_catch_block_fix.dart#L63-L84)
+
+---
+
 ## Quick Fix Implementation Checklist
 
 1. Import standard packages (analysis_server_plugin, analyzer, analyzer_plugin)
