@@ -1695,6 +1695,82 @@ static bool _areArgsPassThrough(FormalParameterList? params, ArgumentList args) 
 
 ---
 
+### Recipe: Detect Method Calls Inside Specific Lifecycle Methods (with Callback Exemption)
+
+Register `addMethodInvocation` to intercept a specific call (e.g., `setState`), then walk the parent chain to determine if it's directly inside a lifecycle method (`initState`, `didUpdateWidget`, `build`). Stop at function boundaries to avoid flagging calls inside closures. For `build`, exempt closures passed as named arguments (event handler callbacks like `onPressed`):
+
+```dart
+@override
+void visitMethodInvocation(MethodInvocation node) {
+  if (node.methodName.name != 'setState') return;
+
+  // Verify we're inside a State subclass
+  final enclosingClass = _findEnclosingClass(node);
+  if (enclosingClass == null) return;
+  final element = enclosingClass.declaredFragment?.element;
+  if (element == null || !_stateChecker.isSuperOf(element)) return;
+
+  // Find enclosing lifecycle method, stopping at function boundaries
+  final lifecycleMethod = _findEnclosingLifecycleMethod(node);
+  if (lifecycleMethod == null) return;
+
+  final methodName = lifecycleMethod.name.lexeme;
+
+  // For build: skip if inside event handler callback
+  if (methodName == 'build' && _isInsideEventHandlerCallback(node)) return;
+
+  rule.reportAtNode(node, arguments: [methodName]);
+}
+```
+
+**Lifecycle method finder (stops at function boundaries):**
+```dart
+static MethodDeclaration? _findEnclosingLifecycleMethod(AstNode node) {
+  AstNode? current = node.parent;
+  while (current != null) {
+    // Stop at closures/local functions — not "directly" inside lifecycle method
+    if (current is FunctionExpression) return null;
+    if (current is FunctionDeclaration) return null;
+
+    if (current is MethodDeclaration) {
+      final name = current.name.lexeme;
+      if (_lifecycleMethods.contains(name)) return current;
+      return null; // Inside a different method
+    }
+    current = current.parent;
+  }
+  return null;
+}
+```
+
+**Event handler callback exemption:**
+```dart
+static bool _isInsideEventHandlerCallback(AstNode node) {
+  AstNode? current = node.parent;
+  while (current != null) {
+    if (current is MethodDeclaration) return false;
+    // FunctionExpression whose parent is NamedExpression = event handler
+    if (current is FunctionExpression) {
+      final parent = current.parent;
+      if (parent is NamedExpression) return true;
+    }
+    current = current.parent;
+  }
+  return false;
+}
+```
+
+**Key details:**
+- Returning `null` from `_findEnclosingLifecycleMethod` when hitting a `FunctionExpression` ensures closures within lifecycle methods don't trigger the lint — the closure creates a new scope
+- `NamedExpression` parent check identifies event handler callbacks (e.g., `onPressed: () { setState(...) }`)
+- For `initState`/`didUpdateWidget`, all direct `setState` calls are flagged (no callback exemption needed since those don't return widgets)
+- The `_findEnclosingClass` walks to the nearest `ClassDeclaration` for the State type check
+
+**When to use:** Rules that flag method calls that are inappropriate in specific lifecycle method contexts but allowed in event handlers or async callbacks
+**Reference:** [avoid_unnecessary_setstate.dart](../../../lib/src/rules/avoid_unnecessary_setstate.dart#L65-L130)
+
+---
+
 ## 🧪 Testing & Registration
 
 ### Test Structure
@@ -1863,3 +1939,4 @@ class ManyLintsPlugin extends Plugin {
 | Feb 18, 2026 | avoid_flexible_outside_flex | Added recipe for checking if a widget is a direct child of a specific parent widget type by walking the AST parent chain through ListLiteral/NamedExpression/ArgumentList to the enclosing InstanceCreationExpression. |
 | Feb 18, 2026 | avoid_mounted_in_setstate | Added recipe for searching callback argument body for specific identifiers. Shows handling of three identifier forms: bare SimpleIdentifier (with parent exclusion), PrefixedIdentifier (`context.mounted`), and PropertyAccess (`this.mounted`). |
 | Feb 18, 2026 | avoid_unnecessary_overrides | Added recipe for detecting unnecessary overrides across five patterns: abstract members (check `isAbstract` BEFORE `isGetter`/`isSetter`), getters (PropertyAccess on super), setters (AssignmentExpression to super), operators (BinaryExpression with SuperExpression, NOT MethodInvocation), and regular methods with arg pass-through validation. |
+| Feb 18, 2026 | avoid_unnecessary_setstate | Added recipe for detecting method calls inside specific lifecycle methods with event handler callback exemption. Walk parent chain stopping at function boundaries (FunctionExpression/FunctionDeclaration) to find enclosing lifecycle method, use NamedExpression parent check to exempt event handler callbacks in build. |
