@@ -62,6 +62,7 @@ import 'package:many_lints/src/rules/prefer_explicit_function_type.dart';
 import 'package:many_lints/src/rules/prefer_overriding_parent_equality.dart';
 import 'package:many_lints/src/rules/prefer_padding_over_container.dart';
 import 'package:many_lints/src/rules/prefer_return_await.dart';
+import 'package:many_lints/src/rules/proper_super_calls.dart';
 import 'package:many_lints/src/rules/prefer_returning_shorthands.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_constructors.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_enums.dart';
@@ -108,6 +109,7 @@ import 'package:many_lints/src/fixes/prefer_explicit_function_type_fix.dart';
 import 'package:many_lints/src/fixes/prefer_overriding_parent_equality_fix.dart';
 import 'package:many_lints/src/fixes/prefer_padding_over_container_fix.dart';
 import 'package:many_lints/src/fixes/prefer_return_await_fix.dart';
+import 'package:many_lints/src/fixes/proper_super_calls_fix.dart';
 import 'package:many_lints/src/fixes/prefer_returning_shorthands_fix.dart';
 import 'package:many_lints/src/fixes/prefer_shorthands_with_constructors_fix.dart';
 import 'package:many_lints/src/fixes/prefer_shorthands_with_enums_fix.dart';
@@ -188,6 +190,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferSingleWidgetPerFile());
     registry.registerWarningRule(PreferSpacing());
     registry.registerWarningRule(PreferTestMatchers());
+    registry.registerWarningRule(ProperSuperCalls());
 
     // Register fixes for rules
     registry.registerFixForRule(
@@ -330,6 +333,8 @@ class ManyLintsPlugin extends Plugin {
       AvoidUnnecessaryStatefulWidgets.code,
       AvoidUnnecessaryStatefulWidgetsFix.new,
     );
+
+    registry.registerFixForRule(ProperSuperCalls.code, ProperSuperCallsFix.new);
 
     // Register assists
     registry.registerAssist(ConvertIterableMapToCollectionFor.new);

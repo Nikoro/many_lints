@@ -47,6 +47,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Re-derive from type | [dispose_fields_fix.dart](dispose_fields_fix.dart) | Walk up from reported node to VariableDeclaration, re-derive cleanup method from field type instead of parsing diagnostic message |
 | Unwrap+add param | [avoid_incorrect_image_opacity_fix.dart](avoid_incorrect_image_opacity_fix.dart) | Unwrap child from wrapper widget + add parameter via string insertion; handle both ConstructorName and SimpleIdentifier report nodes |
 | Delete method | [avoid_unnecessary_overrides_in_state_fix.dart](avoid_unnecessary_overrides_in_state_fix.dart) | Line-based deletion of entire MethodDeclaration including annotations using `SourceRange` with line boundary extension |
+| Move statement | [proper_super_calls_fix.dart](proper_super_calls_fix.dart) | Delete statement at current position + insert at first/last position; line-boundary whitespace handling via `unitResult.content` |
 
 ## Updating Documentation
 
