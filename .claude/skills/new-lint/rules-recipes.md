@@ -1059,3 +1059,50 @@ static String? _findCleanupMethod(DartType type) {
 - Get a field's type from AST: `variable.declaredFragment?.element.type` (not `declaredElement`)
 
 **Ref:** [dispose_fields.dart](../../../lib/src/rules/dispose_fields.dart)
+
+### Walk Chained Method Calls to Find Parent Context
+
+When a method call like `.expand(...)` is followed by `.skip(1).toList()`, the AST nests them as `MethodInvocation` targets. Walk up through the chain:
+
+```dart
+AstNode topOfChain = node;
+while (topOfChain.parent is MethodInvocation) {
+  final parent = topOfChain.parent! as MethodInvocation;
+  if (parent.target != topOfChain) break;
+  topOfChain = parent;
+}
+// topOfChain is now the outermost call in the chain
+// topOfChain.parent is the context where the result is used
+```
+
+**When to use:** Detecting if a chained expression result (e.g., `list.expand(...).skip(1).toList()`) is used in a specific context (e.g., as the `children` argument of a widget).
+
+**Ref:** [prefer_spacing.dart](../../../lib/src/rules/prefer_spacing.dart#L200-L205)
+
+### Handle Both InstanceCreationExpression and MethodInvocation for Constructors
+
+Without explicit type arguments or `const`/`new`, constructors are parsed as `MethodInvocation` (not `InstanceCreationExpression`). Use `staticType` for type checking instead of element checks:
+
+```dart
+// Instead of checking the constructor element:
+void _checkWidget(DartType? staticType, ArgumentList argumentList) {
+  if (staticType == null) return;
+  if (!_checker.isExactlyType(staticType)) return;
+  // Process argumentList...
+}
+
+// Register both visitors and delegate to shared logic:
+@override
+void visitInstanceCreationExpression(InstanceCreationExpression node) {
+  _checkWidget(node.staticType, node.argumentList);
+}
+
+@override
+void visitMethodInvocation(MethodInvocation node) {
+  _checkWidget(node.staticType, node.argumentList);
+}
+```
+
+**When to use:** Any rule that needs to detect widget/object construction calls reliably in both real code and test mocks.
+
+**Ref:** [prefer_spacing.dart](../../../lib/src/rules/prefer_spacing.dart#L72-L87)
