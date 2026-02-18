@@ -1158,6 +1158,61 @@ static bool _isExpectedType(InterfaceType type) {
 
 ---
 
+### Recipe: Detect Negative Integer Literals in Binary Expressions
+
+Negative numbers like `-1` are NOT parsed as `IntegerLiteral` with a negative value. Instead, they are parsed as `PrefixExpression(MINUS, IntegerLiteral(1))`. Use pattern matching to detect them:
+
+```dart
+import 'package:analyzer/dart/ast/token.dart';
+
+static bool _isNegativeOne(Expression expr) {
+  if (expr case PrefixExpression(
+    operator: Token(type: TokenType.MINUS),
+    operand: IntegerLiteral(value: 1),
+  )) {
+    return true;
+  }
+  return false;
+}
+```
+
+**Combined with BinaryExpression for `.indexOf() == -1` detection:**
+```dart
+@override
+void visitBinaryExpression(BinaryExpression node) {
+  final op = node.operator.type;
+  if (op != TokenType.EQ_EQ && op != TokenType.BANG_EQ) return;
+
+  final left = node.leftOperand;
+  final right = node.rightOperand;
+
+  // x.indexOf(item) == -1 or x.indexOf(item) != -1
+  if (_isIndexOfCall(left) && _isNegativeOne(right)) {
+    rule.reportAtNode(node);
+    return;
+  }
+
+  // Reversed: -1 == x.indexOf(item) or -1 != x.indexOf(item)
+  if (_isNegativeOne(left) && _isIndexOfCall(right)) {
+    rule.reportAtNode(node);
+  }
+}
+
+static bool _isIndexOfCall(Expression expr) {
+  return expr is MethodInvocation && expr.methodName.name == 'indexOf';
+}
+```
+
+**Key details:**
+- `-1` in source code is `PrefixExpression(MINUS, IntegerLiteral(1))`, NOT `IntegerLiteral(-1)`
+- Always check both operand orders for commutative comparisons (user may write `x == -1` or `-1 == x`)
+- `IntegerLiteral.value` returns `int?` — the `1` in `-1` has value `1`, not `-1`
+
+**When to use:** Rules that detect comparisons against negative integer literals
+**Reference:** [prefer_contains.dart](../../../lib/src/rules/prefer_contains.dart#L68-L77)
+
+---
+
 ## 🧪 Testing & Registration
 
 ### Test Structure
@@ -1318,3 +1373,4 @@ class ManyLintsPlugin extends Plugin {
 | Feb 18, 2026 | prefer_return_await | Added `addReturnStatement` to cheat sheet, recipe for analyzing return statements with async function detection and try-catch context checking. Shows parent-chain walking for async detection via `body.isAsynchronous` and `_isDescendantOf` for try/catch containment. |
 | Feb 18, 2026 | avoid_throw_in_catch_block | Added recipe for finding specific expressions inside catch blocks using RecursiveAstVisitor with function boundary stopping (ThrowExpression vs RethrowExpression distinction). Also added recipe for adding parameters to catch clauses in quick fixes (CatchClauseParameter manipulation). |
 | Feb 18, 2026 | avoid_unassigned_stream_subscriptions | Added recipe for detecting unassigned method invocation return values using `node.staticType` (return type) + `node.parent is ExpressionStatement` (discarded value). Shows dart:async type checking via `library.identifier`. |
+| Feb 18, 2026 | prefer_contains | Added recipe for detecting negative integer literals (`-1` is `PrefixExpression(MINUS, IntegerLiteral(1))`, NOT `IntegerLiteral(-1)`). Combined with BinaryExpression for `.indexOf() == -1` pattern detection with reversed operand handling. |

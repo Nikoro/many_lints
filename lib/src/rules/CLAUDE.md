@@ -40,6 +40,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Return in try-catch | [prefer_return_await.dart](prefer_return_await.dart) | ReturnStatement visitor, async detection, Future type check |
 | Matcher type check | [prefer_test_matchers.dart](prefer_test_matchers.dart) | Check if arg extends a class by walking `allSupertypes` |
 | Unassigned return value | [avoid_unassigned_stream_subscriptions.dart](avoid_unassigned_stream_subscriptions.dart) | `node.staticType` + `parent is ExpressionStatement` for discarded values |
+| Negative literal detection | [prefer_contains.dart](prefer_contains.dart) | `-1` is `PrefixExpression(MINUS, IntegerLiteral(1))`, BinaryExpression with reversed operands |
 
 ## Updating Documentation
 
