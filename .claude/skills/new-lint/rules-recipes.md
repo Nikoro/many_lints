@@ -1391,3 +1391,53 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
 - Return `true` from `_checkExpression()` to suppress child recursion (avoids sub-expression matches when the whole expression already matched)
 
 **Ref:** [use_existing_variable.dart](../../../lib/src/rules/use_existing_variable.dart#L49-L84)
+
+### Analyze Pattern Variable Declarations (Dart 3 Destructuring)
+
+Register `addPatternVariableDeclaration` to visit `PatternVariableDeclaration` nodes directly. These represent `final SomeClass(:value) = input;` and `final (:length) = record;` syntax.
+
+```dart
+@override
+void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+  final visitor = _Visitor(this);
+  registry.addPatternVariableDeclaration(this, visitor);
+}
+
+@override
+void visitPatternVariableDeclaration(PatternVariableDeclaration node) {
+  final pattern = node.pattern;
+
+  // ObjectPattern: `final SomeClass(:value) = input;`
+  if (pattern is ObjectPattern) {
+    final fields = pattern.fields;           // NodeList<PatternField>
+    final typeName = pattern.type.name.lexeme; // e.g., "SomeClass"
+    for (final field in fields) {
+      final name = field.effectiveName;       // String? — the property name
+      final innerPattern = field.pattern;     // DartPattern (usually DeclaredVariablePattern)
+      if (innerPattern is DeclaredVariablePattern) {
+        final varName = innerPattern.name.lexeme; // The bound variable name
+      }
+    }
+  }
+
+  // RecordPattern: `final (:length) = record;`
+  if (pattern is RecordPattern) {
+    final fields = pattern.fields;            // NodeList<PatternField>
+    // Same field access as ObjectPattern
+  }
+
+  // Access the right-hand side expression and keyword:
+  final expression = node.expression;         // Expression (e.g., `input`)
+  final keyword = node.keyword;               // Token (`final` or `var`)
+}
+```
+
+**Key AST types:**
+- `PatternVariableDeclaration` — the full declaration (keyword + pattern + `=` + expression)
+- `PatternVariableDeclarationStatement` — wraps the above + semicolon (use `addPatternVariableDeclarationStatement` if you need the statement)
+- `ObjectPattern` — `SomeClass(:field1, :field2)` — has `.type` (NamedType) and `.fields` (NodeList<PatternField>)
+- `RecordPattern` — `(:field1, :field2)` — has `.fields` only (no type)
+- `PatternField` — a single field with `.effectiveName` (String?), `.name` (PatternFieldName?), `.pattern` (DartPattern)
+- `DeclaredVariablePattern` — the variable binding inside a field, has `.name` (Token), `.keyword` (Token?), `.type` (TypeAnnotation?)
+
+**Ref:** [avoid_single_field_destructuring.dart](../../../lib/src/rules/avoid_single_field_destructuring.dart#L55-L69)
