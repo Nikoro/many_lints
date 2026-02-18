@@ -886,6 +886,47 @@ static bool _isOrSubtypeOf(InterfaceType type, String targetName) {
 
 ---
 
+### Recipe: Analyze Try-Catch Clauses (CatchClause Body Inspection)
+
+Register `addTryStatement` to visit `TryStatement` nodes. Iterate `catchClauses` and inspect each `CatchClause.body` for specific statement patterns:
+
+```dart
+@override
+void registerNodeProcessors(
+  RuleVisitorRegistry registry,
+  RuleContext context,
+) {
+  final visitor = _Visitor(this);
+  registry.addTryStatement(this, visitor);
+}
+
+@override
+void visitTryStatement(TryStatement node) {
+  for (final catchClause in node.catchClauses) {
+    final statements = catchClause.body.statements;
+    if (statements.length != 1) continue;
+
+    final statement = statements.first;
+    if (statement is! ExpressionStatement) continue;
+
+    if (statement.expression is RethrowExpression) {
+      rule.reportAtNode(catchClause);
+    }
+  }
+}
+```
+
+**Key AST types for try-catch:**
+- `TryStatement` — has `body` (Block), `catchClauses` (NodeList<CatchClause>), `finallyBlock` (Block?), `finallyKeyword` (Token?)
+- `CatchClause` — has `body` (Block), `onKeyword` (Token?), `exceptionType` (TypeAnnotation?), `catchKeyword` (Token?), `exceptionParameter` (CatchClauseParameter?), `stackTraceParameter` (CatchClauseParameter?)
+- `RethrowExpression` — has `rethrowKeyword` (Token). Appears inside `ExpressionStatement`
+- `Block.statements` — `NodeList<Statement>` for accessing the body's statements
+
+**When to use:** Rules that analyze exception handling patterns (rethrow-only, empty catch, catch-all, etc.)
+**Reference:** [avoid_only_rethrow.dart](../../../lib/src/rules/avoid_only_rethrow.dart#L68-L82)
+
+---
+
 ## 🧪 Testing & Registration
 
 ### Test Structure
@@ -1042,3 +1083,4 @@ class ManyLintsPlugin extends Plugin {
 | Feb 17, 2026 | prefer_simpler_patterns_null_check | Added `addIfStatement` to cheat sheet, recipe for analyzing if-case patterns (CaseClause, GuardedPattern, LogicalAndPattern, RelationalPattern, DeclaredVariablePattern, NullCheckPattern). Documents all key DartPattern subtypes for Dart 3 pattern matching analysis. |
 | Feb 18, 2026 | avoid_map_keys_contains | Added recipe for PrefixedIdentifier vs PropertyAccess duality when detecting `target.property.method()` patterns. Simple identifiers (`map.keys`) parse as PrefixedIdentifier, complex expressions (`maps.first.keys`) parse as PropertyAccess — must handle both. |
 | Feb 18, 2026 | avoid_misused_test_matchers | Added recipe for validating function call arguments by name and type category. Shows pattern for intercepting specific method calls (e.g., `expect()`), resolving matcher expressions (SimpleIdentifier vs MethodInvocation), and checking type compatibility with `NullabilitySuffix` and `_isOrSubtypeOf`. |
+| Feb 18, 2026 | avoid_only_rethrow | Added `addTryStatement` to cheat sheet, recipe for analyzing try-catch clauses (TryStatement, CatchClause body inspection, RethrowExpression detection). Documents all key CatchClause properties. |

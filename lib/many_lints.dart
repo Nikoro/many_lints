@@ -34,6 +34,7 @@ import 'package:many_lints/src/rules/avoid_accessing_collections_by_constant_ind
 import 'package:many_lints/src/rules/avoid_generics_shadowing.dart';
 import 'package:many_lints/src/rules/avoid_map_keys_contains.dart';
 import 'package:many_lints/src/rules/avoid_misused_test_matchers.dart';
+import 'package:many_lints/src/rules/avoid_only_rethrow.dart';
 import 'package:many_lints/src/rules/avoid_single_child_in_multi_child_widgets.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_consumer_widgets.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_hook_widgets.dart';
@@ -64,6 +65,7 @@ import 'package:many_lints/src/fixes/avoid_duplicate_cascades_fix.dart';
 import 'package:many_lints/src/fixes/add_suffix_fix.dart';
 import 'package:many_lints/src/fixes/avoid_generics_shadowing_fix.dart';
 import 'package:many_lints/src/fixes/avoid_map_keys_contains_fix.dart';
+import 'package:many_lints/src/fixes/avoid_only_rethrow_fix.dart';
 import 'package:many_lints/src/fixes/prefer_abstract_final_static_class_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_hook_widgets_fix.dart';
@@ -107,6 +109,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidGenericsShadowing());
     registry.registerWarningRule(AvoidMapKeysContains());
     registry.registerWarningRule(AvoidMisusedTestMatchers());
+    registry.registerWarningRule(AvoidOnlyRethrow());
     registry.registerWarningRule(AvoidCollectionEqualityChecks());
     registry.registerWarningRule(AvoidCollectionMethodsWithUnrelatedTypes());
     registry.registerWarningRule(PreferAbstractFinalStaticClass());
@@ -222,6 +225,7 @@ class ManyLintsPlugin extends Plugin {
       AvoidMapKeysContains.code,
       AvoidMapKeysContainsFix.new,
     );
+    registry.registerFixForRule(AvoidOnlyRethrow.code, AvoidOnlyRethrowFix.new);
 
     // Register assists
     registry.registerAssist(ConvertIterableMapToCollectionFor.new);
