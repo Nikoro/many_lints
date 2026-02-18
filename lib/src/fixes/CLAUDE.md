@@ -52,6 +52,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Re-derive from block context | [use_existing_variable_fix.dart](use_existing_variable_fix.dart) | Walk up to enclosing `Block`, scan preceding final/const variable declarations for matching `toSource()`, replace duplicate expression with variable name |
 | Multi-edit: pattern + replacement | [use_existing_destructuring_fix.dart](use_existing_destructuring_fix.dart) | Walk up to enclosing `Block`, find `PatternVariableDeclarationStatement` for the source variable, `addSimpleInsertion` to add field to pattern (after last field) + `addSimpleReplacement` to replace property access with variable name |
 | Constructor rewrite | [avoid_border_all_fix.dart](avoid_border_all_fix.dart) | Replace constructor call with alternative; handle both `InstanceCreationExpression` and `MethodInvocation` node types; preserve args via `toSource()` |
+| Widget replacement | [avoid_expanded_as_spacer_fix.dart](avoid_expanded_as_spacer_fix.dart) | Replace entire widget with simpler alternative; selectively preserve named args (key, flex); handle both node types; preserve const keyword |
 
 ## Updating Documentation
 
