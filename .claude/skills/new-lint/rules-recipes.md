@@ -1236,3 +1236,69 @@ static bool _isTargetType(FormalParameter param) {
 **When to use:** Rules that detect incorrect variable scoping (e.g., using outer BuildContext when an inner one is available).
 
 **Ref:** [use_closest_build_context.dart](../../../lib/src/rules/use_closest_build_context.dart#L52-L180)
+
+### Collect Property Accesses Per Variable in a Block
+
+Register `addBlock`. Use `RecursiveAstVisitor` to traverse statements and group property accesses by target variable. Filter to local variables/parameters using `LocalElement`:
+
+```dart
+@override
+void visitBlock(Block node) {
+  final collector = _PropertyAccessCollector();
+  for (final statement in node.statements) {
+    statement.accept(collector);
+  }
+
+  for (final entry in collector.accessesByVariable.entries) {
+    final variableName = entry.key;
+    final info = entry.value;
+    if (info.properties.length < _minOccurrences) continue;
+    if (info.targetType is! InterfaceType) continue;
+    rule.reportAtNode(info.firstAccess, arguments: [...]);
+  }
+}
+
+class _PropertyAccessCollector extends RecursiveAstVisitor<void> {
+  final Map<String, _VariableAccessInfo> accessesByVariable = {};
+
+  @override
+  void visitPrefixedIdentifier(PrefixedIdentifier node) {
+    _check(node.prefix.name, node.prefix.element, node.prefix.staticType,
+           node.identifier.name, node);
+  }
+
+  @override
+  void visitPropertyAccess(PropertyAccess node) {
+    final target = node.target;
+    if (target is SimpleIdentifier) {
+      _check(target.name, target.element, target.staticType,
+             node.propertyName.name, node);
+    }
+  }
+
+  // Stop at nested functions
+  @override void visitFunctionExpression(FunctionExpression node) {}
+  @override void visitFunctionDeclaration(FunctionDeclaration node) {}
+
+  void _check(String targetName, Element? targetElement, DartType? targetType,
+              String propertyName, AstNode accessNode) {
+    if (targetElement is! LocalElement) return;
+
+    // Skip assignments and method call targets
+    final parent = accessNode.parent;
+    if (parent is AssignmentExpression && parent.leftHandSide == accessNode) return;
+    if (parent is MethodInvocation && parent.target == accessNode) return;
+
+    accessesByVariable
+        .putIfAbsent(targetName, () => _VariableAccessInfo(targetType))
+        .addAccess(propertyName, accessNode);
+  }
+}
+```
+
+**Key API notes:**
+- `SimpleIdentifier.element` (not `.staticElement`) resolves the referenced element
+- `LocalElement` is the supertype of both `LocalVariableElement` and `FormalParameterElement`
+- Handle both `PrefixedIdentifier` (simple `obj.prop`) and `PropertyAccess` (chained `a.b.prop`)
+
+**Ref:** [prefer_class_destructuring.dart](../../../lib/src/rules/prefer_class_destructuring.dart#L60-L173)
