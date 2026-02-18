@@ -1023,6 +1023,95 @@ static bool _isDescendantOf(AstNode node, AstNode ancestor) {
 
 ---
 
+### Recipe: Find Specific Expressions Inside Catch Blocks (RecursiveAstVisitor with Boundary)
+
+Register `addTryStatement`, then use a `RecursiveAstVisitor` to traverse each `CatchClause.body` for specific expression types, stopping at function boundaries to avoid false positives from closures/nested functions:
+
+```dart
+@override
+void visitTryStatement(TryStatement node) {
+  for (final catchClause in node.catchClauses) {
+    final finder = _ThrowFinder(rule);
+    catchClause.body.visitChildren(finder);
+  }
+}
+
+class _ThrowFinder extends RecursiveAstVisitor<void> {
+  final MyRule rule;
+
+  _ThrowFinder(this.rule);
+
+  @override
+  void visitThrowExpression(ThrowExpression node) {
+    rule.reportAtNode(node);
+    super.visitThrowExpression(node);
+  }
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {
+    // Don't traverse into closures — not in catch scope
+  }
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    // Don't traverse into local function declarations
+  }
+}
+```
+
+**Key details:**
+- Override `visitFunctionExpression` and `visitFunctionDeclaration` with empty bodies to prevent traversal into closures and local functions
+- `ThrowExpression` contains the `throw` keyword + the thrown expression — `node.expression` gives the thrown value
+- `ThrowExpression` does NOT include `rethrow` — that's `RethrowExpression` (a separate AST type)
+- Use `catchClause.body.visitChildren(finder)` to start traversal from the catch body
+
+**When to use:** Rules that detect specific expression/statement patterns inside catch blocks while respecting function boundaries
+**Reference:** [avoid_throw_in_catch_block.dart](../../../lib/src/rules/avoid_throw_in_catch_block.dart#L73-L95)
+
+---
+
+### Recipe: Add Parameters to Catch Clauses in Quick Fix
+
+When a fix needs to add a stack trace parameter (or exception parameter) to a catch clause:
+
+```dart
+void _addStackTraceParameter(
+  dynamic builder,
+  CatchClause catchClause,
+  String stackParam,
+) {
+  final exceptionParam = catchClause.exceptionParameter;
+
+  if (exceptionParam != null) {
+    // Has exception parameter: `catch (e)` → `catch (e, stackTrace)`
+    builder.addSimpleInsertion(exceptionParam.end, ', $stackParam');
+  } else if (catchClause.catchKeyword != null) {
+    // Has `catch` keyword but no params (edge case)
+    final catchKeyword = catchClause.catchKeyword!;
+    builder.addSimpleInsertion(catchKeyword.end, ' (_, $stackParam)');
+  } else {
+    // Only `on Type` without `catch`: `on Type {` → `on Type catch (_, stackTrace) {`
+    final body = catchClause.body;
+    builder.addSimpleInsertion(
+      body.leftBracket.offset,
+      'catch (_, $stackParam) ',
+    );
+  }
+}
+```
+
+**Key AST properties for catch parameter manipulation:**
+- `CatchClause.exceptionParameter` — `CatchClauseParameter?` for the exception variable
+- `CatchClause.stackTraceParameter` — `CatchClauseParameter?` for the stack trace variable
+- `CatchClause.catchKeyword` — `Token?` (null when only `on Type` without `catch`)
+- `CatchClauseParameter.name` — `Token` (the parameter name)
+- `CatchClauseParameter.end` — character offset right after the parameter name
+
+**When to use:** Fixes that need to modify catch clause parameters (add stack trace, add exception variable, etc.)
+**Reference:** [avoid_throw_in_catch_block_fix.dart](../../../lib/src/fixes/avoid_throw_in_catch_block_fix.dart#L63-L84)
+
+---
+
 ## 🧪 Testing & Registration
 
 ### Test Structure
@@ -1181,3 +1270,4 @@ class ManyLintsPlugin extends Plugin {
 | Feb 18, 2026 | avoid_misused_test_matchers | Added recipe for validating function call arguments by name and type category. Shows pattern for intercepting specific method calls (e.g., `expect()`), resolving matcher expressions (SimpleIdentifier vs MethodInvocation), and checking type compatibility with `NullabilitySuffix` and `_isOrSubtypeOf`. |
 | Feb 18, 2026 | avoid_only_rethrow | Added `addTryStatement` to cheat sheet, recipe for analyzing try-catch clauses (TryStatement, CatchClause body inspection, RethrowExpression detection). Documents all key CatchClause properties. |
 | Feb 18, 2026 | prefer_return_await | Added `addReturnStatement` to cheat sheet, recipe for analyzing return statements with async function detection and try-catch context checking. Shows parent-chain walking for async detection via `body.isAsynchronous` and `_isDescendantOf` for try/catch containment. |
+| Feb 18, 2026 | avoid_throw_in_catch_block | Added recipe for finding specific expressions inside catch blocks using RecursiveAstVisitor with function boundary stopping (ThrowExpression vs RethrowExpression distinction). Also added recipe for adding parameters to catch clauses in quick fixes (CatchClauseParameter manipulation). |

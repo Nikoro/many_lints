@@ -41,6 +41,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Multi-factory | [add_suffix_fix.dart](add_suffix_fix.dart) | Shared logic for Bloc/Cubit/Notifier suffixes |
 | Widget dispatch | [use_gap_fix.dart](use_gap_fix.dart) | Different fix logic per widget type |
 | Unwrap try body | [avoid_only_rethrow_fix.dart](avoid_only_rethrow_fix.dart) | Remove try-catch, keep body statements |
+| Add catch params | [avoid_throw_in_catch_block_fix.dart](avoid_throw_in_catch_block_fix.dart) | Replace throw + add stack trace param to catch clause |
 
 ## Updating Documentation
 
