@@ -37,6 +37,7 @@ import 'package:many_lints/src/rules/avoid_unnecessary_gesture_detector.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_overrides.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_setstate.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_overrides_in_state.dart';
+import 'package:many_lints/src/rules/avoid_unnecessary_stateful_widgets.dart';
 import 'package:many_lints/src/rules/avoid_mounted_in_setstate.dart';
 import 'package:many_lints/src/rules/avoid_collection_methods_with_unrelated_types.dart';
 import 'package:many_lints/src/rules/avoid_accessing_collections_by_constant_index.dart';
@@ -84,6 +85,7 @@ import 'package:many_lints/src/fixes/avoid_unnecessary_gesture_detector_fix.dart
 import 'package:many_lints/src/fixes/avoid_unnecessary_overrides_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_setstate_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_overrides_in_state_fix.dart';
+import 'package:many_lints/src/fixes/avoid_unnecessary_stateful_widgets_fix.dart';
 import 'package:many_lints/src/fixes/avoid_duplicate_cascades_fix.dart';
 import 'package:many_lints/src/fixes/add_suffix_fix.dart';
 import 'package:many_lints/src/fixes/avoid_generics_shadowing_fix.dart';
@@ -148,6 +150,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidUnnecessaryOverrides());
     registry.registerWarningRule(AvoidUnnecessaryOverridesInState());
     registry.registerWarningRule(AvoidUnnecessarySetstate());
+    registry.registerWarningRule(AvoidUnnecessaryStatefulWidgets());
     registry.registerWarningRule(AvoidMountedInSetstate());
     registry.registerWarningRule(AvoidCollectionEqualityChecks());
     registry.registerWarningRule(AvoidCollectionMethodsWithUnrelatedTypes());
@@ -314,6 +317,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidUnnecessarySetstate.code,
       AvoidUnnecessarySetstateFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidUnnecessaryStatefulWidgets.code,
+      AvoidUnnecessaryStatefulWidgetsFix.new,
     );
 
     // Register assists
