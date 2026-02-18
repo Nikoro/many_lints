@@ -1106,3 +1106,57 @@ void visitMethodInvocation(MethodInvocation node) {
 **When to use:** Any rule that needs to detect widget/object construction calls reliably in both real code and test mocks.
 
 **Ref:** [prefer_spacing.dart](../../../lib/src/rules/prefer_spacing.dart#L72-L87)
+
+### Check Super Call Position in Lifecycle Methods
+
+Register `addMethodDeclaration` to visit methods directly (instead of `addClassDeclaration` + member iteration). Navigate up to the class via `node.parent` (→ `BlockClassBody`) → `.parent` (→ `ClassDeclaration`):
+
+```dart
+@override
+void visitMethodDeclaration(MethodDeclaration node) {
+  final methodName = node.name.lexeme;
+  if (!_targetMethods.contains(methodName)) return;
+
+  // Navigate to enclosing class
+  final enclosingBody = node.parent;
+  if (enclosingBody is! BlockClassBody) return;
+  final classDecl = enclosingBody.parent;
+  if (classDecl is! ClassDeclaration) return;
+
+  final element = classDecl.declaredFragment?.element;
+  if (element == null || !_stateChecker.isSuperOf(element)) return;
+
+  // Must have block body with statements
+  final body = node.body;
+  if (body is! BlockFunctionBody) return;
+  final statements = body.block.statements;
+  if (statements.isEmpty) return;
+
+  // Find super.<methodName>() by index
+  final superIndex = _findSuperCallIndex(statements, methodName);
+  if (superIndex == -1) return;
+
+  // Check position: first for init-like, last for cleanup-like
+  if (shouldBeFirst && superIndex != 0) {
+    rule.reportAtNode(statements[superIndex]);
+  } else if (!shouldBeFirst && superIndex != statements.length - 1) {
+    rule.reportAtNode(statements[superIndex]);
+  }
+}
+
+static int _findSuperCallIndex(NodeList<Statement> stmts, String name) {
+  for (var i = 0; i < stmts.length; i++) {
+    if (stmts[i] case ExpressionStatement(
+      expression: MethodInvocation(
+        target: SuperExpression(),
+        methodName: SimpleIdentifier(name: final n),
+      ),
+    ) when n == name) return i;
+  }
+  return -1;
+}
+```
+
+**When to use:** Rules that validate statement ordering within specific methods (lifecycle, setup/teardown).
+
+**Ref:** [proper_super_calls.dart](../../../lib/src/rules/proper_super_calls.dart#L70-L130)
