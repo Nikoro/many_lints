@@ -1441,3 +1441,78 @@ void visitPatternVariableDeclaration(PatternVariableDeclaration node) {
 - `DeclaredVariablePattern` — the variable binding inside a field, has `.name` (Token), `.keyword` (Token?), `.type` (TypeAnnotation?)
 
 **Ref:** [avoid_single_field_destructuring.dart](../../../lib/src/rules/avoid_single_field_destructuring.dart#L55-L69)
+
+### Track Destructurings in Block and Flag Property Accesses on Same Source
+
+Register `addBlock`. Scan statements in order: collect `PatternVariableDeclarationStatement` entries (source name, element, destructured fields), then use a `RecursiveAstVisitor` to find subsequent property accesses on the same source variable for fields not yet destructured. Match source by element identity when possible:
+
+```dart
+@override
+void visitBlock(Block node) {
+  final destructurings = <_DestructuringInfo>[];
+
+  for (final statement in node.statements) {
+    // First, check property accesses against existing destructurings
+    if (destructurings.isNotEmpty) {
+      final finder = _PropertyAccessFinder(destructurings);
+      statement.accept(finder);
+      for (final match in finder.matches) {
+        rule.reportAtNode(match.accessNode, arguments: [...]);
+      }
+    }
+
+    // Then, collect new destructuring declarations
+    if (statement is PatternVariableDeclarationStatement) {
+      final decl = statement.declaration;
+      final expression = decl.expression;
+      if (expression is! SimpleIdentifier) continue;
+      if (expression.element is! LocalElement) continue;
+
+      final pattern = decl.pattern;
+      final fields = <String>{};
+      if (pattern is ObjectPattern) {
+        for (final field in pattern.fields) {
+          final name = field.effectiveName;
+          if (name != null) fields.add(name);
+        }
+      }
+      // ... store sourceName, sourceElement, fields
+    }
+  }
+}
+
+class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
+  @override
+  void visitPrefixedIdentifier(PrefixedIdentifier node) {
+    _check(node.prefix.name, node.prefix.element, node.identifier.name, node);
+    super.visitPrefixedIdentifier(node);
+  }
+
+  @override
+  void visitPropertyAccess(PropertyAccess node) {
+    final target = node.target;
+    if (target is SimpleIdentifier) {
+      _check(target.name, target.element, node.propertyName.name, node);
+    }
+    super.visitPropertyAccess(node);
+  }
+
+  // Stop at nested function boundaries
+  @override void visitFunctionExpression(FunctionExpression node) {}
+  @override void visitFunctionDeclaration(FunctionDeclaration node) {}
+
+  void _check(String targetName, Element? targetElement,
+              String propertyName, AstNode accessNode) {
+    // Match by element identity, skip assignments, skip already-destructured fields
+  }
+}
+```
+
+**Key points:**
+- Use `expression.element` (not `.staticElement`) on `SimpleIdentifier` to get the referenced element
+- Match source by element identity (`targetElement == info.sourceElement`) for reliability
+- Only track `LocalElement` sources (parameters and local variables)
+- Handle both `PrefixedIdentifier` (simple `obj.prop`) and `PropertyAccess` (chained access)
+- `PatternField.effectiveName` returns the property name being destructured
+
+**Ref:** [use_existing_destructuring.dart](../../../lib/src/rules/use_existing_destructuring.dart#L81-L248)

@@ -50,6 +50,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Move statement | [proper_super_calls_fix.dart](proper_super_calls_fix.dart) | Delete statement at current position + insert at first/last position; line-boundary whitespace handling via `unitResult.content` |
 | Insert destructuring | [prefer_class_destructuring_fix.dart](prefer_class_destructuring_fix.dart) | Re-collect property accesses from block, generate destructuring declaration, insert before first usage with `addSimpleInsertion` + indentation from `unitResult.content` |
 | Re-derive from block context | [use_existing_variable_fix.dart](use_existing_variable_fix.dart) | Walk up to enclosing `Block`, scan preceding final/const variable declarations for matching `toSource()`, replace duplicate expression with variable name |
+| Multi-edit: pattern + replacement | [use_existing_destructuring_fix.dart](use_existing_destructuring_fix.dart) | Walk up to enclosing `Block`, find `PatternVariableDeclarationStatement` for the source variable, `addSimpleInsertion` to add field to pattern (after last field) + `addSimpleReplacement` to replace property access with variable name |
 
 ## Updating Documentation
 
