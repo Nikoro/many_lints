@@ -31,6 +31,9 @@ import 'package:many_lints/src/rules/avoid_contradictory_expressions.dart';
 import 'package:many_lints/src/rules/avoid_constant_switches.dart';
 import 'package:many_lints/src/rules/avoid_commented_out_code.dart';
 import 'package:many_lints/src/rules/avoid_collection_equality_checks.dart';
+import 'package:many_lints/src/rules/avoid_incomplete_copy_with.dart';
+import 'package:many_lints/src/rules/avoid_incorrect_image_opacity.dart';
+import 'package:many_lints/src/rules/avoid_mounted_in_setstate.dart';
 import 'package:many_lints/src/rules/avoid_collection_methods_with_unrelated_types.dart';
 import 'package:many_lints/src/rules/avoid_accessing_collections_by_constant_index.dart';
 import 'package:many_lints/src/rules/avoid_generics_shadowing.dart';
@@ -71,6 +74,8 @@ import 'package:many_lints/src/rules/use_notifier_suffix.dart';
 import 'package:many_lints/src/fixes/always_remove_listener_fix.dart';
 import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
 import 'package:many_lints/src/fixes/avoid_commented_out_code_fix.dart';
+import 'package:many_lints/src/fixes/avoid_incomplete_copy_with_fix.dart';
+import 'package:many_lints/src/fixes/avoid_incorrect_image_opacity_fix.dart';
 import 'package:many_lints/src/fixes/avoid_duplicate_cascades_fix.dart';
 import 'package:many_lints/src/fixes/add_suffix_fix.dart';
 import 'package:many_lints/src/fixes/avoid_generics_shadowing_fix.dart';
@@ -129,6 +134,9 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidThrowInCatchBlock());
     registry.registerWarningRule(AvoidUnassignedStreamSubscriptions());
     registry.registerWarningRule(AvoidFlexibleOutsideFlex());
+    registry.registerWarningRule(AvoidIncompleteCopyWith());
+    registry.registerWarningRule(AvoidIncorrectImageOpacity());
+    registry.registerWarningRule(AvoidMountedInSetstate());
     registry.registerWarningRule(AvoidCollectionEqualityChecks());
     registry.registerWarningRule(AvoidCollectionMethodsWithUnrelatedTypes());
     registry.registerWarningRule(PreferAbstractFinalStaticClass());
@@ -270,6 +278,14 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidThrowInCatchBlock.code,
       AvoidThrowInCatchBlockFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidIncompleteCopyWith.code,
+      AvoidIncompleteCopyWithFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidIncorrectImageOpacity.code,
+      AvoidIncorrectImageOpacityFix.new,
     );
 
     // Register assists

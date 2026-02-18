@@ -45,6 +45,8 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | ObjectPattern analysis | [prefer_wildcard_pattern.dart](prefer_wildcard_pattern.dart) | `ObjectPattern.type.name.lexeme` + `fields.isEmpty` check, recursive pattern walking |
 | Cross-method pairing | [always_remove_listener.dart](always_remove_listener.dart) | Track addListener/removeListener across lifecycle methods using RecursiveAstVisitor collectors, `toSource()` matching |
 | Widget hierarchy check | [avoid_flexible_outside_flex.dart](avoid_flexible_outside_flex.dart) | Walk parent chain through ListLiteral/NamedExpression/ArgumentList to find enclosing widget constructor |
+| Widget wrapping check | [avoid_incorrect_image_opacity.dart](avoid_incorrect_image_opacity.dart) | Detect widget wrapping pattern (Opacity→Image), handle both InstanceCreationExpression and MethodInvocation for constructors, check child staticType |
+| Callback body search | [avoid_mounted_in_setstate.dart](avoid_mounted_in_setstate.dart) | Search callback arg of MethodInvocation for identifiers (bare, prefixed, property access) using RecursiveAstVisitor |
 
 ## Updating Documentation
 
