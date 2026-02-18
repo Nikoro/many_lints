@@ -1030,6 +1030,7 @@ if (node case InstanceCreationExpression(
 | Mixins | `registry.addMixinDeclaration(this, visitor)` |
 | Pattern variable decl | `registry.addPatternVariableDeclaration(this, visitor)` |
 | Pattern variable stmt | `registry.addPatternVariableDeclarationStatement(this, visitor)` |
+| Generic function types | `registry.addGenericFunctionType(this, visitor)` |
 
 ### Common AST Checks
 

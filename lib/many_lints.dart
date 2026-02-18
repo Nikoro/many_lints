@@ -27,6 +27,7 @@ import 'package:many_lints/src/rules/avoid_cascade_after_if_null.dart';
 import 'package:many_lints/src/rules/avoid_border_all.dart';
 import 'package:many_lints/src/rules/avoid_expanded_as_spacer.dart';
 import 'package:many_lints/src/rules/avoid_returning_widgets.dart';
+import 'package:many_lints/src/rules/prefer_async_callback.dart';
 import 'package:many_lints/src/rules/avoid_shrink_wrap_in_lists.dart';
 import 'package:many_lints/src/rules/avoid_state_constructors.dart';
 import 'package:many_lints/src/rules/avoid_single_field_destructuring.dart';
@@ -123,6 +124,7 @@ import 'package:many_lints/src/fixes/prefer_contains_fix.dart';
 import 'package:many_lints/src/fixes/prefer_enums_by_name_fix.dart';
 import 'package:many_lints/src/fixes/prefer_expect_later_fix.dart';
 import 'package:many_lints/src/fixes/prefer_iterable_of_fix.dart';
+import 'package:many_lints/src/fixes/prefer_async_callback_fix.dart';
 import 'package:many_lints/src/fixes/prefer_explicit_function_type_fix.dart';
 import 'package:many_lints/src/fixes/prefer_overriding_parent_equality_fix.dart';
 import 'package:many_lints/src/fixes/prefer_padding_over_container_fix.dart';
@@ -225,6 +227,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidReturningWidgets());
     registry.registerWarningRule(AvoidShrinkWrapInLists());
     registry.registerWarningRule(AvoidStateConstructors());
+    registry.registerWarningRule(PreferAsyncCallback());
 
     // Register fixes for rules
     registry.registerFixForRule(
@@ -405,6 +408,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidStateConstructors.code,
       AvoidStateConstructorsFix.new,
+    );
+    registry.registerFixForRule(
+      PreferAsyncCallback.code,
+      PreferAsyncCallbackFix.new,
     );
 
     // Register assists

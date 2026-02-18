@@ -64,6 +64,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Widget wrapping with empty child | [avoid_expanded_as_spacer.dart](avoid_expanded_as_spacer.dart) | Detect wrapper widget with empty child (no args or only `key`); shared `_check()` for both `InstanceCreationExpression` and `MethodInvocation`; child arg inspection via `staticType` |
 | Return type checking | [avoid_returning_widgets.dart](avoid_returning_widgets.dart) | Use `addMethodDeclaration` + `addFunctionDeclaration` to check return types; `returnType.type` → `InterfaceType` check + `TypeChecker.isAssignableFromType()`; exempt specific method names (e.g., `build`) |
 | Constructor inspection | [avoid_state_constructors.dart](avoid_state_constructors.dart) | Use `addClassDeclaration` to find `ConstructorDeclaration` members; check `body is BlockFunctionBody` with non-empty statements + `initializers.any()` (filter out `SuperConstructorInvocation`); type-check enclosing class with `TypeChecker.isSuperOf()` |
+| GenericFunctionType analysis | [prefer_async_callback.dart](prefer_async_callback.dart) | Use `addGenericFunctionType` to visit explicit function type annotations; check `returnType`, `parameters`, `typeParameters`, `question`; skip `node.parent is GenericTypeAlias` for typedef definitions |
 
 ## Updating Documentation
 

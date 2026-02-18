@@ -54,6 +54,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Constructor rewrite | [avoid_border_all_fix.dart](avoid_border_all_fix.dart) | Replace constructor call with alternative; handle both `InstanceCreationExpression` and `MethodInvocation` node types; preserve args via `toSource()` |
 | Widget replacement | [avoid_expanded_as_spacer_fix.dart](avoid_expanded_as_spacer_fix.dart) | Replace entire widget with simpler alternative; selectively preserve named args (key, flex); handle both node types; preserve const keyword |
 | Delete constructor | [avoid_state_constructors_fix.dart](avoid_state_constructors_fix.dart) | Delete entire `ConstructorDeclaration` node via `range.node()` + `addDeletion()` |
+| Replace + add import | [prefer_async_callback_fix.dart](prefer_async_callback_fix.dart) | Replace type annotation + `builder.importLibrary(Uri.parse('package:...'))` to auto-add import |
 
 ## Updating Documentation
 
