@@ -77,6 +77,7 @@ import 'package:many_lints/src/rules/use_bloc_suffix.dart';
 import 'package:many_lints/src/rules/use_cubit_suffix.dart';
 import 'package:many_lints/src/rules/use_dedicated_media_query_methods.dart';
 import 'package:many_lints/src/rules/use_gap.dart';
+import 'package:many_lints/src/rules/use_closest_build_context.dart';
 import 'package:many_lints/src/rules/use_notifier_suffix.dart';
 
 // Fixes
@@ -119,6 +120,7 @@ import 'package:many_lints/src/fixes/prefer_switch_expression_fix.dart';
 import 'package:many_lints/src/fixes/prefer_wildcard_pattern_fix.dart';
 import 'package:many_lints/src/fixes/prefer_type_over_var_fix.dart';
 import 'package:many_lints/src/fixes/use_dedicated_media_query_methods_fix.dart';
+import 'package:many_lints/src/fixes/use_closest_build_context_fix.dart';
 import 'package:many_lints/src/fixes/use_gap_fix.dart';
 
 // Assists
@@ -191,6 +193,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferSpacing());
     registry.registerWarningRule(PreferTestMatchers());
     registry.registerWarningRule(ProperSuperCalls());
+    registry.registerWarningRule(UseClosestBuildContext());
 
     // Register fixes for rules
     registry.registerFixForRule(
@@ -335,6 +338,10 @@ class ManyLintsPlugin extends Plugin {
     );
 
     registry.registerFixForRule(ProperSuperCalls.code, ProperSuperCallsFix.new);
+    registry.registerFixForRule(
+      UseClosestBuildContext.code,
+      UseClosestBuildContextFix.new,
+    );
 
     // Register assists
     registry.registerAssist(ConvertIterableMapToCollectionFor.new);
