@@ -47,6 +47,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Widget hierarchy check | [avoid_flexible_outside_flex.dart](avoid_flexible_outside_flex.dart) | Walk parent chain through ListLiteral/NamedExpression/ArgumentList to find enclosing widget constructor |
 | Widget wrapping check | [avoid_incorrect_image_opacity.dart](avoid_incorrect_image_opacity.dart) | Detect widget wrapping pattern (Opacity→Image), handle both InstanceCreationExpression and MethodInvocation for constructors, check child staticType |
 | Callback body search | [avoid_mounted_in_setstate.dart](avoid_mounted_in_setstate.dart) | Search callback arg of MethodInvocation for identifiers (bare, prefixed, property access) using RecursiveAstVisitor |
+| Super-only override | [avoid_unnecessary_overrides_in_state.dart](avoid_unnecessary_overrides_in_state.dart) | Check overridden methods in State subclasses for bodies that only call super (block and expression forms) |
 
 ## Updating Documentation
 
