@@ -57,6 +57,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Replace + add import | [prefer_async_callback_fix.dart](prefer_async_callback_fix.dart) | Replace type annotation + `builder.importLibrary(Uri.parse('package:...'))` to auto-add import |
 | Callback transform + import | [prefer_compute_over_isolate_run_fix.dart](prefer_compute_over_isolate_run_fix.dart) | Replace method call + transform callback arg (add `_` param) + `importLibrary`; handle closures vs function references differently |
 | Constructor rewrite (multi-case) | [prefer_correct_edge_insets_constructor_fix.dart](prefer_correct_edge_insets_constructor_fix.dart) | Switch on constructor name to compute different replacements; shared `_isZero()` helper; mirror rule logic for fix replacement strings; handle both `InstanceCreationExpression` and `MethodInvocation` |
+| Multi-pattern fix dispatch | [prefer_for_loop_in_children_fix.dart](prefer_for_loop_in_children_fix.dart) | Dispatch fix by checking `node` type and method name; convert `.map().toList()` → `[for ...]`, `SpreadElement` → `for ...`, `List.generate()` → `[for (var i...)]`, `.fold()` → `[for ...]`; use `maybeGetSingleReturnExpression` for callback bodies; `_extractFoldAddExpression` for fold pattern |
 
 ## Updating Documentation
 
