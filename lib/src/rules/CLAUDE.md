@@ -63,6 +63,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Named constructor detection | [avoid_border_all.dart](avoid_border_all.dart) | Detect `ClassName.namedCtor()` calls via both `InstanceCreationExpression` (with type args) and `MethodInvocation` (without); use `staticType` + `TypeChecker.isExactlyType()` for type verification |
 | Widget wrapping with empty child | [avoid_expanded_as_spacer.dart](avoid_expanded_as_spacer.dart) | Detect wrapper widget with empty child (no args or only `key`); shared `_check()` for both `InstanceCreationExpression` and `MethodInvocation`; child arg inspection via `staticType` |
 | Return type checking | [avoid_returning_widgets.dart](avoid_returning_widgets.dart) | Use `addMethodDeclaration` + `addFunctionDeclaration` to check return types; `returnType.type` → `InterfaceType` check + `TypeChecker.isAssignableFromType()`; exempt specific method names (e.g., `build`) |
+| Constructor inspection | [avoid_state_constructors.dart](avoid_state_constructors.dart) | Use `addClassDeclaration` to find `ConstructorDeclaration` members; check `body is BlockFunctionBody` with non-empty statements + `initializers.any()` (filter out `SuperConstructorInvocation`); type-check enclosing class with `TypeChecker.isSuperOf()` |
 
 ## Updating Documentation
 

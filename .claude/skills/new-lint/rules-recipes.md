@@ -1516,3 +1516,42 @@ class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
 - `PatternField.effectiveName` returns the property name being destructured
 
 **Ref:** [use_existing_destructuring.dart](../../../lib/src/rules/use_existing_destructuring.dart#L81-L248)
+
+### Inspect Constructors Within a Class Declaration
+
+Register `addClassDeclaration`. Iterate `BlockClassBody.members` for `ConstructorDeclaration` nodes. Check constructor body (non-empty `BlockFunctionBody`) and initializer list (`initializers`), excluding `SuperConstructorInvocation`:
+
+```dart
+@override
+void visitClassDeclaration(ClassDeclaration node) {
+  final element = node.declaredFragment?.element;
+  if (element == null || !_stateChecker.isSuperOf(element)) return;
+
+  final body = node.body;
+  if (body is! BlockClassBody) return;
+
+  for (final member in body.members) {
+    if (member is! ConstructorDeclaration) continue;
+
+    final hasBody =
+        member.body is BlockFunctionBody &&
+        (member.body as BlockFunctionBody).block.statements.isNotEmpty;
+
+    // Filter out super() forwarding calls — only flag real initializers
+    final hasInitializers = member.initializers.any(
+      (i) => i is! SuperConstructorInvocation,
+    );
+
+    if (hasBody || hasInitializers) {
+      rule.reportAtNode(member);
+    }
+  }
+}
+```
+
+**Key types:**
+- `ConstructorDeclaration.body` → `FunctionBody` (usually `BlockFunctionBody` or `EmptyFunctionBody`)
+- `ConstructorDeclaration.initializers` → `NodeList<ConstructorInitializer>` — subtypes: `ConstructorFieldInitializer`, `SuperConstructorInvocation`, `RedirectingConstructorInvocation`, `AssertInitializer`
+- `ConstructorDeclaration.name` → `SimpleIdentifier` (class name), `.period` → `Token?` (for named constructors)
+
+**Ref:** [avoid_state_constructors.dart](../../../lib/src/rules/avoid_state_constructors.dart#L55-L77)

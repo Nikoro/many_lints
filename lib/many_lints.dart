@@ -28,6 +28,7 @@ import 'package:many_lints/src/rules/avoid_border_all.dart';
 import 'package:many_lints/src/rules/avoid_expanded_as_spacer.dart';
 import 'package:many_lints/src/rules/avoid_returning_widgets.dart';
 import 'package:many_lints/src/rules/avoid_shrink_wrap_in_lists.dart';
+import 'package:many_lints/src/rules/avoid_state_constructors.dart';
 import 'package:many_lints/src/rules/avoid_single_field_destructuring.dart';
 import 'package:many_lints/src/rules/avoid_flexible_outside_flex.dart';
 import 'package:many_lints/src/rules/avoid_constant_conditions.dart';
@@ -96,6 +97,7 @@ import 'package:many_lints/src/fixes/dispose_fields_fix.dart';
 import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
 import 'package:many_lints/src/fixes/avoid_border_all_fix.dart';
 import 'package:many_lints/src/fixes/avoid_expanded_as_spacer_fix.dart';
+import 'package:many_lints/src/fixes/avoid_state_constructors_fix.dart';
 import 'package:many_lints/src/fixes/avoid_single_field_destructuring_fix.dart';
 import 'package:many_lints/src/fixes/avoid_commented_out_code_fix.dart';
 import 'package:many_lints/src/fixes/avoid_incomplete_copy_with_fix.dart';
@@ -222,6 +224,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidExpandedAsSpacer());
     registry.registerWarningRule(AvoidReturningWidgets());
     registry.registerWarningRule(AvoidShrinkWrapInLists());
+    registry.registerWarningRule(AvoidStateConstructors());
 
     // Register fixes for rules
     registry.registerFixForRule(
@@ -398,6 +401,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidExpandedAsSpacer.code,
       AvoidExpandedAsSpacerFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidStateConstructors.code,
+      AvoidStateConstructorsFix.new,
     );
 
     // Register assists
