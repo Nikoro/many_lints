@@ -39,6 +39,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Throw in catch | [avoid_throw_in_catch_block.dart](avoid_throw_in_catch_block.dart) | RecursiveAstVisitor for ThrowExpression, function boundary stopping |
 | Return in try-catch | [prefer_return_await.dart](prefer_return_await.dart) | ReturnStatement visitor, async detection, Future type check |
 | Matcher type check | [prefer_test_matchers.dart](prefer_test_matchers.dart) | Check if arg extends a class by walking `allSupertypes` |
+| Unassigned return value | [avoid_unassigned_stream_subscriptions.dart](avoid_unassigned_stream_subscriptions.dart) | `node.staticType` + `parent is ExpressionStatement` for discarded values |
 
 ## Updating Documentation
 
