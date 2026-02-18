@@ -45,6 +45,7 @@ import 'package:many_lints/src/rules/prefer_center_over_align.dart';
 import 'package:many_lints/src/rules/prefer_iterable_of.dart';
 import 'package:many_lints/src/rules/prefer_explicit_function_type.dart';
 import 'package:many_lints/src/rules/prefer_padding_over_container.dart';
+import 'package:many_lints/src/rules/prefer_return_await.dart';
 import 'package:many_lints/src/rules/prefer_returning_shorthands.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_constructors.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_enums.dart';
@@ -75,6 +76,7 @@ import 'package:many_lints/src/fixes/prefer_center_over_align_fix.dart';
 import 'package:many_lints/src/fixes/prefer_iterable_of_fix.dart';
 import 'package:many_lints/src/fixes/prefer_explicit_function_type_fix.dart';
 import 'package:many_lints/src/fixes/prefer_padding_over_container_fix.dart';
+import 'package:many_lints/src/fixes/prefer_return_await_fix.dart';
 import 'package:many_lints/src/fixes/prefer_returning_shorthands_fix.dart';
 import 'package:many_lints/src/fixes/prefer_shorthands_with_constructors_fix.dart';
 import 'package:many_lints/src/fixes/prefer_shorthands_with_enums_fix.dart';
@@ -117,6 +119,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferAlignOverContainer());
     registry.registerWarningRule(PreferExplicitFunctionType());
     registry.registerWarningRule(PreferPaddingOverContainer());
+    registry.registerWarningRule(PreferReturnAwait());
     registry.registerWarningRule(PreferReturningShorthands());
     registry.registerWarningRule(PreferShorthandsWithConstructors());
     registry.registerWarningRule(PreferShorthandsWithEnums());
@@ -170,6 +173,10 @@ class ManyLintsPlugin extends Plugin {
     );
     registry.registerFixForRule(PreferAnyOrEvery.code, PreferAnyOrEveryFix.new);
     registry.registerFixForRule(PreferIterableOf.code, PreferIterableOfFix.new);
+    registry.registerFixForRule(
+      PreferReturnAwait.code,
+      PreferReturnAwaitFix.new,
+    );
     registry.registerFixForRule(
       PreferReturningShorthands.code,
       PreferReturningShorthandsFix.new,

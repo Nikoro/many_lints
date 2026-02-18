@@ -36,6 +36,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Property+method chain | [avoid_map_keys_contains.dart](avoid_map_keys_contains.dart) | PrefixedIdentifier vs PropertyAccess duality |
 | Test matcher validation | [avoid_misused_test_matchers.dart](avoid_misused_test_matchers.dart) | Method name matching, nullability/type category checks |
 | Try-catch analysis | [avoid_only_rethrow.dart](avoid_only_rethrow.dart) | CatchClause body inspection, RethrowExpression detection |
+| Return in try-catch | [prefer_return_await.dart](prefer_return_await.dart) | ReturnStatement visitor, async detection, Future type check |
 
 ## Updating Documentation
 

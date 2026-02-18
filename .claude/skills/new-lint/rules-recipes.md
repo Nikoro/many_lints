@@ -927,6 +927,102 @@ void visitTryStatement(TryStatement node) {
 
 ---
 
+### Recipe: Analyze Return Statements in Async Try-Catch Context
+
+Register `addReturnStatement` to visit `ReturnStatement` nodes, then walk up the parent chain to determine if (a) the node is inside a try body or catch clause, and (b) the enclosing function is async:
+
+```dart
+@override
+void registerNodeProcessors(
+  RuleVisitorRegistry registry,
+  RuleContext context,
+) {
+  final visitor = _Visitor(this);
+  registry.addReturnStatement(this, visitor);
+}
+
+@override
+void visitReturnStatement(ReturnStatement node) {
+  final expression = node.expression;
+  if (expression == null) return;
+
+  // Already awaited
+  if (expression is AwaitExpression) return;
+
+  // Check static type is Future
+  final type = expression.staticType;
+  if (type is! InterfaceType) return;
+  final name = type.element.name;
+  if (name != 'Future' && name != 'FutureOr') return;
+
+  // Check enclosing context
+  if (!_isInsideTryCatch(node)) return;
+  if (!_isEnclosingFunctionAsync(node)) return;
+
+  rule.reportAtNode(expression);
+}
+```
+
+**Async function detection (walk parent chain):**
+```dart
+static bool _isEnclosingFunctionAsync(AstNode node) {
+  AstNode? current = node.parent;
+  while (current != null) {
+    if (current is FunctionExpression) {
+      return current.body.isAsynchronous;
+    }
+    if (current is MethodDeclaration) {
+      return current.body.isAsynchronous;
+    }
+    current = current.parent;
+  }
+  return false;
+}
+```
+
+**Try-catch containment check (with function boundary):**
+```dart
+static bool _isInsideTryCatch(AstNode node) {
+  AstNode? current = node.parent;
+  while (current != null) {
+    // Stop at function boundaries
+    if (current is FunctionExpression ||
+        current is FunctionDeclaration ||
+        current is MethodDeclaration) {
+      return false;
+    }
+    if (current is TryStatement) {
+      // Verify node is in try body or catch clause, not finally
+      return _isDescendantOf(node, current.body) ||
+          current.catchClauses.any((c) => _isDescendantOf(node, c));
+    }
+    current = current.parent;
+  }
+  return false;
+}
+
+static bool _isDescendantOf(AstNode node, AstNode ancestor) {
+  AstNode? current = node.parent;
+  while (current != null) {
+    if (current == ancestor) return true;
+    current = current.parent;
+  }
+  return false;
+}
+```
+
+**Key details:**
+- `ReturnStatement.expression` is nullable (bare `return;` has no expression)
+- `FunctionBody.isAsynchronous` is `true` for both `async` and `async*` functions
+- Stop parent-chain walking at function boundaries to avoid false positives for nested closures
+- `_isDescendantOf` is needed to distinguish try body, catch clauses, and finally block
+- Import `InterfaceType` from `package:analyzer/dart/element/type.dart` for Future type check
+
+**When to use:** Rules that analyze return behavior within specific scoping contexts (try-catch, loops, closures)
+**Reference:** [prefer_return_await.dart](../../../lib/src/rules/prefer_return_await.dart#L70-L139)
+
+---
+
 ## 🧪 Testing & Registration
 
 ### Test Structure
@@ -1084,3 +1180,4 @@ class ManyLintsPlugin extends Plugin {
 | Feb 18, 2026 | avoid_map_keys_contains | Added recipe for PrefixedIdentifier vs PropertyAccess duality when detecting `target.property.method()` patterns. Simple identifiers (`map.keys`) parse as PrefixedIdentifier, complex expressions (`maps.first.keys`) parse as PropertyAccess — must handle both. |
 | Feb 18, 2026 | avoid_misused_test_matchers | Added recipe for validating function call arguments by name and type category. Shows pattern for intercepting specific method calls (e.g., `expect()`), resolving matcher expressions (SimpleIdentifier vs MethodInvocation), and checking type compatibility with `NullabilitySuffix` and `_isOrSubtypeOf`. |
 | Feb 18, 2026 | avoid_only_rethrow | Added `addTryStatement` to cheat sheet, recipe for analyzing try-catch clauses (TryStatement, CatchClause body inspection, RethrowExpression detection). Documents all key CatchClause properties. |
+| Feb 18, 2026 | prefer_return_await | Added `addReturnStatement` to cheat sheet, recipe for analyzing return statements with async function detection and try-catch context checking. Shows parent-chain walking for async detection via `body.isAsynchronous` and `_isDescendantOf` for try/catch containment. |
