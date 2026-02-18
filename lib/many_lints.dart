@@ -94,6 +94,7 @@ import 'package:many_lints/src/rules/prefer_class_destructuring.dart';
 import 'package:many_lints/src/rules/use_closest_build_context.dart';
 import 'package:many_lints/src/rules/use_existing_destructuring.dart';
 import 'package:many_lints/src/rules/use_existing_variable.dart';
+import 'package:many_lints/src/rules/prefer_container.dart';
 import 'package:many_lints/src/rules/use_notifier_suffix.dart';
 
 // Fixes
@@ -151,6 +152,7 @@ import 'package:many_lints/src/fixes/prefer_class_destructuring_fix.dart';
 import 'package:many_lints/src/fixes/use_closest_build_context_fix.dart';
 import 'package:many_lints/src/fixes/use_existing_destructuring_fix.dart';
 import 'package:many_lints/src/fixes/use_existing_variable_fix.dart';
+import 'package:many_lints/src/fixes/prefer_container_fix.dart';
 import 'package:many_lints/src/fixes/use_gap_fix.dart';
 
 // Assists
@@ -240,6 +242,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferConstBorderRadius());
     registry.registerWarningRule(AvoidWrappingInPadding());
     registry.registerWarningRule(PreferConstrainedBoxOverContainer());
+    registry.registerWarningRule(PreferContainer());
 
     // Register fixes for rules
     registry.registerFixForRule(
@@ -441,6 +444,7 @@ class ManyLintsPlugin extends Plugin {
       AvoidWrappingInPadding.code,
       AvoidWrappingInPaddingFix.new,
     );
+    registry.registerFixForRule(PreferContainer.code, PreferContainerFix.new);
 
     // Register assists
     registry.registerAssist(ConvertIterableMapToCollectionFor.new);
