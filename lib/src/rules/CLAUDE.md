@@ -67,6 +67,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | GenericFunctionType analysis | [prefer_async_callback.dart](prefer_async_callback.dart) | Use `addGenericFunctionType` to visit explicit function type annotations; check `returnType`, `parameters`, `typeParameters`, `question`; skip `node.parent is GenericTypeAlias` for typedef definitions |
 | dart: library verification | [prefer_compute_over_isolate_run.dart](prefer_compute_over_isolate_run.dart) | Verify `SimpleIdentifier` resolves to a dart: SDK class via `element.library.identifier.startsWith('dart:isolate')` to avoid false positives on user-defined classes with the same name |
 | Constructor param check | [avoid_wrapping_in_padding.dart](avoid_wrapping_in_padding.dart) | Dynamically check if a type's constructor has a specific named parameter via `InterfaceType.element.constructors` → `formalParameters` → `isNamed && name == 'padding'`; handles both `InstanceCreationExpression` and `MethodInvocation` children |
+| Constructor optimization | [prefer_correct_edge_insets_constructor.dart](prefer_correct_edge_insets_constructor.dart) | Analyze constructor arguments via `toSource()` comparison to suggest simpler constructors; handle named args with `NamedExpression`, positional args by index; `reportAtNode` with `{0}` placeholder for suggestion message |
 
 ## Updating Documentation
 

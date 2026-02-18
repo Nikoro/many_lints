@@ -56,6 +56,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Delete constructor | [avoid_state_constructors_fix.dart](avoid_state_constructors_fix.dart) | Delete entire `ConstructorDeclaration` node via `range.node()` + `addDeletion()` |
 | Replace + add import | [prefer_async_callback_fix.dart](prefer_async_callback_fix.dart) | Replace type annotation + `builder.importLibrary(Uri.parse('package:...'))` to auto-add import |
 | Callback transform + import | [prefer_compute_over_isolate_run_fix.dart](prefer_compute_over_isolate_run_fix.dart) | Replace method call + transform callback arg (add `_` param) + `importLibrary`; handle closures vs function references differently |
+| Constructor rewrite (multi-case) | [prefer_correct_edge_insets_constructor_fix.dart](prefer_correct_edge_insets_constructor_fix.dart) | Switch on constructor name to compute different replacements; shared `_isZero()` helper; mirror rule logic for fix replacement strings; handle both `InstanceCreationExpression` and `MethodInvocation` |
 
 ## Updating Documentation
 
