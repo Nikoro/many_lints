@@ -34,6 +34,7 @@ import 'package:many_lints/src/rules/avoid_collection_equality_checks.dart';
 import 'package:many_lints/src/rules/avoid_incomplete_copy_with.dart';
 import 'package:many_lints/src/rules/avoid_incorrect_image_opacity.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_gesture_detector.dart';
+import 'package:many_lints/src/rules/avoid_unnecessary_overrides.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_overrides_in_state.dart';
 import 'package:many_lints/src/rules/avoid_mounted_in_setstate.dart';
 import 'package:many_lints/src/rules/avoid_collection_methods_with_unrelated_types.dart';
@@ -79,6 +80,7 @@ import 'package:many_lints/src/fixes/avoid_commented_out_code_fix.dart';
 import 'package:many_lints/src/fixes/avoid_incomplete_copy_with_fix.dart';
 import 'package:many_lints/src/fixes/avoid_incorrect_image_opacity_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_gesture_detector_fix.dart';
+import 'package:many_lints/src/fixes/avoid_unnecessary_overrides_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_overrides_in_state_fix.dart';
 import 'package:many_lints/src/fixes/avoid_duplicate_cascades_fix.dart';
 import 'package:many_lints/src/fixes/add_suffix_fix.dart';
@@ -141,6 +143,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidIncompleteCopyWith());
     registry.registerWarningRule(AvoidIncorrectImageOpacity());
     registry.registerWarningRule(AvoidUnnecessaryGestureDetector());
+    registry.registerWarningRule(AvoidUnnecessaryOverrides());
     registry.registerWarningRule(AvoidUnnecessaryOverridesInState());
     registry.registerWarningRule(AvoidMountedInSetstate());
     registry.registerWarningRule(AvoidCollectionEqualityChecks());
@@ -296,6 +299,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidUnnecessaryGestureDetector.code,
       AvoidUnnecessaryGestureDetectorFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidUnnecessaryOverrides.code,
+      AvoidUnnecessaryOverridesFix.new,
     );
     registry.registerFixForRule(
       AvoidUnnecessaryOverridesInState.code,

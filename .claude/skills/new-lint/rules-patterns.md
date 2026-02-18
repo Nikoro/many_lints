@@ -1026,6 +1026,7 @@ if (node case InstanceCreationExpression(
 | Switch expressions | `registry.addSwitchExpression(this, visitor)` |
 | Return statements | `registry.addReturnStatement(this, visitor)` |
 | Try statements | `registry.addTryStatement(this, visitor)` |
+| Mixins | `registry.addMixinDeclaration(this, visitor)` |
 
 ### Common AST Checks
 
