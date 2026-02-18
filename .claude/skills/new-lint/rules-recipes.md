@@ -1609,6 +1609,92 @@ class _IdentifierFinder extends RecursiveAstVisitor<void> {
 
 ---
 
+### Recipe: Detect Unnecessary Overrides (Methods, Getters, Setters, Operators, Abstract)
+
+Register `addClassDeclaration` + `addMixinDeclaration` and iterate class members for `MethodDeclaration` nodes with `@override`. Handle five cases:
+
+1. **Abstract members** — `member.isAbstract` (has `EmptyFunctionBody`); must check BEFORE `isGetter`/`isSetter` since abstract getters/setters have both flags
+2. **Getters** — body returns `super.getterName` (via `PropertyAccess`)
+3. **Setters** — body assigns `super.setterName = param` (via `AssignmentExpression`)
+4. **Operators** — body is `BinaryExpression` with `SuperExpression` left operand (NOT `MethodInvocation`)
+5. **Regular methods** — body is `MethodInvocation` on `super` with pass-through args
+
+```dart
+void _checkMethodDeclaration(MethodDeclaration member) {
+  final memberName = member.name.lexeme;
+
+  // Abstract redeclaration — check FIRST (abstract getters/setters also have isGetter/isSetter)
+  if (member.isAbstract) {
+    rule.reportAtNode(member, arguments: [memberName]);
+    return;
+  }
+
+  if (member.isGetter) {
+    if (_isUnnecessaryGetter(member, memberName)) {
+      rule.reportAtNode(member, arguments: [memberName]);
+    }
+  } else if (member.isSetter) {
+    if (_isUnnecessarySetter(member, memberName)) {
+      rule.reportAtNode(member, arguments: [memberName]);
+    }
+  } else {
+    if (_isOnlySuperCall(member, memberName)) {
+      rule.reportAtNode(member, arguments: [memberName]);
+    }
+  }
+}
+```
+
+**Operator override detection via BinaryExpression:**
+```dart
+// In _isOnlySuperCall, after checking MethodInvocation:
+if (method.isOperator && expression is BinaryExpression) {
+  return expression.leftOperand is SuperExpression &&
+      expression.operator.lexeme == methodName &&
+      _isSingleParamPassThrough(method.parameters, expression.rightOperand);
+}
+```
+
+**Arg pass-through validation:**
+```dart
+static bool _areArgsPassThrough(FormalParameterList? params, ArgumentList args) {
+  if (params == null) return args.arguments.isEmpty;
+  final parameters = params.parameters;
+  final arguments = args.arguments;
+  if (parameters.length != arguments.length) return false;
+
+  for (var i = 0; i < parameters.length; i++) {
+    final param = parameters[i];
+    final arg = arguments[i];
+    final paramName = param.name?.lexeme;
+    if (paramName == null) return false;
+
+    if (arg is NamedExpression) {
+      if (arg.name.label.name != paramName) return false;
+      final expr = arg.expression;
+      if (expr is! SimpleIdentifier || expr.name != paramName) return false;
+    } else if (arg is SimpleIdentifier) {
+      if (arg.name != paramName) return false;
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+```
+
+**Key details:**
+- `member.isAbstract` is true for methods/getters/setters with `EmptyFunctionBody` (`;`)
+- `super.property` is parsed as `PropertyAccess(SuperExpression, SimpleIdentifier)` — NOT `PrefixedIdentifier`
+- `super == other` is `BinaryExpression`, NOT `MethodInvocation` — `method.isOperator` distinguishes operator declarations
+- `FormalParameter.name` returns `Token?` — use `.lexeme` to get the string
+- Named args have `NamedExpression(name: Label, expression: Expression)` — both label and value must match the parameter name
+
+**When to use:** Rules that detect redundant overrides in any class or mixin
+**Reference:** [avoid_unnecessary_overrides.dart](../../../lib/src/rules/avoid_unnecessary_overrides.dart#L71-L210)
+
+---
+
 ## 🧪 Testing & Registration
 
 ### Test Structure
@@ -1776,3 +1862,4 @@ class ManyLintsPlugin extends Plugin {
 | Feb 18, 2026 | always_remove_listener | Added recipe for cross-method call pairing (tracking addListener/removeListener across lifecycle methods). Uses RecursiveAstVisitor collectors with function boundary stopping, `realTarget?.toSource()` matching, and `args.first.toSource()` for callback comparison. |
 | Feb 18, 2026 | avoid_flexible_outside_flex | Added recipe for checking if a widget is a direct child of a specific parent widget type by walking the AST parent chain through ListLiteral/NamedExpression/ArgumentList to the enclosing InstanceCreationExpression. |
 | Feb 18, 2026 | avoid_mounted_in_setstate | Added recipe for searching callback argument body for specific identifiers. Shows handling of three identifier forms: bare SimpleIdentifier (with parent exclusion), PrefixedIdentifier (`context.mounted`), and PropertyAccess (`this.mounted`). |
+| Feb 18, 2026 | avoid_unnecessary_overrides | Added recipe for detecting unnecessary overrides across five patterns: abstract members (check `isAbstract` BEFORE `isGetter`/`isSetter`), getters (PropertyAccess on super), setters (AssignmentExpression to super), operators (BinaryExpression with SuperExpression, NOT MethodInvocation), and regular methods with arg pass-through validation. |
