@@ -58,6 +58,7 @@ import 'package:many_lints/src/rules/prefer_any_or_every.dart';
 import 'package:many_lints/src/rules/prefer_center_over_align.dart';
 import 'package:many_lints/src/rules/prefer_contains.dart';
 import 'package:many_lints/src/rules/prefer_enums_by_name.dart';
+import 'package:many_lints/src/rules/prefer_expect_later.dart';
 import 'package:many_lints/src/rules/prefer_iterable_of.dart';
 import 'package:many_lints/src/rules/prefer_explicit_function_type.dart';
 import 'package:many_lints/src/rules/prefer_overriding_parent_equality.dart';
@@ -108,6 +109,7 @@ import 'package:many_lints/src/fixes/prefer_any_or_every_fix.dart';
 import 'package:many_lints/src/fixes/prefer_center_over_align_fix.dart';
 import 'package:many_lints/src/fixes/prefer_contains_fix.dart';
 import 'package:many_lints/src/fixes/prefer_enums_by_name_fix.dart';
+import 'package:many_lints/src/fixes/prefer_expect_later_fix.dart';
 import 'package:many_lints/src/fixes/prefer_iterable_of_fix.dart';
 import 'package:many_lints/src/fixes/prefer_explicit_function_type_fix.dart';
 import 'package:many_lints/src/fixes/prefer_overriding_parent_equality_fix.dart';
@@ -185,6 +187,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferAnyOrEvery());
     registry.registerWarningRule(PreferContains());
     registry.registerWarningRule(PreferEnumsByName());
+    registry.registerWarningRule(PreferExpectLater());
     registry.registerWarningRule(PreferIterableOf());
     registry.registerWarningRule(AvoidSingleChildInMultiChildWidgets());
     registry.registerWarningRule(AvoidUnnecessaryHookWidgets());
@@ -244,6 +247,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       PreferEnumsByName.code,
       PreferEnumsByNameFix.new,
+    );
+    registry.registerFixForRule(
+      PreferExpectLater.code,
+      PreferExpectLaterFix.new,
     );
     registry.registerFixForRule(PreferIterableOf.code, PreferIterableOfFix.new);
     registry.registerFixForRule(
