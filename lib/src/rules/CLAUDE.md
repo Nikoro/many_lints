@@ -57,6 +57,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Lifecycle method ordering | [proper_super_calls.dart](proper_super_calls.dart) | Use `addMethodDeclaration` to visit methods directly, check super call position in block body via statement index, navigate `BlockClassBody.parent` to find enclosing class |
 | Outer scope variable detection | [use_closest_build_context.dart](use_closest_build_context.dart) | Detect outer variable usage inside nested closures with shadowing params; resolve untyped param types via `param.declaredFragment?.element.type`; multi-level RecursiveAstVisitor (finder→usage checker) with function boundary stopping |
 | Block-scoped property collection | [prefer_class_destructuring.dart](prefer_class_destructuring.dart) | Use `addBlock` + `RecursiveAstVisitor` to collect property accesses grouped by target variable; check `element is LocalElement` to filter to locals/params; skip assignment targets and method call targets |
+| Expression deduplication | [use_existing_variable.dart](use_existing_variable.dart) | Use `addBlock` to scan statements in order: first check for duplicates via `toSource()` comparison against collected variable initializers, then collect new final/const variable initializers; `RecursiveAstVisitor` with per-expression-type overrides that call `_checkExpression()` and suppress child recursion on match; stop at function boundaries; skip trivial expressions (identifiers, literals) |
 
 ## Updating Documentation
 

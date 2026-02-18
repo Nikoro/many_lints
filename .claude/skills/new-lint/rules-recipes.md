@@ -1302,3 +1302,92 @@ class _PropertyAccessCollector extends RecursiveAstVisitor<void> {
 - Handle both `PrefixedIdentifier` (simple `obj.prop`) and `PropertyAccess` (chained `a.b.prop`)
 
 **Ref:** [prefer_class_destructuring.dart](../../../lib/src/rules/prefer_class_destructuring.dart#L60-L173)
+
+### Detect Duplicate Expressions Matching Variable Initializers
+
+Register `addBlock`. Iterate statements in order: first check for duplicates, then collect new variable initializers. Use `toSource()` to compare expressions. Override multiple expression-type visitors in a `RecursiveAstVisitor` to check each expression, suppressing child recursion on match:
+
+```dart
+@override
+void visitBlock(Block node) {
+  final variables = <_VariableInfo>[];
+
+  for (final statement in node.statements) {
+    // First: check for duplicates against already-collected variables
+    if (variables.isNotEmpty) {
+      final finder = _DuplicateExpressionFinder(variables);
+      statement.accept(finder);
+      for (final match in finder.matches) {
+        rule.reportAtNode(match.node, arguments: [match.variableName]);
+      }
+    }
+
+    // Then: collect new final/const variable initializers
+    if (statement is VariableDeclarationStatement) {
+      if (!statement.variables.isFinal && !statement.variables.isConst) continue;
+      for (final variable in statement.variables.variables) {
+        final initializer = variable.initializer;
+        if (initializer == null) continue;
+        if (_isTrivialExpression(initializer)) continue;
+        variables.add(_VariableInfo(
+          name: variable.name.lexeme,
+          initializerSource: initializer.toSource(),
+        ));
+      }
+    }
+  }
+}
+
+class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
+  final List<_VariableInfo> variables;
+  final List<_DuplicateMatch> matches = [];
+
+  _DuplicateExpressionFinder(this.variables);
+
+  // Override per-expression-type visitors and call _checkExpression():
+  @override
+  void visitPrefixedIdentifier(PrefixedIdentifier node) {
+    if (_checkExpression(node)) return; // Stop recursion on match
+    super.visitPrefixedIdentifier(node);
+  }
+
+  @override
+  void visitPropertyAccess(PropertyAccess node) {
+    if (_checkExpression(node)) return;
+    super.visitPropertyAccess(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (_checkExpression(node)) return;
+    super.visitMethodInvocation(node);
+  }
+
+  // ... (override all relevant expression types: InstanceCreation, Index,
+  //      Binary, Conditional, ListLiteral, etc.)
+
+  // Stop at nested function boundaries
+  @override void visitFunctionExpression(FunctionExpression node) {}
+  @override void visitFunctionDeclaration(FunctionDeclaration node) {}
+
+  bool _checkExpression(Expression expression) {
+    final source = expression.toSource();
+    for (final variable in variables) {
+      if (source == variable.initializerSource) {
+        matches.add(_DuplicateMatch(node: expression, variableName: variable.name));
+        return true;
+      }
+    }
+    return false;
+  }
+}
+```
+
+**Key points:**
+- Process statements **in order** so variables are only checked against *later* expressions
+- Use `toSource()` for reliable text-based comparison (not semantic equality)
+- Skip trivial expressions (identifiers, literals, negated literals) to avoid noise
+- Override expression-type visitors individually (not `visitExpression`) to check at the right AST level
+- Return `true` from `_checkExpression()` to suppress child recursion (avoids sub-expression matches when the whole expression already matched)
+
+**Ref:** [use_existing_variable.dart](../../../lib/src/rules/use_existing_variable.dart#L49-L84)
