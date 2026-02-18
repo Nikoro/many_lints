@@ -65,6 +65,7 @@ import 'package:many_lints/src/rules/prefer_return_await.dart';
 import 'package:many_lints/src/rules/prefer_returning_shorthands.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_constructors.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_enums.dart';
+import 'package:many_lints/src/rules/prefer_single_widget_per_file.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_static_fields.dart';
 import 'package:many_lints/src/rules/prefer_simpler_patterns_null_check.dart';
 import 'package:many_lints/src/rules/prefer_switch_expression.dart';
@@ -183,6 +184,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(UseNotifierSuffix());
     registry.registerWarningRule(UseDedicatedMediaQueryMethods());
     registry.registerWarningRule(UseGap());
+    registry.registerWarningRule(PreferSingleWidgetPerFile());
     registry.registerWarningRule(PreferTestMatchers());
 
     // Register fixes for rules
