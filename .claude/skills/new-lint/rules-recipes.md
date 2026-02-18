@@ -1112,6 +1112,52 @@ void _addStackTraceParameter(
 
 ---
 
+### Recipe: Detect Unassigned Method Invocation Return Values
+
+Register `addMethodInvocation` and check if the call is used as an expression statement (i.e., the return value is discarded). Combine with return type checking to target specific methods:
+
+```dart
+@override
+void visitMethodInvocation(MethodInvocation node) {
+  if (node.methodName.name != 'listen') return;
+
+  // Check the return type of the method call
+  final returnType = node.staticType;
+  if (returnType is! InterfaceType) return;
+  if (!_isExpectedType(returnType)) return;
+
+  // Only flag if used as an expression statement (not assigned, returned,
+  // or passed as an argument)
+  if (node.parent is! ExpressionStatement) return;
+
+  rule.reportAtNode(node);
+}
+
+static bool _isExpectedType(InterfaceType type) {
+  if (type.element.name == 'StreamSubscription') {
+    return type.element.library.identifier.startsWith('dart:async');
+  }
+  for (final supertype in type.element.allSupertypes) {
+    if (supertype.element.name == 'StreamSubscription' &&
+        supertype.element.library.identifier.startsWith('dart:async')) {
+      return true;
+    }
+  }
+  return false;
+}
+```
+
+**Key details:**
+- `node.staticType` gives the return type of the method invocation
+- `node.parent is ExpressionStatement` means the return value is discarded (not assigned, returned, or used as argument)
+- Check `library.identifier.startsWith('dart:async')` to match dart:async types without TypeChecker
+- This pattern generalizes to any rule that warns about ignored return values
+
+**When to use:** Rules that detect method calls whose return values should be stored (e.g., stream subscriptions, futures, disposables)
+**Reference:** [avoid_unassigned_stream_subscriptions.dart](../../../lib/src/rules/avoid_unassigned_stream_subscriptions.dart#L49-L73)
+
+---
+
 ## 🧪 Testing & Registration
 
 ### Test Structure
@@ -1271,3 +1317,4 @@ class ManyLintsPlugin extends Plugin {
 | Feb 18, 2026 | avoid_only_rethrow | Added `addTryStatement` to cheat sheet, recipe for analyzing try-catch clauses (TryStatement, CatchClause body inspection, RethrowExpression detection). Documents all key CatchClause properties. |
 | Feb 18, 2026 | prefer_return_await | Added `addReturnStatement` to cheat sheet, recipe for analyzing return statements with async function detection and try-catch context checking. Shows parent-chain walking for async detection via `body.isAsynchronous` and `_isDescendantOf` for try/catch containment. |
 | Feb 18, 2026 | avoid_throw_in_catch_block | Added recipe for finding specific expressions inside catch blocks using RecursiveAstVisitor with function boundary stopping (ThrowExpression vs RethrowExpression distinction). Also added recipe for adding parameters to catch clauses in quick fixes (CatchClauseParameter manipulation). |
+| Feb 18, 2026 | avoid_unassigned_stream_subscriptions | Added recipe for detecting unassigned method invocation return values using `node.staticType` (return type) + `node.parent is ExpressionStatement` (discarded value). Shows dart:async type checking via `library.identifier`. |

@@ -36,6 +36,7 @@ import 'package:many_lints/src/rules/avoid_map_keys_contains.dart';
 import 'package:many_lints/src/rules/avoid_misused_test_matchers.dart';
 import 'package:many_lints/src/rules/avoid_only_rethrow.dart';
 import 'package:many_lints/src/rules/avoid_throw_in_catch_block.dart';
+import 'package:many_lints/src/rules/avoid_unassigned_stream_subscriptions.dart';
 import 'package:many_lints/src/rules/prefer_test_matchers.dart';
 import 'package:many_lints/src/rules/avoid_single_child_in_multi_child_widgets.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_consumer_widgets.dart';
@@ -116,6 +117,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidMisusedTestMatchers());
     registry.registerWarningRule(AvoidOnlyRethrow());
     registry.registerWarningRule(AvoidThrowInCatchBlock());
+    registry.registerWarningRule(AvoidUnassignedStreamSubscriptions());
     registry.registerWarningRule(AvoidCollectionEqualityChecks());
     registry.registerWarningRule(AvoidCollectionMethodsWithUnrelatedTypes());
     registry.registerWarningRule(PreferAbstractFinalStaticClass());
