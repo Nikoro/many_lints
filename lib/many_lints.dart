@@ -31,6 +31,7 @@ import 'package:many_lints/src/rules/avoid_contradictory_expressions.dart';
 import 'package:many_lints/src/rules/avoid_constant_switches.dart';
 import 'package:many_lints/src/rules/avoid_commented_out_code.dart';
 import 'package:many_lints/src/rules/avoid_collection_equality_checks.dart';
+import 'package:many_lints/src/rules/dispose_fields.dart';
 import 'package:many_lints/src/rules/avoid_incomplete_copy_with.dart';
 import 'package:many_lints/src/rules/avoid_incorrect_image_opacity.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_gesture_detector.dart';
@@ -77,6 +78,7 @@ import 'package:many_lints/src/rules/use_notifier_suffix.dart';
 
 // Fixes
 import 'package:many_lints/src/fixes/always_remove_listener_fix.dart';
+import 'package:many_lints/src/fixes/dispose_fields_fix.dart';
 import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
 import 'package:many_lints/src/fixes/avoid_commented_out_code_fix.dart';
 import 'package:many_lints/src/fixes/avoid_incomplete_copy_with_fix.dart';
@@ -153,6 +155,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidUnnecessaryStatefulWidgets());
     registry.registerWarningRule(AvoidMountedInSetstate());
     registry.registerWarningRule(AvoidCollectionEqualityChecks());
+    registry.registerWarningRule(DisposeFields());
     registry.registerWarningRule(AvoidCollectionMethodsWithUnrelatedTypes());
     registry.registerWarningRule(PreferAbstractFinalStaticClass());
     registry.registerWarningRule(PreferCenterOverAlign());
@@ -191,6 +194,7 @@ class ManyLintsPlugin extends Plugin {
       AvoidCascadeAfterIfNull.code,
       AvoidCascadeAfterIfNullFix.new,
     );
+    registry.registerFixForRule(DisposeFields.code, DisposeFieldsFix.new);
     registry.registerFixForRule(
       AvoidCommentedOutCode.code,
       AvoidCommentedOutCodeFix.new,

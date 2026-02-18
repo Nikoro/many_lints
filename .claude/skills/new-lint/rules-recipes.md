@@ -1021,3 +1021,41 @@ static bool _hasMutableFields(BlockClassBody body) {
 ```
 
 **Ref:** [avoid_unnecessary_stateful_widgets.dart](../../../lib/src/rules/avoid_unnecessary_stateful_widgets.dart#L66-L148)
+
+### Dynamic Method Detection on Types
+
+Check if a field's type has specific methods by walking its interface and all supertypes. Useful for detecting disposable/closeable/cancellable types without hardcoding a type list.
+
+```dart
+/// Ordered list — first match wins
+static const _cleanupMethods = ['dispose', 'close', 'cancel'];
+
+static String? _findCleanupMethod(DartType type) {
+  if (type is! InterfaceType) return null;
+
+  final allMethods = <String>{};
+  for (final method in type.methods) {
+    final name = method.name;
+    if (name != null) allMethods.add(name);
+  }
+  for (final supertype in type.element.allSupertypes) {
+    for (final method in supertype.methods) {
+      final name = method.name;
+      if (name != null) allMethods.add(name);
+    }
+  }
+
+  for (final cleanup in _cleanupMethods) {
+    if (allMethods.contains(cleanup)) return cleanup;
+  }
+  return null;
+}
+```
+
+**Key API notes:**
+- `InterfaceType.methods` returns `List<MethodElement>` for the type's own methods
+- `InterfaceType.element.allSupertypes` returns `List<InterfaceType>` for inherited types
+- `MethodElement.name` is `String?` in analyzer 10.0.2 — null-check before using
+- Get a field's type from AST: `variable.declaredFragment?.element.type` (not `declaredElement`)
+
+**Ref:** [dispose_fields.dart](../../../lib/src/rules/dispose_fields.dart)
