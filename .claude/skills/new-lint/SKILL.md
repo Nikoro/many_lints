@@ -228,7 +228,7 @@ You must update if you:
 - ✅ Implemented a complex visitor pattern for deep analysis
 - ✅ Created a new helper utility function
 - ✅ Had to dig into analyzer source code or documentation for APIs not covered in the cookbook
-- ✅ Found analyzer ^10.0.2 specific behaviors different from what you "know" from training data
+- ✅ Found analyzer ^10.1.0 specific behaviors different from what you "know" from training data
 
 **How to update (two places):**
 
