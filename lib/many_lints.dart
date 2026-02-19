@@ -42,6 +42,7 @@ import 'package:many_lints/src/rules/avoid_shrink_wrap_in_lists.dart';
 import 'package:many_lints/src/rules/avoid_notifier_constructors.dart';
 import 'package:many_lints/src/rules/avoid_ref_inside_state_dispose.dart';
 import 'package:many_lints/src/rules/avoid_ref_read_inside_build.dart';
+import 'package:many_lints/src/rules/dispose_provided_instances.dart';
 import 'package:many_lints/src/rules/avoid_state_constructors.dart';
 import 'package:many_lints/src/rules/avoid_single_field_destructuring.dart';
 import 'package:many_lints/src/rules/avoid_flexible_outside_flex.dart';
@@ -117,6 +118,7 @@ import 'package:many_lints/src/rules/use_sliver_prefix.dart';
 // Fixes
 import 'package:many_lints/src/fixes/always_remove_listener_fix.dart';
 import 'package:many_lints/src/fixes/dispose_fields_fix.dart';
+import 'package:many_lints/src/fixes/dispose_provided_instances_fix.dart';
 import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
 import 'package:many_lints/src/fixes/avoid_border_all_fix.dart';
 import 'package:many_lints/src/fixes/avoid_expanded_as_spacer_fix.dart';
@@ -229,6 +231,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidMountedInSetstate());
     registry.registerWarningRule(AvoidCollectionEqualityChecks());
     registry.registerWarningRule(DisposeFields());
+    registry.registerWarningRule(DisposeProvidedInstances());
     registry.registerWarningRule(AvoidCollectionMethodsWithUnrelatedTypes());
     registry.registerWarningRule(PreferAbstractFinalStaticClass());
     registry.registerWarningRule(PreferCenterOverAlign());
@@ -300,6 +303,10 @@ class ManyLintsPlugin extends Plugin {
       AvoidCascadeAfterIfNullFix.new,
     );
     registry.registerFixForRule(DisposeFields.code, DisposeFieldsFix.new);
+    registry.registerFixForRule(
+      DisposeProvidedInstances.code,
+      DisposeProvidedInstancesFix.new,
+    );
     registry.registerFixForRule(
       AvoidCommentedOutCode.code,
       AvoidCommentedOutCodeFix.new,

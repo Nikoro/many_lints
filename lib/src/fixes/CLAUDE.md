@@ -62,6 +62,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Static call → extension | [prefer_bloc_extensions_fix.dart](prefer_bloc_extensions_fix.dart) | Replace `Provider.of<T>(ctx)` with `ctx.method<T>()`; extract context arg via `args.first.toSource()`; preserve type args via `typeArguments?.toSource()`; check named args for `listen: true` to choose method |
 | Add annotation + import | [prefer_immutable_bloc_state_fix.dart](prefer_immutable_bloc_state_fix.dart) | Navigate from `SimpleIdentifier` to parent `ClassDeclaration`; `addSimpleInsertion` at `classDecl.offset` for `@immutable\n`; `importLibrary(Uri.parse('package:meta/meta.dart'))` to auto-add import |
 | Flatten nested widgets | [prefer_multi_bloc_provider_fix.dart](prefer_multi_bloc_provider_fix.dart) | Collect consecutive nested provider calls by walking `child:` args; handle both `ConstructorName` and `SimpleIdentifier` report nodes; build Multi* wrapper with `providers: [...]` array; strip `child:` arg from each provider via `toSource()` filtering |
+| Insert after statement | [dispose_provided_instances_fix.dart](dispose_provided_instances_fix.dart) | Walk up to `VariableDeclaration` then enclosing `Statement`; insert `ref.onDispose(...)` after variable declaration via `addSimpleInsertion(statement.end, ...)`; preserve indentation by scanning `unitResult.content` for line start; re-derive cleanup method from field type |
 
 ## Updating Documentation
 
