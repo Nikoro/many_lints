@@ -40,6 +40,7 @@ import 'package:many_lints/src/rules/avoid_wrapping_in_padding.dart';
 import 'package:many_lints/src/rules/prefer_constrained_box_over_container.dart';
 import 'package:many_lints/src/rules/avoid_shrink_wrap_in_lists.dart';
 import 'package:many_lints/src/rules/avoid_notifier_constructors.dart';
+import 'package:many_lints/src/rules/avoid_public_notifier_properties.dart';
 import 'package:many_lints/src/rules/avoid_ref_inside_state_dispose.dart';
 import 'package:many_lints/src/rules/avoid_ref_read_inside_build.dart';
 import 'package:many_lints/src/rules/dispose_provided_instances.dart';
@@ -279,6 +280,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidReturningWidgets());
     registry.registerWarningRule(AvoidShrinkWrapInLists());
     registry.registerWarningRule(AvoidNotifierConstructors());
+    registry.registerWarningRule(AvoidPublicNotifierProperties());
     registry.registerWarningRule(AvoidRefInsideStateDispose());
     registry.registerWarningRule(AvoidRefReadInsideBuild());
     registry.registerWarningRule(AvoidStateConstructors());
