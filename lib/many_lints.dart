@@ -39,6 +39,7 @@ import 'package:many_lints/src/rules/prefer_const_border_radius.dart';
 import 'package:many_lints/src/rules/avoid_wrapping_in_padding.dart';
 import 'package:many_lints/src/rules/prefer_constrained_box_over_container.dart';
 import 'package:many_lints/src/rules/avoid_shrink_wrap_in_lists.dart';
+import 'package:many_lints/src/rules/avoid_notifier_constructors.dart';
 import 'package:many_lints/src/rules/avoid_state_constructors.dart';
 import 'package:many_lints/src/rules/avoid_single_field_destructuring.dart';
 import 'package:many_lints/src/rules/avoid_flexible_outside_flex.dart';
@@ -117,6 +118,7 @@ import 'package:many_lints/src/fixes/dispose_fields_fix.dart';
 import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
 import 'package:many_lints/src/fixes/avoid_border_all_fix.dart';
 import 'package:many_lints/src/fixes/avoid_expanded_as_spacer_fix.dart';
+import 'package:many_lints/src/fixes/avoid_notifier_constructors_fix.dart';
 import 'package:many_lints/src/fixes/avoid_state_constructors_fix.dart';
 import 'package:many_lints/src/fixes/avoid_single_field_destructuring_fix.dart';
 import 'package:many_lints/src/fixes/avoid_commented_out_code_fix.dart';
@@ -266,6 +268,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidExpandedAsSpacer());
     registry.registerWarningRule(AvoidReturningWidgets());
     registry.registerWarningRule(AvoidShrinkWrapInLists());
+    registry.registerWarningRule(AvoidNotifierConstructors());
     registry.registerWarningRule(AvoidStateConstructors());
     registry.registerWarningRule(PreferAsyncCallback());
     registry.registerWarningRule(PreferComputeOverIsolateRun());
@@ -457,6 +460,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidExpandedAsSpacer.code,
       AvoidExpandedAsSpacerFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidNotifierConstructors.code,
+      AvoidNotifierConstructorsFix.new,
     );
     registry.registerFixForRule(
       AvoidStateConstructors.code,
