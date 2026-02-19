@@ -1739,3 +1739,84 @@ void visitListLiteral(ListLiteral node) {
 - Check `node.parent is SpreadElement` to avoid double-reporting when both patterns match
 
 **Ref:** [prefer_for_loop_in_children.dart](../../../lib/src/rules/prefer_for_loop_in_children.dart#L43-L166)
+
+### Detect Identifier Usage After Async Gaps (await points)
+
+Register `addMethodDeclaration`. Check `node.body.isAsynchronous`. Get block statements and scan sequentially, tracking a "seen await" flag. Use `RecursiveAstVisitor` to find await expressions and target identifiers, both with function boundary stopping:
+
+```dart
+@override
+void visitMethodDeclaration(MethodDeclaration node) {
+  if (!node.body.isAsynchronous) return;
+  // Verify enclosing class type...
+  final body = node.body;
+  if (body is! BlockFunctionBody) return;
+
+  var seenAwait = false;
+  for (final statement in body.block.statements) {
+    if (!seenAwait) {
+      seenAwait = _containsAwait(statement);
+      continue;
+    }
+
+    // Check for a guard pattern that resets context
+    if (_isMountedGuardWithReturn(statement)) {
+      seenAwait = false;
+      continue;
+    }
+
+    // Report target usages after the async gap
+    final finder = _TargetFinder(rule);
+    statement.accept(finder);
+  }
+}
+
+static bool _containsAwait(AstNode node) {
+  final finder = _AwaitFinder();
+  node.accept(finder);
+  return finder.found;
+}
+
+class _AwaitFinder extends RecursiveAstVisitor<void> {
+  bool found = false;
+
+  @override
+  void visitAwaitExpression(AwaitExpression node) { found = true; }
+  @override void visitFunctionExpression(FunctionExpression node) {}
+  @override void visitFunctionDeclaration(FunctionDeclaration node) {}
+}
+```
+
+**Guard pattern detection** (e.g., `if (!ref.mounted) return;`):
+
+```dart
+static bool _isMountedGuardWithReturn(Statement statement) {
+  if (statement is! IfStatement) return false;
+  final condition = statement.expression;
+  if (condition is! PrefixExpression || condition.operator.lexeme != '!') return false;
+  final operand = condition.operand;
+  final isMountedCheck =
+      (operand is PrefixedIdentifier &&
+          operand.prefix.name == 'ref' &&
+          operand.identifier.name == 'mounted') ||
+      (operand is SimpleIdentifier && operand.name == 'mounted');
+  if (!isMountedCheck) return false;
+
+  final thenStatement = statement.thenStatement;
+  if (thenStatement is ReturnStatement) return true;
+  if (thenStatement is Block) {
+    final stmts = thenStatement.statements;
+    if (stmts.length == 1 && stmts.first is ReturnStatement) return true;
+  }
+  return false;
+}
+```
+
+**Key points:**
+- Use `body.isAsynchronous` to skip non-async methods early
+- Track `seenAwait` as a sequential flag — reset on mounted guard detection
+- `_AwaitFinder` and `_TargetFinder` both stop at function boundaries to skip closures
+- For target detection, handle all identifier forms: `MethodInvocation` (ref.read), `PrefixedIdentifier` (ref.prop), `SimpleIdentifier` (bare ref), `AssignmentExpression` (state = x), `PropertyAccess` (this.ref.prop)
+- Exclude `ref.mounted` from being flagged (it's the guard itself)
+
+**Ref:** [use_ref_and_state_synchronously.dart](../../../lib/src/rules/use_ref_and_state_synchronously.dart#L55-L148)
