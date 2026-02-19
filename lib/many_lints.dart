@@ -98,6 +98,7 @@ import 'package:many_lints/src/rules/prefer_container.dart';
 import 'package:many_lints/src/rules/prefer_correct_edge_insets_constructor.dart';
 import 'package:many_lints/src/rules/prefer_for_loop_in_children.dart';
 import 'package:many_lints/src/rules/prefer_single_setstate.dart';
+import 'package:many_lints/src/rules/prefer_sized_box_square.dart';
 import 'package:many_lints/src/rules/use_notifier_suffix.dart';
 
 // Fixes
@@ -159,6 +160,7 @@ import 'package:many_lints/src/fixes/prefer_container_fix.dart';
 import 'package:many_lints/src/fixes/prefer_correct_edge_insets_constructor_fix.dart';
 import 'package:many_lints/src/fixes/prefer_for_loop_in_children_fix.dart';
 import 'package:many_lints/src/fixes/prefer_single_setstate_fix.dart';
+import 'package:many_lints/src/fixes/prefer_sized_box_square_fix.dart';
 import 'package:many_lints/src/fixes/use_gap_fix.dart';
 
 // Assists
@@ -252,6 +254,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferCorrectEdgeInsetsConstructor());
     registry.registerWarningRule(PreferForLoopInChildren());
     registry.registerWarningRule(PreferSingleSetstate());
+    registry.registerWarningRule(PreferSizedBoxSquare());
 
     // Register fixes for rules
     registry.registerFixForRule(
@@ -465,6 +468,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       PreferSingleSetstate.code,
       PreferSingleSetstateFix.new,
+    );
+    registry.registerFixForRule(
+      PreferSizedBoxSquare.code,
+      PreferSizedBoxSquareFix.new,
     );
 
     // Register assists
