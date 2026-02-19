@@ -72,6 +72,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Build return type naming | [use_sliver_prefix.dart](use_sliver_prefix.dart) | Use `addCompilationUnit` to correlate StatefulWidget + State; check if `build()` returns a type whose class name starts with 'Sliver' from `package:flutter/`; uses `maybeGetSingleReturnExpression()` + `InterfaceType.element.name` + library URI check; name-based heuristic since Flutter has no common sliver supertype |
 | Class member restriction | [avoid_bloc_public_methods.dart](avoid_bloc_public_methods.dart) | Use `addClassDeclaration` + `TypeChecker.isSuperOf()` to find Bloc subclasses; iterate `BlockClassBody.members` for `MethodDeclaration`; skip private (`_`-prefix), static, and `@override` members; exclude Cubit subclasses via separate `TypeChecker` |
 | Param type restriction | [avoid_passing_build_context_to_blocs.dart](avoid_passing_build_context_to_blocs.dart) | Use `addClassDeclaration` + `TypeChecker.isSuperOf()` to find Bloc/Cubit subclasses; iterate constructor and method parameters; check `param.declaredFragment?.element.type` against `TypeChecker.isExactlyType()` for forbidden types |
+| Static method replacement | [prefer_bloc_extensions.dart](prefer_bloc_extensions.dart) | Detect `ClassName.of(context)` via `addMethodInvocation`; check `node.target is SimpleIdentifier` + name match; verify library via `element.library.identifier`; check named args for `listen: true` via `BooleanLiteral` pattern match |
 
 ## Updating Documentation
 

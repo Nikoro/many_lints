@@ -59,6 +59,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Constructor rewrite (multi-case) | [prefer_correct_edge_insets_constructor_fix.dart](prefer_correct_edge_insets_constructor_fix.dart) | Switch on constructor name to compute different replacements; shared `_isZero()` helper; mirror rule logic for fix replacement strings; handle both `InstanceCreationExpression` and `MethodInvocation` |
 | Multi-pattern fix dispatch | [prefer_for_loop_in_children_fix.dart](prefer_for_loop_in_children_fix.dart) | Dispatch fix by checking `node` type and method name; convert `.map().toList()` → `[for ...]`, `SpreadElement` → `for ...`, `List.generate()` → `[for (var i...)]`, `.fold()` → `[for ...]`; use `maybeGetSingleReturnExpression` for callback bodies; `_extractFoldAddExpression` for fold pattern |
 | Add prefix | [use_sliver_prefix_fix.dart](use_sliver_prefix_fix.dart) | Simple prefix addition to class name via `addSimpleReplacement(range.node(targetNode), 'Sliver$currentName')` |
+| Static call → extension | [prefer_bloc_extensions_fix.dart](prefer_bloc_extensions_fix.dart) | Replace `Provider.of<T>(ctx)` with `ctx.method<T>()`; extract context arg via `args.first.toSource()`; preserve type args via `typeArguments?.toSource()`; check named args for `listen: true` to choose method |
 
 ## Updating Documentation
 
