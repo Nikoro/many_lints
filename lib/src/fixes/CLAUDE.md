@@ -71,6 +71,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Insert after statement | [dispose_provided_instances_fix.dart](dispose_provided_instances_fix.dart) | Walk up to `VariableDeclaration` then enclosing `Statement`; insert `ref.onDispose(...)` after variable declaration via `addSimpleInsertion(statement.end, ...)`; preserve indentation by scanning `unitResult.content` for line start; re-derive cleanup method from field type |
 | Insert guard before statement | [use_ref_and_state_synchronously_fix.dart](use_ref_and_state_synchronously_fix.dart) | Walk up from reported node to enclosing `Statement`; compute indentation from `unitResult.content`; `addSimpleInsertion` at statement offset to insert `if (!ref.mounted) return;\n` before the flagged line |
 | Insert mounted guard | [use_ref_read_synchronously_fix.dart](use_ref_read_synchronously_fix.dart) | Same pattern as above but inserts `if (!mounted) return;\n` for ConsumerWidget/ConsumerState context |
+| Append to list literal | [list_all_equatable_fields_fix.dart](list_all_equatable_fields_fix.dart) | Find list literal in `props` getter (expression or block body); collect existing elements via `toSource()`; append missing field names; replace entire `ListLiteral` node |
 
 ## Updating Documentation
 
