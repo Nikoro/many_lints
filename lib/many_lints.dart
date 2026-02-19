@@ -100,6 +100,7 @@ import 'package:many_lints/src/rules/prefer_for_loop_in_children.dart';
 import 'package:many_lints/src/rules/prefer_single_setstate.dart';
 import 'package:many_lints/src/rules/prefer_sized_box_square.dart';
 import 'package:many_lints/src/rules/use_notifier_suffix.dart';
+import 'package:many_lints/src/rules/prefer_text_rich.dart';
 import 'package:many_lints/src/rules/use_sliver_prefix.dart';
 
 // Fixes
@@ -163,6 +164,7 @@ import 'package:many_lints/src/fixes/prefer_for_loop_in_children_fix.dart';
 import 'package:many_lints/src/fixes/prefer_single_setstate_fix.dart';
 import 'package:many_lints/src/fixes/prefer_sized_box_square_fix.dart';
 import 'package:many_lints/src/fixes/use_gap_fix.dart';
+import 'package:many_lints/src/fixes/prefer_text_rich_fix.dart';
 import 'package:many_lints/src/fixes/use_sliver_prefix_fix.dart';
 
 // Assists
@@ -257,6 +259,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferForLoopInChildren());
     registry.registerWarningRule(PreferSingleSetstate());
     registry.registerWarningRule(PreferSizedBoxSquare());
+    registry.registerWarningRule(PreferTextRich());
     registry.registerWarningRule(UseSliverPrefix());
 
     // Register fixes for rules
@@ -476,6 +479,7 @@ class ManyLintsPlugin extends Plugin {
       PreferSizedBoxSquare.code,
       PreferSizedBoxSquareFix.new,
     );
+    registry.registerFixForRule(PreferTextRich.code, PreferTextRichFix.new);
     registry.registerFixForRule(UseSliverPrefix.code, UseSliverPrefixFix.new);
 
     // Register assists
