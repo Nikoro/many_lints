@@ -74,6 +74,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Param type restriction | [avoid_passing_build_context_to_blocs.dart](avoid_passing_build_context_to_blocs.dart) | Use `addClassDeclaration` + `TypeChecker.isSuperOf()` to find Bloc/Cubit subclasses; iterate constructor and method parameters; check `param.declaredFragment?.element.type` against `TypeChecker.isExactlyType()` for forbidden types |
 | Static method replacement | [prefer_bloc_extensions.dart](prefer_bloc_extensions.dart) | Detect `ClassName.of(context)` via `addMethodInvocation`; check `node.target is SimpleIdentifier` + name match; verify library via `element.library.identifier`; check named args for `listen: true` via `BooleanLiteral` pattern match |
 | Annotation check + hierarchy | [prefer_immutable_bloc_state.dart](prefer_immutable_bloc_state.dart) | Use `addCompilationUnit` for two-strategy detection: (1) extract state type parameter from Bloc/Cubit extends clause, (2) name pattern (`*State`); propagate through extends/implements hierarchy with fixed-point loop; check `@immutable` annotation via `metadata` |
+| Nested widget flattening | [prefer_multi_bloc_provider.dart](prefer_multi_bloc_provider.dart) | Register both `addInstanceCreationExpression` + `addMethodInvocation`; use `staticType` + `TypeChecker.isExactlyType()` for matching (handles constructors parsed as MethodInvocation); check `child:` arg's staticType matches same provider type; skip inner providers via parent chain check to report only outermost |
 
 ## Updating Documentation
 

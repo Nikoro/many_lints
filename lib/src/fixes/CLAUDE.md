@@ -61,6 +61,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Add prefix | [use_sliver_prefix_fix.dart](use_sliver_prefix_fix.dart) | Simple prefix addition to class name via `addSimpleReplacement(range.node(targetNode), 'Sliver$currentName')` |
 | Static call → extension | [prefer_bloc_extensions_fix.dart](prefer_bloc_extensions_fix.dart) | Replace `Provider.of<T>(ctx)` with `ctx.method<T>()`; extract context arg via `args.first.toSource()`; preserve type args via `typeArguments?.toSource()`; check named args for `listen: true` to choose method |
 | Add annotation + import | [prefer_immutable_bloc_state_fix.dart](prefer_immutable_bloc_state_fix.dart) | Navigate from `SimpleIdentifier` to parent `ClassDeclaration`; `addSimpleInsertion` at `classDecl.offset` for `@immutable\n`; `importLibrary(Uri.parse('package:meta/meta.dart'))` to auto-add import |
+| Flatten nested widgets | [prefer_multi_bloc_provider_fix.dart](prefer_multi_bloc_provider_fix.dart) | Collect consecutive nested provider calls by walking `child:` args; handle both `ConstructorName` and `SimpleIdentifier` report nodes; build Multi* wrapper with `providers: [...]` array; strip `child:` arg from each provider via `toSource()` filtering |
 
 ## Updating Documentation
 

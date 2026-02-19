@@ -28,6 +28,7 @@ import 'package:many_lints/src/rules/avoid_passing_bloc_to_bloc.dart';
 import 'package:many_lints/src/rules/avoid_passing_build_context_to_blocs.dart';
 import 'package:many_lints/src/rules/prefer_bloc_extensions.dart';
 import 'package:many_lints/src/rules/prefer_immutable_bloc_state.dart';
+import 'package:many_lints/src/rules/prefer_multi_bloc_provider.dart';
 import 'package:many_lints/src/rules/avoid_cascade_after_if_null.dart';
 import 'package:many_lints/src/rules/avoid_border_all.dart';
 import 'package:many_lints/src/rules/avoid_expanded_as_spacer.dart';
@@ -122,6 +123,7 @@ import 'package:many_lints/src/fixes/avoid_commented_out_code_fix.dart';
 import 'package:many_lints/src/fixes/avoid_incomplete_copy_with_fix.dart';
 import 'package:many_lints/src/fixes/prefer_bloc_extensions_fix.dart';
 import 'package:many_lints/src/fixes/prefer_immutable_bloc_state_fix.dart';
+import 'package:many_lints/src/fixes/prefer_multi_bloc_provider_fix.dart';
 import 'package:many_lints/src/fixes/avoid_incorrect_image_opacity_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_gesture_detector_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_overrides_fix.dart';
@@ -197,6 +199,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidPassingBuildContextToBlocs());
     registry.registerWarningRule(PreferBlocExtensions());
     registry.registerWarningRule(PreferImmutableBlocState());
+    registry.registerWarningRule(PreferMultiBlocProvider());
     registry.registerWarningRule(AvoidCascadeAfterIfNull());
     registry.registerWarningRule(AvoidCommentedOutCode());
     registry.registerWarningRule(AvoidDuplicateCascades());
@@ -513,6 +516,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       PreferImmutableBlocState.code,
       PreferImmutableBlocStateFix.new,
+    );
+    registry.registerFixForRule(
+      PreferMultiBlocProvider.code,
+      PreferMultiBlocProviderFix.new,
     );
 
     // Register assists
