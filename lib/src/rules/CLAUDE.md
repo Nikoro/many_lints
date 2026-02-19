@@ -86,6 +86,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Notifier public property check | [avoid_public_notifier_properties.dart](avoid_public_notifier_properties.dart) | Use `addClassDeclaration` + `notifierChecker.isSuperOf()` for Notifier/AsyncNotifier subclasses; iterate `BlockClassBody.members` for `FieldDeclaration` (skip static, check `_`-prefix on variable names) and `MethodDeclaration` (getter/setter only, skip static, private, `state`, and `@override`); report at token for precise highlighting |
 | Equatable field completeness | [list_all_equatable_fields.dart](list_all_equatable_fields.dart) | Use `addClassDeclaration` + `TypeChecker.any()` for Equatable/EquatableMixin; collect own non-static fields via `element.fields` + `isOriginDeclaration`; find `props` getter list literal; extract identifiers via `RecursiveAstVisitor`; compare field names against props identifiers |
 | Extends clause check | [prefer_equatable_mixin.dart](prefer_equatable_mixin.dart) | Use `addClassDeclaration` + `extendsClause` check; `TypeChecker.isExactly()` on `superclass.element` to detect direct `extends Equatable`; report at `ExtendsClause` node |
+| Conditional hook detection | [avoid_conditional_hooks.dart](avoid_conditional_hooks.dart) | Use `RecursiveAstVisitor` with `_conditionalDepth` counter to track conditional context (if/else, switch, ternary, `&&`/`||`); reuses `hook_detection.dart` helpers; stops at function boundaries and HookBuilder boundaries; checks both HookWidget build and HookBuilder body |
 
 ## Updating Documentation
 
