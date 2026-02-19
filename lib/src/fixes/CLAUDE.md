@@ -60,6 +60,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Multi-pattern fix dispatch | [prefer_for_loop_in_children_fix.dart](prefer_for_loop_in_children_fix.dart) | Dispatch fix by checking `node` type and method name; convert `.map().toList()` → `[for ...]`, `SpreadElement` → `for ...`, `List.generate()` → `[for (var i...)]`, `.fold()` → `[for ...]`; use `maybeGetSingleReturnExpression` for callback bodies; `_extractFoldAddExpression` for fold pattern |
 | Add prefix | [use_sliver_prefix_fix.dart](use_sliver_prefix_fix.dart) | Simple prefix addition to class name via `addSimpleReplacement(range.node(targetNode), 'Sliver$currentName')` |
 | Static call → extension | [prefer_bloc_extensions_fix.dart](prefer_bloc_extensions_fix.dart) | Replace `Provider.of<T>(ctx)` with `ctx.method<T>()`; extract context arg via `args.first.toSource()`; preserve type args via `typeArguments?.toSource()`; check named args for `listen: true` to choose method |
+| Add annotation + import | [prefer_immutable_bloc_state_fix.dart](prefer_immutable_bloc_state_fix.dart) | Navigate from `SimpleIdentifier` to parent `ClassDeclaration`; `addSimpleInsertion` at `classDecl.offset` for `@immutable\n`; `importLibrary(Uri.parse('package:meta/meta.dart'))` to auto-add import |
 
 ## Updating Documentation
 
