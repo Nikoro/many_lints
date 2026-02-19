@@ -630,6 +630,80 @@ Future<void> _fixPadding(...) {
 
 ---
 
+## Fix Inheritance (DRY Patterns)
+
+When multiple fixes share nearly identical logic, use inheritance to avoid duplication:
+
+### Pattern: Override a Single Getter
+
+```dart
+/// Base fix with shared logic
+class PreferReturningShorthandsFix extends ResolvedCorrectionProducer {
+  static const _fixKind = FixKind(
+    'many_lints.fix.preferReturningShorthands',
+    DartFixKindPriority.standard,
+    'Use shorthand syntax',
+  );
+
+  PreferReturningShorthandsFix({required super.context});
+
+  /// Override this in subclasses for different behavior
+  String get unnamedConstructorReplacement => '';
+
+  @override
+  FixKind get fixKind => _fixKind;
+
+  // ... shared compute() logic using unnamedConstructorReplacement
+}
+
+/// Subclass overrides only the differing behavior
+class PreferShorthandsWithConstructorsFix extends PreferReturningShorthandsFix {
+  static const _fixKind = FixKind(
+    'many_lints.fix.preferShorthandsWithConstructors',
+    DartFixKindPriority.standard,
+    'Use shorthand constructor',
+  );
+
+  PreferShorthandsWithConstructorsFix({required super.context});
+
+  @override
+  String get unnamedConstructorReplacement => 'new';
+
+  @override
+  FixKind get fixKind => _fixKind;
+}
+```
+
+**Current inheritance relationships:**
+- `PreferShorthandsWithConstructorsFix` extends `PreferReturningShorthandsFix` (overrides `unnamedConstructorReplacement`)
+- `PreferShorthandsWithStaticFieldsFix` extends `PreferShorthandsWithEnumsFix` (overrides `fixKind`)
+
+**When to use:** Multiple fixes with >80% shared code, differing only in a string, enum value, or small logic branch.
+
+**Reference:** [prefer_returning_shorthands_fix.dart](../../../lib/src/fixes/prefer_returning_shorthands_fix.dart), [prefer_shorthands_with_constructors_fix.dart](../../../lib/src/fixes/prefer_shorthands_with_constructors_fix.dart)
+
+---
+
+### Shared Disposal Utilities
+
+**From [disposal_utils.dart](../../../lib/src/disposal_utils.dart):**
+
+```dart
+import 'package:many_lints/src/disposal_utils.dart';
+
+// Find which cleanup method a type supports (dispose, close, cancel)
+final cleanupMethod = findCleanupMethod(fieldType);
+
+// Access the ordered list of cleanup method names
+const cleanupMethods = ['dispose', 'close', 'cancel'];
+```
+
+**When to use:** Fixes that generate cleanup calls (e.g., `dispose_fields_fix`, `dispose_provided_instances_fix`).
+
+**Reference:** [disposal_utils.dart](../../../lib/src/disposal_utils.dart)
+
+---
+
 ## Helper Utilities
 
 ### From ast_node_analysis.dart

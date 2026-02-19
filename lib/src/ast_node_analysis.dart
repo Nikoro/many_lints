@@ -1,7 +1,22 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 
 import 'package:many_lints/src/type_checker.dart';
+
+/// Walks up the AST to find the nearest enclosing [ClassDeclaration].
+ClassDeclaration? enclosingClassDeclaration(AstNode node) {
+  AstNode? current = node.parent;
+  while (current != null) {
+    if (current is ClassDeclaration) return current;
+    current = current.parent;
+  }
+  return null;
+}
+
+/// Returns whether a [MethodDeclaration] has the `@override` annotation.
+bool hasOverrideAnnotation(MethodDeclaration method) =>
+    method.metadata.any((a) => a.name.name == 'override');
 
 /// Checks whether an expression's static type exactly matches the given type.
 bool isExpressionExactlyType(Expression expression, TypeChecker checker) {
@@ -59,6 +74,40 @@ Expression? maybeGetSingleReturnExpression(FunctionBody body) {
     ) => expression,
     _ => null,
   };
+}
+
+/// Negates an expression, handling double negation and parenthesization.
+String negateExpression(Expression expr) {
+  // Double negation removal: !x -> x
+  if (expr is PrefixExpression && expr.operator.type == TokenType.BANG) {
+    return expr.operand.toSource();
+  }
+  // Simple expressions don't need parentheses
+  if (expr is SimpleIdentifier ||
+      expr is PrefixedIdentifier ||
+      expr is MethodInvocation ||
+      expr is PropertyAccess ||
+      expr is IndexExpression ||
+      expr is ParenthesizedExpression ||
+      expr is PrefixExpression ||
+      expr is BooleanLiteral) {
+    return '!${expr.toSource()}';
+  }
+  // Binary and other complex expressions need parentheses
+  return '!(${expr.toSource()})';
+}
+
+/// Builds a replacement expression for .every() with negated predicate.
+String? buildEveryReplacement(String collection, Expression predicate) {
+  if (predicate is! FunctionExpression) return null;
+
+  final body = predicate.body;
+  final innerExpr = maybeGetSingleReturnExpression(body);
+  if (innerExpr == null) return null;
+
+  final params = predicate.parameters!.toSource();
+  final negated = negateExpression(innerExpr);
+  return '$collection.every($params => $negated)';
 }
 
 /// Extension on `Iterable` providing additional utility methods.

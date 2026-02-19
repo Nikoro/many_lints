@@ -3,3 +3,9 @@ include: package:lints/recommended.yaml
 analyzer:
   exclude:
     - example/**
+
+linter:
+  rules:
+    - avoid_dynamic_calls
+    - always_declare_return_types
+    - prefer_final_locals

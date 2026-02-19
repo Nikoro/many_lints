@@ -85,7 +85,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       // Report at the first property access occurrence
       rule.reportAtNode(
-        info.firstAccess,
+        info.firstAccess!,
         arguments: [info.properties.length.toString(), variableName],
       );
     }
@@ -96,16 +96,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 class _VariableAccessInfo {
   final Set<String> properties = {};
   final DartType? targetType;
-  late final AstNode firstAccess;
-  bool _hasFirst = false;
+  AstNode? firstAccess;
 
   _VariableAccessInfo(this.targetType);
 
   void addAccess(String propertyName, AstNode accessNode) {
-    if (!_hasFirst) {
-      firstAccess = accessNode;
-      _hasFirst = true;
-    }
+    firstAccess ??= accessNode;
     properties.add(propertyName);
   }
 }

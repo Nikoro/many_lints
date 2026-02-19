@@ -15,9 +15,12 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 
 - **TypeChecker** (`../type_checker.dart`) — type matching: `fromName()`, `fromUrl()`, `isSuperOf()`, `isAssignableFromType()`
 - **Type inference** (`../type_inference.dart`) — `inferContextType()`, `resolveReturnType()`, `isTypeCompatible()`
-- **AST helpers** (`../ast_node_analysis.dart`) — `isExpressionExactlyType()`, `maybeGetSingleReturnExpression()`, `firstWhereOrNull`
+- **AST helpers** (`../ast_node_analysis.dart`) — `isExpressionExactlyType()`, `maybeGetSingleReturnExpression()`, `firstWhereOrNull`, `enclosingClassDeclaration()`, `hasOverrideAnnotation()`, `negateExpression()`, `buildEveryReplacement()`
 - **Hook detection** (`../hook_detection.dart`) — `getAllInnerHookExpressions()`, `maybeHookBuilderBody()`
 - **String distance** (`../text_distance.dart`) — `computeEditDistance()`
+- **Disposal utils** (`../disposal_utils.dart`) — `findCleanupMethod()`, `cleanupMethods` (shared by dispose_fields + dispose_provided_instances)
+- **Widget helpers** (`../flutter_widget_helpers.dart`) — `FlexAxis` enum (shared by prefer_spacing + use_gap)
+- **Riverpod checkers** (`../riverpod_type_checkers.dart`) — `notifierChecker` TypeChecker (shared by avoid_notifier_constructors + dispose_provided_instances)
 - **Reporting** — `reportAtNode()`, `reportAtToken()`, `reportAtOffset()`, with `{0}` placeholder interpolation
 - **Analyzer 10.0.2** — use `node.declaredFragment?.element` (not deprecated `.element`), `node.body` (not `.members`), `namePart.typeName` for class/enum names
 

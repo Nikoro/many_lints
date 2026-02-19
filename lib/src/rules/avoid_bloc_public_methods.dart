@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
 /// Warns when a Bloc class declares public members (methods, getters, setters)
@@ -86,11 +87,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (member.isStatic) return;
 
     // Skip overrides
-    if (_hasOverrideAnnotation(member)) return;
+    if (hasOverrideAnnotation(member)) return;
 
     rule.reportAtToken(member.name);
   }
-
-  static bool _hasOverrideAnnotation(MethodDeclaration method) =>
-      method.metadata.any((a) => a.name.name == 'override');
 }

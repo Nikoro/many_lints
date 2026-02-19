@@ -1026,11 +1026,25 @@ static bool _hasMutableFields(BlockClassBody body) {
 
 Check if a field's type has specific methods by walking its interface and all supertypes. Useful for detecting disposable/closeable/cancellable types without hardcoding a type list.
 
+**⚠️ USE SHARED UTILITY:** This logic has been extracted to [disposal_utils.dart](../../../lib/src/disposal_utils.dart). Use `findCleanupMethod()` instead of reimplementing:
+
+```dart
+import '../disposal_utils.dart';
+
+final cleanupMethod = findCleanupMethod(fieldType);
+if (cleanupMethod != null) {
+  // This type is disposable
+}
+```
+
+<details>
+<summary>Implementation reference (for understanding, not copy-paste)</summary>
+
 ```dart
 /// Ordered list — first match wins
-static const _cleanupMethods = ['dispose', 'close', 'cancel'];
+const cleanupMethods = ['dispose', 'close', 'cancel'];
 
-static String? _findCleanupMethod(DartType type) {
+String? findCleanupMethod(DartType type) {
   if (type is! InterfaceType) return null;
 
   final allMethods = <String>{};
@@ -1045,12 +1059,14 @@ static String? _findCleanupMethod(DartType type) {
     }
   }
 
-  for (final cleanup in _cleanupMethods) {
+  for (final cleanup in cleanupMethods) {
     if (allMethods.contains(cleanup)) return cleanup;
   }
   return null;
 }
 ```
+
+</details>
 
 **Key API notes:**
 - `InterfaceType.methods` returns `List<MethodElement>` for the type's own methods
@@ -1058,7 +1074,7 @@ static String? _findCleanupMethod(DartType type) {
 - `MethodElement.name` is `String?` in analyzer 10.0.2 — null-check before using
 - Get a field's type from AST: `variable.declaredFragment?.element.type` (not `declaredElement`)
 
-**Ref:** [dispose_fields.dart](../../../lib/src/rules/dispose_fields.dart)
+**Ref:** [disposal_utils.dart](../../../lib/src/disposal_utils.dart), [dispose_fields.dart](../../../lib/src/rules/dispose_fields.dart)
 
 ### Walk Chained Method Calls to Find Parent Context
 

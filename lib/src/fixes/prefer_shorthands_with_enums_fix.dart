@@ -5,9 +5,9 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces explicit enum prefix with dot shorthand.
+/// Fix that replaces explicit enum/class prefix with dot shorthand.
 ///
-/// Transforms `MyEnum.first` into `.first`.
+/// Transforms `MyEnum.first` or `SomeClass.field` into `.first` / `.field`.
 class PreferShorthandsWithEnumsFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferShorthandsWithEnums',

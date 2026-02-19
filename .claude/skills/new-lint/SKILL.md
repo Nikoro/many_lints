@@ -156,9 +156,9 @@ Key conventions:
 - Use `addSimpleReplacement()` for simple text replacements
 - Use `addDeletion()` for removing code
 
-## Step 6: Register in main.dart
+## Step 6: Register in many_lints.dart
 
-Edit `lib/main.dart`:
+Edit `lib/many_lints.dart`:
 
 1. Add imports for the new rule and fix
 2. Add `registry.registerWarningRule(<RuleClass>());` in the rules section

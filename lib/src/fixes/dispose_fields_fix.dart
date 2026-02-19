@@ -1,9 +1,11 @@
 import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analysis_server_plugin/edit/dart/dart_fix_kind_priority.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
+
+import '../ast_node_analysis.dart';
+import '../disposal_utils.dart';
 
 /// Fix that adds the appropriate cleanup call (dispose/close/cancel)
 /// for an undisposed field in the dispose() method.
@@ -23,8 +25,6 @@ class DisposeFieldsFix extends ResolvedCorrectionProducer {
   @override
   FixKind get fixKind => _fixKind;
 
-  static const _cleanupMethods = ['dispose', 'close', 'cancel'];
-
   @override
   Future<void> compute(ChangeBuilder builder) async {
     // The diagnostic is reported at the variable name token.
@@ -39,13 +39,13 @@ class DisposeFieldsFix extends ResolvedCorrectionProducer {
     final type = varDecl.declaredFragment?.element.type;
     if (type == null) return;
 
-    final cleanupMethod = _findCleanupMethod(type);
+    final cleanupMethod = findCleanupMethod(type);
     if (cleanupMethod == null) return;
 
     final disposeCall = '$fieldName.$cleanupMethod()';
 
     // Find the enclosing class declaration
-    final classDecl = _findEnclosingClass(targetNode);
+    final classDecl = enclosingClassDeclaration(targetNode);
     if (classDecl == null) return;
 
     final body = classDecl.body;
@@ -101,36 +101,6 @@ class DisposeFieldsFix extends ResolvedCorrectionProducer {
     AstNode? current = node;
     while (current != null) {
       if (current is VariableDeclaration) return current;
-      current = current.parent;
-    }
-    return null;
-  }
-
-  static String? _findCleanupMethod(DartType type) {
-    if (type is! InterfaceType) return null;
-
-    final allMethods = <String>{};
-    for (final method in type.methods) {
-      final name = method.name;
-      if (name != null) allMethods.add(name);
-    }
-    for (final supertype in type.element.allSupertypes) {
-      for (final method in supertype.methods) {
-        final name = method.name;
-        if (name != null) allMethods.add(name);
-      }
-    }
-
-    for (final cleanup in _cleanupMethods) {
-      if (allMethods.contains(cleanup)) return cleanup;
-    }
-    return null;
-  }
-
-  static ClassDeclaration? _findEnclosingClass(AstNode node) {
-    AstNode? current = node.parent;
-    while (current != null) {
-      if (current is ClassDeclaration) return current;
       current = current.parent;
     }
     return null;

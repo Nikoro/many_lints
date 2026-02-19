@@ -4,6 +4,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
+import '../ast_node_analysis.dart';
+
 /// Fix that adds a matching removeListener() call in dispose().
 class AlwaysRemoveListenerFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
@@ -38,7 +40,7 @@ class AlwaysRemoveListenerFix extends ResolvedCorrectionProducer {
         : '$targetSource.removeListener($listenerSource)';
 
     // Find the enclosing class declaration
-    final classDecl = _findEnclosingClass(targetNode);
+    final classDecl = enclosingClassDeclaration(targetNode);
     if (classDecl == null) return;
 
     final body = classDecl.body;
@@ -91,15 +93,6 @@ class AlwaysRemoveListenerFix extends ResolvedCorrectionProducer {
         );
       }
     });
-  }
-
-  static ClassDeclaration? _findEnclosingClass(AstNode node) {
-    AstNode? current = node.parent;
-    while (current != null) {
-      if (current is ClassDeclaration) return current;
-      current = current.parent;
-    }
-    return null;
   }
 
   static Statement? _findSuperDispose(Block block) {

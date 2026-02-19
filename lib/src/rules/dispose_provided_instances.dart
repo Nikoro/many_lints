@@ -7,7 +7,8 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../type_checker.dart';
+import '../disposal_utils.dart';
+import '../riverpod_type_checkers.dart';
 
 /// Warns when an instance with a `dispose` method is created inside a Riverpod
 /// provider callback or Notifier `build()` method without a corresponding
@@ -56,14 +57,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _notifierChecker = TypeChecker.any([
-    TypeChecker.fromName('Notifier', packageName: 'riverpod'),
-    TypeChecker.fromName('AsyncNotifier', packageName: 'riverpod'),
-  ]);
-
-  /// Cleanup methods to look for on created instances.
-  static const _cleanupMethods = ['dispose', 'close', 'cancel'];
-
   // --- Provider callback detection ---
 
   @override
@@ -96,7 +89,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (classDecl is! ClassDeclaration) return;
 
     final element = classDecl.declaredFragment?.element;
-    if (element == null || !_notifierChecker.isSuperOf(element)) return;
+    if (element == null || !notifierChecker.isSuperOf(element)) return;
 
     _checkFunctionBody(node.body);
   }
@@ -174,29 +167,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       rule.reportAtToken(variable.nameToken, arguments: [name]);
     }
   }
-
-  /// Returns the expected cleanup method name for a type, or `null` if the
-  /// type has no cleanup method.
-  static String? _findCleanupMethod(DartType type) {
-    if (type is! InterfaceType) return null;
-
-    final allMethods = <String>{};
-    for (final method in type.methods) {
-      final name = method.name;
-      if (name != null) allMethods.add(name);
-    }
-    for (final supertype in type.element.allSupertypes) {
-      for (final method in supertype.methods) {
-        final name = method.name;
-        if (name != null) allMethods.add(name);
-      }
-    }
-
-    for (final cleanup in _cleanupMethods) {
-      if (allMethods.contains(cleanup)) return cleanup;
-    }
-    return null;
-  }
 }
 
 /// Info about a variable with a disposable type found in the body.
@@ -224,7 +194,7 @@ class _DisposableVariableFinder extends RecursiveAstVisitor<void> {
       return;
     }
 
-    final cleanupMethod = _Visitor._findCleanupMethod(type);
+    final cleanupMethod = findCleanupMethod(type);
     if (cleanupMethod != null) {
       variables.add(
         _DisposableVariable(
@@ -316,11 +286,9 @@ class _OnDisposeCollector extends RecursiveAstVisitor<void> {
 class _CleanupCallFinder extends RecursiveAstVisitor<void> {
   final Set<String> sources = {};
 
-  static const _cleanupMethods = {'dispose', 'close', 'cancel'};
-
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (_cleanupMethods.contains(node.methodName.name)) {
+    if (cleanupMethods.contains(node.methodName.name)) {
       final target = node.realTarget;
       if (target != null) {
         sources.add(target.toSource());

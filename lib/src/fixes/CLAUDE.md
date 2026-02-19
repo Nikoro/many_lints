@@ -31,6 +31,12 @@ final arg = arguments.whereType<NamedExpression>()
     .firstWhereOrNull((e) => e.name.label.name == 'alignment');
 ```
 
+## Fix Inheritance (DRY patterns from audit)
+
+- `PreferShorthandsWithConstructorsFix` extends `PreferReturningShorthandsFix` — overrides only `unnamedConstructorReplacement` getter
+- `PreferShorthandsWithStaticFieldsFix` extends `PreferShorthandsWithEnumsFix` — overrides only `fixKind`
+- Disposal fixes share `findCleanupMethod()` from `lib/src/disposal_utils.dart`
+
 ## Example Fixes
 
 | Pattern | Example | Description |

@@ -6,6 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 import 'package:many_lints/src/ast_node_analysis.dart';
+import 'package:many_lints/src/flutter_widget_helpers.dart';
 import 'package:many_lints/src/type_checker.dart';
 
 /// Warns when SizedBox or Padding is used for spacing inside multi-child
@@ -36,9 +37,6 @@ class UseGap extends AnalysisRule {
   }
 }
 
-/// Represents the axis direction of a multi-child widget.
-enum _Axis { vertical, horizontal }
-
 class _Visitor extends SimpleAstVisitor<void> {
   final UseGap rule;
 
@@ -55,11 +53,14 @@ class _Visitor extends SimpleAstVisitor<void> {
   );
 
   static const _multiChildWidgets = [
-    (TypeChecker.fromName('Column', packageName: 'flutter'), _Axis.vertical),
-    (TypeChecker.fromName('Row', packageName: 'flutter'), _Axis.horizontal),
+    (TypeChecker.fromName('Column', packageName: 'flutter'), FlexAxis.vertical),
+    (TypeChecker.fromName('Row', packageName: 'flutter'), FlexAxis.horizontal),
     (TypeChecker.fromName('Wrap', packageName: 'flutter'), null),
     (TypeChecker.fromName('Flex', packageName: 'flutter'), null),
-    (TypeChecker.fromName('ListView', packageName: 'flutter'), _Axis.vertical),
+    (
+      TypeChecker.fromName('ListView', packageName: 'flutter'),
+      FlexAxis.vertical,
+    ),
   ];
 
   @override
@@ -101,8 +102,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     // Verify axis match: height for vertical, width for horizontal
     final axis = parentAxis.$1;
     if (axis != null) {
-      if (axis == _Axis.vertical && spacingParam != 'height') return;
-      if (axis == _Axis.horizontal && spacingParam != 'width') return;
+      if (axis == FlexAxis.vertical && spacingParam != 'height') return;
+      if (axis == FlexAxis.horizontal && spacingParam != 'width') return;
     }
 
     rule.reportAtNode(node.constructorName, arguments: ['SizedBox']);
@@ -149,8 +150,10 @@ class _Visitor extends SimpleAstVisitor<void> {
     // Verify axis match
     final axis = parentAxis.$1;
     if (axis != null) {
-      if (axis == _Axis.vertical && !verticalDirs.contains(dirName)) return;
-      if (axis == _Axis.horizontal && !horizontalDirs.contains(dirName)) return;
+      if (axis == FlexAxis.vertical && !verticalDirs.contains(dirName)) return;
+      if (axis == FlexAxis.horizontal && !horizontalDirs.contains(dirName)) {
+        return;
+      }
     }
 
     rule.reportAtNode(node.constructorName, arguments: ['Padding']);
@@ -158,7 +161,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Walks up the AST to find if this node is inside the `children` list
   /// of a multi-child widget. Returns the axis if found, null otherwise.
-  (_Axis?,)? _findParentMultiChildAxis(InstanceCreationExpression node) {
+  (FlexAxis?,)? _findParentMultiChildAxis(InstanceCreationExpression node) {
     // Walk up: node → ListLiteral → NamedExpression(children) → ArgumentList → InstanceCreation
     var current = node.parent;
 

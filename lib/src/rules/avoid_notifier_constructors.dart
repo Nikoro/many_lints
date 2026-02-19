@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../type_checker.dart';
+import '../riverpod_type_checkers.dart';
 
 /// Warns when a `Notifier` or `AsyncNotifier` subclass declares a constructor
 /// with a non-empty body or initializer list.
@@ -46,15 +46,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _notifierChecker = TypeChecker.any([
-    TypeChecker.fromName('Notifier', packageName: 'riverpod'),
-    TypeChecker.fromName('AsyncNotifier', packageName: 'riverpod'),
-  ]);
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final element = node.declaredFragment?.element;
-    if (element == null || !_notifierChecker.isSuperOf(element)) return;
+    if (element == null || !notifierChecker.isSuperOf(element)) return;
 
     final body = node.body;
     if (body is! BlockClassBody) return;

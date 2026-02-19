@@ -13,6 +13,7 @@ class PreferAlignOverContainer extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_align_over_container',
     'Use Align widget instead of the Container widget with only the alignment parameter',
+    correctionMessage: 'Try using Align instead of Container.',
   );
 
   PreferAlignOverContainer()

@@ -7,6 +7,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
 import 'package:many_lints/src/ast_node_analysis.dart';
+import 'package:many_lints/src/flutter_widget_helpers.dart';
 import 'package:many_lints/src/type_checker.dart';
 
 /// Warns when SizedBox widgets are used for spacing inside Row, Column, or Flex
@@ -46,8 +47,6 @@ class PreferSpacing extends AnalysisRule {
   }
 }
 
-enum _Axis { vertical, horizontal }
-
 class _Visitor extends SimpleAstVisitor<void> {
   final PreferSpacing rule;
 
@@ -59,8 +58,8 @@ class _Visitor extends SimpleAstVisitor<void> {
   );
 
   static const _flexWidgets = [
-    (TypeChecker.fromName('Column', packageName: 'flutter'), _Axis.vertical),
-    (TypeChecker.fromName('Row', packageName: 'flutter'), _Axis.horizontal),
+    (TypeChecker.fromName('Column', packageName: 'flutter'), FlexAxis.vertical),
+    (TypeChecker.fromName('Row', packageName: 'flutter'), FlexAxis.horizontal),
     (TypeChecker.fromName('Flex', packageName: 'flutter'), null),
   ];
 
@@ -117,7 +116,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Pattern 1: Direct SizedBox widgets used as spacers in a children list.
   /// Only triggers when all SizedBox spacers have the same value (uniform).
-  void _checkDirectSizedBoxInList(ListLiteral list, _Axis? parentAxis) {
+  void _checkDirectSizedBoxInList(ListLiteral list, FlexAxis? parentAxis) {
     final elements = list.elements;
     if (elements.length < 3) return;
 
@@ -134,10 +133,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       // Check axis match
       if (parentAxis != null) {
-        if (parentAxis == _Axis.vertical && spacingInfo.$1 != 'height') {
+        if (parentAxis == FlexAxis.vertical && spacingInfo.$1 != 'height') {
           continue;
         }
-        if (parentAxis == _Axis.horizontal && spacingInfo.$1 != 'width') {
+        if (parentAxis == FlexAxis.horizontal && spacingInfo.$1 != 'width') {
           continue;
         }
       }
