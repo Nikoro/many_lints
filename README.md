@@ -15,7 +15,7 @@
     <img alt="MIT License" src="https://tinyurl.com/3uf9tzpy">
   </a>
   <a href="https://pub.dev/packages/analyzer">
-    <img src="https://img.shields.io/badge/analyzer-10.0.2-blue" alt="analyzer version 10.0.2">
+    <img src="https://img.shields.io/badge/analyzer-10.1.0-blue" alt="analyzer version 10.1.0">
   </a>
 </p>
 

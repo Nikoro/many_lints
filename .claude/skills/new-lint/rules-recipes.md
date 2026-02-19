@@ -2,7 +2,7 @@
 
 Copy-paste ready recipes for common lint rule patterns. For foundational patterns (rule structure, type checking, AST, visitors, reporting), see [rules-patterns.md](rules-patterns.md).
 
-**Analyzer Version:** ^10.0.2
+**Analyzer Version:** ^10.1.0
 
 ## Common Pattern: Parent Chain Walking
 
@@ -331,7 +331,7 @@ Cascade section types: `AssignmentExpression`, `MethodInvocation`, `IndexExpress
 
 ### Get Top-Level Declaration Names (Non-Deprecated API)
 
-Different declarations use different APIs in analyzer 10.0.2:
+Different declarations use different APIs in analyzer 10.1.0:
 
 ```dart
 final topLevelNames = <String>{};
@@ -1071,7 +1071,7 @@ String? findCleanupMethod(DartType type) {
 **Key API notes:**
 - `InterfaceType.methods` returns `List<MethodElement>` for the type's own methods
 - `InterfaceType.element.allSupertypes` returns `List<InterfaceType>` for inherited types
-- `MethodElement.name` is `String?` in analyzer 10.0.2 — null-check before using
+- `MethodElement.name` is `String?` in analyzer 10.1.0 — null-check before using
 - Get a field's type from AST: `variable.declaredFragment?.element.type` (not `declaredElement`)
 
 **Ref:** [disposal_utils.dart](../../../lib/src/disposal_utils.dart), [dispose_fields.dart](../../../lib/src/rules/dispose_fields.dart)

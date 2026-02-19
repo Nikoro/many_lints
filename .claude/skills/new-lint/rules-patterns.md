@@ -2,12 +2,12 @@
 
 ## 📚 About This Document
 
-This cookbook provides **copy-paste ready patterns** for implementing lint rules in the `many_lints` package using **analyzer ^10.0.2**. Instead of searching through existing rules or diving into analyzer source code, consult this guide first.
+This cookbook provides **copy-paste ready patterns** for implementing lint rules in the `many_lints` package using **analyzer ^10.1.0**. Instead of searching through existing rules or diving into analyzer source code, consult this guide first.
 
 For common recipes (specific use-case patterns), see [rules-recipes.md](rules-recipes.md).
 
 **Target Audience:** AI agents and developers implementing new lint rules
-**Analyzer Version:** ^10.0.2
+**Analyzer Version:** ^10.1.0
 **Last Updated:** February 2026
 
 ---
@@ -21,7 +21,7 @@ For common recipes (specific use-case patterns), see [rules-recipes.md](rules-re
 - ✅ You need to research AST traversal techniques beyond what's documented
 - ✅ You find a new type checking method or pattern
 - ✅ You implement a complex visitor pattern not shown in examples
-- ✅ You discover analyzer ^10.0.2 specific APIs different from older versions
+- ✅ You discover analyzer ^10.1.0 specific APIs different from older versions
 - ✅ You create a new helper utility that could benefit other rules
 
 **Also update the lean quick reference** at `lib/src/rules/CLAUDE.md` with a brief mention of the new pattern.
@@ -70,7 +70,7 @@ Quick navigation to common patterns:
 - [Visitor Patterns](#-visitor-patterns)
 - [Reporting Issues & Quick Fixes](#-reporting--quick-fixes)
 - [Utility Functions](#-utility-functions)
-- [Analyzer 10.0.2 APIs](#-analyzer-1002-specific-apis)
+- [Analyzer 10.1.0 APIs](#-analyzer-1002-specific-apis)
 - [Quick Reference Cards](#-quick-reference-cards)
 
 For recipes and testing, see [rules-recipes.md](rules-recipes.md).
@@ -960,16 +960,16 @@ FunctionBody? maybeHookBuilderBody(InstanceCreationExpression node)
 
 ---
 
-## 🔧 Analyzer 10.0.2 Specific APIs
+## 🔧 Analyzer 10.1.0 Specific APIs
 
-### New Element Access (analyzer ^10.0.2)
+### New Element Access (analyzer ^10.1.0)
 
 **Old API (pre-10.0):**
 ```dart
 final element = node.element;  // Deprecated
 ```
 
-**New API (10.0.2+):**
+**New API (10.1.0+):**
 ```dart
 final element = node.declaredFragment?.element;
 ```
@@ -1025,9 +1025,9 @@ if (type != null) {
 
 **Reference:** Multiple rules use this pattern
 
-### InstanceElement Member Access (analyzer 10.0.2)
+### InstanceElement Member Access (analyzer 10.1.0)
 
-**⚠️ Important:** In analyzer 10.0.2, `InstanceElement` has `getters`, `methods`, `fields` — NOT `accessors`.
+**⚠️ Important:** In analyzer 10.1.0, `InstanceElement` has `getters`, `methods`, `fields` — NOT `accessors`.
 
 ```dart
 // Access class members via element
@@ -1066,7 +1066,7 @@ final el = type.element;  // InterfaceElement
 
 ### Pattern Matching Features
 
-Analyzer 10.0.2 works well with Dart 3 pattern matching:
+Analyzer 10.1.0 works well with Dart 3 pattern matching:
 
 ```dart
 // Destructuring in patterns
