@@ -74,6 +74,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Append to list literal | [list_all_equatable_fields_fix.dart](list_all_equatable_fields_fix.dart) | Find list literal in `props` getter (expression or block body); collect existing elements via `toSource()`; append missing field names; replace entire `ListLiteral` node |
 | Extends→mixin swap | [prefer_equatable_mixin_fix.dart](prefer_equatable_mixin_fix.dart) | Replace `extends Equatable` with `with EquatableMixin`; handle existing `with` clause (delete extends + append to mixins) vs no `with` clause (simple replacement); `range.startStart()` for partial deletion |
 | Unwrap factory return | [prefer_use_callback_fix.dart](prefer_use_callback_fix.dart) | Extract inner expression from `useMemoized(() => expr)` factory; rebuild as `useCallback(expr, keys)` preserving remaining args via `toSource()` |
+| Offset-based rename | [prefer_use_prefix_fix.dart](prefer_use_prefix_fix.dart) | Use `diagnosticOffset`/`diagnosticLength` + `unitResult.content.substring()` to read the token text; compute new name with `use` prefix; `SourceRange` replacement |
 
 ## Updating Documentation
 

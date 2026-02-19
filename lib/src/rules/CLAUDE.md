@@ -88,6 +88,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Extends clause check | [prefer_equatable_mixin.dart](prefer_equatable_mixin.dart) | Use `addClassDeclaration` + `extendsClause` check; `TypeChecker.isExactly()` on `superclass.element` to detect direct `extends Equatable`; report at `ExtendsClause` node |
 | Conditional hook detection | [avoid_conditional_hooks.dart](avoid_conditional_hooks.dart) | Use `RecursiveAstVisitor` with `_conditionalDepth` counter to track conditional context (if/else, switch, ternary, `&&`/`||`); reuses `hook_detection.dart` helpers; stops at function boundaries and HookBuilder boundaries; checks both HookWidget build and HookBuilder body |
 | Hook call return type check | [prefer_use_callback.dart](prefer_use_callback.dart) | Detect `useMemoized(() => fn)` where factory returns a `FunctionType`; check `ExpressionFunctionBody.expression.staticType` or single-return `BlockFunctionBody`; regex match on method name |
+| Hook naming convention | [prefer_use_prefix.dart](prefer_use_prefix.dart) | Use `addFunctionDeclaration` + `addMethodDeclaration` to visit functions/methods; reuse `getAllInnerHookExpressions()` from `hook_detection.dart` to check if body calls hooks; skip `@override` methods via `node.metadata` check; regex prefix match `^_?use[0-9A-Z]` |
 
 ## Updating Documentation
 
