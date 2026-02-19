@@ -31,6 +31,21 @@ class ChangeWidgetNameFix extends ResolvedCorrectionProducer {
     );
   }
 
+  /// Factory for creating a Transform fix.
+  static ChangeWidgetNameFix transformFix({
+    required CorrectionProducerContext context,
+  }) {
+    return ChangeWidgetNameFix._(
+      context: context,
+      widgetName: 'Transform',
+      fixKind: FixKind(
+        'many_lints.fix.changeWidgetToTransform',
+        DartFixKindPriority.standard,
+        'Replace with Transform',
+      ),
+    );
+  }
+
   @override
   CorrectionApplicability get applicability =>
       CorrectionApplicability.singleLocation;

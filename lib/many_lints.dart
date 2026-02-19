@@ -101,6 +101,7 @@ import 'package:many_lints/src/rules/prefer_single_setstate.dart';
 import 'package:many_lints/src/rules/prefer_sized_box_square.dart';
 import 'package:many_lints/src/rules/use_notifier_suffix.dart';
 import 'package:many_lints/src/rules/prefer_text_rich.dart';
+import 'package:many_lints/src/rules/prefer_transform_over_container.dart';
 import 'package:many_lints/src/rules/use_sliver_prefix.dart';
 
 // Fixes
@@ -260,6 +261,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferSingleSetstate());
     registry.registerWarningRule(PreferSizedBoxSquare());
     registry.registerWarningRule(PreferTextRich());
+    registry.registerWarningRule(PreferTransformOverContainer());
     registry.registerWarningRule(UseSliverPrefix());
 
     // Register fixes for rules
@@ -480,6 +482,10 @@ class ManyLintsPlugin extends Plugin {
       PreferSizedBoxSquareFix.new,
     );
     registry.registerFixForRule(PreferTextRich.code, PreferTextRichFix.new);
+    registry.registerFixForRule(
+      PreferTransformOverContainer.code,
+      ChangeWidgetNameFix.transformFix,
+    );
     registry.registerFixForRule(UseSliverPrefix.code, UseSliverPrefixFix.new);
 
     // Register assists
