@@ -41,6 +41,7 @@ import 'package:many_lints/src/rules/prefer_constrained_box_over_container.dart'
 import 'package:many_lints/src/rules/avoid_shrink_wrap_in_lists.dart';
 import 'package:many_lints/src/rules/avoid_notifier_constructors.dart';
 import 'package:many_lints/src/rules/avoid_ref_inside_state_dispose.dart';
+import 'package:many_lints/src/rules/avoid_ref_read_inside_build.dart';
 import 'package:many_lints/src/rules/avoid_state_constructors.dart';
 import 'package:many_lints/src/rules/avoid_single_field_destructuring.dart';
 import 'package:many_lints/src/rules/avoid_flexible_outside_flex.dart';
@@ -120,6 +121,7 @@ import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
 import 'package:many_lints/src/fixes/avoid_border_all_fix.dart';
 import 'package:many_lints/src/fixes/avoid_expanded_as_spacer_fix.dart';
 import 'package:many_lints/src/fixes/avoid_notifier_constructors_fix.dart';
+import 'package:many_lints/src/fixes/avoid_ref_read_inside_build_fix.dart';
 import 'package:many_lints/src/fixes/avoid_state_constructors_fix.dart';
 import 'package:many_lints/src/fixes/avoid_single_field_destructuring_fix.dart';
 import 'package:many_lints/src/fixes/avoid_commented_out_code_fix.dart';
@@ -271,6 +273,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AvoidShrinkWrapInLists());
     registry.registerWarningRule(AvoidNotifierConstructors());
     registry.registerWarningRule(AvoidRefInsideStateDispose());
+    registry.registerWarningRule(AvoidRefReadInsideBuild());
     registry.registerWarningRule(AvoidStateConstructors());
     registry.registerWarningRule(PreferAsyncCallback());
     registry.registerWarningRule(PreferComputeOverIsolateRun());
@@ -466,6 +469,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidNotifierConstructors.code,
       AvoidNotifierConstructorsFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidRefReadInsideBuild.code,
+      AvoidRefReadInsideBuildFix.new,
     );
     registry.registerFixForRule(
       AvoidStateConstructors.code,
