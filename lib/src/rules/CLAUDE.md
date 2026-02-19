@@ -26,7 +26,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | Pattern | Example | Description |
 |---------|---------|-------------|
 | Suffix naming | [use_bloc_suffix.dart](use_bloc_suffix.dart) | Uses `ClassSuffixValidator` base class |
-| Widget replacement | [prefer_center_over_align.dart](prefer_center_over_align.dart) | Checks constructor params with `isInstanceCreationExpressionOnlyUsingParameter` |
+| Widget replacement | [prefer_center_over_align.dart](prefer_center_over_align.dart), [prefer_transform_over_container.dart](prefer_transform_over_container.dart) | Checks constructor params with `isInstanceCreationExpressionOnlyUsingParameter` |
 | Type context | [prefer_shorthands_with_enums.dart](prefer_shorthands_with_enums.dart) | Uses `inferContextType()` + `isTypeCompatible()` |
 | Pattern matching | [prefer_any_or_every.dart](prefer_any_or_every.dart) | Complex Dart 3 pattern matching on AST |
 | Comment analysis | [avoid_commented_out_code.dart](avoid_commented_out_code.dart) | Token stream traversal, `reportAtOffset()` |
