@@ -25,6 +25,7 @@ import 'package:analysis_server_plugin/registry.dart';
 import 'package:many_lints/src/rules/always_remove_listener.dart';
 import 'package:many_lints/src/rules/avoid_bloc_public_methods.dart';
 import 'package:many_lints/src/rules/avoid_passing_bloc_to_bloc.dart';
+import 'package:many_lints/src/rules/avoid_passing_build_context_to_blocs.dart';
 import 'package:many_lints/src/rules/avoid_cascade_after_if_null.dart';
 import 'package:many_lints/src/rules/avoid_border_all.dart';
 import 'package:many_lints/src/rules/avoid_expanded_as_spacer.dart';
@@ -189,6 +190,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(AlwaysRemoveListener());
     registry.registerWarningRule(AvoidBlocPublicMethods());
     registry.registerWarningRule(AvoidPassingBlocToBloc());
+    registry.registerWarningRule(AvoidPassingBuildContextToBlocs());
     registry.registerWarningRule(AvoidCascadeAfterIfNull());
     registry.registerWarningRule(AvoidCommentedOutCode());
     registry.registerWarningRule(AvoidDuplicateCascades());
