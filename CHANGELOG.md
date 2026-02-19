@@ -4,12 +4,84 @@
 
 ### Added
 
+#### Dart & Code Quality Rules
 - `avoid_constant_conditions` rule to warn when both sides of a comparison are constants
 - `avoid_constant_switches` rule to warn when a switch expression is a constant
 - `avoid_contradictory_expressions` rule to detect contradictory comparisons in `&&` chains
 - `avoid_duplicate_cascades` rule to detect duplicate cascade sections with quick fix
 - `avoid_generics_shadowing` rule to warn when a generic type parameter shadows a top-level declaration with quick fix
+- `avoid_incomplete_copy_with` rule to detect `copyWith` methods missing constructor parameters with quick fix
+- `avoid_map_keys_contains` rule to prefer `containsKey()` over `.keys.contains()` with quick fix
+- `avoid_misused_test_matchers` rule to detect incompatible matcher usage
+- `avoid_only_rethrow` rule to flag catch clauses that only rethrow with quick fix
+- `avoid_single_field_destructuring` rule to avoid single-field destructuring with quick fix
+- `avoid_throw_in_catch_block` rule to avoid `throw` inside catch blocks with quick fix
+- `avoid_unassigned_stream_subscriptions` rule to detect unassigned stream subscriptions
+- `prefer_class_destructuring` rule to suggest class destructuring for repeated property accesses with quick fix
+- `prefer_contains` rule to prefer `.contains()` over `.indexOf()` compared to `-1` with quick fix
+- `prefer_enums_by_name` rule to prefer `.byName()` over `.firstWhere()` with quick fix
+- `prefer_expect_later` rule to prefer `expectLater` when testing Futures with quick fix
+- `prefer_overriding_parent_equality` rule to detect missing `==`/`hashCode` overrides with quick fix
+- `prefer_return_await` rule to detect missing `await` in `try-catch` with quick fix
 - `prefer_simpler_patterns_null_check` rule to prefer simpler null-check patterns in if-case expressions with quick fix
+- `prefer_single_widget_per_file` rule to enforce one public widget per file
+- `prefer_test_matchers` rule to prefer matchers over literals in `expect()`
+- `prefer_wildcard_pattern` rule to prefer `_` over `Object()` with quick fix
+- `proper_super_calls` rule to enforce correct super call placement with quick fix
+- `use_closest_build_context` rule to use the closest available `BuildContext` with quick fix
+- `use_existing_destructuring` rule to use existing destructuring instead of direct access with quick fix
+- `use_existing_variable` rule to detect duplicate initializer expressions with quick fix
+
+#### Flutter Widget Rules
+- `always_remove_listener` rule to detect listeners not removed in `dispose()` with quick fix
+- `avoid_border_all` rule to prefer `Border.fromBorderSide` over `Border.all` with quick fix
+- `avoid_expanded_as_spacer` rule to prefer `Spacer` over `Expanded` with empty child with quick fix
+- `avoid_flexible_outside_flex` rule to flag `Flexible`/`Expanded` outside `Row`/`Column`/`Flex`
+- `avoid_incorrect_image_opacity` rule to use `Image`'s `opacity` parameter with quick fix
+- `avoid_mounted_in_setstate` rule to detect `mounted` check inside `setState`
+- `avoid_returning_widgets` rule to avoid returning widgets from functions/methods
+- `avoid_shrink_wrap_in_lists` rule to avoid `shrinkWrap` in `ListView`
+- `avoid_unnecessary_gesture_detector` rule to flag `GestureDetector` with no handlers with quick fix
+- `avoid_unnecessary_overrides` rule to detect overrides that only call `super` with quick fix
+- `avoid_unnecessary_overrides_in_state` rule to detect State overrides that only call `super` with quick fix
+- `avoid_unnecessary_setstate` rule to detect unnecessary `setState` calls with quick fix
+- `avoid_unnecessary_stateful_widgets` rule to detect `StatefulWidget` with no mutable state with quick fix
+- `avoid_wrapping_in_padding` rule to avoid wrapping in `Padding` when widget has padding support with quick fix
+- `dispose_fields` rule to detect undisposed fields with quick fix
+- `prefer_async_callback` rule to prefer `AsyncCallback` over `Future<void> Function()` with quick fix
+- `prefer_compute_over_isolate_run` rule for web platform compatibility with quick fix
+- `prefer_const_border_radius` rule to prefer `BorderRadius.all(Radius.circular())` with quick fix
+- `prefer_constrained_box_over_container` rule to prefer `ConstrainedBox` over `Container` with quick fix
+- `prefer_container` rule to merge nested widgets into a single `Container` with quick fix
+- `prefer_correct_edge_insets_constructor` rule to use simpler `EdgeInsets` constructors with quick fix
+- `prefer_for_loop_in_children` rule to prefer for-loops over functional list building with quick fix
+- `prefer_single_setstate` rule to merge multiple `setState` calls with quick fix
+- `prefer_sized_box_square` rule to prefer `SizedBox.square` with quick fix
+- `prefer_spacing` rule to prefer the `spacing` argument over `SizedBox`
+- `prefer_text_rich` rule to prefer `Text.rich` over `RichText` with quick fix
+- `prefer_transform_over_container` rule to prefer `Transform` over `Container` with quick fix
+- `prefer_void_callback` rule to prefer `VoidCallback` over `void Function()` with quick fix
+- `use_sliver_prefix` rule to enforce `Sliver` prefix for sliver-returning widgets with quick fix
+
+#### BLoC Rules
+- `avoid_bloc_public_methods` rule to avoid public members in Bloc classes
+- `avoid_passing_bloc_to_bloc` rule to avoid passing Bloc/Cubit to another Bloc/Cubit
+- `avoid_passing_build_context_to_blocs` rule to avoid passing `BuildContext` to Bloc/Cubit
+- `prefer_bloc_extensions` rule to prefer `context.read`/`context.watch` with quick fix
+- `prefer_immutable_bloc_state` rule to annotate Bloc state with `@immutable` with quick fix
+- `prefer_multi_bloc_provider` rule to prefer `MultiBlocProvider` with quick fix
+
+#### Riverpod Rules
+- `avoid_notifier_constructors` rule to avoid constructors with logic in Notifier classes with quick fix
+- `avoid_ref_inside_state_dispose` rule to avoid accessing `ref` inside `dispose()`
+- `avoid_ref_read_inside_build` rule to avoid `ref.read` inside `build` with quick fix
+- `avoid_state_constructors` rule to avoid constructors with logic in State classes with quick fix
+- `dispose_provided_instances` rule to detect instances not disposed via `ref.onDispose()` with quick fix
+
+### Changed
+
+- Extracted shared utility `lib/src/constant_expression.dart` for constant expression checking
+- Updated README and example README to document all 92 rules and 72 quick fixes
 
 ## [0.3.0] - 2026-02-14
 

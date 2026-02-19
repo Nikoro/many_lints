@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
 /// Warns when `setState` is called directly inside `initState`,
@@ -64,7 +65,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (node.methodName.name != 'setState') return;
 
     // Verify we're inside a State subclass
-    final enclosingClass = _findEnclosingClass(node);
+    final enclosingClass = enclosingClassDeclaration(node);
     if (enclosingClass == null) return;
 
     final element = enclosingClass.declaredFragment?.element;
@@ -80,16 +81,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (methodName == 'build' && _isInsideEventHandlerCallback(node)) return;
 
     rule.reportAtNode(node, arguments: [methodName]);
-  }
-
-  /// Walks up the AST to find the nearest enclosing ClassDeclaration.
-  static ClassDeclaration? _findEnclosingClass(AstNode node) {
-    AstNode? current = node.parent;
-    while (current != null) {
-      if (current is ClassDeclaration) return current;
-      current = current.parent;
-    }
-    return null;
   }
 
   /// Walks up the AST to find the nearest lifecycle method declaration,

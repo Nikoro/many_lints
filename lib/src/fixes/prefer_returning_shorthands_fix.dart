@@ -25,6 +25,10 @@ class PreferReturningShorthandsFix extends ResolvedCorrectionProducer {
   @override
   FixKind get fixKind => _fixKind;
 
+  /// The fallback name when a constructor has no explicit name.
+  /// Override in subclasses for different behavior.
+  String get unnamedConstructorReplacement => 'new';
+
   @override
   Future<void> compute(ChangeBuilder builder) async {
     final targetNode = node;
@@ -33,12 +37,10 @@ class PreferReturningShorthandsFix extends ResolvedCorrectionProducer {
     if (targetNode is SimpleIdentifier) {
       final parent = targetNode.parent;
       if (parent is MethodInvocation && parent.target == targetNode) {
-        // This is the class name part of "SomeClass.named"
         final methodName = parent.methodName.name;
         final replacement = '.$methodName';
 
         await builder.addDartFileEdit(file, (builder) {
-          // Replace "SomeClass.named" with ".named"
           builder.addSimpleReplacement(
             range.startStart(targetNode, parent.argumentList),
             replacement,
@@ -50,8 +52,11 @@ class PreferReturningShorthandsFix extends ResolvedCorrectionProducer {
 
     // Handle ConstructorName case (for new expressions)
     if (targetNode is ConstructorName) {
-      final constructorNameText = targetNode.name?.name ?? 'new';
-      final replacement = '.$constructorNameText';
+      final constructorNameText =
+          targetNode.name?.name ?? unnamedConstructorReplacement;
+      final replacement = constructorNameText.isEmpty
+          ? '.'
+          : '.$constructorNameText';
 
       await builder.addDartFileEdit(file, (builder) {
         builder.addSimpleReplacement(range.node(targetNode), replacement);

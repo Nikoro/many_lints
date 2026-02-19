@@ -36,6 +36,18 @@ class FutureProvider<T> {
   FutureProvider(Future<T> Function(Ref ref) create);
 }
 
+class StreamProvider<T> {
+  StreamProvider(Stream<T> Function(Ref ref) create);
+}
+
+class StateNotifierProvider<T, S> {
+  StateNotifierProvider(T Function(Ref ref) create);
+}
+
+class ChangeNotifierProvider<T> {
+  ChangeNotifierProvider(T Function(Ref ref) create);
+}
+
 abstract class Notifier<State> {
   Ref get ref => throw UnimplementedError();
   State get state => throw UnimplementedError();
@@ -312,5 +324,113 @@ final provider = Provider<DisposableA>((ref) {
 ''',
       [lint(208, 1)],
     );
+  }
+
+  // --- Additional provider type tests ---
+
+  Future<void> test_stateProviderWithDisposableInstance() async {
+    await assertDiagnostics(
+      r'''
+import 'package:riverpod/riverpod.dart';
+
+class DisposableService {
+  void dispose() {}
+}
+
+final provider = StateProvider<DisposableService>((ref) {
+  final instance = DisposableService();
+  return instance;
+});
+''',
+      [lint(157, 8)],
+    );
+  }
+
+  Future<void> test_futureProviderWithDisposableInstance() async {
+    await assertDiagnostics(
+      r'''
+import 'package:riverpod/riverpod.dart';
+
+class DisposableService {
+  void dispose() {}
+}
+
+final provider = FutureProvider<DisposableService>((ref) async {
+  final instance = DisposableService();
+  return instance;
+});
+''',
+      [lint(164, 8)],
+    );
+  }
+
+  Future<void> test_streamProviderWithDisposableInstance() async {
+    await assertDiagnostics(
+      r'''
+import 'package:riverpod/riverpod.dart';
+
+class DisposableService {
+  void dispose() {}
+}
+
+final provider = StreamProvider<DisposableService>((ref) async* {
+  final instance = DisposableService();
+  yield instance;
+});
+''',
+      [lint(165, 8)],
+    );
+  }
+
+  Future<void> test_stateNotifierProviderWithDisposableInstance() async {
+    await assertDiagnostics(
+      r'''
+import 'package:riverpod/riverpod.dart';
+
+class DisposableNotifier {
+  void dispose() {}
+}
+
+final provider = StateNotifierProvider<DisposableNotifier, int>((ref) {
+  final instance = DisposableNotifier();
+  return instance;
+});
+''',
+      [lint(172, 8)],
+    );
+  }
+
+  Future<void> test_changeNotifierProviderWithDisposableInstance() async {
+    await assertDiagnostics(
+      r'''
+import 'package:riverpod/riverpod.dart';
+
+class DisposableNotifier {
+  void dispose() {}
+}
+
+final provider = ChangeNotifierProvider<DisposableNotifier>((ref) {
+  final instance = DisposableNotifier();
+  return instance;
+});
+''',
+      [lint(168, 8)],
+    );
+  }
+
+  Future<void> test_stateProviderWithOnDispose() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+class DisposableService {
+  void dispose() {}
+}
+
+final provider = StateProvider<DisposableService>((ref) {
+  final instance = DisposableService();
+  ref.onDispose(instance.dispose);
+  return instance;
+});
+''');
   }
 }

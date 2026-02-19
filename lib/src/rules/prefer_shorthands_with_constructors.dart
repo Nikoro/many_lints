@@ -216,7 +216,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Gets the element type from a collection literal's context.
   DartType? _getCollectionElementType(AstNode collectionNode) {
-    // Get the static type of the collection
     final collectionType = switch (collectionNode) {
       ListLiteral(:final staticType) ||
       SetOrMapLiteral(:final staticType) => staticType,
@@ -225,19 +224,15 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (collectionType is! InterfaceType) return null;
 
-    // Extract the element type from List<T>, Set<T>, or Map<K,V>
     final typeArgs = collectionType.typeArguments;
     if (typeArgs.isEmpty) return null;
 
-    return typeArgs.first; // For List/Set, this is the element type
+    return typeArgs.first;
   }
 
   /// Checks if the context type is compatible with the constructor's class.
   bool _isTypeCompatible(DartType contextType, InterfaceElement classElement) {
-    // Don't suggest shorthands for non-interface types (including dynamic)
     if (contextType is! InterfaceType) return false;
-
-    // Check if the context type matches the class type (ignoring nullability)
     return contextType.element == classElement;
   }
 }

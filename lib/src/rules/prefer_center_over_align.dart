@@ -13,6 +13,7 @@ class PreferCenterOverAlign extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_center_over_align',
     'Use the Center widget instead of the Align widget with alignment set to Alignment.center',
+    correctionMessage: 'Try using Center instead of Align.',
   );
 
   PreferCenterOverAlign()

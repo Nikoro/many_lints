@@ -1,9 +1,10 @@
 import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analysis_server_plugin/edit/dart/dart_fix_kind_priority.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
+
+import '../disposal_utils.dart';
 
 /// Fix that adds `ref.onDispose(instance.dispose)` after the variable
 /// declaration of a disposable instance inside a Riverpod provider or
@@ -24,8 +25,6 @@ class DisposeProvidedInstancesFix extends ResolvedCorrectionProducer {
   @override
   FixKind get fixKind => _fixKind;
 
-  static const _cleanupMethods = ['dispose', 'close', 'cancel'];
-
   @override
   Future<void> compute(ChangeBuilder builder) async {
     // The diagnostic is reported at the variable name token.
@@ -39,7 +38,7 @@ class DisposeProvidedInstancesFix extends ResolvedCorrectionProducer {
     final type = varDecl.declaredFragment?.element.type;
     if (type == null) return;
 
-    final cleanupMethod = _findCleanupMethod(type);
+    final cleanupMethod = findCleanupMethod(type);
     if (cleanupMethod == null) return;
 
     // Find the enclosing statement (VariableDeclarationStatement)
@@ -82,26 +81,5 @@ class DisposeProvidedInstancesFix extends ResolvedCorrectionProducer {
       i--;
     }
     return i + 1;
-  }
-
-  static String? _findCleanupMethod(DartType type) {
-    if (type is! InterfaceType) return null;
-
-    final allMethods = <String>{};
-    for (final method in type.methods) {
-      final name = method.name;
-      if (name != null) allMethods.add(name);
-    }
-    for (final supertype in type.element.allSupertypes) {
-      for (final method in supertype.methods) {
-        final name = method.name;
-        if (name != null) allMethods.add(name);
-      }
-    }
-
-    for (final cleanup in _cleanupMethods) {
-      if (allMethods.contains(cleanup)) return cleanup;
-    }
-    return null;
   }
 }

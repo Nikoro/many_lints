@@ -77,6 +77,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
+  /// Maximum number of single-line comments to collect before bailing out.
+  /// Prevents stalling the analysis server on auto-generated files with
+  /// thousands of comment lines.
+  static const _maxComments = 500;
+
   /// Collects all single-line comment tokens (`//`) from the token stream,
   /// excluding doc comments (`///`) and ignore directives.
   List<Token> _collectAllComments(CompilationUnit node) {
@@ -88,6 +93,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       while (comment != null) {
         if (_isSingleLineComment(comment)) {
           comments.add(comment);
+          if (comments.length >= _maxComments) return comments;
         }
         comment = comment.next;
       }
@@ -100,6 +106,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       while (comment != null) {
         if (_isSingleLineComment(comment)) {
           comments.add(comment);
+          if (comments.length >= _maxComments) return comments;
         }
         comment = comment.next;
       }

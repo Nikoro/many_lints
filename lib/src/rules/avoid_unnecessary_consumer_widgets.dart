@@ -5,7 +5,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/ast_node_analysis.dart';
+import '../ast_node_analysis.dart';
+import '../type_checker.dart';
 
 /// Warns when a ConsumerWidget does not use WidgetRef.
 class AvoidUnnecessaryConsumerWidgets extends AnalysisRule {
@@ -39,13 +40,21 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
+  static const _consumerWidgetChecker = TypeChecker.any([
+    TypeChecker.fromName('ConsumerWidget', packageName: 'flutter_riverpod'),
+    TypeChecker.fromName(
+      'ConsumerStatefulWidget',
+      packageName: 'flutter_riverpod',
+    ),
+  ]);
+
   @override
   void visitClassDeclaration(ClassDeclaration cls) {
-    final extendsName = cls.extendsClause?.superclass.name.lexeme;
-    if (extendsName != 'ConsumerWidget' &&
-        extendsName != 'ConsumerStatefulWidget') {
-      return;
-    }
+    final superclass = cls.extendsClause?.superclass;
+    final superclassElement = superclass?.element;
+    if (superclass == null || superclassElement == null) return;
+
+    if (!_consumerWidgetChecker.isExactly(superclassElement)) return;
 
     // Find build method
     final body = cls.body;

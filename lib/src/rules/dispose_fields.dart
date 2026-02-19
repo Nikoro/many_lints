@@ -3,9 +3,9 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
-import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../disposal_utils.dart';
 import '../type_checker.dart';
 
 /// Warns when a widget State field that has a disposal method (`dispose`,
@@ -54,10 +54,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     packageName: 'flutter',
   );
 
-  /// Ordered list of cleanup method names — the first one found on a type
-  /// is the expected cleanup method.
-  static const _cleanupMethods = ['dispose', 'close', 'cancel'];
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final element = node.declaredFragment?.element;
@@ -95,7 +91,7 @@ class _Visitor extends SimpleAstVisitor<void> {
         final type = variable.declaredFragment?.element.type;
         if (type == null) continue;
 
-        final expectedCleanup = _findCleanupMethod(type);
+        final expectedCleanup = findCleanupMethod(type);
         if (expectedCleanup == null) continue;
 
         final fieldName = variable.name.lexeme;
@@ -120,33 +116,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     }
   }
-
-  /// Returns the expected cleanup method name for a type, or `null` if the
-  /// type is not disposable.
-  static String? _findCleanupMethod(DartType type) {
-    if (type is! InterfaceType) return null;
-
-    final allMethods = <String>{};
-
-    // Collect methods from the type itself and all supertypes
-    for (final method in type.methods) {
-      final name = method.name;
-      if (name != null) allMethods.add(name);
-    }
-    for (final supertype in type.element.allSupertypes) {
-      for (final method in supertype.methods) {
-        final name = method.name;
-        if (name != null) allMethods.add(name);
-      }
-    }
-
-    // Return the first matching cleanup method
-    for (final cleanup in _cleanupMethods) {
-      if (allMethods.contains(cleanup)) return cleanup;
-    }
-
-    return null;
-  }
 }
 
 /// Represents a cleanup call like `fieldName.dispose()`.
@@ -161,12 +130,10 @@ class _CleanupCall {
 class _CleanupCallCollector extends RecursiveAstVisitor<void> {
   final List<_CleanupCall> calls = [];
 
-  static const _cleanupMethods = {'dispose', 'close', 'cancel'};
-
   @override
   void visitMethodInvocation(MethodInvocation node) {
     final methodName = node.methodName.name;
-    if (_cleanupMethods.contains(methodName)) {
+    if (cleanupMethods.contains(methodName)) {
       final target = node.realTarget;
       if (target != null) {
         calls.add(

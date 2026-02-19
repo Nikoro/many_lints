@@ -853,6 +853,95 @@ final buildMethod = body.members
 
 **Reference:** [ast_node_analysis.dart](../../../lib/src/ast_node_analysis.dart)
 
+**5. Find enclosing class declaration:**
+```dart
+ClassDeclaration? enclosingClassDeclaration(AstNode node)
+```
+
+Walks up parent chain to find the nearest `ClassDeclaration`. Used in rules and fixes that need the enclosing class context.
+
+**Reference:** [ast_node_analysis.dart](../../../lib/src/ast_node_analysis.dart)
+
+**6. Check for @override annotation:**
+```dart
+bool hasOverrideAnnotation(MethodDeclaration node)
+```
+
+Returns true if the method declaration has an `@override` annotation. Shared across rules that filter overridden methods.
+
+**Reference:** [ast_node_analysis.dart](../../../lib/src/ast_node_analysis.dart)
+
+**7. Negate an expression:**
+```dart
+String negateExpression(Expression expr)
+```
+
+Produces the negated form of an expression. Used by `prefer_any_or_every` fix.
+
+**Reference:** [ast_node_analysis.dart](../../../lib/src/ast_node_analysis.dart)
+
+**8. Build `.every()` replacement:**
+```dart
+String buildEveryReplacement(...)
+```
+
+Builds the replacement string for converting `.where().isEmpty` to `.every()`. Used by `prefer_any_or_every` fix.
+
+**Reference:** [ast_node_analysis.dart](../../../lib/src/ast_node_analysis.dart)
+
+### Disposal Utilities
+
+**From [disposal_utils.dart](../../../lib/src/disposal_utils.dart):**
+
+**IMPORTANT:** Use these shared utilities instead of reimplementing cleanup method detection. Extracted from `dispose_fields` and `dispose_provided_instances` rules/fixes.
+
+```dart
+import '../disposal_utils.dart';
+
+// Find which cleanup method a type supports (dispose, close, or cancel)
+final cleanupMethod = findCleanupMethod(fieldType);
+if (cleanupMethod != null) {
+  // This type is disposable — use cleanupMethod as the method name
+}
+
+// Access the ordered list of cleanup method names
+const cleanupMethods = ['dispose', 'close', 'cancel'];
+```
+
+**When to use:** Any rule or fix that detects/generates cleanup calls for disposable types.
+**Reference:** [disposal_utils.dart](../../../lib/src/disposal_utils.dart), [dispose_fields.dart](../../../lib/src/rules/dispose_fields.dart), [dispose_provided_instances.dart](../../../lib/src/rules/dispose_provided_instances.dart)
+
+### Flutter Widget Helpers
+
+**From [flutter_widget_helpers.dart](../../../lib/src/flutter_widget_helpers.dart):**
+
+```dart
+import '../flutter_widget_helpers.dart';
+
+// Enum for flex axis direction (vertical or horizontal)
+enum FlexAxis { vertical, horizontal }
+```
+
+**When to use:** Rules that detect SizedBox spacers in flex layouts (Row/Column).
+**Reference:** [flutter_widget_helpers.dart](../../../lib/src/flutter_widget_helpers.dart), [prefer_spacing.dart](../../../lib/src/rules/prefer_spacing.dart), [use_gap.dart](../../../lib/src/rules/use_gap.dart)
+
+### Riverpod Type Checkers
+
+**From [riverpod_type_checkers.dart](../../../lib/src/riverpod_type_checkers.dart):**
+
+```dart
+import '../riverpod_type_checkers.dart';
+
+// TypeChecker that matches all Riverpod Notifier base classes
+// (Notifier, AsyncNotifier, AutoDisposeNotifier, etc.)
+if (notifierChecker.isSuperOf(element)) {
+  // This class extends a Riverpod Notifier
+}
+```
+
+**When to use:** Rules that need to detect Riverpod Notifier subclasses.
+**Reference:** [riverpod_type_checkers.dart](../../../lib/src/riverpod_type_checkers.dart), [avoid_notifier_constructors.dart](../../../lib/src/rules/avoid_notifier_constructors.dart), [dispose_provided_instances.dart](../../../lib/src/rules/dispose_provided_instances.dart)
+
 ### Hook-Specific Helpers
 
 **From [hook_detection.dart](../../../lib/src/hook_detection.dart):**

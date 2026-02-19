@@ -13,6 +13,7 @@ class PreferTransformOverContainer extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_transform_over_container',
     'Use Transform widget instead of the Container widget with only the transform parameter',
+    correctionMessage: 'Try using Transform instead of Container.',
   );
 
   PreferTransformOverContainer()

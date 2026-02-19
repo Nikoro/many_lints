@@ -13,6 +13,7 @@ class PreferPaddingOverContainer extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_padding_over_container',
     'Use Padding widget instead of the Container widget with only the padding or margin parameter',
+    correctionMessage: 'Try using Padding instead of Container.',
   );
 
   PreferPaddingOverContainer()

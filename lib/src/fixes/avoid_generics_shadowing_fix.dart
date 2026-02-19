@@ -33,18 +33,45 @@ class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
     if (typeParamList is! TypeParameterList) return;
 
     // Collect names already in use by sibling type parameters.
-    final siblingNames = <String>{
+    final usedNames = <String>{
       for (final tp in typeParamList.typeParameters) tp.name.lexeme,
     };
+
+    // Also collect all NamedType identifiers in the declaring scope to avoid
+    // renaming to a name that shadows an outer type or identifier.
+    final scope = _findDeclaringScope(targetNode);
+    if (scope != null) {
+      final scopeNames = _collectNamedTypes(scope);
+      usedNames.addAll(scopeNames);
+    }
+
+    // Also check top-level declaration names in the compilation unit.
+    final unit = targetNode.thisOrAncestorOfType<CompilationUnit>();
+    if (unit != null) {
+      for (final declaration in unit.declarations) {
+        final declName = switch (declaration) {
+          ClassDeclaration(:final namePart) => namePart.typeName.lexeme,
+          MixinDeclaration(:final name) => name.lexeme,
+          EnumDeclaration(:final namePart) => namePart.typeName.lexeme,
+          GenericTypeAlias(:final name) => name.lexeme,
+          FunctionTypeAlias(:final name) => name.lexeme,
+          FunctionDeclaration(:final name) => name.lexeme,
+          TopLevelVariableDeclaration(:final variables) =>
+            variables.variables.firstOrNull?.name.lexeme,
+          _ => null,
+        };
+        if (declName != null) usedNames.add(declName);
+      }
+    }
 
     // Pick a replacement name: try T, R, E, S, U, V, W, then T0, T1, ...
     final candidates = ['T', 'R', 'E', 'S', 'U', 'V', 'W'];
     final replacement = candidates.firstWhere(
-      (c) => !siblingNames.contains(c),
+      (c) => !usedNames.contains(c),
       orElse: () {
         for (var i = 0; ; i++) {
           final name = 'T$i';
-          if (!siblingNames.contains(name)) return name;
+          if (!usedNames.contains(name)) return name;
         }
       },
     );
@@ -72,9 +99,18 @@ class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
     });
   }
 
+  /// Collects all [NamedType] identifier names used within [scope],
+  /// excluding the type parameters themselves.
+  Set<String> _collectNamedTypes(AstNode scope) {
+    final names = <String>{};
+    final visitor = _NamedTypeCollector(names);
+    scope.visitChildren(visitor);
+    return names;
+  }
+
   /// Finds the AST node that scopes this type parameter (class, method, etc.).
   AstNode? _findDeclaringScope(TypeParameter typeParam) {
-    AstNode? current = typeParam.parent?.parent;
+    final current = typeParam.parent?.parent;
     if (current is ClassDeclaration ||
         current is MixinDeclaration ||
         current is EnumDeclaration ||
@@ -108,6 +144,21 @@ class _UsageFinder extends RecursiveAstVisitor<void> {
   void visitNamedType(NamedType node) {
     if (node.name.lexeme == name && node.importPrefix == null) {
       usages.add(node.name);
+    }
+    super.visitNamedType(node);
+  }
+}
+
+/// Collects all [NamedType] identifier names within a scope.
+class _NamedTypeCollector extends RecursiveAstVisitor<void> {
+  final Set<String> names;
+
+  _NamedTypeCollector(this.names);
+
+  @override
+  void visitNamedType(NamedType node) {
+    if (node.importPrefix == null) {
+      names.add(node.name.lexeme);
     }
     super.visitNamedType(node);
   }

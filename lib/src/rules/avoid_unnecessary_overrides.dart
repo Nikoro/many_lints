@@ -5,6 +5,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import 'package:many_lints/src/ast_node_analysis.dart';
+
 /// Warns when a class or mixin overrides a member without adding
 /// implementation or changing the signature.
 ///
@@ -62,7 +64,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     for (final member in body.members) {
       if (member is MethodDeclaration) {
-        if (!_hasOverrideAnnotation(member)) continue;
+        if (!hasOverrideAnnotation(member)) continue;
         _checkMethodDeclaration(member);
       }
     }
@@ -251,7 +253,4 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
     return false;
   }
-
-  static bool _hasOverrideAnnotation(MethodDeclaration method) =>
-      method.metadata.any((a) => a.name.name == 'override');
 }

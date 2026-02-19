@@ -25,6 +25,9 @@ lib/
     hook_detection.dart   # Hook widget detection helpers
     ast_node_analysis.dart # AST node analysis helpers
     constant_expression.dart # Constant expression/identifier checking helpers
+    disposal_utils.dart   # Shared disposal helpers (findCleanupMethod, cleanupMethods)
+    flutter_widget_helpers.dart # Flutter widget helpers (FlexAxis enum)
+    riverpod_type_checkers.dart # Shared Riverpod TypeChecker constants
     rules/                # Lint rules (AnalysisRule + SimpleAstVisitor pattern)
     fixes/                # Quick fixes (ResolvedCorrectionProducer pattern)
     assists/              # Code assists (ResolvedCorrectionProducer pattern)
@@ -86,5 +89,8 @@ Quick summary:
 - `lib/src/class_suffix_validator.dart` - Base class for suffix naming rules
 - `lib/src/text_distance.dart` - Levenshtein edit distance
 - `lib/src/hook_detection.dart` - Hook widget detection helpers
-- `lib/src/ast_node_analysis.dart` - AST node analysis helpers
+- `lib/src/ast_node_analysis.dart` - AST node analysis helpers (enclosingClassDeclaration, hasOverrideAnnotation, negateExpression, buildEveryReplacement)
 - `lib/src/constant_expression.dart` - Constant expression and identifier checking (isConstantExpression, isConstantIdentifier)
+- `lib/src/disposal_utils.dart` - Shared disposal helpers (findCleanupMethod, cleanupMethods)
+- `lib/src/flutter_widget_helpers.dart` - Flutter widget helpers (FlexAxis enum for spacing rules)
+- `lib/src/riverpod_type_checkers.dart` - Shared Riverpod TypeChecker constants (notifierChecker)

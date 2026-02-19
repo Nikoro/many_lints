@@ -1,6 +1,7 @@
 name: many_lints
-description: "A useful collection of custom lints for Flutter & Dart projects"
+description: "A comprehensive collection of custom lint rules, quick fixes, and code assists for Flutter and Dart projects."
 version: 0.3.0
+homepage: https://github.com/Nikoro/many_lints
 repository: https://github.com/Nikoro/many_lints
 issue_tracker: https://github.com/Nikoro/many_lints/issues
 topics: [lint, lints, linter, analyzer, code]

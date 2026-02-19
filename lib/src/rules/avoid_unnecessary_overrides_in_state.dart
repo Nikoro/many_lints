@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import 'package:many_lints/src/ast_node_analysis.dart';
 import 'package:many_lints/src/type_checker.dart';
 
 /// Warns when a `State` class contains method overrides that only call the
@@ -59,7 +60,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     for (final member in body.members) {
       if (member is! MethodDeclaration) continue;
-      if (!_hasOverrideAnnotation(member)) continue;
+      if (!hasOverrideAnnotation(member)) continue;
 
       final methodName = member.name.lexeme;
 
@@ -67,10 +68,6 @@ class _Visitor extends SimpleAstVisitor<void> {
         rule.reportAtNode(member, arguments: [methodName]);
       }
     }
-  }
-
-  static bool _hasOverrideAnnotation(MethodDeclaration method) {
-    return method.metadata.any((a) => a.name.name == 'override');
   }
 
   /// Checks if the method body only contains a call to super.methodName().

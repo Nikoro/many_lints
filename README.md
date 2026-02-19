@@ -70,9 +70,12 @@ plugins:
 
 ## Available Lints
 
-All lints are enabled by default as warnings.
+All 92 lints are enabled by default as warnings.
 
+- **always_remove_listener**: Listener added but never removed in `dispose()`.
 - **avoid_accessing_collections_by_constant_index**: Avoid accessing a collection by a constant index inside a loop.
+- **avoid_bloc_public_methods**: Avoid declaring public members in Bloc classes. Use events via `add` instead.
+- **avoid_border_all**: Prefer `Border.fromBorderSide` over `Border.all`.
 - **avoid_cascade_after_if_null**: Cascade after if-null operator without parentheses can produce unexpected results.
 - **avoid_collection_equality_checks**: Comparing collections with `==`/`!=` checks reference equality, not contents.
 - **avoid_collection_methods_with_unrelated_types**: Detects collection method calls with arguments unrelated to the collection's type.
@@ -81,59 +84,163 @@ All lints are enabled by default as warnings.
 - **avoid_constant_switches**: The switch expression is a constant, so the result is always the same.
 - **avoid_contradictory_expressions**: Detects contradictory comparisons in `&&` chains that always evaluate to false.
 - **avoid_duplicate_cascades**: Detects duplicate cascade sections that indicate copy-paste errors.
+- **avoid_expanded_as_spacer**: Prefer replacing `Expanded` with an empty child with `Spacer`.
+- **avoid_flexible_outside_flex**: `Flexible`/`Expanded` should only be used as a direct child of `Row`, `Column`, or `Flex`.
 - **avoid_generics_shadowing**: Warns when a generic type parameter shadows a top-level declaration in the same file.
+- **avoid_incomplete_copy_with**: `copyWith` is missing constructor parameters.
+- **avoid_incorrect_image_opacity**: Use `Image`'s `opacity` parameter instead of wrapping it in an `Opacity` widget.
+- **avoid_map_keys_contains**: Use `containsKey()` instead of `.keys.contains()`.
+- **avoid_misused_test_matchers**: Detects incompatible matcher usage with the actual value type.
+- **avoid_mounted_in_setstate**: Checking `mounted` inside `setState` is too late and can lead to an exception.
+- **avoid_notifier_constructors**: Avoid constructors with logic in Notifier classes.
+- **avoid_only_rethrow**: Catch clause contains only a rethrow statement.
+- **avoid_passing_bloc_to_bloc**: Avoid passing a Bloc/Cubit to another Bloc/Cubit.
+- **avoid_passing_build_context_to_blocs**: Avoid passing `BuildContext` to a Bloc/Cubit.
+- **avoid_ref_inside_state_dispose**: Avoid accessing `ref` inside the `dispose()` method.
+- **avoid_ref_read_inside_build**: Avoid using `ref.read` inside the `build` method.
+- **avoid_returning_widgets**: Avoid returning widgets from functions, methods, or getters.
+- **avoid_shrink_wrap_in_lists**: Avoid using `shrinkWrap` in `ListView`.
 - **avoid_single_child_in_multi_child_widgets**: Avoid using a single child in widgets that can accept multiple children (e.g., `Row`, `Column`, `Flex`).
+- **avoid_single_field_destructuring**: Avoid single-field destructuring. Use direct property access instead.
+- **avoid_state_constructors**: Avoid constructors with logic in State classes.
+- **avoid_throw_in_catch_block**: Avoid using `throw` inside a catch block.
+- **avoid_unassigned_stream_subscriptions**: Stream subscription is not assigned to a variable.
 - **avoid_unnecessary_consumer_widgets**: Ensures that a `ConsumerWidget` uses the `ref` parameter.
+- **avoid_unnecessary_gesture_detector**: Detects `GestureDetector` with no event handlers.
 - **avoid_unnecessary_hook_widgets**: Ensures that a `HookWidget` uses hooks.
+- **avoid_unnecessary_overrides**: Detects method overrides that only call `super` without additional logic.
+- **avoid_unnecessary_overrides_in_state**: Detects State method overrides that only call `super` without additional logic.
+- **avoid_unnecessary_setstate**: Detects unnecessary calls to `setState`.
+- **avoid_unnecessary_stateful_widgets**: Detects `StatefulWidget` with no mutable state. Consider using `StatelessWidget`.
+- **avoid_wrapping_in_padding**: Avoid wrapping a widget in a `Padding` widget when it already has padding support.
+- **dispose_fields**: Detects fields that are not disposed in `dispose()`.
+- **dispose_provided_instances**: Detects instances with a dispose method that are not disposed via `ref.onDispose()`.
 - **prefer_abstract_final_static_class**: Classes with only static members should be declared as `abstract final`.
 - **prefer_align_over_container**: Enforces the use of `Align` over `Container` with only the alignment parameter.
 - **prefer_any_or_every**: Prefer `.any()` or `.every()` over `.where().isEmpty/.isNotEmpty`.
+- **prefer_async_callback**: Use `AsyncCallback` instead of `Future<void> Function()`.
+- **prefer_bloc_extensions**: Use `context.read`/`context.watch` instead of `BlocProvider.of()`.
 - **prefer_center_over_align**: Prefer `Center` over `Align` with `alignment: Alignment.center`.
+- **prefer_class_destructuring**: Suggests using class destructuring for repeated property accesses.
+- **prefer_compute_over_isolate_run**: Use `compute()` instead of `Isolate.run()` for web platform compatibility.
+- **prefer_const_border_radius**: Prefer `BorderRadius.all(Radius.circular())` over `BorderRadius.circular()`.
+- **prefer_constrained_box_over_container**: Use `ConstrainedBox` instead of `Container` with only the constraints parameter.
+- **prefer_container**: Detects sequences of nested widgets that can be replaced with a single `Container`.
+- **prefer_contains**: Use `.contains()` instead of `.indexOf()` compared to `-1`.
+- **prefer_correct_edge_insets_constructor**: Use a simpler `EdgeInsets` constructor.
+- **prefer_enums_by_name**: Use `.byName()` instead of `.firstWhere()` to access enum values by name.
+- **prefer_expect_later**: Prefer `expectLater` when testing Futures.
 - **prefer_explicit_function_type**: Prefer explicit return type and parameter list over bare `Function` type.
+- **prefer_for_loop_in_children**: Prefer using a for-loop instead of functional list building.
+- **prefer_immutable_bloc_state**: Bloc state classes should be annotated with `@immutable`.
 - **prefer_iterable_of**: Prefer `.of()` instead of `.from()` for `List`, `Set`, and `Map` for compile-time type safety.
+- **prefer_multi_bloc_provider**: Prefer `MultiBlocProvider` instead of multiple nested `BlocProvider`s.
+- **prefer_overriding_parent_equality**: Parent class overrides `==` and `hashCode` but this class does not.
 - **prefer_padding_over_container**: Enforces the use of `Padding` over `Container` with only margin.
+- **prefer_return_await**: Missing `await` on returned `Future` inside `try-catch` block.
 - **prefer_returning_shorthands**: Prefer dot shorthands when the instance type matches the return type.
-- **prefer_simpler_patterns_null_check**: Prefer simpler null-check patterns in if-case expressions.
 - **prefer_shorthands_with_constructors**: Prefer dot shorthands instead of explicit class instantiations.
 - **prefer_shorthands_with_enums**: Prefer dot shorthands instead of explicit enum prefixes.
 - **prefer_shorthands_with_static_fields**: Prefer dot shorthands instead of explicit class prefixes for static fields.
+- **prefer_simpler_patterns_null_check**: Prefer simpler null-check patterns in if-case expressions.
+- **prefer_single_setstate**: Multiple `setState` calls should be merged into a single call.
+- **prefer_single_widget_per_file**: Only one public widget per file.
+- **prefer_sized_box_square**: Use `SizedBox.square` instead of `SizedBox` with equal width and height.
+- **prefer_spacing**: Prefer passing the `spacing` argument instead of using `SizedBox`.
 - **prefer_switch_expression**: Prefer switch expressions over switch statements when possible.
+- **prefer_test_matchers**: Prefer using a `Matcher` instead of a literal value in `expect()`.
+- **prefer_text_rich**: Use `Text.rich` instead of `RichText` for better text scaling and accessibility.
+- **prefer_transform_over_container**: Use `Transform` instead of `Container` with only the transform parameter.
 - **prefer_type_over_var**: Prefer an explicit type annotation over `var`.
+- **prefer_void_callback**: Use `VoidCallback` instead of `void Function()`.
+- **prefer_wildcard_pattern**: Use the wildcard pattern `_` instead of `Object()`.
+- **proper_super_calls**: Ensures `super` calls are placed correctly (first in `initState`, last in `dispose`).
 - **use_bloc_suffix**: Enforces the use of the `Bloc` suffix for classes that extend `Bloc`.
+- **use_closest_build_context**: Use the closest available `BuildContext` instead of the outer one.
 - **use_cubit_suffix**: Enforces the use of the `Cubit` suffix for classes that extend `Cubit`.
 - **use_dedicated_media_query_methods**: Enforces the use of dedicated `MediaQuery` methods instead of `MediaQuery.of(context)`.
+- **use_existing_destructuring**: Use existing destructuring instead of accessing properties directly.
+- **use_existing_variable**: Detects expressions that duplicate the initializer of an existing variable.
 - **use_gap**: Prefer `Gap` widget instead of `SizedBox` or `Padding` for spacing in multi-child widgets.
 - **use_notifier_suffix**: Enforces the use of the `Notifier` suffix for classes that extend `Notifier`.
+- **use_sliver_prefix**: Widget returns a sliver but its name does not start with `Sliver`.
 
 ### Quick fixes
 
-The following rules include auto-fixable quick fixes:
+The following rules include auto-fixable quick fixes (72 total):
 
+- `always_remove_listener`
+- `avoid_border_all`
 - `avoid_cascade_after_if_null`
 - `avoid_commented_out_code`
 - `avoid_duplicate_cascades`
+- `avoid_expanded_as_spacer`
 - `avoid_generics_shadowing`
+- `avoid_incomplete_copy_with`
+- `avoid_incorrect_image_opacity`
+- `avoid_map_keys_contains`
+- `avoid_notifier_constructors`
+- `avoid_only_rethrow`
+- `avoid_ref_read_inside_build`
+- `avoid_single_field_destructuring`
+- `avoid_state_constructors`
+- `avoid_throw_in_catch_block`
 - `avoid_unnecessary_consumer_widgets`
+- `avoid_unnecessary_gesture_detector`
 - `avoid_unnecessary_hook_widgets`
+- `avoid_unnecessary_overrides`
+- `avoid_unnecessary_overrides_in_state`
+- `avoid_unnecessary_setstate`
+- `avoid_unnecessary_stateful_widgets`
+- `avoid_wrapping_in_padding`
+- `dispose_fields`
+- `dispose_provided_instances`
 - `prefer_abstract_final_static_class`
 - `prefer_align_over_container`
 - `prefer_any_or_every`
+- `prefer_async_callback`
+- `prefer_bloc_extensions`
 - `prefer_center_over_align`
+- `prefer_class_destructuring`
+- `prefer_compute_over_isolate_run`
+- `prefer_const_border_radius`
+- `prefer_constrained_box_over_container`
+- `prefer_container`
+- `prefer_contains`
+- `prefer_correct_edge_insets_constructor`
+- `prefer_enums_by_name`
+- `prefer_expect_later`
 - `prefer_explicit_function_type`
+- `prefer_for_loop_in_children`
+- `prefer_immutable_bloc_state`
 - `prefer_iterable_of`
+- `prefer_multi_bloc_provider`
+- `prefer_overriding_parent_equality`
 - `prefer_padding_over_container`
+- `prefer_return_await`
 - `prefer_returning_shorthands`
-- `prefer_simpler_patterns_null_check`
 - `prefer_shorthands_with_constructors`
 - `prefer_shorthands_with_enums`
 - `prefer_shorthands_with_static_fields`
+- `prefer_simpler_patterns_null_check`
+- `prefer_single_setstate`
+- `prefer_sized_box_square`
 - `prefer_switch_expression`
+- `prefer_text_rich`
+- `prefer_transform_over_container`
 - `prefer_type_over_var`
+- `prefer_void_callback`
+- `prefer_wildcard_pattern`
+- `proper_super_calls`
 - `use_bloc_suffix`
+- `use_closest_build_context`
 - `use_cubit_suffix`
 - `use_dedicated_media_query_methods`
+- `use_existing_destructuring`
+- `use_existing_variable`
 - `use_gap`
 - `use_notifier_suffix`
+- `use_sliver_prefix`
 
 ## Available Assists
 

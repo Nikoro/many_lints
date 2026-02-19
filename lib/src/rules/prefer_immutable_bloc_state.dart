@@ -103,33 +103,36 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     }
 
-    // Also add subclasses of known state classes
-    var changed = true;
-    while (changed) {
-      changed = false;
-      for (final declaration in node.declarations) {
-        if (declaration is! ClassDeclaration) continue;
+    // Also add subclasses of known state classes using a single-pass BFS.
+    // Build a parent→children adjacency map, then propagate from known roots.
+    final childrenOf = <String, List<String>>{};
+    for (final declaration in node.declarations) {
+      if (declaration is! ClassDeclaration) continue;
 
-        final className = declaration.namePart.typeName.lexeme;
-        if (stateClassNames.contains(className)) continue;
+      final className = declaration.namePart.typeName.lexeme;
 
-        final superclass = declaration.extendsClause?.superclass;
-        if (superclass != null &&
-            stateClassNames.contains(superclass.name.lexeme)) {
-          stateClassNames.add(className);
-          changed = true;
-          continue;
+      final superclass = declaration.extendsClause?.superclass;
+      if (superclass != null) {
+        (childrenOf[superclass.name.lexeme] ??= []).add(className);
+      }
+
+      final implementsClause = declaration.implementsClause;
+      if (implementsClause != null) {
+        for (final implemented in implementsClause.interfaces) {
+          (childrenOf[implemented.name.lexeme] ??= []).add(className);
         }
+      }
+    }
 
-        final implementsClause = declaration.implementsClause;
-        if (implementsClause != null) {
-          for (final implemented in implementsClause.interfaces) {
-            if (stateClassNames.contains(implemented.name.lexeme)) {
-              stateClassNames.add(className);
-              changed = true;
-              break;
-            }
-          }
+    // BFS from known state class names
+    final queue = [...stateClassNames];
+    while (queue.isNotEmpty) {
+      final current = queue.removeLast();
+      final children = childrenOf[current];
+      if (children == null) continue;
+      for (final child in children) {
+        if (stateClassNames.add(child)) {
+          queue.add(child);
         }
       }
     }
