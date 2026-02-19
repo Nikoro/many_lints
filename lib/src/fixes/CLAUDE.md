@@ -73,6 +73,7 @@ final arg = arguments.whereType<NamedExpression>()
 | Insert mounted guard | [use_ref_read_synchronously_fix.dart](use_ref_read_synchronously_fix.dart) | Same pattern as above but inserts `if (!mounted) return;\n` for ConsumerWidget/ConsumerState context |
 | Append to list literal | [list_all_equatable_fields_fix.dart](list_all_equatable_fields_fix.dart) | Find list literal in `props` getter (expression or block body); collect existing elements via `toSource()`; append missing field names; replace entire `ListLiteral` node |
 | Extends→mixin swap | [prefer_equatable_mixin_fix.dart](prefer_equatable_mixin_fix.dart) | Replace `extends Equatable` with `with EquatableMixin`; handle existing `with` clause (delete extends + append to mixins) vs no `with` clause (simple replacement); `range.startStart()` for partial deletion |
+| Unwrap factory return | [prefer_use_callback_fix.dart](prefer_use_callback_fix.dart) | Extract inner expression from `useMemoized(() => expr)` factory; rebuild as `useCallback(expr, keys)` preserving remaining args via `toSource()` |
 
 ## Updating Documentation
 

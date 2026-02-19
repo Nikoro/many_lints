@@ -119,6 +119,7 @@ import 'package:many_lints/src/rules/use_ref_and_state_synchronously.dart';
 import 'package:many_lints/src/rules/use_ref_read_synchronously.dart';
 import 'package:many_lints/src/rules/list_all_equatable_fields.dart';
 import 'package:many_lints/src/rules/prefer_equatable_mixin.dart';
+import 'package:many_lints/src/rules/prefer_use_callback.dart';
 import 'package:many_lints/src/rules/use_sliver_prefix.dart';
 
 // Fixes
@@ -194,6 +195,7 @@ import 'package:many_lints/src/fixes/use_ref_and_state_synchronously_fix.dart';
 import 'package:many_lints/src/fixes/use_ref_read_synchronously_fix.dart';
 import 'package:many_lints/src/fixes/list_all_equatable_fields_fix.dart';
 import 'package:many_lints/src/fixes/prefer_equatable_mixin_fix.dart';
+import 'package:many_lints/src/fixes/prefer_use_callback_fix.dart';
 import 'package:many_lints/src/fixes/use_sliver_prefix_fix.dart';
 
 // Assists
@@ -307,6 +309,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(UseRefReadSynchronously());
     registry.registerWarningRule(ListAllEquatableFields());
     registry.registerWarningRule(PreferEquatableMixin());
+    registry.registerWarningRule(PreferUseCallback());
     registry.registerWarningRule(UseSliverPrefix());
 
     // Register fixes for rules
@@ -562,6 +565,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       PreferEquatableMixin.code,
       PreferEquatableMixinFix.new,
+    );
+    registry.registerFixForRule(
+      PreferUseCallback.code,
+      PreferUseCallbackFix.new,
     );
     registry.registerFixForRule(UseSliverPrefix.code, UseSliverPrefixFix.new);
     registry.registerFixForRule(
