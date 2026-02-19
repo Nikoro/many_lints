@@ -30,6 +30,7 @@ import 'package:many_lints/src/rules/prefer_bloc_extensions.dart';
 import 'package:many_lints/src/rules/prefer_immutable_bloc_state.dart';
 import 'package:many_lints/src/rules/prefer_multi_bloc_provider.dart';
 import 'package:many_lints/src/rules/avoid_cascade_after_if_null.dart';
+import 'package:many_lints/src/rules/avoid_conditional_hooks.dart';
 import 'package:many_lints/src/rules/avoid_border_all.dart';
 import 'package:many_lints/src/rules/avoid_expanded_as_spacer.dart';
 import 'package:many_lints/src/rules/avoid_returning_widgets.dart';
@@ -264,6 +265,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferIterableOf());
     registry.registerWarningRule(AvoidSingleChildInMultiChildWidgets());
     registry.registerWarningRule(AvoidUnnecessaryHookWidgets());
+    registry.registerWarningRule(AvoidConditionalHooks());
     registry.registerWarningRule(AvoidUnnecessaryConsumerWidgets());
     registry.registerWarningRule(UseBlocSuffix());
     registry.registerWarningRule(UseCubitSuffix());

@@ -1820,3 +1820,76 @@ static bool _isMountedGuardWithReturn(Statement statement) {
 - Exclude `ref.mounted` from being flagged (it's the guard itself)
 
 **Ref:** [use_ref_and_state_synchronously.dart](../../../lib/src/rules/use_ref_and_state_synchronously.dart#L55-L148)
+
+### Detect Calls Inside Conditional Branches (Depth Counter Pattern)
+
+When you need to flag specific function calls that appear inside conditional branches (if/else, switch, ternary, `&&`/`||` short-circuit), use a `RecursiveAstVisitor` with a `_conditionalDepth` counter. Increment before entering conditional branches, decrement after:
+
+```dart
+class _ConditionalCallFinder extends RecursiveAstVisitor<void> {
+  final MyRule rule;
+  int _conditionalDepth = 0;
+
+  _ConditionalCallFinder(this.rule);
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (_conditionalDepth > 0 && _isTargetCall(node)) {
+      rule.reportAtNode(node);
+    }
+    super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitIfStatement(IfStatement node) {
+    node.expression.accept(this); // condition is not conditional
+    _conditionalDepth++;
+    node.thenStatement.accept(this);
+    node.elseStatement?.accept(this);
+    _conditionalDepth--;
+  }
+
+  @override
+  void visitSwitchStatement(SwitchStatement node) {
+    node.expression.accept(this);
+    _conditionalDepth++;
+    for (final member in node.members) member.accept(this);
+    _conditionalDepth--;
+  }
+
+  @override
+  void visitConditionalExpression(ConditionalExpression node) {
+    node.condition.accept(this);
+    _conditionalDepth++;
+    node.thenExpression.accept(this);
+    node.elseExpression.accept(this);
+    _conditionalDepth--;
+  }
+
+  @override
+  void visitBinaryExpression(BinaryExpression node) {
+    final op = node.operator.lexeme;
+    if (op == '&&' || op == '||') {
+      node.leftOperand.accept(this);
+      _conditionalDepth++;
+      node.rightOperand.accept(this);
+      _conditionalDepth--;
+    } else {
+      super.visitBinaryExpression(node);
+    }
+  }
+
+  // Stop at nested function boundaries
+  @override void visitFunctionExpression(FunctionExpression node) {}
+  @override void visitFunctionDeclaration(FunctionDeclaration node) {}
+}
+```
+
+**Key points:**
+- The condition expression itself is NOT conditional — only the branches are
+- For `&&`/`||`, only the right operand is conditional (short-circuit)
+- Stop at function boundaries to avoid false positives from closures
+- Override all conditional node types: `IfStatement`, `IfElement`, `SwitchStatement`, `SwitchExpression`, `ConditionalExpression`, `BinaryExpression` (`&&`/`||`)
+- `RecursiveAstVisitor` does NOT have `visitInvocationExpression` — use `visitMethodInvocation`, `visitFunctionExpressionInvocation`, and `visitInstanceCreationExpression` separately
+
+**Ref:** [avoid_conditional_hooks.dart](../../../lib/src/rules/avoid_conditional_hooks.dart#L88-L189)
