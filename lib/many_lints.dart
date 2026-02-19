@@ -114,6 +114,7 @@ import 'package:many_lints/src/rules/prefer_text_rich.dart';
 import 'package:many_lints/src/rules/prefer_transform_over_container.dart';
 import 'package:many_lints/src/rules/prefer_void_callback.dart';
 import 'package:many_lints/src/rules/use_ref_and_state_synchronously.dart';
+import 'package:many_lints/src/rules/use_ref_read_synchronously.dart';
 import 'package:many_lints/src/rules/use_sliver_prefix.dart';
 
 // Fixes
@@ -186,6 +187,7 @@ import 'package:many_lints/src/fixes/use_gap_fix.dart';
 import 'package:many_lints/src/fixes/prefer_text_rich_fix.dart';
 import 'package:many_lints/src/fixes/prefer_void_callback_fix.dart';
 import 'package:many_lints/src/fixes/use_ref_and_state_synchronously_fix.dart';
+import 'package:many_lints/src/fixes/use_ref_read_synchronously_fix.dart';
 import 'package:many_lints/src/fixes/use_sliver_prefix_fix.dart';
 
 // Assists
@@ -294,6 +296,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferTransformOverContainer());
     registry.registerWarningRule(PreferVoidCallback());
     registry.registerWarningRule(UseRefAndStateSynchronously());
+    registry.registerWarningRule(UseRefReadSynchronously());
     registry.registerWarningRule(UseSliverPrefix());
 
     // Register fixes for rules
@@ -537,6 +540,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       UseRefAndStateSynchronously.code,
       UseRefAndStateSynchronouslyFix.new,
+    );
+    registry.registerFixForRule(
+      UseRefReadSynchronously.code,
+      UseRefReadSynchronouslyFix.new,
     );
     registry.registerFixForRule(UseSliverPrefix.code, UseSliverPrefixFix.new);
     registry.registerFixForRule(
