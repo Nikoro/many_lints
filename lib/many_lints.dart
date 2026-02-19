@@ -102,6 +102,7 @@ import 'package:many_lints/src/rules/prefer_sized_box_square.dart';
 import 'package:many_lints/src/rules/use_notifier_suffix.dart';
 import 'package:many_lints/src/rules/prefer_text_rich.dart';
 import 'package:many_lints/src/rules/prefer_transform_over_container.dart';
+import 'package:many_lints/src/rules/prefer_void_callback.dart';
 import 'package:many_lints/src/rules/use_sliver_prefix.dart';
 
 // Fixes
@@ -166,6 +167,7 @@ import 'package:many_lints/src/fixes/prefer_single_setstate_fix.dart';
 import 'package:many_lints/src/fixes/prefer_sized_box_square_fix.dart';
 import 'package:many_lints/src/fixes/use_gap_fix.dart';
 import 'package:many_lints/src/fixes/prefer_text_rich_fix.dart';
+import 'package:many_lints/src/fixes/prefer_void_callback_fix.dart';
 import 'package:many_lints/src/fixes/use_sliver_prefix_fix.dart';
 
 // Assists
@@ -262,6 +264,7 @@ class ManyLintsPlugin extends Plugin {
     registry.registerWarningRule(PreferSizedBoxSquare());
     registry.registerWarningRule(PreferTextRich());
     registry.registerWarningRule(PreferTransformOverContainer());
+    registry.registerWarningRule(PreferVoidCallback());
     registry.registerWarningRule(UseSliverPrefix());
 
     // Register fixes for rules
@@ -485,6 +488,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       PreferTransformOverContainer.code,
       ChangeWidgetNameFix.transformFix,
+    );
+    registry.registerFixForRule(
+      PreferVoidCallback.code,
+      PreferVoidCallbackFix.new,
     );
     registry.registerFixForRule(UseSliverPrefix.code, UseSliverPrefixFix.new);
 
