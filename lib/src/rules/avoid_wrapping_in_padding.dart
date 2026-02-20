@@ -6,8 +6,8 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/ast_node_analysis.dart';
-import 'package:many_lints/src/type_checker.dart';
+import '../ast_node_analysis.dart';
+import '../type_checker.dart';
 
 /// Warns when a widget that supports a `padding` parameter is wrapped in a
 /// `Padding` widget. The padding should be passed directly to the child widget

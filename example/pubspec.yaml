@@ -17,5 +17,5 @@ dependencies:
   riverpod: ^3.2.1
 
 dependency_overrides:
-  analyzer: ^10.0.2
+  analyzer: ^10.1.0
   meta: ^1.18.1

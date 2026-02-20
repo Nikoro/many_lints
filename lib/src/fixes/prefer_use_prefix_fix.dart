@@ -37,11 +37,11 @@ class PreferUsePrefixFix extends ResolvedCorrectionProducer {
 
   static String _addUsePrefix(String name) {
     if (name.startsWith('_')) {
-      // _myHook -> _useMyHook
       final rest = name.substring(1);
+      if (rest.isEmpty) return '_use';
       return '_use${rest[0].toUpperCase()}${rest.substring(1)}';
     }
-    // myHook -> useMyHook
+    if (name.isEmpty) return 'use';
     return 'use${name[0].toUpperCase()}${name.substring(1)}';
   }
 }

@@ -5,7 +5,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-import 'package:many_lints/src/ast_node_analysis.dart';
+import '../ast_node_analysis.dart';
 
 /// Fix that replaces Container(padding/margin: ...) with Padding(padding: ...).
 class PreferPaddingOverContainerFix extends ResolvedCorrectionProducer {

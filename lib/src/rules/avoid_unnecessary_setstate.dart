@@ -5,7 +5,6 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
 /// Warns when `setState` is called directly inside `initState`,
@@ -64,18 +63,14 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name != 'setState') return;
 
-    // Verify we're inside a State subclass
-    final enclosingClass = enclosingClassDeclaration(node);
-    if (enclosingClass == null) return;
+    // Single parent-chain walk: find lifecycle method and enclosing class.
+    final (:method, :classDecl) = _findLifecycleMethodAndClass(node);
+    if (method == null || classDecl == null) return;
 
-    final element = enclosingClass.declaredFragment?.element;
+    final element = classDecl.declaredFragment?.element;
     if (element == null || !_stateChecker.isSuperOf(element)) return;
 
-    // Find the enclosing lifecycle method
-    final lifecycleMethod = _findEnclosingLifecycleMethod(node);
-    if (lifecycleMethod == null) return;
-
-    final methodName = lifecycleMethod.name.lexeme;
+    final methodName = method.name.lexeme;
 
     // For build method, skip setState inside event handler callbacks
     if (methodName == 'build' && _isInsideEventHandlerCallback(node)) return;
@@ -83,25 +78,31 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(node, arguments: [methodName]);
   }
 
-  /// Walks up the AST to find the nearest lifecycle method declaration,
-  /// stopping at function boundaries (closures, local functions).
-  static MethodDeclaration? _findEnclosingLifecycleMethod(AstNode node) {
+  /// Walks up the AST once to find both the nearest lifecycle method and
+  /// the enclosing class declaration, stopping at function boundaries.
+  static ({MethodDeclaration? method, ClassDeclaration? classDecl})
+  _findLifecycleMethodAndClass(AstNode node) {
+    MethodDeclaration? method;
     AstNode? current = node.parent;
     while (current != null) {
-      // Stop at function boundaries — closures and local functions
-      // mean we're not "directly" inside the lifecycle method
-      if (current is FunctionExpression) return null;
-      if (current is FunctionDeclaration) return null;
-
-      if (current is MethodDeclaration) {
-        final name = current.name.lexeme;
-        if (_lifecycleMethods.contains(name)) return current;
-        return null;
+      if (method == null) {
+        // Still looking for the lifecycle method
+        if (current is FunctionExpression || current is FunctionDeclaration) {
+          return (method: null, classDecl: null);
+        }
+        if (current is MethodDeclaration) {
+          final name = current.name.lexeme;
+          if (!_lifecycleMethods.contains(name)) {
+            return (method: null, classDecl: null);
+          }
+          method = current;
+        }
+      } else if (current is ClassDeclaration) {
+        return (method: method, classDecl: current);
       }
-
       current = current.parent;
     }
-    return null;
+    return (method: null, classDecl: null);
   }
 
   /// Checks whether the setState call is inside a closure that is passed

@@ -4,8 +4,8 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/assist/assist.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 
-import 'package:many_lints/src/type_checker.dart';
-import 'package:many_lints/src/ast_node_analysis.dart';
+import '../type_checker.dart';
+import '../ast_node_analysis.dart';
 
 /// Converts an iterable call to `Iterable.map` with an optional
 /// collect `Iterable.toList`/`Iterable.toSet` to a collection-for idiom.

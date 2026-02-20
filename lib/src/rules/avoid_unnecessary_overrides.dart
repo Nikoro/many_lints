@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/ast_node_analysis.dart';
+import '../ast_node_analysis.dart';
 
 /// Warns when a class or mixin overrides a member without adding
 /// implementation or changing the signature.

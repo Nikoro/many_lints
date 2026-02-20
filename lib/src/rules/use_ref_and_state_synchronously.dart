@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../async_guard_utils.dart';
 import '../riverpod_type_checkers.dart';
 
 /// Warns when `ref` or `state` is accessed after an `await` point inside a
@@ -76,18 +77,12 @@ class _Visitor extends SimpleAstVisitor<void> {
     for (final statement in statements) {
       // Check if this statement contains an await
       if (!seenAwait) {
-        seenAwait = _containsAwait(statement);
-        if (seenAwait) {
-          // Also check this same statement for ref/state usage AFTER the await
-          // e.g., `state = await someAsyncFn();` — state is the target, fine
-          // e.g., `final x = await foo(); ref.read(p);` — not possible in
-          // single expression, but compound statements need checking
-        }
+        seenAwait = containsAwait(statement);
         continue;
       }
 
       // After an await: check for mounted guard that resets context
-      if (_isMountedGuardWithReturn(statement)) {
+      if (isMountedGuardWithReturn(statement)) {
         // A mounted guard resets the "seen await" state —
         // code after this guard is safe until the next await
         seenAwait = false;
@@ -95,7 +90,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
 
       // Check if this statement contains another await (resets for next pass)
-      if (_containsAwait(statement)) {
+      if (containsAwait(statement)) {
         // Report any ref/state usage in this statement before the await
         final finder = _RefStateFinder(rule);
         statement.accept(finder);
@@ -105,72 +100,8 @@ class _Visitor extends SimpleAstVisitor<void> {
       // Report ref/state usage after an await without a mounted guard
       final finder = _RefStateFinder(rule);
       statement.accept(finder);
-
-      // If the statement is an if/for/while with its own block, check nested
-      if (statement is IfStatement) {
-        // The RecursiveAstVisitor in _RefStateFinder handles nested blocks
-      }
     }
   }
-
-  /// Returns true if the statement is a mounted guard pattern:
-  /// `if (!ref.mounted) return;` or `if (!mounted) return;`
-  static bool _isMountedGuardWithReturn(Statement statement) {
-    if (statement is! IfStatement) return false;
-    final condition = statement.expression;
-
-    // Check for `!ref.mounted` or `!mounted`
-    if (condition is! PrefixExpression) return false;
-    if (condition.operator.lexeme != '!') return false;
-
-    final operand = condition.operand;
-    final isMountedCheck =
-        // ref.mounted (PrefixedIdentifier)
-        (operand is PrefixedIdentifier &&
-            operand.prefix.name == 'ref' &&
-            operand.identifier.name == 'mounted') ||
-        // ref.mounted (PropertyAccess — e.g., this.ref.mounted)
-        (operand is PropertyAccess && operand.propertyName.name == 'mounted') ||
-        // bare `mounted`
-        (operand is SimpleIdentifier && operand.name == 'mounted');
-
-    if (!isMountedCheck) return false;
-
-    // Check that the then branch contains a return
-    final thenStatement = statement.thenStatement;
-    if (thenStatement is ReturnStatement) return true;
-    if (thenStatement is Block) {
-      final stmts = thenStatement.statements;
-      if (stmts.length == 1 && stmts.first is ReturnStatement) return true;
-    }
-
-    return false;
-  }
-
-  /// Returns true if the node contains an `await` expression.
-  static bool _containsAwait(AstNode node) {
-    final finder = _AwaitFinder();
-    node.accept(finder);
-    return finder.found;
-  }
-}
-
-/// Finds `await` expressions, stopping at function boundaries.
-class _AwaitFinder extends RecursiveAstVisitor<void> {
-  bool found = false;
-
-  @override
-  void visitAwaitExpression(AwaitExpression node) {
-    found = true;
-    // No need to continue
-  }
-
-  // Stop at function boundaries
-  @override
-  void visitFunctionExpression(FunctionExpression node) {}
-
-  @override
-  void visitFunctionDeclaration(FunctionDeclaration node) {}
 }
 
 /// Finds `ref` and `state` usages in AST nodes.

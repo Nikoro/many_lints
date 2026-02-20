@@ -7,7 +7,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/type_checker.dart';
+import '../type_checker.dart';
 
 /// Warns when a function, method, or getter returns a Widget or Widget subclass.
 ///

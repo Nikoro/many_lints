@@ -20,6 +20,7 @@ plugins:
 | `avoid_bloc_public_methods` | Avoid declaring public members in Bloc classes | — |
 | `avoid_border_all` | Prefer `Border.fromBorderSide` over `Border.all` | Yes |
 | `avoid_cascade_after_if_null` | Cascade after if-null operator can produce unexpected results | Yes |
+| `avoid_conditional_hooks` | Hooks called inside conditionals or loops | — |
 | `avoid_collection_equality_checks` | Comparing collections with `==`/`!=` checks reference equality | — |
 | `avoid_collection_methods_with_unrelated_types` | Collection method calls with arguments unrelated to the collection's type | — |
 | `avoid_commented_out_code` | Detects comments that look like commented-out code | Yes |
@@ -39,6 +40,7 @@ plugins:
 | `avoid_only_rethrow` | Catch clause contains only a rethrow statement | Yes |
 | `avoid_passing_bloc_to_bloc` | Avoid passing a Bloc/Cubit to another Bloc/Cubit | — |
 | `avoid_passing_build_context_to_blocs` | Avoid passing `BuildContext` to a Bloc/Cubit | — |
+| `avoid_public_notifier_properties` | Public non-overridden properties in Notifier classes | — |
 | `avoid_ref_inside_state_dispose` | Avoid accessing `ref` inside `dispose()` | — |
 | `avoid_ref_read_inside_build` | Avoid using `ref.read` inside the `build` method | Yes |
 | `avoid_returning_widgets` | Avoid returning widgets from functions/methods/getters | — |
@@ -58,6 +60,7 @@ plugins:
 | `avoid_wrapping_in_padding` | Avoid wrapping a widget in `Padding` when it has padding support | Yes |
 | `dispose_fields` | Field not disposed in `dispose()` | Yes |
 | `dispose_provided_instances` | Instance not disposed via `ref.onDispose()` | Yes |
+| `list_all_equatable_fields` | Equatable subclass missing fields in `props` | Yes |
 | `prefer_abstract_final_static_class` | Classes with only static members → `abstract final` | Yes |
 | `prefer_align_over_container` | Use `Align` instead of `Container` with only alignment | Yes |
 | `prefer_any_or_every` | `.any()`/`.every()` over `.where().isEmpty/.isNotEmpty` | Yes |
@@ -72,6 +75,7 @@ plugins:
 | `prefer_contains` | `.contains()` instead of `.indexOf()` compared to `-1` | Yes |
 | `prefer_correct_edge_insets_constructor` | Use a simpler `EdgeInsets` constructor | Yes |
 | `prefer_enums_by_name` | `.byName()` instead of `.firstWhere()` for enum values | Yes |
+| `prefer_equatable_mixin` | `EquatableMixin` instead of extending `Equatable` | Yes |
 | `prefer_expect_later` | `expectLater` when testing Futures | Yes |
 | `prefer_explicit_function_type` | Explicit return type over bare `Function` | Yes |
 | `prefer_for_loop_in_children` | For-loop instead of functional list building | Yes |
@@ -95,6 +99,8 @@ plugins:
 | `prefer_text_rich` | `Text.rich` instead of `RichText` | Yes |
 | `prefer_transform_over_container` | `Transform` over `Container` with only transform | Yes |
 | `prefer_type_over_var` | Explicit type annotation over `var` | Yes |
+| `prefer_use_callback` | `useCallback` instead of inline closures in hooks | Yes |
+| `prefer_use_prefix` | `use` prefix for custom hook functions | Yes |
 | `prefer_void_callback` | `VoidCallback` instead of `void Function()` | Yes |
 | `prefer_wildcard_pattern` | Wildcard pattern `_` instead of `Object()` | Yes |
 | `proper_super_calls` | `super` calls placed correctly in lifecycle methods | Yes |
@@ -106,6 +112,8 @@ plugins:
 | `use_existing_variable` | Expression duplicates an existing variable's initializer | Yes |
 | `use_gap` | `Gap` widget for spacing in multi-child widgets | Yes |
 | `use_notifier_suffix` | `Notifier` suffix for `Notifier` subclasses | Yes |
+| `use_ref_and_state_synchronously` | Async gap before `ref`/`state` access | Yes |
+| `use_ref_read_synchronously` | `ref.read` stored across async gaps | Yes |
 | `use_sliver_prefix` | `Sliver` prefix for sliver-returning widgets | Yes |
 
 ## Detailed Examples

@@ -2,7 +2,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 
-import 'package:many_lints/src/type_checker.dart';
+import './type_checker.dart';
 
 /// Walks up the AST to find the nearest enclosing [ClassDeclaration].
 ClassDeclaration? enclosingClassDeclaration(AstNode node) {
@@ -105,7 +105,9 @@ String? buildEveryReplacement(String collection, Expression predicate) {
   final innerExpr = maybeGetSingleReturnExpression(body);
   if (innerExpr == null) return null;
 
-  final params = predicate.parameters!.toSource();
+  final paramList = predicate.parameters;
+  if (paramList == null) return null;
+  final params = paramList.toSource();
   final negated = negateExpression(innerExpr);
   return '$collection.every($params => $negated)';
 }

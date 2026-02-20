@@ -6,8 +6,9 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/ast_node_analysis.dart';
-import 'package:many_lints/src/type_checker.dart';
+import '../ast_node_analysis.dart';
+import '../flutter_widget_helpers.dart';
+import '../type_checker.dart';
 
 /// Warns when a sequence of nested widgets could be replaced with a single
 /// `Container` widget.
@@ -182,8 +183,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Collects the sequence of container-compatible widgets by walking the
   /// child chain.
-  static List<_WidgetInfo> _collectSequence(Expression node) {
-    final sequence = <_WidgetInfo>[];
+  static List<WidgetInfo> _collectSequence(Expression node) {
+    final sequence = <WidgetInfo>[];
     Expression? current = node;
 
     while (current != null) {
@@ -198,7 +199,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Extracts widget info from an expression if it's a container-compatible
   /// widget.
-  static _WidgetInfo? _getWidgetInfo(Expression expr) {
+  static WidgetInfo? _getWidgetInfo(Expression expr) {
     if (expr is InstanceCreationExpression) {
       final type = expr.staticType;
       if (type == null || !_containerCompatibleCheckers.isExactlyType(type)) {
@@ -206,10 +207,10 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
       final name = expr.constructorName.type.name.lexeme;
       if (!_containerCompatibleWidgets.contains(name)) return null;
-      return _WidgetInfo(
+      return (
         name: name,
         argumentList: expr.argumentList,
-        node: expr,
+        node: expr as Expression,
       );
     }
     if (expr is MethodInvocation) {
@@ -219,10 +220,10 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
       final name = expr.methodName.name;
       if (!_containerCompatibleWidgets.contains(name)) return null;
-      return _WidgetInfo(
+      return (
         name: name,
         argumentList: expr.argumentList,
-        node: expr,
+        node: expr as Expression,
       );
     }
     return null;
@@ -238,7 +239,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Checks whether the sequence has conflicting parameters. Two widgets that
   /// map to the same Container parameter would conflict.
-  static bool _hasConflictingParams(List<_WidgetInfo> sequence) {
+  static bool _hasConflictingParams(List<WidgetInfo> sequence) {
     final usedParams = <String>{};
     for (final widget in sequence) {
       final param = _containerParamForWidget(widget.name);
@@ -254,16 +255,4 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
     return false;
   }
-}
-
-class _WidgetInfo {
-  final String name;
-  final ArgumentList argumentList;
-  final Expression node;
-
-  _WidgetInfo({
-    required this.name,
-    required this.argumentList,
-    required this.node,
-  });
 }

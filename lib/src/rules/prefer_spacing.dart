@@ -6,9 +6,9 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/ast_node_analysis.dart';
-import 'package:many_lints/src/flutter_widget_helpers.dart';
-import 'package:many_lints/src/type_checker.dart';
+import '../ast_node_analysis.dart';
+import '../flutter_widget_helpers.dart';
+import '../type_checker.dart';
 
 /// Warns when SizedBox widgets are used for spacing inside Row, Column, or Flex
 /// children instead of using the `spacing` argument (Flutter 3.27+).

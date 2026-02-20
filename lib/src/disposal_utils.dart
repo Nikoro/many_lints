@@ -11,20 +11,15 @@ const cleanupMethods = ['dispose', 'close', 'cancel'];
 String? findCleanupMethod(DartType type) {
   if (type is! InterfaceType) return null;
 
-  final allMethods = <String>{};
-  for (final method in type.methods) {
-    final name = method.name;
-    if (name != null) allMethods.add(name);
-  }
-  for (final supertype in type.element.allSupertypes) {
-    for (final method in supertype.methods) {
-      final name = method.name;
-      if (name != null) allMethods.add(name);
-    }
+  bool hasMethod(String name) {
+    if (type.methods.any((m) => m.name == name)) return true;
+    return type.element.allSupertypes.any(
+      (s) => s.methods.any((m) => m.name == name),
+    );
   }
 
   for (final cleanup in cleanupMethods) {
-    if (allMethods.contains(cleanup)) return cleanup;
+    if (hasMethod(cleanup)) return cleanup;
   }
   return null;
 }

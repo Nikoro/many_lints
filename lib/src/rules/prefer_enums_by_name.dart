@@ -7,7 +7,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/ast_node_analysis.dart';
+import '../ast_node_analysis.dart';
 
 /// Suggests using `.byName()` instead of `.firstWhere((e) => e.name == value)`
 /// on enum values.

@@ -58,59 +58,46 @@ class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitCompilationUnit(CompilationUnit node) {
     final stateClassNames = <String>{};
+    final childrenOf = <String, List<String>>{};
 
-    // Strategy 1: Find classes used as state type parameter of Bloc/Cubit
-    for (final declaration in node.declarations) {
-      if (declaration is! ClassDeclaration) continue;
-
-      final element = declaration.declaredFragment?.element;
-      if (element == null) continue;
-
-      if (_blocChecker.isSuperOf(element) && !_blocChecker.isExactly(element)) {
-        // Bloc<Event, State> — state is the second type arg
-        final typeArgs =
-            declaration.extendsClause?.superclass.typeArguments?.arguments;
-        if (typeArgs != null && typeArgs.length == 2) {
-          final stateType = typeArgs[1];
-          if (stateType is NamedType) {
-            stateClassNames.add(stateType.name.lexeme);
-          }
-        }
-      } else if (_cubitChecker.isSuperOf(element) &&
-          !_cubitChecker.isExactly(element)) {
-        // Cubit<State> — state is the first type arg
-        final typeArgs =
-            declaration.extendsClause?.superclass.typeArguments?.arguments;
-        if (typeArgs != null && typeArgs.length == 1) {
-          final stateType = typeArgs.first;
-          if (stateType is NamedType) {
-            stateClassNames.add(stateType.name.lexeme);
-          }
-        }
-      }
-    }
-
-    // Strategy 2: Find classes whose name ends with 'State' and that
-    // participate in a sealed/extends hierarchy with known state classes
+    // Single pass: collect state type names, *State classes, and hierarchy.
     for (final declaration in node.declarations) {
       if (declaration is! ClassDeclaration) continue;
 
       final className = declaration.namePart.typeName.lexeme;
 
-      // Check if name ends with 'State'
+      // Strategy 1: Find classes used as state type parameter of Bloc/Cubit
+      final element = declaration.declaredFragment?.element;
+      if (element != null) {
+        if (_blocChecker.isSuperOf(element) &&
+            !_blocChecker.isExactly(element)) {
+          final typeArgs =
+              declaration.extendsClause?.superclass.typeArguments?.arguments;
+          if (typeArgs != null && typeArgs.length == 2) {
+            final stateType = typeArgs[1];
+            if (stateType is NamedType) {
+              stateClassNames.add(stateType.name.lexeme);
+            }
+          }
+        } else if (_cubitChecker.isSuperOf(element) &&
+            !_cubitChecker.isExactly(element)) {
+          final typeArgs =
+              declaration.extendsClause?.superclass.typeArguments?.arguments;
+          if (typeArgs != null && typeArgs.length == 1) {
+            final stateType = typeArgs.first;
+            if (stateType is NamedType) {
+              stateClassNames.add(stateType.name.lexeme);
+            }
+          }
+        }
+      }
+
+      // Strategy 2: Classes whose name ends with 'State'
       if (className.endsWith('State') && className.length > 5) {
         stateClassNames.add(className);
       }
-    }
 
-    // Also add subclasses of known state classes using a single-pass BFS.
-    // Build a parent→children adjacency map, then propagate from known roots.
-    final childrenOf = <String, List<String>>{};
-    for (final declaration in node.declarations) {
-      if (declaration is! ClassDeclaration) continue;
-
-      final className = declaration.namePart.typeName.lexeme;
-
+      // Build parent→children adjacency map for BFS
       final superclass = declaration.extendsClause?.superclass;
       if (superclass != null) {
         (childrenOf[superclass.name.lexeme] ??= []).add(className);

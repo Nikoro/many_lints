@@ -6,6 +6,8 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../constant_expression.dart';
+
 /// Warns when a logical AND (`&&`) expression contains contradictory
 /// comparisons on the same variable, resulting in a condition that always
 /// evaluates to `false`.
@@ -85,22 +87,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
 
       final op = expr.operator.type;
-      if (_comparisonOperators.contains(op)) {
-        out.add(
-          _Comparison(left: expr.leftOperand, op: op, right: expr.rightOperand),
-        );
+      if (comparisonOperators.contains(op)) {
+        out.add((left: expr.leftOperand, op: op, right: expr.rightOperand));
       }
     }
   }
-
-  static const _comparisonOperators = {
-    TokenType.EQ_EQ,
-    TokenType.BANG_EQ,
-    TokenType.LT,
-    TokenType.GT,
-    TokenType.LT_EQ,
-    TokenType.GT_EQ,
-  };
 
   /// Two comparisons are contradictory if they cannot both be true.
   static bool _areContradictory(_Comparison a, _Comparison b) {
@@ -262,10 +253,4 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-class _Comparison {
-  final Expression left;
-  final TokenType op;
-  final Expression right;
-
-  _Comparison({required this.left, required this.op, required this.right});
-}
+typedef _Comparison = ({Expression left, TokenType op, Expression right});

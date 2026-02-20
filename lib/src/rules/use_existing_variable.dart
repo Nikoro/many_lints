@@ -72,12 +72,10 @@ class _Visitor extends SimpleAstVisitor<void> {
           // Skip trivial expressions (single identifiers, literals)
           if (_isTrivialExpression(initializer)) continue;
 
-          variables.add(
-            _VariableInfo(
-              name: variable.name.lexeme,
-              initializerSource: source,
-            ),
-          );
+          variables.add((
+            name: variable.name.lexeme,
+            initializerSource: source,
+          ));
         }
       }
     }
@@ -107,19 +105,9 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-class _VariableInfo {
-  final String name;
-  final String initializerSource;
+typedef _VariableInfo = ({String name, String initializerSource});
 
-  _VariableInfo({required this.name, required this.initializerSource});
-}
-
-class _DuplicateMatch {
-  final AstNode node;
-  final String variableName;
-
-  _DuplicateMatch({required this.node, required this.variableName});
-}
+typedef _DuplicateMatch = ({AstNode node, String variableName});
 
 class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
   final List<_VariableInfo> variables;
@@ -245,12 +233,11 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
   /// Checks if [expression] matches any known variable initializer.
   /// Returns true if a match is found (to stop recursion into children).
   bool _checkExpression(Expression expression) {
+    if (_Visitor._isTrivialExpression(expression)) return false;
     final source = expression.toSource();
     for (final variable in variables) {
       if (source == variable.initializerSource) {
-        matches.add(
-          _DuplicateMatch(node: expression, variableName: variable.name),
-        );
+        matches.add((node: expression, variableName: variable.name));
         return true; // Don't recurse — we matched the whole expression
       }
     }

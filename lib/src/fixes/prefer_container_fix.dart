@@ -5,7 +5,8 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-import 'package:many_lints/src/ast_node_analysis.dart';
+import '../ast_node_analysis.dart';
+import '../flutter_widget_helpers.dart';
 
 /// Fix that merges a sequence of nested widgets into a single Container.
 class PreferContainerFix extends ResolvedCorrectionProducer {
@@ -95,8 +96,8 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
   }
 
   /// Collects the sequence of container-compatible widgets in the chain.
-  static List<_WidgetInfo> _collectSequence(Expression node) {
-    final sequence = <_WidgetInfo>[];
+  static List<WidgetInfo> _collectSequence(Expression node) {
+    final sequence = <WidgetInfo>[];
     Expression? current = node;
 
     while (current != null) {
@@ -109,23 +110,23 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
     return sequence;
   }
 
-  static _WidgetInfo? _getWidgetInfo(Expression expr) {
+  static WidgetInfo? _getWidgetInfo(Expression expr) {
     if (expr is InstanceCreationExpression) {
       final name = expr.constructorName.type.name.lexeme;
       if (!_containerCompatibleWidgets.contains(name)) return null;
-      return _WidgetInfo(
+      return (
         name: name,
         argumentList: expr.argumentList,
-        node: expr,
+        node: expr as Expression,
       );
     }
     if (expr is MethodInvocation) {
       final name = expr.methodName.name;
       if (!_containerCompatibleWidgets.contains(name)) return null;
-      return _WidgetInfo(
+      return (
         name: name,
         argumentList: expr.argumentList,
-        node: expr,
+        node: expr as Expression,
       );
     }
     return null;
@@ -139,7 +140,7 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
   }
 
   /// Builds the Container replacement string from the widget sequence.
-  static String? _buildContainerReplacement(List<_WidgetInfo> sequence) {
+  static String? _buildContainerReplacement(List<WidgetInfo> sequence) {
     final params = <String>[];
     String? keySource;
     String? childSource;
@@ -232,16 +233,4 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
       _ => null,
     };
   }
-}
-
-class _WidgetInfo {
-  final String name;
-  final ArgumentList argumentList;
-  final Expression node;
-
-  _WidgetInfo({
-    required this.name,
-    required this.argumentList,
-    required this.node,
-  });
 }

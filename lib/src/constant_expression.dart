@@ -2,6 +2,16 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/element/element.dart';
 
+/// The six standard comparison operators.
+const comparisonOperators = {
+  TokenType.EQ_EQ,
+  TokenType.BANG_EQ,
+  TokenType.LT,
+  TokenType.GT,
+  TokenType.LT_EQ,
+  TokenType.GT_EQ,
+};
+
 /// Returns `true` if [expression] is a compile-time constant.
 bool isConstantExpression(Expression expression) {
   var expr = expression;

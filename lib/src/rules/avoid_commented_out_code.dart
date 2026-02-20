@@ -147,7 +147,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       // Allow small gaps (whitespace + newline between consecutive lines).
       // Typically the gap is just \n + indentation spaces.
-      if (gap < 200 && !_hasBlankLineBetween(prev, curr)) {
+      if (gap < _maxAdjacentCommentGap && !_hasBlankLineBetween(prev, curr)) {
         currentGroup.add(curr);
       } else {
         groups.add(currentGroup);
@@ -158,14 +158,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     return groups;
   }
 
+  /// Maximum character offset gap between two comment tokens to consider them
+  /// adjacent (accounts for newline + indentation).
+  static const _maxAdjacentCommentGap = 150;
+
   /// Checks whether there is a blank line between two comment tokens.
-  ///
-  /// Uses a gap threshold heuristic: adjacent comment lines have a gap of
-  /// newline + indentation (typically < 80 chars). Larger gaps indicate
-  /// blank lines or intervening code.
   bool _hasBlankLineBetween(Token a, Token b) {
     final gap = b.offset - a.end;
-    return gap > 100;
+    return gap > _maxAdjacentCommentGap;
   }
 
   /// Strips the `//` prefix and optional leading space from a comment.

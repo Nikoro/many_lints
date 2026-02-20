@@ -105,11 +105,11 @@ class TypeChecker {
     if (element is! InterfaceElement) return false;
 
     // Parse URL like 'dart:core#Iterable' or 'package:flutter/widgets.dart#Widget'
-    final parts = _url.split('#');
-    if (parts.length != 2) return false;
+    final hashIndex = _url.indexOf('#');
+    if (hashIndex < 0 || hashIndex == _url.length - 1) return false;
 
-    final expectedUri = parts[0];
-    final expectedName = parts[1];
+    final expectedUri = _url.substring(0, hashIndex);
+    final expectedName = _url.substring(hashIndex + 1);
 
     if (element.name != expectedName) return false;
 

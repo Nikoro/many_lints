@@ -10,11 +10,19 @@ jobs:
     permissions:
       id-token: write
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: pub.dev
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
-      
+        with:
+          sdk: "3.10.0"
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-
       - name: Install dependencies
         run: dart pub get --no-example
       
@@ -52,6 +60,7 @@ jobs:
   release:
     needs: publish
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:

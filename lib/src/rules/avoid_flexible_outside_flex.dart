@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/type_checker.dart';
+import '../type_checker.dart';
 
 /// Warns when a Flexible or Expanded widget is used outside a Flex widget.
 ///

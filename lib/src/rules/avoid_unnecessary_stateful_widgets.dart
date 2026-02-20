@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/type_checker.dart';
+import '../type_checker.dart';
 
 /// Warns when a StatefulWidget can be replaced with a StatelessWidget because
 /// its State class has no mutable state, lifecycle methods, or setState calls.
