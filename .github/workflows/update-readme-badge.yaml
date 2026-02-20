@@ -37,6 +37,17 @@ jobs:
             --out=coverage/lcov.info \
             --report-on=lib
 
+      - name: Exclude untestable code from coverage
+        run: |
+          # Exclude lib/src/fixes/ and lib/src/assists/ from coverage reports.
+          # analyzer_testing 0.2.0 only provides AnalysisRuleTest — there is no
+          # fix or assist test API yet. Revisit when analyzer_testing 0.3.0+ ships.
+          sudo apt-get install -y lcov
+          lcov --remove coverage/lcov.info \
+            'lib/src/fixes/*' \
+            'lib/src/assists/*' \
+            --output-file coverage/lcov.info
+
       - name: Compute coverage percentage and color
         id: coverage
         run: |
