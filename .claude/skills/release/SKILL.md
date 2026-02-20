@@ -116,7 +116,7 @@ Allow the user to request edits to the CHANGELOG content before proceeding.
 
 1. **`pubspec.yaml`**: Update the `version:` field to the new version.
 
-2. **`README.md`**: Find the line matching the pattern `many_lints: ^` followed by a semver version (e.g., `many_lints: ^0.2.1`) and update it to `many_lints: ^X.Y.Z`. Do NOT hardcode a line number — use a pattern match to find it robustly.
+2. **`README.md`**: Find **all** lines matching the pattern `many_lints: ^` or `version: ^` followed by a semver version and update them to `^X.Y.Z`. There are two occurrences: the simple plugin syntax (`many_lints: ^X.Y.Z`) and the extended syntax with diagnostics (`version: ^X.Y.Z`). Do NOT hardcode line numbers — use pattern matching to find them robustly.
 
 3. **`CHANGELOG.md`**: Insert the new version section at the top of the file, directly after the `# Changelog` heading. Preserve all existing content below.
 
