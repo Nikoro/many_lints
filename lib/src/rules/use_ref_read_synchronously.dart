@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../async_guard_utils.dart';
 import '../type_checker.dart';
 
 /// Warns when `ref.read()` is called after an `await` point inside an async
@@ -112,12 +113,12 @@ class _AsyncCallbackFinder extends RecursiveAstVisitor<void> {
 
     for (final statement in statements) {
       if (!seenAwait) {
-        seenAwait = _containsAwait(statement);
+        seenAwait = containsAwait(statement);
         continue;
       }
 
       // After an await: check for mounted guard that resets context
-      if (_isMountedGuardWithReturn(statement)) {
+      if (isMountedGuardWithReturn(statement)) {
         seenAwait = false;
         continue;
       }
@@ -127,63 +128,6 @@ class _AsyncCallbackFinder extends RecursiveAstVisitor<void> {
       statement.accept(finder);
     }
   }
-
-  /// Returns true if the statement is a mounted guard pattern:
-  /// `if (!mounted) return;` or `if (!context.mounted) return;`
-  static bool _isMountedGuardWithReturn(Statement statement) {
-    if (statement is! IfStatement) return false;
-    final condition = statement.expression;
-
-    // Check for `!mounted` or `!context.mounted`
-    if (condition is! PrefixExpression) return false;
-    if (condition.operator.lexeme != '!') return false;
-
-    final operand = condition.operand;
-    final isMountedCheck =
-        // context.mounted (PrefixedIdentifier)
-        (operand is PrefixedIdentifier &&
-            operand.identifier.name == 'mounted') ||
-        // context.mounted (PropertyAccess — e.g., this.context.mounted)
-        (operand is PropertyAccess && operand.propertyName.name == 'mounted') ||
-        // bare `mounted`
-        (operand is SimpleIdentifier && operand.name == 'mounted');
-
-    if (!isMountedCheck) return false;
-
-    // Check that the then branch contains a return
-    final thenStatement = statement.thenStatement;
-    if (thenStatement is ReturnStatement) return true;
-    if (thenStatement is Block) {
-      final stmts = thenStatement.statements;
-      if (stmts.length == 1 && stmts.first is ReturnStatement) return true;
-    }
-
-    return false;
-  }
-
-  /// Returns true if the node contains an `await` expression.
-  static bool _containsAwait(AstNode node) {
-    final finder = _AwaitFinder();
-    node.accept(finder);
-    return finder.found;
-  }
-}
-
-/// Finds `await` expressions, stopping at function boundaries.
-class _AwaitFinder extends RecursiveAstVisitor<void> {
-  bool found = false;
-
-  @override
-  void visitAwaitExpression(AwaitExpression node) {
-    found = true;
-  }
-
-  // Stop at function boundaries
-  @override
-  void visitFunctionExpression(FunctionExpression node) {}
-
-  @override
-  void visitFunctionDeclaration(FunctionDeclaration node) {}
 }
 
 /// Finds `ref.read(...)` calls in AST nodes.

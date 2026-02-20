@@ -5,8 +5,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/ast_node_analysis.dart';
-import 'package:many_lints/src/type_checker.dart';
+import '../ast_node_analysis.dart';
+import '../type_checker.dart';
 
 /// Suggests using Transform widget instead of Container with only transform.
 class PreferTransformOverContainer extends AnalysisRule {

@@ -6,6 +6,8 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../ast_node_analysis.dart';
+
 /// Warns when `useMemoized` is used to memoize a function expression.
 ///
 /// `useCallback` is specifically designed for memoizing callbacks and is more
@@ -60,31 +62,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Returns true if the function expression's body evaluates to a Function
-  /// type. This covers:
-  /// - `() => () { ... }` (returns a closure)
-  /// - `() => (x) => x + 1` (returns a closure)
-  /// - `() => myMethod` (returns a tear-off)
-  /// - `{ return () { ... }; }` (block body returning a closure)
   static bool _returnsFunction(FunctionExpression factory) {
-    final body = factory.body;
-
-    Expression? returnExpression;
-    if (body is ExpressionFunctionBody) {
-      returnExpression = body.expression;
-    } else if (body is BlockFunctionBody) {
-      final statements = body.block.statements;
-      if (statements.length == 1 && statements.first is ReturnStatement) {
-        returnExpression = (statements.first as ReturnStatement).expression;
-      }
-    }
-
-    if (returnExpression == null) return false;
-
-    // Check static type of the returned expression
-    final returnType = returnExpression.staticType;
-    if (returnType == null) return false;
-
-    return returnType is FunctionType;
+    final returnExpr = maybeGetSingleReturnExpression(factory.body);
+    if (returnExpr == null) return false;
+    return returnExpr.staticType is FunctionType;
   }
 }

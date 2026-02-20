@@ -49,27 +49,12 @@ class UseExistingDestructuring extends AnalysisRule {
   }
 }
 
-/// Info about a destructuring declaration in a block.
-class _DestructuringInfo {
-  /// The source expression name (the variable being destructured).
-  final String sourceName;
-
-  /// The element of the source expression (to match against property accesses).
-  final Element? sourceElement;
-
-  /// The field names already destructured.
-  final Set<String> destructuredFields;
-
-  /// The offset of the destructuring statement (to check ordering).
-  final int statementOffset;
-
-  _DestructuringInfo({
-    required this.sourceName,
-    required this.sourceElement,
-    required this.destructuredFields,
-    required this.statementOffset,
-  });
-}
+typedef _DestructuringInfo = ({
+  String sourceName,
+  Element? sourceElement,
+  Set<String> destructuredFields,
+  int statementOffset,
+});
 
 class _Visitor extends SimpleAstVisitor<void> {
   final UseExistingDestructuring rule;
@@ -147,7 +132,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (fields.isEmpty) return null;
 
-    return _DestructuringInfo(
+    return (
       sourceName: sourceName,
       sourceElement: sourceElement,
       destructuredFields: fields,
@@ -156,18 +141,11 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// A match found by the property access finder.
-class _PropertyAccessMatch {
-  final AstNode accessNode;
-  final String sourceName;
-  final String propertyName;
-
-  _PropertyAccessMatch({
-    required this.accessNode,
-    required this.sourceName,
-    required this.propertyName,
-  });
-}
+typedef _PropertyAccessMatch = ({
+  AstNode accessNode,
+  String sourceName,
+  String propertyName,
+});
 
 /// Finds property accesses on variables that have existing destructurings.
 class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
@@ -236,13 +214,11 @@ class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
       // Only flag if the property is NOT already destructured
       if (info.destructuredFields.contains(propertyName)) continue;
 
-      matches.add(
-        _PropertyAccessMatch(
-          accessNode: accessNode,
-          sourceName: info.sourceName,
-          propertyName: propertyName,
-        ),
-      );
+      matches.add((
+        accessNode: accessNode,
+        sourceName: info.sourceName,
+        propertyName: propertyName,
+      ));
       return true;
     }
     return false;

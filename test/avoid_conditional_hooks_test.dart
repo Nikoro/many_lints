@@ -29,6 +29,12 @@ class HookBuilder extends Widget {
   HookBuilder({required Widget Function(BuildContext) builder});
 }
 ''');
+    newPackage('hooks_riverpod').addFile('lib/hooks_riverpod.dart', r'''
+import 'package:flutter/widgets.dart';
+class HookConsumerWidget extends Widget {
+  Widget build(BuildContext context) => Widget();
+}
+''');
     super.setUp();
   }
 
@@ -263,5 +269,74 @@ class MyWidget extends HookWidget {
   }
 }
 ''');
+  }
+
+  // --- HookConsumerWidget tests ---
+
+  Future<void> test_hookConsumerWidgetInsideIf() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+class MyWidget extends HookConsumerWidget {
+  final bool condition;
+  MyWidget(this.condition);
+  @override
+  Widget build(BuildContext context) {
+    if (condition) {
+      useState(0);
+    }
+    return Widget();
+  }
+}
+''',
+      [lint(317, 11)],
+    );
+  }
+
+  // --- Logical || operator tests ---
+
+  Future<void> test_hookInsideLogicalOr() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+class MyWidget extends HookWidget {
+  final bool condition;
+  MyWidget(this.condition);
+  @override
+  Widget build(BuildContext context) {
+    final x = condition || useMemoized(() => false);
+    return Widget();
+  }
+}
+''',
+      [lint(256, 24)],
+    );
+  }
+
+  // --- Switch expression tests ---
+
+  Future<void> test_hookInsideSwitchExpression() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+class MyWidget extends HookWidget {
+  final int value;
+  MyWidget(this.value);
+  @override
+  Widget build(BuildContext context) {
+    final result = switch (value) {
+      0 => useState(0),
+      _ => useState(1),
+    };
+    return Widget();
+  }
+}
+''',
+      [lint(267, 11), lint(291, 11)],
+    );
   }
 }

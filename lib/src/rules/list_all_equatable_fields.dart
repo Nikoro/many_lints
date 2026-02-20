@@ -6,6 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
 /// Warns when a class extending `Equatable` or using `EquatableMixin` does not
@@ -107,21 +108,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     return null;
   }
 
-  /// Finds the list literal in the props getter body.
-  /// Handles both `=> [a, b]` and `{ return [a, b]; }` forms.
   static ListLiteral? _findPropsListLiteral(MethodDeclaration propsGetter) {
-    final body = propsGetter.body;
-    if (body is ExpressionFunctionBody) {
-      final expr = body.expression;
-      if (expr is ListLiteral) return expr;
-    } else if (body is BlockFunctionBody) {
-      final statements = body.block.statements;
-      if (statements.length == 1 && statements.first is ReturnStatement) {
-        final returnExpr = (statements.first as ReturnStatement).expression;
-        if (returnExpr is ListLiteral) return returnExpr;
-      }
-    }
-    return null;
+    final expr = maybeGetSingleReturnExpression(propsGetter.body);
+    return expr is ListLiteral ? expr : null;
   }
 
   /// Extracts field name identifiers from a list literal.

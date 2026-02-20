@@ -70,7 +70,7 @@ plugins:
 
 ## Available Lints
 
-All 92 lints are enabled by default as warnings.
+All 100 lints are enabled by default as warnings.
 
 - **always_remove_listener**: Listener added but never removed in `dispose()`.
 - **avoid_accessing_collections_by_constant_index**: Avoid accessing a collection by a constant index inside a loop.
@@ -80,6 +80,7 @@ All 92 lints are enabled by default as warnings.
 - **avoid_collection_equality_checks**: Comparing collections with `==`/`!=` checks reference equality, not contents.
 - **avoid_collection_methods_with_unrelated_types**: Detects collection method calls with arguments unrelated to the collection's type.
 - **avoid_commented_out_code**: Detects comments that look like commented-out code.
+- **avoid_conditional_hooks**: Warns when hooks are called inside conditional branches.
 - **avoid_constant_conditions**: Both sides of a comparison are constants, so the result is always the same.
 - **avoid_constant_switches**: The switch expression is a constant, so the result is always the same.
 - **avoid_contradictory_expressions**: Detects contradictory comparisons in `&&` chains that always evaluate to false.
@@ -96,6 +97,7 @@ All 92 lints are enabled by default as warnings.
 - **avoid_only_rethrow**: Catch clause contains only a rethrow statement.
 - **avoid_passing_bloc_to_bloc**: Avoid passing a Bloc/Cubit to another Bloc/Cubit.
 - **avoid_passing_build_context_to_blocs**: Avoid passing `BuildContext` to a Bloc/Cubit.
+- **avoid_public_notifier_properties**: Avoid public properties on Notifier classes other than `state`.
 - **avoid_ref_inside_state_dispose**: Avoid accessing `ref` inside the `dispose()` method.
 - **avoid_ref_read_inside_build**: Avoid using `ref.read` inside the `build` method.
 - **avoid_returning_widgets**: Avoid returning widgets from functions, methods, or getters.
@@ -129,11 +131,13 @@ All 92 lints are enabled by default as warnings.
 - **prefer_contains**: Use `.contains()` instead of `.indexOf()` compared to `-1`.
 - **prefer_correct_edge_insets_constructor**: Use a simpler `EdgeInsets` constructor.
 - **prefer_enums_by_name**: Use `.byName()` instead of `.firstWhere()` to access enum values by name.
+- **prefer_equatable_mixin**: Prefer using `EquatableMixin` instead of extending `Equatable`.
 - **prefer_expect_later**: Prefer `expectLater` when testing Futures.
 - **prefer_explicit_function_type**: Prefer explicit return type and parameter list over bare `Function` type.
 - **prefer_for_loop_in_children**: Prefer using a for-loop instead of functional list building.
 - **prefer_immutable_bloc_state**: Bloc state classes should be annotated with `@immutable`.
 - **prefer_iterable_of**: Prefer `.of()` instead of `.from()` for `List`, `Set`, and `Map` for compile-time type safety.
+- **list_all_equatable_fields**: Warns when an Equatable class does not list all instance fields in `props`.
 - **prefer_multi_bloc_provider**: Prefer `MultiBlocProvider` instead of multiple nested `BlocProvider`s.
 - **prefer_overriding_parent_equality**: Parent class overrides `==` and `hashCode` but this class does not.
 - **prefer_padding_over_container**: Enforces the use of `Padding` over `Container` with only margin.
@@ -150,8 +154,10 @@ All 92 lints are enabled by default as warnings.
 - **prefer_switch_expression**: Prefer switch expressions over switch statements when possible.
 - **prefer_test_matchers**: Prefer using a `Matcher` instead of a literal value in `expect()`.
 - **prefer_text_rich**: Use `Text.rich` instead of `RichText` for better text scaling and accessibility.
+- **prefer_use_callback**: Use `useCallback` instead of `useMemoized` for memoizing functions.
 - **prefer_transform_over_container**: Use `Transform` instead of `Container` with only the transform parameter.
 - **prefer_type_over_var**: Prefer an explicit type annotation over `var`.
+- **prefer_use_prefix**: Custom hooks should start with the `use` prefix.
 - **prefer_void_callback**: Use `VoidCallback` instead of `void Function()`.
 - **prefer_wildcard_pattern**: Use the wildcard pattern `_` instead of `Object()`.
 - **proper_super_calls**: Ensures `super` calls are placed correctly (first in `initState`, last in `dispose`).
@@ -163,11 +169,13 @@ All 92 lints are enabled by default as warnings.
 - **use_existing_variable**: Detects expressions that duplicate the initializer of an existing variable.
 - **use_gap**: Prefer `Gap` widget instead of `SizedBox` or `Padding` for spacing in multi-child widgets.
 - **use_notifier_suffix**: Enforces the use of the `Notifier` suffix for classes that extend `Notifier`.
+- **use_ref_and_state_synchronously**: Don't use `ref` or `state` after an async gap without checking `ref.mounted`.
+- **use_ref_read_synchronously**: Avoid calling `ref.read` after an await point without checking if the widget is mounted.
 - **use_sliver_prefix**: Widget returns a sliver but its name does not start with `Sliver`.
 
 ### Quick fixes
 
-The following rules include auto-fixable quick fixes (72 total):
+The following rules include auto-fixable quick fixes (78 total):
 
 - `always_remove_listener`
 - `avoid_border_all`
@@ -209,11 +217,13 @@ The following rules include auto-fixable quick fixes (72 total):
 - `prefer_contains`
 - `prefer_correct_edge_insets_constructor`
 - `prefer_enums_by_name`
+- `prefer_equatable_mixin`
 - `prefer_expect_later`
 - `prefer_explicit_function_type`
 - `prefer_for_loop_in_children`
 - `prefer_immutable_bloc_state`
 - `prefer_iterable_of`
+- `list_all_equatable_fields`
 - `prefer_multi_bloc_provider`
 - `prefer_overriding_parent_equality`
 - `prefer_padding_over_container`
@@ -227,8 +237,10 @@ The following rules include auto-fixable quick fixes (72 total):
 - `prefer_sized_box_square`
 - `prefer_switch_expression`
 - `prefer_text_rich`
+- `prefer_use_callback`
 - `prefer_transform_over_container`
 - `prefer_type_over_var`
+- `prefer_use_prefix`
 - `prefer_void_callback`
 - `prefer_wildcard_pattern`
 - `proper_super_calls`
@@ -240,6 +252,8 @@ The following rules include auto-fixable quick fixes (72 total):
 - `use_existing_variable`
 - `use_gap`
 - `use_notifier_suffix`
+- `use_ref_and_state_synchronously`
+- `use_ref_read_synchronously`
 - `use_sliver_prefix`
 
 ## Available Assists

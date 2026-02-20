@@ -6,7 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/type_checker.dart';
+import '../type_checker.dart';
 
 /// Warns when `Expanded` wraps an empty `SizedBox` or `Container` instead of
 /// using the dedicated `Spacer` widget.

@@ -5,9 +5,9 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/ast_node_analysis.dart';
-import 'package:many_lints/src/hook_detection.dart';
-import 'package:many_lints/src/type_checker.dart';
+import '../ast_node_analysis.dart';
+import '../hook_detection.dart';
+import '../type_checker.dart';
 
 /// Warns when hooks are called inside conditional branches.
 ///
@@ -94,7 +94,7 @@ class _ConditionalHookFinder extends RecursiveAstVisitor<void> {
 
   _ConditionalHookFinder(this.rule);
 
-  static final _isHookRegex = RegExp('^_?use[0-9A-Z]');
+  static final _isHookRegex = hookNameRegex;
 
   void _checkHookCall(AstNode node) {
     if (_conditionalDepth > 0 &&

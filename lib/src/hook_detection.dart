@@ -1,8 +1,12 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 
-import 'package:many_lints/src/ast_node_analysis.dart';
-import 'package:many_lints/src/type_checker.dart';
+import './ast_node_analysis.dart';
+import './type_checker.dart';
+
+/// Matches hook function names: starts with `use` (or `_use`) followed by
+/// an uppercase letter or digit (to avoid matching words like "user").
+final hookNameRegex = RegExp('^_?use[0-9A-Z]');
 
 /// Collects hook invocations from AST nodes.
 class _HookExpressionsGatherer extends GeneralizingAstVisitor<void> {
@@ -15,7 +19,7 @@ class _HookExpressionsGatherer extends GeneralizingAstVisitor<void> {
   }
 
   // use + upper case letter to avoid cases like "user"
-  static final _isHookRegex = RegExp('^_?use[0-9A-Z]');
+  static final _isHookRegex = hookNameRegex;
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {

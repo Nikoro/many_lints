@@ -9,16 +9,18 @@ concurrency:
   group: update-readme-badges
   cancel-in-progress: true
 
-permissions:
-  contents: write
-
 jobs:
   update-badges:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
       - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "3.10.0"
 
       - name: Install dependencies
         run: dart pub get --no-example

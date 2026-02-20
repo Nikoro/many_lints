@@ -2,10 +2,9 @@ import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import 'package:many_lints/src/constant_expression.dart';
+import '../constant_expression.dart';
 
 /// Warns when a binary comparison has constant operands on both sides.
 ///
@@ -46,18 +45,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _comparisonOperators = {
-    TokenType.EQ_EQ,
-    TokenType.BANG_EQ,
-    TokenType.LT,
-    TokenType.GT,
-    TokenType.LT_EQ,
-    TokenType.GT_EQ,
-  };
-
   @override
   void visitBinaryExpression(BinaryExpression node) {
-    if (!_comparisonOperators.contains(node.operator.type)) return;
+    if (!comparisonOperators.contains(node.operator.type)) return;
 
     if (!isConstantExpression(node.leftOperand) ||
         !isConstantExpression(node.rightOperand)) {

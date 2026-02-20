@@ -5,7 +5,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-import 'package:many_lints/src/type_checker.dart';
+import '../type_checker.dart';
 
 /// Fix that replaces an EdgeInsets constructor with a simpler alternative.
 class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {

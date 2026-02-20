@@ -42,11 +42,7 @@ void main() {
   test('expected number of rules are registered', () {
     plugin.register(registry);
     final totalRules = registry.warningRules.length + registry.lintRules.length;
-    expect(
-      totalRules,
-      greaterThanOrEqualTo(90),
-      reason: 'Expected at least 90 rules, got $totalRules',
-    );
+    expect(totalRules, equals(100));
   });
 
   test('fixes are registered', () {
@@ -55,15 +51,11 @@ void main() {
       0,
       (sum, v) => sum + v.length,
     );
-    expect(
-      totalFixes,
-      greaterThanOrEqualTo(60),
-      reason: 'Expected at least 60 fixes, got $totalFixes',
-    );
+    expect(totalFixes, equals(78));
   });
 
   test('assists are registered', () {
     plugin.register(registry);
-    expect(registry.assistKinds.length, greaterThanOrEqualTo(1));
+    expect(registry.assistKinds.length, equals(1));
   });
 }

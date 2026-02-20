@@ -6,7 +6,8 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/hook_detection.dart';
+import '../ast_node_analysis.dart';
+import '../hook_detection.dart';
 
 /// Warns when a function that calls hooks does not follow the `use` prefix
 /// naming convention.
@@ -49,7 +50,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static final _hasUsePrefix = RegExp('^_?use[0-9A-Z]');
+  static final _hasUsePrefix = hookNameRegex;
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
@@ -59,7 +60,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
     // Skip overridden methods (e.g., build in HookWidget)
-    if (node.metadata.any((a) => a.name.name == 'override')) return;
+    if (hasOverrideAnnotation(node)) return;
 
     _check(node.name.lexeme, node.name, node.body);
   }

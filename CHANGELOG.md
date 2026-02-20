@@ -17,9 +17,11 @@
 - `avoid_single_field_destructuring` rule to avoid single-field destructuring with quick fix
 - `avoid_throw_in_catch_block` rule to avoid `throw` inside catch blocks with quick fix
 - `avoid_unassigned_stream_subscriptions` rule to detect unassigned stream subscriptions
+- `list_all_equatable_fields` rule to detect Equatable subclasses with missing fields in `props` with quick fix
 - `prefer_class_destructuring` rule to suggest class destructuring for repeated property accesses with quick fix
 - `prefer_contains` rule to prefer `.contains()` over `.indexOf()` compared to `-1` with quick fix
 - `prefer_enums_by_name` rule to prefer `.byName()` over `.firstWhere()` with quick fix
+- `prefer_equatable_mixin` rule to prefer `EquatableMixin` over extending `Equatable` with quick fix
 - `prefer_expect_later` rule to prefer `expectLater` when testing Futures with quick fix
 - `prefer_overriding_parent_equality` rule to detect missing `==`/`hashCode` overrides with quick fix
 - `prefer_return_await` rule to detect missing `await` in `try-catch` with quick fix
@@ -35,6 +37,7 @@
 #### Flutter Widget Rules
 - `always_remove_listener` rule to detect listeners not removed in `dispose()` with quick fix
 - `avoid_border_all` rule to prefer `Border.fromBorderSide` over `Border.all` with quick fix
+- `avoid_conditional_hooks` rule to detect hooks called inside conditionals or loops
 - `avoid_expanded_as_spacer` rule to prefer `Spacer` over `Expanded` with empty child with quick fix
 - `avoid_flexible_outside_flex` rule to flag `Flexible`/`Expanded` outside `Row`/`Column`/`Flex`
 - `avoid_incorrect_image_opacity` rule to use `Image`'s `opacity` parameter with quick fix
@@ -60,6 +63,8 @@
 - `prefer_spacing` rule to prefer the `spacing` argument over `SizedBox`
 - `prefer_text_rich` rule to prefer `Text.rich` over `RichText` with quick fix
 - `prefer_transform_over_container` rule to prefer `Transform` over `Container` with quick fix
+- `prefer_use_callback` rule to prefer `useCallback` over inline closures with quick fix
+- `prefer_use_prefix` rule to prefer `use` prefix for custom hook functions with quick fix
 - `prefer_void_callback` rule to prefer `VoidCallback` over `void Function()` with quick fix
 - `use_sliver_prefix` rule to enforce `Sliver` prefix for sliver-returning widgets with quick fix
 
@@ -73,15 +78,18 @@
 
 #### Riverpod Rules
 - `avoid_notifier_constructors` rule to avoid constructors with logic in Notifier classes with quick fix
+- `avoid_public_notifier_properties` rule to avoid public non-overridden properties in Notifier classes
 - `avoid_ref_inside_state_dispose` rule to avoid accessing `ref` inside `dispose()`
 - `avoid_ref_read_inside_build` rule to avoid `ref.read` inside `build` with quick fix
 - `avoid_state_constructors` rule to avoid constructors with logic in State classes with quick fix
 - `dispose_provided_instances` rule to detect instances not disposed via `ref.onDispose()` with quick fix
+- `use_ref_and_state_synchronously` rule to detect async gaps before `ref`/`state` access with quick fix
+- `use_ref_read_synchronously` rule to detect `ref.read` stored across async gaps with quick fix
 
 ### Changed
 
 - Extracted shared utility `lib/src/constant_expression.dart` for constant expression checking
-- Updated README and example README to document all 92 rules and 72 quick fixes
+- Updated README and example README to document all 100 rules and 78 quick fixes
 
 ## [0.3.0] - 2026-02-14
 

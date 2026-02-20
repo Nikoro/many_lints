@@ -5,9 +5,9 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import 'package:many_lints/src/ast_node_analysis.dart';
-import 'package:many_lints/src/hook_detection.dart';
-import 'package:many_lints/src/type_checker.dart';
+import '../ast_node_analysis.dart';
+import '../hook_detection.dart';
+import '../type_checker.dart';
 
 /// Warns when a HookWidget does not use any hooks in the build method.
 class AvoidUnnecessaryHookWidgets extends AnalysisRule {

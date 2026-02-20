@@ -1,4 +1,4 @@
-import 'package:many_lints/src/type_checker.dart';
+import './type_checker.dart';
 
 /// TypeChecker for Riverpod Notifier and AsyncNotifier base classes.
 const notifierChecker = TypeChecker.any([
