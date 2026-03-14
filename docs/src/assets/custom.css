@@ -129,3 +129,66 @@ site-search {
   color: #fff;
   border-color: #0468D7;
 }
+
+/* Flutter docs-inspired admonition/aside styling */
+
+/* Note - dark mode */
+.starlight-aside--note {
+  --sl-color-asides-text-accent: #439bff;
+  --sl-color-asides-border: #439bff;
+  background-color: #202731;
+}
+
+/* Note - light mode */
+:root[data-theme='light'] .starlight-aside--note {
+  --sl-color-asides-text-accent: #2058b7;
+  --sl-color-asides-border: #2058b7;
+  background-color: #f6f7f8;
+}
+
+/* Caution - dark mode */
+.starlight-aside--caution {
+  --sl-color-asides-text-accent: #ffb74d;
+  --sl-color-asides-border: #ffb74d;
+  background-color: #312a1f;
+}
+
+/* Caution - light mode */
+:root[data-theme='light'] .starlight-aside--caution {
+  --sl-color-asides-text-accent: #b7742a;
+  --sl-color-asides-border: #b7742a;
+  background-color: #fdf6ed;
+}
+
+/* Danger - dark mode */
+.starlight-aside--danger {
+  --sl-color-asides-text-accent: #ef5350;
+  --sl-color-asides-border: #ef5350;
+  background-color: #311f1f;
+}
+
+/* Danger - light mode */
+:root[data-theme='light'] .starlight-aside--danger {
+  --sl-color-asides-text-accent: #b72a2a;
+  --sl-color-asides-border: #b72a2a;
+  background-color: #fdf0f0;
+}
+
+/* Tip - dark mode */
+.starlight-aside--tip {
+  --sl-color-asides-text-accent: #66bb6a;
+  --sl-color-asides-border: #66bb6a;
+  background-color: #1f2e1f;
+}
+
+/* Tip - light mode */
+:root[data-theme='light'] .starlight-aside--tip {
+  --sl-color-asides-text-accent: #2e7d32;
+  --sl-color-asides-border: #2e7d32;
+  background-color: #f0f7f0;
+}
+
+/* Aside title - lighter weight like Flutter docs */
+.starlight-aside__title {
+  font-weight: 500;
+}
