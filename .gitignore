@@ -33,3 +33,8 @@ coverage/
 doc/
 .env
 .env.*
+
+# Docs site
+docs/node_modules/
+docs/dist/
+docs/.astro/
