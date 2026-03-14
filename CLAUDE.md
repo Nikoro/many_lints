@@ -28,11 +28,13 @@ lib/
     disposal_utils.dart   # Shared disposal helpers (findCleanupMethod, cleanupMethods)
     flutter_widget_helpers.dart # Flutter widget helpers (FlexAxis enum)
     riverpod_type_checkers.dart # Shared Riverpod TypeChecker constants
+    async_guard_utils.dart # Async helpers (containsAwait, isMountedGuardWithReturn)
     rules/                # Lint rules (AnalysisRule + SimpleAstVisitor pattern)
     fixes/                # Quick fixes (ResolvedCorrectionProducer pattern)
     assists/              # Code assists (ResolvedCorrectionProducer pattern)
 test/
   *.dart                  # Test files (analyzer_testing pattern)
+docs/                     # Astro Starlight docs site (see docs/CLAUDE.md)
 ```
 
 ## Reference Docs
@@ -47,7 +49,7 @@ Before writing any code:
 
 ## Adding a New Lint Rule
 
-**Use the `/new-lint` skill** for step-by-step guidance, or see the full cookbooks:
+**Use the `/new-lint` skill** for step-by-step guidance, or **`/release`** to prepare a new version. See the full cookbooks:
 
 - [Rules patterns](.claude/skills/new-lint/rules-patterns.md) - Rule structure, type checking, AST, visitors, reporting
 - [Rules recipes](.claude/skills/new-lint/rules-recipes.md) - Copy-paste recipes for common patterns
@@ -94,3 +96,4 @@ Quick summary:
 - `lib/src/disposal_utils.dart` - Shared disposal helpers (findCleanupMethod, cleanupMethods)
 - `lib/src/flutter_widget_helpers.dart` - Flutter widget helpers (FlexAxis enum for spacing rules)
 - `lib/src/riverpod_type_checkers.dart` - Shared Riverpod TypeChecker constants (notifierChecker)
+- `lib/src/async_guard_utils.dart` - Async helpers (containsAwait, isMountedGuardWithReturn)
