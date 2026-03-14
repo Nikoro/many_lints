@@ -10,12 +10,19 @@ environment:
   sdk: ^3.10.0
 
 dependencies:
-  analyzer: ^10.1.0
-  analyzer_plugin: ^0.14.3
-  analysis_server_plugin: ^0.3.9
+  analyzer: ^11.0.0
+  analyzer_plugin: ^0.14.5
+  analysis_server_plugin: ^0.3.11
 
 dev_dependencies:
-  test: ^1.29.0
-  analyzer_testing: ^0.2.0
+  test: ^1.30.0
+  analyzer_testing: ^0.2.2
   test_reflective_loader: ^0.4.0
   lints: ^6.1.0
+
+# analyzer 11.0.0 is required by analysis_server_plugin 0.3.11, analyzer_plugin 0.14.5,
+# and analyzer_testing 0.2.2. The test package 1.30.0 has not yet released an update
+# that lifts its upper bound past analyzer <11.0.0. This override allows the dev
+# environment to resolve until test publishes a compatible release.
+dependency_overrides:
+  analyzer: ^11.0.0
