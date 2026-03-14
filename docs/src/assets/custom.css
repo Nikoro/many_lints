@@ -57,8 +57,15 @@
 
 .hero > img,
 .hero > .hero-html {
-  width: min(90%, 36rem) !important;
+  width: 100% !important;
+  max-width: 100%;
   order: -1;
+}
+
+.hero > .hero-html img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 .hero .stack {
