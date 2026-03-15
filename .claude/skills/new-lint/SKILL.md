@@ -228,7 +228,7 @@ You must update if you:
 - ✅ Implemented a complex visitor pattern for deep analysis
 - ✅ Created a new helper utility function
 - ✅ Had to dig into analyzer source code or documentation for APIs not covered in the cookbook
-- ✅ Found analyzer ^10.1.0 specific behaviors different from what you "know" from training data
+- ✅ Found analyzer ^11.0.0 specific behaviors different from what you "know" from training data
 
 **How to update (two places):**
 
@@ -242,7 +242,91 @@ You must update if you:
 
 This keeps the cookbooks as **living documents** that improve with each new rule!
 
-## Step 9: Create an example file
+## Step 9: Create a documentation page
+
+Create `docs/src/content/docs/docs/rules/<category>/<lint-name>.md` for the new rule.
+
+**Determine the category** by matching the lint's domain to one of the existing sidebar categories:
+- `class-naming` — Suffix/naming rules for classes (Bloc, Cubit, Notifier, etc.)
+- `bloc-riverpod` — Bloc/Riverpod architecture rules
+- `riverpod-state` — Riverpod state/ref usage rules
+- `async-safety` — Async/await safety rules
+- `widget-best-practices` — Widget usage best practices
+- `widget-replacement` — Prefer simpler/more specific widgets
+- `state-management` — StatefulWidget/setState rules
+- `control-flow` — Control flow, cascades, exceptions, switches
+- `collection-type` — Collection/Iterable/Map rules
+- `pattern-matching` — Dart pattern matching rules
+- `type-annotations` — Type annotation preferences
+- `code-organization` — Code structure and organization
+- `shorthand-patterns` — Shorthand/constructor sugar
+- `hook-rules` — Flutter Hooks rules
+- `testing-rules` — Test-related rules
+- `resource-management` — Disposal, listeners, subscriptions
+- `code-quality` — General code quality
+
+If no existing category fits, create a new directory AND add a matching `autogenerate` entry in `docs/astro.config.mjs` sidebar config.
+
+**Use this template** (match the format of existing pages):
+
+```markdown
+---
+title: <lint_name>
+description: "<Short description>"
+sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
+  label: <lint_name>
+---
+
+<span class="rule-badge rule-badge--version">vX.Y.Z</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category"><Category Name></span>
+
+<2-3 sentence human-friendly description of what the lint detects and why it matters.>
+
+## Why use this rule
+
+<Real-world context explaining why this pattern is problematic. Include "See also" links to relevant official docs.>
+
+**See also:** [Link](url) | [Link](url)
+
+## Don't
+
+```dart
+// Bad example with comment explaining why it's wrong
+<code that triggers the lint>
+```
+
+## Do
+
+```dart
+// Good example
+<correct code>
+```
+
+## Configuration
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      <lint_name>: false
+```
+```
+
+Key notes:
+- Omit the `sidebar.badge` block entirely if the lint has **no quick fix**
+- Omit the `<span class="rule-badge rule-badge--fix">Fix</span>` badge if there is no fix
+- Determine the version tag: check the latest version in `pubspec.yaml` — if this is a new unreleased rule, use the next version that will be released
+- Use the lint name with underscores (snake_case) for `title` and `label`
+- Use dashes (kebab-case) for the filename (e.g., `prefer-center-over-align.md`)
+
+## Step 10: Create an example file
 
 Create `example/lib/<lint_name>_example.dart` to demonstrate the lint rule. Look at existing example files in `example/lib/` for the pattern.
 
@@ -277,7 +361,7 @@ class GoodExamples {
 }
 ```
 
-## Step 10: Verify
+## Step 11: Verify
 
 Run the following commands from the project root to ensure everything works:
 

@@ -2,7 +2,7 @@
 
 ## 📚 About This Document
 
-This cookbook provides **copy-paste ready patterns** for implementing lint rules in the `many_lints` package using **analyzer ^10.1.0**. Instead of searching through existing rules or diving into analyzer source code, consult this guide first.
+This cookbook provides **copy-paste ready patterns** for implementing lint rules in the `many_lints` package using **analyzer ^11.0.0**. Instead of searching through existing rules or diving into analyzer source code, consult this guide first.
 
 For common recipes (specific use-case patterns), see [rules-recipes.md](rules-recipes.md).
 
@@ -21,7 +21,7 @@ For common recipes (specific use-case patterns), see [rules-recipes.md](rules-re
 - ✅ You need to research AST traversal techniques beyond what's documented
 - ✅ You find a new type checking method or pattern
 - ✅ You implement a complex visitor pattern not shown in examples
-- ✅ You discover analyzer ^10.1.0 specific APIs different from older versions
+- ✅ You discover analyzer ^11.0.0 specific APIs different from older versions
 - ✅ You create a new helper utility that could benefit other rules
 
 **Also update the lean quick reference** at `lib/src/rules/CLAUDE.md` with a brief mention of the new pattern.
@@ -70,7 +70,7 @@ Quick navigation to common patterns:
 - [Visitor Patterns](#-visitor-patterns)
 - [Reporting Issues & Quick Fixes](#-reporting--quick-fixes)
 - [Utility Functions](#-utility-functions)
-- [Analyzer 10.1.0 APIs](#-analyzer-1002-specific-apis)
+- [Analyzer 11.0.0 APIs](#-analyzer-1002-specific-apis)
 - [Quick Reference Cards](#-quick-reference-cards)
 
 For recipes and testing, see [rules-recipes.md](rules-recipes.md).
@@ -960,9 +960,9 @@ FunctionBody? maybeHookBuilderBody(InstanceCreationExpression node)
 
 ---
 
-## 🔧 Analyzer 10.1.0 Specific APIs
+## 🔧 Analyzer 11.0.0 Specific APIs
 
-### New Element Access (analyzer ^10.1.0)
+### New Element Access (analyzer ^11.0.0)
 
 **Old API (pre-10.0):**
 ```dart
@@ -1066,7 +1066,7 @@ final el = type.element;  // InterfaceElement
 
 ### Pattern Matching Features
 
-Analyzer 10.1.0 works well with Dart 3 pattern matching:
+Analyzer 11.0.0 works well with Dart 3 pattern matching:
 
 ```dart
 // Destructuring in patterns

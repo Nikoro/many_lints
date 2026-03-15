@@ -120,9 +120,14 @@ Allow the user to request edits to the CHANGELOG content before proceeding.
 
 3. **`CHANGELOG.md`**: Insert the new version section at the top of the file, directly after the `# Changelog` heading. Preserve all existing content below.
 
+4. **Docs site version references**: Update the installable version in these files (same `many_lints: ^` / `version: ^` pattern as README):
+   - `docs/src/content/docs/docs/configuration.md` — 3 occurrences (`many_lints: ^X.Y.Z` and `version: ^X.Y.Z`)
+   - `docs/src/content/docs/docs/getting-started.mdx` — 1 occurrence (`many_lints: ^X.Y.Z`)
+   - Do NOT update version badges on rule pages (`rule-badge--version`) — those are historical and indicate the version that introduced each rule.
+
 ## Step 8: Commit & Tag
 
-1. Stage changes: `git add pubspec.yaml README.md CHANGELOG.md`
+1. Stage changes: `git add pubspec.yaml README.md CHANGELOG.md docs/src/content/docs/docs/configuration.md docs/src/content/docs/docs/getting-started.mdx`
 2. Create commit:
    ```
    git commit -m "chore(release): bump version to X.Y.Z"

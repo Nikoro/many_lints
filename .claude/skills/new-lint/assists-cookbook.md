@@ -2,7 +2,7 @@
 
 ## About This Document
 
-This cookbook provides **copy-paste ready patterns** for implementing code assists in the `many_lints` package using **analyzer ^10.1.0**. Assists are standalone code actions that offer helpful refactorings, independent of lint diagnostics.
+This cookbook provides **copy-paste ready patterns** for implementing code assists in the `many_lints` package using **analyzer ^11.0.0**. Assists are standalone code actions that offer helpful refactorings, independent of lint diagnostics.
 
 **Target Audience:** AI agents and developers implementing code assists
 **Analyzer Version:** ^10.1.0
@@ -18,7 +18,7 @@ This cookbook provides **copy-paste ready patterns** for implementing code assis
 - You discover a new assist applicability pattern
 - You find a new node selection or targeting technique
 - You implement a complex AST transformation for assists
-- You discover analyzer ^10.1.0 specific assist behaviors
+- You discover analyzer ^11.0.0 specific assist behaviors
 - You create helper methods for common assist patterns
 - You find better ways to check assist applicability
 
@@ -589,41 +589,67 @@ class ManyLintsPlugin extends Plugin {
 
 ## Testing
 
-### Current State
+### Testing Assists
 
-**The project currently has NO tests for assists.**
+Assists are tested using `PubPackageResolutionTest` with `CorrectionProducerContext.createResolved()`. Since `analyzer_testing` has no dedicated assist test base class, tests manually resolve code, create a context at a target offset, run the assist's `compute()`, and verify the produced edits.
 
-This is an area for improvement. If implementing tests, they would likely follow patterns similar to:
+**Reference:** [convert_iterable_map_to_collection_for_test.dart](../../../test/convert_iterable_map_to_collection_for_test.dart)
 
 ```dart
-// Hypothetical test structure (not yet implemented)
-import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
+import 'package:analyzer/dart/analysis/results.dart';
+import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
+import 'package:analyzer_testing/src/analysis_rule/pub_package_resolution.dart';
 import 'package:many_lints/src/assists/my_assist.dart';
+import 'package:test/test.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
-void main() {
-  defineReflectiveSuite(() => defineReflectiveTests(MyAssistTest));
-}
-
 @reflectiveTest
-class MyAssistTest extends /* AssistTest base class */ {
-  @override
-  void setUp() {
-    // Setup
-    super.setUp();
+class MyAssistTest extends PubPackageResolutionTest {
+  Future<String?> _applyAssist(String content, String target) async {
+    final file = newFile('$testPackageLibPath/test.dart', content);
+    final resolvedUnit = await resolveFile(file.path);
+    final resolvedLibrary = await resolvedUnit.session
+        .getResolvedLibraryByElement(resolvedUnit.libraryElement)
+        as ResolvedLibraryResult;
+
+    final offset = content.indexOf(target);
+    final context = CorrectionProducerContext.createResolved(
+      libraryResult: resolvedLibrary,
+      unitResult: resolvedUnit,
+      selectionOffset: offset,
+      selectionLength: target.length,
+    );
+
+    final assist = MyAssist(context: context);
+    final builder = ChangeBuilder(session: resolvedUnit.session);
+    await assist.compute(builder);
+
+    final change = builder.sourceChange;
+    if (change.edits.isEmpty) return null;
+
+    // Apply edits in reverse offset order
+    var result = content;
+    final edits = change.edits.first.edits.toList()
+      ..sort((a, b) => b.offset.compareTo(a.offset));
+    for (final edit in edits) {
+      result = result.replaceRange(
+        edit.offset, edit.offset + edit.length, edit.replacement);
+    }
+    return result;
   }
 
-  void test_converts_pattern() async {
-    // Test that assist converts code correctly
+  Future<void> test_appliesTransformation() async {
+    final result = await _applyAssist(r'...source code...', 'target');
+    expect(result, contains('expected output'));
   }
 
-  void test_not_applicable_when_complex_function() async {
-    // Test that assist doesn't show when not applicable
+  Future<void> test_notApplicable() async {
+    final result = await _applyAssist(r'...source code...', 'target');
+    expect(result, isNull);
   }
 }
 ```
-
-**For now: Test manually in a test project**
 
 ---
 
