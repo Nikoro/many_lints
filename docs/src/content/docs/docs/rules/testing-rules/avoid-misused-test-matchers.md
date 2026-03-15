@@ -1,133 +1,54 @@
 ---
 title: avoid_misused_test_matchers
-description: "The matcher '{0}' is incompatible with the actual value type '{1}'."
+description: "Detect test matchers used with incompatible value types."
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: avoid_misused_test_matchers
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_misused_test_matchers` |
-| **Category** | Testing Rules |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Testing Rules</span>
 
-## Problem
+Flags `expect()` calls where the matcher is incompatible with the actual value's type. For example, using `isNull` on a non-nullable type, `isEmpty` on an `int`, or `isList` on a `String`. Misused matchers can cause tests to always pass (hiding bugs) or always fail (making assertions useless).
 
-The matcher '{0}' is incompatible with the actual value type '{1}'.
+## Why use this rule
 
-## Suggestion
+A mismatched matcher silently undermines your test suite. `expect(42, isNull)` will always fail because `int` is non-nullable, while `expect(42, isNotNull)` will always pass, giving a false sense of coverage. This rule catches these type mismatches at analysis time before they reach CI.
 
-Use a matcher that is compatible with the actual type.
+**See also:** [test package - Matchers](https://pub.dev/packages/test#matchers)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
+expect(someString, isList);       // String is not a List
+expect(someNumber, isEmpty);      // int has no isEmpty
+expect(someNumber, isNull);       // int is non-nullable
+expect(someNumber, isNotNull);    // always true, redundant
+expect(someNumber, hasLength(1)); // int has no length
+expect(someString, isZero);       // String is not a num
+expect(someNumber, isTrue);       // int is not a bool
+expect(someString, isMap);        // String is not a Map
+expect(true, isNegative);         // bool is not a num
+```
 
-// avoid_misused_test_matchers
-//
-// Warns when test matchers are used with incompatible actual value types
-// in expect() calls. Misused matchers can cause tests to always pass
-// (hiding bugs) or always fail (redundant checks).
+## Do
 
-// NOTE: This rule detects expect() calls by method name, so it works
-// with any package that provides an expect() function and matchers
-// named isNull, isEmpty, isList, isMap, hasLength, etc.
-
-void expect(dynamic actual, dynamic matcher) {}
-
-const isNull = 1;
-const isNotNull = 2;
-const isEmpty = 3;
-const isNotEmpty = 4;
-const isList = 5;
-const isMap = 6;
-const isZero = 7;
-const isNaN = 8;
-const isPositive = 9;
-const isNegative = 10;
-const isTrue = 11;
-const isFalse = 12;
-
-int hasLength(dynamic expected) => 0;
-
-// ❌ Bad: Matchers used with incompatible types
-void bad() {
-  const someNumber = 1;
-  const someString = '1';
-
-  // LINT: String is not a List
-  expect(someString, isList);
-
-  // LINT: Set is not a List
-  expect({1}, isList);
-
-  // LINT: int has no isEmpty property
-  expect(someNumber, isEmpty);
-
-  // LINT: int cannot be null (non-nullable type)
-  expect(someNumber, isNull);
-
-  // LINT: int is always not-null (redundant check)
-  expect(someNumber, isNotNull);
-
-  // LINT: int has no length property
-  expect(someNumber, hasLength(1));
-
-  // LINT: String is not a num
-  expect(someString, isZero);
-
-  // LINT: int is not a bool
-  expect(someNumber, isTrue);
-
-  // LINT: String is not a Map
-  expect(someString, isMap);
-
-  // LINT: String has no isEmpty (wait, String does have isEmpty)
-  // This would NOT lint — String has isEmpty.
-
-  // LINT: bool is not a num
-  expect(true, isNegative);
-
-  // LINT: int is not a bool
-  expect(42, isFalse);
-}
-
-// ✅ Good: Matchers used with compatible types
-void good() {
-  const someNumber = 1;
-  const someList = [1, 2, 3];
-  const someString = 'hello';
-  int? nullableValue;
-
-  // Correct type matchers
-  expect(someList, isList);
-  expect(<String, int>{}, isMap);
-
-  // Correct nullability matchers
-  expect(nullableValue, isNull);
-  expect(nullableValue, isNotNull);
-
-  // Correct emptiness matchers
-  expect(someList, isEmpty);
-  expect(someString, isEmpty);
-  expect(<String, int>{}, isNotEmpty);
-
-  // Correct length matchers
-  expect(someList, hasLength(3));
-  expect(someString, hasLength(5));
-
-  // Correct numeric matchers
-  expect(someNumber, isZero);
-  expect(0.0, isNaN);
-  expect(5, isPositive);
-  expect(-1, isNegative);
-
-  // Correct boolean matchers
-  expect(true, isTrue);
-  expect(false, isFalse);
-}
+```dart
+expect(someList, isList);
+expect(<String, int>{}, isMap);
+expect(nullableValue, isNull);
+expect(nullableValue, isNotNull);
+expect(someList, isEmpty);
+expect(someString, isEmpty);
+expect(someList, hasLength(3));
+expect(someNumber, isZero);
+expect(5, isPositive);
+expect(true, isTrue);
+expect(false, isFalse);
 ```
 
 ## Configuration

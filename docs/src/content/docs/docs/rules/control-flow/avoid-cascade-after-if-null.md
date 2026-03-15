@@ -1,57 +1,40 @@
 ---
 title: avoid_cascade_after_if_null
-description: "Cascade after if-null operator without parentheses can produce unexpected results."
+description: "Detect cascades after if-null operators without parentheses"
 sidebar:
-  badge:
-    text: "Fix"
-    variant: "tip"
   label: avoid_cascade_after_if_null
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_cascade_after_if_null` |
-| **Category** | Control Flow |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.3.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Control Flow</span>
 
-## Problem
+Warns when a cascade expression (`..`) follows an if-null (`??`) operator without parentheses. Due to operator precedence, it is ambiguous whether the cascade applies to the right-hand side of `??` or to the entire expression, which can produce unexpected results.
 
-Cascade after if-null operator without parentheses can produce unexpected results.
+## Why use this rule
 
-## Suggestion
+Dart's cascade operator and if-null operator have surprising precedence interactions. Without parentheses, `a ?? B()..method()` is parsed as `a ?? (B()..method())`, which may not be what the developer intended. Adding explicit parentheses makes the intent clear and prevents subtle bugs.
 
-Wrap the expression in parentheses to clarify precedence.
+**See also:** [Cascade notation](https://dart.dev/language/operators#cascade-notation)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// avoid_cascade_after_if_null
-//
-// Warns when a cascade expression follows an if-null (??) operator
-// without parentheses, which can produce unexpected results due to
-// operator precedence.
-
-class Cow {
-  void moo() {}
-  int age = 0;
-}
-
-// ❌ Bad: Cascade after if-null without parentheses
 void bad(Cow? nullableCow) {
-  // LINT: Unclear whether ..moo() applies to the result of ?? or just Cow()
+  // Unclear whether ..moo() applies to the result of ?? or just Cow()
   final cow = nullableCow ?? Cow()
     ..moo();
 
-  // LINT: Multiple cascades after if-null
+  // Multiple cascades after if-null
   final cow2 = nullableCow ?? Cow()
     ..moo()
     ..age = 5;
 }
+```
 
-// ✅ Good: Parentheses clarify intent
+## Do
+
+```dart
 void good(Cow? nullableCow) {
   // Cascade applies to the entire if-null expression
   final cow = (nullableCow ?? Cow())..moo();

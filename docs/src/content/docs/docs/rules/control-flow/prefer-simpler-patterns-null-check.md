@@ -1,6 +1,6 @@
 ---
 title: prefer_simpler_patterns_null_check
-description: "Use a simpler null-check pattern."
+description: "Suggest simpler null-check patterns in if-case expressions"
 sidebar:
   badge:
     text: "Fix"
@@ -8,51 +8,38 @@ sidebar:
   label: prefer_simpler_patterns_null_check
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_simpler_patterns_null_check` |
-| **Category** | Control Flow |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Control Flow</span>
 
-## Problem
+Warns when an if-case pattern uses `!= null && final field` instead of the simpler `final field?` syntax, or when a typed binding already guarantees non-nullability making the `!= null` check redundant. Dart 3 patterns offer concise null-checking syntax that should be preferred.
 
-Use a simpler null-check pattern.
+## Why use this rule
 
-## Suggestion
+The `!= null && final field` pattern is verbose and can be replaced with `final field?` which does the same thing in fewer characters. When a type annotation is already present (e.g., `final String field`), the `!= null` check is doubly redundant since the non-nullable type already excludes null. Using the simpler pattern makes the code more idiomatic and easier to read.
 
-Replace with a simpler pattern that achieves the same result.
+**See also:** [Patterns](https://dart.dev/language/patterns)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// prefer_simpler_patterns_null_check
-//
-// Warns when an if-case pattern uses `!= null && final field` instead of
-// the simpler `final field?` syntax, or when a typed binding already
-// guarantees non-nullability making the `!= null` redundant.
-
-class WithField {
-  final String? field;
-  WithField(this.field);
-}
-
-// ❌ Bad: Redundant null-check with variable binding
 void bad(WithField object) {
-  // LINT: Use `final field?` instead
+  // Use `final field?` instead
   if (object.field case != null && final field) {
     print(field);
   }
 
-  // LINT: Type annotation already guarantees non-null
+  // Type annotation already guarantees non-null
   if (object.field case != null && final String field) {
     print(field);
   }
 }
+```
 
-// ✅ Good: Simpler patterns
+## Do
+
+```dart
 void good(WithField object) {
   // Nullable binding with postfix ?
   if (object.field case final field?) {

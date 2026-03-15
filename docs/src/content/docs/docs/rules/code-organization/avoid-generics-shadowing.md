@@ -1,92 +1,64 @@
 ---
 title: avoid_generics_shadowing
-description: "The type parameter '{0}' shadows the top-level declaration '{0}'."
+description: "Avoid generic type parameters that shadow top-level declarations."
 sidebar:
-  badge:
-    text: "Fix"
-    variant: "tip"
   label: avoid_generics_shadowing
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_generics_shadowing` |
-| **Category** | Code Organization |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Code Organization</span>
 
-## Problem
+Flags generic type parameters that shadow a top-level type declaration (class, mixin, enum, typedef, or extension type) in the same file. When a type parameter has the same name as a real class, it becomes confusing whether a reference points to the generic or the concrete type.
 
-The type parameter '{0}' shadows the top-level declaration '{0}'.
+## Why use this rule
 
-## Suggestion
+Shadowing a top-level type with a generic parameter silently replaces the concrete type with an unbounded generic within that scope. This can lead to subtle bugs where code appears to reference a specific class but actually operates on an unrelated type parameter. Using conventional single-letter names like `T`, `R`, or `E` eliminates the ambiguity.
 
-Try renaming the type parameter to a single letter like T, R, or E.
+**See also:** [Dart language - Generics](https://dart.dev/language/generics)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, unused_element
-
-// avoid_generics_shadowing
-//
-// Warns when a generic type parameter shadows a top-level type declaration
-// (class, mixin, enum, typedef) in the same file.
-
-// --- Top-level types used for examples ---
 class MyModel {}
-
-class AnotherClass {}
-
 enum MyEnum { first, second }
 
-mixin MyMixin {}
-
-typedef MyCallback = void Function();
-
-// ❌ Bad: Generic type parameter shadows a top-level class
+// Generic type parameter shadows the top-level class MyModel
 class Repository<MyModel> {
-  // LINT: MyModel shadows the top-level class MyModel
   MyModel get(int id) => throw '';
 }
 
-// ❌ Bad: Method type parameter shadows a top-level enum
 class SomeClass {
-  void method<MyEnum>(MyEnum p) {} // LINT: MyEnum shadows the enum
-
-  AnotherClass anotherMethod<AnotherClass>() {
-    // LINT: AnotherClass shadows the class
-    throw '';
-  }
+  // MyEnum shadows the top-level enum
+  void method<MyEnum>(MyEnum p) {}
 }
 
-// ❌ Bad: Multiple shadowing type parameters
+// Both type parameters shadow top-level types
 class BadPair<MyModel, AnotherClass> {
-  // LINT: Both MyModel and AnotherClass shadow top-level types
   final MyModel first;
   final AnotherClass second;
   BadPair(this.first, this.second);
 }
+```
 
-// ✅ Good: Use conventional single-letter type parameters
+## Do
+
+```dart
+class MyModel {}
+enum MyEnum { first, second }
+
+// Use conventional single-letter type parameters
 class GoodRepository<T> {
   T get(int id) => throw '';
 }
 
-// ✅ Good: Descriptive names that don't shadow top-level types
+// Descriptive names that don't shadow top-level types
 class GoodPair<TFirst, TSecond> {
   final TFirst first;
   final TSecond second;
   GoodPair(this.first, this.second);
 }
 
-// ✅ Good: No conflict when type parameter name isn't a top-level type
-class Wrapper<TModel> {
-  final TModel value;
-  Wrapper(this.value);
-}
-
-// ✅ Good: Single-letter generics on methods
 class Processor {
   void process<T>(T item) {}
   R transform<R>(Object input) => throw '';

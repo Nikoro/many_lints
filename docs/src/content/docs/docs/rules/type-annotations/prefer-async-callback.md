@@ -8,65 +8,50 @@ sidebar:
   label: prefer_async_callback
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_async_callback` |
-| **Category** | Type Annotations |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Type Annotations</span>
 
-## Problem
+Flags uses of `Future<void> Function()` that can be replaced with the `AsyncCallback` typedef from `package:flutter/foundation.dart`. The typedef is shorter, more readable, and is the standard Flutter convention for no-argument async void callbacks.
 
-Use 'AsyncCallback' instead of 'Future<void> Function()'.
+## Why use this rule
 
-## Suggestion
+`AsyncCallback` is a well-known typedef in the Flutter framework. Using it instead of the verbose `Future<void> Function()` makes code more concise and consistent with the rest of the Flutter ecosystem. The quick fix automatically replaces the type and adds the necessary import.
 
-Replace with 'AsyncCallback' from 'package:flutter/foundation.dart'.
+**See also:** [AsyncCallback typedef](https://api.flutter.dev/flutter/foundation/AsyncCallback.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_element, unused_field, unused_local_variable
-
-/// Examples of the `prefer_async_callback` lint rule.
-
-// ❌ Bad: Using verbose Future<void> Function() type
 class BadWidget {
-  final Future<void> Function() onTap; // LINT
-  final Future<void> Function()? onLongPress; // LINT
+  final Future<void> Function() onTap;
+  final Future<void> Function()? onLongPress;
 
   const BadWidget(this.onTap, this.onLongPress);
 }
 
-void badParameter(Future<void> Function() callback) {} // LINT
+void badParameter(Future<void> Function() callback) {}
 
-void badVariable() {
-  Future<void> Function() callback = () async {}; // LINT
-}
+Future<void> Function() badReturnType() => () async {};
 
-void badTypeArgument() {
-  List<Future<void> Function()> callbacks = []; // LINT
-}
+List<Future<void> Function()> callbacks = [];
+```
 
-Future<void> Function() badReturnType() {
-  // LINT
-  return () async {};
-}
+## Do
 
-// ✅ Good: Using AsyncCallback typedef
-// import 'package:flutter/foundation.dart';
+```dart
 class GoodWidget {
-  // final AsyncCallback onTap;
-  // final AsyncCallback? onLongPress;
+  final AsyncCallback onTap;
+  final AsyncCallback? onLongPress;
 
-  const GoodWidget();
+  const GoodWidget(this.onTap, this.onLongPress);
 }
 
-// ✅ Good: Function types that are NOT AsyncCallback (different return/params)
-void goodFutureInt(Future<int> Function() callback) {}
-void goodFutureString(Future<String> Function() callback) {}
-void goodWithParams(Future<void> Function(int value) callback) {}
-void goodVoidCallback(void Function() callback) {}
+// Function types with different return types or parameters are fine:
+Future<int> Function() goodFutureInt = () async => 0;
+Future<void> Function(int value) goodWithParams = (_) async {};
+void Function() goodVoidCallback = () {};
 ```
 
 ## Configuration

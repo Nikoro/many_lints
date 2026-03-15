@@ -1,6 +1,6 @@
 ---
 title: avoid_expanded_as_spacer
-description: "Prefer replacing Expanded with an empty child with 'Spacer'."
+description: "Use Spacer instead of Expanded with an empty child"
 sidebar:
   badge:
     text: "Fix"
@@ -8,59 +8,43 @@ sidebar:
   label: avoid_expanded_as_spacer
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_expanded_as_spacer` |
-| **Category** | Widget Replacement |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Widget Replacement</span>
 
-## Problem
+Flags `Expanded` widgets that wrap an empty `SizedBox` or `Container` as their child. This pattern is equivalent to using the `Spacer` widget, which is purpose-built for this exact use case.
 
-Prefer replacing Expanded with an empty child with 'Spacer'.
+## Why use this rule
 
-## Suggestion
+Flutter provides the `Spacer` widget specifically for creating flexible space in `Row`, `Column`, and `Flex` layouts. Using `Expanded` with an empty child obscures the intent and adds an unnecessary widget to the tree. `Spacer` is clearer, more concise, and immediately communicates that the purpose is to fill available space.
 
-Replace with Spacer widget.
+**See also:** [Spacer](https://api.flutter.dev/flutter/widgets/Spacer-class.html) | [Expanded](https://api.flutter.dev/flutter/widgets/Expanded-class.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
+// Expanded with empty SizedBox
+const Expanded(child: SizedBox());
 
-// avoid_expanded_as_spacer
-//
-// Warns when Expanded wraps an empty SizedBox or Container instead of
-// using the dedicated Spacer widget.
+// Expanded with empty Container
+Expanded(child: Container());
 
-import 'package:flutter/widgets.dart';
+// Expanded with flex and empty SizedBox
+const Expanded(flex: 2, child: SizedBox());
+```
 
-// ❌ Bad: Using Expanded with an empty child as a spacer
-class BadExamples {
-  // LINT: Expanded with empty SizedBox
-  final a = const Expanded(child: SizedBox());
+## Do
 
-  // LINT: Expanded with empty Container
-  final b = Expanded(child: Container());
+```dart
+// Use Spacer directly
+const Spacer();
 
-  // LINT: Expanded with flex and empty SizedBox
-  final c = const Expanded(flex: 2, child: SizedBox());
-}
+// Use Spacer with flex parameter
+const Spacer(flex: 2);
 
-// ✅ Good: Using Spacer directly
-class GoodExamples {
-  // Use Spacer instead of Expanded + empty child
-  final a = const Spacer();
-
-  // Use Spacer with flex parameter
-  final b = const Spacer(flex: 2);
-
-  // Expanded with a non-empty child is fine
-  final c = const Expanded(child: Text('content'));
-
-  // SizedBox with dimensions is not a spacer
-  final d = const Expanded(child: SizedBox(width: 10));
-}
+// Expanded with a non-empty child is fine
+const Expanded(child: Text('content'));
 ```
 
 ## Configuration

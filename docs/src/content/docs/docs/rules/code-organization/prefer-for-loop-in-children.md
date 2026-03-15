@@ -1,6 +1,6 @@
 ---
 title: prefer_for_loop_in_children
-description: "Prefer using a for-loop instead of functional list building."
+description: "Prefer collection-for syntax over functional list building in widget children."
 sidebar:
   badge:
     text: "Fix"
@@ -8,125 +8,68 @@ sidebar:
   label: prefer_for_loop_in_children
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_for_loop_in_children` |
-| **Category** | Code Organization |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Code Organization</span>
 
-## Problem
+Flags functional list-building patterns like `.map().toList()`, `List.generate()`, `.fold()`, and spread with `.map()` that can be replaced with Dart's collection-for syntax. Collection-for is more idiomatic, avoids intermediate allocations, and reads more naturally in widget trees.
 
-Prefer using a for-loop instead of functional list building.
+## Why use this rule
 
-## Suggestion
+Collection-for syntax (`[for (final item in items) Widget(item)]`) is the idiomatic Dart way to build lists inline. It avoids creating intermediate iterables, integrates naturally with collection-if for conditional elements, and is easier to read in deeply nested widget trees than chained method calls.
 
-Use collection-for syntax: [for (final item in items) Widget(item)].
+**See also:** [Flutter - Column children](https://api.flutter.dev/flutter/widgets/Column/children.html) | [Flutter - Row children](https://api.flutter.dev/flutter/widgets/Row/children.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
+// .map().toList()
+Column(
+  children: items.map((item) => Text(item)).toList(),
+);
 
-import 'package:flutter/widgets.dart';
+// spread with .map()
+Column(
+  children: [
+    const Text('Header'),
+    ...items.map((item) => Text(item)),
+  ],
+);
 
-// prefer_for_loop_in_children
-//
-// Prefer using collection-for syntax instead of functional approaches
-// (.map().toList(), List.generate(), .fold(), spread with .map())
-// to build widget lists.
+// List.generate()
+Column(
+  children: List.generate(5, (index) => Text('Item $index')),
+);
 
-// ❌ Bad: .map().toList()
-class BadMapToList extends StatelessWidget {
-  const BadMapToList({super.key});
+// .fold() to accumulate widgets
+final widgets = items.fold<List<Widget>>([], (list, item) {
+  list.add(Text(item));
+  return list;
+});
+```
 
-  @override
-  Widget build(BuildContext context) {
-    final items = ['a', 'b', 'c'];
-    return Column(
-      // LINT: Prefer using a for-loop instead of functional list building
-      children: items.map((item) => Text(item)).toList(),
-    );
-  }
-}
+## Do
 
-// ❌ Bad: spread with .map()
-class BadSpreadMap extends StatelessWidget {
-  const BadSpreadMap({super.key});
+```dart
+// collection-for syntax
+Column(
+  children: [for (final item in items) Text(item)],
+);
 
-  @override
-  Widget build(BuildContext context) {
-    final items = ['a', 'b', 'c'];
-    return Column(
-      children: [
-        const Text('Header'),
-        // LINT: Prefer using a for-loop
-        ...items.map((item) => Text(item)),
-      ],
-    );
-  }
-}
+// collection-for with index
+Column(
+  children: [for (var i = 0; i < 5; i++) Text('Item $i')],
+);
 
-// ❌ Bad: List.generate()
-class BadListGenerate extends StatelessWidget {
-  const BadListGenerate({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      // LINT: Prefer using a for-loop
-      children: List.generate(5, (index) => Text('Item $index')),
-    );
-  }
-}
-
-// ❌ Bad: .fold() to accumulate widgets
-Widget badFold(List<String> items) {
-  // LINT: Prefer using a for-loop
-  final widgets = items.fold<List<Widget>>([], (list, item) {
-    list.add(Text(item));
-    return list;
-  });
-  return Column(children: widgets);
-}
-
-// ✅ Good: collection-for syntax
-class GoodForLoop extends StatelessWidget {
-  const GoodForLoop({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final items = ['a', 'b', 'c'];
-    return Column(children: [for (final item in items) Text(item)]);
-  }
-}
-
-// ✅ Good: collection-for with index
-class GoodForLoopWithIndex extends StatelessWidget {
-  const GoodForLoopWithIndex({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(children: [for (var i = 0; i < 5; i++) Text('Item $i')]);
-  }
-}
-
-// ✅ Good: for-loop mixed with other children
-class GoodMixed extends StatelessWidget {
-  const GoodMixed({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final items = ['a', 'b', 'c'];
-    return Column(
-      children: [
-        const Text('Header'),
-        for (final item in items) Text(item),
-        const Text('Footer'),
-      ],
-    );
-  }
-}
+// mixed with other children
+Column(
+  children: [
+    const Text('Header'),
+    for (final item in items) Text(item),
+    const Text('Footer'),
+  ],
+);
 ```
 
 ## Configuration

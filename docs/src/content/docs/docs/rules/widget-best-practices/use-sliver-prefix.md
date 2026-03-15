@@ -1,6 +1,6 @@
 ---
 title: use_sliver_prefix
-description: "Widget returns a sliver but its name does not start with 'Sliver'."
+description: "Name widgets that return slivers with a Sliver prefix"
 sidebar:
   badge:
     text: "Fix"
@@ -8,98 +8,53 @@ sidebar:
   label: use_sliver_prefix
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `use_sliver_prefix` |
-| **Category** | Widget Best Practices |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-## Problem
+This rule warns when a widget's `build` method returns a sliver widget (like `SliverList`, `SliverAppBar`, `SliverToBoxAdapter`) but the class name does not start with `Sliver`. Slivers and non-sliver widgets are not interchangeable, so making the distinction visible in the name prevents layout errors.
 
-Widget returns a sliver but its name does not start with 'Sliver'.
+## Why use this rule
 
-## Suggestion
+If you drop a sliver-returning widget into a `Column` or `Row`, Flutter throws a confusing runtime error about "RenderSliver" not being a "RenderBox". A `Sliver` prefix on the class name makes it immediately obvious that the widget belongs inside a `CustomScrollView`, not a regular box layout. This naming convention is used throughout the Flutter framework itself.
 
-Add the 'Sliver' prefix to the class name.
+**See also:** [Slivers](https://api.flutter.dev/flutter/widgets/CustomScrollView-class.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_element
-
-import 'package:flutter/material.dart';
-
-// use_sliver_prefix
-//
-// Widgets that return sliver widgets should have the 'Sliver' prefix
-// in their class name.
-
-// ❌ Bad: Returns a sliver widget but lacks the 'Sliver' prefix
-
-// LINT: Returns SliverToBoxAdapter but name doesn't start with 'Sliver'
+// Returns a sliver but name does not indicate it
 class MyAdapter extends StatelessWidget {
-  const MyAdapter({super.key});
-
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(child: Text('hello'));
   }
 }
 
-// LINT: Returns SliverList but name doesn't start with 'Sliver'
-class _ProductList extends StatelessWidget {
-  const _ProductList();
-
+class ProductList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverList(delegate: SliverChildListDelegate([]));
   }
 }
+```
 
-// LINT: StatefulWidget whose State returns a sliver
-class _HeaderBar extends StatefulWidget {
-  const _HeaderBar();
+## Do
 
-  @override
-  State<_HeaderBar> createState() => _HeaderBarState();
-}
-
-class _HeaderBarState extends State<_HeaderBar> {
-  @override
-  Widget build(BuildContext context) {
-    return SliverAppBar(title: const Text('Title'));
-  }
-}
-
-// ✅ Good: Has the 'Sliver' prefix
-
+```dart
+// Sliver prefix makes the contract clear
 class SliverMyAdapter extends StatelessWidget {
-  const SliverMyAdapter({super.key});
-
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(child: Text('hello'));
   }
 }
 
-class _SliverProductList extends StatelessWidget {
-  const _SliverProductList();
-
+class SliverProductList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverList(delegate: SliverChildListDelegate([]));
-  }
-}
-
-// ✅ Good: Returns a non-sliver widget (no prefix needed)
-
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(child: Text('hello'));
   }
 }
 ```

@@ -1,6 +1,6 @@
 ---
 title: prefer_shorthands_with_static_fields
-description: "Prefer dot shorthands instead of explicit class prefixes."
+description: "Use dot shorthands instead of explicit class prefixes for static fields."
 sidebar:
   badge:
     text: "Fix"
@@ -8,103 +8,61 @@ sidebar:
   label: prefer_shorthands_with_static_fields
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_shorthands_with_static_fields` |
-| **Category** | Shorthand Patterns |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.3.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Shorthand Patterns</span>
 
-## Problem
+Flags explicit class prefixes on static field accesses (e.g., `SomeClass.first`) when the type can be inferred from context and a dot shorthand (`.first`) would suffice. This applies to switch cases, switch expressions, typed variable declarations, comparisons, default parameters, and return expressions.
 
-Prefer dot shorthands instead of explicit class prefixes.
+## Why use this rule
 
-## Suggestion
+When the expected type is already known from context, repeating the class name on a static field access adds visual noise. Dot shorthands are more concise and keep the focus on the value rather than the type. This rule skips enums, which are handled separately by `prefer_shorthands_with_enums`.
 
-Try removing the prefix.
-
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-/// Example demonstrating the prefer_shorthands_with_static_fields lint rule.
-///
-/// This rule suggests using dot shorthands with static fields when the type
-/// can be inferred from context.
-
 class SomeClass {
   final String value;
-
   const SomeClass(this.value);
-
   static const first = SomeClass('first');
   static const second = SomeClass('second');
 }
 
-void badExamples(SomeClass? e) {
-  // ❌ BAD: Using explicit class prefix in switch case
+void example(SomeClass? e) {
   switch (e) {
-    case SomeClass.first: // LINT
+    case SomeClass.first:
       print(e);
   }
 
-  // ❌ BAD: Using explicit class prefix in switch expression
-  final v = switch (e) {
-    SomeClass.first => 1, // LINT
-    _ => 2,
-  };
-
-  // ❌ BAD: Using explicit class prefix in variable declaration
-  final SomeClass another = SomeClass.first; // LINT
-
-  // ❌ BAD: Using explicit class prefix in comparison
-  if (e == SomeClass.first) {} // LINT
+  final SomeClass another = SomeClass.first;
+  if (e == SomeClass.first) {}
 }
 
-// ❌ BAD: Using explicit class prefix in default parameter
-void badDefaultParameter({SomeClass value = SomeClass.first}) {} // LINT
+void fn({SomeClass value = SomeClass.first}) {}
 
-// ❌ BAD: Using explicit class prefix in return expression
-SomeClass badReturnExpression() => SomeClass.first; // LINT
+SomeClass getResult() => SomeClass.first;
+```
 
-void goodExamples(SomeClass? e) {
-  // ✅ GOOD: Using dot shorthand in switch case
+## Do
+
+```dart
+void example(SomeClass? e) {
   switch (e) {
     case .first:
       print(e);
   }
 
-  // ✅ GOOD: Using dot shorthand in switch expression
-  final v = switch (e) {
-    .first => 1,
-    _ => 2,
-  };
-
-  // ✅ GOOD: Using dot shorthand in variable declaration
   final SomeClass another = .first;
-
-  // ✅ GOOD: Using dot shorthand in comparison
   if (e == .first) {}
 }
 
-// ✅ GOOD: Using dot shorthand in default parameter
-void goodDefaultParameter({SomeClass value = .first}) {}
+void fn({SomeClass value = .first}) {}
 
-// ✅ GOOD: Using dot shorthand in return expression
-SomeClass goodReturnExpression() => .first;
+SomeClass getResult() => .first;
 
-// ✅ GOOD: Explicit prefix is OK when type cannot be inferred
+// Explicit prefix is fine when type cannot be inferred:
 Object getObject() => SomeClass.first;
-
-// ✅ GOOD: Not applicable when static field type differs from class
-class Container {
-  static const String staticString = 'test';
-}
-
-void useStaticString() {
-  final String str = Container.staticString;
-}
 ```
 
 ## Configuration

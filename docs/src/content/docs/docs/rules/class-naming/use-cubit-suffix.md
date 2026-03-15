@@ -1,6 +1,6 @@
 ---
 title: use_cubit_suffix
-description: "Use Cubit suffix"
+description: "Ensure classes extending Cubit have the Cubit suffix"
 sidebar:
   badge:
     text: "Fix"
@@ -8,33 +8,39 @@ sidebar:
   label: use_cubit_suffix
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `use_cubit_suffix` |
-| **Category** | Class Naming |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.1.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Class Naming</span>
 
-## Problem
+This rule flags classes that extend `Cubit` but don't include the `Cubit` suffix in their name. Consistent naming makes it immediately clear which classes are Cubits when scanning through code or reading imports.
 
-Use Cubit suffix
+## Why use this rule
 
-## Suggestion
+When a class extends `Cubit` but is named something generic like `Counter` or `AuthManager`, it becomes unclear whether it's a Cubit, a plain class, or some other state holder. The `Cubit` suffix is a standard convention in the Bloc ecosystem that communicates intent instantly.
 
-Ex. {0}Cubit
+**See also:** [Bloc naming conventions](https://bloclibrary.dev/naming-conventions/)
 
-## Example
+## Don't
 
 ```dart
 import 'package:bloc/bloc.dart';
 
-// use_cubit_suffix
-//
-// Classes extending Cubit should have the 'Cubit' suffix.
-
-// LINT: Missing 'Cubit' suffix
+// Missing 'Cubit' suffix
 class Counter extends Cubit<int> {
   Counter() : super(0);
+
+  void increment() => emit(state + 1);
+}
+```
+
+## Do
+
+```dart
+import 'package:bloc/bloc.dart';
+
+class CounterCubit extends Cubit<int> {
+  CounterCubit() : super(0);
 
   void increment() => emit(state + 1);
 }

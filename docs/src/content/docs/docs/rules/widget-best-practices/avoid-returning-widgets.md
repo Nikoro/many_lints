@@ -1,73 +1,46 @@
 ---
 title: avoid_returning_widgets
-description: "Avoid returning widgets from functions, methods, or getters."
+description: "Extract widget helper methods into separate widget classes"
 sidebar:
   label: avoid_returning_widgets
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_returning_widgets` |
-| **Category** | Widget Best Practices |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-## Problem
+This rule warns when a function, method, or getter returns a `Widget`. Building widgets inside helper methods is a common Flutter anti-pattern because the framework cannot optimize rebuilds for code that lives outside of a proper widget class.
 
-Avoid returning widgets from functions, methods, or getters.
+## Why use this rule
 
-## Suggestion
+When you extract UI into a `_buildHeader()` method instead of a `_Header` widget class, Flutter treats the entire parent widget as a single unit. It cannot skip rebuilding the header when only something else changed. Proper widget classes give Flutter the information it needs to do fine-grained rebuilds, which directly improves performance in complex UIs.
 
-Extract the widget into a separate widget class.
+**See also:** [Flutter performance best practices](https://docs.flutter.dev/perf/best-practices)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_element
-
-// avoid_returning_widgets
-//
-// Warns when a function, method, or getter returns a Widget or Widget subclass.
-// Extracting widgets into helper methods is a Flutter anti-pattern because
-// the framework cannot optimize rebuilds. Extract into separate widget classes.
-
-import 'package:flutter/widgets.dart';
-
-// ❌ Bad: Returning widgets from methods/functions/getters
-class BadExamples extends StatelessWidget {
-  const BadExamples({super.key});
-
+class MyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Column(children: [_buildHeader(), _body, buildFooter()]);
+    return Column(children: [_buildHeader(), _body]);
   }
 
-  // LINT: Method returning a widget
-  Widget _buildHeader() {
-    return const Text('Header');
-  }
+  // Helper method returning a widget
+  Widget _buildHeader() => const Text('Header');
 
-  // LINT: Getter returning a widget
+  // Getter returning a widget
   Widget get _body => const Text('Body');
-
-  // LINT: Static method returning a widget
-  static Widget buildFooter() {
-    return const Text('Footer');
-  }
 }
+```
 
-// LINT: Top-level function returning a widget
-Widget buildGreeting() {
-  return const Text('Hello');
-}
+## Do
 
-// ✅ Good: Extract widgets into separate classes
-class GoodExamples extends StatelessWidget {
-  const GoodExamples({super.key});
-
+```dart
+class MyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const Column(children: [_Header(), _Body(), _Footer()]);
+    return const Column(children: [_Header(), _Body()]);
   }
 }
 
@@ -83,19 +56,6 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Text('Body');
-}
-
-class _Footer extends StatelessWidget {
-  const _Footer();
-
-  @override
-  Widget build(BuildContext context) => const Text('Footer');
-}
-
-// ✅ Good: Methods returning non-widget types are fine
-class Helpers {
-  String getName() => 'hello';
-  int getCount() => 42;
 }
 ```
 

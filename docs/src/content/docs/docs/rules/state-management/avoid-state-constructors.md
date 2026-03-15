@@ -1,52 +1,29 @@
 ---
 title: avoid_state_constructors
-description: "Avoid constructors with logic in State classes."
+description: "Avoid constructors with logic in State classes"
 sidebar:
-  badge:
-    text: "Fix"
-    variant: "tip"
   label: avoid_state_constructors
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_state_constructors` |
-| **Category** | State Management |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">State Management</span>
 
-## Problem
+Flags `State` subclasses that have constructors with non-empty bodies or initializer lists. Initialization logic in State classes should live in `initState()`, not in the constructor, to respect the Flutter widget lifecycle.
 
-Avoid constructors with logic in State classes.
+## Why use this rule
 
-## Suggestion
+The `State` constructor runs before the framework has fully initialized the state object. At construction time, `widget`, `context`, and other framework-provided properties are not yet available. Placing logic in the constructor can lead to subtle bugs when that logic depends on the widget tree. Using `initState()` ensures all framework wiring is in place.
 
-Move initialization logic to initState().
+**See also:** [State class](https://api.flutter.dev/flutter/widgets/State-class.html) | [State.initState](https://api.flutter.dev/flutter/widgets/State/initState.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_field, unused_element
-
-// avoid_state_constructors
-//
-// Warns when a State subclass declares a constructor with a non-empty body
-// or initializer list. Initialization logic should go into initState() instead.
-
-import 'package:flutter/widgets.dart';
-
-// ❌ Bad: Constructor with body
-class BadWidget1 extends StatefulWidget {
-  const BadWidget1({super.key});
-
-  @override
-  State<BadWidget1> createState() => _BadWidget1State();
-}
-
 class _BadWidget1State extends State<BadWidget1> {
   late String _data;
 
-  // LINT: Constructor body should be empty — move logic to initState()
+  // Constructor body should be empty — move logic to initState()
   _BadWidget1State() {
     _data = 'Hello';
   }
@@ -55,32 +32,20 @@ class _BadWidget1State extends State<BadWidget1> {
   Widget build(BuildContext context) => const SizedBox();
 }
 
-// ❌ Bad: Constructor with initializer list
-class BadWidget2 extends StatefulWidget {
-  const BadWidget2({super.key});
-
-  @override
-  State<BadWidget2> createState() => _BadWidget2State();
-}
-
 class _BadWidget2State extends State<BadWidget2> {
   final String _data;
 
-  // LINT: Initializer list in State constructor — move logic to initState()
+  // Initializer list in State constructor — move logic to initState()
   _BadWidget2State() : _data = 'Hello';
 
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
+```
 
-// ✅ Good: No constructor, initialization in initState()
-class GoodWidget extends StatefulWidget {
-  const GoodWidget({super.key});
+## Do
 
-  @override
-  State<GoodWidget> createState() => _GoodWidgetState();
-}
-
+```dart
 class _GoodWidgetState extends State<GoodWidget> {
   late String _data;
 
@@ -94,14 +59,7 @@ class _GoodWidgetState extends State<GoodWidget> {
   Widget build(BuildContext context) => const SizedBox();
 }
 
-// ✅ Good: Empty constructor is fine
-class GoodWidget2 extends StatefulWidget {
-  const GoodWidget2({super.key});
-
-  @override
-  State<GoodWidget2> createState() => _GoodWidget2State();
-}
-
+// Empty constructor is fine
 class _GoodWidget2State extends State<GoodWidget2> {
   _GoodWidget2State();
 

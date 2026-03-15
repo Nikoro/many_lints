@@ -1,34 +1,26 @@
 ---
 title: avoid_bloc_public_methods
-description: "Avoid declaring public members in Bloc classes. Use events via 'add' instead."
+description: "Prevent public methods, getters, and setters in Bloc classes"
 sidebar:
   label: avoid_bloc_public_methods
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_bloc_public_methods` |
-| **Category** | Bloc / Riverpod |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-## Problem
+This rule flags public methods, getters, and setters declared in Bloc classes (but not Cubits). Blocs should only expose state changes through events via the `add` method, not through custom public members.
 
-Avoid declaring public members in Bloc classes. Use events via 'add' instead.
+## Why use this rule
 
-## Suggestion
+The whole point of the Bloc pattern is that state changes are driven by events. When you add public methods like `increment()` or `reset()` to a Bloc, you bypass the event-driven architecture and lose the ability to trace, replay, and log state transitions. If you need public methods, you probably want a Cubit instead. Private members, overrides, and static members are all allowed.
 
-Make this member private or trigger state changes through events.
+**See also:** [Bloc best practices](https://bloclibrary.dev/bloc-concepts/) | [When to use Cubit vs Bloc](https://bloclibrary.dev/bloc-concepts/#cubit-vs-bloc)
 
-## Example
+## Don't
 
 ```dart
 import 'package:bloc/bloc.dart';
-
-// avoid_bloc_public_methods
-//
-// Blocs should not declare public methods, getters, or setters.
-// State changes should be triggered through events via the `add` method.
 
 abstract class CounterEvent {}
 
@@ -36,26 +28,36 @@ class Increment extends CounterEvent {}
 
 class Decrement extends CounterEvent {}
 
-// ❌ Bad: Public methods in a Bloc class
 class CounterBloc extends Bloc<CounterEvent, int> {
   CounterBloc() : super(0) {
     on<Increment>((event, emit) => emit(state + 1));
     on<Decrement>((event, emit) => emit(state - 1));
   }
 
-  // LINT: Avoid declaring public methods in Bloc classes
+  // Public method bypasses event-driven pattern
   void increment() {}
 
-  // LINT: Avoid declaring public getters in Bloc classes
+  // Public getter exposes internal state
   int get currentValue => state;
 
-  // LINT: Avoid declaring public setters in Bloc classes
+  // Public setter allows direct mutation
   set currentValue(int value) {}
 }
+```
 
-// ✅ Good: Only private members and overrides
-class GoodCounterBloc extends Bloc<CounterEvent, int> {
-  GoodCounterBloc() : super(0) {
+## Do
+
+```dart
+import 'package:bloc/bloc.dart';
+
+abstract class CounterEvent {}
+
+class Increment extends CounterEvent {}
+
+class Decrement extends CounterEvent {}
+
+class CounterBloc extends Bloc<CounterEvent, int> {
+  CounterBloc() : super(0) {
     on<Increment>((event, emit) => emit(state + 1));
     on<Decrement>((event, emit) => emit(state - 1));
   }

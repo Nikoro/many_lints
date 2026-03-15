@@ -1,6 +1,6 @@
 ---
 title: prefer_enums_by_name
-description: "Use .byName() instead of .firstWhere() to access enum values by name."
+description: "Use .byName() instead of .firstWhere() to look up enum values by name."
 sidebar:
   badge:
     text: "Fix"
@@ -8,60 +8,51 @@ sidebar:
   label: prefer_enums_by_name
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_enums_by_name` |
-| **Category** | Collection & Type |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Collection & Type</span>
 
-## Problem
+Using `.firstWhere((e) => e.name == value)` on enum values can be replaced with the built-in `.byName()` method, available since Dart 2.15. The dedicated method is more concise, more readable, and throws a clear `ArgumentError` when the name is not found.
 
-Use .byName() instead of .firstWhere() to access enum values by name.
+## Why use this rule
 
-## Suggestion
+`.byName()` was specifically designed for looking up enum values by their string name. It is shorter, self-documenting, and provides a better error message on failure compared to the `firstWhere` approach which throws a generic `StateError`.
 
-Replace with .byName() for better readability.
+**See also:** [Dart enums](https://dart.dev/language/enums)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
+enum Style { bold, italic, underline }
 
-// prefer_enums_by_name
-//
-// Prefer using `.byName()` instead of `.firstWhere((e) => e.name == value)`
-// on enum values. Available since Dart 2.15.
+void example() {
+  // Use .byName() instead of .firstWhere()
+  final style = Style.values.firstWhere(
+    (def) => def.name == 'bold',
+  );
 
-enum StyleDefinition { bold, italic, underline }
+  // Reversed comparison also detected
+  final style2 = Style.values.firstWhere(
+    (def) => 'italic' == def.name,
+  );
 
-// ❌ Bad: Using firstWhere to find enum value by name
-class BadExamples {
-  void example() {
-    // LINT: Use .byName() instead of .firstWhere()
-    final style = StyleDefinition.values.firstWhere(
-      (def) => def.name == 'bold',
-    );
-
-    // LINT: Reversed comparison also detected
-    final style2 = StyleDefinition.values.firstWhere(
-      (def) => 'italic' == def.name,
-    );
-
-    // LINT: Variable comparison
-    final name = 'underline';
-    final style3 = StyleDefinition.values.firstWhere((def) => def.name == name);
-  }
+  // Variable comparison
+  final name = 'underline';
+  final style3 = Style.values.firstWhere((def) => def.name == name);
 }
+```
 
-// ✅ Good: Using .byName() for cleaner enum lookup
-class GoodExamples {
-  void example() {
-    final style = StyleDefinition.values.byName('bold');
+## Do
 
-    final name = 'underline';
-    final style2 = StyleDefinition.values.byName(name);
-  }
+```dart
+enum Style { bold, italic, underline }
+
+void example() {
+  final style = Style.values.byName('bold');
+
+  final name = 'underline';
+  final style2 = Style.values.byName(name);
 }
 ```
 

@@ -1,6 +1,6 @@
 ---
 title: prefer_text_rich
-description: "Use Text.rich instead of RichText for better text scaling and accessibility."
+description: "Use Text.rich instead of RichText for better accessibility"
 sidebar:
   badge:
     text: "Fix"
@@ -8,89 +8,58 @@ sidebar:
   label: prefer_text_rich
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_text_rich` |
-| **Category** | Widget Replacement |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Widget Replacement</span>
 
-## Problem
+Flags usages of `RichText` which should be replaced with `Text.rich`. `RichText` does not respect `MediaQuery` text scaling by default, which can break accessibility for users who configure larger text sizes.
 
-Use Text.rich instead of RichText for better text scaling and accessibility.
+## Why use this rule
 
-## Suggestion
+`Text.rich` inherits the default `TextStyle` from the nearest `DefaultTextStyle` ancestor and automatically applies text scaling from `MediaQuery`. `RichText` does neither -- it requires you to pass these explicitly. Using `Text.rich` gives you correct accessibility behavior out of the box and is the recommended approach for rich text in Flutter.
 
-Replace RichText with Text.rich.
+**See also:** [Text.rich](https://api.flutter.dev/flutter/widgets/Text/Text.rich.html) | [RichText](https://api.flutter.dev/flutter/widgets/RichText-class.html)
 
-## Example
+## Don't
 
 ```dart
-import 'package:flutter/widgets.dart';
+// RichText does not handle text scaling
+RichText(
+  text: TextSpan(
+    text: 'Hello ',
+    children: [
+      TextSpan(
+        text: 'bold',
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      TextSpan(text: ' world!'),
+    ],
+  ),
+);
 
-// prefer_text_rich
-//
-// Warns when RichText is used instead of Text.rich.
-// RichText does not handle text scaling well. Text.rich provides
-// better accessibility support.
+// Even simple RichText should use Text.rich
+RichText(text: TextSpan(text: 'Simple text'));
+```
 
-// ignore_for_file: unused_local_variable
+## Do
 
-// ❌ Bad: Using RichText directly
-class BadExamples extends StatelessWidget {
-  const BadExamples({super.key});
+```dart
+// Text.rich handles text scaling and inherits default style
+Text.rich(
+  TextSpan(
+    text: 'Hello ',
+    children: [
+      TextSpan(
+        text: 'bold',
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      TextSpan(text: ' world!'),
+    ],
+  ),
+);
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // LINT: Use Text.rich instead of RichText
-        RichText(
-          text: TextSpan(
-            text: 'Hello ',
-            children: [
-              TextSpan(
-                text: 'bold',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              TextSpan(text: ' world!'),
-            ],
-          ),
-        ),
-
-        // LINT: Even simple RichText should use Text.rich
-        RichText(text: TextSpan(text: 'Simple text')),
-      ],
-    );
-  }
-}
-
-// ✅ Good: Using Text.rich for better accessibility
-class GoodExamples extends StatelessWidget {
-  const GoodExamples({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text.rich(
-          TextSpan(
-            text: 'Hello ',
-            children: [
-              TextSpan(
-                text: 'bold',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              TextSpan(text: ' world!'),
-            ],
-          ),
-        ),
-
-        Text.rich(TextSpan(text: 'Simple text')),
-      ],
-    );
-  }
-}
+Text.rich(TextSpan(text: 'Simple text'));
 ```
 
 ## Configuration

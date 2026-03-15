@@ -5,89 +5,73 @@ sidebar:
   label: avoid_accessing_collections_by_constant_index
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_accessing_collections_by_constant_index` |
-| **Category** | Collection & Type |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.3.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Collection & Type</span>
 
-## Problem
+Accessing a collection with a constant index (like `list[0]`) inside a loop is suspicious because the index never changes with the loop iteration. This usually means the access should be moved outside the loop, or the index should depend on the loop variable.
 
-Avoid accessing a collection by a constant index inside a loop.
+## Why use this rule
 
-## Suggestion
+A constant index inside a loop always reads the same element on every iteration. This is either redundant work that belongs before the loop, or a bug where the developer forgot to use the loop variable as the index.
 
-Move the access outside the loop or use a loop-dependent index.
+**See also:** [Dart collections](https://dart.dev/guides/libraries/library-tour#collections)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, unused_element
+const array = [1, 2, 3, 4, 5];
 
-// avoid_accessing_collections_by_constant_index
-//
-// Warns when a collection is accessed by a constant index inside a loop body.
-// A constant index never changes with the loop, suggesting the access should
-// either be moved outside the loop or use a loop-dependent index.
-
-const _array = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-// ❌ Bad: Constant index access inside a loop
-
-void badExamples() {
-  // LINT: Integer literal index inside for-in loop
-  for (final element in _array) {
-    _array[0];
+void example() {
+  // Constant index inside for-in loop
+  for (final element in array) {
+    array[0];
   }
 
-  // LINT: Integer literal index inside for loop
-  for (var i = 0; i < _array.length; i++) {
-    _array[0];
+  // Constant index inside for loop
+  for (var i = 0; i < array.length; i++) {
+    array[0];
   }
 
-  // LINT: Const variable index inside loop
+  // Const variable index inside loop
   const idx = 2;
-  for (final element in _array) {
-    _array[idx];
+  for (final element in array) {
+    array[idx];
   }
 
-  // LINT: Integer literal index inside while loop
+  // Constant index inside while loop
   var j = 0;
-  while (j < _array.length) {
-    _array[0];
+  while (j < array.length) {
+    array[0];
     j++;
   }
-
-  // LINT: Integer literal index inside do-while loop
-  var k = 0;
-  do {
-    _array[0];
-    k++;
-  } while (k < _array.length);
 }
+```
 
-// ✅ Good: Correct usage patterns
+## Do
 
-void goodExamples() {
-  // OK: Access outside of a loop
-  final first = _array[0];
+```dart
+const array = [1, 2, 3, 4, 5];
 
-  // OK: Loop variable used as index
-  for (var i = 0; i < _array.length; i++) {
-    _array[i];
+void example() {
+  // Access outside of a loop
+  final first = array[0];
+
+  // Loop variable used as index
+  for (var i = 0; i < array.length; i++) {
+    array[i];
   }
 
-  // OK: Mutable variable used as index
+  // Mutable variable used as index
   var idx = 0;
-  for (final element in _array) {
-    _array[idx];
+  for (final element in array) {
+    array[idx];
     idx++;
   }
 
-  // OK: Expression-based index
-  for (var i = 0; i < _array.length; i++) {
-    _array[i + 1];
+  // Expression-based index
+  for (var i = 0; i < array.length; i++) {
+    array[i + 1];
   }
 }
 ```

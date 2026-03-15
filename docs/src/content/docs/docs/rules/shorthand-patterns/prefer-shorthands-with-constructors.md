@@ -1,6 +1,6 @@
 ---
 title: prefer_shorthands_with_constructors
-description: "Prefer dot shorthands instead of explicit class instantiations."
+description: "Use dot shorthand constructors for common Flutter classes."
 sidebar:
   badge:
     text: "Fix"
@@ -8,122 +8,53 @@ sidebar:
   label: prefer_shorthands_with_constructors
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_shorthands_with_constructors` |
-| **Category** | Shorthand Patterns |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.3.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Shorthand Patterns</span>
 
-## Problem
+Flags explicit constructor invocations of `EdgeInsets`, `BorderRadius`, `Radius`, and `Border` when the type can be inferred from context. In named arguments and collection literals, the class name is redundant and can be replaced with a dot shorthand like `.all()`, `.symmetric()`, or `.circular()`.
 
-Prefer dot shorthands instead of explicit class instantiations.
+## Why use this rule
 
-## Suggestion
+These Flutter classes appear frequently in widget trees, and their constructors are often passed as named arguments where the type is already known. Replacing `EdgeInsets.all(8)` with `.all(8)` reduces visual clutter in deeply nested build methods, making the widget tree easier to scan.
 
-Try using the dot shorthand constructor.
+**See also:** [Dart language - Constructor tear-offs](https://dart.dev/language/constructors#constructor-tear-offs)
 
-## Example
+## Don't
 
 ```dart
-import 'package:flutter/material.dart';
+Padding(
+  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  child: Text('Hello'),
+);
 
-// prefer_shorthands_with_constructors
-//
-// Suggests using dot shorthand constructor invocations instead of
-// explicit class instantiations when the type can be inferred from context.
-//
-// Supported classes: EdgeInsets, BorderRadius, Radius, Border
-//
-// NOTE: To extend this rule to support additional classes, you would need to
-// modify the _defaultClasses set in the rule implementation.
-// Future versions may support configuration via analysis_options.yaml.
+Container(
+  decoration: BoxDecoration(
+    borderRadius: BorderRadius.circular(18),
+    border: Border.all(color: Colors.blue, width: 2),
+  ),
+);
 
-class PreferShorthandsWithConstructorsExample extends StatelessWidget {
-  const PreferShorthandsWithConstructorsExample({super.key});
+Padding(padding: EdgeInsets.all(8), child: Text('World'));
+```
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // === EdgeInsets examples ===
+## Do
 
-        // LINT: Use .symmetric instead of EdgeInsets.symmetric
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Text('Hello'),
-        ),
+```dart
+Padding(
+  padding: .symmetric(horizontal: 16, vertical: 12),
+  child: Text('Hello'),
+);
 
-        // LINT: Use .all instead of EdgeInsets.all
-        Padding(padding: EdgeInsets.all(8), child: Text('World')),
+Container(
+  decoration: BoxDecoration(
+    borderRadius: .circular(18),
+    border: .all(color: Colors.blue, width: 2),
+  ),
+);
 
-        // LINT: Use .only instead of EdgeInsets.only
-        Container(
-          margin: EdgeInsets.only(top: 10, left: 20),
-          child: Text('With margin'),
-        ),
-
-        // === BorderRadius and Border examples ===
-
-        // LINT: Use .circular instead of BorderRadius.circular
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            // LINT: Use .all instead of Border.all
-            border: Border.all(color: Colors.blue, width: 2),
-          ),
-        ),
-
-        // LINT: Multiple shorthands in one widget
-        Container(
-          decoration: BoxDecoration(
-            // LINT: Use .all instead of BorderRadius.all
-            borderRadius: BorderRadius.all(Radius.circular(12)),
-            // LINT: Use .circular instead of Radius.circular
-            border: Border.all(color: Colors.red),
-          ),
-        ),
-
-        // === Good examples (already using shorthand) ===
-        Padding(
-          padding: .symmetric(horizontal: 16, vertical: 12),
-          child: Text('Good: Using dot shorthand'),
-        ),
-
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: .circular(8),
-            border: .all(color: Colors.green, width: 1),
-          ),
-        ),
-
-        // === In collections ===
-
-        // LINT: Works in list literals too
-        ...[
-          Padding(padding: EdgeInsets.all(4), child: Text('Item 1')),
-          Padding(padding: EdgeInsets.all(4), child: Text('Item 2')),
-        ],
-      ],
-    );
-  }
-
-  // Example showing why this is useful:
-  Widget _buildCard({
-    required Widget child,
-    required EdgeInsets padding,
-    required BorderRadius borderRadius,
-  }) {
-    return Container(
-      // GOOD: Type is already declared in parameter
-      padding: .all(16), // Instead of EdgeInsets.all(16)
-      decoration: BoxDecoration(
-        borderRadius: .circular(12), // Instead of BorderRadius.circular(12)
-      ),
-      child: child,
-    );
-  }
-}
+Padding(padding: .all(8), child: Text('World'));
 ```
 
 ## Configuration

@@ -8,52 +8,43 @@ sidebar:
   label: prefer_equatable_mixin
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_equatable_mixin` |
-| **Category** | Type Annotations |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Type Annotations</span>
 
-## Problem
+Flags classes that directly extend `Equatable` instead of using `EquatableMixin`. Extending `Equatable` consumes the single `extends` slot in Dart, preventing your class from inheriting from any other base class. Using the mixin keeps the `extends` slot free while providing identical functionality.
 
-Prefer using EquatableMixin instead of extending Equatable.
+## Why use this rule
 
-## Suggestion
+Dart only allows single inheritance. By using `with EquatableMixin` instead of `extends Equatable`, you preserve the ability to extend another meaningful base class while still getting value equality. This is especially important for domain models that might need to extend an existing hierarchy.
 
-Replace 'extends Equatable' with 'with EquatableMixin'.
+**See also:** [equatable package](https://pub.dev/packages/equatable)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_field
-
-// prefer_equatable_mixin
-//
-// Warns when a class directly extends Equatable instead of using
-// EquatableMixin. Using the mixin preserves the ability to extend another
-// base class while keeping all equatable features.
-
 import 'package:equatable/equatable.dart';
 
-// ❌ Bad: Extending Equatable directly limits class hierarchy
 class BadPerson extends Equatable {
   const BadPerson(this.name, this.age);
   final String name;
   final int age;
 
-  // LINT: Prefer using EquatableMixin instead of extending Equatable
   @override
   List<Object?> get props => [name, age];
 }
 
-// ❌ Bad: Abstract class extending Equatable
 abstract class BadBaseEntity extends Equatable {
-  // LINT: Prefer using EquatableMixin instead of extending Equatable
   const BadBaseEntity();
 }
+```
 
-// ✅ Good: Using EquatableMixin preserves extends slot
+## Do
+
+```dart
+import 'package:equatable/equatable.dart';
+
 class GoodPerson with EquatableMixin {
   GoodPerson(this.name, this.age);
   final String name;
@@ -63,12 +54,7 @@ class GoodPerson with EquatableMixin {
   List<Object?> get props => [name, age];
 }
 
-// ✅ Good: Can extend another class while using EquatableMixin
-class Animal {
-  const Animal(this.species);
-  final String species;
-}
-
+// Can extend another class while using EquatableMixin
 class Pet extends Animal with EquatableMixin {
   const Pet(super.species, this.name);
   final String name;
@@ -77,7 +63,6 @@ class Pet extends Animal with EquatableMixin {
   List<Object?> get props => [species, name];
 }
 
-// ✅ Good: Abstract class using EquatableMixin
 abstract class GoodBaseEntity with EquatableMixin {
   const GoodBaseEntity();
 }

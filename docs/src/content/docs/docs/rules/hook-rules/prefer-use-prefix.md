@@ -1,6 +1,6 @@
 ---
 title: prefer_use_prefix
-description: "Custom hooks should start with 'use' prefix."
+description: "Custom hooks should start with the 'use' prefix."
 sidebar:
   badge:
     text: "Fix"
@@ -8,53 +8,34 @@ sidebar:
   label: prefer_use_prefix
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_use_prefix` |
-| **Category** | Hook Rules |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Hook Rules</span>
 
-## Problem
+Flags functions and methods that call hooks internally but do not follow the `use` prefix naming convention. Custom hooks must start with `use` (or `_use` for private functions) so that the hooks framework and other lint rules can identify them as hooks.
 
-Custom hooks should start with 'use' prefix.
+## Why use this rule
 
-## Suggestion
+The `use` prefix is a critical convention in the hooks ecosystem. Without it, lint rules like `avoid_conditional_hooks` cannot detect that a function is a hook, leading to missed warnings. Consistent naming also helps developers immediately recognize hook functions in code review.
 
-Rename the function to start with 'use' (or '_use' for private functions).
+**See also:** [flutter_hooks - Custom hooks](https://pub.dev/packages/flutter_hooks#custom-hooks)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_element, unused_local_variable
-
-import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-
-// prefer_use_prefix
-//
-// Custom hooks (functions that call other hooks) should follow the
-// naming convention of starting with the `use` prefix.
-// This helps the hooks framework and other lint rules identify them.
-
-// ❌ Bad: Top-level function calling hooks without 'use' prefix
+// Top-level function calling hooks without 'use' prefix
 String myCustomHook() {
-  // LINT: Custom hooks should start with 'use' prefix.
   return useMemoized(() => 'hello');
 }
 
-// ❌ Bad: Private function calling hooks without '_use' prefix
+// Private function without '_use' prefix
 int _myPrivateHook() {
-  // LINT: Custom hooks should start with 'use' prefix.
   return useState(0);
 }
 
-// ❌ Bad: Method in HookWidget calling hooks without 'use' prefix
 class BadWidget extends HookWidget {
-  const BadWidget({super.key});
-
   int _fetchData() {
-    // LINT: Custom hooks should start with 'use' prefix.
     return useState(42);
   }
 
@@ -64,21 +45,22 @@ class BadWidget extends HookWidget {
     return Text('$data');
   }
 }
+```
 
-// ✅ Good: Top-level function with 'use' prefix
+## Do
+
+```dart
+// Top-level function with 'use' prefix
 String useCustomHook() {
   return useMemoized(() => 'hello');
 }
 
-// ✅ Good: Private function with '_use' prefix
+// Private function with '_use' prefix
 int _usePrivateHook() {
   return useState(0);
 }
 
-// ✅ Good: Method in HookWidget with 'use' prefix
 class GoodWidget extends HookWidget {
-  const GoodWidget({super.key});
-
   int _useData() {
     return useState(42);
   }
@@ -90,21 +72,8 @@ class GoodWidget extends HookWidget {
   }
 }
 
-// ✅ Good: Regular function that doesn't call hooks — no prefix needed
-int regularFunction() {
-  return 42;
-}
-
-// ✅ Good: build method in HookWidget — standard widget method, not a custom hook
-class NormalWidget extends HookWidget {
-  const NormalWidget({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final value = useState(0);
-    return Text('$value');
-  }
-}
+// Regular functions that don't call hooks need no prefix:
+int regularFunction() => 42;
 ```
 
 ## Configuration

@@ -1,6 +1,6 @@
 ---
 title: prefer_bloc_extensions
-description: "Use 'context.{0}' instead of '{1}.of()'."
+description: "Use context.read/watch instead of BlocProvider.of or RepositoryProvider.of"
 sidebar:
   badge:
     text: "Fix"
@@ -8,31 +8,22 @@ sidebar:
   label: prefer_bloc_extensions
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_bloc_extensions` |
-| **Category** | Bloc / Riverpod |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-## Problem
+This rule flags usage of `BlocProvider.of()` and `RepositoryProvider.of()` and suggests using the shorter `context.read()` or `context.watch()` extensions instead. When `listen: true` is passed, the rule suggests `context.watch()`.
 
-Use 'context.{0}' instead of '{1}.of()'.
+## Why use this rule
 
-## Suggestion
+The `context.read()` and `context.watch()` extensions are shorter, more readable, and make the intent clearer. With `BlocProvider.of()`, developers can easily forget the `listen` parameter or misconfigure it. The extension methods make the distinction between one-time reads and reactive watches explicit in the method name itself.
 
-Replace with 'context.{0}{2}()'.
+**See also:** [BlocProvider](https://bloclibrary.dev/flutter-bloc-concepts/#blocprovider) | [context.read vs context.watch](https://bloclibrary.dev/flutter-bloc-concepts/#usage-1)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// prefer_bloc_extensions
-//
-// Warns when BlocProvider.of() or RepositoryProvider.of() is used
-// instead of context.read() / context.watch() extensions.
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -48,23 +39,32 @@ class CounterCubit extends Cubit<int> {
 
 class MyRepository {}
 
-// ❌ Bad: Using BlocProvider.of() directly
-void badExamples(BuildContext context) {
-  // LINT: Use context.read instead of BlocProvider.of
+void examples(BuildContext context) {
   final bloc = BlocProvider.of<CounterBloc>(context);
-
-  // LINT: Use context.read instead of BlocProvider.of (without type arg)
-  BlocProvider.of(context);
-
-  // LINT: Use context.watch instead (listen: true → context.watch)
-  final watchedBloc = BlocProvider.of<CounterCubit>(context, listen: true);
-
-  // LINT: Use context.read instead of RepositoryProvider.of
+  final watched = BlocProvider.of<CounterCubit>(context, listen: true);
   final repo = RepositoryProvider.of<MyRepository>(context);
 }
+```
 
-// ✅ Good: Using context extensions
-void goodExamples(BuildContext context) {
+## Do
+
+```dart
+import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+abstract class CounterEvent {}
+
+class CounterBloc extends Bloc<CounterEvent, int> {
+  CounterBloc() : super(0);
+}
+
+class CounterCubit extends Cubit<int> {
+  CounterCubit() : super(0);
+}
+
+class MyRepository {}
+
+void examples(BuildContext context) {
   final bloc = context.read<CounterBloc>();
   final cubit = context.watch<CounterCubit>();
   final repo = context.read<MyRepository>();

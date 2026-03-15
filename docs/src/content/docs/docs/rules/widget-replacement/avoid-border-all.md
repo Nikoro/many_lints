@@ -1,6 +1,6 @@
 ---
 title: avoid_border_all
-description: "Prefer Border.fromBorderSide over Border.all."
+description: "Use Border.fromBorderSide instead of Border.all for const support"
 sidebar:
   badge:
     text: "Fix"
@@ -8,56 +8,42 @@ sidebar:
   label: avoid_border_all
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_border_all` |
-| **Category** | Widget Replacement |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Widget Replacement</span>
 
-## Problem
+Flags usages of `Border.all()` which should be replaced with `Border.fromBorderSide(BorderSide(...))`. The `Border.all()` factory delegates to `Border.fromBorderSide()` internally, but it cannot be made `const` because it is a factory constructor.
 
-Prefer Border.fromBorderSide over Border.all.
+## Why use this rule
 
-## Suggestion
+`Border.all()` calls `Border.fromBorderSide()` under the hood, so using `Border.fromBorderSide(BorderSide(...))` directly allows the entire expression to be `const`. Const objects are canonicalized at compile time, which reduces allocations and improves performance -- especially in build methods that run frequently.
 
-Replace with Border.fromBorderSide(BorderSide(...)) for const support.
+**See also:** [Border](https://api.flutter.dev/flutter/painting/Border-class.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
+// Border.all() cannot be const
+final border1 = Border.all();
 
-// avoid_border_all
-//
-// Prefer Border.fromBorderSide over Border.all for const support.
-// Border.all() calls Border.fromBorderSide() under the hood, so using
-// Border.fromBorderSide(BorderSide(...)) directly allows the expression
-// to be const.
+// Border.all() with arguments
+final border2 = Border.all(
+  color: const Color(0xFF000000),
+  width: 1.0,
+  style: BorderStyle.solid,
+);
+```
 
-import 'package:flutter/painting.dart';
+## Do
 
-// ❌ Bad: Using Border.all()
-void bad() {
-  // LINT: Border.all() can be replaced with Border.fromBorderSide()
-  final border1 = Border.all();
+```dart
+// Border.fromBorderSide() supports const
+final border1 = const Border.fromBorderSide(BorderSide());
 
-  // LINT: Border.all() with arguments
-  final border2 = Border.all(
-    color: const Color(0xFF000000),
-    width: 1.0,
-    style: BorderStyle.solid,
-  );
-}
-
-// ✅ Good: Using Border.fromBorderSide() directly
-void good() {
-  final border1 = const Border.fromBorderSide(BorderSide());
-
-  final border2 = const Border.fromBorderSide(
-    BorderSide(color: Color(0xFF000000), width: 1.0, style: BorderStyle.solid),
-  );
-}
+final border2 = const Border.fromBorderSide(
+  BorderSide(color: Color(0xFF000000), width: 1.0, style: BorderStyle.solid),
+);
 ```
 
 ## Configuration

@@ -1,6 +1,6 @@
 ---
 title: avoid_single_field_destructuring
-description: "Avoid single-field destructuring. Use direct property access instead."
+description: "Avoid destructuring a single field when direct property access is simpler."
 sidebar:
   badge:
     text: "Fix"
@@ -8,32 +8,22 @@ sidebar:
   label: avoid_single_field_destructuring
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_single_field_destructuring` |
-| **Category** | Pattern Matching |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Pattern Matching</span>
 
-## Problem
+Destructuring a single field from an object or record pattern adds unnecessary syntactic overhead. Direct property access like `config.name` is simpler and clearer when only one value is needed.
 
-Avoid single-field destructuring. Use direct property access instead.
+## Why use this rule
 
-## Suggestion
+Destructuring shines when extracting multiple values at once. For a single field, `final Config(:name) = config;` is more verbose than `final name = config.name;` with no readability benefit. This rule encourages destructuring only when it genuinely simplifies the code.
 
-Replace destructuring with direct property access on the expression.
+**See also:** [Dart patterns](https://dart.dev/language/patterns)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// avoid_single_field_destructuring
-//
-// Warns when a pattern variable declaration destructures only a single field.
-// Single-field destructuring adds unnecessary complexity compared to direct
-// property access.
-
 class Config {
   final String name;
   final int timeout;
@@ -41,33 +31,36 @@ class Config {
   const Config({required this.name, required this.timeout});
 }
 
-// ❌ Bad: Single-field destructuring (use direct property access instead)
-void badExamples(Config config) {
-  // LINT: Single field destructured from object pattern
+void example(Config config) {
+  // Single field destructured from object pattern
   final Config(:name) = config;
 
-  // LINT: Single named field destructured with renamed variable
+  // Single named field destructured with renamed variable
   final Config(timeout: t) = config;
 }
 
-void badRecordExample(({int length}) record) {
-  // LINT: Single field destructured from record pattern
+void recordExample(({int length}) record) {
+  // Single field destructured from record pattern
   final (:length) = record;
 }
+```
 
-// ✅ Good: Direct property access
-void goodExamples(Config config) {
+## Do
+
+```dart
+// Direct property access
+void example(Config config) {
   final name = config.name;
   final t = config.timeout;
 }
 
-// ✅ Good: Multiple fields destructured (this is the right use case)
-void goodMultipleFields(Config config) {
+// Multiple fields destructured (this is the right use case)
+void multipleFields(Config config) {
   final Config(:name, :timeout) = config;
 }
 
-// ✅ Good: Regular variable declaration (no destructuring)
-void goodRegularDeclaration() {
+// Regular variable declaration (no destructuring)
+void regularDeclaration() {
   final x = 42;
 }
 ```

@@ -1,6 +1,6 @@
 ---
 title: prefer_constrained_box_over_container
-description: "Use ConstrainedBox widget instead of the Container widget with only the constraints parameter."
+description: "Use ConstrainedBox instead of Container when only constraints is set"
 sidebar:
   badge:
     text: "Fix"
@@ -8,65 +8,47 @@ sidebar:
   label: prefer_constrained_box_over_container
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_constrained_box_over_container` |
-| **Category** | Widget Replacement |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Widget Replacement</span>
 
-## Problem
+Flags `Container` widgets that only use the `constraints` parameter (plus optional `key` and `child`). When `Container` is used solely for constraints, the `ConstrainedBox` widget is a lighter, more descriptive alternative.
 
-Use ConstrainedBox widget instead of the Container widget with only the constraints parameter.
+## Why use this rule
 
-## Suggestion
+`Container` is a convenience widget that composes many lower-level widgets internally. When you only need constraints, using `ConstrainedBox` directly avoids the overhead and communicates your intent more clearly. It also keeps the widget tree shallow and easier to reason about.
 
-Replace with ConstrainedBox.
+**See also:** [ConstrainedBox](https://api.flutter.dev/flutter/widgets/ConstrainedBox-class.html) | [Container](https://api.flutter.dev/flutter/widgets/Container-class.html)
 
-## Example
+## Don't
 
 ```dart
-import 'package:flutter/material.dart';
+// Container with only constraints parameter
+Container(
+  constraints: BoxConstraints(maxWidth: 200),
+  child: Text('Hello'),
+);
 
-// prefer_constrained_box_over_container
-//
-// Use ConstrainedBox widget instead of Container when only constraints is set.
+// Container with only constraints, no child
+Container(constraints: BoxConstraints.tightFor(width: 100));
+```
 
-// ignore_for_file: unused_local_variable
+## Do
 
-class PreferConstrainedBoxOverContainerExample extends StatelessWidget {
-  const PreferConstrainedBoxOverContainerExample({super.key});
+```dart
+// Use ConstrainedBox directly
+ConstrainedBox(
+  constraints: BoxConstraints(maxWidth: 200),
+  child: Text('Hello'),
+);
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // ❌ Bad: Container with only constraints parameter
-        // LINT: Use ConstrainedBox instead of Container with only constraints
-        Container(
-          constraints: BoxConstraints(maxWidth: 200),
-          child: Text('Hello'),
-        ),
-
-        // LINT: Container with only constraints, no child
-        Container(constraints: BoxConstraints.tightFor(width: 100)),
-
-        // ✅ Good: Use ConstrainedBox directly
-        ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 200),
-          child: Text('Hello'),
-        ),
-
-        // ✅ Good: Container with additional properties besides constraints
-        Container(
-          constraints: BoxConstraints(maxWidth: 200),
-          padding: EdgeInsets.all(8),
-          child: Text('Hello'),
-        ),
-      ],
-    );
-  }
-}
+// Container with additional properties besides constraints is fine
+Container(
+  constraints: BoxConstraints(maxWidth: 200),
+  padding: EdgeInsets.all(8),
+  child: Text('Hello'),
+);
 ```
 
 ## Configuration

@@ -1,6 +1,6 @@
 ---
 title: use_existing_destructuring
-description: "Use existing destructuring of '{0}' instead of accessing '{1}' directly."
+description: "Add properties to an existing destructuring instead of accessing them directly."
 sidebar:
   badge:
     text: "Fix"
@@ -8,32 +8,22 @@ sidebar:
   label: use_existing_destructuring
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `use_existing_destructuring` |
-| **Category** | Pattern Matching |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Pattern Matching</span>
 
-## Problem
+When an object already has a destructuring declaration in the same scope, accessing additional properties directly on that object is inconsistent. The property should be added to the existing destructuring pattern instead, keeping all extractions in one place.
 
-Use existing destructuring of '{0}' instead of accessing '{1}' directly.
+## Why use this rule
 
-## Suggestion
+Mixing destructuring and direct property access on the same variable is confusing. If you already have `final Config(:name) = config;`, then accessing `config.timeout` separately misses the opportunity to keep all property extractions together. Adding `:timeout` to the existing pattern is cleaner and avoids repetition of the variable name.
 
-Add ':{1}' to the existing destructuring pattern and use '{1}' directly.
+**See also:** [Dart patterns](https://dart.dev/language/patterns)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// use_existing_destructuring
-//
-// Warns when a property is accessed directly on an object that already has a
-// destructuring declaration in the same scope. The property should be added
-// to the existing destructuring instead.
-
 class Config {
   final String name;
   final int timeout;
@@ -46,59 +36,47 @@ class Config {
   });
 }
 
-// ❌ Bad: Accessing property directly when destructuring already exists
+// Accessing property directly when destructuring already exists
 void badDirectAccess(Config config) {
   final Config(:name) = config;
-  // LINT: Use existing destructuring instead of accessing 'timeout' directly
   print(config.timeout);
 }
 
-// ❌ Bad: Multiple undeclared property accesses
+// Multiple undeclared property accesses
 void badMultipleAccesses(Config config) {
   final Config(:name) = config;
-  // LINT: Both accesses should be added to the destructuring
   print(config.timeout);
   print(config.verbose);
 }
+```
 
-// ❌ Bad: Record pattern with direct access
-void badRecordAccess(({int left, int right}) record) {
-  final (:left) = record;
-  // LINT: Use existing destructuring for 'right'
-  print(record.right);
-}
+## Do
 
-// ✅ Good: All needed properties are destructured
+```dart
+// All needed properties are destructured
 void goodFullDestructuring(Config config) {
   final Config(:name, :timeout) = config;
   print(name);
   print(timeout);
 }
 
-// ✅ Good: No destructuring exists (no lint)
+// No destructuring exists (no lint)
 void goodNoDestructuring(Config config) {
   print(config.name);
   print(config.timeout);
 }
 
-// ✅ Good: Accessing a property that IS already destructured
-void goodAlreadyDestructured(Config config) {
-  final Config(:name, :timeout) = config;
-  print(name);
-  print(timeout);
-}
-
-// ✅ Good: Different variable than the one being destructured
-void goodDifferentVariable(Config a, Config b) {
-  final Config(:name) = a;
-  print(b.timeout);
-}
-
-// ✅ Good: Access appears before the destructuring declaration
+// Access appears before the destructuring declaration (no lint)
 void goodBeforeDestructuring(Config config) {
   print(config.timeout);
   final Config(:name) = config;
   print(name);
+}
+
+// Different variable than the one being destructured
+void goodDifferentVariable(Config a, Config b) {
+  final Config(:name) = a;
+  print(b.timeout);
 }
 ```
 

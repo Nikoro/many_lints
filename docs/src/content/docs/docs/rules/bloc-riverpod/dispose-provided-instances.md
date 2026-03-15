@@ -1,39 +1,25 @@
 ---
 title: dispose_provided_instances
-description: "Instance '{0}' has a dispose method but is not disposed via ref.onDispose()."
+description: "Ensure disposable instances in Riverpod providers are cleaned up with ref.onDispose"
 sidebar:
-  badge:
-    text: "Fix"
-    variant: "tip"
   label: dispose_provided_instances
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `dispose_provided_instances` |
-| **Category** | Bloc / Riverpod |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-## Problem
+This rule flags instances created inside Riverpod provider callbacks or Notifier `build()` methods that have a `dispose()`, `close()`, or `cancel()` method but are not cleaned up via `ref.onDispose()`. It recognizes tear-off, lambda, and block body cleanup patterns.
 
-Instance '{0}' has a dispose method but is not disposed via ref.onDispose().
+## Why use this rule
 
-## Suggestion
+When a provider creates a disposable resource (like a controller, stream subscription, or service with a `close()` method) without registering cleanup, the resource leaks when the provider is destroyed. This leads to memory leaks and resource exhaustion over time. The `ref.onDispose()` callback ensures proper cleanup regardless of how or when the provider is disposed.
 
-Add 'ref.onDispose({0}.dispose)' to ensure proper resource cleanup.
+**See also:** [Riverpod ref.onDispose](https://riverpod.dev/docs/concepts/modifiers/auto_dispose)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// dispose_provided_instances
-//
-// Warns when an instance with a dispose/close/cancel method is created
-// inside a Riverpod provider callback or Notifier build() method without
-// a corresponding ref.onDispose() call to clean it up.
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod/riverpod.dart';
 
@@ -42,58 +28,48 @@ class DisposableService {
   String get value => 'hello';
 }
 
-class CloseableService {
-  void close() {}
-}
-
-// ❌ Bad: Instance has dispose() but ref.onDispose is not called
+// Instance has dispose() but ref.onDispose is not called
 final badProvider = Provider<DisposableService>((ref) {
-  // LINT: instance has a dispose method but is not disposed via ref.onDispose()
   final instance = DisposableService();
   return instance;
 });
 
-// ❌ Bad: Instance has close() but ref.onDispose is not called
-final badCloseProvider = Provider.autoDispose<CloseableService>((ref) {
-  // LINT: service has a dispose method but is not disposed via ref.onDispose()
-  final service = CloseableService();
-  return service;
-});
-
-// ❌ Bad: Notifier build() creates disposable without ref.onDispose
+// Notifier build() creates disposable without ref.onDispose
 class BadNotifier extends Notifier<DisposableService> {
   @override
   DisposableService build() {
-    // LINT: instance has a dispose method but is not disposed via ref.onDispose()
     final instance = DisposableService();
     return instance;
   }
 }
+```
 
-// ✅ Good: Using ref.onDispose with tear-off
+## Do
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod/riverpod.dart';
+
+class DisposableService {
+  void dispose() {}
+  String get value => 'hello';
+}
+
+// Using ref.onDispose with tear-off
 final goodProvider = Provider<DisposableService>((ref) {
   final instance = DisposableService();
   ref.onDispose(instance.dispose);
   return instance;
 });
 
-// ✅ Good: Using ref.onDispose with lambda
+// Using ref.onDispose with lambda
 final goodLambdaProvider = Provider<DisposableService>((ref) {
   final instance = DisposableService();
   ref.onDispose(() => instance.dispose());
   return instance;
 });
 
-// ✅ Good: Using ref.onDispose with block body
-final goodBlockProvider = Provider<DisposableService>((ref) {
-  final instance = DisposableService();
-  ref.onDispose(() {
-    instance.dispose();
-  });
-  return instance;
-});
-
-// ✅ Good: Notifier build() with ref.onDispose
+// Notifier build() with ref.onDispose
 class GoodNotifier extends Notifier<DisposableService> {
   @override
   DisposableService build() {
@@ -102,16 +78,6 @@ class GoodNotifier extends Notifier<DisposableService> {
     return instance;
   }
 }
-
-// ✅ Good: Non-disposable instance (no dispose/close/cancel methods)
-class RegularService {
-  void doSomething() {}
-}
-
-final regularProvider = Provider<RegularService>((ref) {
-  final instance = RegularService();
-  return instance;
-});
 ```
 
 ## Configuration

@@ -1,6 +1,6 @@
 ---
 title: prefer_single_setstate
-description: "Multiple setState calls should be merged into a single call."
+description: "Merge multiple setState calls into a single call."
 sidebar:
   badge:
     text: "Fix"
@@ -8,48 +8,27 @@ sidebar:
   label: prefer_single_setstate
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_single_setstate` |
-| **Category** | Code Quality |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
 
-## Problem
+Flags methods in `State` subclasses that contain multiple `setState()` calls at the same scope level. Each `setState()` call schedules a rebuild, so calling it multiple times in the same synchronous method triggers redundant rebuilds that can be avoided by merging all state mutations into a single call.
 
-Multiple setState calls should be merged into a single call.
+## Why use this rule
 
-## Suggestion
+Multiple `setState()` calls in the same method cause Flutter to schedule multiple rebuilds in the same frame. While Flutter coalesces them into one actual rebuild, the pattern is misleading and fragile. Merging mutations into a single `setState()` makes the code clearer and avoids accidental intermediate states if the framework behavior changes.
 
-Merge all setState calls into one.
+**See also:** [State.setState()](https://api.flutter.dev/flutter/widgets/State/setState.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, unused_element
-
-// prefer_single_setstate
-//
-// Warns when a method in a State subclass contains multiple setState calls
-// that could be merged into a single invocation. Multiple setState calls
-// cause redundant rebuilds.
-
-import 'package:flutter/widgets.dart';
-
-// ❌ Bad: Multiple consecutive setState calls
-class BadConsecutive extends StatefulWidget {
-  const BadConsecutive({super.key});
-
-  @override
-  State<BadConsecutive> createState() => _BadConsecutiveState();
-}
-
-class _BadConsecutiveState extends State<BadConsecutive> {
+class _BadState extends State<BadWidget> {
   String _a = '';
   String _b = '';
 
   void _update() {
-    // LINT: Multiple setState calls should be merged
     setState(() {
       _a = 'Hello';
     });
@@ -58,24 +37,8 @@ class _BadConsecutiveState extends State<BadConsecutive> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) => const SizedBox();
-}
-
-// ❌ Bad: Multiple non-consecutive setState calls
-class BadNonConsecutive extends StatefulWidget {
-  const BadNonConsecutive({super.key});
-
-  @override
-  State<BadNonConsecutive> createState() => _BadNonConsecutiveState();
-}
-
-class _BadNonConsecutiveState extends State<BadNonConsecutive> {
-  String _a = '';
-  String _b = '';
-
-  void _update() {
-    // LINT: Even with code in between, setState calls should be merged
+  // Even with code in between:
+  void _updateWithGap() {
     setState(() {
       _a = 'Hello';
     });
@@ -84,20 +47,13 @@ class _BadNonConsecutiveState extends State<BadNonConsecutive> {
       _b = 'World';
     });
   }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox();
 }
+```
 
-// ✅ Good: Single setState call with all mutations
-class GoodMerged extends StatefulWidget {
-  const GoodMerged({super.key});
+## Do
 
-  @override
-  State<GoodMerged> createState() => _GoodMergedState();
-}
-
-class _GoodMergedState extends State<GoodMerged> {
+```dart
+class _GoodState extends State<GoodWidget> {
   String _a = '';
   String _b = '';
 
@@ -107,66 +63,24 @@ class _GoodMergedState extends State<GoodMerged> {
       _b = 'World';
     });
   }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox();
 }
 
-// ✅ Good: setState in separate closures (different scopes)
-class GoodSeparateClosures extends StatefulWidget {
-  const GoodSeparateClosures({super.key});
-
-  @override
-  State<GoodSeparateClosures> createState() => _GoodSeparateClosuresState();
+// setState in separate closures is fine (different scopes):
+void _setup() {
+  final callback1 = () {
+    setState(() { _data = 'a'; });
+  };
+  final callback2 = () {
+    setState(() { _data = 'b'; });
+  };
 }
 
-class _GoodSeparateClosuresState extends State<GoodSeparateClosures> {
-  String _data = '';
-
-  void _setup() {
-    final callback1 = () {
-      setState(() {
-        _data = 'a';
-      });
-    };
-    final callback2 = () {
-      setState(() {
-        _data = 'b';
-      });
-    };
-    callback1();
-    callback2();
-  }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox();
+// setState in different methods is fine:
+void _update1() {
+  setState(() { _data = 'Hello'; });
 }
-
-// ✅ Good: setState in different methods
-class GoodDifferentMethods extends StatefulWidget {
-  const GoodDifferentMethods({super.key});
-
-  @override
-  State<GoodDifferentMethods> createState() => _GoodDifferentMethodsState();
-}
-
-class _GoodDifferentMethodsState extends State<GoodDifferentMethods> {
-  String _data = '';
-
-  void _update1() {
-    setState(() {
-      _data = 'Hello';
-    });
-  }
-
-  void _update2() {
-    setState(() {
-      _data = 'World';
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox();
+void _update2() {
+  setState(() { _data = 'World'; });
 }
 ```
 

@@ -1,44 +1,33 @@
 ---
 title: avoid_constant_switches
-description: "The switch expression is a constant, so the result is always the same."
+description: "Detect switch statements on constant expressions"
 sidebar:
   label: avoid_constant_switches
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_constant_switches` |
-| **Category** | Control Flow |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Control Flow</span>
 
-## Problem
+Warns when a switch statement or switch expression evaluates a constant expression. Since the value never changes, the switch always takes the same branch, making all other cases dead code. This usually indicates a typo or a bug.
 
-The switch expression is a constant, so the result is always the same.
+## Why use this rule
 
-## Suggestion
+Switching on a constant means only one branch can ever execute, turning the switch into expensive dead code. This is typically a mistake -- the developer likely intended to switch on a variable or parameter instead of a compile-time constant. Catching this early prevents unreachable code from accumulating.
 
-Replace the switch expression with a variable or parameter.
+**See also:** [Effective Dart: Usage](https://dart.dev/effective-dart/usage)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// avoid_constant_switches
-//
-// Warns when a switch statement or expression evaluates a constant expression.
-// The result is always the same branch, which usually indicates a typo or bug.
-
 const _another = 10;
 
 abstract final class Config {
   static const value = '1';
 }
 
-// ❌ Bad: Switch on a constant — always takes the same branch
 void bad() {
-  // LINT: Switching on a static const field
+  // Switching on a static const field
   switch (Config.value) {
     case '1':
       print('always');
@@ -46,7 +35,7 @@ void bad() {
       print('never');
   }
 
-  // LINT: Switching on a top-level const
+  // Switching on a top-level const
   switch (_another) {
     case 10:
       print('always');
@@ -54,16 +43,19 @@ void bad() {
       print('never');
   }
 
-  // LINT: Switch expression on an integer literal
+  // Switch expression on an integer literal
   final x = switch (42) {
     42 => 'yes',
     _ => 'no',
   };
 }
+```
 
-// ✅ Good: Switch on a variable or parameter
+## Do
+
+```dart
 void good(int another) {
-  // Parameter — fine
+  // Parameter
   switch (another) {
     case 10:
       print('maybe');
@@ -71,13 +63,13 @@ void good(int another) {
       print('maybe');
   }
 
-  // Switch expression on parameter — fine
+  // Switch expression on parameter
   final x = switch (another) {
     10 => 'ten',
     _ => 'other',
   };
 
-  // Method call result — fine
+  // Method call result
   switch (another.toString()) {
     case '10':
       print('maybe');

@@ -192,3 +192,64 @@ site-search {
 .starlight-aside__title {
   font-weight: 500;
 }
+
+/* Rule page badges */
+.rule-badge {
+  display: inline-block;
+  padding: 0.25em 0.75em;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-right: 0.4em;
+  margin-bottom: 1em;
+  border: 1px solid transparent;
+}
+
+.rule-badge--version {
+  background-color: #3a3a3a;
+  color: #dcdcdc;
+  border-color: #6b6b6b;
+}
+
+.rule-badge--warning {
+  background-color: #ffb74d;
+  color: #312a1f;
+  border-color: #e6a544;
+}
+
+.rule-badge--fix {
+  background-color: #66bb6a;
+  color: #1b3a1d;
+  border-color: #4caf50;
+}
+
+.rule-badge--category {
+  background-color: #3a3a3a;
+  color: #dcdcdc;
+  border-color: #6b6b6b;
+}
+
+:root[data-theme='light'] .rule-badge--version {
+  background-color: #f0f1f3;
+  color: #2e3440;
+  border-color: #c8ccd4;
+}
+
+:root[data-theme='light'] .rule-badge--warning {
+  background-color: #fff3e0;
+  color: #e65100;
+  border-color: #ffb74d;
+}
+
+:root[data-theme='light'] .rule-badge--fix {
+  background-color: #f0f7f0;
+  color: #2e7d32;
+  border-color: #66bb6a;
+}
+
+:root[data-theme='light'] .rule-badge--category {
+  background-color: #f0f1f3;
+  color: #2e3440;
+  border-color: #c8ccd4;
+}

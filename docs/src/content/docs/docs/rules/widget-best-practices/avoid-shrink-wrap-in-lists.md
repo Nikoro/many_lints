@@ -1,78 +1,52 @@
 ---
 title: avoid_shrink_wrap_in_lists
-description: "Avoid using shrinkWrap in ListView."
+description: "Avoid using shrinkWrap in ListView for better scroll performance"
 sidebar:
   label: avoid_shrink_wrap_in_lists
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_shrink_wrap_in_lists` |
-| **Category** | Widget Best Practices |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-## Problem
+This rule flags `ListView` widgets that use `shrinkWrap: true`. When shrink-wrapping is enabled, the ListView lays out all of its children eagerly to determine its own size, which defeats the lazy rendering that makes scrollable lists performant.
 
-Avoid using shrinkWrap in ListView.
+## Why use this rule
 
-## Suggestion
+A `ListView` with `shrinkWrap: true` forces Flutter to measure every single child up front, even the ones that are off-screen. For large lists this is extremely expensive and can cause visible jank or even ANRs. The recommended alternative is to use `CustomScrollView` with `SliverList`, which gives you the same nested-scrollable layout without the performance cost.
 
-Consider using CustomScrollView with SliverList instead.
+**See also:** [ListView.shrinkWrap](https://api.flutter.dev/flutter/widgets/ListView/shrinkWrap.html) | [Flutter performance best practices](https://docs.flutter.dev/perf/best-practices)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
+// ListView with shrinkWrap forces eager layout of all children
+final list = ListView(shrinkWrap: true);
 
-// avoid_shrink_wrap_in_lists
-//
-// Warns when a ListView uses shrinkWrap: true, which is expensive
-// performance-wise. Prefer using CustomScrollView with SliverList instead.
+final builder = ListView.builder(
+  shrinkWrap: true,
+  itemCount: 10,
+  itemBuilder: (context, index) => Text('$index'),
+);
+```
 
-import 'package:flutter/widgets.dart';
+## Do
 
-// ❌ Bad: Using shrinkWrap: true in ListView
-class BadExamples {
-  // LINT: ListView with shrinkWrap: true
-  final a = ListView(shrinkWrap: true);
+```dart
+// ListView without shrinkWrap (default lazy rendering)
+final list = ListView(children: const [Text('hello')]);
 
-  // LINT: ListView.builder with shrinkWrap: true
-  final b = ListView.builder(
-    shrinkWrap: true,
-    itemCount: 10,
-    itemBuilder: (context, index) => Text('$index'),
-  );
-
-  // LINT: ListView.separated with shrinkWrap: true
-  final c = ListView.separated(
-    shrinkWrap: true,
-    itemCount: 10,
-    itemBuilder: (context, index) => Text('$index'),
-    separatorBuilder: (context, index) => const SizedBox(height: 8),
-  );
-}
-
-// ✅ Good: ListView without shrinkWrap or using slivers
-class GoodExamples {
-  // ListView without shrinkWrap
-  final a = ListView(children: const [Text('hello')]);
-
-  // ListView with shrinkWrap explicitly false
-  final b = ListView(shrinkWrap: false);
-
-  // CustomScrollView with SliverList for better performance
-  final c = CustomScrollView(
-    slivers: [
-      SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) => Text('$index'),
-          childCount: 10,
-        ),
+// CustomScrollView with SliverList for nested scroll scenarios
+final scroll = CustomScrollView(
+  slivers: [
+    SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) => Text('$index'),
+        childCount: 10,
       ),
-    ],
-  );
-}
+    ),
+  ],
+);
 ```
 
 ## Configuration

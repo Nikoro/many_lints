@@ -1,6 +1,6 @@
 ---
 title: proper_super_calls
-description: "'{0}' should call 'super.{0}()' {1}."
+description: "Enforce correct ordering of super lifecycle calls in State classes"
 sidebar:
   badge:
     text: "Fix"
@@ -8,49 +8,28 @@ sidebar:
   label: proper_super_calls
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `proper_super_calls` |
-| **Category** | Control Flow |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Control Flow</span>
 
-## Problem
+Warns when super lifecycle methods are called in the wrong order in `State` subclasses. Methods like `initState`, `didUpdateWidget`, `activate`, `didChangeDependencies`, and `reassemble` must call super first. Methods like `deactivate` and `dispose` must call super last.
 
-'{0}' should call 'super.{0}()' {1}.
+## Why use this rule
 
-## Suggestion
+Flutter's `State` lifecycle methods have a specific contract about when `super` should be called. Calling `super.initState()` after your own initialization code can lead to errors because the framework expects to set up its own state first. Conversely, calling `super.dispose()` before your cleanup code means your resources are released while the framework has already torn down its own state. The quick fix automatically moves the super call to the correct position.
 
-Move 'super.{0}()' to be the {1} statement.
+**See also:** [State.initState](https://api.flutter.dev/flutter/widgets/State/initState.html) | [State.dispose](https://api.flutter.dev/flutter/widgets/State/dispose.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_element, avoid_unnecessary_setstate
-
-// proper_super_calls
-//
-// Warns when super lifecycle methods are called in the wrong order
-// in State subclasses. initState, didUpdateWidget, activate,
-// didChangeDependencies, and reassemble must call super first.
-// deactivate and dispose must call super last.
-
-import 'package:flutter/widgets.dart';
-
-// ❌ Bad: super.initState() should be first
-class BadInitState extends StatefulWidget {
-  const BadInitState({super.key});
-
-  @override
-  State<BadInitState> createState() => _BadInitStateState();
-}
-
 class _BadInitStateState extends State<BadInitState> {
   String _data = '';
 
   @override
   void initState() {
-    _data = 'Hello'; // LINT: super.initState() should come before this
+    _data = 'Hello'; // super.initState() should come before this
     super.initState();
   }
 
@@ -58,18 +37,10 @@ class _BadInitStateState extends State<BadInitState> {
   Widget build(BuildContext context) => const SizedBox();
 }
 
-// ❌ Bad: super.dispose() should be last
-class BadDispose extends StatefulWidget {
-  const BadDispose({super.key});
-
-  @override
-  State<BadDispose> createState() => _BadDisposeState();
-}
-
 class _BadDisposeState extends State<BadDispose> {
   @override
   void dispose() {
-    super.dispose(); // LINT: super.dispose() should come after cleanup
+    super.dispose(); // super.dispose() should come after cleanup
     debugPrint('cleanup');
   }
 
@@ -77,39 +48,27 @@ class _BadDisposeState extends State<BadDispose> {
   Widget build(BuildContext context) => const SizedBox();
 }
 
-// ❌ Bad: super.deactivate() should be last
-class BadDeactivate extends StatefulWidget {
-  const BadDeactivate({super.key});
-
-  @override
-  State<BadDeactivate> createState() => _BadDeactivateState();
-}
-
 class _BadDeactivateState extends State<BadDeactivate> {
   @override
   void deactivate() {
-    super.deactivate(); // LINT: super.deactivate() should come after cleanup
+    super.deactivate(); // super.deactivate() should come after cleanup
     debugPrint('deactivating');
   }
 
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
+```
 
-// ✅ Good: super.initState() is first
-class GoodInitState extends StatefulWidget {
-  const GoodInitState({super.key});
+## Do
 
-  @override
-  State<GoodInitState> createState() => _GoodInitStateState();
-}
-
+```dart
 class _GoodInitStateState extends State<GoodInitState> {
   String _data = '';
 
   @override
   void initState() {
-    super.initState();
+    super.initState(); // First
     _data = 'Hello';
   }
 
@@ -117,38 +76,22 @@ class _GoodInitStateState extends State<GoodInitState> {
   Widget build(BuildContext context) => const SizedBox();
 }
 
-// ✅ Good: super.dispose() is last
-class GoodDispose extends StatefulWidget {
-  const GoodDispose({super.key});
-
-  @override
-  State<GoodDispose> createState() => _GoodDisposeState();
-}
-
 class _GoodDisposeState extends State<GoodDispose> {
   @override
   void dispose() {
     debugPrint('cleanup');
-    super.dispose();
+    super.dispose(); // Last
   }
 
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
 
-// ✅ Good: super.deactivate() is last
-class GoodDeactivate extends StatefulWidget {
-  const GoodDeactivate({super.key});
-
-  @override
-  State<GoodDeactivate> createState() => _GoodDeactivateState();
-}
-
 class _GoodDeactivateState extends State<GoodDeactivate> {
   @override
   void deactivate() {
     debugPrint('deactivating');
-    super.deactivate();
+    super.deactivate(); // Last
   }
 
   @override

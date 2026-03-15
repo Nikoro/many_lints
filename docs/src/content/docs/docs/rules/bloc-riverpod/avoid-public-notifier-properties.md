@@ -1,68 +1,60 @@
 ---
 title: avoid_public_notifier_properties
-description: "Avoid public properties on Notifier classes."
+description: "Prevent public fields, getters, and setters on Notifier classes"
 sidebar:
   label: avoid_public_notifier_properties
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_public_notifier_properties` |
-| **Category** | Bloc / Riverpod |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-## Problem
+This rule flags public properties (fields, getters, and setters) on `Notifier` and `AsyncNotifier` subclasses, except for the built-in `state` property. Public methods, private properties, static properties, and overrides are all allowed.
 
-Avoid public properties on Notifier classes.
+## Why use this rule
 
-## Suggestion
+Riverpod Notifiers are designed to expose a single reactive `state` property. When you add extra public getters or fields, consumers can read stale values that don't trigger rebuilds, leading to UI inconsistencies. Instead, consolidate all data into a model class used as the `state` type. This keeps the reactive contract intact and makes state changes predictable.
 
-Consolidate state into the state property using a model class, or make this property private.
+**See also:** [Riverpod Notifier documentation](https://riverpod.dev/docs/concepts/providers#notifierprovider)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_field, unused_element
-
-// avoid_public_notifier_properties
-//
-// Warns when a Notifier or AsyncNotifier subclass declares public properties
-// (getters, fields, or setters) other than the standard `state`. All state
-// should be consolidated into the `state` property using a model class.
-
 import 'package:riverpod/riverpod.dart';
 
-// ❌ Bad: Public getter exposes state outside the standard `state` property
+// Public getter exposes state outside the reactive `state` property
 class BadNotifier extends Notifier<int> {
-  // LINT: Public getter — consolidate into state or make private
   int get publicGetter => 0;
 
   @override
   int build() => 0;
 }
 
-// ❌ Bad: Public field on a Notifier
+// Public field on a Notifier
 class BadNotifier2 extends Notifier<int> {
-  // LINT: Public field — consolidate into state or make private
   int publicField = 0;
 
   @override
   int build() => 0;
 }
 
-// ❌ Bad: Public setter on a Notifier
+// Public setter on a Notifier
 class BadNotifier3 extends Notifier<int> {
   int _value = 0;
 
-  // LINT: Public setter — consolidate into state or make private
   set publicSetter(int value) => _value = value;
 
   @override
   int build() => _value;
 }
+```
 
-// ✅ Good: Use a model class to consolidate state
+## Do
+
+```dart
+import 'package:riverpod/riverpod.dart';
+
+// Consolidate state into a model class
 class MyState {
   final int left;
   final int right;
@@ -74,7 +66,7 @@ class GoodNotifier extends Notifier<MyState> {
   MyState build() => MyState(0, 1);
 }
 
-// ✅ Good: Private properties are fine
+// Private properties are fine
 class GoodNotifier2 extends Notifier<int> {
   int _privateField = 0;
   int get _privateGetter => _privateField;
@@ -83,18 +75,9 @@ class GoodNotifier2 extends Notifier<int> {
   int build() => _privateGetter;
 }
 
-// ✅ Good: Public methods are allowed (only properties are flagged)
+// Public methods are allowed (only properties are flagged)
 class GoodNotifier3 extends Notifier<int> {
   void increment() => state++;
-
-  @override
-  int build() => 0;
-}
-
-// ✅ Good: Static properties are fine
-class GoodNotifier4 extends Notifier<int> {
-  static int staticField = 0;
-  static int get staticGetter => staticField;
 
   @override
   int build() => 0;

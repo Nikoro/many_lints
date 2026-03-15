@@ -1,62 +1,44 @@
 ---
 title: avoid_mounted_in_setstate
-description: "Checking mounted inside setState is too late and can lead to an exception."
+description: "Detect mounted checks inside setState callbacks"
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: avoid_mounted_in_setstate
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_mounted_in_setstate` |
-| **Category** | State Management |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">State Management</span>
 
-## Problem
+Warns when `mounted` or `context.mounted` is checked inside a `setState` callback. If the widget has been disposed, `setState` itself throws an exception before the callback ever runs, making any `mounted` check inside it useless.
 
-Checking mounted inside setState is too late and can lead to an exception.
+## Why use this rule
 
-## Suggestion
+A common misconception is that checking `mounted` inside `setState` protects against calling `setState` on a disposed widget. In reality, `setState` validates the state object immediately when called -- if the widget is unmounted, it throws before executing the callback. The `mounted` check must happen before the `setState` call, not inside it.
 
-Check mounted before calling setState instead.
+**See also:** [State.mounted](https://api.flutter.dev/flutter/widgets/State/mounted.html) | [State.setState](https://api.flutter.dev/flutter/widgets/State/setState.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, unnecessary_lambdas
-
-// avoid_mounted_in_setstate
-//
-// Warns when `mounted` is checked inside a `setState` callback.
-// Checking `mounted` inside `setState` is too late — if the widget has
-// been disposed, `setState` itself will throw before the callback runs.
-
-import 'package:flutter/widgets.dart';
-
-// ❌ Bad: mounted check inside setState callback
-class BadExample extends StatefulWidget {
-  const BadExample({super.key});
-
-  @override
-  State<BadExample> createState() => _BadExampleState();
-}
-
 class _BadExampleState extends State<BadExample> {
   Future<void> _loadData() async {
     final data = await Future.delayed(const Duration(seconds: 1), () => 42);
 
-    // LINT: Checking mounted inside setState is too late
+    // mounted check inside setState is too late
     setState(() {
       if (mounted) {
-        // This check is useless — if the widget was disposed,
-        // setState itself already threw before reaching here.
+        // If the widget was disposed, setState already threw
       }
     });
 
-    // LINT: context.mounted inside setState is also flagged
+    // context.mounted inside setState is also wrong
     setState(() {
       if (context.mounted) {
-        // Same problem as above
+        // Same problem
       }
     });
   }
@@ -64,15 +46,11 @@ class _BadExampleState extends State<BadExample> {
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
+```
 
-// ✅ Good: mounted check before setState
-class GoodExample extends StatefulWidget {
-  const GoodExample({super.key});
+## Do
 
-  @override
-  State<GoodExample> createState() => _GoodExampleState();
-}
-
+```dart
 class _GoodExampleState extends State<GoodExample> {
   Future<void> _loadData() async {
     final data = await Future.delayed(const Duration(seconds: 1), () => 42);

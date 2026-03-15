@@ -1,39 +1,42 @@
 ---
 title: use_notifier_suffix
-description: "Use Notifier suffix"
+description: "Ensure classes extending Notifier have the Notifier suffix"
 sidebar:
-  badge:
-    text: "Fix"
-    variant: "tip"
   label: use_notifier_suffix
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `use_notifier_suffix` |
-| **Category** | Class Naming |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.1.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Class Naming</span>
 
-## Problem
+This rule flags classes that extend `Notifier` (or `AsyncNotifier`) but don't include the `Notifier` suffix in their name. Consistent naming makes it immediately clear which classes are Riverpod Notifiers when scanning through your codebase.
 
-Use Notifier suffix
+## Why use this rule
 
-## Suggestion
+Riverpod Notifiers have a specific lifecycle and behavior -- they're created by providers, have a `build()` method, and manage reactive state. When a class like `CounterManager` extends `Notifier` without the suffix, developers have to inspect the class to understand its role. The `Notifier` suffix makes the architectural intent obvious.
 
-Ex. {0}Notifier
+**See also:** [Riverpod Notifier documentation](https://riverpod.dev/docs/concepts/providers#notifierprovider)
 
-## Example
+## Don't
 
 ```dart
 import 'package:riverpod/riverpod.dart';
 
-// use_notifier_suffix
-//
-// Classes extending Notifier should have the 'Notifier' suffix.
-
-// LINT: Missing 'Notifier' suffix
+// Missing 'Notifier' suffix
 class CounterManager extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void increment() => state++;
+}
+```
+
+## Do
+
+```dart
+import 'package:riverpod/riverpod.dart';
+
+class CounterNotifier extends Notifier<int> {
   @override
   int build() => 0;
 

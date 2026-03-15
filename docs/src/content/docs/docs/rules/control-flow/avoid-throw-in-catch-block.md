@@ -1,6 +1,6 @@
 ---
 title: avoid_throw_in_catch_block
-description: "Avoid using throw inside a catch block."
+description: "Detect throw expressions inside catch blocks"
 sidebar:
   badge:
     text: "Fix"
@@ -8,56 +8,38 @@ sidebar:
   label: avoid_throw_in_catch_block
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_throw_in_catch_block` |
-| **Category** | Control Flow |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Control Flow</span>
 
-## Problem
+Warns when a `throw` expression is used inside a catch block. Throwing a new exception (or re-throwing the caught one with `throw e`) discards the original stack trace, making debugging significantly harder. Use `rethrow` or `Error.throwWithStackTrace()` instead.
 
-Avoid using throw inside a catch block.
+## Why use this rule
 
-## Suggestion
+When you use `throw` inside a catch block, the original stack trace is lost. This means error reports and logs will point to the catch block instead of the actual source of the error. Using `rethrow` preserves the full stack trace, and `Error.throwWithStackTrace()` lets you throw a different exception while keeping the original stack trace attached.
 
-Use Error.throwWithStackTrace() to preserve the stack trace.
+**See also:** [Exceptions](https://dart.dev/language/error-handling)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, unused_catch_clause
-
-// avoid_throw_in_catch_block
-//
-// Warns when a `throw` expression is used inside a catch block.
-// Throwing inside catch loses the original stack trace — use
-// Error.throwWithStackTrace() or rethrow instead.
-
-class RepositoryException implements Exception {
-  RepositoryException([this.message]);
-  final String? message;
-}
-
-void networkDataProvider() {}
-
-// ❌ Bad: Throwing a new exception in a catch block
 void bad() {
-  // LINT: throw loses original stack trace
+  // throw loses original stack trace
   try {
     networkDataProvider();
   } on Object {
     throw RepositoryException();
   }
 
-  // LINT: throw with caught exception still loses stack trace
+  // throw with caught exception still loses stack trace
   try {
     networkDataProvider();
   } catch (e) {
     throw e;
   }
 
-  // LINT: throw with logic before it
+  // throw with logic before it
   try {
     networkDataProvider();
   } catch (e) {
@@ -65,8 +47,11 @@ void bad() {
     throw RepositoryException('failed');
   }
 }
+```
 
-// ✅ Good: Preserving the original stack trace
+## Do
+
+```dart
 void good() {
   // Use Error.throwWithStackTrace to preserve the stack trace
   try {

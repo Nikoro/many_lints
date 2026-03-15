@@ -1,6 +1,6 @@
 ---
 title: prefer_transform_over_container
-description: "Use Transform widget instead of the Container widget with only the transform parameter"
+description: "Use Transform instead of Container when only transform is set"
 sidebar:
   badge:
     text: "Fix"
@@ -8,81 +8,51 @@ sidebar:
   label: prefer_transform_over_container
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_transform_over_container` |
-| **Category** | Widget Replacement |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Widget Replacement</span>
 
-## Problem
+Flags `Container` widgets that only use the `transform` parameter (plus optional `key` and `child`). When `Container` is used solely for a transform, the `Transform` widget is a lighter, more descriptive alternative.
 
-Use Transform widget instead of the Container widget with only the transform parameter
+## Why use this rule
 
-## Suggestion
+`Container` is a convenience widget that composes many lower-level widgets internally. When you only need a matrix transform, using `Transform` directly avoids the overhead and clearly communicates your intent. It also gives you access to Transform's named constructors like `Transform.rotate` and `Transform.scale`.
 
-Try using Transform instead of Container.
+**See also:** [Transform](https://api.flutter.dev/flutter/widgets/Transform-class.html) | [Container](https://api.flutter.dev/flutter/widgets/Container-class.html)
 
-## Example
+## Don't
 
 ```dart
-import 'dart:math' as math;
+// Container with only transform parameter
+Container(
+  transform: Matrix4.skewY(0.3)..rotateZ(-math.pi / 12.0),
+  child: const Text('Skewed'),
+);
 
-import 'package:flutter/material.dart';
+// Container with only transform and key
+Container(
+  key: const ValueKey('rotated'),
+  transform: Matrix4.rotationZ(math.pi / 4),
+  child: const Text('Rotated'),
+);
+```
 
-// prefer_transform_over_container
-//
-// Use Transform widget instead of Container when only transform is set.
+## Do
 
-// ❌ Bad: Container used only for transform
-class BadExamples extends StatelessWidget {
-  const BadExamples({super.key});
+```dart
+// Use Transform directly
+Transform(
+  transform: Matrix4.skewY(0.3)..rotateZ(-math.pi / 12.0),
+  child: const Text('Skewed'),
+);
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // LINT: Container with only transform parameter
-        Container(
-          transform: Matrix4.skewY(0.3)..rotateZ(-math.pi / 12.0),
-          child: const Text('Skewed'),
-        ),
-
-        // LINT: Container with only transform and key
-        Container(
-          key: const ValueKey('rotated'),
-          transform: Matrix4.rotationZ(math.pi / 4),
-          child: const Text('Rotated'),
-        ),
-      ],
-    );
-  }
-}
-
-// ✅ Good: Using Transform widget directly
-class GoodExamples extends StatelessWidget {
-  const GoodExamples({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Good: Using Transform directly
-        Transform(
-          transform: Matrix4.skewY(0.3)..rotateZ(-math.pi / 12.0),
-          child: const Text('Skewed'),
-        ),
-
-        // Good: Container with transform and other parameters
-        Container(
-          transform: Matrix4.rotationZ(math.pi / 4),
-          alignment: Alignment.topRight,
-          child: const Text('Rotated with alignment'),
-        ),
-      ],
-    );
-  }
-}
+// Container with transform and other parameters is fine
+Container(
+  transform: Matrix4.rotationZ(math.pi / 4),
+  alignment: Alignment.topRight,
+  child: const Text('Rotated with alignment'),
+);
 ```
 
 ## Configuration
