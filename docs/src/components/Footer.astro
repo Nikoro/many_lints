@@ -1,0 +1,55 @@
+---
+import type { Props } from '@astrojs/starlight/props';
+import Default from '@astrojs/starlight/components/Footer.astro';
+---
+
+<Default {...Astro.props}><slot /></Default>
+
+<footer class="site-footer">
+  <div class="footer-topics">
+    <a href="https://pub.dev/packages?q=topic%3Alint" target="_blank" rel="noopener">#lint</a>
+    <a href="https://pub.dev/packages?q=topic%3Alints" target="_blank" rel="noopener">#lints</a>
+    <a href="https://pub.dev/packages?q=topic%3Alinter" target="_blank" rel="noopener">#linter</a>
+    <a href="https://pub.dev/packages?q=topic%3Aanalyzer" target="_blank" rel="noopener">#analyzer</a>
+    <a href="https://pub.dev/packages?q=topic%3Acode" target="_blank" rel="noopener">#code</a>
+  </div>
+  <p class="footer-copyright">&copy; {new Date().getFullYear()} Dominik Krajcer</p>
+</footer>
+
+<style>
+  .site-footer {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 1.5rem 1rem;
+    font-size: var(--sl-text-xs);
+    color: var(--sl-color-gray-3);
+    border-top: 1px solid var(--sl-color-gray-5);
+  }
+
+  .footer-copyright {
+    margin: 0;
+    text-align: center;
+  }
+
+  .footer-topics {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .footer-topics a {
+    padding: 0.2rem 0.55rem;
+    border-radius: 1rem;
+    border: 1px solid var(--sl-color-gray-5);
+    color: var(--sl-color-gray-3);
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+
+  .footer-topics a:hover {
+    color: var(--sl-color-accent);
+    border-color: var(--sl-color-accent);
+    background: var(--sl-color-accent-low);
+  }
+</style>

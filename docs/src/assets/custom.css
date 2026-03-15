@@ -111,23 +111,25 @@ site-search {
   justify-content: center;
 }
 
-/* Dart/Flutter blue for sidebar badges */
+/* Green "Fix" badge in sidebar — matches rule page .rule-badge--fix */
 .sl-badge.tip {
-  --sl-color-bg-badge: #0468D7;
-  color: #fff;
-  border-color: #0468D7;
+  --sl-color-bg-badge: #66bb6a;
+  color: #1b3a1d;
+  border-color: #4caf50;
+  font-weight: 600;
+  border-radius: 999px;
 }
 
 :root .sl-badge.tip {
-  --sl-color-bg-badge: #0468D7;
-  color: #fff;
-  border-color: #0468D7;
+  --sl-color-bg-badge: #66bb6a;
+  color: #1b3a1d;
+  border-color: #4caf50;
 }
 
 :root[data-theme='light'] .sl-badge.tip {
-  --sl-color-bg-badge: #0468D7;
-  color: #fff;
-  border-color: #0468D7;
+  --sl-color-bg-badge: #f0f7f0;
+  color: #2e7d32;
+  border-color: #66bb6a;
 }
 
 /* Flutter docs-inspired admonition/aside styling */
