@@ -10,6 +10,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Many Lints',
+      favicon: '/favicon.ico',
       expressiveCode: {
         themes: ['github-light', 'github-dark'],
         styleOverrides: {
@@ -20,6 +21,7 @@ export default defineConfig({
       components: {
         SocialIcons: './src/components/SocialIcons.astro',
         ThemeSelect: './src/components/ThemeSelect.astro',
+        Footer: './src/components/Footer.astro',
       },
       customCss: ['./src/assets/custom.css'],
       sidebar: [
