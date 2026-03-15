@@ -1,6 +1,6 @@
 ---
 title: prefer_returning_shorthands
-description: "This instance type matches the return type and can be replaced with a dot shorthand."
+description: "Use dot shorthand constructors in expression function return values."
 sidebar:
   badge:
     text: "Fix"
@@ -8,117 +8,58 @@ sidebar:
   label: prefer_returning_shorthands
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_returning_shorthands` |
-| **Category** | Shorthand Patterns |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.3.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Shorthand Patterns</span>
 
-## Problem
+Flags expression function bodies that return an instance whose type matches the declared return type. Since the return type is already explicit, the class name in the constructor call is redundant and can be replaced with a dot shorthand (e.g., `.new()` or `.named()`).
 
-This instance type matches the return type and can be replaced with a dot shorthand.
+## Why use this rule
 
-## Suggestion
+When a function already declares its return type, repeating the class name in the returned constructor call adds visual noise without extra information. Dot shorthands reduce this redundancy, making arrow functions more concise. This also applies to both branches of conditional expressions.
 
-Try using the dot shorthand constructor.
+**See also:** [Dart language - Arrow syntax](https://dart.dev/language/functions#arrow-syntax)
 
-## Example
+## Don't
 
 ```dart
-// prefer_returning_shorthands
-//
-// Suggests returning dot shorthands from an expression function body.
-//
-// Function and method declarations already have an explicit return type and in
-// cases when that type is the same as the returned instance, the instance can be
-// simplified to a dot shorthand without reducing readability.
-
 class SomeClass {
   final String value;
-
   const SomeClass(this.value);
   const SomeClass.named(this.value);
 }
 
-class ExampleService {
-  // === BAD examples ===
+SomeClass getInstance() => SomeClass('val');
 
-  // LINT: Use .new('val') instead of SomeClass('val')
-  SomeClass getInstance() => SomeClass('val');
+SomeClass getNamedInstance() => SomeClass.named('val');
 
-  // LINT: Use .named('val') instead of SomeClass.named('val')
-  SomeClass getNamedInstance() => SomeClass.named('val');
+SomeClass getConditional(bool flag) =>
+    flag ? SomeClass('value') : SomeClass.named('val');
 
-  // LINT: Both branches can use shorthands
-  SomeClass getConditional(bool flag) =>
-      flag ? SomeClass('value') : SomeClass.named('val');
+SomeClass? getNullable() => SomeClass('val');
+```
 
-  // LINT: Works with nullable return types too
-  SomeClass? getNullable() => SomeClass('val');
+## Do
 
-  // === GOOD examples ===
+```dart
+SomeClass getInstance() => .new('val');
 
-  // GOOD: Using dot shorthand for default constructor
-  SomeClass getInstanceGood() => .new('val');
+SomeClass getNamedInstance() => .named('val');
 
-  // GOOD: Using dot shorthand for named constructor
-  SomeClass getNamedInstanceGood() => .named('val');
+SomeClass getConditional(bool flag) =>
+    flag ? .new('value') : .named('val');
 
-  // GOOD: Using shorthands in conditional
-  SomeClass getConditionalGood(bool flag) =>
-      flag ? .new('value') : .named('val');
-
-  // === Cases where the lint does NOT trigger ===
-
-  // GOOD: Block function body (not an expression function)
-  SomeClass getWithBlock() {
-    return SomeClass('val');
-  }
-
-  // GOOD: No explicit return type
-  getInstance() => SomeClass('val');
-
-  // GOOD: Dynamic return type
-  dynamic getDynamic() => SomeClass('val');
-
-  // GOOD: Already using shorthand
-  SomeClass getAlreadyShorthand() => .new('val');
+// Block function bodies are not flagged:
+SomeClass getWithBlock() {
+  return SomeClass('val');
 }
 
-// Example with generics
-class GenericClass<T> {
-  final T value;
+// No explicit return type — not flagged:
+getInstance() => SomeClass('val');
 
-  const GenericClass(this.value);
-}
-
-class GenericService {
-  // LINT: Generic classes also benefit from shorthands
-  GenericClass<String> getGeneric() => GenericClass<String>('val');
-
-  // GOOD: Using shorthand
-  GenericClass<String> getGenericGood() => .new('val');
-}
-
-// Example showing the benefits
-class ConfigFactory {
-  // Without shorthands (verbose)
-  Config getDefaultConfigBad() => Config.development('localhost', 3000);
-  Config getProductionConfigBad() => Config.production('api.example.com', 443);
-
-  // With shorthands (concise and readable)
-  Config getDefaultConfigGood() => .development('localhost', 3000);
-  Config getProductionConfigGood() => .production('api.example.com', 443);
-}
-
-class Config {
-  final String host;
-  final int port;
-
-  const Config.development(this.host, this.port);
-  const Config.production(this.host, this.port);
-}
+// Dynamic return type — not flagged:
+dynamic getDynamic() => SomeClass('val');
 ```
 
 ## Configuration

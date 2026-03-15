@@ -4,7 +4,12 @@
       "Bash(git add:*)",
       "Bash(dart test:*)",
       "Bash(dart analyze:*)",
-      "WebFetch(domain:dcm.dev)"
+      "WebFetch(domain:dcm.dev)",
+      "Bash(dart pub get:*)",
+      "Bash(dart format:*)",
+      "Bash(bun run *)",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot"
     ]
   },
   "hooks": {

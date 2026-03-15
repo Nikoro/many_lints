@@ -1,6 +1,6 @@
 ---
 title: prefer_return_await
-description: "Missing await on returned Future inside try-catch block."
+description: "Detect missing await on returned Futures inside try-catch"
 sidebar:
   badge:
     text: "Fix"
@@ -8,37 +8,25 @@ sidebar:
   label: prefer_return_await
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_return_await` |
-| **Category** | Control Flow |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Control Flow</span>
 
-## Problem
+Warns when a `Future` is returned without `await` inside a try-catch block in an async function. Without `await`, any exception thrown by the Future will not be caught by the surrounding catch block, silently bypassing your error handling.
 
-Missing await on returned Future inside try-catch block.
+## Why use this rule
 
-## Suggestion
+When you write `return asyncOp()` inside a try-catch, the Future is returned to the caller without being awaited. If `asyncOp()` throws, the exception propagates to the caller instead of being caught by the local catch block. Adding `await` ensures the Future completes within the try-catch scope, so exceptions are properly caught and handled.
 
-Add await before the returned expression.
+**See also:** [Asynchronous programming](https://dart.dev/libraries/async/async-await)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, unused_catch_clause
-
-// prefer_return_await
-//
-// Warns when a Future is returned without `await` inside a try-catch block.
-// Not awaiting a Future leads to any potential exception not being caught
-// by the catch block.
-
-// ❌ Bad: Returning Future without await in try-catch
-
 Future<String> badReturnInTry() async {
   try {
-    // LINT: Exception from asyncOp() won't be caught
+    // Exception from asyncOp() won't be caught
     return asyncOp();
   } catch (e) {
     return 'fallback';
@@ -49,13 +37,15 @@ Future<String> badReturnInCatch() async {
   try {
     throw Exception();
   } catch (e) {
-    // LINT: Exception from asyncOp() won't be caught
+    // Exception from asyncOp() won't be caught
     return asyncOp();
   }
 }
+```
 
-// ✅ Good: Returning with await in try-catch
+## Do
 
+```dart
 Future<String> goodReturnAwaitInTry() async {
   try {
     return await asyncOp();
@@ -72,12 +62,12 @@ Future<String> goodReturnAwaitInCatch() async {
   }
 }
 
-// ✅ Good: Returning Future outside try-catch is fine
+// Returning Future outside try-catch is fine
 Future<String> goodReturnOutsideTryCatch() async {
   return asyncOp();
 }
 
-// ✅ Good: Non-async function returning Future in try-catch is fine
+// Non-async function returning Future in try-catch is fine
 Future<String> goodNonAsync() {
   try {
     return asyncOp();
@@ -85,8 +75,6 @@ Future<String> goodNonAsync() {
     return Future.value('fallback');
   }
 }
-
-Future<String> asyncOp() async => 'result';
 ```
 
 ## Configuration

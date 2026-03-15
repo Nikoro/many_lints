@@ -8,51 +8,44 @@ sidebar:
   label: prefer_contains
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_contains` |
-| **Category** | Collection & Type |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Collection & Type</span>
 
-## Problem
+Comparing `.indexOf()` to `-1` is a common pattern for checking whether an element exists in a collection or a substring exists in a string. The `.contains()` method expresses this intent more clearly and directly.
 
-Use .contains() instead of .indexOf() compared to -1.
+## Why use this rule
 
-## Suggestion
+`.contains()` communicates "does this exist?" more clearly than `.indexOf() != -1`. It is also less error-prone since there is no magic number to get wrong. This rule catches both `indexOf(x) == -1` and `indexOf(x) != -1` patterns, including reversed operand order.
 
-Replace with .contains() for better readability.
+**See also:** [Iterable.contains](https://api.dart.dev/stable/dart-core/Iterable/contains.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// prefer_contains
-//
-// Warns when using .indexOf() compared to -1 instead of .contains().
-// Using .contains() directly expresses the intent of checking for presence.
-
-// ❌ Bad: Using .indexOf() compared to -1
-void bad() {
+void example() {
   final list = [1, 2, 3];
 
-  // LINT: Use .contains() instead of .indexOf() == -1
+  // Use .contains() instead of .indexOf() == -1
   final notFound = list.indexOf(1) == -1;
 
-  // LINT: Use .contains() instead of .indexOf() != -1
+  // Use .contains() instead of .indexOf() != -1
   final found = list.indexOf(1) != -1;
 
-  // LINT: Also reversed comparisons
+  // Also reversed comparisons
   final reversed = -1 == list.indexOf(1);
 
-  // LINT: Works on strings too
+  // Works on strings too
   final s = 'hello';
   final hasA = s.indexOf('a') != -1;
 }
+```
 
-// ✅ Good: Using .contains()
-void good() {
+## Do
+
+```dart
+void example() {
   final list = [1, 2, 3];
 
   final notFound = !list.contains(1);

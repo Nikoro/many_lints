@@ -1,46 +1,29 @@
 ---
 title: avoid_ref_inside_state_dispose
-description: "Avoid accessing 'ref' inside the dispose() method."
+description: "Avoid accessing ref inside the dispose method of a ConsumerState"
 sidebar:
   label: avoid_ref_inside_state_dispose
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_ref_inside_state_dispose` |
-| **Category** | Riverpod State |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Riverpod State</span>
 
-## Problem
+This rule catches `ref` usage inside the `dispose()` method of `ConsumerState` classes. By the time `dispose()` runs, providers may already be torn down, so reading or watching them can throw unexpected errors or return stale data.
 
-Avoid accessing 'ref' inside the dispose() method.
+## Why use this rule
 
-## Suggestion
+In Riverpod, the lifecycle of providers and widgets is not tightly coupled. When `dispose()` fires, there is no guarantee that the providers you are trying to access are still alive. Accessing `ref` in `dispose()` can silently read disposed state or throw `UnmountedRefException`, leading to hard-to-debug crashes in production.
 
-Providers may already be disposed at this point. Remove the ref access or move it to an earlier lifecycle method.
+**See also:** [Riverpod provider lifecycle](https://riverpod.dev/docs/essentials/auto_dispose)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, unused_element
-
-// avoid_ref_inside_state_dispose
-//
-// Warns when `ref` is accessed inside the dispose() method of a
-// ConsumerState class. At disposal time, providers may already be
-// disposed and accessing them can lead to unexpected errors.
-
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-final someProvider = Provider<String>((ref) => 'hello');
-
-// ❌ Bad: Accessing ref in dispose()
-class _BadExampleState extends ConsumerState<ConsumerStatefulWidget> {
+class MyWidgetState extends ConsumerState<ConsumerStatefulWidget> {
   @override
   void dispose() {
-    // LINT: Avoid accessing ref inside dispose
+    // ref may already be invalid at this point
     ref.read(someProvider);
     super.dispose();
   }
@@ -48,24 +31,12 @@ class _BadExampleState extends ConsumerState<ConsumerStatefulWidget> {
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
+```
 
-// ❌ Bad: Multiple ref accesses in dispose()
-class _BadExampleMultipleState extends ConsumerState<ConsumerStatefulWidget> {
-  @override
-  void dispose() {
-    // LINT: Avoid accessing ref inside dispose
-    ref.read(someProvider);
-    // LINT: Avoid accessing ref inside dispose
-    ref.watch(someProvider);
-    super.dispose();
-  }
+## Do
 
-  @override
-  Widget build(BuildContext context) => const SizedBox();
-}
-
-// ✅ Good: No ref in dispose()
-class _GoodExampleState extends ConsumerState<ConsumerStatefulWidget> {
+```dart
+class MyWidgetState extends ConsumerState<ConsumerStatefulWidget> {
   @override
   void dispose() {
     // Clean up without accessing ref
@@ -74,27 +45,10 @@ class _GoodExampleState extends ConsumerState<ConsumerStatefulWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // ref is fine to use in build
+    // ref is safe to use in build
     final value = ref.watch(someProvider);
     return Text(value);
   }
-}
-
-// ✅ Good: ref in other lifecycle methods is fine
-class _GoodInitStateState extends ConsumerState<ConsumerStatefulWidget> {
-  @override
-  void initState() {
-    super.initState();
-    ref.read(someProvider);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox();
 }
 ```
 

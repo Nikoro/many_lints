@@ -1,6 +1,6 @@
 ---
 title: prefer_explicit_function_type
-description: "This 'Function' type does not specify a return type or parameter list."
+description: "Prefer explicit function type annotations over the bare 'Function' type."
 sidebar:
   badge:
     text: "Fix"
@@ -8,48 +8,39 @@ sidebar:
   label: prefer_explicit_function_type
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_explicit_function_type` |
-| **Category** | Type Annotations |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.3.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Type Annotations</span>
 
-## Problem
+Flags uses of the bare `Function` type that do not specify a return type or parameter list. Using the unparameterized `Function` type effectively makes the declaration dynamic and disables type checking on calls, which can hide bugs.
 
-This 'Function' type does not specify a return type or parameter list.
+## Why use this rule
 
-## Suggestion
+The bare `Function` type accepts any number and type of arguments and returns `dynamic`, bypassing Dart's type system entirely. Specifying the return type and parameter list catches mismatched signatures at compile time rather than at runtime.
 
-Try adding explicit return type and parameter list.
+**See also:** [Dart language - Function type](https://dart.dev/language/functions#the-function-type)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_element, unused_field
-
-/// Examples of the `prefer_explicit_function_type` lint rule.
-
-// ❌ Bad: Using non-explicit Function type
 class BadWidget {
-  final Function onTap; // LINT
-  final Function? onLongPress; // LINT
+  final Function onTap;
+  final Function? onLongPress;
 
   const BadWidget(this.onTap, this.onLongPress);
 }
 
-void badFunction(Function callback) {} // LINT
+void badFunction(Function callback) {}
 
-Function badReturnType() {
-  // LINT
-  return () {};
-}
+Function badReturnType() => () {};
 
-void badTypeArgument() {
-  List<Function> callbacks = []; // LINT
-}
+List<Function> callbacks = [];
+```
 
-// ✅ Good: Using explicit function types
+## Do
+
+```dart
 class GoodWidget {
   final void Function() onTap;
   final void Function()? onLongPress;
@@ -59,26 +50,13 @@ class GoodWidget {
 
 void goodFunction(void Function() callback) {}
 
-void Function() goodReturnType() {
-  return () {};
-}
+void Function() goodReturnType() => () {};
 
-void goodTypeArgument() {
-  List<void Function()> callbacks = [];
-}
+List<void Function()> callbacks = [];
 
-// ✅ Good: Function types with parameters and return types
-class GoodWidgetWithTypes {
-  final void Function(int value) onValueChanged;
-  final int Function(String input) processInput;
-  final String Function(int a, int b)? combine;
-
-  const GoodWidgetWithTypes(
-    this.onValueChanged,
-    this.processInput,
-    this.combine,
-  );
-}
+// Function types with parameters and return types
+final void Function(int value) onValueChanged = (_) {};
+final int Function(String input) processInput = (_) => 0;
 ```
 
 ## Configuration

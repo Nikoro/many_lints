@@ -1,6 +1,6 @@
 ---
 title: avoid_commented_out_code
-description: "This comment looks like commented-out code."
+description: "Detect and flag commented-out code."
 sidebar:
   badge:
     text: "Fix"
@@ -8,48 +8,38 @@ sidebar:
   label: avoid_commented_out_code
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_commented_out_code` |
-| **Category** | Code Quality |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.3.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
 
-## Problem
+Flags comments that look like commented-out Dart code rather than descriptive text. This includes commented-out function definitions, variable declarations, import statements, and other recognizable code patterns. The quick fix removes the flagged comment block.
 
-This comment looks like commented-out code.
+## Why use this rule
 
-## Suggestion
+Commented-out code is technical debt that clutters the codebase and confuses readers about what is intentional. Version control already preserves old code, making commented-out blocks unnecessary. Removing them keeps the codebase clean and reduces cognitive load during code review.
 
-Remove commented-out code. Use version control to track old code instead.
+**See also:** [Effective Dart: Documentation](https://dart.dev/effective-dart/documentation)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// avoid_commented_out_code
-//
-// Warns when commented-out code is found. Use version control to
-// track old code instead of keeping it in comments.
-
-// Bad: Commented-out function definition
 class BadExamples {
-  // LINT: This looks like commented-out code
   // void apply(String value) {
   //   print(value);
   // }
 
-  // LINT: Commented-out variable declaration
   // final x = 42;
 
-  // LINT: Commented-out import statement
   // import 'dart:async';
 
   void another() {}
 }
+```
 
-// Good: Regular descriptive comments
+## Do
+
+```dart
 class GoodExamples {
   // This method handles the main processing logic
   // and delegates to the appropriate handler

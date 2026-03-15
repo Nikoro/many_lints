@@ -1,6 +1,6 @@
 ---
 title: avoid_unnecessary_stateful_widgets
-description: "This StatefulWidget has no mutable state. Consider using StatelessWidget instead."
+description: "Detect StatefulWidgets that have no mutable state"
 sidebar:
   badge:
     text: "Fix"
@@ -8,33 +8,23 @@ sidebar:
   label: avoid_unnecessary_stateful_widgets
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_unnecessary_stateful_widgets` |
-| **Category** | State Management |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">State Management</span>
 
-## Problem
+Warns when a `StatefulWidget` has no mutable fields, lifecycle method overrides, or `setState` calls in its companion `State` class. In these cases, the widget should be a `StatelessWidget` instead.
 
-This StatefulWidget has no mutable state. Consider using StatelessWidget instead.
+## Why use this rule
 
-## Suggestion
+Using `StatefulWidget` when there is no mutable state adds unnecessary complexity and overhead. A `StatelessWidget` is simpler to read, easier to test, and communicates intent more clearly. The framework also has slightly less work to do for stateless widgets since there is no `State` object to manage.
 
-Convert to StatelessWidget and move the build method.
+**See also:** [StatefulWidget](https://api.flutter.dev/flutter/widgets/StatefulWidget-class.html) | [StatelessWidget](https://api.flutter.dev/flutter/widgets/StatelessWidget-class.html)
 
-## Example
+## Don't
 
 ```dart
-import 'package:flutter/material.dart';
-
-// avoid_unnecessary_stateful_widgets
-//
-// Warns when a StatefulWidget has no mutable state, lifecycle methods, or
-// setState calls and could be a StatelessWidget instead.
-
-// ❌ Bad: StatefulWidget with no mutable state — only implements build()
-// LINT: This StatefulWidget has no mutable state
+// StatefulWidget with no mutable state — only implements build()
 class UnnecessaryStatefulExample extends StatefulWidget {
   const UnnecessaryStatefulExample({super.key});
 
@@ -51,8 +41,7 @@ class _UnnecessaryStatefulExampleState
   }
 }
 
-// ❌ Bad: StatefulWidget with only final/static fields — still no mutable state
-// LINT: Final fields don't justify a StatefulWidget
+// StatefulWidget with only final/static fields — still no mutable state
 class FinalFieldStatefulExample extends StatefulWidget {
   const FinalFieldStatefulExample({super.key});
 
@@ -69,8 +58,12 @@ class _FinalFieldStatefulExampleState extends State<FinalFieldStatefulExample> {
     return Text(title);
   }
 }
+```
 
-// ✅ Good: StatelessWidget — the correct choice when there's no mutable state
+## Do
+
+```dart
+// StatelessWidget — the correct choice when there's no mutable state
 class CorrectStatelessExample extends StatelessWidget {
   const CorrectStatelessExample({super.key});
 
@@ -80,7 +73,7 @@ class CorrectStatelessExample extends StatelessWidget {
   }
 }
 
-// ✅ Good: StatefulWidget with mutable state
+// StatefulWidget with mutable state — justified
 class CounterWidget extends StatefulWidget {
   const CounterWidget({super.key});
 
@@ -100,7 +93,7 @@ class _CounterWidgetState extends State<CounterWidget> {
   }
 }
 
-// ✅ Good: StatefulWidget with lifecycle methods
+// StatefulWidget with lifecycle methods — justified
 class LifecycleWidget extends StatefulWidget {
   const LifecycleWidget({super.key});
 
@@ -112,12 +105,10 @@ class _LifecycleWidgetState extends State<LifecycleWidget> {
   @override
   void initState() {
     super.initState();
-    // Setup logic here
   }
 
   @override
   void dispose() {
-    // Cleanup logic here
     super.dispose();
   }
 

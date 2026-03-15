@@ -1,68 +1,41 @@
 ---
 title: use_ref_and_state_synchronously
-description: "Don't use 'ref' or 'state' after an async gap without checking 'ref.mounted'."
+description: "Check ref.mounted before using ref or state after an await"
 sidebar:
-  badge:
-    text: "Fix"
-    variant: "tip"
   label: use_ref_and_state_synchronously
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `use_ref_and_state_synchronously` |
-| **Category** | Async Safety |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Async Safety</span>
 
-## Problem
+This rule warns when `ref` or `state` is accessed after an `await` in a Riverpod Notifier method without first checking `ref.mounted`. If the notifier gets disposed while the async operation is in progress, accessing `ref` or `state` will throw an `UnmountedRefException`.
 
-Don't use 'ref' or 'state' after an async gap without checking 'ref.mounted'.
+## Why use this rule
 
-## Suggestion
+Async methods in Notifiers can outlive the notifier itself. When a user navigates away or a provider is disposed mid-await, the notifier is torn down but the async method keeps running. Without a `ref.mounted` guard, the next `ref.read()` or `state = ...` will crash at runtime with an exception that is easy to miss during development but hits users in production.
 
-Add 'if (!ref.mounted) return;' before accessing 'ref' or 'state' after an await.
+**See also:** [Riverpod async safety](https://riverpod.dev/docs/essentials/auto_dispose) | [Flutter mounted check](https://api.flutter.dev/flutter/widgets/State/mounted.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, unused_element
-
-// use_ref_and_state_synchronously
-//
-// Warns when `ref` or `state` is accessed after an `await` point in a
-// Riverpod Notifier without first checking `ref.mounted`. If the notifier
-// is disposed before the async operation completes, accessing `ref` or
-// `state` will throw an `UnmountedRefException`.
-
-import 'package:riverpod/riverpod.dart';
-
-// ❌ Bad: Accessing ref after await without a mounted guard
-class _BadRefAfterAwait extends Notifier<int> {
+class CounterNotifier extends Notifier<int> {
   @override
   int build() => 0;
 
   Future<void> incrementDelayed() async {
     await Future<void>.delayed(const Duration(seconds: 1));
-    // LINT: ref may be unmounted after the await
-    ref.read(someProvider);
-  }
-}
-
-// ❌ Bad: Assigning state after await without a mounted guard
-class _BadStateAfterAwait extends Notifier<int> {
-  @override
-  int build() => 0;
-
-  Future<void> incrementDelayed() async {
-    await Future<void>.delayed(const Duration(seconds: 1));
-    // LINT: notifier may be disposed, state access crashes
+    // Notifier may be disposed by now — this can throw
     state = state + 1;
   }
 }
+```
 
-// ✅ Good: Using ref.mounted guard before accessing ref/state
-class _GoodMountedGuard extends Notifier<int> {
+## Do
+
+```dart
+class CounterNotifier extends Notifier<int> {
   @override
   int build() => 0;
 
@@ -72,32 +45,6 @@ class _GoodMountedGuard extends Notifier<int> {
     state = state + 1;
   }
 }
-
-// ✅ Good: Accessing ref/state before await (no async gap)
-class _GoodBeforeAwait extends Notifier<int> {
-  @override
-  int build() => 0;
-
-  Future<void> incrementDelayed() async {
-    final current = state;
-    ref.read(someProvider);
-    await Future<void>.delayed(const Duration(seconds: 1));
-    // No ref/state access after await — safe
-  }
-}
-
-// ✅ Good: Using ref/state in a sync method (no async gap)
-class _GoodSyncMethod extends Notifier<int> {
-  @override
-  int build() => 0;
-
-  void increment() {
-    state = state + 1;
-    ref.read(someProvider);
-  }
-}
-
-final someProvider = Provider<String>((ref) => 'hello');
 ```
 
 ## Configuration

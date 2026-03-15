@@ -8,65 +8,50 @@ sidebar:
   label: prefer_void_callback
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_void_callback` |
-| **Category** | Type Annotations |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Type Annotations</span>
 
-## Problem
+Flags uses of `void Function()` that can be replaced with the `VoidCallback` typedef from `dart:ui`. The typedef is shorter, more readable, and is the standard Flutter convention for no-argument void callbacks.
 
-Use 'VoidCallback' instead of 'void Function()'.
+## Why use this rule
 
-## Suggestion
+`VoidCallback` is a well-known typedef in the Flutter framework. Using it instead of the verbose `void Function()` makes code more concise and consistent with the rest of the Flutter ecosystem. The quick fix automatically replaces the type and adds the necessary import.
 
-Replace with 'VoidCallback' from 'dart:ui'.
+**See also:** [VoidCallback typedef](https://api.flutter.dev/flutter/dart-ui/VoidCallback.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_element, unused_field, unused_local_variable
-
-/// Examples of the `prefer_void_callback` lint rule.
-
-// ❌ Bad: Using verbose void Function() type
 class BadWidget {
-  final void Function() onTap; // LINT
-  final void Function()? onLongPress; // LINT
+  final void Function() onTap;
+  final void Function()? onLongPress;
 
   const BadWidget(this.onTap, this.onLongPress);
 }
 
-void badParameter(void Function() callback) {} // LINT
+void badParameter(void Function() callback) {}
 
-void badVariable() {
-  void Function() callback = () {}; // LINT
-}
+void Function() badReturnType() => () {};
 
-void badTypeArgument() {
-  List<void Function()> callbacks = []; // LINT
-}
+List<void Function()> callbacks = [];
+```
 
-void Function() badReturnType() {
-  // LINT
-  return () {};
-}
+## Do
 
-// ✅ Good: Using VoidCallback typedef
-// import 'dart:ui';
+```dart
 class GoodWidget {
-  // final VoidCallback onTap;
-  // final VoidCallback? onLongPress;
+  final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
-  const GoodWidget();
+  const GoodWidget(this.onTap, this.onLongPress);
 }
 
-// ✅ Good: Function types that are NOT VoidCallback (different return/params)
+// Function types with parameters or different return types are fine:
 void goodWithParams(void Function(int value) callback) {}
-void goodIntReturn(int Function() callback) {}
-void goodFutureReturn(Future<void> Function() callback) {}
-void goodGeneric(void Function<T>() callback) {}
+int Function() goodIntReturn = () => 0;
+Future<void> Function() goodFutureReturn = () async {};
 ```
 
 ## Configuration

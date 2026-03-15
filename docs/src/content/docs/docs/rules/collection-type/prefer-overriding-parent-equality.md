@@ -1,39 +1,25 @@
 ---
 title: prefer_overriding_parent_equality
-description: "Parent class overrides == and hashCode but this class does not."
+description: "Override == and hashCode when the parent class overrides them."
 sidebar:
-  badge:
-    text: "Fix"
-    variant: "tip"
   label: prefer_overriding_parent_equality
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_overriding_parent_equality` |
-| **Category** | Collection & Type |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Collection & Type</span>
 
-## Problem
+When a parent class overrides `==` and `hashCode`, child classes that add new fields should also override both operators. Otherwise, the inherited equality ignores the child's fields, meaning two child instances with different field values may be considered equal.
 
-Parent class overrides == and hashCode but this class does not.
+## Why use this rule
 
-## Suggestion
+Inheriting a parent's `==` without overriding it in the child means the child's own fields are excluded from equality checks. This causes silent bugs in collections, state comparison, and testing where logically different objects appear identical.
 
-Override both == and hashCode to account for this class\
+**See also:** [Dart operator == and hashCode](https://dart.dev/guides/language/effective-dart/design#equality)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, unused_element
-
-// prefer_overriding_parent_equality
-//
-// Warns when a class extends a parent that overrides == and hashCode
-// but does not override them itself.
-
-// ❌ Bad: Child inherits parent's equality without accounting for its own fields
 class Parent {
   final int id;
   Parent(this.id);
@@ -45,13 +31,13 @@ class Parent {
   bool operator ==(Object other) => other is Parent && id == other.id;
 }
 
-// LINT: Missing both == and hashCode overrides
+// Missing both == and hashCode overrides
 class Child extends Parent {
   final String name;
   Child(this.name, int id) : super(id);
 }
 
-// LINT: Missing hashCode override
+// Missing hashCode override
 class ChildMissingHashCode extends Parent {
   final String name;
   ChildMissingHashCode(this.name, int id) : super(id);
@@ -61,7 +47,7 @@ class ChildMissingHashCode extends Parent {
       other is ChildMissingHashCode && name == other.name && id == other.id;
 }
 
-// LINT: Missing == override
+// Missing == override
 class ChildMissingEquals extends Parent {
   final String name;
   ChildMissingEquals(this.name, int id) : super(id);
@@ -69,8 +55,12 @@ class ChildMissingEquals extends Parent {
   @override
   int get hashCode => Object.hash(id, name);
 }
+```
 
-// ✅ Good: Child overrides both == and hashCode
+## Do
+
+```dart
+// Child overrides both == and hashCode
 class GoodChild extends Parent {
   final String name;
   GoodChild(this.name, int id) : super(id);
@@ -83,13 +73,13 @@ class GoodChild extends Parent {
       other is GoodChild && id == other.id && name == other.name;
 }
 
-// ✅ Good: Abstract class is not flagged
+// Abstract class is not flagged
 abstract class AbstractChild extends Parent {
   final String label;
   AbstractChild(this.label, int id) : super(id);
 }
 
-// ✅ Good: Parent does not override equality — no warning
+// Parent does not override equality — no warning
 class SimpleParent {
   final int x;
   SimpleParent(this.x);

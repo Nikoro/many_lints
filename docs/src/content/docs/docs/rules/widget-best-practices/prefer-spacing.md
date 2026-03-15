@@ -1,145 +1,47 @@
 ---
 title: prefer_spacing
-description: "Prefer passing the 'spacing' argument instead of using SizedBox."
+description: "Use the spacing argument on Row/Column instead of SizedBox spacers"
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: prefer_spacing
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_spacing` |
-| **Category** | Widget Best Practices |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-## Problem
+This rule detects `SizedBox` widgets used as uniform spacers between children in a `Row`, `Column`, or `Flex`, and suggests using the built-in `spacing` argument instead. It also catches `separatedBy()` and `.expand()` patterns that insert SizedBox spacers. Requires Flutter 3.27+.
 
-Prefer passing the 'spacing' argument instead of using SizedBox.
+## Why use this rule
 
-## Suggestion
+Scattering `SizedBox(height: 10)` between every child is verbose and easy to get wrong (miss one, use a different value, etc.). The `spacing` parameter on `Row`, `Column`, and `Flex` applies uniform spacing declaratively with a single property, making the intent clear and the code shorter. It also avoids polluting the `children` list with non-semantic spacer widgets.
 
-Use the 'spacing' argument on Row, Column, or Flex instead.
+**See also:** [Column spacing](https://api.flutter.dev/flutter/widgets/Flex/spacing.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, unused_element
+Column(
+  children: [
+    Text('First'),
+    SizedBox(height: 10),
+    Text('Second'),
+    SizedBox(height: 10),
+    Text('Third'),
+  ],
+)
+```
 
-import 'package:flutter/material.dart';
+## Do
 
-// prefer_spacing
-//
-// Prefer using the `spacing` argument on Row, Column, and Flex
-// instead of inserting SizedBox widgets between children.
-// Requires Flutter 3.27+.
-
-extension _ListSeparate<T> on List<T> {
-  List<T> separatedBy(T separator) => [];
-}
-
-// ❌ Bad: SizedBox used as spacer between children
-class BadDirectSizedBox extends StatelessWidget {
-  const BadDirectSizedBox({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text('First'),
-        // LINT: Prefer passing the 'spacing' argument instead of using SizedBox
-        SizedBox(height: 10),
-        Text('Second'),
-        // LINT: Same uniform spacing value
-        SizedBox(height: 10),
-        Text('Third'),
-      ],
-    );
-  }
-}
-
-// ❌ Bad: .separatedBy() with SizedBox
-class BadSeparatedBy extends StatelessWidget {
-  const BadSeparatedBy({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // LINT: Prefer passing the 'spacing' argument
-    return Column(
-      children: [
-        Text('A'),
-        Text('B'),
-        Text('C'),
-      ].separatedBy(const SizedBox(height: 10)),
-    );
-  }
-}
-
-// ❌ Bad: .expand() yielding SizedBox
-class BadExpand extends StatelessWidget {
-  const BadExpand({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final widgets = [Text('A'), Text('B'), Text('C')];
-    // LINT: Prefer passing the 'spacing' argument
-    return Column(
-      children: widgets
-          .expand((widget) sync* {
-            yield const SizedBox(height: 10);
-            yield widget;
-          })
-          .skip(1)
-          .toList(),
-    );
-  }
-}
-
-// ✅ Good: Using the spacing argument
-class GoodSpacing extends StatelessWidget {
-  const GoodSpacing({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      spacing: 10,
-      children: [Text('First'), Text('Second'), Text('Third')],
-    );
-  }
-}
-
-// ✅ Good: Mixed spacing values (not uniform, so no lint)
-class GoodMixedSpacing extends StatelessWidget {
-  const GoodMixedSpacing({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text('First'),
-        SizedBox(height: 10),
-        Text('Second'),
-        SizedBox(height: 20),
-        Text('Third'),
-      ],
-    );
-  }
-}
-
-// ✅ Good: SizedBox with child (not a spacer)
-class GoodSizedBoxWithChild extends StatelessWidget {
-  const GoodSizedBoxWithChild({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text('First'),
-        SizedBox(height: 100, child: Text('Constrained')),
-        Text('Second'),
-      ],
-    );
-  }
-}
+```dart
+Column(
+  spacing: 10,
+  children: [Text('First'), Text('Second'), Text('Third')],
+)
 ```
 
 ## Configuration

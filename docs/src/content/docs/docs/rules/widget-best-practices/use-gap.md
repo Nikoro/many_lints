@@ -1,6 +1,6 @@
 ---
 title: use_gap
-description: "Use Gap widget instead of {0} for spacing in multi-child widgets."
+description: "Use Gap widget instead of SizedBox for spacing in multi-child widgets"
 sidebar:
   badge:
     text: "Fix"
@@ -8,65 +8,57 @@ sidebar:
   label: use_gap
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `use_gap` |
-| **Category** | Widget Best Practices |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.2.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-## Problem
+This rule suggests replacing `SizedBox` and `Padding` spacers inside multi-child widgets (`Column`, `Row`, etc.) with the `Gap` widget from the `gap` package. `Gap` automatically picks the right axis based on its parent, so you never accidentally use `width` in a `Column` or `height` in a `Row`.
 
-Use Gap widget instead of {0} for spacing in multi-child widgets.
+## Why use this rule
 
-## Suggestion
+Using `SizedBox(height: 16)` for spacing works, but it is error-prone in `Row` (where you need `width` instead) and verbose in either case. `Gap(16)` is axis-aware, shorter, and makes the intent clearer: this is a spacer, not a box with specific dimensions. It also reduces bugs when refactoring a `Column` to a `Row` or vice versa.
 
-Replace with Gap widget from the gap package.
+**See also:** [gap package](https://pub.dev/packages/gap)
 
-## Example
+## Don't
 
 ```dart
-import 'package:flutter/material.dart';
+Column(
+  children: [
+    Text('First'),
+    SizedBox(height: 16),
+    Text('Second'),
+  ],
+)
 
-// use_gap
-//
-// Use Gap widget instead of SizedBox or Padding for spacing
-// inside multi-child widgets like Column, Row, etc.
+Row(
+  children: [
+    Text('Left'),
+    SizedBox(width: 8),
+    Text('Right'),
+  ],
+)
+```
 
-class UseGapExample extends StatelessWidget {
-  const UseGapExample({super.key});
+## Do
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text('First'),
-        // LINT: Use Gap instead of SizedBox for vertical spacing
-        SizedBox(height: 16),
-        Text('Second'),
-        // LINT: Use Gap instead of Padding for vertical spacing
-        Padding(padding: EdgeInsets.only(top: 8)),
-        Text('Third'),
-      ],
-    );
-  }
-}
+```dart
+Column(
+  children: [
+    Text('First'),
+    Gap(16),
+    Text('Second'),
+  ],
+)
 
-class UseGapRowExample extends StatelessWidget {
-  const UseGapRowExample({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text('Left'),
-        // LINT: Use Gap instead of SizedBox for horizontal spacing
-        SizedBox(width: 8),
-        Text('Right'),
-      ],
-    );
-  }
-}
+Row(
+  children: [
+    Text('Left'),
+    Gap(8),
+    Text('Right'),
+  ],
+)
 ```
 
 ## Configuration

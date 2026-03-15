@@ -1,6 +1,6 @@
 ---
 title: avoid_wrapping_in_padding
-description: "Avoid wrapping a '{0}' in a 'Padding' widget."
+description: "Avoid wrapping widgets that support padding in a Padding widget"
 sidebar:
   badge:
     text: "Fix"
@@ -8,83 +8,49 @@ sidebar:
   label: avoid_wrapping_in_padding
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_wrapping_in_padding` |
-| **Category** | Widget Replacement |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Widget Replacement</span>
 
-## Problem
+Flags `Padding` widgets whose child already supports a `padding` parameter (such as `Container`, `Card`, `ListView`, etc.). Instead of wrapping in `Padding`, you should pass padding directly to the child widget.
 
-Avoid wrapping a '{0}' in a 'Padding' widget.
+## Why use this rule
 
-## Suggestion
+Many Flutter widgets accept a `padding` parameter in their constructor. Wrapping them in a `Padding` widget adds an unnecessary layer to the widget tree when the same effect can be achieved by passing `padding` directly to the child. This keeps the tree flatter, reduces nesting, and makes the code easier to read.
 
-Try using the 'padding' argument of the '{0}' widget directly.
+**See also:** [Padding](https://api.flutter.dev/flutter/widgets/Padding-class.html) | [Container](https://api.flutter.dev/flutter/widgets/Container-class.html)
 
-## Example
+## Don't
 
 ```dart
-import 'package:flutter/material.dart';
+// Container supports padding, no need to wrap in Padding
+Padding(
+  padding: EdgeInsets.all(16),
+  child: Container(child: Text('Hello')),
+);
 
-// avoid_wrapping_in_padding
-//
-// Avoid wrapping widgets that support a `padding` parameter in a Padding
-// widget. Use the child widget's own padding parameter instead.
+// Card supports padding
+Padding(
+  padding: EdgeInsets.symmetric(horizontal: 12),
+  child: Card(child: Text('Card content')),
+);
+```
 
-class AvoidWrappingInPaddingExample extends StatelessWidget {
-  const AvoidWrappingInPaddingExample({super.key});
+## Do
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // LINT: Container supports padding, no need to wrap in Padding
-        Padding(
-          padding: EdgeInsets.all(16),
-          child: Container(child: Text('Hello')),
-        ),
+```dart
+// Pass padding directly to Container
+Container(padding: EdgeInsets.all(16), child: Text('Hello'));
 
-        // LINT: Container with no arguments, still supports padding
-        Padding(padding: EdgeInsets.all(8), child: Container()),
+// Padding wrapping a widget that doesn't support padding is fine
+Padding(padding: EdgeInsets.all(8), child: Text('Hello'));
 
-        // LINT: Card supports padding
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Card(child: Text('Card content')),
-        ),
-      ],
-    );
-  }
-}
-
-// Good: Use the child widget's padding parameter directly
-class GoodExamples extends StatelessWidget {
-  const GoodExamples({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Good: padding passed directly to Container
-        Container(padding: EdgeInsets.all(16), child: Text('Hello')),
-
-        // Good: Padding wrapping a widget that doesn't support padding
-        Padding(padding: EdgeInsets.all(8), child: Text('Hello')),
-
-        // Good: Padding wrapping an Icon (no padding parameter)
-        Padding(padding: EdgeInsets.all(8), child: Icon(Icons.star)),
-
-        // Good: Container already has its own padding set
-        Padding(
-          padding: EdgeInsets.all(8),
-          child: Container(padding: EdgeInsets.all(4), child: Text('Hello')),
-        ),
-      ],
-    );
-  }
-}
+// Container already has its own padding set -- wrapping is acceptable
+Padding(
+  padding: EdgeInsets.all(8),
+  child: Container(padding: EdgeInsets.all(4), child: Text('Hello')),
+);
 ```
 
 ## Configuration

@@ -1,6 +1,6 @@
 ---
 title: avoid_map_keys_contains
-description: "Use containsKey() instead of .keys.contains()."
+description: "Use containsKey() instead of .keys.contains() for better performance."
 sidebar:
   badge:
     text: "Fix"
@@ -8,46 +8,39 @@ sidebar:
   label: avoid_map_keys_contains
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_map_keys_contains` |
-| **Category** | Collection & Type |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Collection & Type</span>
 
-## Problem
+Using `map.keys.contains(key)` iterates through all keys to check for existence, while `map.containsKey(key)` performs a direct hash lookup. This rule catches the slower pattern and suggests the more efficient alternative.
 
-Use containsKey() instead of .keys.contains().
+## Why use this rule
 
-## Suggestion
+`Map.keys` returns an `Iterable` that must be traversed linearly to check for a key, making it O(n). `Map.containsKey()` uses the map's hash table directly and runs in O(1). For large maps, the performance difference is significant.
 
-Replace with containsKey() for better performance.
+**See also:** [Map.containsKey](https://api.dart.dev/stable/dart-core/Map/containsKey.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// avoid_map_keys_contains
-//
-// Warns when using .keys.contains() instead of containsKey().
-// .keys.contains is significantly slower than containsKey.
-
-// ❌ Bad: Using .keys.contains()
-void bad() {
+void example() {
   final map = {'hello': 'world', 'foo': 'bar'};
 
-  // LINT: Use containsKey() instead
+  // Use containsKey() instead
   final exists = map.keys.contains('hello');
 
-  // LINT: Also in conditions
+  // Also in conditions
   if (map.keys.contains('foo')) {
     print('found');
   }
 }
+```
 
-// ✅ Good: Using containsKey()
-void good() {
+## Do
+
+```dart
+void example() {
   final map = {'hello': 'world', 'foo': 'bar'};
 
   final exists = map.containsKey('hello');

@@ -1,6 +1,6 @@
 ---
 title: prefer_correct_edge_insets_constructor
-description: "Use a simpler EdgeInsets constructor."
+description: "Use the simplest EdgeInsets constructor for the given values."
 sidebar:
   badge:
     text: "Fix"
@@ -8,110 +8,65 @@ sidebar:
   label: prefer_correct_edge_insets_constructor
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_correct_edge_insets_constructor` |
-| **Category** | Collection & Type |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Collection & Type</span>
 
-## Problem
+Flutter's `EdgeInsets` provides several constructors for different use cases: `all()`, `symmetric()`, `only()`, `zero`, and `fromLTRB()`. This rule detects when a more verbose constructor is used where a simpler one would suffice, such as using `EdgeInsets.fromLTRB(8, 8, 8, 8)` instead of `EdgeInsets.all(8)`.
 
-Use a simpler EdgeInsets constructor.
+## Why use this rule
 
-## Suggestion
+Using the most specific constructor makes your intent clearer at a glance. `EdgeInsets.all(8)` immediately communicates uniform padding, while `EdgeInsets.fromLTRB(8, 8, 8, 8)` requires reading all four values to understand the pattern.
 
-Replace with {0}.
+**See also:** [EdgeInsets](https://api.flutter.dev/flutter/painting/EdgeInsets-class.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// prefer_correct_edge_insets_constructor
-//
-// Warns when an EdgeInsets constructor can be replaced with a simpler one.
-
 import 'package:flutter/painting.dart';
 
-// ❌ Bad: EdgeInsets.fromLTRB with all equal values
-class BadFromLTRBAllEqual {
-  void example() {
-    // LINT: Use EdgeInsets.all(8) instead
-    final p = EdgeInsets.fromLTRB(8, 8, 8, 8);
-  }
+void example() {
+  // Use EdgeInsets.all(8) instead
+  final p1 = EdgeInsets.fromLTRB(8, 8, 8, 8);
+
+  // Use EdgeInsets.symmetric(horizontal: 8) instead
+  final p2 = EdgeInsets.fromLTRB(8, 0, 8, 0);
+
+  // Use EdgeInsets.symmetric(horizontal: 8, vertical: 4) instead
+  final p3 = EdgeInsets.fromLTRB(8, 4, 8, 4);
+
+  // Use EdgeInsets.only(left: 8) instead
+  final p4 = EdgeInsets.fromLTRB(8, 0, 0, 0);
+
+  // Use EdgeInsets.symmetric(horizontal: 16) instead
+  final p5 = EdgeInsets.only(left: 16, right: 16);
+
+  // Use EdgeInsets.all(8) instead
+  final p6 = EdgeInsets.only(left: 8, top: 8, right: 8, bottom: 8);
+
+  // Use EdgeInsets.all(8) instead
+  final p7 = EdgeInsets.symmetric(horizontal: 8, vertical: 8);
+
+  // Use EdgeInsets.zero instead
+  final p8 = EdgeInsets.all(0);
+  final p9 = EdgeInsets.fromLTRB(0, 0, 0, 0);
 }
+```
 
-// ❌ Bad: EdgeInsets.fromLTRB with symmetric values
-class BadFromLTRBSymmetric {
-  void example() {
-    // LINT: Use EdgeInsets.symmetric(horizontal: 8) instead
-    final p = EdgeInsets.fromLTRB(8, 0, 8, 0);
+## Do
 
-    // LINT: Use EdgeInsets.symmetric(horizontal: 8, vertical: 4) instead
-    final p2 = EdgeInsets.fromLTRB(8, 4, 8, 4);
-  }
-}
+```dart
+import 'package:flutter/painting.dart';
 
-// ❌ Bad: EdgeInsets.fromLTRB with some zero values
-class BadFromLTRBOnly {
-  void example() {
-    // LINT: Use EdgeInsets.only(left: 8) instead
-    final p = EdgeInsets.fromLTRB(8, 0, 0, 0);
-  }
-}
-
-// ❌ Bad: EdgeInsets.only with symmetric values
-class BadOnlySymmetric {
-  void example() {
-    // LINT: Use EdgeInsets.symmetric(horizontal: 16) instead
-    final p = EdgeInsets.only(left: 16, right: 16);
-  }
-}
-
-// ❌ Bad: EdgeInsets.only with all equal values
-class BadOnlyAllEqual {
-  void example() {
-    // LINT: Use EdgeInsets.all(8) instead
-    final p = EdgeInsets.only(left: 8, top: 8, right: 8, bottom: 8);
-  }
-}
-
-// ❌ Bad: EdgeInsets.symmetric with both values equal
-class BadSymmetricEqual {
-  void example() {
-    // LINT: Use EdgeInsets.all(8) instead
-    final p = EdgeInsets.symmetric(horizontal: 8, vertical: 8);
-  }
-}
-
-// ❌ Bad: EdgeInsets.all(0) should be EdgeInsets.zero
-class BadAllZero {
-  void example() {
-    // LINT: Use EdgeInsets.zero instead
-    final p = EdgeInsets.all(0);
-  }
-}
-
-// ❌ Bad: EdgeInsets.fromLTRB(0, 0, 0, 0) should be EdgeInsets.zero
-class BadFromLTRBZero {
-  void example() {
-    // LINT: Use EdgeInsets.zero instead
-    final p = EdgeInsets.fromLTRB(0, 0, 0, 0);
-  }
-}
-
-// ✅ Good: Using the correct constructor
-class GoodExamples {
-  void example() {
-    final p1 = EdgeInsets.all(8);
-    final p2 = EdgeInsets.symmetric(horizontal: 8, vertical: 4);
-    final p3 = EdgeInsets.symmetric(horizontal: 16);
-    final p4 = EdgeInsets.only(left: 8);
-    final p5 = EdgeInsets.only(left: 8, top: 4);
-    final p6 = EdgeInsets.zero;
-    final p7 = EdgeInsets.fromLTRB(1, 2, 3, 4);
-  }
+void example() {
+  final p1 = EdgeInsets.all(8);
+  final p2 = EdgeInsets.symmetric(horizontal: 8, vertical: 4);
+  final p3 = EdgeInsets.symmetric(horizontal: 16);
+  final p4 = EdgeInsets.only(left: 8);
+  final p5 = EdgeInsets.only(left: 8, top: 4);
+  final p6 = EdgeInsets.zero;
+  final p7 = EdgeInsets.fromLTRB(1, 2, 3, 4);
 }
 ```
 

@@ -1,6 +1,6 @@
 ---
 title: avoid_unnecessary_overrides_in_state
-description: "This method override only calls super.{0}() without additional logic."
+description: "Detect State lifecycle overrides that only call super"
 sidebar:
   badge:
     text: "Fix"
@@ -8,95 +8,61 @@ sidebar:
   label: avoid_unnecessary_overrides_in_state
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_unnecessary_overrides_in_state` |
-| **Category** | State Management |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">State Management</span>
 
-## Problem
+Warns when a `State` class overrides a lifecycle method (like `initState`, `dispose`, `didChangeDependencies`) but the body only calls the corresponding `super` method without any additional logic. These overrides are redundant and should be removed.
 
-This method override only calls super.{0}() without additional logic.
+## Why use this rule
 
-## Suggestion
+Lifecycle overrides that only call `super` clutter your State classes and make it harder to spot the overrides that actually do meaningful work. When every lifecycle method is overridden "just in case," readers must inspect each one to know which ones matter. Removing the no-op overrides keeps your State classes focused on actual behavior.
 
-Remove this unnecessary override.
+**See also:** [State.initState](https://api.flutter.dev/flutter/widgets/State/initState.html) | [State.dispose](https://api.flutter.dev/flutter/widgets/State/dispose.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_element, unused_field
-
-// avoid_unnecessary_overrides_in_state
-//
-// Warns when a State class contains method overrides that only call the
-// super implementation without any additional logic.
-
-import 'package:flutter/material.dart';
-
-// ❌ Bad: Overrides that only call super
-class _BadWidget extends StatefulWidget {
-  const _BadWidget();
-
-  @override
-  State<_BadWidget> createState() => _BadWidgetState();
-}
-
 class _BadWidgetState extends State<_BadWidget> {
-  // LINT: dispose only calls super.dispose()
   @override
   void dispose() {
-    super.dispose();
+    super.dispose(); // Only calls super — remove this override
   }
 
-  // LINT: initState only calls super.initState()
   @override
   void initState() {
-    super.initState();
+    super.initState(); // Only calls super — remove this override
   }
 
   @override
   Widget build(BuildContext context) => const SizedBox();
-}
-
-// ❌ Bad: Expression body that only calls super
-class _BadExpressionWidget extends StatefulWidget {
-  const _BadExpressionWidget();
-
-  @override
-  State<_BadExpressionWidget> createState() => _BadExpressionWidgetState();
 }
 
 class _BadExpressionWidgetState extends State<_BadExpressionWidget> {
-  // LINT: initState uses expression body to just call super
   @override
-  void initState() => super.initState();
+  void initState() => super.initState(); // Expression body, still redundant
 
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
+```
 
-// ✅ Good: Overrides that include additional logic
-class _GoodWidget extends StatefulWidget {
-  const _GoodWidget();
+## Do
 
-  @override
-  State<_GoodWidget> createState() => _GoodWidgetState();
-}
-
+```dart
 class _GoodWidgetState extends State<_GoodWidget> {
   final ValueNotifier<int> _counter = ValueNotifier(0);
 
   @override
   void initState() {
     super.initState();
-    _counter.addListener(_onChanged);
+    _counter.addListener(_onChanged); // Additional logic — override is justified
   }
 
   @override
   void dispose() {
-    _counter.removeListener(_onChanged);
+    _counter.removeListener(_onChanged); // Cleanup logic — override is justified
     super.dispose();
   }
 
@@ -106,14 +72,7 @@ class _GoodWidgetState extends State<_GoodWidget> {
   Widget build(BuildContext context) => const SizedBox();
 }
 
-// ✅ Good: No overrides at all
-class _MinimalWidget extends StatefulWidget {
-  const _MinimalWidget();
-
-  @override
-  State<_MinimalWidget> createState() => _MinimalWidgetState();
-}
-
+// No overrides at all — clean and simple
 class _MinimalWidgetState extends State<_MinimalWidget> {
   @override
   Widget build(BuildContext context) => const SizedBox();

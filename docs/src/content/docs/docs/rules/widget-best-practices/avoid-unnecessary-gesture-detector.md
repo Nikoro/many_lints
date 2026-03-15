@@ -1,6 +1,6 @@
 ---
 title: avoid_unnecessary_gesture_detector
-description: "This 'GestureDetector' has no event handlers."
+description: "Remove GestureDetector widgets that have no event handlers"
 sidebar:
   badge:
     text: "Fix"
@@ -8,70 +8,39 @@ sidebar:
   label: avoid_unnecessary_gesture_detector
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_unnecessary_gesture_detector` |
-| **Category** | Widget Best Practices |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-## Problem
+This rule flags `GestureDetector` widgets that have no event handler callbacks (no `onTap`, `onLongPress`, `onDoubleTap`, etc.). A GestureDetector without any handlers does nothing useful but still participates in hit testing, which can interfere with gesture recognition for widgets below it.
 
-This 'GestureDetector' has no event handlers.
+## Why use this rule
 
-## Suggestion
+A handler-less `GestureDetector` is dead code that adds clutter to the widget tree. It may also unintentionally swallow touch events from child widgets, especially when `behavior` is set to `HitTestBehavior.opaque`. Removing it or adding the intended handler makes the code correct and easier to understand.
 
-Try passing an event handler (e.g. onTap) or removing this widget.
+**See also:** [GestureDetector](https://api.flutter.dev/flutter/widgets/GestureDetector-class.html) | [InkWell](https://api.flutter.dev/flutter/material/InkWell-class.html)
 
-## Example
+## Don't
 
 ```dart
-import 'package:flutter/material.dart';
+// GestureDetector without any on* callback
+GestureDetector(child: Text('hello'))
 
-// avoid_unnecessary_gesture_detector
-//
-// Warns when a GestureDetector widget has no event handler callbacks,
-// making it functionally useless.
+// Non-handler arguments like behavior don't count
+GestureDetector(behavior: HitTestBehavior.opaque, child: Text('world'))
+```
 
-// ignore_for_file: unused_element
+## Do
 
-// ❌ Bad: GestureDetector with no event handlers
-class BadExample extends StatelessWidget {
-  const BadExample({super.key});
+```dart
+GestureDetector(onTap: () => print('tapped'), child: Text('hello'))
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // LINT: GestureDetector without any on* callback
-        GestureDetector(child: Text('hello')),
-
-        // LINT: Only non-handler arguments like behavior don't count
-        GestureDetector(behavior: HitTestBehavior.opaque, child: Text('world')),
-      ],
-    );
-  }
-}
-
-// ✅ Good: GestureDetector with event handlers
-class GoodExample extends StatelessWidget {
-  const GoodExample({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        GestureDetector(onTap: () => print('tapped'), child: Text('hello')),
-
-        GestureDetector(
-          onLongPress: () => print('long pressed'),
-          onDoubleTap: () => print('double tapped'),
-          child: Text('world'),
-        ),
-      ],
-    );
-  }
-}
+GestureDetector(
+  onLongPress: () => print('long pressed'),
+  onDoubleTap: () => print('double tapped'),
+  child: Text('world'),
+)
 ```
 
 ## Configuration

@@ -1,84 +1,48 @@
 ---
 title: avoid_flexible_outside_flex
-description: "{0} should only be used as a direct child of Row, Column, or Flex."
+description: "Only use Flexible and Expanded as direct children of Row, Column, or Flex"
 sidebar:
   label: avoid_flexible_outside_flex
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_flexible_outside_flex` |
-| **Category** | Widget Best Practices |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-## Problem
+This rule flags `Flexible` and `Expanded` widgets that are not direct children of a `Row`, `Column`, or `Flex`. These widgets rely on the flex layout protocol to work, so wrapping them inside other widgets like `Container` or `Padding` makes them silently do nothing.
 
-{0} should only be used as a direct child of Row, Column, or Flex.
+## Why use this rule
 
-## Suggestion
+When `Expanded` or `Flexible` is nested inside a non-flex parent, Flutter does not throw an error at build time -- the widget simply has no effect. This leads to confusing layouts where you think you are distributing space but nothing happens. Catching this at lint time saves you from staring at the widget tree wondering why your layout is broken.
 
-Move {0} inside a Row, Column, or Flex, or remove the wrapper.
+**See also:** [Flexible](https://api.flutter.dev/flutter/widgets/Flexible-class.html) | [Row](https://api.flutter.dev/flutter/widgets/Row-class.html) | [Column](https://api.flutter.dev/flutter/widgets/Column-class.html)
 
-## Example
+## Don't
 
 ```dart
-import 'package:flutter/material.dart';
+Column(
+  children: [
+    // Expanded is inside a Container, not directly in the Column
+    Container(child: Expanded(child: Text('hello'))),
 
-// avoid_flexible_outside_flex
-//
-// Flexible and Expanded widgets should only be used as direct children
-// of Row, Column, or Flex. Using them elsewhere has no effect.
+    // Flexible is inside a Center
+    Center(child: Flexible(child: Text('hello'))),
+  ],
+)
+```
 
-// ❌ Bad: Expanded/Flexible outside a Flex widget
-class BadExamples extends StatelessWidget {
-  const BadExamples({super.key});
+## Do
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // LINT: Expanded wrapped inside a Container, not directly in a Flex
-        Container(child: Expanded(child: Text('hello'))),
+```dart
+Column(
+  children: [
+    // Expanded directly in a Row
+    Row(children: [Expanded(child: Text('hello'))]),
 
-        // LINT: Flexible inside a Center
-        Center(child: Flexible(child: Text('hello'))),
-
-        // LINT: Expanded inside a Padding
-        Padding(
-          padding: EdgeInsets.all(8),
-          child: Expanded(child: Text('hello')),
-        ),
-      ],
-    );
-  }
-}
-
-// ✅ Good: Expanded/Flexible as direct children of Row, Column, or Flex
-class GoodExamples extends StatelessWidget {
-  const GoodExamples({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // OK: Expanded directly in a Row
-        Row(children: [Expanded(child: Text('hello'))]),
-
-        // OK: Flexible directly in a Column
-        Flexible(child: Text('hello')),
-
-        // OK: Multiple Expanded in a Row
-        Row(
-          children: [
-            Expanded(child: Text('a')),
-            Expanded(child: Text('b')),
-          ],
-        ),
-      ],
-    );
-  }
-}
+    // Flexible directly in a Column
+    Flexible(child: Text('hello')),
+  ],
+)
 ```
 
 ## Configuration

@@ -1,6 +1,6 @@
 ---
 title: avoid_unnecessary_overrides
-description: "This override of {0} does not add any implementation."
+description: "Detect overrides that only delegate to super"
 sidebar:
   badge:
     text: "Fix"
@@ -8,31 +8,22 @@ sidebar:
   label: avoid_unnecessary_overrides
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_unnecessary_overrides` |
-| **Category** | State Management |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">State Management</span>
 
-## Problem
+Warns when a class or mixin overrides a method, getter, or setter without adding any logic beyond calling `super`. This includes pass-through methods that forward all arguments unchanged, getters that only return `super.getter`, setters that only assign `super.setter`, and abstract redeclarations.
 
-This override of {0} does not add any implementation.
+## Why use this rule
 
-## Suggestion
+Overrides that only delegate to `super` add visual noise without changing behavior. They make classes harder to scan and can mislead readers into thinking the override does something meaningful. Removing them keeps the codebase lean and makes intentional overrides stand out.
 
-Remove this unnecessary override.
+**See also:** [Effective Dart: Usage](https://dart.dev/effective-dart/usage)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_element, unused_field
-
-// avoid_unnecessary_overrides
-//
-// Warns when a class or mixin overrides a member without adding
-// implementation or changing the signature.
-
 class _Base {
   void foo() {}
   void bar(int x, String y) {}
@@ -41,70 +32,43 @@ class _Base {
   int compute(int x) => x;
 }
 
-// ❌ Bad: method overrides that only call super
-
 class _BadMethodNoArgs extends _Base {
   @override
   void foo() {
-    // LINT: only calls super.foo()
     super.foo();
   }
-}
-
-class _BadMethodExpression extends _Base {
-  @override
-  void foo() => super.foo(); // LINT: expression body only calls super
 }
 
 class _BadMethodWithArgs extends _Base {
   @override
   void bar(int x, String y) {
-    // LINT: passes through all args unchanged
     super.bar(x, y);
   }
 }
 
-class _BadMethodWithReturn extends _Base {
-  @override
-  int compute(int x) => super.compute(x); // LINT: pass-through return
-}
-
-// ❌ Bad: getter/setter overrides that only delegate to super
-
 class _BadGetter extends _Base {
   @override
-  int get value => super.value; // LINT: only returns super.value
+  int get value => super.value;
 }
 
 class _BadSetter extends _Base {
   @override
-  set value(int v) => super.value = v; // LINT: only assigns super.value
+  set value(int v) => super.value = v;
 }
-
-// ❌ Bad: abstract redeclarations
 
 abstract class _AbstractBase {
   void foo();
-  int get value;
 }
 
 abstract class _BadAbstractRedeclaration extends _AbstractBase {
   @override
-  void foo(); // LINT: abstract redeclaration without implementation
-
-  @override
-  int get value; // LINT: abstract getter redeclaration
+  void foo(); // Abstract redeclaration without implementation
 }
+```
 
-// ❌ Bad: mixin unnecessary override
+## Do
 
-mixin _BadMixin on _Base {
-  @override
-  void foo() => super.foo(); // LINT
-}
-
-// ✅ Good: overrides that add actual logic
-
+```dart
 class _GoodMethodWithExtraLogic extends _Base {
   @override
   void foo() {
@@ -125,25 +89,10 @@ class _GoodGetterWithDifferentValue extends _Base {
   int get value => super.value + 1;
 }
 
-class _GoodSetterWithExtraLogic extends _Base {
-  @override
-  set value(int v) {
-    print('setting $v');
-    super.value = v;
-  }
-}
-
-// ✅ Good: empty override (intentionally suppresses behavior)
+// Empty override intentionally suppresses behavior
 class _GoodEmptyOverride extends _Base {
   @override
   void foo() {}
-}
-
-// ✅ Good: no @override annotation
-class _NoAnnotation extends _Base {
-  void foo() {
-    super.foo();
-  }
 }
 ```
 

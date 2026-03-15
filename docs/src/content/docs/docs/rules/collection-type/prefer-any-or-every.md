@@ -1,6 +1,6 @@
 ---
 title: prefer_any_or_every
-description: "Use .{0}() instead of .where().{1}."
+description: "Use .any() or .every() instead of .where().isEmpty/.isNotEmpty."
 sidebar:
   badge:
     text: "Fix"
@@ -8,40 +8,45 @@ sidebar:
   label: prefer_any_or_every
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_any_or_every` |
-| **Category** | Collection & Type |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.1.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Collection & Type</span>
 
-## Problem
+Using `.where(predicate).isNotEmpty` can be replaced with `.any(predicate)`, and `.where(predicate).isEmpty` can be replaced with `.every(negatedPredicate)`. The dedicated methods are more readable and can short-circuit evaluation, avoiding the creation of an intermediate lazy iterable.
 
-Use .{0}() instead of .where().{1}.
+## Why use this rule
 
-## Suggestion
+`.any()` and `.every()` express intent more clearly and stop iterating as soon as the result is determined. `.where()` creates an intermediate `Iterable` that is unnecessary when you only need a boolean check.
 
-Replace with .{0}() for better readability and performance.
+**See also:** [Iterable.any](https://api.dart.dev/stable/dart-core/Iterable/any.html) | [Iterable.every](https://api.dart.dev/stable/dart-core/Iterable/every.html)
 
-## Example
+## Don't
 
 ```dart
-// prefer_any_or_every
-//
-// Use .any() instead of .where().isNotEmpty
-// Use .every() with negated condition instead of .where().isEmpty
-
-class PreferAnyOrEveryExample {
+class Example {
   final List<int> numbers = [1, 2, 3, 4, 5];
 
   void checkNumbers() {
-    // LINT: Use .any() instead of .where().isNotEmpty
+    // Use .any() instead of .where().isNotEmpty
     final hasEven = numbers.where((n) => n.isEven).isNotEmpty;
 
-    // LINT: Use .every() instead of .where().isEmpty
+    // Use .every() instead of .where().isEmpty
     final allPositive = numbers.where((n) => n < 0).isEmpty;
+  }
+}
+```
 
-    print('$hasEven $allPositive');
+## Do
+
+```dart
+class Example {
+  final List<int> numbers = [1, 2, 3, 4, 5];
+
+  void checkNumbers() {
+    final hasEven = numbers.any((n) => n.isEven);
+
+    final allPositive = numbers.every((n) => n >= 0);
   }
 }
 ```

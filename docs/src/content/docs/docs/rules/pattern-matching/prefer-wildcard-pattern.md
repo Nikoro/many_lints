@@ -1,6 +1,6 @@
 ---
 title: prefer_wildcard_pattern
-description: "Use the wildcard pattern '_' instead of 'Object()'."
+description: "Use the wildcard pattern '_' instead of 'Object()' for catch-all cases."
 sidebar:
   badge:
     text: "Fix"
@@ -8,83 +8,71 @@ sidebar:
   label: prefer_wildcard_pattern
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_wildcard_pattern` |
-| **Category** | Pattern Matching |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Pattern Matching</span>
 
-## Problem
+Using `Object()` as a catch-all pattern in switch expressions, switch statements, or if-case conditions is functionally equivalent to the wildcard pattern `_`. The wildcard is more idiomatic in Dart and instantly recognizable as "match anything."
 
-Use the wildcard pattern '_' instead of 'Object()'.
+## Why use this rule
 
-## Suggestion
+`_` is the standard Dart idiom for "I don't care about the value." Using `Object()` instead adds visual noise and may confuse readers into thinking the pattern is doing something specific. The wildcard pattern is shorter, clearer, and universally understood.
 
-Replace 'Object()' with '_'.
+**See also:** [Dart patterns](https://dart.dev/language/patterns)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, dead_code, unreachable_switch_case
+// Using Object() as a catch-all pattern
+String classify(Object object) {
+  return switch (object) {
+    int() => 'int',
+    Object() => 'other',
+  };
+}
 
-// prefer_wildcard_pattern
-//
-// Warns when `Object()` is used as a pattern instead of the wildcard `_`.
-// The wildcard pattern is clearer and more idiomatic for matching any value.
-
-// ❌ Bad: Using Object() as a catch-all pattern
-class BadExamples {
-  String switchExpression(Object object) {
-    return switch (object) {
-      int() => 'int',
-      // LINT: Use _ instead of Object()
-      Object() => 'other',
-    };
-  }
-
-  void switchStatement(Object object) {
-    switch (object) {
-      case int():
-        break;
-      // LINT: Use _ instead of Object()
-      case Object():
-        break;
-    }
-  }
-
-  void ifCase(Object object) {
-    // LINT: Use _ instead of Object()
-    if (object case Object()) {}
+void statement(Object object) {
+  switch (object) {
+    case int():
+      break;
+    case Object():
+      break;
   }
 }
 
-// ✅ Good: Using the wildcard pattern _
-class GoodExamples {
-  String switchExpression(Object object) {
-    return switch (object) {
-      int() => 'int',
-      _ => 'other',
-    };
-  }
+void ifCase(Object object) {
+  if (object case Object()) {}
+}
+```
 
-  void switchStatement(Object object) {
-    switch (object) {
-      case int():
-        break;
-      case _:
-        break;
-    }
-  }
+## Do
 
-  // Object() with field destructuring is fine — it extracts values
-  String objectPatternWithFields(Object object) {
-    return switch (object) {
-      int() => 'int',
-      Object(hashCode: final h) => 'hash: $h',
-      _ => 'other',
-    };
+```dart
+// Using the wildcard pattern _
+String classify(Object object) {
+  return switch (object) {
+    int() => 'int',
+    _ => 'other',
+  };
+}
+
+void statement(Object object) {
+  switch (object) {
+    case int():
+      break;
+    case _:
+      break;
   }
+}
+
+// Object() with field destructuring is fine — it extracts values
+String withFields(Object object) {
+  return switch (object) {
+    int() => 'int',
+    Object(hashCode: final h) => 'hash: $h',
+    _ => 'other',
+  };
 }
 ```
 

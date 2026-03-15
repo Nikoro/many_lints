@@ -1,75 +1,54 @@
 ---
 title: prefer_single_widget_per_file
-description: "Only one public widget per file. Move additional widgets to separate files."
+description: "Keep one public widget per file for better organization"
 sidebar:
   label: prefer_single_widget_per_file
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_single_widget_per_file` |
-| **Category** | Widget Best Practices |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-## Problem
+This rule warns when a file contains more than one public widget class. The first public widget is fine, but the second and any subsequent ones trigger the lint. Private widgets (prefixed with `_`) and non-widget classes are not counted.
 
-Only one public widget per file. Move additional widgets to separate files.
+## Why use this rule
 
-## Suggestion
+Having multiple public widgets in one file makes them harder to find, harder to test independently, and harder to reason about in code reviews. A one-widget-per-file convention keeps files focused, makes the file system a natural index of your widget library, and ensures that imports pull in exactly what is needed.
 
-Move this widget to its own file.
+**See also:** [Flutter performance best practices](https://docs.flutter.dev/perf/best-practices)
 
-## Example
+## Don't
 
 ```dart
-import 'package:flutter/material.dart';
-
-// prefer_single_widget_per_file
-//
-// Warns when a file contains more than one public widget class.
-// Private widgets (prefixed with underscore) are ignored.
-
-// ❌ Bad: Multiple public widgets in a single file
-// The first widget is fine, but the second one triggers the lint.
-
+// Two public widgets in the same file
 class FirstWidget extends StatelessWidget {
-  const FirstWidget({super.key});
-
   @override
-  Widget build(BuildContext context) {
-    return const Text('First');
-  }
+  Widget build(BuildContext context) => const Text('First');
 }
 
-// LINT: Only one public widget per file
+// This triggers the lint
 class SecondWidget extends StatelessWidget {
-  const SecondWidget({super.key});
-
   @override
-  Widget build(BuildContext context) {
-    return const Text('Second');
-  }
+  Widget build(BuildContext context) => const Text('Second');
+}
+```
+
+## Do
+
+```dart
+// first_widget.dart — one public widget per file
+class FirstWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => const Text('First');
 }
 
-// ✅ Good: Private widgets are allowed alongside a public widget
+// Private helpers are fine in the same file
 class _HelperWidget extends StatelessWidget {
   const _HelperWidget();
 
   @override
-  Widget build(BuildContext context) {
-    return const Text('Helper');
-  }
+  Widget build(BuildContext context) => const Text('Helper');
 }
-
-// ✅ Good: Non-widget classes are allowed alongside a public widget
-class MyModel {
-  final String name;
-  const MyModel(this.name);
-}
-
-// ✅ Good: StatefulWidget with its private State class is fine
-// (State classes are private and extend State, not Widget directly)
 ```
 
 ## Configuration

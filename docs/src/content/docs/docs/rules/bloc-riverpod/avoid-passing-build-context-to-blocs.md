@@ -1,36 +1,53 @@
 ---
 title: avoid_passing_build_context_to_blocs
-description: "Avoid passing BuildContext to a Bloc/Cubit."
+description: "Prevent passing BuildContext to Bloc or Cubit classes"
 sidebar:
   label: avoid_passing_build_context_to_blocs
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_passing_build_context_to_blocs` |
-| **Category** | Bloc / Riverpod |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-## Problem
+This rule flags Bloc or Cubit classes that accept a `BuildContext` as a constructor or method parameter. Blocs should remain independent of the UI layer and never hold a reference to a widget's context.
 
-Avoid passing BuildContext to a Bloc/Cubit.
+## Why use this rule
 
-## Suggestion
+Passing `BuildContext` into a Bloc creates a dangerous coupling between your business logic and the widget tree. The context can become invalid (unmounted) while the Bloc is still alive, leading to runtime crashes. It also makes the Bloc impossible to unit test without mocking the entire widget framework. Any logic that needs the context (navigation, showing dialogs, reading theme) belongs in the widget layer, not in the Bloc.
 
-Move the context-dependent logic to the widget layer instead.
+**See also:** [Bloc best practices](https://bloclibrary.dev/bloc-concepts/)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_element, unused_field
+import 'package:bloc/bloc.dart';
+import 'package:flutter/widgets.dart';
 
-// avoid_passing_build_context_to_blocs
-//
-// Warns when a Bloc/Cubit class accepts a BuildContext parameter in its
-// constructor or methods. Passing BuildContext creates unnecessary coupling
-// between Blocs and widgets, and can introduce bugs when context is unmounted.
+abstract class CounterEvent {}
 
+// Bloc constructor accepts BuildContext
+class BadBloc extends Bloc<CounterEvent, int> {
+  final BuildContext context;
+
+  BadBloc(this.context) : super(0);
+}
+
+// Cubit method accepts BuildContext
+class BadCubit extends Cubit<int> {
+  BadCubit() : super(0);
+
+  void doSomething(BuildContext context) {}
+}
+
+// Named constructor parameter with BuildContext
+class AnotherBadBloc extends Bloc<CounterEvent, int> {
+  AnotherBadBloc({required BuildContext context}) : super(0);
+}
+```
+
+## Do
+
+```dart
 import 'package:bloc/bloc.dart';
 import 'package:flutter/widgets.dart';
 
@@ -38,29 +55,7 @@ abstract class CounterEvent {}
 
 class Increment extends CounterEvent {}
 
-// ❌ Bad: Bloc constructor accepts BuildContext
-class BadBloc extends Bloc<CounterEvent, int> {
-  // LINT: Avoid passing BuildContext to a Bloc/Cubit
-  final BuildContext context;
-
-  BadBloc(this.context) : super(0);
-}
-
-// ❌ Bad: Cubit method accepts BuildContext
-class BadCubit extends Cubit<int> {
-  BadCubit() : super(0);
-
-  // LINT: Avoid passing BuildContext to a Bloc/Cubit
-  void doSomething(BuildContext context) {}
-}
-
-// ❌ Bad: Named constructor parameter with BuildContext
-class AnotherBadBloc extends Bloc<CounterEvent, int> {
-  // LINT: Avoid passing BuildContext to a Bloc/Cubit
-  AnotherBadBloc({required BuildContext context}) : super(0);
-}
-
-// ✅ Good: Bloc with repository dependency (no BuildContext)
+// Bloc with repository dependency (no BuildContext)
 class CounterRepository {
   int getValue() => 0;
 }
@@ -73,20 +68,11 @@ class GoodBloc extends Bloc<CounterEvent, int> {
   }
 }
 
-// ✅ Good: Cubit with no BuildContext dependency
+// Cubit with no BuildContext dependency
 class GoodCubit extends Cubit<int> {
   GoodCubit() : super(0);
 
   void increment() => emit(state + 1);
-}
-
-// ✅ Good: Non-Bloc class can freely accept BuildContext
-class NotABloc {
-  final BuildContext context;
-
-  NotABloc(this.context);
-
-  void doWork(BuildContext context) {}
 }
 ```
 

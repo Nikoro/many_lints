@@ -1,77 +1,44 @@
 ---
 title: use_ref_read_synchronously
-description: "Avoid calling 'ref.read' after an await point without checking if the widget is mounted."
+description: "Add a mounted guard before calling ref.read after an await"
 sidebar:
-  badge:
-    text: "Fix"
-    variant: "tip"
   label: use_ref_read_synchronously
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `use_ref_read_synchronously` |
-| **Category** | Async Safety |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Async Safety</span>
 
-## Problem
+This rule catches `ref.read()` calls that happen after an `await` inside async callbacks within a `ConsumerWidget` or `ConsumerState` build method, without a `mounted` check first. If the widget is unmounted while the async operation runs, `ref.read` may return stale or invalid data.
 
-Avoid calling 'ref.read' after an await point without checking if the widget is mounted.
+## Why use this rule
 
-## Suggestion
+Async callbacks like `onPressed: () async { ... }` can easily outlive the widget that created them. After an `await`, the widget might already be disposed. Calling `ref.read` at that point reads from a potentially dead reference. In `ConsumerWidget` callbacks, use `context.mounted` as the guard (for Notifier methods, the sibling rule `use_ref_and_state_synchronously` checks for `ref.mounted` instead).
 
-Add a 'if (!mounted) return;' or 'if (!context.mounted) return;' guard before calling 'ref.read' after an await.
+**See also:** [Riverpod documentation](https://riverpod.dev)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, unused_element
-
-// use_ref_read_synchronously
-//
-// Warns when `ref.read()` is called after an `await` point inside an
-// async callback within a ConsumerWidget or ConsumerState build method
-// without checking if the widget is still mounted.
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-final someProvider = Provider<String>((ref) => 'hello');
-
-// ❌ Bad: Calling ref.read after await without a mounted guard
-class _BadRefReadAfterAwait extends ConsumerWidget {
+class MyWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ElevatedButton(
       onPressed: () async {
         await Future<void>.delayed(const Duration(seconds: 1));
-        // LINT: ref.read after await — widget may be unmounted
+        // Widget may be unmounted — ref.read is unsafe
         ref.read(someProvider);
       },
       child: const Text('Tap'),
     );
   }
 }
+```
 
-// ❌ Bad: Multiple ref.read calls after await
-class _BadMultipleReads extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return ElevatedButton(
-      onPressed: () async {
-        await fetchData();
-        // LINT: ref.read after await
-        final a = ref.read(someProvider);
-        // LINT: still after await with no guard
-        final b = ref.read(someProvider);
-      },
-      child: const Text('Tap'),
-    );
-  }
-}
+## Do
 
-// ✅ Good: Using mounted guard before ref.read
-class _GoodMountedGuard extends ConsumerWidget {
+```dart
+class MyWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ElevatedButton(
@@ -84,36 +51,6 @@ class _GoodMountedGuard extends ConsumerWidget {
     );
   }
 }
-
-// ✅ Good: ref.read before await (no async gap)
-class _GoodBeforeAwait extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return ElevatedButton(
-      onPressed: () async {
-        ref.read(someProvider);
-        await Future<void>.delayed(const Duration(seconds: 1));
-        // No ref.read after await — safe
-      },
-      child: const Text('Tap'),
-    );
-  }
-}
-
-// ✅ Good: ref.read in a synchronous callback
-class _GoodSyncCallback extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return ElevatedButton(
-      onPressed: () {
-        ref.read(someProvider); // sync — no issue
-      },
-      child: const Text('Tap'),
-    );
-  }
-}
-
-Future<void> fetchData() => Future<void>.delayed(const Duration(seconds: 1));
 ```
 
 ## Configuration

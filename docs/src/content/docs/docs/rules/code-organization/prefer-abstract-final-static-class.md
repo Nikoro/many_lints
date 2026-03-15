@@ -8,43 +8,36 @@ sidebar:
   label: prefer_abstract_final_static_class
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_abstract_final_static_class` |
-| **Category** | Code Organization |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.3.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Code Organization</span>
 
-## Problem
+Flags classes that contain only static members but are not declared as `abstract final`. Without these modifiers, a static-only class can be accidentally instantiated or subclassed, which is almost never the intended use.
 
-Classes with only static members should be declared as abstract final.
+## Why use this rule
 
-## Suggestion
+Marking a static-only class as `abstract final` makes the intent clear: it is a namespace for constants or utility functions, not something to instantiate or extend. This prevents misuse and documents the design decision directly in the class declaration.
 
-Add 'abstract final' modifiers to prevent instantiation and inheritance.
+**See also:** [Dart language - Abstract classes](https://dart.dev/language/class-modifiers#abstract) | [Dart language - Final classes](https://dart.dev/language/class-modifiers#final)
 
-## Example
+## Don't
 
 ```dart
-// prefer_abstract_final_static_class
-//
-// Classes with only static members should be declared as abstract final
-// to prevent instantiation and inheritance.
-
-// ❌ Bad: Static-only class without abstract final
-// LINT
 class BadConstants {
   static const pi = 3.14159;
   static const e = 2.71828;
 }
 
-// LINT
 class BadUtils {
   static String greet(String name) => 'Hello, $name!';
   static int add(int a, int b) => a + b;
 }
+```
 
-// ✅ Good: Static-only class declared as abstract final
+## Do
+
+```dart
 abstract final class GoodConstants {
   static const pi = 3.14159;
   static const e = 2.71828;
@@ -55,18 +48,14 @@ abstract final class GoodUtils {
   static int add(int a, int b) => a + b;
 }
 
-// ✅ Good: Class with instance members — not purely static
+// Classes with instance members are fine:
 class MixedClass {
   final String name;
   MixedClass(this.name);
-
   static const defaultName = 'World';
 }
 
-// ✅ Good: Empty class — no members to check
-class EmptyClass {}
-
-// ✅ Good: Class with a constructor — not purely static
+// Classes with constructors are fine:
 class WithConstructor {
   WithConstructor._();
   static const value = 42;

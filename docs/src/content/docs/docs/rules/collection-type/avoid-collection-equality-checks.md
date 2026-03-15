@@ -1,59 +1,50 @@
 ---
 title: avoid_collection_equality_checks
-description: "Comparing collections with {0} checks reference equality, not contents."
+description: "Avoid comparing collections with == or != as it checks reference equality, not contents."
 sidebar:
   label: avoid_collection_equality_checks
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_collection_equality_checks` |
-| **Category** | Collection & Type |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.3.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Collection & Type</span>
 
-## Problem
+Collections in Dart (List, Set, Map) use reference equality by default, not structural equality. Comparing two collections with `==` or `!=` almost never produces the intended result because two distinct instances with identical contents are not considered equal.
 
-Comparing collections with {0} checks reference equality, not contents.
+## Why use this rule
 
-## Suggestion
+Using `==` on collections is a common source of bugs. Two lists with the same elements will return `false` when compared with `==` because they are different objects in memory. Use `DeepCollectionEquality` from the `collection` package or compare individual elements instead.
 
-Use DeepCollectionEquality or a type-specific equality helper.
+**See also:** [Dart collections](https://dart.dev/guides/libraries/library-tour#collections) | [collection package](https://pub.dev/packages/collection)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// avoid_collection_equality_checks
-//
-// Warns when mutable collections are compared with == or !=.
-// Collections in Dart have reference equality, not structural equality,
-// so == almost never produces the intended result.
-
-// ❌ Bad: Comparing mutable collections with ==
-void bad() {
+void example() {
   final list1 = [1, 2, 3];
   final list2 = [1, 2, 3];
 
-  // LINT: Reference equality, not deep equality
+  // Reference equality, not deep equality
   final same = list1 == list2; // always false!
 
   final set1 = {1, 2};
   final set2 = {1, 2};
 
-  // LINT: Same problem with sets
+  // Same problem with sets
   final sameSet = set1 == set2;
 
   final map1 = {'a': 1};
   final map2 = {'a': 1};
 
-  // LINT: Same problem with maps
+  // Same problem with maps
   final sameMap = map1 != map2;
 }
+```
 
-// ✅ Good: Use deep equality or compare individual elements
-void good() {
+## Do
+
+```dart
+void example() {
   // Const collections are fine — they are canonicalized
   final same = const [1, 2] == const [1, 2]; // true
 

@@ -1,63 +1,46 @@
 ---
 title: avoid_duplicate_cascades
-description: "Duplicate cascade section found."
+description: "Detect duplicate cascade sections in cascade expressions"
 sidebar:
-  badge:
-    text: "Fix"
-    variant: "tip"
   label: avoid_duplicate_cascades
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_duplicate_cascades` |
-| **Category** | Control Flow |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Control Flow</span>
 
-## Problem
+Warns when a cascade expression contains duplicate sections -- identical property assignments, method calls, or index operations repeated with the same arguments. Duplicate cascades are usually the result of a copy-paste error.
 
-Duplicate cascade section found.
+## Why use this rule
 
-## Suggestion
+When the same cascade section appears twice (e.g., `..name = 'test'` repeated), the second one overwrites the first with the same value, making it redundant. For method calls, the duplicate invocation may cause unintended side effects. Either way, it signals a copy-paste mistake that should be fixed.
 
-Remove the duplicate cascade section.
+**See also:** [Cascade notation](https://dart.dev/language/operators#cascade-notation)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// avoid_duplicate_cascades
-//
-// Warns when a cascade expression has duplicate cascade sections.
-// Duplicate cascades are usually the result of a copy-paste error.
-
-class Config {
-  String name = '';
-  int value = 0;
-  void reset() {}
-}
-
-// ❌ Bad: Duplicate cascade sections
 void bad() {
-  // LINT: Same property assigned with same value twice
+  // Same property assigned with same value twice
   final config = Config()
     ..name = 'test'
     ..name = 'test';
 
-  // LINT: Same method called twice
+  // Same method called twice
   final config2 = Config()
     ..reset()
     ..reset();
 
-  // LINT: Same index assigned with same value twice
+  // Same index assigned with same value twice
   final list = [1, 2, 3]
     ..[1] = 5
     ..[1] = 5;
 }
+```
 
-// ✅ Good: No duplicate cascade sections
+## Do
+
+```dart
 void good() {
   // Different properties
   final config = Config()
@@ -69,7 +52,7 @@ void good() {
     ..name = 'first'
     ..name = 'second';
 
-  // Different methods
+  // Different indices
   final list = [1, 2, 3]
     ..[0] = 10
     ..[1] = 20;

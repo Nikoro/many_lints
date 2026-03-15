@@ -1,6 +1,6 @@
 ---
 title: use_existing_variable
-description: "The expression duplicates the initializer of '{0}'."
+description: "Use an existing variable instead of repeating its initializer expression."
 sidebar:
   badge:
     text: "Fix"
@@ -8,110 +8,90 @@ sidebar:
   label: use_existing_variable
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `use_existing_variable` |
-| **Category** | Pattern Matching |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Pattern Matching</span>
 
-## Problem
+When an expression duplicates the initializer of an existing `final` or `const` variable in the same scope, you should reference the variable instead. Repeating the expression creates a maintenance risk where only one copy gets updated during refactoring.
 
-The expression duplicates the initializer of '{0}'.
+## Why use this rule
 
-## Suggestion
+Duplicated expressions are easy to introduce and hard to spot during code review. If the expression changes, you need to update every occurrence. Using the existing variable avoids this inconsistency and makes refactoring safer.
 
-Use '{0}' instead of repeating the expression.
+**See also:** [Dart patterns](https://dart.dev/language/patterns)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// use_existing_variable
-//
-// Warns when an expression duplicates the initializer of an existing
-// final/const variable in the same scope. Helps avoid inconsistencies
-// when only one of the repeated expressions is later updated.
-
-// ❌ Bad: Repeating an expression that is already stored in a variable
+// Repeating an expression that is already stored in a variable
 void badPropertyAccess(String value) {
   final isOdd = value.length.isOdd;
-  // LINT: The expression duplicates the initializer of 'isOdd'
   print(value.length.isOdd);
 }
 
-// ❌ Bad: Repeating a method call
+// Repeating a method call
 void badMethodCall(List<int> list) {
   final copy = list.toList();
-  // LINT: Use 'copy' instead
   print(list.toList());
 }
 
-// ❌ Bad: Multiple duplicates of the same variable
-void badMultipleDuplicates(String value) {
-  final len = value.length;
-  // LINT: Two occurrences that should use 'len'
-  print(value.length);
-  print(value.length);
-}
-
-// ❌ Bad: Duplicate in a second variable initializer
+// Duplicate in a second variable initializer
 void badSecondVariable(String value) {
   final a = value.length.isOdd;
-  // LINT: Should be 'final b = a;'
   final b = value.length.isOdd;
   print(b);
 }
+```
 
-// ✅ Good: Using the existing variable
+## Do
+
+```dart
+// Using the existing variable
 void goodReuse(String value) {
   final isOdd = value.length.isOdd;
   print(isOdd);
 }
 
-// ✅ Good: No variable exists for the expression
+// No variable exists for the expression (no lint)
 void goodNoVariable(String value) {
   print(value.length.isOdd);
   print(value.length.isOdd);
 }
 
-// ✅ Good: Different expression (isEven vs isOdd)
+// Different expression (isEven vs isOdd) — no lint
 void goodDifferentExpression(String value) {
   final isOdd = value.length.isOdd;
   print(value.length.isEven);
 }
 
-// ✅ Good: Non-final variable — value may have changed
+// Non-final variable — value may have changed
 void goodNonFinal(String value) {
   var isOdd = value.length.isOdd;
   print(value.length.isOdd);
   isOdd = false;
 }
 
-// ✅ Good: Expression appears before the variable declaration
+// Expression appears before the variable declaration
 void goodBeforeDeclaration(String value) {
   print(value.length.isOdd);
   final isOdd = value.length.isOdd;
   print(isOdd);
 }
 
-// ✅ Good: Inside a nested function (different execution context)
+// Inside a nested function (different execution context)
 void goodNestedFunction(String value) {
   final isOdd = value.length.isOdd;
   void inner() {
     print(value.length.isOdd);
   }
-
   inner();
 }
 
-// ✅ Good: Trivial expressions (literals, identifiers) are not flagged
+// Trivial expressions (literals, identifiers) are not flagged
 void goodTrivial() {
   final x = 42;
   print(42);
-  final y = true;
-  print(true);
 }
 ```
 

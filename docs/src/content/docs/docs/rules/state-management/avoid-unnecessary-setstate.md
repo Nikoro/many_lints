@@ -1,6 +1,6 @@
 ---
 title: avoid_unnecessary_setstate
-description: "Unnecessary call to 'setState' inside '{0}'."
+description: "Detect unnecessary setState calls in lifecycle methods"
 sidebar:
   badge:
     text: "Fix"
@@ -8,49 +8,29 @@ sidebar:
   label: avoid_unnecessary_setstate
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_unnecessary_setstate` |
-| **Category** | State Management |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">State Management</span>
 
-## Problem
+Warns when `setState` is called directly inside `initState`, `didUpdateWidget`, or `build` methods. In these lifecycle methods, mutating state directly is sufficient because the framework already schedules a build after they return. Calling `setState` in `build` triggers an unnecessary additional rebuild.
 
-Unnecessary call to 'setState' inside '{0}'.
+## Why use this rule
 
-## Suggestion
+In `initState` and `didUpdateWidget`, the framework will call `build` automatically after the method returns, so wrapping mutations in `setState` is redundant overhead. In `build`, calling `setState` triggers an infinite rebuild loop or at minimum a wasted frame. Event handler callbacks (like `onTap`) inside `build` are excluded from this rule since they run asynchronously and do need `setState`.
 
-Mutate the state directly without calling setState in this method.
+**See also:** [setState](https://api.flutter.dev/flutter/widgets/State/setState.html)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, unused_element
-
-// avoid_unnecessary_setstate
-//
-// Warns when setState is called inside initState, didUpdateWidget, or build
-// where it is unnecessary. In these lifecycle methods, mutate state directly
-// — the framework already schedules a build after they return.
-
-import 'package:flutter/widgets.dart';
-
-// ❌ Bad: setState in initState
-class BadInitState extends StatefulWidget {
-  const BadInitState({super.key});
-
-  @override
-  State<BadInitState> createState() => _BadInitStateState();
-}
-
 class _BadInitStateState extends State<BadInitState> {
   String _data = '';
 
   @override
   void initState() {
     super.initState();
-    // LINT: Unnecessary setState in initState
+    // Unnecessary — framework rebuilds after initState anyway
     setState(() {
       _data = 'Hello';
     });
@@ -58,38 +38,6 @@ class _BadInitStateState extends State<BadInitState> {
 
   @override
   Widget build(BuildContext context) => const SizedBox();
-}
-
-// ❌ Bad: setState in didUpdateWidget
-class BadDidUpdateWidget extends StatefulWidget {
-  const BadDidUpdateWidget({super.key});
-
-  @override
-  State<BadDidUpdateWidget> createState() => _BadDidUpdateWidgetState();
-}
-
-class _BadDidUpdateWidgetState extends State<BadDidUpdateWidget> {
-  String _data = '';
-
-  @override
-  void didUpdateWidget(BadDidUpdateWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // LINT: Unnecessary setState in didUpdateWidget
-    setState(() {
-      _data = 'updated';
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox();
-}
-
-// ❌ Bad: setState directly in build
-class BadBuild extends StatefulWidget {
-  const BadBuild({super.key});
-
-  @override
-  State<BadBuild> createState() => _BadBuildState();
 }
 
 class _BadBuildState extends State<BadBuild> {
@@ -97,22 +45,18 @@ class _BadBuildState extends State<BadBuild> {
 
   @override
   Widget build(BuildContext context) {
-    // LINT: Unnecessary setState in build
+    // Triggers an unnecessary rebuild during build
     setState(() {
       _data = 'Hello';
     });
     return const SizedBox();
   }
 }
+```
 
-// ✅ Good: Direct state assignment in initState
-class GoodInitState extends StatefulWidget {
-  const GoodInitState({super.key});
+## Do
 
-  @override
-  State<GoodInitState> createState() => _GoodInitStateState();
-}
-
+```dart
 class _GoodInitStateState extends State<GoodInitState> {
   String _data = '';
 
@@ -126,21 +70,14 @@ class _GoodInitStateState extends State<GoodInitState> {
   Widget build(BuildContext context) => const SizedBox();
 }
 
-// ✅ Good: setState in async method
-class GoodAsync extends StatefulWidget {
-  const GoodAsync({super.key});
-
-  @override
-  State<GoodAsync> createState() => _GoodAsyncState();
-}
-
+// setState in an async method is fine
 class _GoodAsyncState extends State<GoodAsync> {
   String _data = '';
 
   Future<void> _loadData() async {
     final data = await Future.value('Hello');
     setState(() {
-      _data = data; // OK — async method needs setState to trigger rebuild
+      _data = data; // Async method needs setState to trigger rebuild
     });
   }
 
@@ -148,14 +85,7 @@ class _GoodAsyncState extends State<GoodAsync> {
   Widget build(BuildContext context) => const SizedBox();
 }
 
-// ✅ Good: setState in event handler callback inside build
-class GoodCallback extends StatefulWidget {
-  const GoodCallback({super.key});
-
-  @override
-  State<GoodCallback> createState() => _GoodCallbackState();
-}
-
+// setState in event handler callbacks inside build is fine
 class _GoodCallbackState extends State<GoodCallback> {
   String _data = '';
 
@@ -164,7 +94,7 @@ class _GoodCallbackState extends State<GoodCallback> {
     return GestureDetector(
       onTap: () {
         setState(() {
-          _data = 'tapped'; // OK — event handler runs asynchronously
+          _data = 'tapped'; // Event handler runs asynchronously
         });
       },
       child: const SizedBox(),

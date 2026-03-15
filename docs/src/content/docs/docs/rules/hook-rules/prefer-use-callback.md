@@ -8,80 +8,52 @@ sidebar:
   label: prefer_use_callback
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_use_callback` |
-| **Category** | Hook Rules |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Hook Rules</span>
 
-## Problem
+Flags uses of `useMemoized` where the factory function returns another function. When you are memoizing a callback, `useCallback` is the semantically correct hook to use. `useMemoized` is designed for expensive non-function values.
 
-Use 'useCallback' instead of 'useMemoized' for memoizing functions.
+## Why use this rule
 
-## Suggestion
+`useCallback` communicates intent more clearly than `useMemoized(() => someFunction)`. It signals that you are memoizing a callback, not computing an expensive value. Using the right hook improves readability and aligns with the hooks naming conventions from React and flutter_hooks.
 
-Replace 'useMemoized' with 'useCallback'.
+**See also:** [flutter_hooks - useCallback](https://pub.dev/packages/flutter_hooks#usecallback)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-
-// prefer_use_callback
-//
-// Prefer useCallback over useMemoized when memoizing function expressions.
-// useCallback is specifically designed for callbacks and is more semantically
-// correct than wrapping a function in useMemoized.
-
-// ❌ Bad: Using useMemoized to memoize a function expression
-class BadCallbackWidget extends HookWidget {
-  const BadCallbackWidget({super.key});
+class BadWidget extends HookWidget {
+  const BadWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // LINT: useMemoized wrapping a closure — use useCallback instead
+    // useMemoized wrapping a closure
     final onPressed = useMemoized(
       () => () {
         debugPrint('pressed');
       },
     );
 
-    // LINT: useMemoized wrapping a closure with keys
-    final onTap = useMemoized(
-      () => () {
-        debugPrint('tapped');
-      },
-      [],
-    );
-
+    // useMemoized wrapping a tear-off
+    final onTap = useMemoized(() => _handleTap);
     return ElevatedButton(onPressed: onPressed, child: const Text('Tap'));
   }
+
+  void _handleTap() => debugPrint('tapped');
 }
+```
 
-// ❌ Bad: Using useMemoized with a tear-off
-class BadTearOffWidget extends HookWidget {
-  const BadTearOffWidget({super.key});
+## Do
 
-  void _handlePress() => debugPrint('pressed');
+```dart
+class GoodWidget extends HookWidget {
+  const GoodWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // LINT: useMemoized wrapping a tear-off — use useCallback instead
-    final onPressed = useMemoized(() => _handlePress);
-    return ElevatedButton(onPressed: onPressed, child: const Text('Tap'));
-  }
-}
-
-// ✅ Good: Using useCallback for memoizing functions
-class GoodCallbackWidget extends HookWidget {
-  const GoodCallbackWidget({super.key});
-
-  @override
-  Widget build(BuildContext context) {
+    // useCallback for memoizing callbacks
     final onPressed = useCallback(() {
       debugPrint('pressed');
     }, []);
@@ -90,16 +62,8 @@ class GoodCallbackWidget extends HookWidget {
   }
 }
 
-// ✅ Good: Using useMemoized for non-function values
-class GoodMemoizedWidget extends HookWidget {
-  const GoodMemoizedWidget({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final expensiveValue = useMemoized(() => List.generate(100, (i) => i));
-    return Text('${expensiveValue.length}');
-  }
-}
+// useMemoized is fine for non-function values:
+final expensiveValue = useMemoized(() => List.generate(100, (i) => i));
 ```
 
 ## Configuration

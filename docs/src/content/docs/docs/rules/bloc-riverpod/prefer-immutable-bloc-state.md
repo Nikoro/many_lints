@@ -1,88 +1,67 @@
 ---
 title: prefer_immutable_bloc_state
-description: "Bloc state classes should be annotated with @immutable."
+description: "Ensure Bloc and Cubit state classes are annotated with @immutable"
 sidebar:
-  badge:
-    text: "Fix"
-    variant: "tip"
   label: prefer_immutable_bloc_state
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_immutable_bloc_state` |
-| **Category** | Bloc / Riverpod |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-## Problem
+This rule flags Bloc and Cubit state classes that are missing the `@immutable` annotation. It detects state classes both by type parameter analysis (classes used as the state type in `Bloc<Event, State>` or `Cubit<State>`) and by naming convention (classes ending with `State`), including their subclasses.
 
-Bloc state classes should be annotated with @immutable.
+## Why use this rule
 
-## Suggestion
+Mutable state objects are a common source of subtle bugs in the Bloc pattern. If you mutate a state object in place instead of creating a new one, `emit` won't trigger a rebuild because Bloc compares state by reference equality. Marking state classes as `@immutable` signals this intent and enables analyzer warnings when you accidentally add mutable fields.
 
-Add '@immutable' annotation to this class.
+**See also:** [Bloc state management](https://bloclibrary.dev/bloc-concepts/#state)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 
-// prefer_immutable_bloc_state
-//
-// Bloc state classes should be annotated with @immutable to ensure
-// that emit always receives a newly created state object.
+abstract class CounterEvent {}
+
+// Missing @immutable annotation
+sealed class CounterState {}
+
+class CounterInitial extends CounterState {}
+
+class CounterLoaded extends CounterState {
+  final int count;
+  CounterLoaded(this.count);
+}
+
+class CounterBloc extends Bloc<CounterEvent, CounterState> {
+  CounterBloc() : super(CounterInitial());
+}
+```
+
+## Do
+
+```dart
+import 'package:bloc/bloc.dart';
+import 'package:meta/meta.dart';
 
 abstract class CounterEvent {}
 
-// ❌ Bad: State classes without @immutable annotation
+@immutable
+sealed class CounterState {}
 
-// LINT: Missing @immutable on sealed state class
-sealed class BadCounterState {}
+@immutable
+class CounterInitial extends CounterState {}
 
-// LINT: Missing @immutable on state subclass
-class BadCounterInitial extends BadCounterState {}
-
-// LINT: Missing @immutable on state subclass
-class BadCounterLoaded extends BadCounterState {
+@immutable
+class CounterLoaded extends CounterState {
   final int count;
-  BadCounterLoaded(this.count);
+  CounterLoaded(this.count);
 }
 
-class BadCounterBloc extends Bloc<CounterEvent, BadCounterState> {
-  BadCounterBloc() : super(BadCounterInitial());
-}
-
-// ✅ Good: State classes annotated with @immutable
-
-@immutable
-sealed class GoodCounterState {}
-
-@immutable
-class GoodCounterInitial extends GoodCounterState {}
-
-@immutable
-class GoodCounterLoaded extends GoodCounterState {
-  final int count;
-  GoodCounterLoaded(this.count);
-}
-
-class GoodCounterBloc extends Bloc<CounterEvent, GoodCounterState> {
-  GoodCounterBloc() : super(GoodCounterInitial());
-}
-
-// ✅ Good: Cubit with immutable state
-@immutable
-sealed class TimerState {}
-
-@immutable
-class TimerInitial extends TimerState {}
-
-class TimerCubit extends Cubit<TimerState> {
-  TimerCubit() : super(TimerInitial());
+class CounterBloc extends Bloc<CounterEvent, CounterState> {
+  CounterBloc() : super(CounterInitial());
 }
 ```
 

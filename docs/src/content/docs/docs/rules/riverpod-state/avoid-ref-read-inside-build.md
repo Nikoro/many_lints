@@ -1,6 +1,6 @@
 ---
 title: avoid_ref_read_inside_build
-description: "Avoid using 'ref.read' inside the build method."
+description: "Use ref.watch instead of ref.read inside the build method"
 sidebar:
   badge:
     text: "Fix"
@@ -8,89 +8,55 @@ sidebar:
   label: avoid_ref_read_inside_build
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_ref_read_inside_build` |
-| **Category** | Riverpod State |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Riverpod State</span>
 
-## Problem
+This rule flags `ref.read()` calls that appear directly inside a `build()` method of a Riverpod consumer widget or state. Since `ref.read` only fetches the value once and does not subscribe to changes, the widget will not rebuild when the provider updates.
 
-Avoid using 'ref.read' inside the build method.
+## Why use this rule
 
-## Suggestion
+Using `ref.read` in `build()` is almost always a mistake. The widget renders with whatever value the provider had at that moment, but never updates when the value changes. This leads to stale UI that does not reflect the current application state. Use `ref.watch` to subscribe and rebuild automatically. Note that `ref.read` inside callbacks (like `onPressed`) is perfectly fine and intentional.
 
-Use 'ref.watch' instead so the widget rebuilds when the provider's value changes.
+**See also:** [ref.read vs ref.watch](https://riverpod.dev/docs/essentials/combining_requests)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, unused_element
-
-// avoid_ref_read_inside_build
-//
-// Warns when ref.read() is called inside a build() method of a Riverpod
-// consumer widget or state. ref.read reads a value once and does not listen
-// for changes, so the widget won't rebuild when the provider's value changes.
-
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-final someProvider = Provider<String>((ref) => 'hello');
-
-// ❌ Bad: Using ref.read() in build — widget won't rebuild on changes
-class _BadConsumerWidget extends ConsumerWidget {
+class MyWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // LINT: ref.read reads the value once, missing subsequent changes
+    // Reads once, never rebuilds on changes
     final value = ref.read(someProvider);
     return Text(value);
   }
 }
+```
 
-// ❌ Bad: Using ref.read() in ConsumerState.build
-class _BadConsumerState extends ConsumerState<ConsumerStatefulWidget> {
-  @override
-  Widget build(BuildContext context) {
-    // LINT: ref.read reads the value once, missing subsequent changes
-    final value = ref.read(someProvider);
-    return Text(value);
-  }
-}
+## Do
 
-// ✅ Good: Using ref.watch() — widget rebuilds when provider changes
-class _GoodConsumerWidget extends ConsumerWidget {
+```dart
+class MyWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Subscribes and rebuilds when provider changes
     final value = ref.watch(someProvider);
     return Text(value);
   }
 }
 
-// ✅ Good: ref.read() inside a closure/callback is fine (intentional one-time read)
-class _GoodRefReadInCallback extends ConsumerWidget {
+// ref.read inside a callback is fine
+class MyOtherWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ElevatedButton(
       onPressed: () {
-        // This is fine — triggered by user action, not during build
+        // Intentional one-time read triggered by user action
         final value = ref.read(someProvider);
       },
       child: const Text('Tap'),
     );
-  }
-}
-
-// ✅ Good: ref.read() outside build is fine
-class _GoodRefReadOutsideBuild extends ConsumerState<ConsumerStatefulWidget> {
-  void _handleTap() {
-    final value = ref.read(someProvider);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox();
   }
 }
 ```

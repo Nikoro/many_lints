@@ -1,6 +1,6 @@
 ---
 title: prefer_class_destructuring
-description: "Consider using class destructuring for {0} property accesses on '{1}'."
+description: "Use Dart 3 class destructuring when accessing multiple properties on the same object."
 sidebar:
   badge:
     text: "Fix"
@@ -8,31 +8,22 @@ sidebar:
   label: prefer_class_destructuring
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_class_destructuring` |
-| **Category** | Collection & Type |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Collection & Type</span>
 
-## Problem
+When you access three or more properties on the same object within a scope, Dart 3 class destructuring can consolidate those accesses into a single declaration. This makes the code more concise and groups related property extractions together.
 
-Consider using class destructuring for {0} property accesses on '{1}'.
+## Why use this rule
 
-## Suggestion
+Repeated `object.property` accesses are verbose and scatter related logic across multiple lines. A single destructuring declaration like `final MyClass(:name, :email, :age) = object;` extracts all needed values at once, making it clear which properties are used in the current scope.
 
-Use a destructuring declaration to extract all properties at once.
+**See also:** [Dart patterns](https://dart.dev/language/patterns) | [Destructuring](https://dart.dev/language/patterns#destructuring)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// prefer_class_destructuring
-//
-// Warns when multiple properties of the same object are accessed separately
-// and could be consolidated using Dart 3 class destructuring.
-
 class UserProfile {
   final String name;
   final String email;
@@ -47,45 +38,32 @@ class UserProfile {
   });
 }
 
-// ❌ Bad: Accessing 3+ properties separately on the same variable
+// Accessing 3+ properties separately on the same variable
 void displayUser(UserProfile user) {
-  // LINT: Consider using class destructuring for 3 property accesses on 'user'
   final greeting = 'Hello, ${user.name}';
   final contact = user.email;
   print('Age: ${user.age}');
 }
+```
 
-// ❌ Bad: Same pattern with local variable
-void processUser() {
-  final user = UserProfile(
-    name: 'Alice',
-    email: 'alice@example.com',
-    age: 30,
-    address: '123 Main St',
-  );
+## Do
 
-  // LINT: 4 property accesses on 'user'
-  print(user.name);
-  print(user.email);
-  print(user.age);
-  print(user.address);
-}
-
-// ✅ Good: Using class destructuring
-void displayUserGood(UserProfile user) {
+```dart
+// Using class destructuring
+void displayUser(UserProfile user) {
   final UserProfile(:name, :email, :age) = user;
   final greeting = 'Hello, $name';
   final contact = email;
   print('Age: $age');
 }
 
-// ✅ Good: Only 2 property accesses (below threshold)
+// Only 2 property accesses (below threshold) — no warning
 void showBasicInfo(UserProfile user) {
   print(user.name);
   print(user.email);
 }
 
-// ✅ Good: Method calls are not counted as property accesses
+// Method calls are not counted as property accesses
 void interactWithUser(UserProfile user) {
   print(user.name);
   print(user.email);

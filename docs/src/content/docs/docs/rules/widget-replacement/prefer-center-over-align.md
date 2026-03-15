@@ -1,6 +1,6 @@
 ---
 title: prefer_center_over_align
-description: "Use the Center widget instead of the Align widget with alignment set to Alignment.center"
+description: "Use Center instead of Align when alignment is center"
 sidebar:
   badge:
     text: "Fix"
@@ -8,46 +8,36 @@ sidebar:
   label: prefer_center_over_align
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_center_over_align` |
-| **Category** | Widget Replacement |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.1.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Widget Replacement</span>
 
-## Problem
+Flags `Align` widgets that use `Alignment.center` (or omit the alignment parameter, which defaults to center). In these cases, the `Center` widget is a clearer and more idiomatic replacement.
 
-Use the Center widget instead of the Align widget with alignment set to Alignment.center
+## Why use this rule
 
-## Suggestion
+`Center` is a specialized subclass of `Align` that always aligns to center. Using `Center` makes the intent immediately obvious and removes the redundant `alignment: Alignment.center` argument. If you omit `alignment` on `Align`, Flutter defaults to center anyway -- so you should just use `Center`.
 
-Try using Center instead of Align.
+**See also:** [Center](https://api.flutter.dev/flutter/widgets/Center-class.html) | [Align](https://api.flutter.dev/flutter/widgets/Align-class.html)
 
-## Example
+## Don't
 
 ```dart
-import 'package:flutter/material.dart';
+// Align with explicit Alignment.center
+Align(alignment: Alignment.center, child: Text('Hello'));
 
-// prefer_center_over_align
-//
-// Use Center widget instead of Align when alignment is center.
+// Align without alignment defaults to center
+Align(child: Text('World'));
+```
 
-class PreferCenterOverAlignExample extends StatelessWidget {
-  const PreferCenterOverAlignExample({super.key});
+## Do
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // LINT: Align with Alignment.center should be Center
-        Align(alignment: Alignment.center, child: Text('Hello')),
+```dart
+// Use Center directly
+Center(child: Text('Hello'));
 
-        // LINT: Align without alignment defaults to center
-        Align(child: Text('World')),
-      ],
-    );
-  }
-}
+Center(child: Text('World'));
 ```
 
 ## Configuration

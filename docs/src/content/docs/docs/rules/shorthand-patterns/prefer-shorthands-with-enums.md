@@ -1,6 +1,6 @@
 ---
 title: prefer_shorthands_with_enums
-description: "Prefer dot shorthands instead of explicit enum prefixes."
+description: "Use dot shorthands instead of explicit enum prefixes."
 sidebar:
   badge:
     text: "Fix"
@@ -8,78 +8,72 @@ sidebar:
   label: prefer_shorthands_with_enums
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_shorthands_with_enums` |
-| **Category** | Shorthand Patterns |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.3.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Shorthand Patterns</span>
 
-## Problem
+Flags explicit enum prefixes (e.g., `MyEnum.first`) when the enum type can be inferred from context and a dot shorthand (`.first`) would suffice. This applies to switch cases, switch expressions, variable declarations with explicit types, comparisons, default parameter values, and return expressions.
 
-Prefer dot shorthands instead of explicit enum prefixes.
+## Why use this rule
 
-## Suggestion
+When the expected enum type is already known from context, repeating the enum name adds noise without adding clarity. Dot shorthands are shorter, reduce visual clutter in switch statements and widget trees, and are the idiomatic Dart style in type-inferred positions.
 
-Try removing the enum prefix.
+**See also:** [Dart language - Enums](https://dart.dev/language/enums)
 
-## Example
+## Don't
 
 ```dart
 enum MyEnum { first, second }
 
-void exampleFunction(MyEnum? e) {
-  // ❌ Bad: Using explicit enum prefix
+void example(MyEnum? e) {
   switch (e) {
-    case MyEnum.first: // LINT
+    case MyEnum.first:
       print(e);
   }
 
-  // ✅ Good: Using dot shorthand
+  final v = switch (e) {
+    MyEnum.first => 1,
+    _ => 2,
+  };
+
+  final MyEnum another = MyEnum.first;
+
+  if (e == MyEnum.first) {}
+}
+
+void fn({MyEnum value = MyEnum.first}) {}
+
+MyEnum getEnum() => MyEnum.first;
+```
+
+## Do
+
+```dart
+enum MyEnum { first, second }
+
+void example(MyEnum? e) {
   switch (e) {
     case .first:
       print(e);
   }
 
-  // ❌ Bad: Explicit prefix in switch expression
   final v = switch (e) {
-    MyEnum.first => 1, // LINT
-    _ => 2,
-  };
-
-  // ✅ Good: Dot shorthand in switch expression
-  final v2 = switch (e) {
     .first => 1,
     _ => 2,
   };
 
-  // ❌ Bad: Explicit prefix in variable declaration
-  final MyEnum another = MyEnum.first; // LINT
+  final MyEnum another = .first;
 
-  // ✅ Good: Dot shorthand in variable declaration
-  final MyEnum another2 = .first;
-
-  // ❌ Bad: Explicit prefix in comparison
-  if (e == MyEnum.first) {} // LINT
-
-  // ✅ Good: Dot shorthand in comparison
   if (e == .first) {}
 }
 
-// ❌ Bad: Explicit prefix in default parameter
-void anotherFunction({MyEnum value = MyEnum.first}) {} // LINT
+void fn({MyEnum value = .first}) {}
 
-// ✅ Good: Dot shorthand in default parameter
-void anotherFunction2({MyEnum value = .first}) {}
+MyEnum getEnum() => .first;
 
-// ❌ Bad: Explicit prefix in return expression
-MyEnum getEnum() => MyEnum.first; // LINT
-
-// ✅ Good: Dot shorthand in return expression
-MyEnum getEnum2() => .first;
-
-// ✅ Allowed: Full prefix when type is not inferable
-Object getObject() => MyEnum.first; // No lint - type is Object, not MyEnum
+// Explicit prefix is fine when type cannot be inferred:
+Object getObject() => MyEnum.first;
 ```
 
 ## Configuration

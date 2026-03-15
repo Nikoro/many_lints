@@ -1,60 +1,44 @@
 ---
 title: avoid_single_child_in_multi_child_widgets
-description: "Avoid using {0} with a single child."
+description: "Don't use Column, Row, or other multi-child widgets with only one child"
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: avoid_single_child_in_multi_child_widgets
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_single_child_in_multi_child_widgets` |
-| **Category** | Widget Best Practices |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.1.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-## Problem
+This rule flags multi-child widgets like `Column`, `Row`, and `Wrap` that contain only a single child in their `children` list. A multi-child layout widget with one child adds unnecessary complexity and layout overhead for something that could be expressed more simply.
 
-Avoid using {0} with a single child.
+## Why use this rule
 
-## Suggestion
+A `Column` or `Row` with a single child does the same thing as just using that child directly, but adds an extra layout pass and makes the code harder to read. If you need alignment, use `Align` or `Center`. If you need padding, use `Padding`. Using the right widget for the job makes intent clearer and keeps the widget tree lean.
 
-Remove the {0} and achieve the same result using dedicated widgets.
+**See also:** [Column](https://api.flutter.dev/flutter/widgets/Column-class.html) | [Row](https://api.flutter.dev/flutter/widgets/Row-class.html)
 
-## Example
+## Don't
 
 ```dart
-import 'package:flutter/material.dart';
+Scaffold(
+  body: Column(
+    // Column with a single child is unnecessary
+    children: [Text('I am the only child')],
+  ),
+)
+```
 
-// avoid_single_child_in_multi_child_widgets
-//
-// Multi-child widgets like Column, Row, Wrap should not be used
-// with only a single child. Use the child widget directly instead.
+## Do
 
-class AvoidSingleChildExample extends StatelessWidget {
-  const AvoidSingleChildExample({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        // LINT: Column with a single child
-        children: [Text('I am the only child')],
-      ),
-    );
-  }
-}
-
-class AvoidSingleChildRowExample extends StatelessWidget {
-  const AvoidSingleChildRowExample({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      // LINT: Row with a single child
-      children: [Text('I am the only child')],
-    );
-  }
-}
+```dart
+Scaffold(
+  // Use the child widget directly
+  body: Text('I am the only child'),
+)
 ```
 
 ## Configuration

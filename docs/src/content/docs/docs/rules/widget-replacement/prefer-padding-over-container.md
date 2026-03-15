@@ -1,6 +1,6 @@
 ---
 title: prefer_padding_over_container
-description: "Use Padding widget instead of the Container widget with only the padding or margin parameter"
+description: "Use Padding instead of Container when only padding or margin is set"
 sidebar:
   badge:
     text: "Fix"
@@ -8,52 +8,46 @@ sidebar:
   label: prefer_padding_over_container
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_padding_over_container` |
-| **Category** | Widget Replacement |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.1.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Widget Replacement</span>
 
-## Problem
+Flags `Container` widgets that only use the `padding` or `margin` parameter (plus optional `key` and `child`). When `Container` is used solely for spacing, the `Padding` widget is a lighter, more descriptive alternative.
 
-Use Padding widget instead of the Container widget with only the padding or margin parameter
+## Why use this rule
 
-## Suggestion
+`Container` is a convenience widget that composes many lower-level widgets internally. When you only need padding or margin, using `Padding` directly avoids the overhead and makes the intent immediately clear. This also keeps the widget tree shallow and easier to read during debugging.
 
-Try using Padding instead of Container.
+**See also:** [Padding](https://api.flutter.dev/flutter/widgets/Padding-class.html) | [Container](https://api.flutter.dev/flutter/widgets/Container-class.html)
 
-## Example
+## Don't
 
 ```dart
-import 'package:flutter/material.dart';
+// Container with only margin parameter
+Container(margin: EdgeInsets.all(16), child: Text('Hello'));
 
-// prefer_padding_over_container
-//
-// Use Padding widget instead of Container when only padding or margin is set.
+// Container with only margin, no child
+Container(margin: EdgeInsets.symmetric(horizontal: 8));
 
-class PreferPaddingOverContainerExample extends StatelessWidget {
-  const PreferPaddingOverContainerExample({super.key});
+// Container with only padding parameter
+Container(padding: EdgeInsets.all(16), child: Text('Hello'));
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // LINT: Container with only margin parameter
-        Container(margin: EdgeInsets.all(16), child: Text('Hello')),
+// Container with only padding, no child
+Container(padding: EdgeInsets.symmetric(vertical: 8));
+```
 
-        // LINT: Container with only margin, no child
-        Container(margin: EdgeInsets.symmetric(horizontal: 8)),
+## Do
 
-        // LINT: Container with only padding parameter
-        Container(padding: EdgeInsets.all(16), child: Text('Hello')),
+```dart
+// Use Padding directly
+Padding(padding: EdgeInsets.all(16), child: Text('Hello'));
 
-        // LINT: Container with only padding, no child
-        Container(padding: EdgeInsets.symmetric(vertical: 8)),
-      ],
-    );
-  }
-}
+Padding(padding: EdgeInsets.symmetric(horizontal: 8));
+
+Padding(padding: EdgeInsets.all(16), child: Text('Hello'));
+
+Padding(padding: EdgeInsets.symmetric(vertical: 8));
 ```
 
 ## Configuration

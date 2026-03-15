@@ -1,6 +1,6 @@
 ---
 title: prefer_multi_bloc_provider
-description: "Prefer '{0}' instead of multiple nested '{1}'s."
+description: "Use MultiBlocProvider, MultiBlocListener, or MultiRepositoryProvider instead of nesting"
 sidebar:
   badge:
     text: "Fix"
@@ -8,31 +8,22 @@ sidebar:
   label: prefer_multi_bloc_provider
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `prefer_multi_bloc_provider` |
-| **Category** | Bloc / Riverpod |
-| **Severity** | Warning |
-| **Has quick fix** | Yes |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-## Problem
+This rule flags nested `BlocProvider`, `BlocListener`, or `RepositoryProvider` widgets that could be consolidated using their `Multi*` counterpart. It only triggers when the same type is nested (e.g., `BlocProvider` inside `BlocProvider`), not when mixing different types.
 
-Prefer '{0}' instead of multiple nested '{1}'s.
+## Why use this rule
 
-## Suggestion
+Deeply nested providers create a "pyramid of doom" that hurts readability and makes diffs harder to review. `MultiBlocProvider`, `MultiBlocListener`, and `MultiRepositoryProvider` flatten the nesting into a clean list, keeping the widget tree shallow and easy to scan. The behavior is identical -- it's purely a readability improvement.
 
-Wrap the nested '{1}'s in a single '{0}'.
+**See also:** [MultiBlocProvider](https://bloclibrary.dev/flutter-bloc-concepts/#multiblocprovider) | [MultiBlocListener](https://bloclibrary.dev/flutter-bloc-concepts/#multibloclistener) | [MultiRepositoryProvider](https://bloclibrary.dev/flutter-bloc-concepts/#multirepositoryprovider)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable
-
-// prefer_multi_bloc_provider
-//
-// Warns when nested BlocProvider, BlocListener, or RepositoryProvider
-// widgets can be consolidated using their Multi* counterpart.
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -46,82 +37,39 @@ class TimerCubit extends Cubit<int> {
   TimerCubit() : super(0);
 }
 
-class AuthRepository {}
-
-class AnalyticsRepository {}
-
-// ❌ Bad: Nested BlocProviders
-final badBlocProviders = BlocProvider<CounterBloc>(
+// Nested BlocProviders
+final widget = BlocProvider<CounterBloc>(
   create: (context) => CounterBloc(),
-  // LINT: Prefer MultiBlocProvider instead of multiple nested BlocProviders
   child: BlocProvider<TimerCubit>(
     create: (context) => TimerCubit(),
     child: Container(),
   ),
 );
+```
 
-// ❌ Bad: Nested RepositoryProviders
-final badRepoProviders = RepositoryProvider<AuthRepository>(
-  create: (context) => AuthRepository(),
-  // LINT: Prefer MultiRepositoryProvider instead of nested RepositoryProviders
-  child: RepositoryProvider<AnalyticsRepository>(
-    create: (context) => AnalyticsRepository(),
-    child: Container(),
-  ),
-);
+## Do
 
-// ❌ Bad: Nested BlocListeners
-final badListeners = BlocListener<CounterBloc, int>(
-  listener: (context, state) {},
-  // LINT: Prefer MultiBlocListener instead of nested BlocListeners
-  child: BlocListener<TimerCubit, int>(
-    listener: (context, state) {},
-    child: Container(),
-  ),
-);
+```dart
+import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-// ✅ Good: Using MultiBlocProvider
-final goodBlocProviders = MultiBlocProvider(
+abstract class CounterEvent {}
+
+class CounterBloc extends Bloc<CounterEvent, int> {
+  CounterBloc() : super(0);
+}
+
+class TimerCubit extends Cubit<int> {
+  TimerCubit() : super(0);
+}
+
+// Flattened with MultiBlocProvider
+final widget = MultiBlocProvider(
   providers: [
     BlocProvider<CounterBloc>(create: (context) => CounterBloc()),
     BlocProvider<TimerCubit>(create: (context) => TimerCubit()),
   ],
   child: Container(),
-);
-
-// ✅ Good: Using MultiRepositoryProvider
-final goodRepoProviders = MultiRepositoryProvider(
-  providers: [
-    RepositoryProvider<AuthRepository>(create: (context) => AuthRepository()),
-    RepositoryProvider<AnalyticsRepository>(
-      create: (context) => AnalyticsRepository(),
-    ),
-  ],
-  child: Container(),
-);
-
-// ✅ Good: Using MultiBlocListener
-final goodListeners = MultiBlocListener(
-  listeners: [
-    BlocListener<CounterBloc, int>(listener: (context, state) {}),
-    BlocListener<TimerCubit, int>(listener: (context, state) {}),
-  ],
-  child: Container(),
-);
-
-// ✅ Good: Single provider (no nesting, no lint)
-final singleProvider = BlocProvider<CounterBloc>(
-  create: (context) => CounterBloc(),
-  child: Container(),
-);
-
-// ✅ Good: Mixed types (BlocProvider + RepositoryProvider) — no lint
-final mixedProviders = BlocProvider<CounterBloc>(
-  create: (context) => CounterBloc(),
-  child: RepositoryProvider<AuthRepository>(
-    create: (context) => AuthRepository(),
-    child: Container(),
-  ),
 );
 ```
 

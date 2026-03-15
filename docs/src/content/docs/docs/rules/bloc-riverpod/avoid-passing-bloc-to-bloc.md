@@ -1,35 +1,26 @@
 ---
 title: avoid_passing_bloc_to_bloc
-description: "Avoid passing a Bloc/Cubit to another Bloc/Cubit."
+description: "Prevent Bloc/Cubit classes from depending on other Bloc/Cubit instances"
 sidebar:
   label: avoid_passing_bloc_to_bloc
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_passing_bloc_to_bloc` |
-| **Category** | Bloc / Riverpod |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-## Problem
+This rule flags Bloc or Cubit classes that accept another Bloc or Cubit as a constructor parameter. Direct bloc-to-bloc dependencies create tight coupling and break the layered architecture that Bloc is designed around.
 
-Avoid passing a Bloc/Cubit to another Bloc/Cubit.
+## Why use this rule
 
-## Suggestion
+When one Bloc depends directly on another, you create a hidden coupling that makes both harder to test, reuse, and reason about. State changes should flow through the presentation layer (where widgets coordinate between Blocs) or through shared repositories in the domain layer. Direct dependencies also make it easy to introduce circular references and lifecycle issues.
 
-Use a repository or push the dependency into the presentation layer.
+**See also:** [Bloc architecture](https://bloclibrary.dev/architecture/)
 
-## Example
+## Don't
 
 ```dart
 import 'package:bloc/bloc.dart';
-
-// avoid_passing_bloc_to_bloc
-//
-// Blocs/Cubits should not depend on other Blocs/Cubits directly.
-// State changes should flow through the presentation layer or
-// be pushed down into the domain layer (repositories).
 
 abstract class CounterEvent {}
 
@@ -37,33 +28,33 @@ class Increment extends CounterEvent {}
 
 abstract class TimerEvent {}
 
-class TimerStarted extends TimerEvent {}
-
-// ❌ Bad: Bloc depends on another Bloc
+// Bloc depends on another Bloc
 class TimerBloc extends Bloc<TimerEvent, int> {
-  // LINT: Passing a Bloc to another Bloc creates tight coupling
   final CounterBloc counterBloc;
 
   TimerBloc(this.counterBloc) : super(0);
 }
 
-// ❌ Bad: Cubit depends on a Bloc
+// Cubit depends on a Bloc
 class SummaryCubit extends Cubit<int> {
-  // LINT: Passing a Bloc to a Cubit creates tight coupling
   final CounterBloc counterBloc;
 
   SummaryCubit(this.counterBloc) : super(0);
 }
+```
 
-// ❌ Bad: Bloc depends on a Cubit
-class AnalyticsBloc extends Bloc<TimerEvent, int> {
-  // LINT: Passing a Cubit to a Bloc creates tight coupling
-  final SummaryCubit summaryCubit;
+## Do
 
-  AnalyticsBloc(this.summaryCubit) : super(0);
-}
+```dart
+import 'package:bloc/bloc.dart';
 
-// ✅ Good: Bloc depends on a repository instead
+abstract class CounterEvent {}
+
+class Increment extends CounterEvent {}
+
+abstract class TimerEvent {}
+
+// Depend on a repository instead
 class CounterRepository {
   int getValue() => 0;
 }
@@ -76,7 +67,7 @@ class CounterBloc extends Bloc<CounterEvent, int> {
   }
 }
 
-// ✅ Good: Bloc with no external Bloc dependencies
+// No external Bloc dependencies
 class IndependentBloc extends Bloc<TimerEvent, int> {
   IndependentBloc() : super(0);
 }

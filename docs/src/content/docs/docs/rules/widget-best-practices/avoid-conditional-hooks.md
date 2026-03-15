@@ -1,96 +1,53 @@
 ---
 title: avoid_conditional_hooks
-description: "Hooks should not be called conditionally."
+description: "Never call hooks inside conditionals, loops, or ternaries"
 sidebar:
   label: avoid_conditional_hooks
 ---
 
-| Property | Value |
-|----------|-------|
-| **Rule name** | `avoid_conditional_hooks` |
-| **Category** | Widget Best Practices |
-| **Severity** | Warning |
-| **Has quick fix** | No |
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-## Problem
+This rule flags hook calls (`useState`, `useMemoized`, `useEffect`, etc.) that appear inside `if` statements, ternary expressions, `switch` cases, or short-circuit operators (`&&`, `||`). Hooks must be called in the exact same order on every build, and conditional execution breaks that guarantee.
 
-Hooks should not be called conditionally.
+## Why use this rule
 
-## Suggestion
+The hooks framework tracks state by call order, not by name. If a hook is skipped on one build because a condition is false, every subsequent hook shifts position and reads the wrong state. This leads to bizarre bugs where values swap between hooks or the app crashes with an index-out-of-range error. This is the same "Rules of Hooks" constraint from React.
 
-Move the conditional logic inside the hook callback instead.
+**See also:** [flutter_hooks](https://pub.dev/packages/flutter_hooks) | [React Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks)
 
-## Example
+## Don't
 
 ```dart
-// ignore_for_file: unused_local_variable, dead_code
-
-import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-
-// avoid_conditional_hooks
-//
-// Hooks must always be called in the same order on every build.
-// Calling hooks conditionally can cause hooks to be called in
-// a different order between builds, leading to unexpected behavior.
-
-// ❌ Bad: Hook called inside an if statement
-class ConditionalHookWidget extends HookWidget {
-  const ConditionalHookWidget({super.key, required this.condition});
-
+class MyWidget extends HookWidget {
   final bool condition;
 
   @override
   Widget build(BuildContext context) {
+    // Hook called conditionally — order changes between builds
     if (condition) {
-      // LINT: Hook called conditionally
       final value = useMemoized(() => 42);
     }
     return const Text('Hello');
   }
 }
+```
 
-// ❌ Bad: Hook called inside a ternary expression
-class TernaryHookWidget extends HookWidget {
-  const TernaryHookWidget({super.key, required this.condition});
+## Do
 
+```dart
+class MyWidget extends HookWidget {
   final bool condition;
 
   @override
   Widget build(BuildContext context) {
-    // LINT: Both branches call hooks conditionally
-    final value = condition ? useState(0) : useState(1);
-    return Text('$value');
-  }
-}
-
-// ✅ Good: Hooks called unconditionally, conditional logic inside
-class CorrectHookWidget extends HookWidget {
-  const CorrectHookWidget({super.key, required this.condition});
-
-  final bool condition;
-
-  @override
-  Widget build(BuildContext context) {
+    // Hook always called, conditional logic inside
     final value = useMemoized(() {
-      if (condition) {
-        return 42;
-      }
+      if (condition) return 42;
       return 0;
     });
     return Text('$value');
-  }
-}
-
-// ✅ Good: All hooks called unconditionally at top level
-class MultipleHooksWidget extends HookWidget {
-  const MultipleHooksWidget({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final count = useState(0);
-    final label = useMemoized(() => 'Count: ${count.value}');
-    return Text(label);
   }
 }
 ```
