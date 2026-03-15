@@ -21,11 +21,13 @@ class EdgeInsets {
   const EdgeInsets.symmetric({double vertical = 0, double horizontal = 0});
   const EdgeInsets.only({double left = 0, double top = 0, double right = 0, double bottom = 0});
   static const EdgeInsets zero = EdgeInsets.all(0);
+  static EdgeInsets lerp(EdgeInsets? a, EdgeInsets? b, double t) => EdgeInsets.all(0);
 }
 
 class BorderRadius {
   const BorderRadius.circular(double radius);
   const BorderRadius.all(Radius radius);
+  static BorderRadius lerp(BorderRadius? a, BorderRadius? b, double t) => BorderRadius.circular(0);
 }
 
 class Radius {
@@ -287,6 +289,100 @@ void f() {
 }
 ''',
       [lint(85, 20)],
+    );
+  }
+
+  Future<void> test_staticMethod_namedArgument() async {
+    // Static methods are parsed as MethodInvocation (not InstanceCreationExpression)
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+Widget f() {
+  return Padding(padding: EdgeInsets.lerp(null, null, 0.5));
+}
+''',
+      [lint(79, 10)],
+    );
+  }
+
+  Future<void> test_staticMethod_notConfiguredClass() async {
+    // Static method on a class not in the configured list - should not lint
+    await assertNoDiagnostics(r'''
+class Foo {
+  static Foo create() => Foo();
+}
+
+void f({required Foo foo}) {
+  f(foo: Foo.create());
+}
+''');
+  }
+
+  Future<void> test_staticMethod_notUsedAsArgument() async {
+    // Static method call not in argument position - should not lint
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+void f() {
+  final result = EdgeInsets.lerp(null, null, 0.5);
+}
+''');
+  }
+
+  Future<void> test_staticMethod_inListLiteral() async {
+    // Static method in a list literal context
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+void f() {
+  final List<EdgeInsets> items = [EdgeInsets.lerp(null, null, 0.5)];
+}
+''',
+      [lint(85, 10)],
+    );
+  }
+
+  Future<void> test_inSetLiteral() async {
+    // Test SetOrMapLiteral branch in _getCollectionElementType
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+void f() {
+  final Set<EdgeInsets> items = {EdgeInsets.all(8)};
+}
+''',
+      [lint(84, 14)],
+    );
+  }
+
+  Future<void> test_staticMethod_inSetLiteral() async {
+    // Static method in a set literal context (covers SetOrMapLiteral + MethodInvocation)
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+void f() {
+  final Set<EdgeInsets> items = {EdgeInsets.lerp(null, null, 0.5)};
+}
+''',
+      [lint(84, 10)],
+    );
+  }
+
+  Future<void> test_staticMethod_borderRadius_namedArgument() async {
+    // Static method on BorderRadius in a named argument
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+void f() {
+  final decoration = BoxDecoration(borderRadius: BorderRadius.lerp(null, null, 0.5));
+}
+''',
+      [lint(100, 12)],
     );
   }
 }

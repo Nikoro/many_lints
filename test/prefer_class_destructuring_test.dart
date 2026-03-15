@@ -220,4 +220,64 @@ void f(Foo foo) {
       [lint(140, 5)],
     );
   }
+
+  Future<void> test_propertyAccess_parenthesized_noLint() async {
+    // PropertyAccess with non-SimpleIdentifier target (ParenthesizedExpression)
+    // is NOT tracked by the rule — visitPropertyAccess checks
+    // `target is SimpleIdentifier` (lines 130-131)
+    await assertNoDiagnostics(r'''
+class Foo {
+  int get x => 1;
+  int get y => 2;
+  int get z => 3;
+}
+
+void f(Foo foo) {
+  (foo).x;
+  (foo).y;
+  (foo).z;
+}
+''');
+  }
+
+  Future<void> test_functionDeclaration_stopsCollection() async {
+    // Exercises visitFunctionDeclaration (line 148) — stops at
+    // local function declarations
+    await assertNoDiagnostics(r'''
+class Foo {
+  int get x => 1;
+  int get y => 2;
+  int get z => 3;
+}
+
+void f(Foo foo) {
+  print(foo.x);
+  print(foo.y);
+  void inner() {
+    print(foo.z);
+  }
+}
+''');
+  }
+
+  Future<void> test_nullAwarePropertyAccess_triggers() async {
+    // Exercises visitPropertyAccess with SimpleIdentifier target (lines 131-137)
+    // Null-aware access `foo?.x` is parsed as PropertyAccess, not PrefixedIdentifier
+    await assertDiagnostics(
+      r'''
+class Foo {
+  int get x => 1;
+  int get y => 2;
+  int get z => 3;
+}
+
+void f(Foo? foo) {
+  foo?.x;
+  foo?.y;
+  foo?.z;
+}
+''',
+      [lint(90, 6)],
+    );
+  }
 }

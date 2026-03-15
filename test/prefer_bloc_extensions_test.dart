@@ -49,6 +49,15 @@ extension WatchContext on BuildContext {
   T watch<T>() => throw UnimplementedError();
 }
 ''');
+    newPackage('provider').addFile('lib/provider.dart', r'''
+import 'package:flutter/widgets.dart';
+
+class BlocProvider<T> {
+  static T of<T>(BuildContext context, {bool listen = false}) {
+    throw UnimplementedError();
+  }
+}
+''');
     super.setUp();
   }
 
@@ -123,6 +132,20 @@ void f(BuildContext context) {
 }
 ''',
       [lint(150, 38)],
+    );
+  }
+
+  Future<void> test_blocProviderOfFromProviderPackage() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+import 'package:provider/provider.dart';
+
+void f(BuildContext context) {
+  BlocProvider.of(context);
+}
+''',
+      [lint(114, 24)],
     );
   }
 

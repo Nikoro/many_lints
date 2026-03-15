@@ -1,5 +1,6 @@
 // ignore_for_file: implementation_imports
 import 'package:analysis_server_plugin/src/registry.dart';
+import 'package:many_lints/many_lints.dart' as many_lints;
 import 'package:many_lints/many_lints.dart';
 import 'package:test/test.dart';
 
@@ -10,6 +11,11 @@ void main() {
   setUp(() {
     plugin = ManyLintsPlugin();
     registry = PluginRegistryImpl('many_lints');
+  });
+
+  test('top-level plugin variable is a ManyLintsPlugin', () {
+    expect(many_lints.plugin, isA<ManyLintsPlugin>());
+    expect(many_lints.plugin.name, 'Many Lints');
   });
 
   test('plugin has correct name', () {

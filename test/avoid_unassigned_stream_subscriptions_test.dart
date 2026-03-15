@@ -80,6 +80,43 @@ void fn() {
 ''');
   }
 
+  Future<void> test_unassignedListenOnCustomSubscription() async {
+    await assertDiagnostics(
+      r'''
+import 'dart:async';
+
+class MySubscription implements StreamSubscription<int> {
+  @override
+  Future<void> cancel() async {}
+  @override
+  void onData(void Function(int)? handleData) {}
+  @override
+  void onDone(void Function()? handleDone) {}
+  @override
+  void onError(Function? handleError) {}
+  @override
+  bool get isPaused => false;
+  @override
+  Future<E> asFuture<E>([E? futureValue]) async => throw '';
+  @override
+  void pause([Future<void>? resumeSignal]) {}
+  @override
+  void resume() {}
+}
+
+class MyStream {
+  MySubscription listen(void Function(int)? onData) => MySubscription();
+}
+
+void fn() {
+  final stream = MyStream();
+  stream.listen((event) {});
+}
+''',
+      [lint(640, 25)],
+    );
+  }
+
   Future<void> test_nonStreamListenMethod() async {
     await assertNoDiagnostics(r'''
 class MyClass {

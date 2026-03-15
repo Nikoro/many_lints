@@ -1,3 +1,4 @@
+import 'package:analyzer/src/diagnostic/diagnostic.dart' as diag;
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:many_lints/src/rules/prefer_wildcard_pattern.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
@@ -71,6 +72,20 @@ void f(Object object) {
 }
 ''',
       [lint(42, 8), lint(54, 8)],
+    );
+  }
+
+  Future<void> test_logicalOrPattern_objectPattern() async {
+    await assertDiagnostics(
+      r'''
+void f(Object object) {
+  switch (object) {
+    case Object() || Object():
+      break;
+  }
+}
+''',
+      [lint(53, 8), error(diag.deadCode, 62, 11), lint(65, 8)],
     );
   }
 

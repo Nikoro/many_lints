@@ -262,6 +262,46 @@ class MyWidget extends StatelessWidget {
 ''');
   }
 
+  Future<void> test_awaitInsideLocalFunctionDoesNotTrigger() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class MyState extends ConsumerState<ConsumerWidget> {
+  @override
+  Widget build(BuildContext context) {
+    final onTap = () async {
+      Future<void> helper() async {
+        await Future<void>.delayed(Duration(seconds: 1));
+      }
+      ref.read(Object());
+    };
+    return StatelessWidget();
+  }
+}
+''');
+  }
+
+  Future<void> test_refReadInLocalFunctionAfterAwait() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class MyState extends ConsumerState<ConsumerWidget> {
+  @override
+  Widget build(BuildContext context) {
+    final onTap = () async {
+      await Future<void>.delayed(Duration(seconds: 1));
+      void localHelper() {
+        ref.read(Object());
+      }
+    };
+    return StatelessWidget();
+  }
+}
+''');
+  }
+
   Future<void> test_refReadInNestedClosure() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';

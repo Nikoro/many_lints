@@ -44,6 +44,9 @@ class ListView extends Widget {
     required Widget Function(int) itemBuilder,
     required Widget Function(int) separatorBuilder,
   }) = _ListViewSeparated;
+
+  static ListView custom({bool shrinkWrap = false}) =>
+      ListView(shrinkWrap: shrinkWrap);
 }
 
 class _ListViewBuilder extends ListView {
@@ -144,6 +147,16 @@ final widget = Column(
 );
 ''',
       [lint(89, 16)],
+    );
+  }
+
+  Future<void> test_listViewCustomStaticMethodWithShrinkWrapTrue() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+final widget = ListView.custom(shrinkWrap: true);
+''',
+      [lint(70, 16)],
     );
   }
 

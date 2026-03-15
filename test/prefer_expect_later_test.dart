@@ -1,3 +1,4 @@
+import 'package:analyzer/src/diagnostic/diagnostic.dart' as diag;
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:many_lints/src/rules/prefer_expect_later.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
@@ -139,5 +140,24 @@ void f() {
   check(Future.value(1), 'matcher');
 }
 ''');
+  }
+
+  Future<void> test_expectWithCustomFutureSubtype() async {
+    await assertDiagnostics(
+      r'''
+import 'package:test_api/test_api.dart';
+
+class MyFuture implements Future<int> {
+}
+
+void f() {
+  expect(MyFuture(), completion);
+}
+''',
+      [
+        error(diag.nonAbstractClassInheritsAbstractMemberThree, 48, 8),
+        lint(98, 6),
+      ],
+    );
   }
 }

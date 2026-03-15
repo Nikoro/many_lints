@@ -122,6 +122,80 @@ void f() {
     );
   }
 
+  Future<void> test_parenthesizedLiterals() async {
+    await assertDiagnostics(
+      r'''
+void f() {
+  (1) == (2);
+}
+''',
+      [lint(13, 10)],
+    );
+  }
+
+  Future<void> test_constInstanceCreationBothSides() async {
+    await assertDiagnostics(
+      r'''
+class Pair {
+  final int x;
+  const Pair(this.x);
+}
+void f() {
+  const Pair(1) == const Pair(2);
+}
+''',
+      [lint(65, 30)],
+    );
+  }
+
+  Future<void> test_constTypedLiterals() async {
+    await assertDiagnostics(
+      r'''
+void f() {
+  const [1] == const [2];
+}
+''',
+      [lint(13, 22)],
+    );
+  }
+
+  Future<void> test_doubleLiterals() async {
+    await assertDiagnostics(
+      r'''
+void f() {
+  1.0 == 2.0;
+}
+''',
+      [lint(13, 10)],
+    );
+  }
+
+  Future<void> test_nullLiterals() async {
+    await assertDiagnostics(
+      r'''
+void f() {
+  null == null;
+}
+''',
+      [lint(13, 12)],
+    );
+  }
+
+  Future<void> test_prefixedIdentifierConst() async {
+    await assertDiagnostics(
+      r'''
+class Config {
+  static const a = 1;
+  static const b = 2;
+}
+void f() {
+  Config.a == Config.b;
+}
+''',
+      [lint(74, 20)],
+    );
+  }
+
   // ── Negative cases (should NOT trigger lint) ──────────────────────
 
   Future<void> test_variableAndLiteral_noLint() async {

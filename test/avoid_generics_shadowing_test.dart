@@ -115,6 +115,28 @@ typedef Transform<Value> = Value Function(Value);
     );
   }
 
+  Future<void> test_classShadowsFunctionTypeAlias() async {
+    await assertDiagnostics(
+      r'''
+typedef MyCallback(int x);
+
+class Foo<MyCallback> {}
+''',
+      [lint(38, 10)],
+    );
+  }
+
+  Future<void> test_classShadowsExtensionType() async {
+    await assertDiagnostics(
+      r'''
+extension type MyId(int id) {}
+
+class Foo<MyId> {}
+''',
+      [lint(42, 4)],
+    );
+  }
+
   // --- Negative cases (should NOT trigger lint) ---
 
   Future<void> test_noShadowing_singleLetter() async {

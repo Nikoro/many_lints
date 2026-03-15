@@ -63,8 +63,26 @@ class Transform extends Widget {
 class ClipRRect extends Widget {
   ClipRRect({Key? key, Widget? child});
 }
+class ClipOval extends Widget {
+  ClipOval({Key? key, Widget? child});
+}
+class ClipPath extends Widget {
+  ClipPath({Key? key, Widget? child});
+}
 class Opacity extends Widget {
   Opacity({Key? key, required double opacity, Widget? child});
+}
+class FractionallySizedBox extends Widget {
+  FractionallySizedBox({Key? key, double? widthFactor, double? heightFactor, Widget? child});
+}
+class IntrinsicHeight extends Widget {
+  IntrinsicHeight({Key? key, Widget? child});
+}
+class IntrinsicWidth extends Widget {
+  IntrinsicWidth({Key? key, Widget? child});
+}
+class LimitedBox extends Widget {
+  LimitedBox({Key? key, double maxWidth = double.infinity, double maxHeight = double.infinity, Widget? child});
 }
 class Text extends Widget {
   Text(String data);
@@ -315,5 +333,66 @@ Widget f() {
 ''',
       [lint(61, 7)],
     );
+  }
+
+  // === Tests for FractionallySizedBox, Opacity, IntrinsicHeight, IntrinsicWidth, LimitedBox ===
+
+  Future<void> test_fractionallySizedBoxOpacityIntrinsicHeight() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+Widget f() {
+  return FractionallySizedBox(
+    widthFactor: 0.5,
+    child: Opacity(
+      opacity: 0.5,
+      child: IntrinsicHeight(
+        child: Text('Hello'),
+      ),
+    ),
+  );
+}
+''',
+      [lint(61, 20)],
+    );
+  }
+
+  Future<void> test_intrinsicWidthLimitedBoxPadding() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+Widget f() {
+  return IntrinsicWidth(
+    child: LimitedBox(
+      maxWidth: 100,
+      child: Padding(
+        padding: EdgeInsets.all(8),
+        child: Text('Hello'),
+      ),
+    ),
+  );
+}
+''',
+      [lint(61, 14)],
+    );
+  }
+
+  Future<void> test_twoFractionallySizedBoxConflict() async {
+    // Two FractionallySizedBox widgets should conflict.
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+Widget f() {
+  return FractionallySizedBox(
+    widthFactor: 0.5,
+    child: FractionallySizedBox(
+      heightFactor: 0.5,
+      child: Padding(
+        padding: EdgeInsets.all(8),
+        child: Text('Hello'),
+      ),
+    ),
+  );
+}
+''');
   }
 }

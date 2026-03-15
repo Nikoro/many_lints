@@ -4,6 +4,7 @@ import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:analyzer/src/diagnostic/diagnostic.dart' as diag;
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:many_lints/src/type_checker.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
@@ -15,6 +16,7 @@ void main() {
     defineReflectiveTests(TypeCheckerIsSuperOfTest);
     defineReflectiveTests(TypeCheckerAnyTest);
     defineReflectiveTests(TypeCheckerIsAssignableFromTypeTest);
+    defineReflectiveTests(TypeCheckerDartPackageTest);
   });
 }
 
@@ -287,5 +289,34 @@ class MyDerived extends Derived {}
     await assertNoDiagnostics(r'''
 class Unrelated {}
 ''');
+  }
+}
+
+// --- fromName with packageName 'dart' ---
+
+@reflectiveTest
+class TypeCheckerDartPackageTest extends AnalysisRuleTest {
+  @override
+  void setUp() {
+    rule = TypeCheckerTestRule(
+      const TypeChecker.fromName('Iterable', packageName: 'dart'),
+      CheckMode.isSuperOf,
+    );
+    super.setUp();
+  }
+
+  Future<void> test_dartCoreType_matchesIterable() async {
+    await assertDiagnostics(
+      r'''
+class MyList extends Iterable<int> {
+  @override
+  Iterator<int> get iterator => <int>[].iterator;
+}
+''',
+      [
+        error(diag.nonAbstractClassInheritsAbstractMemberFivePlus, 6, 6),
+        lint(6, 6),
+      ],
+    );
   }
 }

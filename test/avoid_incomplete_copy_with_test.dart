@@ -178,6 +178,24 @@ class Config {
 ''');
   }
 
+  Future<void> test_copyWithWithPositionalParams() async {
+    await assertDiagnostics(
+      r'''
+class Point {
+  final double x;
+  final double y;
+
+  Point(this.x, this.y);
+
+  Point copyWith(double? x) {
+    return Point(x ?? this.x, y);
+  }
+}
+''',
+      [lint(85, 8)],
+    );
+  }
+
   Future<void> test_superFormalParams() async {
     await assertNoDiagnostics(r'''
 class Base {

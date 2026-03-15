@@ -46,6 +46,11 @@ class BlocProvider<T extends BlocBase> extends Widget {
     required this.child,
     this.lazy = true,
   });
+
+  static BlocProvider<T> of<T extends BlocBase>({
+    required T Function(BuildContext) create,
+    required Widget child,
+  }) => BlocProvider<T>(create: create, child: child);
 }
 
 class MultiBlocProvider extends Widget {
@@ -312,5 +317,42 @@ final provider = BlocProvider<BlocA>(
 ''',
       [lint(272, 19)],
     );
+  }
+
+  // --- MethodInvocation path (static factory) ---
+
+  Future<void> test_methodInvocation_nestedBlocProviders() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+class BlocA extends Cubit<int> { BlocA() : super(0); }
+class BlocB extends Cubit<int> { BlocB() : super(0); }
+
+final provider = BlocProvider.of<BlocA>(
+  create: (context) => BlocA(),
+  child: BlocProvider.of<BlocB>(
+    create: (context) => BlocB(),
+    child: Widget(),
+  ),
+);
+''',
+      [lint(230, 2)],
+    );
+  }
+
+  Future<void> test_methodInvocation_singleBlocProvider_noDiagnostic() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+class BlocA extends Cubit<int> { BlocA() : super(0); }
+
+final provider = BlocProvider.of<BlocA>(
+  create: (context) => BlocA(),
+  child: Widget(),
+);
+''');
   }
 }

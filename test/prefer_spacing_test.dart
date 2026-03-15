@@ -18,6 +18,9 @@ class Widget {
 class Key {}
 class Column extends Widget {
   const Column({Key? key, double? spacing, List<Widget>? children});
+
+  static Column create({double? spacing, List<Widget>? children}) =>
+      Column(spacing: spacing, children: children);
 }
 class Row extends Widget {
   const Row({Key? key, double? spacing, List<Widget>? children});
@@ -27,6 +30,9 @@ class Flex extends Widget {
 }
 class SizedBox extends Widget {
   const SizedBox({Key? key, double? width, double? height, Widget? child});
+
+  static SizedBox gap({double? width, double? height}) =>
+      SizedBox(width: width, height: height);
 }
 class Container extends Widget {
   const Container({Key? key, double? width, double? height});
@@ -254,5 +260,71 @@ Widget f() {
 ''',
       [lint(99, 19)],
     );
+  }
+
+  // --- MethodInvocation paths ---
+
+  Future<void> test_sizedBox_staticFactory_in_column() async {
+    // SizedBox.gap() is a MethodInvocation — covers _extractSizedBoxSpacingFromExpr MethodInvocation branch
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+Widget f() {
+  return Column(children: [Container(height: 20), SizedBox.gap(height: 10), Container(height: 20)]);
+}
+''',
+      [lint(102, 24)],
+    );
+  }
+
+  Future<void> test_separatedBy_with_staticFactory_sizedBox() async {
+    // SizedBox.gap() as separator — covers MethodInvocation in _extractSizedBoxSpacingFromExpr
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+extension ListSeparate on List<Widget> {
+  List<Widget> separatedBy(Widget separator) => [];
+}
+
+Widget f() {
+  return Column(children: <Widget>[Text('A'), Text('B')].separatedBy(SizedBox.gap(height: 10)));
+}
+''',
+      [lint(175, 68)],
+    );
+  }
+
+  Future<void> test_separatedBy_with_column_staticFactory() async {
+    // Column.create() is a MethodInvocation — covers _isChildrenOfFlexWidget MethodInvocation branches
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+extension ListSeparate on List<Widget> {
+  List<Widget> separatedBy(Widget separator) => [];
+}
+
+Widget f() {
+  return Column.create(children: <Widget>[Text('A'), Text('B')].separatedBy(const SizedBox(height: 10)));
+}
+''',
+      [lint(182, 70)],
+    );
+  }
+
+  Future<void> test_expand_with_nested_function_no_lint() async {
+    // The nested function expression inside expand should stop recursion
+    // (covers visitFunctionExpression in _SizedBoxYieldFinder)
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+Widget f() {
+  final List<Widget> widgets = [Text('A'), Text('B')];
+  return Column(children: widgets.expand((widget) sync* {
+    final helper = () sync* { yield const SizedBox(height: 10); };
+    yield widget;
+  }).toList());
+}
+''');
   }
 }

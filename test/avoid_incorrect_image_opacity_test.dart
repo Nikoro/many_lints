@@ -22,6 +22,9 @@ class Key {}
 
 class Opacity extends Widget {
   const Opacity({super.key, required double opacity, Widget? child});
+
+  static Opacity create({required double opacity, Widget? child}) =>
+      Opacity(opacity: opacity, child: child);
 }
 
 class Image extends Widget {
@@ -129,6 +132,32 @@ Widget f() {
 import 'package:flutter/widgets.dart';
 Widget f() {
   return Opacity(opacity: 0.5);
+}
+''');
+  }
+
+  // --- MethodInvocation path (static factory) ---
+
+  Future<void> test_methodInvocation_opacityWrappingImage() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+Widget f() {
+  return Opacity.create(opacity: 0.5, child: Image(semanticLabel: 'test'));
+}
+''',
+      [lint(69, 6)],
+    );
+  }
+
+  Future<void> test_methodInvocation_opacityWrappingNonImage() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+class Text extends Widget {
+  const Text(String data);
+}
+Widget f() {
+  return Opacity.create(opacity: 0.5, child: Text('hello'));
 }
 ''');
   }
