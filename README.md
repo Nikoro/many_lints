@@ -17,6 +17,9 @@
   <a href="https://pub.dev/packages/analyzer">
     <img src="https://img.shields.io/badge/analyzer-11.0.0-blue" alt="analyzer version 11.0.0">
   </a>
+  <a href="https://nikoro.github.io/many_lints">
+    <img src="https://img.shields.io/badge/docs-many__lints-154A95" alt="Documentation">
+  </a>
 </p>
 
 A useful collection of custom lints for Flutter & Dart projects. Uses the new `analysis_server_plugin` system for direct integration with `dart analyze` and IDEs.
