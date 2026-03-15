@@ -96,6 +96,35 @@ void f() {
     );
   }
 
+  Future<void> test_duplicateIndexAccess() async {
+    await assertDiagnostics(
+      r'''
+void f() {
+  [1, 2, 3]
+    ..[1]
+    ..[1];
+}
+''',
+      [lint(37, 5)],
+    );
+  }
+
+  Future<void> test_duplicatePropertyAccess() async {
+    await assertDiagnostics(
+      r'''
+class Foo {
+  int field = 0;
+}
+void f() {
+  Foo()
+    ..field
+    ..field;
+}
+''',
+      [lint(66, 7)],
+    );
+  }
+
   // --- Negative cases: should NOT trigger lint ---
 
   Future<void> test_differentPropertyAssignments() async {

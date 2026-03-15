@@ -28,6 +28,10 @@ class LayoutBuilder extends Widget {
 class Text extends Widget {
   Text(String data);
 }
+
+class OptionalCtxBuilder extends Widget {
+  OptionalCtxBuilder({required Widget Function([BuildContext context]) builder});
+}
 ''');
     super.setUp();
   }
@@ -180,6 +184,112 @@ class MyWidget extends StatelessWidget {
 }
 ''',
       [lint(198, 7)],
+    );
+  }
+
+  Future<void> test_defaultFormalParam_buildContext() async {
+    // Tests DefaultFormalParameter path (lines 83-86)
+    // Optional positional parameter wraps SimpleFormalParameter in
+    // DefaultFormalParameter
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+class MyWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return OptionalCtxBuilder(builder: ([BuildContext? innerCtx]) {
+      return _buildMyWidget(context);
+    });
+  }
+  Widget _buildMyWidget(BuildContext ctx) => Text('hello');
+}
+''',
+      [lint(228, 7)],
+    );
+  }
+
+  Future<void> test_outerContextUsedAsPrefixedIdentifier() async {
+    // Tests PrefixedIdentifier path in _OuterContextUsageFinder (line 159)
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+class MyWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Builder(builder: (_) {
+      context.hashCode;
+      return Text('hello');
+    });
+  }
+}
+''',
+      [lint(171, 7)],
+    );
+  }
+
+  Future<void>
+  test_tripleNestedClosure_innerHasBuildContext_stopsSearch() async {
+    // Tests visitFunctionExpression in _OuterContextUsageFinder (lines 169-180)
+    // The middle closure has BuildContext, so usage in deepest closure should
+    // not flag the outermost context.
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+class MyWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Builder(builder: (innerCtx) {
+      return Builder(builder: (deepCtx) {
+        return Text('hello');
+      });
+    });
+  }
+}
+''');
+  }
+
+  Future<void> test_nestedClosureWithoutBuildContext_continuesSearch() async {
+    // Tests visitFunctionExpression in _OuterContextUsageFinder (line 180)
+    // The nested closure does NOT have BuildContext, so search continues.
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+class MyWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Builder(builder: (_) {
+      final fn = () {
+        context.hashCode;
+      };
+      return Text('hello');
+    });
+  }
+}
+''',
+      [lint(195, 7)],
+    );
+  }
+
+  Future<void> test_nestedClosureWithBuildContext_reportsDeeper() async {
+    // The _NestedContextFinder processes each closure level independently.
+    // The deepest closure has its own BuildContext (deepCtx) but references
+    // the outer `context`, so it gets reported.
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+class MyWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Builder(builder: (_) {
+      return Builder(builder: (deepCtx) {
+        context.hashCode;
+        return Text('hello');
+      });
+    });
+  }
+}
+''',
+      [lint(215, 7)],
     );
   }
 }

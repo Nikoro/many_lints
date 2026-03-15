@@ -36,6 +36,12 @@ class GestureDetector extends Widget {
     void Function()? onScaleStart,
     int? behavior,
   });
+
+  static GestureDetector create({
+    Widget? child,
+    void Function()? onTap,
+    int? behavior,
+  }) => GestureDetector(child: child, onTap: onTap, behavior: behavior);
 }
 
 class Text extends Widget {
@@ -160,6 +166,25 @@ Widget f() {
     child: Text('hello'),
   );
 }
+''');
+  }
+
+  // --- MethodInvocation path (static factory) ---
+
+  Future<void> test_methodInvocation_noHandlers() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+final w = GestureDetector.create(child: Text('hello'));
+''',
+      [lint(65, 6)],
+    );
+  }
+
+  Future<void> test_methodInvocation_withOnTap() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+final w = GestureDetector.create(onTap: () {}, child: Text('hello'));
 ''');
   }
 }

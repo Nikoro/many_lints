@@ -1,3 +1,4 @@
+import 'package:analyzer/src/diagnostic/diagnostic.dart' as diag;
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:many_lints/src/rules/use_existing_destructuring.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
@@ -235,6 +236,81 @@ final global = Foo(1, 2);
 void f() {
   final Foo(:value) = global;
   print(global.another);
+}
+''');
+  }
+
+  // --- RecordPattern coverage (lines 124-127) ---
+
+  Future<void>
+  test_recordPattern_propertyAccessNotDestructured_triggers() async {
+    await assertDiagnostics(
+      r'''
+void f(({int a, String b}) record) {
+  final (:a,) = record;
+  print(record.b);
+}
+''',
+      [error(diag.patternTypeMismatchInIrrefutableContext, 45, 5), lint(69, 8)],
+    );
+  }
+
+  // --- PropertyAccess coverage (lines 170-177) ---
+
+  Future<void> test_propertyAccess_conditionalAccess_triggers() async {
+    await assertDiagnostics(
+      r'''
+class Foo {
+  final int value;
+  final int other;
+  Foo(this.value, this.other);
+}
+
+void f(Foo? obj) {
+  if (obj == null) return;
+  final Foo(:value) = obj;
+  print(obj?.other);
+}
+''',
+      [lint(165, 10), error(diag.invalidNullAwareOperator, 168, 2)],
+    );
+  }
+
+  // --- visitPropertyAccess fallthrough (line 183) ---
+
+  Future<void> test_propertyAccess_nonSimpleIdentifierTarget_noLint() async {
+    await assertNoDiagnostics(r'''
+class Foo {
+  final int value;
+  final int other;
+  Foo(this.value, this.other);
+}
+
+Foo getObj() => Foo(1, 2);
+
+void f(Foo obj) {
+  final Foo(:value) = obj;
+  print(getObj().other);
+}
+''');
+  }
+
+  // --- visitFunctionExpression boundary (line 187) ---
+
+  Future<void> test_functionExpression_noLint() async {
+    await assertNoDiagnostics(r'''
+class Foo {
+  final int value;
+  final int another;
+  Foo(this.value, this.another);
+}
+
+void f(Foo variable) {
+  final Foo(:value) = variable;
+  final fn = () {
+    print(variable.another);
+  };
+  fn();
 }
 ''');
   }

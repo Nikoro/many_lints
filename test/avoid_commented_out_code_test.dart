@@ -143,4 +143,127 @@ void f() {}
       [lint(0, 10)],
     );
   }
+
+  // --- Coverage for uncovered lines ---
+
+  Future<void> test_commentedOutReturnStatement() async {
+    await assertDiagnostics(
+      r'''
+// return value
+void f() {}
+''',
+      [lint(0, 15)],
+    );
+  }
+
+  Future<void> test_commentedOutCascade() async {
+    await assertDiagnostics(
+      r'''
+// ..add(item);
+void f() {}
+''',
+      [lint(0, 15)],
+    );
+  }
+
+  Future<void> test_commentedOutAssignmentWithoutSemicolon() async {
+    await assertDiagnostics(
+      r'''
+// value += something
+void f() {}
+''',
+      [lint(0, 21)],
+    );
+  }
+
+  Future<void> test_commentWithoutSpaceAfterSlashes() async {
+    await assertDiagnostics(
+      r'''
+//final x = 42;
+void f() {}
+''',
+      [lint(0, 15)],
+    );
+  }
+
+  Future<void> test_commentAtEndOfFile() async {
+    await assertDiagnostics(
+      r'''
+void f() {}
+// final x = 42;
+''',
+      [lint(12, 16)],
+    );
+  }
+
+  Future<void> test_separatedCommentGroups() async {
+    await assertDiagnostics(
+      r'''
+// final x = 42;
+
+// final y = 99;
+void f() {}
+''',
+      [lint(0, 34)],
+    );
+  }
+
+  Future<void> test_nonConsecutiveCommentGroups() async {
+    await assertDiagnostics(
+      r'''
+// final x = 42;
+void a() {}
+void b() {}
+void c() {}
+void d() {}
+void e() {}
+void ff() {}
+void gg() {}
+void hh() {}
+void ii() {}
+void jj() {}
+void kk() {}
+void ll() {}
+// final y = 99;
+void z() {}
+''',
+      [lint(0, 16), lint(168, 16)],
+    );
+  }
+
+  Future<void> test_commentedOutAnnotationOnly() async {
+    await assertDiagnostics(
+      r'''
+// @override
+void f() {}
+''',
+      [lint(0, 12)],
+    );
+  }
+
+  // --- Cover _cascadePattern (line 231) ---
+
+  Future<void> test_commentedOutCascadeOnly() async {
+    // A single cascade line — exercises _cascadePattern match at line 231
+    await assertDiagnostics(
+      r'''
+// ..removeAll(items);
+void f() {}
+''',
+      [lint(0, 22)],
+    );
+  }
+
+  // --- Cover EOF token comment processing (line 51 area) ---
+
+  Future<void> test_commentedOutCodeAfterEofToken() async {
+    // Comments after the last real token but before EOF
+    await assertDiagnostics(
+      r'''
+void f() {}
+// final z = 100;
+''',
+      [lint(12, 17)],
+    );
+  }
 }

@@ -213,4 +213,118 @@ class MyState extends ConsumerState<ConsumerStatefulWidget> {
 }
 ''');
   }
+
+  Future<void> test_bareRefInDispose() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+void takeRef(Object r) {}
+
+class MyState extends ConsumerState<ConsumerStatefulWidget> {
+  @override
+  void dispose() {
+    takeRef(ref);
+    super.dispose();
+  }
+}
+''',
+      [lint(190, 3)],
+    );
+  }
+
+  Future<void> test_refPropertyAccessInDispose() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class MyState extends ConsumerState<ConsumerStatefulWidget> {
+  @override
+  void dispose() {
+    ref.hashCode;
+    super.dispose();
+  }
+}
+''',
+      [lint(155, 12)],
+    );
+  }
+
+  Future<void> test_propertyAccessOnRefInDispose() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class MyState extends ConsumerState<ConsumerStatefulWidget> {
+  @override
+  void dispose() {
+    (ref).hashCode;
+    super.dispose();
+  }
+}
+''',
+      [lint(156, 3)],
+    );
+  }
+
+  Future<void> test_refInLocalFunctionInsideDispose() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class MyState extends ConsumerState<ConsumerStatefulWidget> {
+  @override
+  void dispose() {
+    void helper() {
+      ref.read(Object());
+    }
+    super.dispose();
+  }
+}
+''');
+  }
+
+  Future<void> test_nonRefPrefixedIdentifierInDispose() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class MyState extends ConsumerState<ConsumerStatefulWidget> {
+  final Object other = Object();
+  @override
+  void dispose() {
+    other.hashCode;
+    super.dispose();
+  }
+}
+''');
+  }
+
+  Future<void> test_nonRefPropertyAccessInDispose() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class MyState extends ConsumerState<ConsumerStatefulWidget> {
+  final Object other = Object();
+  @override
+  void dispose() {
+    (other).hashCode;
+    super.dispose();
+  }
+}
+''');
+  }
+
+  Future<void> test_nonRefMethodInvocationInDispose() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class MyState extends ConsumerState<ConsumerStatefulWidget> {
+  final Object other = Object();
+  @override
+  void dispose() {
+    other.toString();
+    super.dispose();
+  }
+}
+''');
+  }
 }

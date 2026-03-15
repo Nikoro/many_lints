@@ -420,4 +420,180 @@ class _MyWidgetState extends State<MyWidget> {
 }
 ''');
   }
+
+  Future<void> test_addListenerInsideLambda_ignored() async {
+    // Tests visitFunctionExpression stopAtFunctions (lines 176-178)
+    // addListener inside a lambda in initState should still be caught
+    // because stopAtFunctions stops recursion into nested functions
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
+
+class MyWidget extends StatefulWidget {
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> {
+  final ValueNotifier<int> _notifier = ValueNotifier(0);
+
+  @override
+  void initState() {
+    super.initState();
+    final fn = () {
+      _notifier.addListener(_onChanged);
+    };
+  }
+
+  void _onChanged() {}
+
+  @override
+  Widget build() => Widget();
+}
+''');
+  }
+
+  Future<void> test_addListenerInsideLocalFunction_ignored() async {
+    // Tests visitFunctionDeclaration stopAtFunctions (lines 181-184)
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
+
+class MyWidget extends StatefulWidget {
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> {
+  final ValueNotifier<int> _notifier = ValueNotifier(0);
+
+  @override
+  void initState() {
+    super.initState();
+    void localSetup() {
+      _notifier.addListener(_onChanged);
+    }
+  }
+
+  void _onChanged() {}
+
+  @override
+  Widget build() => Widget();
+}
+''');
+  }
+
+  Future<void> test_sameTargetSameListener_equality() async {
+    // Tests _ListenerCall equality (lines 139-143) — same target and
+    // listener should match
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
+
+class MyWidget extends StatefulWidget {
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> {
+  final ValueNotifier<int> _a = ValueNotifier(0);
+  final ValueNotifier<int> _b = ValueNotifier(0);
+
+  @override
+  void initState() {
+    super.initState();
+    _a.addListener(_onA);
+    _b.addListener(_onB);
+  }
+
+  @override
+  void dispose() {
+    _a.removeListener(_onA);
+    _b.removeListener(_onB);
+    super.dispose();
+  }
+
+  void _onA() {}
+  void _onB() {}
+
+  @override
+  Widget build() => Widget();
+}
+''');
+  }
+
+  Future<void> test_duplicateRemoveListenerInDispose_noLint() async {
+    // Tests _ListenerCall equality (lines 139-143) — when dispose() has two
+    // identical removeListener calls, the Set deduplication uses == and hashCode
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
+
+class MyWidget extends StatefulWidget {
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> {
+  final ValueNotifier<int> _notifier = ValueNotifier(0);
+
+  @override
+  void initState() {
+    super.initState();
+    _notifier.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    _notifier.removeListener(_onChanged);
+    _notifier.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {}
+
+  @override
+  Widget build() => Widget();
+}
+''');
+  }
+
+  Future<void> test_differentTargets_differentListeners() async {
+    // Tests _ListenerCall equality — different target, same listener
+    // should NOT match (exercises lines 139-143 equality operator)
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
+
+class MyWidget extends StatefulWidget {
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> {
+  final ValueNotifier<int> _a = ValueNotifier(0);
+  final ValueNotifier<int> _b = ValueNotifier(0);
+
+  @override
+  void initState() {
+    super.initState();
+    _a.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    _b.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {}
+
+  @override
+  Widget build() => Widget();
+}
+''',
+      [lint(398, 26)],
+    );
+  }
 }

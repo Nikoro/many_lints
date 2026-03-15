@@ -39,6 +39,9 @@ class Expanded extends Widget {
   final int flex;
   final Widget child;
   const Expanded({super.key, this.flex = 1, required this.child});
+
+  static Expanded create({int flex = 1, required Widget child}) =>
+      Expanded(flex: flex, child: child);
 }
 
 class SizedBox extends Widget {
@@ -47,6 +50,7 @@ class SizedBox extends Widget {
   final Widget? child;
   const SizedBox({super.key, this.width, this.height, this.child});
   const SizedBox.shrink({super.key, this.child}) : width = 0, height = 0;
+  static SizedBox empty() => SizedBox();
 }
 
 class Container extends Widget {
@@ -173,5 +177,50 @@ final widget = Expanded(child: Container(width: 10));
 import 'package:flutter/widgets.dart';
 final widget = Spacer();
 ''');
+  }
+
+  // --- MethodInvocation path (static factory) ---
+
+  Future<void> test_methodInvocation_expandedWithEmptySizedBox() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+final widget = Expanded.create(child: SizedBox());
+''',
+      [lint(54, 34)],
+    );
+  }
+
+  Future<void> test_methodInvocation_expandedWithNonEmptyChild() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+final widget = Expanded.create(child: Text('hi'));
+''');
+  }
+
+  // --- Cover MethodInvocation path in _isEmptyWidget (lines 111-112) ---
+
+  Future<void> test_expandedWithEmptySizedBoxViaFactory() async {
+    // SizedBox() created via static method — exercises MethodInvocation
+    // path in _isEmptyWidget (lines 111-112)
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+final widget = Expanded(child: SizedBox.shrink());
+''',
+      [lint(54, 34)],
+    );
+  }
+
+  Future<void> test_expandedWithEmptySizedBoxViaStaticFactory() async {
+    // SizedBox.empty() is a static method returning SizedBox — parsed as
+    // MethodInvocation, exercises lines 111-112 in _isEmptyWidget
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+final widget = Expanded(child: SizedBox.empty());
+''',
+      [lint(54, 33)],
+    );
   }
 }

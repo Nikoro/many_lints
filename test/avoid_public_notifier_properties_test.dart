@@ -237,6 +237,20 @@ class MyNotifier extends Notifier<int> {
 ''');
   }
 
+  Future<void> test_overrideNonStateGetter() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+class MyNotifier extends Notifier<int> {
+  @override
+  int get hashCode => 42;
+
+  @override
+  int build() => 0;
+}
+''');
+  }
+
   Future<void> test_notANotifierClass() async {
     await assertNoDiagnostics(r'''
 class RegularClass {

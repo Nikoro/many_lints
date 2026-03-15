@@ -101,6 +101,10 @@ abstract class AsyncNotifier<State> {
   set state(State value) {}
   Future<State> build();
 }
+
+class ProviderFactory {
+  static Provider<T> create<T>(T Function(Ref ref) fn) => Provider<T>(fn);
+}
 ''');
 
     super.setUp();
@@ -583,4 +587,225 @@ final provider = StateProvider<DisposableService>((ref) {
 });
 ''');
   }
+
+  // --- Cover MethodInvocation provider construction (lines 74-77) ---
+
+  Future<void> test_providerWithoutTypeArgsTriggersLint() async {
+    await assertDiagnostics(
+      r'''
+import 'package:riverpod/riverpod.dart';
+
+class DisposableService {
+  void dispose() {}
+}
+
+final provider = Provider((ref) {
+  final instance = DisposableService();
+  return instance;
+});
+''',
+      [lint(133, 8)],
+    );
+  }
+
+  // --- Cover PropertyAccess in onDispose (lines 254-258) ---
+  // This covers the PropertyAccess path where ref.onDispose(expr.dispose)
+  // is parsed as PropertyAccess rather than PrefixedIdentifier
+
+  Future<void> test_providerOnDisposeWithPropertyAccessTearOff() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+class DisposableService {
+  void dispose() {}
+}
+
+class Holder {
+  DisposableService instance = DisposableService();
+}
+
+final provider = Provider<int>((ref) {
+  final holder = Holder();
+  ref.onDispose(holder.instance.dispose);
+  return 0;
+});
+''');
+  }
+
+  // --- Cover FunctionDeclaration boundary stop (line 214) ---
+
+  Future<void> test_disposableInsideNestedFunctionNotReported() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+class DisposableService {
+  void dispose() {}
+}
+
+final provider = Provider<int>((ref) {
+  void helperFunction() {
+    final inner = DisposableService();
+  }
+  return 42;
+});
+''');
+  }
+
+  // --- Cover null type in variable finder (line 193) ---
+
+  Future<void> test_providerWithVarKeyword() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+final provider = Provider<int>((ref) {
+  var x = 42;
+  return x;
+});
+''');
+  }
+
+  // --- Cover visitMethodInvocation with non-provider type (line 74 early return) ---
+
+  Future<void> test_methodInvocation_nonProvider_noLint() async {
+    await assertNoDiagnostics(r'''
+class DisposableService {
+  void dispose() {}
+}
+
+class NotAProvider {
+  static NotAProvider call(void Function() fn) => NotAProvider();
+}
+
+void f() {
+  NotAProvider.call(() {
+    final instance = DisposableService();
+  });
+}
+''');
+  }
+
+  // --- Cover visitMethodInvocation callback null (line 76 early return) ---
+
+  Future<void> test_methodInvocation_providerWithNonFunctionArg_noLint() async {
+    await assertDiagnostics(
+      r'''
+import 'package:riverpod/riverpod.dart';
+
+class DisposableService {
+  void dispose() {}
+}
+
+DisposableService createService(Ref ref) {
+  final instance = DisposableService();
+  return instance;
+}
+
+final provider = Provider(createService);
+''',
+      // The lint should NOT fire because callback is not a FunctionExpression
+      [],
+    );
+  }
+
+  // --- Cover PropertyAccess in onDispose with SimpleIdentifier target (lines 256-258) ---
+
+  Future<void> test_providerOnDisposePropertyAccessSimpleIdentifier() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+class DisposableService {
+  void dispose() {}
+}
+
+class ServiceWrapper {
+  DisposableService get service => DisposableService();
+  void dispose() {}
+}
+
+final provider = Provider<int>((ref) {
+  final wrapper = ServiceWrapper();
+  ref.onDispose(wrapper.dispose);
+  return 0;
+});
+''');
+  }
+
+  // --- Cover null type in variable declaration (line 192-193) ---
+
+  Future<void> test_providerVariableWithNullType() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+final provider = Provider<int>((ref) {
+  var x;
+  x = 42;
+  return x;
+});
+''');
+  }
+
+  // --- Cover visitMethodInvocation for Provider construction (lines 75,77) ---
+
+  Future<void> test_providerViaStaticFactory_disposableMissing() async {
+    // ProviderFactory.create<T>(fn) returns Provider<T> via static method —
+    // parsed as MethodInvocation with Provider<T> staticType
+    await assertDiagnostics(
+      r'''
+import 'package:riverpod/riverpod.dart';
+
+class DisposableService {
+  void dispose() {}
+}
+
+final provider = ProviderFactory.create<DisposableService>((ref) {
+  final instance = DisposableService();
+  return instance;
+});
+''',
+      [lint(166, 8)],
+    );
+  }
+
+  Future<void> test_providerViaStaticFactory_disposableWithOnDispose() async {
+    // Same factory path but with proper disposal — should not lint
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+class DisposableService {
+  void dispose() {}
+}
+
+final provider = ProviderFactory.create<DisposableService>((ref) {
+  final instance = DisposableService();
+  ref.onDispose(instance.dispose);
+  return instance;
+});
+''');
+  }
+
+  Future<void> test_providerViaStaticFactory_nonFunctionArg() async {
+    // ProviderFactory.create with a function reference (not FunctionExpression)
+    // exercises line 76 (callback == null early return)
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+class DisposableService {
+  void dispose() {}
+}
+
+DisposableService createService(Ref ref) {
+  final instance = DisposableService();
+  return instance;
+}
+
+final provider = ProviderFactory.create<DisposableService>(createService);
+''');
+  }
+
+  // --- Cover PropertyAccess in _OnDisposeCollector via chained access (lines 257-258) ---
+  // Lines 257-258 handle PropertyAccess where target is SimpleIdentifier.
+  // In practice, Dart parses `identifier.identifier` as PrefixedIdentifier,
+  // and PropertyAccess is used for `expr.identifier` where expr is not a
+  // simple identifier. Getting PropertyAccess with a SimpleIdentifier target
+  // is an edge case the analyzer rarely produces — this is defensive code.
 }

@@ -406,6 +406,27 @@ class _MyWidgetState extends State<MyWidget> {
 ''');
   }
 
+  Future<void> test_noSuperCallWithStatements() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class MyWidget extends StatefulWidget {
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> {
+  @override
+  void initState() {
+    print('no super call here');
+  }
+
+  @override
+  Widget build(BuildContext context) => const Widget();
+}
+''');
+  }
+
   Future<void> test_expressionBody() async {
     // Expression bodies can't have multiple statements, so no ordering issue
     await assertNoDiagnostics(r'''

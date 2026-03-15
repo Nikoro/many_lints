@@ -159,4 +159,46 @@ Widget f() {
 }
 ''');
   }
+
+  // --- Cover MethodInvocation visitor (lines 60-64) ---
+
+  Future<void> test_paddingViaMethodInvocation() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+Padding createPadding({required EdgeInsets padding, Widget? child}) =>
+    Padding(padding: padding, child: child);
+
+Widget f() {
+  return createPadding(
+    padding: EdgeInsets.all(8),
+    child: Container(),
+  );
+}
+''',
+      [lint(179, 13)],
+    );
+  }
+
+  // --- Cover MethodInvocation child info (lines 100-101) ---
+
+  Future<void> test_paddingWrappingChildViaMethodInvocation() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+Container makeContainer({Widget? child}) =>
+    Container(child: child);
+
+Widget f() {
+  return Padding(
+    padding: EdgeInsets.all(8),
+    child: makeContainer(),
+  );
+}
+''',
+      [lint(136, 7)],
+    );
+  }
 }

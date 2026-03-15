@@ -19,6 +19,9 @@ class TextSpan extends InlineSpan {
 }
 class RichText extends Widget {
   const RichText({required InlineSpan text, dynamic key});
+
+  static RichText create({required InlineSpan text}) =>
+      RichText(text: text);
 }
 class Text extends Widget {
   const Text(String data, {dynamic key});
@@ -100,5 +103,37 @@ Widget f() {
   return Text('Hello');
 }
 ''');
+  }
+
+  // --- MethodInvocation path (top-level function returning RichText) ---
+
+  Future<void> test_methodInvocation_richText() async {
+    // makeRichText() is a MethodInvocation with staticType=RichText and
+    // target=null. The RichText() in the function body also triggers the lint.
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+RichText makeRichText({required InlineSpan text}) =>
+    RichText(text: text);
+final w = makeRichText(text: TextSpan(text: 'Hello'));
+''',
+      [lint(96, 8), lint(128, 12)],
+    );
+  }
+
+  Future<void> test_methodInvocation_richText_withTarget_noLint() async {
+    // Factory.make() has target=Factory, so visitMethodInvocation skips it.
+    // The RichText() in the method body still triggers through visitInstanceCreationExpression.
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+class Factory {
+  static RichText make({required InlineSpan text}) =>
+      RichText(text: text);
+}
+final w = Factory.make(text: TextSpan(text: 'Hello'));
+''',
+      [lint(115, 8)],
+    );
   }
 }

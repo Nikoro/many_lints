@@ -13,6 +13,14 @@ class PreferShorthandsWithStaticFieldsTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = PreferShorthandsWithStaticFields();
+    newPackage('myclasses').addFile('lib/myclasses.dart', r'''
+class SomeClass {
+  final String value;
+  const SomeClass(this.value);
+  static const first = SomeClass('first');
+  static const second = SomeClass('second');
+}
+''');
     super.setUp();
   }
 
@@ -144,6 +152,18 @@ SomeClass getClass() {
 ''',
       [lint(194, 15)],
     );
+  }
+
+  Future<void> test_propertyAccessViaImportPrefix() async {
+    await assertNoDiagnostics(r'''
+import 'package:myclasses/myclasses.dart' as prefix;
+
+void fn() {
+  // prefix.SomeClass.first is PropertyAccess — target is PrefixedIdentifier,
+  // not SimpleIdentifier, so the rule correctly skips it.
+  final value = prefix.SomeClass.first;
+}
+''');
   }
 
   Future<void> test_alreadyUsingShorthand() async {

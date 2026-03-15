@@ -246,6 +246,66 @@ class _MyWidgetState extends State<MyWidget> {
     );
   }
 
+  Future<void> test_disposeInsideNestedClosure() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+class MyWidget extends StatefulWidget {
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    // Dispose inside a nested closure should NOT count
+    () {
+      _controller.dispose();
+    };
+    super.dispose();
+  }
+
+  @override
+  Widget build() => Widget();
+}
+''',
+      [lint(203, 11)],
+    );
+  }
+
+  Future<void> test_disposeInsideNestedFunctionDeclaration() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+class MyWidget extends StatefulWidget {
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    // Dispose inside a nested function declaration should NOT count
+    void doDispose() {
+      _controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build() => Widget();
+}
+''',
+      [lint(203, 11)],
+    );
+  }
+
   // --- Negative cases: should NOT trigger lint ---
 
   Future<void> test_controllerProperlyDisposed() async {

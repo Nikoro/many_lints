@@ -295,6 +295,103 @@ class MyWidget extends HookConsumerWidget {
     );
   }
 
+  // --- IfElement tests (collection if) ---
+
+  Future<void> test_hookInsideIfElementThen() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+class MyWidget extends HookWidget {
+  final bool condition;
+  MyWidget(this.condition);
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      if (condition) useState(0),
+    ];
+    return Widget();
+  }
+}
+''',
+      [lint(270, 11)],
+    );
+  }
+
+  Future<void> test_hookInsideIfElementElse() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+class MyWidget extends HookWidget {
+  final bool condition;
+  MyWidget(this.condition);
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      if (condition) 42 else useState(0),
+    ];
+    return Widget();
+  }
+}
+''',
+      [lint(278, 11)],
+    );
+  }
+
+  // --- FunctionExpressionInvocation test ---
+
+  Future<void> test_functionExpressionInvocationInBuild() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+class MyWidget extends HookWidget {
+  @override
+  Widget build(BuildContext context) {
+    final value = useState(0);
+    final result = (() => 42)();
+    return Widget();
+  }
+}
+''');
+  }
+
+  // --- Non-short-circuit binary expression test ---
+
+  Future<void> test_nonShortCircuitBinaryExpression() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+class MyWidget extends HookWidget {
+  @override
+  Widget build(BuildContext context) {
+    final value = useState(0);
+    final sum = value + 1;
+    return Widget();
+  }
+}
+''');
+  }
+
+  // --- Nested function declaration test ---
+
+  Future<void> test_hookInsideNestedFunctionDeclaration() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+class MyWidget extends HookWidget {
+  @override
+  Widget build(BuildContext context) {
+    final value = useState(0);
+    void helper() {
+      useState(1);
+    }
+    return Widget();
+  }
+}
+''');
+  }
+
   // --- Logical || operator tests ---
 
   Future<void> test_hookInsideLogicalOr() async {

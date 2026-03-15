@@ -311,6 +311,39 @@ class NotAState {
 ''');
   }
 
+  Future<void> test_setStateInLocalFunction() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class MyWidget extends StatefulWidget {
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> {
+  String _data = '';
+
+  void _update() {
+    void localHelper() {
+      setState(() {
+        _data = 'a';
+      });
+    }
+    void anotherHelper() {
+      setState(() {
+        _data = 'b';
+      });
+    }
+    localHelper();
+    anotherHelper();
+  }
+
+  @override
+  Widget build(BuildContext context) => const Widget();
+}
+''');
+  }
+
   Future<void> test_noSetStateCalls() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';

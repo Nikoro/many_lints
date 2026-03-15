@@ -139,6 +139,18 @@ Widget f(bool condition) {
     );
   }
 
+  Future<void> test_column_with_single_null_aware_element() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+Widget f(Widget? w) {
+  return Column(children: [?w]);
+}
+''',
+      [lint(70, 6)],
+    );
+  }
+
   Future<void> test_sliver_child_list_delegate_with_single_child() async {
     newPackage('flutter').addFile('lib/widgets.dart', r'''
 class Widget {}

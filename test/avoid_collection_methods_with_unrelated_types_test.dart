@@ -220,4 +220,38 @@ void f(List<int> list) {
 }
 ''');
   }
+
+  // --- Cover Map supertype walk (lines 178-181) ---
+
+  Future<void> test_customMapSubtype_containsKeyWithUnrelatedType() async {
+    await assertDiagnostics(
+      r'''
+class IntStringMap extends Object implements Map<int, String> {
+  dynamic noSuchMethod(Invocation i) => null;
+}
+
+void f(IntStringMap map) {
+  map.containsKey('a');
+}
+''',
+      [lint(142, 20)],
+    );
+  }
+
+  // --- Cover Iterable supertype walk (lines 196-199) ---
+
+  Future<void> test_customIterableSubtype_containsWithUnrelatedType() async {
+    await assertDiagnostics(
+      r'''
+class IntCollection extends Object implements Iterable<int> {
+  dynamic noSuchMethod(Invocation i) => null;
+}
+
+void f(IntCollection col) {
+  col.contains('a');
+}
+''',
+      [lint(141, 17)],
+    );
+  }
 }

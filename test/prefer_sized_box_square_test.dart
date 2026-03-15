@@ -19,6 +19,9 @@ class SizedBox extends Widget {
   const SizedBox.square({Key? key, double? dimension, Widget? child});
   const SizedBox.shrink({Key? key, Widget? child});
   const SizedBox.expand({Key? key, Widget? child});
+
+  static SizedBox create({double? width, double? height, Widget? child}) =>
+      SizedBox(width: width, height: height, child: child);
 }
 class Text extends Widget {
   const Text(String data);
@@ -162,6 +165,31 @@ Widget f() {
   const b = 10.0;
   return SizedBox(height: a, width: b);
 }
+''');
+  }
+
+  // --- MethodInvocation path (top-level function returning SizedBox) ---
+
+  Future<void> test_methodInvocation_sameValues() async {
+    // A top-level function named to return SizedBox, triggering MethodInvocation
+    // visitor with staticType = SizedBox but target == null
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+SizedBox makeSizedBox({double? width, double? height}) =>
+    SizedBox(width: width, height: height);
+final w = makeSizedBox(width: 10, height: 10);
+''',
+      [lint(151, 12)],
+    );
+  }
+
+  Future<void> test_methodInvocation_differentValues_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+SizedBox makeSizedBox({double? width, double? height}) =>
+    SizedBox(width: width, height: height);
+final w = makeSizedBox(width: 10, height: 20);
 ''');
   }
 }

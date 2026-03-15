@@ -13,6 +13,9 @@ class PreferShorthandsWithEnumsTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = PreferShorthandsWithEnums();
+    newPackage('myenums').addFile('lib/myenums.dart', r'''
+enum MyEnum { first, second }
+''');
     super.setUp();
   }
 
@@ -109,6 +112,18 @@ MyEnum getEnum() {
 ''',
       [lint(59, 12)],
     );
+  }
+
+  Future<void> test_propertyAccessViaImportPrefix() async {
+    await assertNoDiagnostics(r'''
+import 'package:myenums/myenums.dart' as prefix;
+
+void fn() {
+  // prefix.MyEnum.first is PropertyAccess — target is PrefixedIdentifier,
+  // not SimpleIdentifier, so the rule correctly skips it.
+  final value = prefix.MyEnum.first;
+}
+''');
   }
 
   Future<void> test_alreadyUsingShorthand() async {
@@ -238,5 +253,52 @@ void fn() {
   final value = MyEnum.first;
 }
 ''');
+  }
+
+  // --- type_inference.dart coverage: Set literal (line 71 - SetOrMapLiteral) ---
+
+  Future<void> test_setLiteral() async {
+    await assertDiagnostics(
+      r'''
+enum MyEnum { first, second }
+
+void fn() {
+  final Set<MyEnum> items = {MyEnum.first};
+}
+''',
+      [lint(72, 12)],
+    );
+  }
+
+  // --- type_inference.dart coverage: resolveReturnType via MethodDeclaration ---
+
+  Future<void> test_returnInMethodDeclaration() async {
+    await assertDiagnostics(
+      r'''
+enum MyEnum { first, second }
+
+class Foo {
+  MyEnum getVal() {
+    return MyEnum.first;
+  }
+}
+''',
+      [lint(74, 12)],
+    );
+  }
+
+  // --- type_inference.dart coverage: resolveReturnType via ExpressionFunctionBody in method ---
+
+  Future<void> test_expressionBodyInMethodDeclaration() async {
+    await assertDiagnostics(
+      r'''
+enum MyEnum { first, second }
+
+class Foo {
+  MyEnum getVal() => MyEnum.first;
+}
+''',
+      [lint(64, 12)],
+    );
   }
 }

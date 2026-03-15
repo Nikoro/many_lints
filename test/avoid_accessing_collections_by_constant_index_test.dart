@@ -13,6 +13,11 @@ class AvoidAccessingCollectionsByConstantIndexTest extends AnalysisRuleTest {
   @override
   void setUp() {
     rule = AvoidAccessingCollectionsByConstantIndex();
+    newPackage('cfg_pkg').addFile('lib/cfg_pkg.dart', r'''
+class Config {
+  static const idx = 0;
+}
+''');
     super.setUp();
   }
 
@@ -105,6 +110,40 @@ void f() {
 }
 ''',
       [lint(67, 7), lint(80, 7)],
+    );
+  }
+
+  Future<void> test_prefixedIdentifierConstIndex() async {
+    await assertDiagnostics(
+      r'''
+class Config {
+  static const idx = 0;
+}
+
+void f() {
+  final list = [1, 2, 3];
+  for (final e in list) {
+    list[Config.idx];
+  }
+}
+''',
+      [lint(109, 16)],
+    );
+  }
+
+  Future<void> test_propertyAccessConstIndex() async {
+    await assertDiagnostics(
+      r'''
+import 'package:cfg_pkg/cfg_pkg.dart' as cfg;
+
+void f() {
+  final list = [1, 2, 3];
+  for (final e in list) {
+    list[cfg.Config.idx];
+  }
+}
+''',
+      [lint(114, 20)],
     );
   }
 

@@ -72,4 +72,24 @@ import 'package:flutter/painting.dart';
 const radius = BorderRadius.all(Radius.circular(8));
 ''');
   }
+
+  Future<void> test_borderRadiusCircular_asNamedConstructor() async {
+    newPackage('flutter').addFile('lib/painting.dart', r'''
+class Radius {
+  const Radius.circular(double radius);
+}
+
+class BorderRadius {
+  const BorderRadius.all(Radius radius);
+  const BorderRadius.circular(double radius);
+}
+''');
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/painting.dart';
+final radius = BorderRadius.circular(8);
+''',
+      [lint(55, 24)],
+    );
+  }
 }

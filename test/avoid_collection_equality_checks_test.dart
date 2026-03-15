@@ -104,6 +104,14 @@ void f() {
 ''');
   }
 
+  Future<void> test_bothConstParenthesized() async {
+    await assertNoDiagnostics(r'''
+void f() {
+  (const [1]) == (const [1]);
+}
+''');
+  }
+
   Future<void> test_nonCollectionEquality() async {
     await assertNoDiagnostics(r'''
 void f(int a, int b) {

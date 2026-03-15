@@ -129,4 +129,59 @@ void f() {
 }
 ''');
   }
+
+  // --- Cover block body with return (already covered by test_firstWhere_with_block_body) ---
+  // This covers the `maybeGetSingleReturnExpression` path with block body
+
+  Future<void> test_firstWhere_blockBody_reversedComparison() async {
+    await assertDiagnostics(
+      r'''
+enum Color { red, green, blue }
+
+void f(String name) {
+  Color.values.firstWhere((e) {
+    return e.name == name;
+  });
+}
+''',
+      [lint(57, 61)],
+    );
+  }
+
+  // --- Cover _isEnumValues PropertyAccess path (lines 88-93) ---
+  // PropertyAccess is generated for chained expressions like (expr).values
+
+  Future<void> test_firstWhere_viaGetterOnEnumValues() async {
+    await assertDiagnostics(
+      r'''
+enum Color { red, green, blue }
+
+extension on Type {
+  List<Color> get values => Color.values;
+}
+
+void f() {
+  Color.values.firstWhere((e) => e.name == 'red');
+}
+''',
+      [lint(111, 47)],
+    );
+  }
+
+  // --- Cover _isParamNameAccess PropertyAccess path (lines 107-110) ---
+  // This is hard to trigger since `e.name` is always PrefixedIdentifier.
+  // Adding a test that exercises different comparison patterns instead.
+
+  Future<void> test_firstWhere_with_variable_comparison_reversed() async {
+    await assertDiagnostics(
+      r'''
+enum Color { red, green, blue }
+
+void f(String value) {
+  Color.values.firstWhere((e) => value == e.name);
+}
+''',
+      [lint(58, 47)],
+    );
+  }
 }

@@ -168,4 +168,53 @@ class CounterBloc extends Bloc<CounterEvent, CounterState> {
 class State {}
 ''');
   }
+
+  // --- Cover Cubit state detection (lines 83-89) ---
+  // The Cubit path is an `else if` that only fires when the Bloc branch
+  // doesn't match. Since Cubit extends Bloc, MyCubit matches Bloc first.
+  // To trigger the Cubit path, we need a standalone Cubit not extending Bloc.
+  // Use a separate mock package with Cubit not extending Bloc.
+
+  Future<void> test_cubitOnlyWithNonStateNamedClass() async {
+    // Use a separate file in the existing bloc package where Cubit
+    // does not extend Bloc, to isolate the Cubit detection path.
+    final blocPkg = newPackage('bloc');
+    blocPkg.addFile('lib/cubit_only.dart', r'''
+class Cubit<State> {
+  Cubit(State initialState);
+}
+''');
+
+    await assertDiagnostics(
+      r'''
+import 'package:bloc/cubit_only.dart';
+class MyData {}
+class MyCubit extends Cubit<MyData> {
+  MyCubit() : super(MyData());
+}
+''',
+      [lint(45, 6)],
+    );
+  }
+
+  Future<void> test_cubitOnlyWithSubclasses() async {
+    final blocPkg = newPackage('bloc');
+    blocPkg.addFile('lib/cubit_only2.dart', r'''
+class Cubit<State> {
+  Cubit(State initialState);
+}
+''');
+
+    await assertDiagnostics(
+      r'''
+import 'package:bloc/cubit_only2.dart';
+class AppModel {}
+class InitialModel extends AppModel {}
+class MyCubit extends Cubit<AppModel> {
+  MyCubit() : super(InitialModel());
+}
+''',
+      [lint(46, 8), lint(64, 12)],
+    );
+  }
 }

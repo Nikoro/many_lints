@@ -234,4 +234,56 @@ class SomeClass {
       [lint(50, 11)],
     );
   }
+
+  // --- Cover MethodInvocation path (lines 142-158) ---
+  // When a named constructor without type args is parsed as MethodInvocation
+
+  Future<void> test_methodInvocation_staticMethodReturningOwnType() async {
+    await assertDiagnostics(
+      r'''
+class SomeClass {
+  const SomeClass._(String value);
+  static SomeClass named(String value) => ._(value);
+}
+
+SomeClass getInstance() => SomeClass.named('val');
+''',
+      [lint(136, 9)],
+    );
+  }
+
+  Future<void> test_methodInvocation_targetNotMatchingClassName() async {
+    await assertNoDiagnostics(r'''
+class SomeClass {
+  const SomeClass._(String value);
+  static SomeClass named(String value) => ._(value);
+}
+
+class Factory {
+  static SomeClass create(String value) => ._(value);
+}
+
+SomeClass getInstance() => Factory.create('val');
+''');
+  }
+
+  Future<void> test_methodInvocation_nonInterfaceStaticType() async {
+    await assertNoDiagnostics(r'''
+void doSomething() => print('hello');
+''');
+  }
+
+  Future<void> test_methodInvocation_targetNameDiffersFromType() async {
+    await assertNoDiagnostics(r'''
+class SomeClass {
+  const SomeClass(String value);
+}
+
+class Helper {
+  static SomeClass make(String v) => .new(v);
+}
+
+SomeClass getInstance() => Helper.make('val');
+''');
+  }
 }
