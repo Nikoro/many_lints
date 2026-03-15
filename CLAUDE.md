@@ -65,6 +65,8 @@ Quick summary:
 5. Register the rule in `lib/many_lints.dart` via `registry.registerWarningRule()`
 6. Optionally create a fix in `lib/src/fixes/` extending `ResolvedCorrectionProducer`
 7. Create `test/<rule_name>_test.dart` using `analyzer_testing` patterns
+8. Create a documentation page in `docs/src/content/docs/docs/rules/<category>/`
+9. Create `example/lib/<lint_name>_example.dart` with bad/good/edge-case examples
 
 ## Code Conventions
 
@@ -74,7 +76,7 @@ Quick summary:
 - **Fix classes**: PascalCase with Fix suffix (`PreferCenterOverAlignFix`)
 - **Type checking**: Use `TypeChecker.fromName()` or `TypeChecker.fromUrl()`
 - **Pattern matching**: Dart 3.0+ patterns for AST analysis
-- **SDK**: Dart ^3.10.0
+- **SDK**: Dart ^3.10.0, analyzer ^11.0.0
 
 ## Key Helpers
 
