@@ -37,11 +37,32 @@
   display: none;
 }
 
-/* Make splash page fill viewport and center hero vertically */
+/* Make splash page fill viewport and push footer to bottom */
 .page:has(> .main-frame .hero) .main-frame {
   min-height: calc(100vh - var(--sl-nav-height));
   display: flex;
   flex-direction: column;
+  flex: 1;
+}
+
+.page:has(> .main-frame .hero) .main-frame > :not(script) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.page:has(> .main-frame .hero) .main-pane,
+.page:has(> .main-frame .hero) .main-pane > main,
+.page:has(> .main-frame .hero) .content-panel,
+.page:has(> .main-frame .hero) .sl-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Center the hero vertically within the available space */
+.page:has(> .main-frame .hero) .hero {
+  flex: 1;
   justify-content: center;
 }
 
