@@ -80,7 +80,7 @@ jobs:
           # Extract changelog content for this version
           awk "/## $VERSION/{flag=1; next} /^## /{flag=0} flag" CHANGELOG.md > release_notes.md
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref }}
           name: Release v${{ steps.get_version.outputs.version }}
