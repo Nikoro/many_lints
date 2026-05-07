@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.1] - 2026-05-07
+
+### Changed
+
+- Bump `analyzer` constraint to `^12.1.0`
+- Bump `analyzer_plugin` constraint to `^0.14.8`
+- Bump `analysis_server_plugin` constraint to `^0.3.14`
+- Bump `analyzer_testing` constraint to `^0.2.5`
+- Bump `test` constraint to `^1.31.1`
+- Drop the `analyzer` `dependency_overrides` block (no longer needed once `test 1.31.1` lifted its analyzer upper bound)
+
 ## [0.4.0] - 2026-02-20
 
 ### Added
