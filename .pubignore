@@ -1,0 +1,8 @@
+docs/
+coverage/
+example/.dart_tool/
+.claude/
+.agents/
+.github/
+logo/
+CONTRIBUTING.md
