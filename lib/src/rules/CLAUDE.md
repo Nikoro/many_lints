@@ -22,7 +22,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 - **Widget helpers** (`../flutter_widget_helpers.dart`) — `FlexAxis` enum (shared by prefer_spacing + use_gap)
 - **Riverpod checkers** (`../riverpod_type_checkers.dart`) — `notifierChecker` TypeChecker (shared by avoid_notifier_constructors + dispose_provided_instances)
 - **Reporting** — `reportAtNode()`, `reportAtToken()`, `reportAtOffset()`, with `{0}` placeholder interpolation
-- **Analyzer 11.0.0** — use `node.declaredFragment?.element` (not deprecated `.element`), `node.body` (not `.members`), `namePart.typeName` for class/enum names
+- **Analyzer 12.1.0** — use `node.declaredFragment?.element` (not deprecated `.element`), `node.body` (not `.members`), `namePart.typeName` for class/enum names; `ClassBody`/`EnumBody` are sealed (use `BlockClassBody`/`BlockEnumBody` to access `.members`); use `is DynamicType` (not `identical`) since 12.1.0 allows aliases for `dynamic`/`Never`/`void`
 
 ## Example Rules
 

@@ -76,7 +76,7 @@ Quick summary:
 - **Fix classes**: PascalCase with Fix suffix (`PreferCenterOverAlignFix`)
 - **Type checking**: Use `TypeChecker.fromName()` or `TypeChecker.fromUrl()`
 - **Pattern matching**: Dart 3.0+ patterns for AST analysis
-- **SDK**: Dart ^3.10.0, analyzer ^11.0.0
+- **SDK**: Dart ^3.10.0, analyzer ^12.1.0
 
 ## Key Helpers
 
