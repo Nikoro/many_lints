@@ -32,71 +32,71 @@ export default defineConfig({
           items: [
             {
               label: 'Class Naming',
-              autogenerate: { directory: 'docs/rules/class-naming' },
+              items: [{ autogenerate: { directory: 'docs/rules/class-naming' } }],
             },
             {
               label: 'Bloc / Riverpod',
-              autogenerate: { directory: 'docs/rules/bloc-riverpod' },
+              items: [{ autogenerate: { directory: 'docs/rules/bloc-riverpod' } }],
             },
             {
               label: 'Riverpod State',
-              autogenerate: { directory: 'docs/rules/riverpod-state' },
+              items: [{ autogenerate: { directory: 'docs/rules/riverpod-state' } }],
             },
             {
               label: 'Async Safety',
-              autogenerate: { directory: 'docs/rules/async-safety' },
+              items: [{ autogenerate: { directory: 'docs/rules/async-safety' } }],
             },
             {
               label: 'Widget Best Practices',
-              autogenerate: { directory: 'docs/rules/widget-best-practices' },
+              items: [{ autogenerate: { directory: 'docs/rules/widget-best-practices' } }],
             },
             {
               label: 'Widget Replacement',
-              autogenerate: { directory: 'docs/rules/widget-replacement' },
+              items: [{ autogenerate: { directory: 'docs/rules/widget-replacement' } }],
             },
             {
               label: 'State Management',
-              autogenerate: { directory: 'docs/rules/state-management' },
+              items: [{ autogenerate: { directory: 'docs/rules/state-management' } }],
             },
             {
               label: 'Control Flow',
-              autogenerate: { directory: 'docs/rules/control-flow' },
+              items: [{ autogenerate: { directory: 'docs/rules/control-flow' } }],
             },
             {
               label: 'Collection & Type',
-              autogenerate: { directory: 'docs/rules/collection-type' },
+              items: [{ autogenerate: { directory: 'docs/rules/collection-type' } }],
             },
             {
               label: 'Pattern Matching',
-              autogenerate: { directory: 'docs/rules/pattern-matching' },
+              items: [{ autogenerate: { directory: 'docs/rules/pattern-matching' } }],
             },
             {
               label: 'Type Annotations',
-              autogenerate: { directory: 'docs/rules/type-annotations' },
+              items: [{ autogenerate: { directory: 'docs/rules/type-annotations' } }],
             },
             {
               label: 'Code Organization',
-              autogenerate: { directory: 'docs/rules/code-organization' },
+              items: [{ autogenerate: { directory: 'docs/rules/code-organization' } }],
             },
             {
               label: 'Shorthand Patterns',
-              autogenerate: { directory: 'docs/rules/shorthand-patterns' },
+              items: [{ autogenerate: { directory: 'docs/rules/shorthand-patterns' } }],
             },
             {
               label: 'Hook Rules',
-              autogenerate: { directory: 'docs/rules/hook-rules' },
+              items: [{ autogenerate: { directory: 'docs/rules/hook-rules' } }],
             },
             {
               label: 'Testing Rules',
-              autogenerate: { directory: 'docs/rules/testing-rules' },
+              items: [{ autogenerate: { directory: 'docs/rules/testing-rules' } }],
             },
             {
               label: 'Resource Management',
-              autogenerate: { directory: 'docs/rules/resource-management' },
+              items: [{ autogenerate: { directory: 'docs/rules/resource-management' } }],
             },
             {
               label: 'Code Quality',
-              autogenerate: { directory: 'docs/rules/code-quality' },
+              items: [{ autogenerate: { directory: 'docs/rules/code-quality' } }],
             },
           ],
         },
