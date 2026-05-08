@@ -599,16 +599,8 @@ class ManyLintsPlugin extends Plugin {
 }
 
 void _registerWarningRule(PluginRegistry registry, AbstractAnalysisRule rule) {
-  final isNamedRegistry = identical(
-    PluginServer.registries['many_lints'],
-    registry,
-  );
-  if (!isNamedRegistry) {
-    registry.registerWarningRule(rule);
-    return;
-  }
-
   if (registry is plugin_registry.PluginRegistryImpl) {
+    PluginServer.registries['many_lints'] = registry;
     registry.warningRules[rule.name.toLowerCase()] = rule;
     for (final code in rule.diagnosticCodes) {
       registry.codeMap[code.lowerCaseUniqueName] = code;

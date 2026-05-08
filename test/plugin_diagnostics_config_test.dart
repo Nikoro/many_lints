@@ -2,6 +2,7 @@
 import 'dart:async';
 
 import 'package:analysis_server_plugin/src/plugin_server.dart';
+import 'package:analyzer/src/lint/registry.dart' as analyzer_registry;
 import 'package:analyzer/src/test_utilities/mock_sdk.dart';
 import 'package:analyzer_plugin/channel/channel.dart';
 import 'package:analyzer_plugin/protocol/protocol.dart' as protocol;
@@ -51,6 +52,43 @@ void main() {
       );
     },
   );
+
+  test(
+    'legacy plugin server registration does not leak warning rules globally',
+    () async {
+      harness.tearDown();
+      PluginServer.registries.clear();
+      harness = _PluginAnalysisHarness(useNamedConstructor: false);
+      await harness.setUp();
+
+      expect(
+        analyzer_registry.Registry.ruleRegistry.warningRules,
+        isNot(contains('prefer_overriding_parent_equality')),
+      );
+    },
+  );
+
+  test(
+    'legacy plugin server diagnostics false disables warning rules',
+    () async {
+      harness.tearDown();
+      PluginServer.registries.clear();
+      harness = _PluginAnalysisHarness(useNamedConstructor: false);
+      await harness.setUp();
+
+      final errors = await harness.analyze(
+        _preferOverridingParentEqualityCode,
+        diagnostics: {'prefer_overriding_parent_equality': 'false'},
+      );
+
+      expect(
+        errors.where(
+          (error) => error.code == 'prefer_overriding_parent_equality',
+        ),
+        isEmpty,
+      );
+    },
+  );
 }
 
 const _preferOverridingParentEqualityCode = r'''
@@ -70,8 +108,11 @@ class Child extends Parent {
 
 class _PluginAnalysisHarness with ResourceProviderMixin {
   final channel = _FakeChannel();
+  final bool useNamedConstructor;
 
   late final PluginServer pluginServer;
+
+  _PluginAnalysisHarness({this.useNamedConstructor = true});
 
   String get byteStoreRoot => convertPath('/byteStore');
 
@@ -109,10 +150,15 @@ class _PluginAnalysisHarness with ResourceProviderMixin {
   Future<void> setUp() async {
     createMockSdk(resourceProvider: resourceProvider, root: getFolder(sdkRoot));
 
-    pluginServer = PluginServer.new2(
-      resourceProvider: resourceProvider,
-      plugins: {'many_lints': ManyLintsPlugin()},
-    );
+    pluginServer = useNamedConstructor
+        ? PluginServer.new2(
+            resourceProvider: resourceProvider,
+            plugins: {'many_lints': ManyLintsPlugin()},
+          )
+        : PluginServer(
+            resourceProvider: resourceProvider,
+            plugins: [ManyLintsPlugin()],
+          );
 
     await pluginServer.initialize();
     pluginServer.start(channel);
