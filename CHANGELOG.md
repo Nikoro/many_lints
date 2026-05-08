@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.2] - 2026-05-08
+
+### Fixed
+
+- Respect `diagnostics` configuration so individual `many_lints` rules can be disabled from `analysis_options.yaml`.
+
 ## [0.4.1] - 2026-05-07
 
 ### Changed
