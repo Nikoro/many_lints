@@ -20,6 +20,11 @@ library;
 
 import 'package:analysis_server_plugin/plugin.dart';
 import 'package:analysis_server_plugin/registry.dart';
+// ignore: implementation_imports
+import 'package:analysis_server_plugin/src/plugin_server.dart';
+// ignore: implementation_imports
+import 'package:analysis_server_plugin/src/registry.dart' as plugin_registry;
+import 'package:analyzer/analysis_rule/analysis_rule.dart';
 
 // Rules
 import 'package:many_lints/src/rules/always_remove_listener.dart';
@@ -214,106 +219,106 @@ class ManyLintsPlugin extends Plugin {
   @override
   void register(PluginRegistry registry) {
     // Register warning rules (enabled by default)
-    registry.registerWarningRule(AlwaysRemoveListener());
-    registry.registerWarningRule(AvoidBlocPublicMethods());
-    registry.registerWarningRule(AvoidPassingBlocToBloc());
-    registry.registerWarningRule(AvoidPassingBuildContextToBlocs());
-    registry.registerWarningRule(PreferBlocExtensions());
-    registry.registerWarningRule(PreferImmutableBlocState());
-    registry.registerWarningRule(PreferMultiBlocProvider());
-    registry.registerWarningRule(AvoidCascadeAfterIfNull());
-    registry.registerWarningRule(AvoidCommentedOutCode());
-    registry.registerWarningRule(AvoidDuplicateCascades());
-    registry.registerWarningRule(AvoidConstantConditions());
-    registry.registerWarningRule(AvoidConstantSwitches());
-    registry.registerWarningRule(AvoidContradictoryExpressions());
-    registry.registerWarningRule(AvoidAccessingCollectionsByConstantIndex());
-    registry.registerWarningRule(AvoidGenericsShadowing());
-    registry.registerWarningRule(AvoidMapKeysContains());
-    registry.registerWarningRule(AvoidMisusedTestMatchers());
-    registry.registerWarningRule(AvoidOnlyRethrow());
-    registry.registerWarningRule(AvoidThrowInCatchBlock());
-    registry.registerWarningRule(AvoidUnassignedStreamSubscriptions());
-    registry.registerWarningRule(AvoidFlexibleOutsideFlex());
-    registry.registerWarningRule(AvoidIncompleteCopyWith());
-    registry.registerWarningRule(AvoidIncorrectImageOpacity());
-    registry.registerWarningRule(AvoidUnnecessaryGestureDetector());
-    registry.registerWarningRule(AvoidUnnecessaryOverrides());
-    registry.registerWarningRule(AvoidUnnecessaryOverridesInState());
-    registry.registerWarningRule(AvoidUnnecessarySetstate());
-    registry.registerWarningRule(AvoidUnnecessaryStatefulWidgets());
-    registry.registerWarningRule(AvoidMountedInSetstate());
-    registry.registerWarningRule(AvoidCollectionEqualityChecks());
-    registry.registerWarningRule(DisposeFields());
-    registry.registerWarningRule(DisposeProvidedInstances());
-    registry.registerWarningRule(AvoidCollectionMethodsWithUnrelatedTypes());
-    registry.registerWarningRule(PreferAbstractFinalStaticClass());
-    registry.registerWarningRule(PreferCenterOverAlign());
-    registry.registerWarningRule(PreferAlignOverContainer());
-    registry.registerWarningRule(PreferExplicitFunctionType());
-    registry.registerWarningRule(PreferOverridingParentEquality());
-    registry.registerWarningRule(PreferPaddingOverContainer());
-    registry.registerWarningRule(PreferReturnAwait());
-    registry.registerWarningRule(PreferReturningShorthands());
-    registry.registerWarningRule(PreferShorthandsWithConstructors());
-    registry.registerWarningRule(PreferShorthandsWithEnums());
-    registry.registerWarningRule(PreferShorthandsWithStaticFields());
-    registry.registerWarningRule(PreferSimplerPatternsNullCheck());
-    registry.registerWarningRule(PreferSwitchExpression());
-    registry.registerWarningRule(PreferWildcardPattern());
-    registry.registerWarningRule(PreferTypeOverVar());
-    registry.registerWarningRule(PreferAnyOrEvery());
-    registry.registerWarningRule(PreferContains());
-    registry.registerWarningRule(PreferEnumsByName());
-    registry.registerWarningRule(PreferExpectLater());
-    registry.registerWarningRule(PreferIterableOf());
-    registry.registerWarningRule(AvoidSingleChildInMultiChildWidgets());
-    registry.registerWarningRule(AvoidUnnecessaryHookWidgets());
-    registry.registerWarningRule(AvoidConditionalHooks());
-    registry.registerWarningRule(AvoidUnnecessaryConsumerWidgets());
-    registry.registerWarningRule(UseBlocSuffix());
-    registry.registerWarningRule(UseCubitSuffix());
-    registry.registerWarningRule(UseNotifierSuffix());
-    registry.registerWarningRule(UseDedicatedMediaQueryMethods());
-    registry.registerWarningRule(UseGap());
-    registry.registerWarningRule(PreferSingleWidgetPerFile());
-    registry.registerWarningRule(PreferSpacing());
-    registry.registerWarningRule(PreferTestMatchers());
-    registry.registerWarningRule(ProperSuperCalls());
-    registry.registerWarningRule(PreferClassDestructuring());
-    registry.registerWarningRule(UseClosestBuildContext());
-    registry.registerWarningRule(UseExistingDestructuring());
-    registry.registerWarningRule(UseExistingVariable());
-    registry.registerWarningRule(AvoidSingleFieldDestructuring());
-    registry.registerWarningRule(AvoidBorderAll());
-    registry.registerWarningRule(AvoidExpandedAsSpacer());
-    registry.registerWarningRule(AvoidReturningWidgets());
-    registry.registerWarningRule(AvoidShrinkWrapInLists());
-    registry.registerWarningRule(AvoidNotifierConstructors());
-    registry.registerWarningRule(AvoidPublicNotifierProperties());
-    registry.registerWarningRule(AvoidRefInsideStateDispose());
-    registry.registerWarningRule(AvoidRefReadInsideBuild());
-    registry.registerWarningRule(AvoidStateConstructors());
-    registry.registerWarningRule(PreferAsyncCallback());
-    registry.registerWarningRule(PreferComputeOverIsolateRun());
-    registry.registerWarningRule(PreferConstBorderRadius());
-    registry.registerWarningRule(AvoidWrappingInPadding());
-    registry.registerWarningRule(PreferConstrainedBoxOverContainer());
-    registry.registerWarningRule(PreferContainer());
-    registry.registerWarningRule(PreferCorrectEdgeInsetsConstructor());
-    registry.registerWarningRule(PreferForLoopInChildren());
-    registry.registerWarningRule(PreferSingleSetstate());
-    registry.registerWarningRule(PreferSizedBoxSquare());
-    registry.registerWarningRule(PreferTextRich());
-    registry.registerWarningRule(PreferTransformOverContainer());
-    registry.registerWarningRule(PreferVoidCallback());
-    registry.registerWarningRule(UseRefAndStateSynchronously());
-    registry.registerWarningRule(UseRefReadSynchronously());
-    registry.registerWarningRule(ListAllEquatableFields());
-    registry.registerWarningRule(PreferEquatableMixin());
-    registry.registerWarningRule(PreferUseCallback());
-    registry.registerWarningRule(PreferUsePrefix());
-    registry.registerWarningRule(UseSliverPrefix());
+    _registerWarningRule(registry, AlwaysRemoveListener());
+    _registerWarningRule(registry, AvoidBlocPublicMethods());
+    _registerWarningRule(registry, AvoidPassingBlocToBloc());
+    _registerWarningRule(registry, AvoidPassingBuildContextToBlocs());
+    _registerWarningRule(registry, PreferBlocExtensions());
+    _registerWarningRule(registry, PreferImmutableBlocState());
+    _registerWarningRule(registry, PreferMultiBlocProvider());
+    _registerWarningRule(registry, AvoidCascadeAfterIfNull());
+    _registerWarningRule(registry, AvoidCommentedOutCode());
+    _registerWarningRule(registry, AvoidDuplicateCascades());
+    _registerWarningRule(registry, AvoidConstantConditions());
+    _registerWarningRule(registry, AvoidConstantSwitches());
+    _registerWarningRule(registry, AvoidContradictoryExpressions());
+    _registerWarningRule(registry, AvoidAccessingCollectionsByConstantIndex());
+    _registerWarningRule(registry, AvoidGenericsShadowing());
+    _registerWarningRule(registry, AvoidMapKeysContains());
+    _registerWarningRule(registry, AvoidMisusedTestMatchers());
+    _registerWarningRule(registry, AvoidOnlyRethrow());
+    _registerWarningRule(registry, AvoidThrowInCatchBlock());
+    _registerWarningRule(registry, AvoidUnassignedStreamSubscriptions());
+    _registerWarningRule(registry, AvoidFlexibleOutsideFlex());
+    _registerWarningRule(registry, AvoidIncompleteCopyWith());
+    _registerWarningRule(registry, AvoidIncorrectImageOpacity());
+    _registerWarningRule(registry, AvoidUnnecessaryGestureDetector());
+    _registerWarningRule(registry, AvoidUnnecessaryOverrides());
+    _registerWarningRule(registry, AvoidUnnecessaryOverridesInState());
+    _registerWarningRule(registry, AvoidUnnecessarySetstate());
+    _registerWarningRule(registry, AvoidUnnecessaryStatefulWidgets());
+    _registerWarningRule(registry, AvoidMountedInSetstate());
+    _registerWarningRule(registry, AvoidCollectionEqualityChecks());
+    _registerWarningRule(registry, DisposeFields());
+    _registerWarningRule(registry, DisposeProvidedInstances());
+    _registerWarningRule(registry, AvoidCollectionMethodsWithUnrelatedTypes());
+    _registerWarningRule(registry, PreferAbstractFinalStaticClass());
+    _registerWarningRule(registry, PreferCenterOverAlign());
+    _registerWarningRule(registry, PreferAlignOverContainer());
+    _registerWarningRule(registry, PreferExplicitFunctionType());
+    _registerWarningRule(registry, PreferOverridingParentEquality());
+    _registerWarningRule(registry, PreferPaddingOverContainer());
+    _registerWarningRule(registry, PreferReturnAwait());
+    _registerWarningRule(registry, PreferReturningShorthands());
+    _registerWarningRule(registry, PreferShorthandsWithConstructors());
+    _registerWarningRule(registry, PreferShorthandsWithEnums());
+    _registerWarningRule(registry, PreferShorthandsWithStaticFields());
+    _registerWarningRule(registry, PreferSimplerPatternsNullCheck());
+    _registerWarningRule(registry, PreferSwitchExpression());
+    _registerWarningRule(registry, PreferWildcardPattern());
+    _registerWarningRule(registry, PreferTypeOverVar());
+    _registerWarningRule(registry, PreferAnyOrEvery());
+    _registerWarningRule(registry, PreferContains());
+    _registerWarningRule(registry, PreferEnumsByName());
+    _registerWarningRule(registry, PreferExpectLater());
+    _registerWarningRule(registry, PreferIterableOf());
+    _registerWarningRule(registry, AvoidSingleChildInMultiChildWidgets());
+    _registerWarningRule(registry, AvoidUnnecessaryHookWidgets());
+    _registerWarningRule(registry, AvoidConditionalHooks());
+    _registerWarningRule(registry, AvoidUnnecessaryConsumerWidgets());
+    _registerWarningRule(registry, UseBlocSuffix());
+    _registerWarningRule(registry, UseCubitSuffix());
+    _registerWarningRule(registry, UseNotifierSuffix());
+    _registerWarningRule(registry, UseDedicatedMediaQueryMethods());
+    _registerWarningRule(registry, UseGap());
+    _registerWarningRule(registry, PreferSingleWidgetPerFile());
+    _registerWarningRule(registry, PreferSpacing());
+    _registerWarningRule(registry, PreferTestMatchers());
+    _registerWarningRule(registry, ProperSuperCalls());
+    _registerWarningRule(registry, PreferClassDestructuring());
+    _registerWarningRule(registry, UseClosestBuildContext());
+    _registerWarningRule(registry, UseExistingDestructuring());
+    _registerWarningRule(registry, UseExistingVariable());
+    _registerWarningRule(registry, AvoidSingleFieldDestructuring());
+    _registerWarningRule(registry, AvoidBorderAll());
+    _registerWarningRule(registry, AvoidExpandedAsSpacer());
+    _registerWarningRule(registry, AvoidReturningWidgets());
+    _registerWarningRule(registry, AvoidShrinkWrapInLists());
+    _registerWarningRule(registry, AvoidNotifierConstructors());
+    _registerWarningRule(registry, AvoidPublicNotifierProperties());
+    _registerWarningRule(registry, AvoidRefInsideStateDispose());
+    _registerWarningRule(registry, AvoidRefReadInsideBuild());
+    _registerWarningRule(registry, AvoidStateConstructors());
+    _registerWarningRule(registry, PreferAsyncCallback());
+    _registerWarningRule(registry, PreferComputeOverIsolateRun());
+    _registerWarningRule(registry, PreferConstBorderRadius());
+    _registerWarningRule(registry, AvoidWrappingInPadding());
+    _registerWarningRule(registry, PreferConstrainedBoxOverContainer());
+    _registerWarningRule(registry, PreferContainer());
+    _registerWarningRule(registry, PreferCorrectEdgeInsetsConstructor());
+    _registerWarningRule(registry, PreferForLoopInChildren());
+    _registerWarningRule(registry, PreferSingleSetstate());
+    _registerWarningRule(registry, PreferSizedBoxSquare());
+    _registerWarningRule(registry, PreferTextRich());
+    _registerWarningRule(registry, PreferTransformOverContainer());
+    _registerWarningRule(registry, PreferVoidCallback());
+    _registerWarningRule(registry, UseRefAndStateSynchronously());
+    _registerWarningRule(registry, UseRefReadSynchronously());
+    _registerWarningRule(registry, ListAllEquatableFields());
+    _registerWarningRule(registry, PreferEquatableMixin());
+    _registerWarningRule(registry, PreferUseCallback());
+    _registerWarningRule(registry, PreferUsePrefix());
+    _registerWarningRule(registry, UseSliverPrefix());
 
     // Register fixes for rules
     registry.registerFixForRule(
@@ -591,4 +596,25 @@ class ManyLintsPlugin extends Plugin {
     // Register assists
     registry.registerAssist(ConvertIterableMapToCollectionFor.new);
   }
+}
+
+void _registerWarningRule(PluginRegistry registry, AbstractAnalysisRule rule) {
+  final isNamedRegistry = identical(
+    PluginServer.registries['many_lints'],
+    registry,
+  );
+  if (!isNamedRegistry) {
+    registry.registerWarningRule(rule);
+    return;
+  }
+
+  if (registry is plugin_registry.PluginRegistryImpl) {
+    registry.warningRules[rule.name.toLowerCase()] = rule;
+    for (final code in rule.diagnosticCodes) {
+      registry.codeMap[code.lowerCaseUniqueName] = code;
+    }
+    return;
+  }
+
+  registry.registerWarningRule(rule);
 }
