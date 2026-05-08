@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.3] - 2026-05-08
+
+### Fixed
+
+- Diagnostics configuration now works correctly when `many_lints` is loaded through the legacy plugin server constructor.
+
 ## [0.4.2] - 2026-05-08
 
 ### Fixed
