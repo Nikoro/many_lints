@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.4] - 2026-06-18
+
+### Fixed
+
+- `prefer_shorthands_with_enums` now infers enum shorthand context correctly for named arguments.
+
 ## [0.4.3] - 2026-05-08
 
 ### Fixed
