@@ -2,11 +2,15 @@
 title: always_remove_listener
 description: "Ensure every addListener() has a matching removeListener() in dispose()."
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: always_remove_listener
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Resource Management</span>
 
 Flags `addListener()` calls in State lifecycle methods (`initState`, `didUpdateWidget`, `didChangeDependencies`) that do not have a matching `removeListener()` call in `dispose()`. Missing removal causes memory leaks when the Listenable outlives the widget.

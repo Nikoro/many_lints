@@ -2,11 +2,15 @@
 title: prefer_overriding_parent_equality
 description: "Override == and hashCode when the parent class overrides them."
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: prefer_overriding_parent_equality
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Collection & Type</span>
 
 When a parent class overrides `==` and `hashCode`, child classes that add new fields should also override both operators. Otherwise, the inherited equality ignores the child's fields, meaning two child instances with different field values may be considered equal.

@@ -2,11 +2,15 @@
 title: use_notifier_suffix
 description: "Ensure classes extending Notifier have the Notifier suffix"
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: use_notifier_suffix
 ---
 
 <span class="rule-badge rule-badge--version">v0.1.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Class Naming</span>
 
 This rule flags classes that extend `Notifier` (or `AsyncNotifier`) but don't include the `Notifier` suffix in their name. Consistent naming makes it immediately clear which classes are Riverpod Notifiers when scanning through your codebase.

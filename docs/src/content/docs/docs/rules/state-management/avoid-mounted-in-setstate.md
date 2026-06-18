@@ -2,15 +2,11 @@
 title: avoid_mounted_in_setstate
 description: "Detect mounted checks inside setState callbacks"
 sidebar:
-  badge:
-    text: "Fix"
-    variant: "tip"
   label: avoid_mounted_in_setstate
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
-<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">State Management</span>
 
 Warns when `mounted` or `context.mounted` is checked inside a `setState` callback. If the widget has been disposed, `setState` itself throws an exception before the callback ever runs, making any `mounted` check inside it useless.

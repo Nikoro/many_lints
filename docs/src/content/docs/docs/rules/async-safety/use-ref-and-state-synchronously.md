@@ -2,11 +2,15 @@
 title: use_ref_and_state_synchronously
 description: "Check ref.mounted before using ref or state after an await"
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: use_ref_and_state_synchronously
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Async Safety</span>
 
 This rule warns when `ref` or `state` is accessed after an `await` in a Riverpod Notifier method without first checking `ref.mounted`. If the notifier gets disposed while the async operation is in progress, accessing `ref` or `state` will throw an `UnmountedRefException`.

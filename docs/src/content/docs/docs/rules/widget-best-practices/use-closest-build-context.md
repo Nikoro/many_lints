@@ -2,11 +2,15 @@
 title: use_closest_build_context
 description: "Use the inner BuildContext from builder callbacks, not the outer one"
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: use_closest_build_context
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
 This rule catches cases where an outer `BuildContext` is used inside a nested builder callback (`Builder`, `LayoutBuilder`, etc.) that provides its own context. This commonly happens when the inner parameter is renamed to `_` because it was previously unused, and then the outer `context` is accidentally referenced.

@@ -2,11 +2,15 @@
 title: dispose_provided_instances
 description: "Ensure disposable instances in Riverpod providers are cleaned up with ref.onDispose"
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: dispose_provided_instances
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
 This rule flags instances created inside Riverpod provider callbacks or Notifier `build()` methods that have a `dispose()`, `close()`, or `cancel()` method but are not cleaned up via `ref.onDispose()`. It recognizes tear-off, lambda, and block body cleanup patterns.

@@ -2,11 +2,15 @@
 title: use_ref_read_synchronously
 description: "Add a mounted guard before calling ref.read after an await"
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: use_ref_read_synchronously
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Async Safety</span>
 
 This rule catches `ref.read()` calls that happen after an `await` inside async callbacks within a `ConsumerWidget` or `ConsumerState` build method, without a `mounted` check first. If the widget is unmounted while the async operation runs, `ref.read` may return stale or invalid data.

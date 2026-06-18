@@ -2,11 +2,15 @@
 title: avoid_notifier_constructors
 description: "Prevent initialization logic in Notifier constructors"
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: avoid_notifier_constructors
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
 This rule flags `Notifier` and `AsyncNotifier` subclasses that have constructors with non-empty bodies or initializer lists. Empty constructors are allowed. All initialization logic should go into the `build()` method instead.

@@ -2,11 +2,15 @@
 title: avoid_generics_shadowing
 description: "Avoid generic type parameters that shadow top-level declarations."
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: avoid_generics_shadowing
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
 
 Flags generic type parameters that shadow a top-level type declaration (class, mixin, enum, typedef, or extension type) in the same file. When a type parameter has the same name as a real class, it becomes confusing whether a reference points to the generic or the concrete type.
