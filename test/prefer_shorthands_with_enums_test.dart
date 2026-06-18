@@ -208,10 +208,49 @@ void fn() {
   }
 
   Future<void> test_namedArgument() async {
-    await assertNoDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 enum MyEnum { first, second }
 
 void fn({required MyEnum value}) {}
+
+void caller() {
+  fn(value: MyEnum.first);
+}
+''',
+      [lint(96, 12)],
+    );
+  }
+
+  Future<void> test_namedArgumentInConstructor() async {
+    await assertDiagnostics(
+      r'''
+enum MainAxisSize { min, max }
+enum CrossAxisAlignment { start, stretch }
+
+class Column {
+  Column({
+    required MainAxisSize mainAxisSize,
+    required CrossAxisAlignment crossAxisAlignment,
+  });
+}
+
+Column caller() {
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+  );
+}
+''',
+      [lint(255, 16), lint(297, 26)],
+    );
+  }
+
+  Future<void> test_namedArgument_dynamicParameter() async {
+    await assertNoDiagnostics(r'''
+enum MyEnum { first, second }
+
+void fn({required dynamic value}) {}
 
 void caller() {
   fn(value: MyEnum.first);

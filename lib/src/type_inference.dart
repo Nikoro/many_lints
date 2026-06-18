@@ -26,7 +26,10 @@ DartType? inferContextType(Expression node) {
     // Assignment: `x = value;`
     AssignmentExpression(:final leftHandSide) => leftHandSide.staticType,
 
-    // Named expression (default parameter, named argument, named argument in call)
+    // Named expression: `argument: value`
+    NamedExpression(:final element?) => element.type,
+
+    // Fall back for unresolved named expressions.
     NamedExpression() => inferContextType(parent),
 
     // Default formal parameter: `{Type value = defaultValue}`
