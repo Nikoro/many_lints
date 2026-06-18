@@ -2,15 +2,11 @@
 title: avoid_single_child_in_multi_child_widgets
 description: "Don't use Column, Row, or other multi-child widgets with only one child"
 sidebar:
-  badge:
-    text: "Fix"
-    variant: "tip"
   label: avoid_single_child_in_multi_child_widgets
 ---
 
 <span class="rule-badge rule-badge--version">v0.1.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
-<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
 This rule flags multi-child widgets like `Column`, `Row`, and `Wrap` that contain only a single child in their `children` list. A multi-child layout widget with one child adds unnecessary complexity and layout overhead for something that could be expressed more simply.

@@ -2,11 +2,15 @@
 title: avoid_incomplete_copy_with
 description: "Ensure copyWith methods include all constructor parameters."
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: avoid_incomplete_copy_with
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Collection & Type</span>
 
 A `copyWith` method that does not include all parameters from the class's default constructor is incomplete. Callers cannot override every field, which defeats the purpose of having a `copyWith` method in the first place.

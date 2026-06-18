@@ -2,11 +2,15 @@
 title: prefer_immutable_bloc_state
 description: "Ensure Bloc and Cubit state classes are annotated with @immutable"
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: prefer_immutable_bloc_state
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
 This rule flags Bloc and Cubit state classes that are missing the `@immutable` annotation. It detects state classes both by type parameter analysis (classes used as the state type in `Bloc<Event, State>` or `Cubit<State>`) and by naming convention (classes ending with `State`), including their subclasses.

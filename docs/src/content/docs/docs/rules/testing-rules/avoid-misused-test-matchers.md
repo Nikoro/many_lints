@@ -2,15 +2,11 @@
 title: avoid_misused_test_matchers
 description: "Detect test matchers used with incompatible value types."
 sidebar:
-  badge:
-    text: "Fix"
-    variant: "tip"
   label: avoid_misused_test_matchers
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
-<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Testing Rules</span>
 
 Flags `expect()` calls where the matcher is incompatible with the actual value's type. For example, using `isNull` on a non-nullable type, `isEmpty` on an `int`, or `isList` on a `String`. Misused matchers can cause tests to always pass (hiding bugs) or always fail (making assertions useless).

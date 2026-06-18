@@ -2,11 +2,15 @@
 title: avoid_duplicate_cascades
 description: "Detect duplicate cascade sections in cascade expressions"
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: avoid_duplicate_cascades
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
 Warns when a cascade expression contains duplicate sections -- identical property assignments, method calls, or index operations repeated with the same arguments. Duplicate cascades are usually the result of a copy-paste error.

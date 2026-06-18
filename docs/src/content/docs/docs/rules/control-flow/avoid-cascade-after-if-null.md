@@ -2,11 +2,15 @@
 title: avoid_cascade_after_if_null
 description: "Detect cascades after if-null operators without parentheses"
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: avoid_cascade_after_if_null
 ---
 
 <span class="rule-badge rule-badge--version">v0.3.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
 Warns when a cascade expression (`..`) follows an if-null (`??`) operator without parentheses. Due to operator precedence, it is ambiguous whether the cascade applies to the right-hand side of `??` or to the entire expression, which can produce unexpected results.

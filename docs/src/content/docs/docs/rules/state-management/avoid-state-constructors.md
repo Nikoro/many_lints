@@ -2,11 +2,15 @@
 title: avoid_state_constructors
 description: "Avoid constructors with logic in State classes"
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: avoid_state_constructors
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">State Management</span>
 
 Flags `State` subclasses that have constructors with non-empty bodies or initializer lists. Initialization logic in State classes should live in `initState()`, not in the constructor, to respect the Flutter widget lifecycle.

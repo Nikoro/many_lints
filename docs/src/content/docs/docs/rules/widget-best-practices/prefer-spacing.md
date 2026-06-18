@@ -2,15 +2,11 @@
 title: prefer_spacing
 description: "Use the spacing argument on Row/Column instead of SizedBox spacers"
 sidebar:
-  badge:
-    text: "Fix"
-    variant: "tip"
   label: prefer_spacing
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
-<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
 This rule detects `SizedBox` widgets used as uniform spacers between children in a `Row`, `Column`, or `Flex`, and suggests using the built-in `spacing` argument instead. It also catches `separatedBy()` and `.expand()` patterns that insert SizedBox spacers. Requires Flutter 3.27+.
