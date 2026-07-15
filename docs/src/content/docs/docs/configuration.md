@@ -14,7 +14,7 @@ plugins:
 
 The analysis server will automatically download and resolve the plugin from [pub.dev](https://pub.dev/packages/many_lints). There is no need to add it to your `pubspec.yaml`.
 
-> **Requires Dart 3.10+ (Flutter 3.38+)**
+> **Requires Dart 3.11+ (Flutter 3.41+)**
 
 ## Extended syntax
 

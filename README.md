@@ -28,7 +28,7 @@ A useful collection of custom lints for Flutter & Dart projects. Uses the new `a
 
 ## Getting started
 
-> **Requires Dart 3.10+ (Flutter 3.38+)**
+> **Requires Dart 3.11+ (Flutter 3.41+)**
 
 Add `many_lints` to the **top-level** `plugins` section in your `analysis_options.yaml` file (NOT under `analyzer:`):
 
