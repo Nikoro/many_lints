@@ -126,10 +126,10 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (current is MethodDeclaration) return false;
 
       // Check if we're inside a FunctionExpression that is the value of
-      // a NamedExpression (e.g., onPressed: () { ... })
+      // a NamedArgument (e.g., onPressed: () { ... })
       if (current is FunctionExpression) {
         final parent = current.parent;
-        if (parent is NamedExpression) return true;
+        if (parent is NamedArgument) return true;
       }
 
       current = current.parent;

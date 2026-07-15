@@ -28,7 +28,7 @@ class AvoidIncorrectImageOpacityFix extends ResolvedCorrectionProducer {
   Future<void> compute(ChangeBuilder builder) async {
     // The reported node can be ConstructorName or SimpleIdentifier
     final Expression opacityCreation;
-    final NodeList<Expression> arguments;
+    final NodeList<Argument> arguments;
 
     final targetNode = node;
     if (targetNode is ConstructorName &&
@@ -46,17 +46,17 @@ class AvoidIncorrectImageOpacityFix extends ResolvedCorrectionProducer {
     }
 
     // Find the opacity value
-    final opacityArg = arguments.whereType<NamedExpression>().firstWhereOrNull(
-      (e) => e.name.label.name == 'opacity',
+    final opacityArg = arguments.whereType<NamedArgument>().firstWhereOrNull(
+      (e) => e.name.lexeme == 'opacity',
     );
 
     // Find the child (Image widget)
-    final childArg = arguments.whereType<NamedExpression>().firstWhereOrNull(
-      (e) => e.name.label.name == 'child',
+    final childArg = arguments.whereType<NamedArgument>().firstWhereOrNull(
+      (e) => e.name.lexeme == 'child',
     );
 
     if (childArg == null) return;
-    final imageExpr = childArg.expression;
+    final imageExpr = childArg.argumentExpression;
 
     // Get the image's argument list
     final ArgumentList imageArgList;
@@ -69,13 +69,13 @@ class AvoidIncorrectImageOpacityFix extends ResolvedCorrectionProducer {
     }
 
     // Check if Image already has an opacity parameter
-    final hasOpacity = imageArgList.arguments.whereType<NamedExpression>().any(
-      (e) => e.name.label.name == 'opacity',
+    final hasOpacity = imageArgList.arguments.whereType<NamedArgument>().any(
+      (e) => e.name.lexeme == 'opacity',
     );
 
     if (hasOpacity) return;
 
-    final opacityValue = opacityArg?.expression.toSource() ?? '1.0';
+    final opacityValue = opacityArg?.argumentExpression.toSource() ?? '1.0';
     final imageSource = imageExpr.toSource();
 
     // Build the new Image source with opacity parameter added

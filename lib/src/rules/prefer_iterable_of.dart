@@ -82,7 +82,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     String typeName,
   ) {
     final positionalArgs = argumentList.arguments
-        .where((a) => a is! NamedExpression)
+        .whereType<Expression>()
         .toList();
     if (positionalArgs.length != 1) return;
 

@@ -135,16 +135,16 @@ class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {
     String? right;
     String? bottom;
 
-    for (final arg in args.whereType<NamedExpression>()) {
-      switch (arg.name.label.name) {
+    for (final arg in args.whereType<NamedArgument>()) {
+      switch (arg.name.lexeme) {
         case 'left':
-          left = arg.expression.toSource();
+          left = arg.argumentExpression.toSource();
         case 'top':
-          top = arg.expression.toSource();
+          top = arg.argumentExpression.toSource();
         case 'right':
-          right = arg.expression.toSource();
+          right = arg.argumentExpression.toSource();
         case 'bottom':
-          bottom = arg.expression.toSource();
+          bottom = arg.argumentExpression.toSource();
       }
     }
 
@@ -182,12 +182,12 @@ class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {
     String? horizontal;
     String? vertical;
 
-    for (final arg in args.whereType<NamedExpression>()) {
-      switch (arg.name.label.name) {
+    for (final arg in args.whereType<NamedArgument>()) {
+      switch (arg.name.lexeme) {
         case 'horizontal':
-          horizontal = arg.expression.toSource();
+          horizontal = arg.argumentExpression.toSource();
         case 'vertical':
-          vertical = arg.expression.toSource();
+          vertical = arg.argumentExpression.toSource();
       }
     }
 

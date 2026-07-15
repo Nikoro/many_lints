@@ -3,7 +3,6 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
-import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../type_checker.dart';
@@ -77,15 +76,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   static bool _isBuildContextType(FormalParameter param) {
     // First try the explicit type annotation
-    DartType? type;
-    if (param is SimpleFormalParameter) {
-      type = param.type?.type;
-    } else if (param is DefaultFormalParameter) {
-      final innerParam = param.parameter;
-      if (innerParam is SimpleFormalParameter) {
-        type = innerParam.type?.type;
-      }
-    }
+    final type = param.type?.type;
     if (type != null) return _buildContextChecker.isExactlyType(type);
 
     // Fall back to the resolved element type (for untyped params like `_`)

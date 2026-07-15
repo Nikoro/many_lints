@@ -80,14 +80,15 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       if (match.$1.isEmpty) {
         // handle positional (first argument)
-        if (node.argumentList.arguments.isNotEmpty) {
-          children = node.argumentList.arguments.first;
+        if (node.argumentList.arguments.firstOrNull
+            case final Expression first) {
+          children = first;
         }
       } else {
         // handle named argument
         for (final arg in node.argumentList.arguments) {
-          if (arg is NamedExpression && arg.name.label.name == match.$1) {
-            children = arg.expression;
+          if (arg is NamedArgument && arg.name.lexeme == match.$1) {
+            children = arg.argumentExpression;
             break;
           }
         }
@@ -121,6 +122,7 @@ class _Visitor extends SimpleAstVisitor<void> {
           checkExpression(thenElement) &&
               (elseElement == null || checkExpression(elseElement)),
         NullAwareElement(:final value) => checkExpression(value),
+        _ => false,
       };
     }
 

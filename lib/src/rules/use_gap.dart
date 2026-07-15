@@ -2,6 +2,7 @@ import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
@@ -78,9 +79,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     String? spacingParam;
 
     for (final arg in args) {
-      if (arg case NamedExpression(
-        name: Label(label: SimpleIdentifier(name: final name)),
-      )) {
+      if (arg case NamedArgument(name: Token(lexeme: final name))) {
         if (name == 'key') continue;
         if (name == 'height' && spacingParam == null) {
           spacingParam = 'height';
@@ -112,12 +111,12 @@ class _Visitor extends SimpleAstVisitor<void> {
   void _checkPadding(InstanceCreationExpression node) {
     // Must have padding param with EdgeInsets.only with a single direction
     final paddingArg = node.argumentList.arguments
-        .whereType<NamedExpression>()
-        .firstWhereOrNull((e) => e.name.label.name == 'padding');
+        .whereType<NamedArgument>()
+        .firstWhereOrNull((e) => e.name.lexeme == 'padding');
 
     if (paddingArg == null) return;
 
-    final paddingExpr = paddingArg.expression;
+    final paddingExpr = paddingArg.argumentExpression;
 
     // Check for EdgeInsets.only(...)
     if (paddingExpr is! InstanceCreationExpression) return;
@@ -130,13 +129,13 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     // Must have exactly one directional argument
     final dirArgs = paddingExpr.argumentList.arguments
-        .whereType<NamedExpression>()
-        .where((e) => e.name.label.name != 'key')
+        .whereType<NamedArgument>()
+        .where((e) => e.name.lexeme != 'key')
         .toList();
 
     if (dirArgs.length != 1) return;
 
-    final dirName = dirArgs.first.name.label.name;
+    final dirName = dirArgs.first.name.lexeme;
     final verticalDirs = {'top', 'bottom'};
     final horizontalDirs = {'left', 'right', 'start', 'end'};
 
@@ -171,10 +170,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     final listLiteral = current;
     current = listLiteral.parent;
 
-    // The ListLiteral should be the expression of a NamedExpression named 'children'
-    if (current case NamedExpression(
-      name: Label(label: SimpleIdentifier(name: 'children')),
-    )) {
+    // The ListLiteral should be the value of a NamedArgument named 'children'
+    if (current case NamedArgument(name: Token(lexeme: 'children'))) {
       current = current.parent;
     } else {
       return null;

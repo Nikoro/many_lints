@@ -132,9 +132,7 @@ class PreferMultiBlocProviderFix extends ResolvedCorrectionProducer {
     }
 
     final args = argumentList.arguments
-        .where(
-          (arg) => arg is! NamedExpression || arg.name.label.name != 'child',
-        )
+        .where((arg) => arg is! NamedArgument || arg.name.lexeme != 'child')
         .map((arg) => arg.toSource())
         .join(', ');
 
@@ -153,8 +151,8 @@ class PreferMultiBlocProviderFix extends ResolvedCorrectionProducer {
     }
 
     for (final arg in argumentList.arguments) {
-      if (arg is NamedExpression && arg.name.label.name == 'child') {
-        return arg.expression;
+      if (arg is NamedArgument && arg.name.lexeme == 'child') {
+        return arg.argumentExpression;
       }
     }
     return null;

@@ -60,10 +60,10 @@ FunctionBody? maybeHookBuilderBody(InstanceCreationExpression node) {
   if (!hookBuilderChecker.isExactly(classElement)) return null;
 
   final builderParameter = node.argumentList.arguments
-      .whereType<NamedExpression>()
-      .firstWhereOrNull((e) => e.name.label.name == 'builder');
-  if (builderParameter case NamedExpression(
-    expression: FunctionExpression(:final body),
+      .whereType<NamedArgument>()
+      .firstWhereOrNull((e) => e.name.lexeme == 'builder');
+  if (builderParameter case NamedArgument(
+    argumentExpression: FunctionExpression(:final body),
   )) {
     return body;
   }

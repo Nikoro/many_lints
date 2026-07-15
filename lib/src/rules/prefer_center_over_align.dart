@@ -53,8 +53,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     final arguments = node.argumentList.arguments;
     var hasAlignmentArgument = false;
 
-    for (final argument in arguments.whereType<NamedExpression>()) {
-      if (argument.name.label.name == 'alignment') {
+    for (final argument in arguments.whereType<NamedArgument>()) {
+      if (argument.name.lexeme == 'alignment') {
         hasAlignmentArgument = true;
         if (_isValueAlignmentCenter(argument)) {
           rule.reportAtNode(node.constructorName);
@@ -69,8 +69,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  bool _isValueAlignmentCenter(NamedExpression argument) {
-    return switch (argument.expression) {
+  bool _isValueAlignmentCenter(NamedArgument argument) {
+    return switch (argument.argumentExpression) {
       PrefixedIdentifier(identifier: SimpleIdentifier(name: 'center')) => true,
       InstanceCreationExpression(
         staticType: final type,
@@ -83,7 +83,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     };
   }
 
-  bool _isEveryValueZero(List<Expression> arguments) => arguments.every(
+  bool _isEveryValueZero(List<Argument> arguments) => arguments.every(
     (argument) => switch (argument) {
       IntegerLiteral(value: 0) || DoubleLiteral(value: 0) => true,
       _ => false,

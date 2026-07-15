@@ -45,17 +45,17 @@ class AvoidWrappingInPaddingFix extends ResolvedCorrectionProducer {
 
     // Find the padding argument from the Padding widget
     final paddingArg = paddingArgList.arguments
-        .whereType<NamedExpression>()
-        .firstWhereOrNull((e) => e.name.label.name == 'padding');
+        .whereType<NamedArgument>()
+        .firstWhereOrNull((e) => e.name.lexeme == 'padding');
     if (paddingArg == null) return;
 
     // Find the child argument
     final childArg = paddingArgList.arguments
-        .whereType<NamedExpression>()
-        .firstWhereOrNull((e) => e.name.label.name == 'child');
+        .whereType<NamedArgument>()
+        .firstWhereOrNull((e) => e.name.lexeme == 'child');
     if (childArg == null) return;
 
-    final childExpr = childArg.expression;
+    final childExpr = childArg.argumentExpression;
 
     // Get child's argument list and source prefix
     final (childArgList, childPrefix) = switch (childExpr) {
@@ -69,12 +69,12 @@ class AvoidWrappingInPaddingFix extends ResolvedCorrectionProducer {
     if (childArgList == null || childPrefix == null) return;
 
     // Extract the padding value source
-    final paddingValueSource = paddingArg.expression.toSource();
+    final paddingValueSource = paddingArg.argumentExpression.toSource();
 
     // Find the key argument if present (from the Padding widget)
     final keyArg = paddingArgList.arguments
-        .whereType<NamedExpression>()
-        .firstWhereOrNull((e) => e.name.label.name == 'key');
+        .whereType<NamedArgument>()
+        .firstWhereOrNull((e) => e.name.lexeme == 'key');
 
     // Build the new argument list for the child widget
     final existingArgs = childArgList.arguments
@@ -83,9 +83,9 @@ class AvoidWrappingInPaddingFix extends ResolvedCorrectionProducer {
 
     // Add the key from Padding if the child doesn't already have one
     if (keyArg != null) {
-      final childHasKey = childArgList.arguments
-          .whereType<NamedExpression>()
-          .any((e) => e.name.label.name == 'key');
+      final childHasKey = childArgList.arguments.whereType<NamedArgument>().any(
+        (e) => e.name.lexeme == 'key',
+      );
       if (!childHasKey) {
         existingArgs.insert(0, keyArg.toSource());
       }

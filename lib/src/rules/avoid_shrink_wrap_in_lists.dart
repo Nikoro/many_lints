@@ -71,9 +71,9 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    for (final arg in argumentList.arguments.whereType<NamedExpression>()) {
-      if (arg.name.label.name == 'shrinkWrap') {
-        if (arg.expression case BooleanLiteral(value: true)) {
+    for (final arg in argumentList.arguments.whereType<NamedArgument>()) {
+      if (arg.name.lexeme == 'shrinkWrap') {
+        if (arg.argumentExpression case BooleanLiteral(value: true)) {
           rule.reportAtNode(arg);
           return;
         }

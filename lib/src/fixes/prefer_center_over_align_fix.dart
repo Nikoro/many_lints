@@ -34,8 +34,8 @@ class PreferCenterOverAlignFix extends ResolvedCorrectionProducer {
 
     // Find alignment argument to remove
     final alignmentArgument = instanceCreation.argumentList.arguments
-        .whereType<NamedExpression>()
-        .firstWhereOrNull((e) => e.name.label.name == 'alignment');
+        .whereType<NamedArgument>()
+        .firstWhereOrNull((e) => e.name.lexeme == 'alignment');
 
     await builder.addDartFileEdit(file, (builder) {
       // Replace Align with Center

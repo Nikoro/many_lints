@@ -42,16 +42,16 @@ bool isInstanceCreationExpressionOnlyUsingParameter(
   var hasParameter = false;
 
   for (final argument in node.argumentList.arguments) {
-    if (argument case NamedExpression(
-      name: Label(label: SimpleIdentifier(name: final argumentName)),
-      :final expression,
-      :final staticType,
+    if (argument case NamedArgument(
+      name: Token(lexeme: final argumentName),
+      :final argumentExpression,
     )) {
       if (ignoredParameters.contains(argumentName)) {
         continue;
       } else if (argumentName == parameter &&
-          expression is! NullLiteral &&
-          staticType?.nullabilitySuffix != NullabilitySuffix.question) {
+          argumentExpression is! NullLiteral &&
+          argumentExpression.staticType?.nullabilitySuffix !=
+              NullabilitySuffix.question) {
         hasParameter = true;
       } else {
         // Other named arguments are not allowed

@@ -68,7 +68,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     // Find ref parameter
     final refParam = buildMethod.parameters?.parameters.firstWhereOrNull(
-      (p) => p is SimpleFormalParameter && p.name?.lexeme == 'ref',
+      (p) => p is RegularFormalParameter && p.name?.lexeme == 'ref',
     );
 
     if (refParam == null) return;

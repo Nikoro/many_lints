@@ -134,9 +134,9 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
 
   static Expression? _getChildExpression(ArgumentList argumentList) {
     final childArg = argumentList.arguments
-        .whereType<NamedExpression>()
-        .firstWhereOrNull((e) => e.name.label.name == 'child');
-    return childArg?.expression;
+        .whereType<NamedArgument>()
+        .firstWhereOrNull((e) => e.name.lexeme == 'child');
+    return childArg?.argumentExpression;
   }
 
   /// Builds the Container replacement string from the widget sequence.
@@ -150,11 +150,11 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
       if (mappedParams == null) return null;
 
       for (final arg in widget.argumentList.arguments) {
-        if (arg is! NamedExpression) continue;
-        final argName = arg.name.label.name;
+        if (arg is! NamedArgument) continue;
+        final argName = arg.name.lexeme;
 
         if (argName == 'key' && keySource == null) {
-          keySource = arg.expression.toSource();
+          keySource = arg.argumentExpression.toSource();
           continue;
         }
 
@@ -163,7 +163,7 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
         // Map the argument to Container's parameter
         final containerParam = _mapArgToContainerParam(widget.name, argName);
         if (containerParam != null) {
-          params.add('$containerParam: ${arg.expression.toSource()}');
+          params.add('$containerParam: ${arg.argumentExpression.toSource()}');
         }
       }
 
@@ -171,8 +171,8 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
       if (widget.name == 'Center') {
         // Only add if no explicit alignment argument was provided
         final hasAlignment = widget.argumentList.arguments
-            .whereType<NamedExpression>()
-            .any((e) => e.name.label.name == 'alignment');
+            .whereType<NamedArgument>()
+            .any((e) => e.name.lexeme == 'alignment');
         if (!hasAlignment) {
           params.add('alignment: Alignment.center');
         }

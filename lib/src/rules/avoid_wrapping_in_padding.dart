@@ -67,11 +67,11 @@ class _Visitor extends SimpleAstVisitor<void> {
   void _check(ArgumentList argumentList, AstNode reportNode) {
     // Find the child argument
     final childArg = argumentList.arguments
-        .whereType<NamedExpression>()
-        .firstWhereOrNull((e) => e.name.label.name == 'child');
+        .whereType<NamedArgument>()
+        .firstWhereOrNull((e) => e.name.lexeme == 'child');
     if (childArg == null) return;
 
-    final childExpr = childArg.expression;
+    final childExpr = childArg.argumentExpression;
 
     // Get the child widget's type name and argument list
     final (childTypeName, childArgList) = _getChildInfo(childExpr);
@@ -83,8 +83,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (!_hasPaddingParam(childType)) return;
 
     // Check the child doesn't already have a padding argument set
-    if (childArgList.arguments.whereType<NamedExpression>().any(
-      (e) => e.name.label.name == 'padding',
+    if (childArgList.arguments.whereType<NamedArgument>().any(
+      (e) => e.name.lexeme == 'padding',
     )) {
       return;
     }

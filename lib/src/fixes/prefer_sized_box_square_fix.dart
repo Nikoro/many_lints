@@ -51,23 +51,23 @@ class PreferSizedBoxSquareFix extends ResolvedCorrectionProducer {
       return;
     }
 
-    final args = argumentList.arguments.whereType<NamedExpression>();
+    final args = argumentList.arguments.whereType<NamedArgument>();
 
-    final widthArg = args.firstWhereOrNull((a) => a.name.label.name == 'width');
+    final widthArg = args.firstWhereOrNull((a) => a.name.lexeme == 'width');
     if (widthArg == null) return;
 
     // Build the replacement: keep all args except width/height,
     // replace them with dimension.
     final otherArgs = <String>[];
     for (final arg in argumentList.arguments) {
-      if (arg is NamedExpression) {
-        final name = arg.name.label.name;
+      if (arg is NamedArgument) {
+        final name = arg.name.lexeme;
         if (name == 'width' || name == 'height') continue;
       }
       otherArgs.add(arg.toSource());
     }
 
-    final dimensionSource = widthArg.expression.toSource();
+    final dimensionSource = widthArg.argumentExpression.toSource();
     final allArgs = [...otherArgs, 'dimension: $dimensionSource'];
 
     final constPrefix =

@@ -23,8 +23,8 @@ void main() {
     await harness.setUp();
   });
 
-  tearDown(() {
-    harness.tearDown();
+  tearDown(() async {
+    await harness.tearDown();
   });
 
   test('reports prefer_overriding_parent_equality by default', () async {
@@ -56,7 +56,7 @@ void main() {
   test(
     'legacy plugin server registration does not leak warning rules globally',
     () async {
-      harness.tearDown();
+      await harness.tearDown();
       PluginServer.registries.clear();
       harness = _PluginAnalysisHarness(useNamedConstructor: false);
       await harness.setUp();
@@ -71,7 +71,7 @@ void main() {
   test(
     'legacy plugin server diagnostics false disables warning rules',
     () async {
-      harness.tearDown();
+      await harness.tearDown();
       PluginServer.registries.clear();
       harness = _PluginAnalysisHarness(useNamedConstructor: false);
       await harness.setUp();
@@ -116,8 +116,6 @@ class _PluginAnalysisHarness with ResourceProviderMixin {
 
   String get byteStoreRoot => convertPath('/byteStore');
 
-  protocol.ContextRoot get contextRoot => protocol.ContextRoot(packagePath, []);
-
   String get filePath => join(packagePath, 'lib', 'test.dart');
 
   String get packagePath => convertPath('/package');
@@ -141,7 +139,7 @@ class _PluginAnalysisHarness with ResourceProviderMixin {
         .first;
 
     await channel.sendRequest(
-      protocol.AnalysisSetContextRootsParams([contextRoot]),
+      protocol.AnalysisSetAnalysisRootsParams([packagePath], []),
     );
 
     return errors.timeout(const Duration(seconds: 10));
@@ -167,7 +165,11 @@ class _PluginAnalysisHarness with ResourceProviderMixin {
     );
   }
 
-  void tearDown() {
+  Future<void> tearDown() async {
+    // Let background analysis finish before closing the channel; the
+    // 0.3.18+ plugin server analyzes asynchronously via the driver
+    // scheduler and would otherwise report to a closed channel.
+    await pluginServer.waitForIdle();
     channel.close();
   }
 
@@ -215,6 +217,7 @@ class _FakeChannel implements PluginCommunicationChannel {
 
   @override
   void sendNotification(protocol.Notification notification) {
+    if (_notificationsController.isClosed) return;
     _notificationsController.add(notification);
   }
 

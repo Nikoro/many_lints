@@ -72,9 +72,9 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _checkChildArgument(ArgumentList argumentList, AstNode reportNode) {
-    for (final arg in argumentList.arguments.whereType<NamedExpression>()) {
-      if (arg.name.label.name == 'child') {
-        final childType = arg.expression.staticType;
+    for (final arg in argumentList.arguments.whereType<NamedArgument>()) {
+      if (arg.name.lexeme == 'child') {
+        final childType = arg.argumentExpression.staticType;
         if (childType != null &&
             _imageChecker.isAssignableFromType(childType)) {
           rule.reportAtNode(reportNode);
