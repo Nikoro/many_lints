@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0] - 2026-07-15
+
+### Added
+
+- `prefer_private_named_parameters` rule with quick fix — suggests Dart 3.12 private named parameters (`this._field`) over `_field = field` initializer-list boilerplate; only active in libraries with language version 3.12+
+- `prefer_theme_mode_getters` rule with quick fix — suggests the `ThemeMode.isDark`/`isLight`/`isSystem` getters (Flutter 3.44+) over `==`/`!=` comparisons against `ThemeMode` constants; only active when the getters exist in the project's Flutter version
+
 ## [0.6.0] - 2026-07-15
 
 ### Changed

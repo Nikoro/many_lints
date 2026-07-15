@@ -1,6 +1,6 @@
 name: many_lints
 description: "A comprehensive collection of custom lint rules, quick fixes, and code assists for Flutter and Dart projects."
-version: 0.6.0
+version: 0.7.0
 homepage: https://nikoro.github.io/many_lints
 documentation: https://nikoro.github.io/many_lints/docs
 repository: https://github.com/Nikoro/many_lints
