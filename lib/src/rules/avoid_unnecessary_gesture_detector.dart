@@ -69,8 +69,8 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   static bool _hasEventHandler(ArgumentList argumentList) {
-    return argumentList.arguments.whereType<NamedExpression>().any(
-      (arg) => arg.name.label.name.startsWith('on'),
+    return argumentList.arguments.whereType<NamedArgument>().any(
+      (arg) => arg.name.lexeme.startsWith('on'),
     );
   }
 }

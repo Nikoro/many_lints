@@ -81,9 +81,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     // Find the child argument
     Expression? childExpr;
-    for (final arg in arguments.whereType<NamedExpression>()) {
-      if (arg.name.label.name == 'child') {
-        childExpr = arg.expression;
+    for (final arg in arguments.whereType<NamedArgument>()) {
+      if (arg.name.lexeme == 'child') {
+        childExpr = arg.argumentExpression;
         break;
       }
     }
@@ -115,8 +115,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
 
     for (final arg in argumentList.arguments) {
-      if (arg is NamedExpression) {
-        if (arg.name.label.name != 'key') return false;
+      if (arg is NamedArgument) {
+        if (arg.name.lexeme != 'key') return false;
       } else {
         return false;
       }

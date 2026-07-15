@@ -55,7 +55,7 @@ class AvoidUnnecessaryConsumerWidgetsFix extends ResolvedCorrectionProducer {
         .firstWhereOrNull((m) => m.name.lexeme == 'build');
 
     final refParam = buildMethod?.parameters?.parameters.firstWhereOrNull(
-      (p) => p is SimpleFormalParameter && p.name?.lexeme == 'ref',
+      (p) => p.name?.lexeme == 'ref',
     );
 
     await builder.addDartFileEdit(file, (builder) {

@@ -71,10 +71,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final matcherExpr = args[1];
 
-    // Skip if it's a named expression (e.g., reason: 'xxx')
-    if (matcherExpr is NamedExpression) return;
+    // Skip if it's a named argument (e.g., reason: 'xxx')
+    if (matcherExpr is NamedArgument) return;
 
-    final matcherType = matcherExpr.staticType;
+    final matcherType = matcherExpr.argumentExpression.staticType;
     if (matcherType == null || matcherType is DynamicType) return;
 
     // Check if the matcher type is a Matcher subclass

@@ -56,10 +56,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     // Collect constructor parameter names
     final constructorParams = <String>{};
     for (final param in constructor.parameters.parameters) {
-      final name = switch (param) {
-        DefaultFormalParameter(:final parameter) => parameter.name?.lexeme,
-        _ => param.name?.lexeme,
-      };
+      final name = param.name?.lexeme;
       if (name != null) constructorParams.add(name);
     }
 
@@ -77,10 +74,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final parameters = copyWithMethod.parameters?.parameters;
     if (parameters != null) {
       for (final param in parameters) {
-        final name = switch (param) {
-          DefaultFormalParameter(:final parameter) => parameter.name?.lexeme,
-          _ => param.name?.lexeme,
-        };
+        final name = param.name?.lexeme;
         if (name != null) copyWithParams.add(name);
       }
     }

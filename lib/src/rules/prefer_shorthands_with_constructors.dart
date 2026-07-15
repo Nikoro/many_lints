@@ -167,7 +167,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     while (current != null) {
       switch (current) {
-        case NamedExpression():
+        case NamedArgument():
           return true;
         case ArgumentList():
           return true;
@@ -194,7 +194,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     while (current != null) {
       switch (current) {
-        case NamedExpression():
+        case NamedArgument():
         case ArgumentList():
           // For arguments, use the static type of the expression
           // This is a pragmatic approach that works for most cases

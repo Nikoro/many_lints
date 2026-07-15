@@ -96,7 +96,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (args.isEmpty) return;
 
     final firstArg = args.first;
-    final argType = firstArg.staticType;
+    final argType = firstArg.argumentExpression.staticType;
     if (argType == null) return;
 
     // Check if the target is a Map type.

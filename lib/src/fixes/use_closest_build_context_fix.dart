@@ -1,7 +1,6 @@
 import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analysis_server_plugin/edit/dart/dart_fix_kind_priority.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
@@ -73,15 +72,7 @@ class UseClosestBuildContextFix extends ResolvedCorrectionProducer {
   }
 
   static bool _isBuildContextType(FormalParameter param) {
-    DartType? type;
-    if (param is SimpleFormalParameter) {
-      type = param.type?.type;
-    } else if (param is DefaultFormalParameter) {
-      final innerParam = param.parameter;
-      if (innerParam is SimpleFormalParameter) {
-        type = innerParam.type?.type;
-      }
-    }
+    final type = param.type?.type;
     if (type == null) return false;
     return _buildContextChecker.isExactlyType(type);
   }

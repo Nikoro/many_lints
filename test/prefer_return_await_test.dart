@@ -1,3 +1,4 @@
+import 'package:analyzer/src/diagnostic/diagnostic.dart' as diag;
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:many_lints/src/rules/prefer_return_await.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
@@ -29,7 +30,7 @@ Future<String> f() async {
 
 Future<String> asyncOp() async => 'result';
 ''',
-      [lint(46, 9)],
+      [error(diag.unawaitedReturnInTryBlock, 39, 6), lint(46, 9)],
     );
   }
 
@@ -65,7 +66,7 @@ class MyClass {
   Future<int> _load() async => 42;
 }
 ''',
-      [lint(69, 7)],
+      [error(diag.unawaitedReturnInTryBlock, 62, 6), lint(69, 7)],
     );
   }
 
@@ -86,7 +87,7 @@ Future<String> f() async {
 
 Future<String> asyncOp() async => 'result';
 ''',
-      [lint(58, 9)],
+      [error(diag.unawaitedReturnInTryBlock, 51, 6), lint(58, 9)],
     );
   }
 
@@ -222,7 +223,7 @@ Future<int> f() async {
 
 FutureOr<int> getFutureOr() => 42;
 ''',
-      [lint(65, 13)],
+      [error(diag.unawaitedReturnInTryBlock, 58, 6), lint(65, 13)],
     );
   }
 }

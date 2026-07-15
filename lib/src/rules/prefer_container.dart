@@ -163,8 +163,8 @@ class _Visitor extends SimpleAstVisitor<void> {
   /// parent widget.
   static bool _isChildOfContainerCompatibleWidget(Expression node) {
     final parent = node.parent;
-    if (parent is! NamedExpression) return false;
-    if (parent.name.label.name != 'child') return false;
+    if (parent is! NamedArgument) return false;
+    if (parent.name.lexeme != 'child') return false;
 
     final grandParent = parent.parent;
     if (grandParent is! ArgumentList) return false;
@@ -232,9 +232,9 @@ class _Visitor extends SimpleAstVisitor<void> {
   /// Gets the child expression from a widget's argument list.
   static Expression? _getChildExpression(ArgumentList argumentList) {
     final childArg = argumentList.arguments
-        .whereType<NamedExpression>()
-        .firstWhereOrNull((e) => e.name.label.name == 'child');
-    return childArg?.expression;
+        .whereType<NamedArgument>()
+        .firstWhereOrNull((e) => e.name.lexeme == 'child');
+    return childArg?.argumentExpression;
   }
 
   /// Checks whether the sequence has conflicting parameters. Two widgets that

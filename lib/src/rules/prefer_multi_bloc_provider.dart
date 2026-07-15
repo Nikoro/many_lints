@@ -71,8 +71,8 @@ const _providerTypes = [
 /// Extracts the `child:` named argument expression from an argument list.
 Expression? _findChildExpression(ArgumentList argumentList) {
   for (final arg in argumentList.arguments) {
-    if (arg is NamedExpression && arg.name.label.name == 'child') {
-      return arg.expression;
+    if (arg is NamedArgument && arg.name.lexeme == 'child') {
+      return arg.argumentExpression;
     }
   }
   return null;
@@ -92,11 +92,11 @@ Expression? _findChildExpression(ArgumentList argumentList) {
 /// Returns `true` if [node] is the `child:` of a parent call that matches
 /// the same provider type.
 bool _isChildOfSameProviderType(Expression node, TypeChecker checker) {
-  final namedExpr = node.parent;
-  if (namedExpr is! NamedExpression) return false;
-  if (namedExpr.name.label.name != 'child') return false;
+  final namedArg = node.parent;
+  if (namedArg is! NamedArgument) return false;
+  if (namedArg.name.lexeme != 'child') return false;
 
-  final argList = namedExpr.parent;
+  final argList = namedArg.parent;
   if (argList is! ArgumentList) return false;
 
   final parentCall = argList.parent;

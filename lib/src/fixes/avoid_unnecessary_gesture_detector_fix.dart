@@ -31,7 +31,7 @@ class AvoidUnnecessaryGestureDetectorFix extends ResolvedCorrectionProducer {
 
     // The reported node can be ConstructorName or SimpleIdentifier
     final Expression gestureDetectorExpr;
-    final NodeList<Expression> arguments;
+    final NodeList<Argument> arguments;
 
     if (targetNode is ConstructorName &&
         targetNode.parent is InstanceCreationExpression) {
@@ -48,13 +48,13 @@ class AvoidUnnecessaryGestureDetectorFix extends ResolvedCorrectionProducer {
     }
 
     // Find the child argument
-    final childArg = arguments.whereType<NamedExpression>().firstWhereOrNull(
-      (e) => e.name.label.name == 'child',
+    final childArg = arguments.whereType<NamedArgument>().firstWhereOrNull(
+      (e) => e.name.lexeme == 'child',
     );
 
     if (childArg == null) return;
 
-    final childSource = childArg.expression.toSource();
+    final childSource = childArg.argumentExpression.toSource();
 
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(

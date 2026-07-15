@@ -50,14 +50,14 @@ class PreferTextRichFix extends ResolvedCorrectionProducer {
     final arguments = argumentList.arguments;
 
     // Find the `text` argument (the TextSpan)
-    final textArgument = arguments
-        .whereType<NamedExpression>()
-        .firstWhereOrNull((e) => e.name.label.name == 'text');
+    final textArgument = arguments.whereType<NamedArgument>().firstWhereOrNull(
+      (e) => e.name.lexeme == 'text',
+    );
 
     if (textArgument == null) return;
 
     // Build the replacement: Text.rich(textSpan, otherArgs...)
-    final textSpanSource = textArgument.expression.toSource();
+    final textSpanSource = textArgument.argumentExpression.toSource();
 
     // Collect other arguments (excluding `text`)
     final otherArgs = <String>[];

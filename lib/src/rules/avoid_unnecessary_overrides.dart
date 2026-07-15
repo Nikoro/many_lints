@@ -74,7 +74,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final memberName = member.name.lexeme;
 
     // Abstract redeclaration — no body at all (EmptyFunctionBody)
-    if (member.isAbstract) {
+    if (!member.isComplete) {
       rule.reportAtNode(member, arguments: [memberName]);
       return;
     }
@@ -169,11 +169,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       final paramName = param.name?.lexeme;
       if (paramName == null) return false;
 
-      if (arg is NamedExpression) {
+      if (arg is NamedArgument) {
         // Named argument: name must match and value must be a simple identifier
         // with the same name as the parameter.
-        if (arg.name.label.name != paramName) return false;
-        final expr = arg.expression;
+        if (arg.name.lexeme != paramName) return false;
+        final expr = arg.argumentExpression;
         if (expr is! SimpleIdentifier || expr.name != paramName) return false;
       } else if (arg is SimpleIdentifier) {
         // Positional argument: must be a simple identifier with the same name.

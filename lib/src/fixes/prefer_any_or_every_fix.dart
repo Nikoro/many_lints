@@ -36,7 +36,8 @@ class PreferAnyOrEveryFix extends ResolvedCorrectionProducer {
     final collection = whereInvocation.target;
     if (collection == null) return;
 
-    final predicate = whereInvocation.argumentList.arguments.firstOrNull;
+    final predicate =
+        whereInvocation.argumentList.arguments.firstOrNull?.argumentExpression;
     if (predicate == null) return;
 
     final isNotEmpty = property == 'isNotEmpty';

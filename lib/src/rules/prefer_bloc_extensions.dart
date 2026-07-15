@@ -95,9 +95,9 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   static bool _hasListenTrue(ArgumentList argumentList) {
-    for (final arg in argumentList.arguments.whereType<NamedExpression>()) {
-      if (arg.name.label.name == 'listen') {
-        if (arg.expression case BooleanLiteral(value: true)) {
+    for (final arg in argumentList.arguments.whereType<NamedArgument>()) {
+      if (arg.name.lexeme == 'listen') {
+        if (arg.argumentExpression case BooleanLiteral(value: true)) {
           return true;
         }
       }

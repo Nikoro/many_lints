@@ -34,12 +34,12 @@ class PreferPaddingOverContainerFix extends ResolvedCorrectionProducer {
 
     // Find margin or padding argument
     final marginArgument = instanceCreation.argumentList.arguments
-        .whereType<NamedExpression>()
-        .firstWhereOrNull((e) => e.name.label.name == 'margin');
+        .whereType<NamedArgument>()
+        .firstWhereOrNull((e) => e.name.lexeme == 'margin');
 
     final paddingArgument = instanceCreation.argumentList.arguments
-        .whereType<NamedExpression>()
-        .firstWhereOrNull((e) => e.name.label.name == 'padding');
+        .whereType<NamedArgument>()
+        .firstWhereOrNull((e) => e.name.lexeme == 'padding');
 
     if (marginArgument == null && paddingArgument == null) return;
 
@@ -49,7 +49,7 @@ class PreferPaddingOverContainerFix extends ResolvedCorrectionProducer {
       // Rename margin to padding if needed (padding is already correct)
       if (marginArgument != null) {
         builder.addSimpleReplacement(
-          range.node(marginArgument.name.label),
+          range.token(marginArgument.name),
           'padding',
         );
       }

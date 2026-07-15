@@ -26,14 +26,12 @@ DartType? inferContextType(Expression node) {
     // Assignment: `x = value;`
     AssignmentExpression(:final leftHandSide) => leftHandSide.staticType,
 
-    // Named expression: `argument: value`
-    NamedExpression(:final element?) => element.type,
+    // Named argument: `argument: value`
+    NamedArgument(:final correspondingParameter) =>
+      correspondingParameter?.type,
 
-    // Fall back for unresolved named expressions.
-    NamedExpression() => inferContextType(parent),
-
-    // Default formal parameter: `{Type value = defaultValue}`
-    DefaultFormalParameter(parameter: SimpleFormalParameter(:final type?)) =>
+    // Default value clause: `{Type value = defaultValue}`
+    FormalParameterDefaultClause(parent: FormalParameter(:final type?)) =>
       type.type,
 
     // Binary expression (comparison): `e == value`

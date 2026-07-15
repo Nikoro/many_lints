@@ -74,19 +74,17 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (staticType == null) return;
     if (!_sizedBoxChecker.isExactlyType(staticType)) return;
 
-    final args = argumentList.arguments.whereType<NamedExpression>();
+    final args = argumentList.arguments.whereType<NamedArgument>();
 
-    final widthArg = args.firstWhereOrNull((a) => a.name.label.name == 'width');
-    final heightArg = args.firstWhereOrNull(
-      (a) => a.name.label.name == 'height',
-    );
+    final widthArg = args.firstWhereOrNull((a) => a.name.lexeme == 'width');
+    final heightArg = args.firstWhereOrNull((a) => a.name.lexeme == 'height');
 
     // Both width and height must be present
     if (widthArg == null || heightArg == null) return;
 
     // Check if both values are identical by comparing their source text
-    final widthSource = widthArg.expression.toSource();
-    final heightSource = heightArg.expression.toSource();
+    final widthSource = widthArg.argumentExpression.toSource();
+    final heightSource = heightArg.argumentExpression.toSource();
 
     if (widthSource == heightSource) {
       rule.reportAtNode(reportNode);

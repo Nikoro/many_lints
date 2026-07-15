@@ -88,8 +88,8 @@ class _Visitor extends SimpleAstVisitor<void> {
         continue;
       }
 
-      // Skip named expressions (child: Flexible(...) or children: [...])
-      if (current is NamedExpression) {
+      // Skip named arguments (child: Flexible(...) or children: [...])
+      if (current is NamedArgument) {
         current = current.parent;
         continue;
       }

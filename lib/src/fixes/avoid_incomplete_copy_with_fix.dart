@@ -77,9 +77,7 @@ class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
     if (parameterList == null) return;
 
     // Determine if using named parameters (has { })
-    final hasNamedParams = parameterList.parameters.any(
-      (p) => p is DefaultFormalParameter && p.isNamed,
-    );
+    final hasNamedParams = parameterList.parameters.any((p) => p.isNamed);
 
     final insertParams = newParams.join(', ');
 
@@ -107,22 +105,14 @@ class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
   }
 
   static (String?, String?) _extractParamInfo(FormalParameter param) {
-    final actual = switch (param) {
-      DefaultFormalParameter(:final parameter) => parameter,
-      _ => param,
-    };
+    final name = param.name?.lexeme;
 
-    final name = actual.name?.lexeme;
-    String? type;
-
-    if (actual is SimpleFormalParameter && actual.type != null) {
-      type = actual.type!.toSource();
-    } else if (actual is FieldFormalParameter) {
-      type = actual.type?.toSource();
-    } else if (actual is SuperFormalParameter) {
-      type = actual.type?.toSource();
+    // Function-typed parameters (`int f(int x)`) have no usable type source,
+    // matching the previous behavior for `FunctionTypedFormalParameter`.
+    if (param is RegularFormalParameter && param.functionTypedSuffix != null) {
+      return (name, null);
     }
 
-    return (name, type);
+    return (name, param.type?.toSource());
   }
 }

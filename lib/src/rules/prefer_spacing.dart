@@ -2,6 +2,7 @@ import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
@@ -95,18 +96,18 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (match == null) return;
 
     // Check that the widget doesn't already have a spacing argument
-    final hasSpacingArg = argumentList.arguments
-        .whereType<NamedExpression>()
-        .any((arg) => arg.name.label.name == 'spacing');
+    final hasSpacingArg = argumentList.arguments.whereType<NamedArgument>().any(
+      (arg) => arg.name.lexeme == 'spacing',
+    );
     if (hasSpacingArg) return;
 
     // Find the children argument
     final childrenArg = argumentList.arguments
-        .whereType<NamedExpression>()
-        .firstWhereOrNull((arg) => arg.name.label.name == 'children');
+        .whereType<NamedArgument>()
+        .firstWhereOrNull((arg) => arg.name.lexeme == 'children');
     if (childrenArg == null) return;
 
-    final childrenExpr = childrenArg.expression;
+    final childrenExpr = childrenArg.argumentExpression;
 
     // Pattern 1: Direct list literal with SizedBox spacers
     if (childrenExpr is ListLiteral) {
@@ -166,6 +167,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (args.isEmpty) return;
 
     final separatorArg = args.first;
+    if (separatorArg is! Expression) return;
     if (_extractSizedBoxSpacingFromExpr(separatorArg) == null) return;
 
     rule.reportAtNode(node);
@@ -203,12 +205,12 @@ class _Visitor extends SimpleAstVisitor<void> {
       topOfChain = parent;
     }
 
-    // Should be a NamedExpression(children: ...)
-    final namedExpr = topOfChain.parent;
-    if (namedExpr is! NamedExpression) return false;
-    if (namedExpr.name.label.name != 'children') return false;
+    // Should be a NamedArgument(children: ...)
+    final namedArg = topOfChain.parent;
+    if (namedArg is! NamedArgument) return false;
+    if (namedArg.name.lexeme != 'children') return false;
 
-    final argList = namedExpr.parent;
+    final argList = namedArg.parent;
     if (argList is! ArgumentList) return false;
 
     final parentExpr = argList.parent;
@@ -221,8 +223,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     };
     if (parentArgs == null) return false;
 
-    final hasSpacingArg = parentArgs.whereType<NamedExpression>().any(
-      (arg) => arg.name.label.name == 'spacing',
+    final hasSpacingArg = parentArgs.whereType<NamedArgument>().any(
+      (arg) => arg.name.lexeme == 'spacing',
     );
     if (hasSpacingArg) return false;
 
@@ -254,18 +256,19 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Extracts spacing info from SizedBox arguments.
   /// Returns (paramName, valueSource) or null if not a pure spacer.
-  static (String, String)? _extractSizedBoxSpacing(NodeList<Expression> args) {
+  static (String, String)? _extractSizedBoxSpacing(NodeList<Argument> args) {
     String? spacingParam;
     String? spacingValue;
 
     for (final arg in args) {
-      if (arg case NamedExpression(
-        name: Label(label: SimpleIdentifier(name: final name)),
+      if (arg case NamedArgument(
+        name: Token(lexeme: final name),
+        :final argumentExpression,
       )) {
         if (name == 'key') continue;
         if ((name == 'height' || name == 'width') && spacingParam == null) {
           spacingParam = name;
-          spacingValue = arg.expression.toSource();
+          spacingValue = argumentExpression.toSource();
         } else {
           return null; // has child, both dimensions, or other params
         }

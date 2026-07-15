@@ -38,7 +38,7 @@ class PreferBlocExtensionsFix extends ResolvedCorrectionProducer {
 
     // First positional argument is the context
     final contextArg = args.first;
-    if (contextArg is NamedExpression) return;
+    if (contextArg is NamedArgument) return;
     final contextSource = contextArg.toSource();
 
     // Check for listen: true
@@ -56,9 +56,9 @@ class PreferBlocExtensionsFix extends ResolvedCorrectionProducer {
   }
 
   static bool _hasListenTrue(ArgumentList argumentList) {
-    for (final arg in argumentList.arguments.whereType<NamedExpression>()) {
-      if (arg.name.label.name == 'listen') {
-        if (arg.expression case BooleanLiteral(value: true)) {
+    for (final arg in argumentList.arguments.whereType<NamedArgument>()) {
+      if (arg.name.lexeme == 'listen') {
+        if (arg.argumentExpression case BooleanLiteral(value: true)) {
           return true;
         }
       }

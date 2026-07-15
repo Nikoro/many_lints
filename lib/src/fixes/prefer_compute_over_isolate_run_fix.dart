@@ -33,7 +33,7 @@ class PreferComputeOverIsolateRunFix extends ResolvedCorrectionProducer {
     final args = targetNode.argumentList.arguments;
     if (args.isEmpty) return;
 
-    final callback = args.first;
+    final callback = args.first.argumentExpression;
     final callbackSource = _transformCallback(callback);
 
     await builder.addDartFileEdit(file, (builder) {

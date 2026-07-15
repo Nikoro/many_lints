@@ -60,8 +60,8 @@ class _Visitor extends SimpleAstVisitor<void> {
           topLevelNames.add(name.lexeme);
         case FunctionTypeAlias(:final name):
           topLevelNames.add(name.lexeme);
-        case ExtensionTypeDeclaration(:final primaryConstructor):
-          topLevelNames.add(primaryConstructor.typeName.lexeme);
+        case ExtensionTypeDeclaration(:final namePart):
+          topLevelNames.add(namePart.typeName.lexeme);
         default:
           break;
       }
