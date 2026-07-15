@@ -15,7 +15,7 @@
     <img alt="MIT License" src="https://tinyurl.com/3uf9tzpy">
   </a>
   <a href="https://pub.dev/packages/analyzer">
-    <img src="https://img.shields.io/badge/analyzer-13.3.0-blue" alt="analyzer version 13.3.0">
+    <img src="https://img.shields.io/badge/analyzer-14.1.0-blue" alt="analyzer version 14.1.0">
   </a>
   <a href="https://nikoro.github.io/many_lints">
     <img src="https://img.shields.io/badge/docs-many__lints-154A95" alt="Documentation">
@@ -34,7 +34,7 @@ Add `many_lints` to the **top-level** `plugins` section in your `analysis_option
 
 ```yaml
 plugins:
-  many_lints: ^0.5.0
+  many_lints: ^0.6.0
 ```
 
 That's it — the analysis server will automatically download and resolve the plugin from [pub.dev](https://pub.dev/packages/many_lints). There is no need to add it to your `pubspec.yaml`.
@@ -50,7 +50,7 @@ All rules are registered as warnings and enabled by default. You can enable or d
 ```yaml
 plugins:
   many_lints:
-    version: ^0.5.0
+    version: ^0.6.0
     diagnostics:
       prefer_center_over_align: true
       use_bloc_suffix: false
