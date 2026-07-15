@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.0] - 2026-07-15
+
+### Changed
+
+- Bump `analyzer` constraint to `^13.3.0` (support for the latest Dart/Flutter SDKs)
+- Bump `analyzer_plugin` constraint to `^0.14.12`
+- Bump `analysis_server_plugin` constraint to `^0.3.18`
+- Bump `analyzer_testing` constraint to `^0.3.2`
+- Migrate all rules and quick fixes to the analyzer 13 AST API (`NamedArgument`, `Argument`, `RegularFormalParameter`)
+
 ## [0.4.4] - 2026-06-18
 
 ### Fixed
