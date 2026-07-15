@@ -58,7 +58,7 @@ plugins:
 
 ## Available Lints
 
-100 lints with 78 quick fixes, all enabled by default as warnings. Each rule links to its full documentation with examples and fix details.
+102 lints with 80 quick fixes, all enabled by default as warnings. Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
@@ -66,7 +66,7 @@ plugins:
 | [BLoC & Riverpod](https://nikoro.github.io/many_lints/docs/rules/bloc-riverpod/) | 9 | BLoC and Riverpod state management patterns |
 | [Class Naming](https://nikoro.github.io/many_lints/docs/rules/class-naming/) | 3 | Class and type naming conventions |
 | [Code Organization](https://nikoro.github.io/many_lints/docs/rules/code-organization/) | 3 | Code structure and organization |
-| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/code-quality/) | 2 | General code quality improvements |
+| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/code-quality/) | 3 | General code quality improvements |
 | [Collections & Types](https://nikoro.github.io/many_lints/docs/rules/collection-type/) | 13 | Collection and type-related checks |
 | [Control Flow](https://nikoro.github.io/many_lints/docs/rules/control-flow/) | 11 | Control flow statements and patterns |
 | [Hook Rules](https://nikoro.github.io/many_lints/docs/rules/hook-rules/) | 2 | Flutter Hooks conventions |
@@ -77,7 +77,7 @@ plugins:
 | [State Management](https://nikoro.github.io/many_lints/docs/rules/state-management/) | 6 | StatefulWidget and state patterns |
 | [Testing](https://nikoro.github.io/many_lints/docs/rules/testing-rules/) | 4 | Testing best practices and matchers |
 | [Type Annotations](https://nikoro.github.io/many_lints/docs/rules/type-annotations/) | 5 | Type annotation conventions |
-| [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/widget-best-practices/) | 14 | General widget best practices |
+| [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/widget-best-practices/) | 15 | General widget best practices |
 | [Widget Replacement](https://nikoro.github.io/many_lints/docs/rules/widget-replacement/) | 13 | Simpler widget alternatives |
 
 ## Available Assists

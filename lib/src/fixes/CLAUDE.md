@@ -26,9 +26,11 @@ builder.addDeletion(range.nodeInList(list, element));
 // Replace prefix only
 builder.addSimpleReplacement(range.startStart(node, parent.argumentList), 'Prefix.');
 
-// Find named argument
-final arg = arguments.whereType<NamedExpression>()
-    .firstWhereOrNull((e) => e.name.label.name == 'alignment');
+// Find named argument (analyzer 13+: NamedArgument, name is a Token)
+final arg = arguments.whereType<NamedArgument>()
+    .firstWhereOrNull((e) => e.name.lexeme == 'alignment');
+// Value expression of any Argument (positional or named)
+final value = arg.argumentExpression;
 ```
 
 ## Fix Inheritance (DRY patterns from audit)
@@ -75,6 +77,8 @@ final arg = arguments.whereType<NamedExpression>()
 | Extends→mixin swap | [prefer_equatable_mixin_fix.dart](prefer_equatable_mixin_fix.dart) | Replace `extends Equatable` with `with EquatableMixin`; handle existing `with` clause (delete extends + append to mixins) vs no `with` clause (simple replacement); `range.startStart()` for partial deletion |
 | Unwrap factory return | [prefer_use_callback_fix.dart](prefer_use_callback_fix.dart) | Extract inner expression from `useMemoized(() => expr)` factory; rebuild as `useCallback(expr, keys)` preserving remaining args via `toSource()` |
 | Offset-based rename | [prefer_use_prefix_fix.dart](prefer_use_prefix_fix.dart) | Use `diagnosticOffset`/`diagnosticLength` + `unitResult.content.substring()` to read the token text; compute new name with `use` prefix; `SourceRange` replacement |
+| Parameter rewrite + initializer removal | [prefer_private_named_parameters_fix.dart](prefer_private_named_parameters_fix.dart) | Rebuild a `RegularFormalParameter` as `this._field` preserving `required`/`defaultClause`; replace from `SyntacticEntity` start (`requiredKeyword ?? type ?? name`) to keep metadata; delete lone initializer via `range.endEnd(constructor.parameters, initializer)` or `range.nodeInList` when several |
+| Comparison → getter | [prefer_theme_mode_getters_fix.dart](prefer_theme_mode_getters_fix.dart) | Replace whole `BinaryExpression` with `target.isX` / `!target.isX`; parenthesize non-trivial targets before appending the getter |
 
 ## Updating Documentation
 
