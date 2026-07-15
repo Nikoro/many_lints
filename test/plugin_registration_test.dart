@@ -48,7 +48,7 @@ void main() {
   test('expected number of rules are registered', () {
     plugin.register(registry);
     final totalRules = registry.warningRules.length + registry.lintRules.length;
-    expect(totalRules, equals(100));
+    expect(totalRules, equals(102));
   });
 
   test('fixes are registered', () {
@@ -57,7 +57,7 @@ void main() {
       0,
       (sum, v) => sum + v.length,
     );
-    expect(totalFixes, equals(78));
+    expect(totalFixes, equals(80));
   });
 
   test('assists are registered', () {

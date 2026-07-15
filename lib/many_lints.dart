@@ -77,6 +77,7 @@ import 'package:many_lints/src/rules/avoid_only_rethrow.dart';
 import 'package:many_lints/src/rules/avoid_throw_in_catch_block.dart';
 import 'package:many_lints/src/rules/avoid_unassigned_stream_subscriptions.dart';
 import 'package:many_lints/src/rules/prefer_test_matchers.dart';
+import 'package:many_lints/src/rules/prefer_theme_mode_getters.dart';
 import 'package:many_lints/src/rules/avoid_single_child_in_multi_child_widgets.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_consumer_widgets.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_hook_widgets.dart';
@@ -91,6 +92,7 @@ import 'package:many_lints/src/rules/prefer_iterable_of.dart';
 import 'package:many_lints/src/rules/prefer_explicit_function_type.dart';
 import 'package:many_lints/src/rules/prefer_overriding_parent_equality.dart';
 import 'package:many_lints/src/rules/prefer_padding_over_container.dart';
+import 'package:many_lints/src/rules/prefer_private_named_parameters.dart';
 import 'package:many_lints/src/rules/prefer_return_await.dart';
 import 'package:many_lints/src/rules/proper_super_calls.dart';
 import 'package:many_lints/src/rules/prefer_returning_shorthands.dart';
@@ -174,7 +176,9 @@ import 'package:many_lints/src/fixes/prefer_constrained_box_over_container_fix.d
 import 'package:many_lints/src/fixes/prefer_explicit_function_type_fix.dart';
 import 'package:many_lints/src/fixes/prefer_overriding_parent_equality_fix.dart';
 import 'package:many_lints/src/fixes/prefer_padding_over_container_fix.dart';
+import 'package:many_lints/src/fixes/prefer_private_named_parameters_fix.dart';
 import 'package:many_lints/src/fixes/prefer_return_await_fix.dart';
+import 'package:many_lints/src/fixes/prefer_theme_mode_getters_fix.dart';
 import 'package:many_lints/src/fixes/proper_super_calls_fix.dart';
 import 'package:many_lints/src/fixes/prefer_returning_shorthands_fix.dart';
 import 'package:many_lints/src/fixes/prefer_shorthands_with_constructors_fix.dart';
@@ -258,6 +262,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, PreferExplicitFunctionType());
     _registerWarningRule(registry, PreferOverridingParentEquality());
     _registerWarningRule(registry, PreferPaddingOverContainer());
+    _registerWarningRule(registry, PreferPrivateNamedParameters());
     _registerWarningRule(registry, PreferReturnAwait());
     _registerWarningRule(registry, PreferReturningShorthands());
     _registerWarningRule(registry, PreferShorthandsWithConstructors());
@@ -284,6 +289,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, PreferSingleWidgetPerFile());
     _registerWarningRule(registry, PreferSpacing());
     _registerWarningRule(registry, PreferTestMatchers());
+    _registerWarningRule(registry, PreferThemeModeGetters());
     _registerWarningRule(registry, ProperSuperCalls());
     _registerWarningRule(registry, PreferClassDestructuring());
     _registerWarningRule(registry, UseClosestBuildContext());
@@ -361,6 +367,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       PreferPaddingOverContainer.code,
       PreferPaddingOverContainerFix.new,
+    );
+    registry.registerFixForRule(
+      PreferPrivateNamedParameters.code,
+      PreferPrivateNamedParametersFix.new,
     );
     registry.registerFixForRule(PreferAnyOrEvery.code, PreferAnyOrEveryFix.new);
     registry.registerFixForRule(PreferContains.code, PreferContainsFix.new);
@@ -550,6 +560,10 @@ class ManyLintsPlugin extends Plugin {
       PreferSizedBoxSquareFix.new,
     );
     registry.registerFixForRule(PreferTextRich.code, PreferTextRichFix.new);
+    registry.registerFixForRule(
+      PreferThemeModeGetters.code,
+      PreferThemeModeGettersFix.new,
+    );
     registry.registerFixForRule(
       PreferTransformOverContainer.code,
       ChangeWidgetNameFix.transformFix,

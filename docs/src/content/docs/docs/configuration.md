@@ -46,7 +46,7 @@ Git dependencies are not directly supported by the plugin system. Clone the repo
 
 ## Configuring diagnostics
 
-All 100 rules are registered as warnings and enabled by default. You can enable or disable individual rules under the `diagnostics` key:
+All 102 rules are registered as warnings and enabled by default. You can enable or disable individual rules under the `diagnostics` key:
 
 ```yaml
 plugins:

@@ -962,6 +962,46 @@ FunctionBody? maybeHookBuilderBody(InstanceCreationExpression node)
 
 ## 🔧 Analyzer 11.0.0 Specific APIs
 
+### Gating a rule on a Dart language feature (analyzer 14+)
+
+When a lint suggests syntax that only exists from a certain language version
+(e.g. private named parameters, Dart 3.12), gate it on the unit's `FeatureSet`
+so it stays silent in older-language libraries and the fix can never produce
+non-compiling code:
+
+```dart
+import 'package:analyzer/dart/analysis/features.dart';
+
+@override
+void visitConstructorDeclaration(ConstructorDeclaration node) {
+  final unit = node.thisOrAncestorOfType<CompilationUnit>();
+  if (unit == null ||
+      !unit.featureSet.isEnabled(Feature.private_named_parameters)) {
+    return;
+  }
+  // ...
+}
+```
+
+Tests can exercise the gate with a `// @dart=3.11` header line.
+
+**Reference:** [prefer_private_named_parameters.dart](../../../lib/src/rules/prefer_private_named_parameters.dart)
+
+### Gating a rule on API existence (SDK-version-independent)
+
+When a lint suggests a member added in a newer Flutter/package version, check
+the **resolved element** for the member instead of guessing from versions:
+
+```dart
+final element = interfaceType.element;
+if (element is EnumElement &&
+    element.getters.any((g) => g.name == 'isDark')) {
+  // Safe to suggest `.isDark` - the getter exists in the user's Flutter.
+}
+```
+
+**Reference:** [prefer_theme_mode_getters.dart](../../../lib/src/rules/prefer_theme_mode_getters.dart)
+
 ### New Element Access (analyzer ^11.0.0)
 
 **Old API (pre-10.0):**
