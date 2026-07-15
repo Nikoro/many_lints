@@ -118,6 +118,8 @@ Allow the user to request edits to the CHANGELOG content before proceeding.
 
 2. **`README.md`**: Find **all** lines matching the pattern `many_lints: ^` or `version: ^` followed by a semver version and update them to `^X.Y.Z`. There are two occurrences: the simple plugin syntax (`many_lints: ^X.Y.Z`) and the extended syntax with diagnostics (`version: ^X.Y.Z`). Do NOT hardcode line numbers — use pattern matching to find them robustly.
 
+   **If the release changes the `analyzer` dependency**, also update the analyzer version badge in `README.md` (the `img.shields.io/badge/analyzer-<version>-blue` line — update both the `src` URL and the `alt` text) to the analyzer version from `pubspec.lock`. Additionally check that the `environment.sdk` constraint in `pubspec.yaml` and `example/pubspec.yaml` and the pinned `sdk:` version in `.github/workflows/*.yaml` satisfy the new analyzer's minimum SDK requirement — a mismatch makes CI fail at `dart pub get` after the tag is pushed.
+
 3. **`CHANGELOG.md`**: Insert the new version section at the top of the file, directly after the `# Changelog` heading. Preserve all existing content below.
 
 4. **Docs site version references**: Update the installable version in these files (same `many_lints: ^` / `version: ^` pattern as README):
