@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.0] - 2026-07-15
+
+### Changed
+
+- Bump `analyzer` constraint to `^14.1.0` (support for the latest Dart/Flutter SDKs)
+- Bump `analyzer_plugin` constraint to `^0.14.14`
+- Bump `analysis_server_plugin` constraint to `^0.3.20`
+- Bump `analyzer_testing` constraint to `^0.3.4`
+
 ## [0.5.0] - 2026-07-15
 
 ### Changed
