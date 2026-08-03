@@ -8,6 +8,10 @@
 - `avoid_unnecessary_consumer_widgets` now reports `ConsumerStatefulWidget`. The rule matched it but then looked for a `build` with a `ref` parameter on the widget itself, which a `ConsumerStatefulWidget` never has — its `ref` is a getter on the companion `ConsumerState` — so that half of the rule never reported anything. The widget is now correlated with its state class, and any `ref` use in that class counts, not only one inside `build`.
 - `avoid_unnecessary_consumer_widgets` no longer fires when a mixin uses the `ref` on the class's behalf. A mixin `on ConsumerState<T>` is a normal way to share provider access, and it left the state body looking ref-free while the widget genuinely needed the container. A mixin carrying no `ref` use still does not suppress the diagnostic.
 
+### Documentation
+
+- Documented that suppression comments for plugin lints require the plugin-name prefix (`// ignore: many_lints/<rule>`). A bare `// ignore: <rule>` has no effect, which is easy to mistake for the rule ignoring suppression altogether. Type-based suppression needs the `type=` form (`// ignore: type=lint`).
+
 ## [0.7.0] - 2026-07-15
 
 ### Added

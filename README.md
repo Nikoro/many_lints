@@ -95,6 +95,10 @@ const Align(...);
 // ignore_for_file: many_lints/use_bloc_suffix
 ```
 
+The `many_lints/` prefix is **required**. Unlike SDK lints, a plugin diagnostic is only silenced when the rule name is prefixed with the plugin name, so a bare `// ignore: prefer_center_over_align` has no effect. The prefix is the key used under `plugins:` in `analysis_options.yaml`.
+
+Suppressing by type is also possible via `// ignore: type=lint` (the `type=` form is required, and it silences every lint on that line, SDK ones included).
+
 ## Example
 
 See the [`example/`](example/) directory for a Flutter project that demonstrates every lint rule in action. Each file corresponds to a single rule and contains code that triggers the lint.

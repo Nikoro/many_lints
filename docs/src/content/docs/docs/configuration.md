@@ -68,6 +68,23 @@ const Align(...);
 // ignore_for_file: many_lints/use_bloc_suffix
 ```
 
+:::caution[The `many_lints/` prefix is required]
+Unlike SDK lints, a plugin diagnostic is only silenced when the rule name is prefixed with the plugin name. A bare `// ignore: prefer_center_over_align` has **no effect** — the analyzer matches the plugin name alongside the rule name, and a comment without a prefix carries none, so it never matches.
+
+The prefix is the key you used under `plugins:` in `analysis_options.yaml`. If you renamed it, use that name instead.
+
+```dart
+// ignore: prefer_center_over_align             // ❌ does nothing
+// ignore: many_lints/prefer_center_over_align  // ✅ works
+```
+
+Suppressing by diagnostic type also works, and needs the `type=` form — plain `// ignore: lint` has no effect. Note this silences *every* lint on that line, including SDK ones:
+
+```dart
+// ignore: type=lint
+```
+:::
+
 ## Restarting the analysis server
 
 :::caution

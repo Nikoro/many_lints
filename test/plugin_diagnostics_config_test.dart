@@ -53,6 +53,71 @@ void main() {
     },
   );
 
+  group('suppression comments', () {
+    // Plugin diagnostics are only silenced when the rule name carries the
+    // plugin-name prefix: `IgnoredDiagnosticName._matches` bails out when the
+    // comment's plugin name differs from the diagnostic's, and a bare comment
+    // parses to a null plugin name. These tests pin that down so the docs
+    // cannot drift back to claiming plugin rules ignore `// ignore`.
+    Future<bool> reportsEquality(String content) async {
+      final errors = await harness.analyze(content);
+      return errors.any(
+        (error) => error.code == 'prefer_overriding_parent_equality',
+      );
+    }
+
+    test('bare ignore does not suppress', () async {
+      expect(
+        await reportsEquality(
+          _withLineComment('// ignore: prefer_overriding_parent_equality'),
+        ),
+        isTrue,
+      );
+    });
+
+    test('prefixed ignore suppresses', () async {
+      expect(
+        await reportsEquality(
+          _withLineComment(
+            '// ignore: many_lints/prefer_overriding_parent_equality',
+          ),
+        ),
+        isFalse,
+      );
+    });
+
+    test('bare ignore_for_file does not suppress', () async {
+      expect(
+        await reportsEquality(
+          '// ignore_for_file: prefer_overriding_parent_equality\n'
+          '$_preferOverridingParentEqualityCode',
+        ),
+        isTrue,
+      );
+    });
+
+    test('prefixed ignore_for_file suppresses', () async {
+      expect(
+        await reportsEquality(
+          '// ignore_for_file: many_lints/prefer_overriding_parent_equality\n'
+          '$_preferOverridingParentEqualityCode',
+        ),
+        isFalse,
+      );
+    });
+
+    test('type-based ignore requires the type= form', () async {
+      expect(
+        await reportsEquality(_withLineComment('// ignore: lint')),
+        isTrue,
+      );
+      expect(
+        await reportsEquality(_withLineComment('// ignore: type=lint')),
+        isFalse,
+      );
+    });
+  });
+
   test(
     'legacy plugin server registration does not leak warning rules globally',
     () async {
@@ -90,6 +155,14 @@ void main() {
     },
   );
 }
+
+/// Places [comment] on the line directly above the class that triggers
+/// `prefer_overriding_parent_equality`, where a line-scoped ignore applies.
+String _withLineComment(String comment) =>
+    _preferOverridingParentEqualityCode.replaceFirst(
+      'class Child extends Parent {',
+      '$comment\nclass Child extends Parent {',
+    );
 
 const _preferOverridingParentEqualityCode = r'''
 class Parent {

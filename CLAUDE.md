@@ -47,6 +47,25 @@ Before writing any code:
    - [Testing rules](https://github.com/dart-lang/sdk/blob/main/pkg/analysis_server_plugin/doc/testing_rules.md)
    - [Writing assists](https://github.com/dart-lang/sdk/blob/main/pkg/analysis_server_plugin/doc/writing_assists.md)
 
+## Diagnostic Suppression (verified 2026-08-03)
+
+Plugin rules **do** respect `// ignore` and `// ignore_for_file` — but only with the plugin-name prefix. Do not repeat the claim that they cannot be suppressed; it is false.
+
+| Comment | Suppressed? |
+|---------|-------------|
+| `// ignore: <rule>` | ❌ no |
+| `// ignore: many_lints/<rule>` | ✅ yes |
+| `// ignore_for_file: <rule>` | ❌ no |
+| `// ignore_for_file: many_lints/<rule>` | ✅ yes |
+| `// ignore: lint` | ❌ no |
+| `// ignore: type=lint` | ✅ yes (silences all lints on the line) |
+
+Why: `PluginServer` filters diagnostics through `!ignoreInfo.ignored(e, pluginName: pluginName)`, and `IgnoredDiagnosticName._matches` returns `false` immediately when `this.pluginName != pluginName`. A bare comment parses to `pluginName == null`, so it can never match a plugin diagnostic. The parser only reads a plugin name when a `/` follows the word. The prefix is the key under `plugins:` in `analysis_options.yaml` — *not* `ManyLintsPlugin.name` (`'Many Lints'`). Type-based ignores need the `type=` form (`word.toLowerCase() == 'type'` + `=`); `LintCode.type` is always `DiagnosticType.LINT` regardless of `registerWarningRule`, so `type=warning` does not match.
+
+This is verifiable end-to-end with the `PluginServer` harness in `test/plugin_diagnostics_config_test.dart`.
+
+**Rule of thumb:** never justify a rule change by claiming a false positive "cannot be silenced". It can. Justify it by the pattern being legitimate and common enough that users should not have to annotate it.
+
 ## Adding a New Lint Rule
 
 **Use the `/new-lint` skill** for step-by-step guidance, or **`/release`** to prepare a new version. See the full cookbooks:
