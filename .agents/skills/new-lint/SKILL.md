@@ -238,7 +238,7 @@ You must update if you:
    - [fixes-cookbook.md](fixes-cookbook.md) for fix-related patterns
    - Follow the format in each file's Meta-Instructions section
 
-2. **Brief mention** — Add a short entry to the lean quick reference at `lib/src/rules/CLAUDE.md` (or `lib/src/fixes/CLAUDE.md` for fix patterns)
+2. **Brief mention** — Add a short entry to the lean quick reference at `lib/src/rules/AGENTS.md` (or `lib/src/fixes/AGENTS.md` for fix patterns)
 
 This keeps the cookbooks as **living documents** that improve with each new rule!
 

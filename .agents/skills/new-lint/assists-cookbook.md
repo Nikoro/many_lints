@@ -36,7 +36,7 @@ When updating, add:
 2. Add your pattern following existing format
 3. Include file references with line numbers
 4. Update the Pattern Index if adding new sections
-5. Also update the lean quick reference at `lib/src/assists/CLAUDE.md` with a brief mention of the new pattern
+5. Also update the lean quick reference at `lib/src/assists/AGENTS.md` with a brief mention of the new pattern
 
 ---
 

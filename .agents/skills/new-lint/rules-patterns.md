@@ -24,7 +24,7 @@ For common recipes (specific use-case patterns), see [rules-recipes.md](rules-re
 - ✅ You discover analyzer ^11.0.0 specific APIs different from older versions
 - ✅ You create a new helper utility that could benefit other rules
 
-**Also update the lean quick reference** at `lib/src/rules/CLAUDE.md` with a brief mention of the new pattern.
+**Also update the lean quick reference** at `lib/src/rules/AGENTS.md` with a brief mention of the new pattern.
 
 ### What to Document
 
