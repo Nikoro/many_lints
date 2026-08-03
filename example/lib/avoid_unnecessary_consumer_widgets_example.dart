@@ -16,3 +16,45 @@ class AvoidUnnecessaryConsumerWidgetsExample extends ConsumerWidget {
     return Text('Hello');
   }
 }
+
+// LINT: ConsumerStatefulWidget whose state never touches ref
+class AvoidUnnecessaryConsumerStatefulWidgetsExample
+    extends ConsumerStatefulWidget {
+  const AvoidUnnecessaryConsumerStatefulWidgetsExample({super.key});
+
+  @override
+  ConsumerState<AvoidUnnecessaryConsumerStatefulWidgetsExample> createState() =>
+      _AvoidUnnecessaryConsumerStatefulWidgetsExampleState();
+}
+
+class _AvoidUnnecessaryConsumerStatefulWidgetsExampleState
+    extends ConsumerState<AvoidUnnecessaryConsumerStatefulWidgetsExample> {
+  @override
+  Widget build(BuildContext context) {
+    // ref is never used anywhere in this state
+    return Text('Hello');
+  }
+}
+
+// OK: a mixin uses ref on the state's behalf
+mixin _AnalyticsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
+  void track() {
+    ref.read(Provider((_) => 0));
+  }
+}
+
+class MixinConsumerExample extends ConsumerStatefulWidget {
+  const MixinConsumerExample({super.key});
+
+  @override
+  ConsumerState<MixinConsumerExample> createState() =>
+      _MixinConsumerExampleState();
+}
+
+class _MixinConsumerExampleState extends ConsumerState<MixinConsumerExample>
+    with _AnalyticsMixin {
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(onPressed: track, child: const Text('Save'));
+  }
+}

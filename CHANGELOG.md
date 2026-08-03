@@ -5,6 +5,8 @@
 ### Fixed
 
 - `avoid_unnecessary_stateful_widgets` no longer fires when a mixin applied to the `State` carries the state. A mixin `on State<T>` can hold the mutable fields, the lifecycle overrides or the `setState` calls on behalf of the class that applies it, which left the `State` body looking empty while the widget was genuinely stateful. Computed getters on such a mixin still do not count as state.
+- `avoid_unnecessary_consumer_widgets` now reports `ConsumerStatefulWidget`. The rule matched it but then looked for a `build` with a `ref` parameter on the widget itself, which a `ConsumerStatefulWidget` never has — its `ref` is a getter on the companion `ConsumerState` — so that half of the rule never reported anything. The widget is now correlated with its state class, and any `ref` use in that class counts, not only one inside `build`.
+- `avoid_unnecessary_consumer_widgets` no longer fires when a mixin uses the `ref` on the class's behalf. A mixin `on ConsumerState<T>` is a normal way to share provider access, and it left the state body looking ref-free while the widget genuinely needed the container. A mixin carrying no `ref` use still does not suppress the diagnostic.
 
 ## [0.7.0] - 2026-07-15
 

@@ -15,6 +15,8 @@ sidebar:
 
 This rule detects `ConsumerWidget` subclasses where the `WidgetRef` parameter is never used inside the `build` method. If you are not reading or watching any providers, there is no reason to use `ConsumerWidget` over a plain `StatelessWidget`.
 
+The same applies to `ConsumerStatefulWidget`. There the `ref` is a getter on the companion `ConsumerState`, so the rule looks at the whole state class rather than at a `build` parameter — a `ref` used in an event handler or a lifecycle method counts just as much as one used in `build`.
+
 ## Why use this rule
 
 Every `ConsumerWidget` subscribes to the Riverpod container, which means it participates in the provider dependency graph even when it does not need to. Switching to `StatelessWidget` removes that overhead, makes the widget's dependencies explicit (it has none), and signals to other developers that this widget is purely presentational.
@@ -42,6 +44,33 @@ class Greeting extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text('Hello');
+  }
+}
+```
+
+```dart
+// A ref used by a mixin still counts: the state body looks ref-free, but the
+// widget genuinely needs the Riverpod container.
+mixin AnalyticsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
+  void track(String event) {
+    ref.read(analyticsProvider).log(event);
+  }
+}
+
+class EditPage extends ConsumerStatefulWidget {
+  const EditPage({super.key});
+
+  @override
+  ConsumerState<EditPage> createState() => _EditPageState();
+}
+
+class _EditPageState extends ConsumerState<EditPage> with AnalyticsMixin {
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: () => track('saved'),
+      child: const Text('Save'),
+    );
   }
 }
 ```
