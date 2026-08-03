@@ -275,4 +275,108 @@ class _MyWidgetState extends State<MyWidget> {
 }
 ''');
   }
+
+  Future<void> test_statefulWidget_stateMixinWithMutableField_noLint() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/widgets.dart';
+
+mixin CounterMixin<T extends StatefulWidget> on State<T> {
+  int count = 0;
+
+  void increment() => count++;
+}
+
+class MyWidget extends StatefulWidget {
+  const MyWidget({super.key});
+
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> with CounterMixin {
+  @override
+  Widget build(BuildContext context) {
+    return Text('Hello');
+  }
+}
+""");
+  }
+
+  Future<void> test_statefulWidget_stateMixinWithSetState_noLint() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/widgets.dart';
+
+mixin ToggleMixin<T extends StatefulWidget> on State<T> {
+  void toggle() => setState(() {});
+}
+
+class MyWidget extends StatefulWidget {
+  const MyWidget({super.key});
+
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> with ToggleMixin {
+  @override
+  Widget build(BuildContext context) {
+    return Text('Hello');
+  }
+}
+""");
+  }
+
+  Future<void> test_statefulWidget_stateMixinWithLifecycle_noLint() async {
+    await assertNoDiagnostics(r"""
+import 'package:flutter/widgets.dart';
+
+mixin TickerMixin<T extends StatefulWidget> on State<T> {
+  @override
+  void dispose() {
+    super.dispose();
+  }
+}
+
+class MyWidget extends StatefulWidget {
+  const MyWidget({super.key});
+
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> with TickerMixin {
+  @override
+  Widget build(BuildContext context) {
+    return Text('Hello');
+  }
+}
+""");
+  }
+
+  Future<void> test_statefulWidget_stateMixinWithoutState_lint() async {
+    await assertDiagnostics(
+      r"""
+import 'package:flutter/widgets.dart';
+
+mixin LabelMixin<T extends StatefulWidget> on State<T> {
+  String get label => 'hi';
+}
+
+class MyWidget extends StatefulWidget {
+  const MyWidget({super.key});
+
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> with LabelMixin {
+  @override
+  Widget build(BuildContext context) {
+    return Text(label);
+  }
+}
+""",
+      [lint(134, 8)],
+    );
+  }
 }

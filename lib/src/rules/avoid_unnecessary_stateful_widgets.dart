@@ -3,6 +3,7 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../type_checker.dart';
@@ -66,8 +67,15 @@ class _Visitor extends SimpleAstVisitor<void> {
     // Collect all State classes and their StatefulWidget pairs
     final statefulWidgets = <ClassDeclaration>[];
     final stateClasses = <ClassDeclaration>[];
+    // Mixin declarations in this unit, so a `setState` hidden in one of them
+    // can be found; mixins from other files are covered by their elements.
+    final localMixins = <String, MixinDeclaration>{};
 
     for (final declaration in node.declarations) {
+      if (declaration is MixinDeclaration) {
+        localMixins[declaration.name.lexeme] = declaration;
+        continue;
+      }
       if (declaration is! ClassDeclaration) continue;
 
       final element = declaration.declaredFragment?.element;
@@ -88,7 +96,8 @@ class _Visitor extends SimpleAstVisitor<void> {
       final stateClass = _findStateClass(stateClasses, widgetName);
       if (stateClass == null) continue;
 
-      if (_isUnnecessaryState(stateClass)) {
+      if (_isUnnecessaryState(stateClass) &&
+          !_mixesInState(stateClass, localMixins)) {
         rule.reportAtToken(widget.namePart.typeName);
       }
     }
@@ -114,6 +123,50 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     }
     return null;
+  }
+
+  /// Whether a mixin applied to the State class carries the state itself.
+  ///
+  /// A mixin `on State<T>` can hold the mutable fields, the lifecycle
+  /// overrides and the `setState` calls on behalf of the class that applies
+  /// it, which leaves the State body looking empty while the widget is still
+  /// genuinely stateful. The mixin usually lives in another file, so this
+  /// works off the resolved element rather than the AST.
+  static bool _mixesInState(
+    ClassDeclaration stateClass,
+    Map<String, MixinDeclaration> localMixins,
+  ) {
+    final mixins = stateClass.withClause?.mixinTypes;
+    if (mixins == null) return false;
+
+    for (final mixin in mixins) {
+      // A `setState` inside the mixin body means it drives rebuilds; only the
+      // declaration carries the method bodies, so this needs the AST.
+      final declaration = localMixins[mixin.name.lexeme];
+      if (declaration != null) {
+        final finder = _SetStateFinder();
+        declaration.visitChildren(finder);
+        if (finder.found) return true;
+      }
+
+      final element = mixin.element;
+      if (element is! MixinElement) continue;
+
+      // A non-final, non-static field is mutable state the class inherits.
+      // A bare getter surfaces as a field too, so require a real setter:
+      // computed values are not state.
+      for (final field in element.fields) {
+        if (field.isStatic || field.setter == null) continue;
+        if (!field.isFinal && !field.isConst) return true;
+      }
+
+      // A lifecycle override means the widget has a lifecycle to manage.
+      for (final method in element.methods) {
+        if (_lifecycleMethods.contains(method.name)) return true;
+      }
+    }
+
+    return false;
   }
 
   /// Checks if the State class has no mutable state, lifecycle methods, or

@@ -119,6 +119,33 @@ class _LifecycleWidgetState extends State<LifecycleWidget> {
 }
 ```
 
+```dart
+// State kept by a mixin still counts: the State body looks empty, but the
+// widget is genuinely stateful.
+mixin UnsavedChangesGuard<T extends StatefulWidget> on State<T> {
+  bool allowPop = false;
+
+  Future<void> allowNextPop() async {
+    setState(() => allowPop = true);
+    await WidgetsBinding.instance.endOfFrame;
+  }
+}
+
+class EditPage extends StatefulWidget {
+  const EditPage({super.key});
+
+  @override
+  State<EditPage> createState() => _EditPageState();
+}
+
+class _EditPageState extends State<EditPage> with UnsavedChangesGuard {
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(canPop: allowPop, child: const Text('Edit'));
+  }
+}
+```
+
 ## Configuration
 
 To disable this rule:

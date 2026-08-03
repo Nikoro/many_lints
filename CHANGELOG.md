@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- `avoid_unnecessary_stateful_widgets` no longer fires when a mixin applied to the `State` carries the state. A mixin `on State<T>` can hold the mutable fields, the lifecycle overrides or the `setState` calls on behalf of the class that applies it, which left the `State` body looking empty while the widget was genuinely stateful. Computed getters on such a mixin still do not count as state.
+
 ## [0.7.0] - 2026-07-15
 
 ### Added
