@@ -56,7 +56,9 @@ import 'package:many_lints/src/rules/avoid_build_context_in_providers.dart';
 import 'package:many_lints/src/rules/avoid_ref_inside_state_dispose.dart';
 import 'package:many_lints/src/rules/avoid_ref_read_inside_build.dart';
 import 'package:many_lints/src/rules/avoid_ref_watch_outside_build.dart';
+import 'package:many_lints/src/rules/avoid_collapsible_if.dart';
 import 'package:many_lints/src/rules/avoid_duplicate_bloc_event_handlers.dart';
+import 'package:many_lints/src/rules/avoid_redundant_else.dart';
 import 'package:many_lints/src/rules/avoid_missing_enum_constant_in_map.dart';
 import 'package:many_lints/src/rules/avoid_unsafe_collection_methods.dart';
 import 'package:many_lints/src/rules/avoid_empty_setstate.dart';
@@ -159,6 +161,8 @@ import 'package:many_lints/src/fixes/avoid_notifier_constructors_fix.dart';
 import 'package:many_lints/src/fixes/missing_provider_scope_fix.dart';
 import 'package:many_lints/src/fixes/async_value_nullable_pattern_fix.dart';
 import 'package:many_lints/src/fixes/notifier_build_fix.dart';
+import 'package:many_lints/src/fixes/avoid_collapsible_if_fix.dart';
+import 'package:many_lints/src/fixes/avoid_redundant_else_fix.dart';
 import 'package:many_lints/src/fixes/avoid_ref_read_inside_build_fix.dart';
 import 'package:many_lints/src/fixes/avoid_state_constructors_fix.dart';
 import 'package:many_lints/src/fixes/avoid_single_field_destructuring_fix.dart';
@@ -332,7 +336,9 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidRefInsideStateDispose());
     _registerWarningRule(registry, AvoidRefReadInsideBuild());
     _registerWarningRule(registry, AvoidRefWatchOutsideBuild());
+    _registerWarningRule(registry, AvoidCollapsibleIf());
     _registerWarningRule(registry, AvoidDuplicateBlocEventHandlers());
+    _registerWarningRule(registry, AvoidRedundantElse());
     _registerWarningRule(registry, AvoidMissingEnumConstantInMap());
     _registerWarningRule(registry, AvoidUnsafeCollectionMethods());
     _registerWarningRule(registry, AvoidEmptySetstate());
@@ -536,6 +542,14 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       PreferClassDestructuring.code,
       PreferClassDestructuringFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidCollapsibleIf.code,
+      AvoidCollapsibleIfFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidRedundantElse.code,
+      AvoidRedundantElseFix.new,
     );
     registry.registerFixForRule(
       UseClosestBuildContext.code,
