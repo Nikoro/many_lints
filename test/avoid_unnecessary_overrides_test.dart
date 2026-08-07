@@ -414,6 +414,87 @@ class Child extends Base {
     );
   }
 
+  // ── Exemptions (mirroring SDK unnecessary_overrides) ─────────────────
+
+  Future<void> test_docCommentIsExempt() async {
+    await assertNoDiagnostics(r'''
+class Base {
+  void foo() {}
+}
+
+class Child extends Base {
+  /// Explains why this override exists.
+  @override
+  void foo() => super.foo();
+}
+''');
+  }
+
+  Future<void> test_nonOverrideAnnotationIsExempt() async {
+    await assertNoDiagnostics(r'''
+class Base {
+  void foo() {}
+}
+
+class Child extends Base {
+  @Deprecated('Use bar instead.')
+  @override
+  void foo() => super.foo();
+}
+''');
+  }
+
+  Future<void> test_covariantParameterIsExempt() async {
+    await assertNoDiagnostics(r'''
+class Base {
+  void foo(Object value) {}
+}
+
+class Child extends Base {
+  @override
+  void foo(covariant int value) => super.foo(value);
+}
+''');
+  }
+
+  Future<void> test_noSuchMethodIsExempt() async {
+    await assertNoDiagnostics(r'''
+class Child {
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      super.noSuchMethod(invocation);
+}
+''');
+  }
+
+  Future<void> test_getterWithDocCommentIsExempt() async {
+    await assertNoDiagnostics(r'''
+class Base {
+  int get value => 0;
+}
+
+class Child extends Base {
+  /// Documented for subclasses.
+  @override
+  int get value => super.value;
+}
+''');
+  }
+
+  Future<void> test_abstractRedeclarationWithDocCommentIsExempt() async {
+    await assertNoDiagnostics(r'''
+class Base {
+  void foo() {}
+}
+
+abstract class Child extends Base {
+  /// Subclasses must provide their own behavior.
+  @override
+  void foo();
+}
+''');
+  }
+
   Future<void> test_multipleUnnecessaryOverrides() async {
     await assertDiagnostics(
       r'''

@@ -15,6 +15,11 @@ import '../ast_node_analysis.dart';
 /// - Getters that only return `super.getter`
 /// - Setters that only assign `super.setter = value`
 /// - Abstract redeclarations without implementation changes
+///
+/// Mirrors the exemptions of the SDK's `unnecessary_overrides` rule: an
+/// override is not reported when it adds a documentation comment, an
+/// annotation other than `@override`, or a `covariant` parameter, nor when
+/// the member is `noSuchMethod`.
 class AvoidUnnecessaryOverrides extends AnalysisRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_overrides',
@@ -65,9 +70,33 @@ class _Visitor extends SimpleAstVisitor<void> {
     for (final member in body.members) {
       if (member is MethodDeclaration) {
         if (!hasOverrideAnnotation(member)) continue;
+        if (_isExempt(member)) continue;
         _checkMethodDeclaration(member);
       }
     }
+  }
+
+  /// Whether this override has a legitimate reason to exist beyond
+  /// delegation, matching the exemptions of the SDK's `unnecessary_overrides`.
+  ///
+  /// An override is exempt when it:
+  /// - is `noSuchMethod`, which is special-cased by the language;
+  /// - carries a documentation comment the super member does not provide;
+  /// - carries an annotation other than `@override` (`@protected`,
+  ///   `@visibleForTesting`, `@mustCallSuper`, …), which changes its contract;
+  /// - marks a parameter `covariant`, which narrows the accepted type.
+  static bool _isExempt(MethodDeclaration member) {
+    if (member.name.lexeme == 'noSuchMethod') return true;
+    if (member.documentationComment != null) return true;
+    if (member.metadata.any((a) => a.name.name != 'override')) return true;
+    return _hasCovariantParameter(member);
+  }
+
+  /// Whether any of the member's parameters is marked `covariant`.
+  static bool _hasCovariantParameter(MethodDeclaration member) {
+    final parameters = member.parameters?.parameters;
+    if (parameters == null) return false;
+    return parameters.any((p) => p.covariantKeyword != null);
   }
 
   void _checkMethodDeclaration(MethodDeclaration member) {
