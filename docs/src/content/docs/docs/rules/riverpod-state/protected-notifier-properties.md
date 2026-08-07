@@ -1,0 +1,62 @@
+---
+title: protected_notifier_properties
+description: "A Notifier's state, ref and future should not be used from outside the notifier."
+sidebar:
+  label: protected_notifier_properties
+---
+
+<span class="rule-badge rule-badge--version">v0.8.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Riverpod State</span>
+
+Flags access to `state`, `stateOrNull`, `future` or `ref` on a `Notifier` from outside the notifier that owns them. These members are part of a notifier's internal API.
+
+## Why use this rule
+
+Reading `notifier.state` bypasses the provider system: the value is read once, and the reader is never rebuilt when it changes. Writing it from outside moves state transitions out of the notifier, which is where the rest of the codebase expects to find them. Going through the provider gives correct reactivity and keeps mutations in one place.
+
+**See also:** [Riverpod - Notifier](https://riverpod.dev/docs/concepts/providers)
+
+## Don't
+
+```dart
+void bad(MyNotifier notifier) {
+  print(notifier.state);   // LINT
+  notifier.state = 1;      // LINT
+  print(notifier.ref);     // LINT
+}
+```
+
+## Do
+
+```dart
+// Read the value through its provider so the widget rebuilds on change.
+Widget good(WidgetRef ref) {
+  final value = ref.watch(myProvider);
+  return Text('$value');
+}
+
+// Mutate through a method the notifier exposes.
+void increment(WidgetRef ref) {
+  ref.read(myProvider.notifier).increment();
+}
+
+// Inside the notifier itself, the members are free to use.
+class MyNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void increment() => state = state + 1;
+}
+```
+
+## Configuration
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      protected_notifier_properties: false
+```

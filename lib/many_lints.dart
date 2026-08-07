@@ -47,6 +47,12 @@ import 'package:many_lints/src/rules/prefer_constrained_box_over_container.dart'
 import 'package:many_lints/src/rules/avoid_shrink_wrap_in_lists.dart';
 import 'package:many_lints/src/rules/avoid_notifier_constructors.dart';
 import 'package:many_lints/src/rules/avoid_public_notifier_properties.dart';
+import 'package:many_lints/src/rules/missing_provider_scope.dart';
+import 'package:many_lints/src/rules/protected_notifier_properties.dart';
+import 'package:many_lints/src/rules/provider_parameters.dart';
+import 'package:many_lints/src/rules/async_value_nullable_pattern.dart';
+import 'package:many_lints/src/rules/notifier_build.dart';
+import 'package:many_lints/src/rules/avoid_build_context_in_providers.dart';
 import 'package:many_lints/src/rules/avoid_ref_inside_state_dispose.dart';
 import 'package:many_lints/src/rules/avoid_ref_read_inside_build.dart';
 import 'package:many_lints/src/rules/dispose_provided_instances.dart';
@@ -138,6 +144,9 @@ import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
 import 'package:many_lints/src/fixes/avoid_border_all_fix.dart';
 import 'package:many_lints/src/fixes/avoid_expanded_as_spacer_fix.dart';
 import 'package:many_lints/src/fixes/avoid_notifier_constructors_fix.dart';
+import 'package:many_lints/src/fixes/missing_provider_scope_fix.dart';
+import 'package:many_lints/src/fixes/async_value_nullable_pattern_fix.dart';
+import 'package:many_lints/src/fixes/notifier_build_fix.dart';
 import 'package:many_lints/src/fixes/avoid_ref_read_inside_build_fix.dart';
 import 'package:many_lints/src/fixes/avoid_state_constructors_fix.dart';
 import 'package:many_lints/src/fixes/avoid_single_field_destructuring_fix.dart';
@@ -302,6 +311,12 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidShrinkWrapInLists());
     _registerWarningRule(registry, AvoidNotifierConstructors());
     _registerWarningRule(registry, AvoidPublicNotifierProperties());
+    _registerWarningRule(registry, MissingProviderScope());
+    _registerWarningRule(registry, ProtectedNotifierProperties());
+    _registerWarningRule(registry, ProviderParameters());
+    _registerWarningRule(registry, AsyncValueNullablePattern());
+    _registerWarningRule(registry, NotifierBuild());
+    _registerWarningRule(registry, AvoidBuildContextInProviders());
     _registerWarningRule(registry, AvoidRefInsideStateDispose());
     _registerWarningRule(registry, AvoidRefReadInsideBuild());
     _registerWarningRule(registry, AvoidStateConstructors());
@@ -336,6 +351,15 @@ class ManyLintsPlugin extends Plugin {
       AvoidCascadeAfterIfNullFix.new,
     );
     registry.registerFixForRule(DisposeFields.code, DisposeFieldsFix.new);
+    registry.registerFixForRule(
+      MissingProviderScope.code,
+      MissingProviderScopeFix.new,
+    );
+    registry.registerFixForRule(
+      AsyncValueNullablePattern.code,
+      AsyncValueNullablePatternFix.new,
+    );
+    registry.registerFixForRule(NotifierBuild.code, NotifierBuildFix.new);
     registry.registerFixForRule(
       DisposeProvidedInstances.code,
       DisposeProvidedInstancesFix.new,

@@ -79,6 +79,9 @@ final value = arg.argumentExpression;
 | Offset-based rename | [prefer_use_prefix_fix.dart](prefer_use_prefix_fix.dart) | Use `diagnosticOffset`/`diagnosticLength` + `unitResult.content.substring()` to read the token text; compute new name with `use` prefix; `SourceRange` replacement |
 | Parameter rewrite + initializer removal | [prefer_private_named_parameters_fix.dart](prefer_private_named_parameters_fix.dart) | Rebuild a `RegularFormalParameter` as `this._field` preserving `required`/`defaultClause`; replace from `SyntacticEntity` start (`requiredKeyword ?? type ?? name`) to keep metadata; delete lone initializer via `range.endEnd(constructor.parameters, initializer)` or `range.nodeInList` when several |
 | Comparison → getter | [prefer_theme_mode_getters_fix.dart](prefer_theme_mode_getters_fix.dart) | Replace whole `BinaryExpression` with `target.isX` / `!target.isX`; parenthesize non-trivial targets before appending the getter |
+| Wrap argument + import | [missing_provider_scope_fix.dart](missing_provider_scope_fix.dart) | Wrap `runApp`'s first arg via two `addSimpleInsertion` calls (prefix at `offset`, `)` at `end`); pick an already-imported Riverpod library with `builder.importsLibrary(uri)` before falling back to `importLibraryElement`, and honour the returned `prefix` |
+| Token deletion + insertion | [async_value_nullable_pattern_fix.dart](async_value_nullable_pattern_fix.dart) | Delete the `?` with `range.token(node.operator)` and insert `, hasValue: true` at `operator.end` |
+| Insert member into class | [notifier_build_fix.dart](notifier_build_fix.dart) | `node.thisOrAncestorOfType<ClassDeclaration>()` from the reported name token, then `addSimpleInsertion(body.leftBracket.end, ...)` to add a stub method |
 
 ## Updating Documentation
 
