@@ -57,6 +57,8 @@ import 'package:many_lints/src/rules/avoid_ref_inside_state_dispose.dart';
 import 'package:many_lints/src/rules/avoid_ref_read_inside_build.dart';
 import 'package:many_lints/src/rules/avoid_ref_watch_outside_build.dart';
 import 'package:many_lints/src/rules/avoid_collapsible_if.dart';
+import 'package:many_lints/src/rules/prefer_add_all.dart';
+import 'package:many_lints/src/rules/prefer_immediate_return.dart';
 import 'package:many_lints/src/rules/avoid_empty_spread.dart';
 import 'package:many_lints/src/rules/avoid_inverted_boolean_checks.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_negations.dart';
@@ -167,6 +169,8 @@ import 'package:many_lints/src/fixes/missing_provider_scope_fix.dart';
 import 'package:many_lints/src/fixes/async_value_nullable_pattern_fix.dart';
 import 'package:many_lints/src/fixes/notifier_build_fix.dart';
 import 'package:many_lints/src/fixes/avoid_collapsible_if_fix.dart';
+import 'package:many_lints/src/fixes/prefer_add_all_fix.dart';
+import 'package:many_lints/src/fixes/prefer_immediate_return_fix.dart';
 import 'package:many_lints/src/fixes/avoid_empty_spread_fix.dart';
 import 'package:many_lints/src/fixes/avoid_inverted_boolean_checks_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_negations_fix.dart';
@@ -345,6 +349,8 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidRefReadInsideBuild());
     _registerWarningRule(registry, AvoidRefWatchOutsideBuild());
     _registerWarningRule(registry, AvoidCollapsibleIf());
+    _registerWarningRule(registry, PreferAddAll());
+    _registerWarningRule(registry, PreferImmediateReturn());
     _registerWarningRule(registry, AvoidEmptySpread());
     _registerWarningRule(registry, AvoidInvertedBooleanChecks());
     _registerWarningRule(registry, AvoidUnnecessaryNegations());
@@ -559,6 +565,11 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidCollapsibleIf.code,
       AvoidCollapsibleIfFix.new,
+    );
+    registry.registerFixForRule(PreferAddAll.code, PreferAddAllFix.new);
+    registry.registerFixForRule(
+      PreferImmediateReturn.code,
+      PreferImmediateReturnFix.new,
     );
     registry.registerFixForRule(AvoidEmptySpread.code, AvoidEmptySpreadFix.new);
     registry.registerFixForRule(
