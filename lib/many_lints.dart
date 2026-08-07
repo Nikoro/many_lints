@@ -55,6 +55,7 @@ import 'package:many_lints/src/rules/notifier_build.dart';
 import 'package:many_lints/src/rules/avoid_build_context_in_providers.dart';
 import 'package:many_lints/src/rules/avoid_ref_inside_state_dispose.dart';
 import 'package:many_lints/src/rules/avoid_ref_read_inside_build.dart';
+import 'package:many_lints/src/rules/avoid_ref_watch_outside_build.dart';
 import 'package:many_lints/src/rules/dispose_provided_instances.dart';
 import 'package:many_lints/src/rules/avoid_state_constructors.dart';
 import 'package:many_lints/src/rules/avoid_single_field_destructuring.dart';
@@ -319,6 +320,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidBuildContextInProviders());
     _registerWarningRule(registry, AvoidRefInsideStateDispose());
     _registerWarningRule(registry, AvoidRefReadInsideBuild());
+    _registerWarningRule(registry, AvoidRefWatchOutsideBuild());
     _registerWarningRule(registry, AvoidStateConstructors());
     _registerWarningRule(registry, PreferAsyncCallback());
     _registerWarningRule(registry, PreferComputeOverIsolateRun());
