@@ -214,6 +214,22 @@ Key conventions:
 - Use `assertNoDiagnostics(code)` for code that should NOT trigger the lint
 - Use `newPackage('name').addFile()` to mock external package dependencies
 - Include at least: 2 positive cases (triggers lint), 2 negative cases (no lint), 1 edge case
+
+`AnalysisRuleTest` covers essentially every rule. The only exception is an
+end-to-end test driving a real `PluginServer` (see
+`test/plugin_diagnostics_config_test.dart`), where two details matter with
+analysis_server_plugin 0.3.18+:
+
+- The protocol request is `AnalysisSetAnalysisRootsParams(included, excluded)` —
+  `analysis.setContextRoots` was renamed to `analysis.setAnalysisRoots`.
+- Analysis runs asynchronously through the driver scheduler, so `tearDown` must
+  `await pluginServer.waitForIdle()` **before** `channel.close()`. Skipping it
+  makes background analysis report to a closed channel.
+
+Note that `analyzer_testing` (0.3.4) still exposes no API for testing quick-fix
+or assist *output* — only `AnalysisRuleTest` for diagnostics. Assist tests
+therefore drive `CorrectionProducerContext` directly; see
+[assists-cookbook.md](assists-cookbook.md).
 - `lint(offset, length)` — offset is the character position, length is the length of the reported node/token
 - Method names start with `test_` and use camelCase
 
@@ -228,7 +244,7 @@ You must update if you:
 - ✅ Implemented a complex visitor pattern for deep analysis
 - ✅ Created a new helper utility function
 - ✅ Had to dig into analyzer source code or documentation for APIs not covered in the cookbook
-- ✅ Found analyzer ^11.0.0 specific behaviors different from what you "know" from training data
+- ✅ Found analyzer ^14.1.0 specific behaviors different from what you "know" from training data
 
 **How to update (two places):**
 

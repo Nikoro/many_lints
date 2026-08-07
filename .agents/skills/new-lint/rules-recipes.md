@@ -2,7 +2,7 @@
 
 Copy-paste ready recipes for common lint rule patterns. For foundational patterns (rule structure, type checking, AST, visitors, reporting), see [rules-patterns.md](rules-patterns.md).
 
-**Analyzer Version:** ^10.1.0
+**Analyzer Version:** ^14.1.0
 
 ## Common Pattern: Parent Chain Walking
 
@@ -27,15 +27,15 @@ This pattern is used in: loop body detection, try-catch containment, lifecycle m
 ### Check for Specific Argument Pattern
 
 ```dart
-NamedExpression? findNamedArgument(InstanceCreationExpression node, String name) {
+NamedArgument? findNamedArgument(InstanceCreationExpression node, String name) {
   return node.argumentList.arguments
-      .whereType<NamedExpression>()
-      .firstWhereOrNull((arg) => arg.name.label.name == name);
+      .whereType<NamedArgument>()
+      .firstWhereOrNull((arg) => arg.name.lexeme == name);
 }
 
 final alignmentArg = findNamedArgument(node, 'alignment');
 if (alignmentArg != null) {
-  final expr = alignmentArg.expression;
+  final expr = alignmentArg.argumentExpression;
   if (expr case PrefixedIdentifier(
     prefix: SimpleIdentifier(name: 'Alignment'),
     identifier: SimpleIdentifier(name: 'center'),
@@ -331,7 +331,7 @@ Cascade section types: `AssignmentExpression`, `MethodInvocation`, `IndexExpress
 
 ### Get Top-Level Declaration Names (Non-Deprecated API)
 
-Different declarations use different APIs in analyzer 10.1.0:
+Different declarations use different APIs in analyzer 14.1.0:
 
 ```dart
 final topLevelNames = <String>{};
@@ -347,15 +347,15 @@ for (final declaration in compilationUnit.declarations) {
       topLevelNames.add(name.lexeme);
     case FunctionTypeAlias(:final name):
       topLevelNames.add(name.lexeme);
-    case ExtensionTypeDeclaration(:final primaryConstructor):
-      topLevelNames.add(primaryConstructor.typeName.lexeme);
+    case ExtensionTypeDeclaration(:final namePart):
+      topLevelNames.add(namePart.typeName.lexeme);
     default: break;
   }
 }
 ```
 
 - `ClassDeclaration.name` / `EnumDeclaration.name` → **DEPRECATED**, use `namePart.typeName`
-- `ExtensionTypeDeclaration.name` → **DEPRECATED**, use `primaryConstructor.typeName`
+- `ExtensionTypeDeclaration.name` → **DEPRECATED**, use `namePart.typeName` (`primaryConstructor` is also deprecated)
 - `MixinDeclaration.name`, `GenericTypeAlias.name`, `FunctionTypeAlias.name` → NOT deprecated
 
 **Ref:** [avoid_generics_shadowing.dart](../../../lib/src/rules/avoid_generics_shadowing.dart#L50-L67)
@@ -762,14 +762,14 @@ class _MethodCallCollector extends RecursiveAstVisitor<void> {
 
 ### Check If Widget Is Direct Child of Specific Parent Widget
 
-Walk parent chain through `ListLiteral`, `NamedExpression`, `ArgumentList` to find enclosing widget:
+Walk parent chain through `ListLiteral`, `NamedArgument`, `ArgumentList` to find enclosing widget:
 
 ```dart
 static bool _isDirectChildOfFlex(InstanceCreationExpression node) {
   AstNode? current = node.parent;
   while (current != null) {
     if (current is ListLiteral) { current = current.parent; continue; }
-    if (current is NamedExpression) { current = current.parent; continue; }
+    if (current is NamedArgument) { current = current.parent; continue; }
     if (current is ArgumentList) {
       final parent = current.parent;
       if (parent is InstanceCreationExpression) {
@@ -786,7 +786,7 @@ static bool _isDirectChildOfFlex(InstanceCreationExpression node) {
 }
 ```
 
-Widget parent chains: `child:` → NamedExpression → ArgumentList → InstanceCreationExpression. `children: [...]` → ListLiteral → NamedExpression → ArgumentList → InstanceCreationExpression.
+Widget parent chains: `child:` → NamedArgument → ArgumentList → InstanceCreationExpression. `children: [...]` → ListLiteral → NamedArgument → ArgumentList → InstanceCreationExpression.
 
 **Ref:** [avoid_flexible_outside_flex.dart](../../../lib/src/rules/avoid_flexible_outside_flex.dart#L80-L119)
 
@@ -810,9 +810,9 @@ void visitMethodInvocation(MethodInvocation node) {
 }
 
 void _checkChildArgument(ArgumentList argumentList, AstNode reportNode) {
-  for (final arg in argumentList.arguments.whereType<NamedExpression>()) {
-    if (arg.name.label.name == 'child') {
-      final childType = arg.expression.staticType;
+  for (final arg in argumentList.arguments.whereType<NamedArgument>()) {
+    if (arg.name.lexeme == 'child') {
+      final childType = arg.argumentExpression.staticType;
       if (childType != null && _childChecker.isAssignableFromType(childType)) {
         rule.reportAtNode(reportNode);
       }
@@ -874,13 +874,13 @@ class _IdentifierFinder extends RecursiveAstVisitor<void> {
 
 ### Detect Unnecessary Overrides (Methods, Getters, Setters, Operators, Abstract)
 
-Check `isAbstract` BEFORE `isGetter`/`isSetter` (abstract getters/setters have both flags):
+Check `!isComplete` BEFORE `isGetter`/`isSetter` (`MethodDeclaration.isAbstract` is deprecated; abstract getters/setters have both flags):
 
 ```dart
 void _checkMethodDeclaration(MethodDeclaration member) {
   final memberName = member.name.lexeme;
 
-  if (member.isAbstract) { rule.reportAtNode(member, arguments: [memberName]); return; }
+  if (!member.isComplete) { rule.reportAtNode(member, arguments: [memberName]); return; }
 
   if (member.isGetter) {
     if (_isUnnecessaryGetter(member, memberName)) rule.reportAtNode(member, arguments: [memberName]);
@@ -913,9 +913,9 @@ static bool _areArgsPassThrough(FormalParameterList? params, ArgumentList args) 
     final arg = arguments[i];
     final paramName = param.name?.lexeme;
     if (paramName == null) return false;
-    if (arg is NamedExpression) {
-      if (arg.name.label.name != paramName) return false;
-      final expr = arg.expression;
+    if (arg is NamedArgument) {
+      if (arg.name.lexeme != paramName) return false;
+      final expr = arg.argumentExpression;
       if (expr is! SimpleIdentifier || expr.name != paramName) return false;
     } else if (arg is SimpleIdentifier) {
       if (arg.name != paramName) return false;
@@ -956,7 +956,7 @@ static bool _isInsideEventHandlerCallback(AstNode node) {
   while (current != null) {
     if (current is MethodDeclaration) return false;
     if (current is FunctionExpression) {
-      if (current.parent is NamedExpression) return true;
+      if (current.parent is NamedArgument) return true;
     }
     current = current.parent;
   }
@@ -1071,7 +1071,7 @@ String? findCleanupMethod(DartType type) {
 **Key API notes:**
 - `InterfaceType.methods` returns `List<MethodElement>` for the type's own methods
 - `InterfaceType.element.allSupertypes` returns `List<InterfaceType>` for inherited types
-- `MethodElement.name` is `String?` in analyzer 10.1.0 — null-check before using
+- `MethodElement.name` is `String?` in analyzer 14.1.0 — null-check before using
 - Get a field's type from AST: `variable.declaredFragment?.element.type` (not `declaredElement`)
 
 **Ref:** [disposal_utils.dart](../../../lib/src/disposal_utils.dart), [dispose_fields.dart](../../../lib/src/rules/dispose_fields.dart)
@@ -1238,7 +1238,7 @@ class _UsageFinder extends RecursiveAstVisitor<void> {
 ```dart
 static bool _isTargetType(FormalParameter param) {
   // Try explicit type annotation first
-  if (param is SimpleFormalParameter) {
+  if (param is RegularFormalParameter) {
     final type = param.type?.type;
     if (type != null) return _checker.isExactlyType(type);
   }

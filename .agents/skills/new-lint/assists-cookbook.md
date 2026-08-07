@@ -2,11 +2,11 @@
 
 ## About This Document
 
-This cookbook provides **copy-paste ready patterns** for implementing code assists in the `many_lints` package using **analyzer ^11.0.0**. Assists are standalone code actions that offer helpful refactorings, independent of lint diagnostics.
+This cookbook provides **copy-paste ready patterns** for implementing code assists in the `many_lints` package using **analyzer ^14.1.0**. Assists are standalone code actions that offer helpful refactorings, independent of lint diagnostics.
 
 **Target Audience:** AI agents and developers implementing code assists
-**Analyzer Version:** ^10.1.0
-**Last Updated:** February 2026
+**Analyzer Version:** ^14.1.0
+**Last Updated:** August 2026
 
 ---
 
@@ -18,7 +18,7 @@ This cookbook provides **copy-paste ready patterns** for implementing code assis
 - You discover a new assist applicability pattern
 - You find a new node selection or targeting technique
 - You implement a complex AST transformation for assists
-- You discover analyzer ^11.0.0 specific assist behaviors
+- You discover analyzer ^14.1.0 specific assist behaviors
 - You create helper methods for common assist patterns
 - You find better ways to check assist applicability
 

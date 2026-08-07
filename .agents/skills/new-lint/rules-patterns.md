@@ -2,13 +2,13 @@
 
 ## 📚 About This Document
 
-This cookbook provides **copy-paste ready patterns** for implementing lint rules in the `many_lints` package using **analyzer ^11.0.0**. Instead of searching through existing rules or diving into analyzer source code, consult this guide first.
+This cookbook provides **copy-paste ready patterns** for implementing lint rules in the `many_lints` package using **analyzer ^14.1.0**. Instead of searching through existing rules or diving into analyzer source code, consult this guide first.
 
 For common recipes (specific use-case patterns), see [rules-recipes.md](rules-recipes.md).
 
 **Target Audience:** AI agents and developers implementing new lint rules
-**Analyzer Version:** ^10.1.0
-**Last Updated:** February 2026
+**Analyzer Version:** ^14.1.0
+**Last Updated:** August 2026
 
 ---
 
@@ -21,7 +21,7 @@ For common recipes (specific use-case patterns), see [rules-recipes.md](rules-re
 - ✅ You need to research AST traversal techniques beyond what's documented
 - ✅ You find a new type checking method or pattern
 - ✅ You implement a complex visitor pattern not shown in examples
-- ✅ You discover analyzer ^11.0.0 specific APIs different from older versions
+- ✅ You discover analyzer ^14.1.0 specific APIs different from older versions
 - ✅ You create a new helper utility that could benefit other rules
 
 **Also update the lean quick reference** at `lib/src/rules/AGENTS.md` with a brief mention of the new pattern.
@@ -70,7 +70,7 @@ Quick navigation to common patterns:
 - [Visitor Patterns](#-visitor-patterns)
 - [Reporting Issues & Quick Fixes](#-reporting--quick-fixes)
 - [Utility Functions](#-utility-functions)
-- [Analyzer 11.0.0 APIs](#-analyzer-1002-specific-apis)
+- [Analyzer 14.1.0 APIs](#-analyzer-1410-specific-apis)
 - [Quick Reference Cards](#-quick-reference-cards)
 
 For recipes and testing, see [rules-recipes.md](rules-recipes.md).
@@ -355,13 +355,20 @@ void visitInstanceCreationExpression(InstanceCreationExpression node) {
 **Accessing named arguments:**
 ```dart
 final arguments = node.argumentList.arguments;
-for (final arg in arguments.whereType<NamedExpression>()) {
-  if (arg.name.label.name == 'alignment') {
-    final value = arg.expression;
+for (final arg in arguments.whereType<NamedArgument>()) {
+  if (arg.name.lexeme == 'alignment') {
+    final value = arg.argumentExpression;
     // Process alignment argument
   }
 }
 ```
+
+`ArgumentList.arguments` is a `NodeList<Argument>`, where `Argument` is sealed:
+`Expression` for positional arguments, `NamedArgument` for named ones. Since
+analyzer 13.0.0 a `NamedArgument` is **not** an `Expression`, so it has no
+`.staticType` or `.element` — read the value through `.argumentExpression`
+(`arg.argumentExpression.staticType`) or resolve the target parameter with
+`arg.correspondingParameter`.
 
 **Reference:** [prefer_align_over_container.dart](../../../lib/src/rules/prefer_align_over_container.dart#L40-L70)
 
@@ -960,7 +967,7 @@ FunctionBody? maybeHookBuilderBody(InstanceCreationExpression node)
 
 ---
 
-## 🔧 Analyzer 11.0.0 Specific APIs
+## 🔧 Analyzer 14.1.0 Specific APIs
 
 ### Gating a rule on a Dart language feature (analyzer 14+)
 
@@ -1002,7 +1009,7 @@ if (element is EnumElement &&
 
 **Reference:** [prefer_theme_mode_getters.dart](../../../lib/src/rules/prefer_theme_mode_getters.dart)
 
-### New Element Access (analyzer ^11.0.0)
+### New Element Access (analyzer ^14.1.0)
 
 **Old API (pre-10.0):**
 ```dart
@@ -1065,9 +1072,9 @@ if (type != null) {
 
 **Reference:** Multiple rules use this pattern
 
-### InstanceElement Member Access (analyzer 10.1.0)
+### InstanceElement Member Access (analyzer 14.1.0)
 
-**⚠️ Important:** In analyzer 10.1.0, `InstanceElement` has `getters`, `methods`, `fields` — NOT `accessors`.
+**⚠️ Important:** In analyzer 14.1.0, `InstanceElement` has `getters`, `methods`, `fields` — NOT `accessors`.
 
 ```dart
 // Access class members via element
@@ -1106,7 +1113,7 @@ final el = type.element;  // InterfaceElement
 
 ### Pattern Matching Features
 
-Analyzer 11.0.0 works well with Dart 3 pattern matching:
+Analyzer 14.1.0 works well with Dart 3 pattern matching:
 
 ```dart
 // Destructuring in patterns
@@ -1160,6 +1167,14 @@ if (node case InstanceCreationExpression(
 | Pattern variable decl | `registry.addPatternVariableDeclaration(this, visitor)` |
 | Pattern variable stmt | `registry.addPatternVariableDeclarationStatement(this, visitor)` |
 | Generic function types | `registry.addGenericFunctionType(this, visitor)` |
+| Named arguments | `registry.addNamedArgument(this, visitor)` |
+| Formal parameters | `registry.addRegularFormalParameter(this, visitor)` |
+
+**⚠️ Renamed in analyzer 13.0.0:** `addNamedExpression` → `addNamedArgument`, and
+`addSimpleFormalParameter` / `addDefaultFormalParameter` → `addRegularFormalParameter`.
+The corresponding visitor methods follow the same renaming
+(`visitNamedArgument`, `visitRegularFormalParameter`). The old names no longer
+exist, so code using them will not compile.
 
 ### Common AST Checks
 
@@ -1168,5 +1183,6 @@ if (node case InstanceCreationExpression(
 | Element from node | `node.declaredFragment?.element` |
 | Class name token | `classDecl.namePart.typeName` |
 | Type display string | `type?.getDisplayString()` |
-| Named argument value | `arg.name.label.name` |
+| Named argument name | `arg.name.lexeme` (a `Token`) |
+| Named argument value | `arg.argumentExpression` |
 | Method name | `method.name.lexeme` |

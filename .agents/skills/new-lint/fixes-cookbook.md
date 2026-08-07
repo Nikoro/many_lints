@@ -2,11 +2,11 @@
 
 ## About This Document
 
-This cookbook provides **copy-paste ready patterns** for implementing quick fixes in the `many_lints` package using **analyzer ^10.1.0**. Quick fixes are code actions that resolve lint diagnostics automatically.
+This cookbook provides **copy-paste ready patterns** for implementing quick fixes in the `many_lints` package using **analyzer ^14.1.0**. Quick fixes are code actions that resolve lint diagnostics automatically.
 
 **Target Audience:** AI agents and developers implementing quick fixes for lint rules
-**Analyzer Version:** ^10.1.0
-**Last Updated:** February 2026
+**Analyzer Version:** ^14.1.0
+**Last Updated:** August 2026
 
 ---
 
@@ -18,7 +18,7 @@ This cookbook provides **copy-paste ready patterns** for implementing quick fixe
 - You discover a new ChangeBuilder API pattern not documented here
 - You find a new range factory usage pattern
 - You implement a complex multi-edit transformation
-- You discover analyzer ^10.1.0 specific fix behaviors
+- You discover analyzer ^14.1.0 specific fix behaviors
 - You create a new helper method that could benefit other fixes
 - You find better ways to preserve formatting or handle edge cases
 
@@ -428,8 +428,8 @@ await builder.addDartFileEdit(file, (builder) {
 import 'package:many_lints/src/ast_node_analysis.dart';
 
 final alignmentArgument = instanceCreation.argumentList.arguments
-    .whereType<NamedExpression>()
-    .firstWhereOrNull((e) => e.name.label.name == 'alignment');
+    .whereType<NamedArgument>()
+    .firstWhereOrNull((e) => e.name.lexeme == 'alignment');
 
 if (alignmentArgument == null) return;
 ```
@@ -463,7 +463,6 @@ final parameters = buildMethod.parameters?.parameters;
 if (parameters == null) return;
 
 final refParam = parameters
-    .whereType<SimpleFormalParameter>()
     .firstWhereOrNull((p) => p.name?.lexeme == 'ref');
 ```
 
@@ -493,8 +492,8 @@ if (grandparent is PropertyAccess) {
 **Key insight:** Extract existing code with `.toSource()` to preserve user formatting:
 
 ```dart
-final valueSource = spacingArg.expression.toSource();
-final childSource = childArg.expression.toSource();
+final valueSource = spacingArg.argumentExpression.toSource();
+final childSource = childArg.argumentExpression.toSource();
 
 final replacement = 'Gap($valueSource), $childSource';
 ```
@@ -719,8 +718,8 @@ extension IterableExtension<T> on Iterable<T> {
 
 // Usage:
 final arg = arguments
-    .whereType<NamedExpression>()
-    .firstWhereOrNull((e) => e.name.label.name == 'alignment');
+    .whereType<NamedArgument>()
+    .firstWhereOrNull((e) => e.name.lexeme == 'alignment');
 ```
 
 **Used in 6 of 15 fixes!**
