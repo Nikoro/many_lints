@@ -1,0 +1,59 @@
+---
+title: avoid_empty_setstate
+description: "Don't call setState with an empty callback"
+sidebar:
+  label: avoid_empty_setstate
+---
+
+<span class="rule-badge rule-badge--version">v0.8.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">State Management</span>
+
+This rule flags `setState(() {})` — a call whose callback contains no statements.
+
+## Why use this rule
+
+An empty callback means the state was already mutated somewhere else and `setState` is being used purely as a "please rebuild" signal. It works, but it separates the mutation from the rebuild request, which causes three problems:
+
+- Readers cannot see what changed by looking at the `setState` call.
+- The framework's debug assertions, which run around the callback, no longer bracket the actual mutation.
+- If the mutation later moves *after* the `setState` call, the rebuild silently renders stale values.
+
+Putting the mutation inside the callback fixes all three and costs nothing.
+
+**See also:** [State.setState docs](https://api.flutter.dev/flutter/widgets/State/setState.html)
+
+## Don't
+
+```dart
+void increment() {
+  _counter++;
+  // The rebuild request is detached from the change
+  setState(() {});
+}
+```
+
+## Do
+
+```dart
+void increment() {
+  setState(() {
+    _counter++;
+  });
+}
+```
+
+## Known limitations
+
+Only a genuinely empty block is reported. A callback containing any statement is left alone, even if that statement has no effect — proving a statement is a no-op is outside this rule's scope.
+
+## Configuration
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_empty_setstate: false
+```
