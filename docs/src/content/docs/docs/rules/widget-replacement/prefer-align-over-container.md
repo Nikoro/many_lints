@@ -15,6 +15,14 @@ sidebar:
 
 Flags `Container` widgets that only use the `alignment` parameter (plus optional `key` and `child`). When `Container` is used solely for alignment, the `Align` widget is a lighter, more descriptive alternative.
 
+:::note[Points the opposite way from `prefer_container`]
+This rule replaces a **single-parameter** `Container` with the specific widget, while [`prefer_container`](/many_lints/docs/rules/widget-replacement/prefer-container/) collapses **3 or more** nested layout widgets *into* a `Container`.
+
+The thresholds keep them from firing on the same code, but after further edits a fix from one rule can produce code the other flags. If that churn bothers you, enable only one direction.
+
+The SDK's [`avoid_unnecessary_containers`](https://dart.dev/tools/linter-rules/avoid_unnecessary_containers) is a third, non-overlapping case: it removes a `Container` that has *no* parameters at all.
+:::
+
 ## Why use this rule
 
 `Container` is a convenience widget that composes many lower-level widgets internally. When you only need alignment, using `Align` directly avoids the overhead and makes the intent clearer. It also makes the widget tree easier to understand at a glance.

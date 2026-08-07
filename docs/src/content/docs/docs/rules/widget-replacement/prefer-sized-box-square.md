@@ -19,7 +19,7 @@ Flags `SizedBox` constructors where `width` and `height` are set to the same val
 
 When width and height are identical, `SizedBox.square` communicates "this is a square" at a glance, whereas `SizedBox(width: 50, height: 50)` requires the reader to compare both values. The named constructor eliminates duplication and makes the code more self-documenting.
 
-**See also:** [SizedBox.square](https://api.flutter.dev/flutter/widgets/SizedBox/SizedBox.square.html)
+**See also:** [SizedBox.square](https://api.flutter.dev/flutter/widgets/SizedBox/SizedBox.square.html) | [Dart lint: sized_box_shrink_expand](https://dart.dev/tools/linter-rules/sized_box_shrink_expand)
 
 ## Don't
 

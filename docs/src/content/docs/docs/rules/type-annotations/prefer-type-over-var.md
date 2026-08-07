@@ -15,6 +15,21 @@ sidebar:
 
 Flags variables declared with the `var` keyword instead of an explicit type annotation. Using `var` can make it harder to understand the type of a variable, especially when the initializer is complex or the nullability is not obvious. This rule does not flag `final` or `const` declarations.
 
+:::caution[Conflicts with an SDK rule you probably have enabled]
+The SDK rule [`omit_local_variable_types`](https://dart.dev/tools/linter-rules/omit_local_variable_types) mandates the **opposite** of this rule — it asks you to remove type annotations that inference can supply. It ships in `package:lints/recommended.yaml`, so most projects have it on by default.
+
+With both enabled you get contradictory diagnostics on every `var`. Pick one philosophy and disable the other:
+
+```yaml
+# analysis_options.yaml — if you keep prefer_type_over_var
+linter:
+  rules:
+    omit_local_variable_types: false
+```
+
+If you want explicit types but find this rule too strict, the SDK offers softer alternatives: [`specify_nonobvious_local_variable_types`](https://dart.dev/tools/linter-rules/specify_nonobvious_local_variable_types) flags only declarations whose type is not obvious from the initializer, while [`always_specify_types`](https://dart.dev/tools/linter-rules/always_specify_types) is the strict equivalent. Note that all three SDK rules are mutually incompatible with `omit_local_variable_types`.
+:::
+
 ## Why use this rule
 
 Explicit type annotations improve code readability and make the type system work for you. When a variable is declared with `var`, readers must mentally resolve the initializer to understand the type, which slows down code review and increases the chance of subtle bugs around nullability or unexpected inference.

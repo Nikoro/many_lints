@@ -15,11 +15,19 @@ sidebar:
 
 Flags chains of 3 or more nested widgets that can all be replaced with a single `Container` widget. `Container` internally composes `Align`, `Padding`, `DecoratedBox`, `ConstrainedBox`, `Transform`, `ColoredBox`, `SizedBox`, and other layout widgets -- so nesting them individually is redundant.
 
+:::note[Points the opposite way from the `prefer_*_over_container` rules]
+This rule collapses **3 or more** nested layout widgets *into* a `Container`, while [`prefer_padding_over_container`](/many_lints/docs/rules/widget-replacement/prefer-padding-over-container/), [`prefer_align_over_container`](/many_lints/docs/rules/widget-replacement/prefer-align-over-container/), [`prefer_constrained_box_over_container`](/many_lints/docs/rules/widget-replacement/prefer-constrained-box-over-container/), and [`prefer_transform_over_container`](/many_lints/docs/rules/widget-replacement/prefer-transform-over-container/) replace a **single-parameter** `Container` with the specific widget.
+
+The thresholds keep them from firing on the same code, but after further edits a fix from one rule can produce code the other flags. If that churn bothers you, enable only one direction.
+
+The SDK's [`avoid_unnecessary_containers`](https://dart.dev/tools/linter-rules/avoid_unnecessary_containers) is a third, non-overlapping case: it removes a `Container` that has *no* parameters at all.
+:::
+
 ## Why use this rule
 
 Deeply nested single-purpose widgets make the widget tree harder to read and debug. When three or more of these widgets are stacked, collapsing them into a single `Container` reduces nesting, improves readability, and still gives you access to all the same properties. The rule only triggers when there are no conflicting parameters (e.g., two `Padding` widgets would conflict).
 
-**See also:** [Container](https://api.flutter.dev/flutter/widgets/Container-class.html) | [DecoratedBox](https://api.flutter.dev/flutter/widgets/DecoratedBox-class.html) | [SizedBox](https://api.flutter.dev/flutter/widgets/SizedBox-class.html)
+**See also:** [Container](https://api.flutter.dev/flutter/widgets/Container-class.html) | [DecoratedBox](https://api.flutter.dev/flutter/widgets/DecoratedBox-class.html) | [SizedBox](https://api.flutter.dev/flutter/widgets/SizedBox-class.html) | [Dart lint: avoid_unnecessary_containers](https://dart.dev/tools/linter-rules/avoid_unnecessary_containers)
 
 ## Don't
 

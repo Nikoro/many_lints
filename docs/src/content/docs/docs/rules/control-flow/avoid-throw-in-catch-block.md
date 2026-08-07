@@ -19,7 +19,7 @@ Warns when a `throw` expression is used inside a catch block. Throwing a new exc
 
 When you use `throw` inside a catch block, the original stack trace is lost. This means error reports and logs will point to the catch block instead of the actual source of the error. Using `rethrow` preserves the full stack trace, and `Error.throwWithStackTrace()` lets you throw a different exception while keeping the original stack trace attached.
 
-**See also:** [Exceptions](https://dart.dev/language/error-handling)
+**See also:** [Exceptions](https://dart.dev/language/error-handling) | [Dart lint: throw_in_finally](https://dart.dev/tools/linter-rules/throw_in_finally) | [Dart lint: only_throw_errors](https://dart.dev/tools/linter-rules/only_throw_errors)
 
 ## Don't
 

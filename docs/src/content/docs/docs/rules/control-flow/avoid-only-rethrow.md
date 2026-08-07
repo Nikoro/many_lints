@@ -19,7 +19,7 @@ Warns when a catch clause contains only a `rethrow` statement. Such catch clause
 
 A catch clause that only rethrows does not handle, log, or transform the exception in any way. It adds indentation and visual noise without changing behavior. Removing the redundant try-catch makes the code simpler and communicates that no error handling is happening at this level.
 
-**See also:** [Exceptions](https://dart.dev/language/error-handling)
+**See also:** [Exceptions](https://dart.dev/language/error-handling) | [Dart lint: use_rethrow_when_possible](https://dart.dev/tools/linter-rules/use_rethrow_when_possible)
 
 ## Don't
 

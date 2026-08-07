@@ -19,7 +19,7 @@ Flags instance fields in `State` subclasses whose type has a `dispose()`, `close
 
 Disposable resources that are not cleaned up cause memory leaks. A `TextEditingController` that is never disposed keeps its listeners and internal state alive indefinitely. This rule checks that every field with a cleanup method has a matching call in `dispose()`, catching missing or incomplete cleanup.
 
-**See also:** [State.dispose()](https://api.flutter.dev/flutter/widgets/State/dispose.html)
+**See also:** [State.dispose()](https://api.flutter.dev/flutter/widgets/State/dispose.html) | [Dart lint: cancel_subscriptions](https://dart.dev/tools/linter-rules/cancel_subscriptions) | [Dart lint: close_sinks](https://dart.dev/tools/linter-rules/close_sinks)
 
 ## Don't
 

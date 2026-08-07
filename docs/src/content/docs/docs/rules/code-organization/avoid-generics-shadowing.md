@@ -19,7 +19,7 @@ Flags generic type parameters that shadow a top-level type declaration (class, m
 
 Shadowing a top-level type with a generic parameter silently replaces the concrete type with an unbounded generic within that scope. This can lead to subtle bugs where code appears to reference a specific class but actually operates on an unrelated type parameter. Using conventional single-letter names like `T`, `R`, or `E` eliminates the ambiguity.
 
-**See also:** [Dart language - Generics](https://dart.dev/language/generics)
+**See also:** [Dart language - Generics](https://dart.dev/language/generics) | [Dart lint: avoid_shadowing_type_parameters](https://dart.dev/tools/linter-rules/avoid_shadowing_type_parameters)
 
 ## Don't
 

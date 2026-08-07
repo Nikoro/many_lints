@@ -19,7 +19,7 @@ Warns when a `Future` is returned without `await` inside a try-catch block in an
 
 When you write `return asyncOp()` inside a try-catch, the Future is returned to the caller without being awaited. If `asyncOp()` throws, the exception propagates to the caller instead of being caught by the local catch block. Adding `await` ensures the Future completes within the try-catch scope, so exceptions are properly caught and handled.
 
-**See also:** [Asynchronous programming](https://dart.dev/libraries/async/async-await)
+**See also:** [Asynchronous programming](https://dart.dev/libraries/async/async-await) | [Dart lint: unnecessary_await_in_return](https://dart.dev/tools/linter-rules/unnecessary_await_in_return)
 
 ## Don't
 

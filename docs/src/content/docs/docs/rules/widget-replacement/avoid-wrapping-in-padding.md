@@ -19,7 +19,7 @@ Flags `Padding` widgets whose child already supports a `padding` parameter (such
 
 Many Flutter widgets accept a `padding` parameter in their constructor. Wrapping them in a `Padding` widget adds an unnecessary layer to the widget tree when the same effect can be achieved by passing `padding` directly to the child. This keeps the tree flatter, reduces nesting, and makes the code easier to read.
 
-**See also:** [Padding](https://api.flutter.dev/flutter/widgets/Padding-class.html) | [Container](https://api.flutter.dev/flutter/widgets/Container-class.html)
+**See also:** [Padding](https://api.flutter.dev/flutter/widgets/Padding-class.html) | [Container](https://api.flutter.dev/flutter/widgets/Container-class.html) | [Dart lint: avoid_unnecessary_containers](https://dart.dev/tools/linter-rules/avoid_unnecessary_containers)
 
 ## Don't
 

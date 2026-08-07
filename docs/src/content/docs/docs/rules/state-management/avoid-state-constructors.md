@@ -19,7 +19,7 @@ Flags `State` subclasses that have constructors with non-empty bodies or initial
 
 The `State` constructor runs before the framework has fully initialized the state object. At construction time, `widget`, `context`, and other framework-provided properties are not yet available. Placing logic in the constructor can lead to subtle bugs when that logic depends on the widget tree. Using `initState()` ensures all framework wiring is in place.
 
-**See also:** [State class](https://api.flutter.dev/flutter/widgets/State-class.html) | [State.initState](https://api.flutter.dev/flutter/widgets/State/initState.html)
+**See also:** [State class](https://api.flutter.dev/flutter/widgets/State-class.html) | [State.initState](https://api.flutter.dev/flutter/widgets/State/initState.html) | [Dart lint: no_logic_in_create_state](https://dart.dev/tools/linter-rules/no_logic_in_create_state)
 
 ## Don't
 

@@ -15,11 +15,24 @@ sidebar:
 
 Comparing `.indexOf()` to `-1` is a common pattern for checking whether an element exists in a collection or a substring exists in a string. The `.contains()` method expresses this intent more clearly and directly.
 
+:::caution[The Dart SDK already covers this]
+The SDK ships a rule with the same name, [`prefer_contains`](https://dart.dev/tools/linter-rules/prefer_contains), and it is part of `package:lints/core.yaml` — so it is almost certainly already enabled in your project. The SDK rule is also slightly broader: it additionally catches `indexOf(x) < 0` and `indexOf(x) >= 0`, which this rule misses.
+
+If both are active you will get **two diagnostics on the same line**, because plugin diagnostics are reported separately from SDK ones. Prefer the SDK rule and disable this one:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_contains: false
+```
+:::
+
 ## Why use this rule
 
 `.contains()` communicates "does this exist?" more clearly than `.indexOf() != -1`. It is also less error-prone since there is no magic number to get wrong. This rule catches both `indexOf(x) == -1` and `indexOf(x) != -1` patterns, including reversed operand order.
 
-**See also:** [Iterable.contains](https://api.dart.dev/stable/dart-core/Iterable/contains.html)
+**See also:** [Iterable.contains](https://api.dart.dev/stable/dart-core/Iterable/contains.html) | [Dart lint: prefer_contains](https://dart.dev/tools/linter-rules/prefer_contains)
 
 ## Don't
 

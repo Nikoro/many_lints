@@ -19,7 +19,7 @@ Flags `addListener()` calls in State lifecycle methods (`initState`, `didUpdateW
 
 Every `addListener()` on a `ChangeNotifier`, `ValueNotifier`, or `AnimationController` creates a strong reference to the callback. If the listener is not removed in `dispose()`, the callback (and everything it captures) stays in memory even after the widget is unmounted. This rule ensures every add has a matching remove with the same target and callback.
 
-**See also:** [ChangeNotifier](https://api.flutter.dev/flutter/foundation/ChangeNotifier-class.html) | [removeListener](https://api.flutter.dev/flutter/foundation/ChangeNotifier/removeListener.html)
+**See also:** [ChangeNotifier](https://api.flutter.dev/flutter/foundation/ChangeNotifier-class.html) | [removeListener](https://api.flutter.dev/flutter/foundation/ChangeNotifier/removeListener.html) | [Dart lint: cancel_subscriptions](https://dart.dev/tools/linter-rules/cancel_subscriptions)
 
 ## Don't
 

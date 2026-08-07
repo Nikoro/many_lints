@@ -15,6 +15,12 @@ sidebar:
 
 Warns when super lifecycle methods are called in the wrong order in `State` subclasses. Methods like `initState`, `didUpdateWidget`, `activate`, `didChangeDependencies`, and `reassemble` must call super first. Methods like `deactivate` and `dispose` must call super last.
 
+:::note[Not the same as the removed `super_goes_last`]
+The SDK once had a `super_goes_last` lint, but it was **removed in Dart 3.0** and is no longer available. It also addressed a different problem: the position of `super` in a **constructor initializer list**, not the ordering of `super` calls inside `State` lifecycle methods.
+
+There is no SDK rule covering the Flutter lifecycle contract, which is what this rule checks.
+:::
+
 ## Why use this rule
 
 Flutter's `State` lifecycle methods have a specific contract about when `super` should be called. Calling `super.initState()` after your own initialization code can lead to errors because the framework expects to set up its own state first. Conversely, calling `super.dispose()` before your cleanup code means your resources are released while the framework has already torn down its own state. The quick fix automatically moves the super call to the correct position.

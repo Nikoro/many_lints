@@ -15,11 +15,26 @@ sidebar:
 
 Warns when a class or mixin overrides a method, getter, or setter without adding any logic beyond calling `super`. This includes pass-through methods that forward all arguments unchanged, getters that only return `super.getter`, setters that only assign `super.setter`, and abstract redeclarations.
 
+:::note[Overlaps with an SDK rule]
+The SDK rule [`unnecessary_overrides`](https://dart.dev/tools/linter-rules/unnecessary_overrides) covers the **method** case. This rule extends it to getters, setters, operator overrides, and abstract redeclarations, which the SDK rule does not check.
+
+It applies the same exemptions as the SDK rule, so an override is **not** reported when it adds a documentation comment, an annotation other than `@override` (such as `@protected` or `@Deprecated`), or a `covariant` parameter — and `noSuchMethod` is never reported. These are legitimate reasons to override a member without changing its body.
+
+Enabling both rules means the method case is reported twice. If that bothers you, disable the SDK rule and keep this one for the wider coverage:
+
+```yaml
+# analysis_options.yaml
+linter:
+  rules:
+    unnecessary_overrides: false
+```
+:::
+
 ## Why use this rule
 
 Overrides that only delegate to `super` add visual noise without changing behavior. They make classes harder to scan and can mislead readers into thinking the override does something meaningful. Removing them keeps the codebase lean and makes intentional overrides stand out.
 
-**See also:** [Effective Dart: Usage](https://dart.dev/effective-dart/usage)
+**See also:** [Effective Dart: Usage](https://dart.dev/effective-dart/usage) | [Dart lint: unnecessary_overrides](https://dart.dev/tools/linter-rules/unnecessary_overrides)
 
 ## Don't
 

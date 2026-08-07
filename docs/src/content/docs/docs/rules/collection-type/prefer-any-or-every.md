@@ -19,7 +19,7 @@ Using `.where(predicate).isNotEmpty` can be replaced with `.any(predicate)`, and
 
 `.any()` and `.every()` express intent more clearly and stop iterating as soon as the result is determined. `.where()` creates an intermediate `Iterable` that is unnecessary when you only need a boolean check.
 
-**See also:** [Iterable.any](https://api.dart.dev/stable/dart-core/Iterable/any.html) | [Iterable.every](https://api.dart.dev/stable/dart-core/Iterable/every.html)
+**See also:** [Iterable.any](https://api.dart.dev/stable/dart-core/Iterable/any.html) | [Iterable.every](https://api.dart.dev/stable/dart-core/Iterable/every.html) | [Dart lint: prefer_iterable_whereType](https://dart.dev/tools/linter-rules/prefer_iterable_whereType)
 
 ## Don't
 

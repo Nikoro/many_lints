@@ -15,6 +15,19 @@ sidebar:
 
 Flags classes that contain only static members but are not declared as `abstract final`. Without these modifiers, a static-only class can be accidentally instantiated or subclassed, which is almost never the intended use.
 
+:::caution[Contradicts an SDK rule]
+The SDK rule [`avoid_classes_with_only_static_members`](https://dart.dev/tools/linter-rules/avoid_classes_with_only_static_members) gives the **opposite** advice: it says not to create such a class at all, and to use top-level functions and constants instead — Dart has real top-level declarations, unlike Java.
+
+This rule instead assumes you want to keep the class as a namespace and only asks you to seal it. The two are mutually exclusive, so enable at most one:
+
+```yaml
+# analysis_options.yaml — if you keep prefer_abstract_final_static_class
+linter:
+  rules:
+    avoid_classes_with_only_static_members: false
+```
+:::
+
 ## Why use this rule
 
 Marking a static-only class as `abstract final` makes the intent clear: it is a namespace for constants or utility functions, not something to instantiate or extend. This prevents misuse and documents the design decision directly in the class declaration.

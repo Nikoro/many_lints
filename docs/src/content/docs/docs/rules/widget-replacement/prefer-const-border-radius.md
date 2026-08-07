@@ -19,7 +19,7 @@ Flags usages of `BorderRadius.circular()` which should be replaced with `BorderR
 
 `BorderRadius.circular()` calls `BorderRadius.all(Radius.circular())` under the hood. Using the explicit form allows the entire expression to be `const`, which means the Dart compiler can canonicalize it at compile time. This avoids repeated allocations in build methods and is especially beneficial for border radii that never change.
 
-**See also:** [BorderRadius](https://api.flutter.dev/flutter/painting/BorderRadius-class.html)
+**See also:** [BorderRadius](https://api.flutter.dev/flutter/painting/BorderRadius-class.html) | [Dart lint: prefer_const_constructors](https://dart.dev/tools/linter-rules/prefer_const_constructors)
 
 ## Don't
 

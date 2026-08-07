@@ -19,7 +19,7 @@ This rule catches `ref.read()` calls that happen after an `await` inside async c
 
 Async callbacks like `onPressed: () async { ... }` can easily outlive the widget that created them. After an `await`, the widget might already be disposed. Calling `ref.read` at that point reads from a potentially dead reference. In `ConsumerWidget` callbacks, use `context.mounted` as the guard (for Notifier methods, the sibling rule `use_ref_and_state_synchronously` checks for `ref.mounted` instead).
 
-**See also:** [Riverpod documentation](https://riverpod.dev)
+**See also:** [Riverpod documentation](https://riverpod.dev) | [Dart lint: use_build_context_synchronously](https://dart.dev/tools/linter-rules/use_build_context_synchronously)
 
 ## Don't
 

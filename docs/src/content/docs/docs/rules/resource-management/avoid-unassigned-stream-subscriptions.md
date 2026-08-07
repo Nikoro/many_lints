@@ -15,7 +15,7 @@ Flags `Stream.listen()` calls whose return value (a `StreamSubscription`) is not
 
 A `StreamSubscription` that is never stored cannot be cancelled. The listener keeps running indefinitely, holding references to the callback closure and everything it captures. This is especially problematic in StatefulWidgets where the stream may outlive the widget, causing `setState()` calls on a disposed State.
 
-**See also:** [Dart - Streams](https://dart.dev/libraries/async/using-streams) | [StreamSubscription](https://api.dart.dev/stable/dart-async/StreamSubscription-class.html)
+**See also:** [Dart - Streams](https://dart.dev/libraries/async/using-streams) | [StreamSubscription](https://api.dart.dev/stable/dart-async/StreamSubscription-class.html) | [Dart lint: cancel_subscriptions](https://dart.dev/tools/linter-rules/cancel_subscriptions)
 
 ## Don't
 
