@@ -57,6 +57,7 @@ import 'package:many_lints/src/rules/avoid_ref_inside_state_dispose.dart';
 import 'package:many_lints/src/rules/avoid_ref_read_inside_build.dart';
 import 'package:many_lints/src/rules/avoid_ref_watch_outside_build.dart';
 import 'package:many_lints/src/rules/avoid_collapsible_if.dart';
+import 'package:many_lints/src/rules/avoid_equal_expressions.dart';
 import 'package:many_lints/src/rules/avoid_wildcard_cases_with_enums.dart';
 import 'package:many_lints/src/rules/avoid_duplicate_bloc_event_handlers.dart';
 import 'package:many_lints/src/rules/avoid_redundant_else.dart';
@@ -338,6 +339,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidRefReadInsideBuild());
     _registerWarningRule(registry, AvoidRefWatchOutsideBuild());
     _registerWarningRule(registry, AvoidCollapsibleIf());
+    _registerWarningRule(registry, AvoidEqualExpressions());
     _registerWarningRule(registry, AvoidWildcardCasesWithEnums());
     _registerWarningRule(registry, AvoidDuplicateBlocEventHandlers());
     _registerWarningRule(registry, AvoidRedundantElse());
