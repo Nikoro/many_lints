@@ -13,7 +13,7 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Shorthand Patterns</span>
 
-Flags explicit class prefixes on static field accesses (e.g., `Currency.zloty`) when the type can be inferred from context and a dot shorthand (`.first`) would suffice. This applies to switch cases, switch expressions, typed variable declarations, comparisons, default parameters, and return expressions.
+Flags explicit class prefixes on static field accesses (e.g., `Currency.usd`) when the type can be inferred from context and a dot shorthand (`.usd`) would suffice. This applies to switch cases, switch expressions, typed variable declarations, comparisons, default parameters, and return expressions.
 
 ## Why use this rule
 
@@ -25,23 +25,23 @@ When the expected type is already known from context, repeating the class name o
 class Currency {
   final String code;
   const Currency(this.code);
-  static const zloty = Currency('PLN');
-  static const euro = Currency('EUR');
+  static const usd = Currency('USD');
+  static const eur = Currency('EUR');
 }
 
 void example(Currency? e) {
   switch (e) {
-    case Currency.zloty:
+    case Currency.usd:
       print(e);
   }
 
-  final Currency another = Currency.zloty;
-  if (e == Currency.zloty) {}
+  final Currency another = Currency.usd;
+  if (e == Currency.usd) {}
 }
 
-void fn({Currency value = Currency.zloty}) {}
+void fn({Currency value = Currency.usd}) {}
 
-Currency getResult() => Currency.zloty;
+Currency getResult() => Currency.usd;
 ```
 
 ## Do
@@ -49,20 +49,20 @@ Currency getResult() => Currency.zloty;
 ```dart
 void example(Currency? e) {
   switch (e) {
-    case .zloty:
+    case .usd:
       print(e);
   }
 
-  final Currency another = .zloty;
-  if (e == .zloty) {}
+  final Currency another = .usd;
+  if (e == .usd) {}
 }
 
 void fn({Currency value = .first}) {}
 
-Currency getResult() => .zloty;
+Currency getResult() => .usd;
 
 // Explicit prefix is fine when type cannot be inferred:
-Object getObject() => Currency.zloty;
+Object getObject() => Currency.usd;
 ```
 
 ## Configuration

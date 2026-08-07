@@ -30,36 +30,36 @@ class Currency {
   const Currency.symbol(this.code);
 }
 
-Currency getInstance() => Currency('PLN');
+Currency getInstance() => Currency('USD');
 
-Currency getNamedInstance() => Currency.symbol('PLN');
+Currency getNamedInstance() => Currency.symbol('USD');
 
 Currency getConditional(bool flag) =>
-    flag ? Currency('EUR') : Currency.symbol('PLN');
+    flag ? Currency('EUR') : Currency.symbol('USD');
 
-Currency? getNullable() => Currency('PLN');
+Currency? getNullable() => Currency('USD');
 ```
 
 ## Do
 
 ```dart
-Currency getInstance() => .new('PLN');
+Currency getInstance() => .new('USD');
 
-Currency getNamedInstance() => .symbol('PLN');
+Currency getNamedInstance() => .symbol('USD');
 
 Currency getConditional(bool flag) =>
-    flag ? .new('EUR') : .symbol('PLN');
+    flag ? .new('EUR') : .symbol('USD');
 
 // Block function bodies are not flagged:
 Currency getWithBlock() {
-  return Currency('PLN');
+  return Currency('USD');
 }
 
 // No explicit return type — not flagged:
-getInstance() => Currency('PLN');
+getInstance() => Currency('USD');
 
 // Dynamic return type — not flagged:
-dynamic getDynamic() => Currency('PLN');
+dynamic getDynamic() => Currency('USD');
 ```
 
 ## Configuration

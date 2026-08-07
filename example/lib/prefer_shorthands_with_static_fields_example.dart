@@ -10,64 +10,64 @@ class Currency {
 
   const Currency(this.code);
 
-  static const zloty = Currency('PLN');
-  static const euro = Currency('EUR');
+  static const usd = Currency('USD');
+  static const eur = Currency('EUR');
 }
 
 void badExamples(Currency? e) {
   // ❌ BAD: Using explicit class prefix in switch case
   switch (e) {
-    case Currency.zloty: // LINT
+    case Currency.usd: // LINT
       print(e);
   }
 
   // ❌ BAD: Using explicit class prefix in switch expression
   final v = switch (e) {
-    Currency.zloty => 1, // LINT
+    Currency.usd => 1, // LINT
     _ => 2,
   };
 
   // ❌ BAD: Using explicit class prefix in variable declaration
-  final Currency another = Currency.zloty; // LINT
+  final Currency another = Currency.usd; // LINT
 
   // ❌ BAD: Using explicit class prefix in comparison
-  if (e == Currency.zloty) {} // LINT
+  if (e == Currency.usd) {} // LINT
 }
 
 // ❌ BAD: Using explicit class prefix in default parameter
-void badDefaultParameter({Currency value = Currency.zloty}) {} // LINT
+void badDefaultParameter({Currency value = Currency.usd}) {} // LINT
 
 // ❌ BAD: Using explicit class prefix in return expression
-Currency badReturnExpression() => Currency.zloty; // LINT
+Currency badReturnExpression() => Currency.usd; // LINT
 
 void goodExamples(Currency? e) {
   // ✅ GOOD: Using dot shorthand in switch case
   switch (e) {
-    case .zloty:
+    case .usd:
       print(e);
   }
 
   // ✅ GOOD: Using dot shorthand in switch expression
   final v = switch (e) {
-    .zloty => 1,
+    .usd => 1,
     _ => 2,
   };
 
   // ✅ GOOD: Using dot shorthand in variable declaration
-  final Currency another = .zloty;
+  final Currency another = .usd;
 
   // ✅ GOOD: Using dot shorthand in comparison
-  if (e == .zloty) {}
+  if (e == .usd) {}
 }
 
 // ✅ GOOD: Using dot shorthand in default parameter
-void goodDefaultParameter({Currency value = .zloty}) {}
+void goodDefaultParameter({Currency value = .usd}) {}
 
 // ✅ GOOD: Using dot shorthand in return expression
-Currency goodReturnExpression() => .zloty;
+Currency goodReturnExpression() => .usd;
 
 // ✅ GOOD: Explicit prefix is OK when type cannot be inferred
-Object getObject() => Currency.zloty;
+Object getObject() => Currency.usd;
 
 // ✅ GOOD: Not applicable when static field type differs from class
 class Container {

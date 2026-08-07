@@ -30,7 +30,7 @@ RichText(
     text: 'Total: ',
     children: [
       TextSpan(
-        text: '42 PLN',
+        text: '42 USD',
         style: TextStyle(fontWeight: FontWeight.bold),
       ),
       TextSpan(text: ' incl. VAT'),
@@ -51,7 +51,7 @@ Text.rich(
     text: 'Total: ',
     children: [
       TextSpan(
-        text: '42 PLN',
+        text: '42 USD',
         style: TextStyle(fontWeight: FontWeight.bold),
       ),
       TextSpan(text: ' incl. VAT'),

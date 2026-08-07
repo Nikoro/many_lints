@@ -16,45 +16,45 @@ class Currency {
 class ExampleService {
   // === BAD examples ===
 
-  // LINT: Use .new('PLN') instead of Currency('PLN')
-  Currency getInstance() => Currency('PLN');
+  // LINT: Use .new('USD') instead of Currency('USD')
+  Currency getInstance() => Currency('USD');
 
-  // LINT: Use .symbol('PLN') instead of Currency.symbol('PLN')
-  Currency getNamedInstance() => Currency.symbol('PLN');
+  // LINT: Use .symbol('USD') instead of Currency.symbol('USD')
+  Currency getNamedInstance() => Currency.symbol('USD');
 
   // LINT: Both branches can use shorthands
   Currency getConditional(bool flag) =>
-      flag ? Currency('EUR') : Currency.symbol('PLN');
+      flag ? Currency('EUR') : Currency.symbol('USD');
 
   // LINT: Works with nullable return types too
-  Currency? getNullable() => Currency('PLN');
+  Currency? getNullable() => Currency('USD');
 
   // === GOOD examples ===
 
   // GOOD: Using dot shorthand for default constructor
-  Currency getInstanceGood() => .new('PLN');
+  Currency getInstanceGood() => .new('USD');
 
   // GOOD: Using dot shorthand for named constructor
-  Currency getNamedInstanceGood() => .symbol('PLN');
+  Currency getNamedInstanceGood() => .symbol('USD');
 
   // GOOD: Using shorthands in conditional
-  Currency getConditionalGood(bool flag) => flag ? .new('EUR') : .symbol('PLN');
+  Currency getConditionalGood(bool flag) => flag ? .new('EUR') : .symbol('USD');
 
   // === Cases where the lint does NOT trigger ===
 
   // GOOD: Block function body (not an expression function)
   Currency getWithBlock() {
-    return Currency('PLN');
+    return Currency('USD');
   }
 
   // GOOD: No explicit return type
-  getInstanceInferred() => Currency('PLN');
+  getInstanceInferred() => Currency('USD');
 
   // GOOD: Dynamic return type
-  dynamic getDynamic() => Currency('PLN');
+  dynamic getDynamic() => Currency('USD');
 
   // GOOD: Already using shorthand
-  Currency getAlreadyShorthand() => .new('PLN');
+  Currency getAlreadyShorthand() => .new('USD');
 }
 
 // Example with generics
@@ -66,10 +66,10 @@ class GenericClass<T> {
 
 class GenericService {
   // LINT: Generic classes also benefit from shorthands
-  GenericClass<String> getGeneric() => GenericClass<String>('PLN');
+  GenericClass<String> getGeneric() => GenericClass<String>('USD');
 
   // GOOD: Using shorthand
-  GenericClass<String> getGenericGood() => .new('PLN');
+  GenericClass<String> getGenericGood() => .new('USD');
 }
 
 // Example showing the benefits
