@@ -79,7 +79,7 @@ class _GoodMemoized extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final controllers = useMemoized(
-      () => items.map(TextEditingController.new).toList(),
+      () => items.map((item) => TextEditingController(text: item)).toList(),
       [items],
     );
     return const SizedBox();

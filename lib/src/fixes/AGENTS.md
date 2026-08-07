@@ -82,6 +82,10 @@ final value = arg.argumentExpression;
 | Wrap argument + import | [missing_provider_scope_fix.dart](missing_provider_scope_fix.dart) | Wrap `runApp`'s first arg via two `addSimpleInsertion` calls (prefix at `offset`, `)` at `end`); pick an already-imported Riverpod library with `builder.importsLibrary(uri)` before falling back to `importLibraryElement`, and honour the returned `prefix` |
 | Token deletion + insertion | [async_value_nullable_pattern_fix.dart](async_value_nullable_pattern_fix.dart) | Delete the `?` with `range.token(node.operator)` and insert `, hasValue: true` at `operator.end` |
 | Insert member into class | [notifier_build_fix.dart](notifier_build_fix.dart) | `node.thisOrAncestorOfType<ClassDeclaration>()` from the reported name token, then `addSimpleInsertion(body.leftBracket.end, ...)` to add a stub method |
+| Merge two statements | [avoid_collapsible_if_fix.dart](avoid_collapsible_if_fix.dart) | Two edits: replace the outer condition with `a && b`, then replace the outer then-branch with the inner one's body; parenthesise an operand whose own operator (`\|\|`, ternary) binds looser than `&&` |
+| Hoist block to outer scope | [avoid_redundant_else_fix.dart](avoid_redundant_else_fix.dart) | `range.endEnd(thenStatement, elseStatement)` to drop the `else` wrapper and re-emit its statements; refuse when the body contains a `VariableDeclarationStatement`, since hoisting could collide with a name in the enclosing scope |
+| Collapse statement pair | [prefer_immediate_return_fix.dart](prefer_immediate_return_fix.dart) | `range.startEnd(declaration, returnStatement)` replaced by a single `return <initializer>;` |
+| Loop → single call | [prefer_add_all_fix.dart](prefer_add_all_fix.dart) | Rebuild `target.addAll(source)` from the `ForEachPartsWithDeclaration.iterable` and the `add` call's `realTarget` |
 
 ## Updating Documentation
 

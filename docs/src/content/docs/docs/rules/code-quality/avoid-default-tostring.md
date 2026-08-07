@@ -1,0 +1,67 @@
+---
+title: avoid_default_tostring
+description: "Don't interpolate objects that don't override toString"
+sidebar:
+  label: avoid_default_tostring
+---
+
+<span class="rule-badge rule-badge--version">v0.8.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule flags string interpolation of a value whose class does not override `toString`.
+
+## Why use this rule
+
+`Object.toString` returns `Instance of 'Foo'`. That is the one piece of information the reader of a log already has — the type — and none of the information they need.
+
+The cost lands exactly where it hurts most: an error message written to diagnose a failure, or a log line captured from production, that turns out to say nothing. By the time anyone notices, the incident is over and the data is gone.
+
+## Don't
+
+```dart
+class User {
+  final String id;
+  final String email;
+}
+
+// Logs: "failed for Instance of 'User'"
+logger.severe('failed for $user');
+```
+
+## Do
+
+```dart
+class User {
+  final String id;
+  final String email;
+
+  @override
+  String toString() => 'User(id: $id, email: $email)';
+}
+
+logger.severe('failed for $user');
+```
+
+Or interpolate the fields you actually need:
+
+```dart
+logger.severe('failed for ${user.id}');
+```
+
+## Known limitations
+
+Only classes declared in the analysed code are reported. A type from the SDK or a third-party package without a `toString` is not something the user can fix, so it is skipped.
+
+The check walks the full supertype chain, so a class inheriting `toString` from a base class is not flagged. Enums, records, and core types render usefully by default and are never reported.
+
+## Configuration
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_default_tostring: false
+```
