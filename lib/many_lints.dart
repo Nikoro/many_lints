@@ -57,6 +57,9 @@ import 'package:many_lints/src/rules/avoid_ref_inside_state_dispose.dart';
 import 'package:many_lints/src/rules/avoid_ref_read_inside_build.dart';
 import 'package:many_lints/src/rules/avoid_ref_watch_outside_build.dart';
 import 'package:many_lints/src/rules/avoid_collapsible_if.dart';
+import 'package:many_lints/src/rules/avoid_empty_spread.dart';
+import 'package:many_lints/src/rules/avoid_inverted_boolean_checks.dart';
+import 'package:many_lints/src/rules/avoid_unnecessary_negations.dart';
 import 'package:many_lints/src/rules/avoid_equal_expressions.dart';
 import 'package:many_lints/src/rules/avoid_wildcard_cases_with_enums.dart';
 import 'package:many_lints/src/rules/avoid_duplicate_bloc_event_handlers.dart';
@@ -164,6 +167,9 @@ import 'package:many_lints/src/fixes/missing_provider_scope_fix.dart';
 import 'package:many_lints/src/fixes/async_value_nullable_pattern_fix.dart';
 import 'package:many_lints/src/fixes/notifier_build_fix.dart';
 import 'package:many_lints/src/fixes/avoid_collapsible_if_fix.dart';
+import 'package:many_lints/src/fixes/avoid_empty_spread_fix.dart';
+import 'package:many_lints/src/fixes/avoid_inverted_boolean_checks_fix.dart';
+import 'package:many_lints/src/fixes/avoid_unnecessary_negations_fix.dart';
 import 'package:many_lints/src/fixes/avoid_redundant_else_fix.dart';
 import 'package:many_lints/src/fixes/avoid_ref_read_inside_build_fix.dart';
 import 'package:many_lints/src/fixes/avoid_state_constructors_fix.dart';
@@ -339,6 +345,9 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidRefReadInsideBuild());
     _registerWarningRule(registry, AvoidRefWatchOutsideBuild());
     _registerWarningRule(registry, AvoidCollapsibleIf());
+    _registerWarningRule(registry, AvoidEmptySpread());
+    _registerWarningRule(registry, AvoidInvertedBooleanChecks());
+    _registerWarningRule(registry, AvoidUnnecessaryNegations());
     _registerWarningRule(registry, AvoidEqualExpressions());
     _registerWarningRule(registry, AvoidWildcardCasesWithEnums());
     _registerWarningRule(registry, AvoidDuplicateBlocEventHandlers());
@@ -550,6 +559,15 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidCollapsibleIf.code,
       AvoidCollapsibleIfFix.new,
+    );
+    registry.registerFixForRule(AvoidEmptySpread.code, AvoidEmptySpreadFix.new);
+    registry.registerFixForRule(
+      AvoidInvertedBooleanChecks.code,
+      AvoidInvertedBooleanChecksFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidUnnecessaryNegations.code,
+      AvoidUnnecessaryNegationsFix.new,
     );
     registry.registerFixForRule(
       AvoidRedundantElse.code,
