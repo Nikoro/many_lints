@@ -3,6 +3,7 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../riverpod_type_checkers.dart';
@@ -70,6 +71,15 @@ class _Visitor extends SimpleAstVisitor<void> {
     for (final variable in member.fields.variables) {
       final name = variable.name.lexeme;
       if (name.startsWith('_')) continue;
+      if (name == 'state') continue;
+
+      // A `final` field cannot be reassigned, so it is not leaked mutable
+      // state — there is nothing to consolidate into `state`.
+      if (variable.isFinal || variable.isConst) continue;
+
+      final element = variable.declaredFragment?.element;
+      if (!_isVisibleOutsideTheNotifier(element)) continue;
+
       rule.reportAtToken(variable.name);
     }
   }
@@ -82,16 +92,28 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (name.startsWith('_')) return;
     if (name == 'state') return;
 
-    // Skip @override members (inherited from base class)
-    if (_hasOverrideAnnotation(member)) return;
+    final element = member.declaredFragment?.element;
+    if (!_isVisibleOutsideTheNotifier(element)) return;
 
     rule.reportAtToken(member.name);
   }
 
-  static bool _hasOverrideAnnotation(MethodDeclaration node) {
-    for (final annotation in node.metadata) {
-      if (annotation.name.name == 'override') return true;
-    }
-    return false;
+  /// Whether [element] is really part of the notifier's outside surface.
+  ///
+  /// Members annotated with `@override`, `@protected`,
+  /// `@visibleForOverriding` or `@visibleForTesting` are deliberately exposed
+  /// for a narrower audience, so they are not the accidental public state this
+  /// rule looks for.
+  static bool _isVisibleOutsideTheNotifier(Element? element) {
+    if (element == null) return false;
+    if (!element.isPublic) return false;
+
+    final metadata = element.metadata;
+    if (metadata.hasOverride) return false;
+    if (metadata.hasProtected) return false;
+    if (metadata.hasVisibleForOverriding) return false;
+    if (metadata.hasVisibleForTesting) return false;
+
+    return true;
   }
 }

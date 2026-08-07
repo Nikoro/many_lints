@@ -32,6 +32,11 @@ abstract class AsyncNotifier<State> {
     super.setUp();
   }
 
+  /// Resolves `package:meta/meta.dart` so `@protected` and friends carry their
+  /// real element metadata.
+  @override
+  bool get addMetaPackageDep => true;
+
   // --- Positive cases: should trigger lint ---
 
   Future<void> test_publicGetter() async {
@@ -82,9 +87,9 @@ class MyNotifier extends Notifier<int> {
     );
   }
 
-  Future<void> test_publicFinalField() async {
-    await assertDiagnostics(
-      r'''
+  Future<void> test_publicFinalFieldNotFlagged() async {
+    // A `final` field cannot be reassigned, so it is not leaked mutable state.
+    await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
 class MyNotifier extends Notifier<int> {
@@ -93,9 +98,7 @@ class MyNotifier extends Notifier<int> {
   @override
   int build() => 0;
 }
-''',
-      [lint(95, 11)],
-    );
+''');
   }
 
   Future<void> test_asyncNotifierPublicGetter() async {
@@ -256,6 +259,68 @@ class MyNotifier extends Notifier<int> {
 class RegularClass {
   int get publicGetter => 0;
   int publicField = 0;
+}
+''');
+  }
+
+  // --- Members deliberately exposed to a narrower audience ---
+
+  Future<void> test_protectedGetterNotFlagged() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+import 'package:meta/meta.dart';
+
+class MyNotifier extends Notifier<int> {
+  @protected
+  int get exposed => 0;
+
+  @override
+  int build() => 0;
+}
+''');
+  }
+
+  Future<void> test_visibleForTestingFieldNotFlagged() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+import 'package:meta/meta.dart';
+
+class MyNotifier extends Notifier<int> {
+  @visibleForTesting
+  int exposed = 0;
+
+  @override
+  int build() => 0;
+}
+''');
+  }
+
+  Future<void> test_visibleForOverridingGetterNotFlagged() async {
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+import 'package:meta/meta.dart';
+
+class MyNotifier extends Notifier<int> {
+  @visibleForOverriding
+  int get exposed => 0;
+
+  @override
+  int build() => 0;
+}
+''');
+  }
+
+  Future<void> test_publicStateFieldNotFlagged() async {
+    // `state` is the notifier's own surface, whether declared as a field or a
+    // getter, so it must be skipped in both forms.
+    await assertNoDiagnostics(r'''
+import 'package:riverpod/riverpod.dart';
+
+class MyNotifier extends Notifier<int> {
+  int state = 0;
+
+  @override
+  int build() => 0;
 }
 ''');
   }
