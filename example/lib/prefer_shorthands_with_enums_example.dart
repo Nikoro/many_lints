@@ -5,12 +5,16 @@ void exampleFunction(MyEnum? e) {
   switch (e) {
     case MyEnum.first: // LINT
       print(e);
+    default:
+      break;
   }
 
   // ✅ Good: Using dot shorthand
   switch (e) {
     case .first:
       print(e);
+    default:
+      break;
   }
 
   // ❌ Bad: Explicit prefix in switch expression

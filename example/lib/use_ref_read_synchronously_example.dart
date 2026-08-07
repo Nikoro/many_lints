@@ -6,6 +6,7 @@
 // async callback within a ConsumerWidget or ConsumerState build method
 // without checking if the widget is still mounted.
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final someProvider = Provider<String>((ref) => 'hello');

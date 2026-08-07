@@ -35,7 +35,7 @@ void badMultipleAccesses(Config config) {
 
 // ❌ Bad: Record pattern with direct access
 void badRecordAccess(({int left, int right}) record) {
-  final (:left) = record;
+  final (:left, right: _) = record;
   // LINT: Use existing destructuring for 'right'
   print(record.right);
 }

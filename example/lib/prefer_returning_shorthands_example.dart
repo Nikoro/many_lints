@@ -49,7 +49,7 @@ class ExampleService {
   }
 
   // GOOD: No explicit return type
-  getInstance() => SomeClass('val');
+  getInstanceInferred() => SomeClass('val');
 
   // GOOD: Dynamic return type
   dynamic getDynamic() => SomeClass('val');

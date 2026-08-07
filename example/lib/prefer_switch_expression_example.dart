@@ -122,7 +122,7 @@ class ExampleService {
 
   // GOOD: Mixed assignment targets
   String getMixed(int value) {
-    String result;
+    String result = '';
     String other;
     switch (value) {
       case 1:

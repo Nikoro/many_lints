@@ -16,7 +16,7 @@ String myCustomHook() {
 }
 
 // ❌ Bad: Private function calling hooks without '_use' prefix
-int _myPrivateHook() {
+ValueNotifier<int> _myPrivateHook() {
   // LINT: Custom hooks should start with 'use' prefix.
   return useState(0);
 }
@@ -25,7 +25,7 @@ int _myPrivateHook() {
 class BadWidget extends HookWidget {
   const BadWidget({super.key});
 
-  int _fetchData() {
+  ValueNotifier<int> _fetchData() {
     // LINT: Custom hooks should start with 'use' prefix.
     return useState(42);
   }
@@ -33,7 +33,7 @@ class BadWidget extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final data = _fetchData();
-    return Text('$data');
+    return Text('${data.value}');
   }
 }
 
@@ -43,7 +43,7 @@ String useCustomHook() {
 }
 
 // ✅ Good: Private function with '_use' prefix
-int _usePrivateHook() {
+ValueNotifier<int> _usePrivateHook() {
   return useState(0);
 }
 
@@ -51,14 +51,14 @@ int _usePrivateHook() {
 class GoodWidget extends HookWidget {
   const GoodWidget({super.key});
 
-  int _useData() {
+  ValueNotifier<int> _useData() {
     return useState(42);
   }
 
   @override
   Widget build(BuildContext context) {
     final data = _useData();
-    return Text('$data');
+    return Text('${data.value}');
   }
 }
 
@@ -74,6 +74,6 @@ class NormalWidget extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final value = useState(0);
-    return Text('$value');
+    return Text('${value.value}');
   }
 }

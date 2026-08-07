@@ -40,7 +40,7 @@ class BadSeparatedBy extends StatelessWidget {
   Widget build(BuildContext context) {
     // LINT: Prefer passing the 'spacing' argument
     return Column(
-      children: [
+      children: <Widget>[
         Text('A'),
         Text('B'),
         Text('C'),

@@ -9,14 +9,21 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_hooks: ^0.21.3
-  flutter_riverpod: ^3.2.1
-  hooks_riverpod: ^3.2.1
-  bloc: ^9.2.0
+  flutter_riverpod: ^3.4.2
+  hooks_riverpod: ^3.4.2
+  bloc: ^9.2.1
   flutter_bloc: ^9.1.1
   gap: ^3.0.1
-  riverpod: ^3.2.1
+  riverpod: ^3.4.2
   riverpod_annotation: ^4.0.6
+  collection: ^1.19.1
+  equatable: ^2.1.0
+  meta: ^1.18.0
 
+# flutter_test pulls in `test`, which pins an old analyzer (10.x) and the
+# Flutter SDK pins meta to 1.18.0. Neither matches what many_lints itself
+# builds against, so the example would resolve against a different analyzer
+# than the plugin under demonstration. These overrides keep them aligned.
 dependency_overrides:
-  analyzer: ^10.1.0
-  meta: ^1.18.1
+  analyzer: ^14.1.0
+  meta: ^1.19.0
