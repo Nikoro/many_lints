@@ -26,7 +26,8 @@ This cookbook provides **copy-paste ready patterns** for implementing quick fixe
 
 When updating, add:
 - **Working code example** (tested and verified)
-- **File reference** to your implementation (e.g., `[my_fix.dart](../../../lib/src/fixes/my_fix.dart#L10-L20)`)
+- **File reference** to the real implementation (for example,
+  `lib/src/fixes/my_fix.dart`; link it only after the file exists)
 - **Brief explanation** of when to use this pattern
 - **Common pitfalls** if any
 
@@ -54,7 +55,7 @@ Quick navigation:
 - [Helper Utilities](#helper-utilities)
 - [Common Gotchas](#common-gotchas--edge-cases)
 - [Registration](#registration)
-- [Never Type-Test `node` Directly](#never-type-test-node-directly)
+- [Do Not Assume the Shape of `node`](#do-not-assume-the-shape-of-node)
 - [Testing a Fix](#testing-a-fix)
 
 ---
@@ -90,8 +91,8 @@ class MyFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // Walk up — never type-test `node` directly. See
-    // "Never Type-Test `node` Directly" below.
+    // Safe default: walk up to the semantic target. See
+    // "Do Not Assume the Shape of node" below.
     final targetNode = node.thisOrAncestorOfType<ExpectedType>();
     if (targetNode == null) return;
 
@@ -105,8 +106,8 @@ class MyFix extends ResolvedCorrectionProducer {
 }
 ```
 
-**When to use:** 95% of fixes - one fix for one specific lint rule
-**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart#L11-L54), [prefer_explicit_function_type_fix.dart](../../../lib/src/fixes/prefer_explicit_function_type_fix.dart#L8-L37)
+**When to use:** Ordinary single-rule fixes
+**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart), [prefer_explicit_function_type_fix.dart](../../../lib/src/fixes/prefer_explicit_function_type_fix.dart)
 
 ---
 
@@ -166,7 +167,7 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
 ```
 
 **When to use:** Multiple related lint rules with similar fix logic
-**Reference:** [add_suffix_fix.dart](../../../lib/src/fixes/add_suffix_fix.dart#L8-L57) (Bloc, Cubit, Notifier), [change_widget_name_fix.dart](../../../lib/src/fixes/change_widget_name_fix.dart) (HookWidget, ConsumerWidget)
+**Reference:** [add_suffix_fix.dart](../../../lib/src/fixes/add_suffix_fix.dart) (Bloc, Cubit, Notifier), [change_widget_name_fix.dart](../../../lib/src/fixes/change_widget_name_fix.dart) (HookWidget, ConsumerWidget)
 
 ---
 
@@ -186,7 +187,7 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
 
 ### Priority Levels
 
-**All 15 existing fixes use `DartFixKindPriority.standard`:**
+**The standard choice in this package is `DartFixKindPriority.standard`:**
 
 ```dart
 static const _fixKind = FixKind(
@@ -197,7 +198,7 @@ static const _fixKind = FixKind(
 ```
 
 **Available priorities:**
-- `DartFixKindPriority.standard` - **Use this** (all existing fixes use it)
+- `DartFixKindPriority.standard` - **Use this** for ordinary quick fixes
 - `DartFixKindPriority.inFile` - Available but not used in codebase
 - `DartFixKindPriority.automatic` - Available but not used in codebase
 
@@ -226,8 +227,8 @@ The `node` property contains the AST node where the diagnostic was reported.
 
 ### Pattern 1: Walk Up to the Node You Need
 
-**Do not type-test `node` directly** — see
-[Never Type-Test `node` Directly](#never-type-test-node-directly) for why this
+**Do not assume the shape of `node`** — see
+[Do Not Assume the Shape of `node`](#do-not-assume-the-shape-of-node) for why this
 silently broke 27 fixes at once.
 
 ```dart
@@ -240,7 +241,7 @@ Future<void> compute(ChangeBuilder builder) async {
 }
 ```
 
-**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart#L30-L31), [use_gap_fix.dart](../../../lib/src/fixes/use_gap_fix.dart#L28-L29)
+**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart), [use_gap_fix.dart](../../../lib/src/fixes/use_gap_fix.dart)
 
 ---
 
@@ -260,21 +261,22 @@ final classDecl = node.thisOrAncestorOfType<ClassDeclaration>();
 if (classDecl == null) return;
 ```
 
-**Reference:** [avoid_unnecessary_consumer_widgets_fix.dart](../../../lib/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart#L28-L32)
+**Reference:** [avoid_unnecessary_consumer_widgets_fix.dart](../../../lib/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart)
 
 ---
 
-### Pattern 3: Navigate to Specific Parent
+### Pattern 3: Resolve the Semantic Target
 
 ```dart
-final targetNode = node;
-if (targetNode is! ConstructorName) return;
+final constructorName = node.thisOrAncestorOfType<ConstructorName>();
+if (constructorName == null) return;
 
-final instanceCreation = targetNode.parent;
-if (instanceCreation is! InstanceCreationExpression) return;
+final instanceCreation =
+    constructorName.thisOrAncestorOfType<InstanceCreationExpression>();
+if (instanceCreation == null) return;
 ```
 
-**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart#L33-L34)
+**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart)
 
 ---
 
@@ -291,7 +293,7 @@ if (identifierName == null) return;
 ```
 
 **When to use:** Node could be one of multiple types
-**Reference:** [prefer_shorthands_with_enums_fix.dart](../../../lib/src/fixes/prefer_shorthands_with_enums_fix.dart#L28-L32)
+**Reference:** [prefer_shorthands_with_enums_fix.dart](../../../lib/src/fixes/prefer_shorthands_with_enums_fix.dart)
 
 ---
 
@@ -301,7 +303,7 @@ The `range` factory creates source ranges for edits. Import: `package:analyzer_p
 
 ### range.node() - Replace Entire Node
 
-**Most common pattern - used in all 15 fixes!**
+**Common pattern for replacing a complete AST node:**
 
 ```dart
 builder.addSimpleReplacement(
@@ -311,7 +313,7 @@ builder.addSimpleReplacement(
 ```
 
 **When to use:** Replacing a complete AST node
-**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart#L43), [change_widget_name_fix.dart](../../../lib/src/fixes/change_widget_name_fix.dart#L39), [prefer_explicit_function_type_fix.dart](../../../lib/src/fixes/prefer_explicit_function_type_fix.dart#L33)
+**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart), [change_widget_name_fix.dart](../../../lib/src/fixes/change_widget_name_fix.dart), [prefer_explicit_function_type_fix.dart](../../../lib/src/fixes/prefer_explicit_function_type_fix.dart)
 
 ---
 
@@ -329,7 +331,7 @@ builder.addDeletion(
 ```
 
 **When to use:** Removing a parameter/argument from a list
-**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart#L46-L51), [avoid_unnecessary_consumer_widgets_fix.dart](../../../lib/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart#L59-L61)
+**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart), [avoid_unnecessary_consumer_widgets_fix.dart](../../../lib/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart)
 
 ---
 
@@ -345,7 +347,7 @@ builder.addSimpleReplacement(
 ```
 
 **When to use:** Replacing just the prefix of a node (before arguments)
-**Reference:** [prefer_returning_shorthands_fix.dart](../../../lib/src/fixes/prefer_returning_shorthands_fix.dart#L39-L42), [prefer_shorthands_with_constructors_fix.dart](../../../lib/src/fixes/prefer_shorthands_with_constructors_fix.dart#L38-L41)
+**Reference:** [prefer_returning_shorthands_fix.dart](../../../lib/src/fixes/prefer_returning_shorthands_fix.dart), [prefer_shorthands_with_constructors_fix.dart](../../../lib/src/fixes/prefer_shorthands_with_constructors_fix.dart)
 
 ---
 
@@ -371,7 +373,7 @@ All edits happen inside `builder.addDartFileEdit(file, (builder) { ... })`.
 
 ### Pattern 1: Simple Replacement (Most Common)
 
-**Used in 13 of 15 fixes:**
+**Use for a single, direct replacement:**
 
 ```dart
 await builder.addDartFileEdit(file, (builder) {
@@ -391,7 +393,7 @@ await builder.addDartFileEdit(file, (builder) {
 });
 ```
 
-**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart#L46-L51)
+**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart)
 
 ---
 
@@ -415,7 +417,7 @@ await builder.addDartFileEdit(file, (builder) {
 ```
 
 **When to use:** Fix requires multiple changes
-**Reference:** [avoid_unnecessary_consumer_widgets_fix.dart](../../../lib/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart#L53-L64)
+**Reference:** [avoid_unnecessary_consumer_widgets_fix.dart](../../../lib/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart)
 
 ---
 
@@ -430,7 +432,7 @@ await builder.addDartFileEdit(file, (builder) {
 ```
 
 **When to use:** Multiple independent edits
-**Reference:** [prefer_padding_over_container_fix.dart](../../../lib/src/fixes/prefer_padding_over_container_fix.dart#L38-L44)
+**Reference:** [prefer_padding_over_container_fix.dart](../../../lib/src/fixes/prefer_padding_over_container_fix.dart)
 
 ---
 
@@ -449,7 +451,7 @@ if (alignmentArgument == null) return;
 ```
 
 **Uses `firstWhereOrNull` extension from helpers!**
-**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart#L36-L39)
+**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart)
 
 ---
 
@@ -466,7 +468,7 @@ final buildMethod = body.members
 if (buildMethod == null) return;
 ```
 
-**Reference:** [avoid_unnecessary_consumer_widgets_fix.dart](../../../lib/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart#L48-L50)
+**Reference:** [avoid_unnecessary_consumer_widgets_fix.dart](../../../lib/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart)
 
 ---
 
@@ -480,22 +482,25 @@ final refParam = parameters
     .firstWhereOrNull((p) => p.name?.lexeme == 'ref');
 ```
 
-**Reference:** [avoid_unnecessary_consumer_widgets_fix.dart](../../../lib/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart#L52-L58)
+**Reference:** [avoid_unnecessary_consumer_widgets_fix.dart](../../../lib/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart)
 
 ---
 
 ### Parent Chain Navigation
 
-```dart
-final parent = node.parent;
-final grandparent = parent?.parent;
+Use parent chains only after resolving and type-checking the semantic target:
 
-if (grandparent is PropertyAccess) {
+```dart
+final resolvedInvocation =
+    node.thisOrAncestorOfType<MethodInvocation>();
+if (resolvedInvocation == null) return;
+
+if (resolvedInvocation.parent?.parent is PropertyAccess) {
   // Handle chained property access
 }
 ```
 
-**Reference:** [use_dedicated_media_query_methods_fix.dart](../../../lib/src/fixes/use_dedicated_media_query_methods_fix.dart#L45)
+**Reference:** [use_dedicated_media_query_methods_fix.dart](../../../lib/src/fixes/use_dedicated_media_query_methods_fix.dart)
 
 ---
 
@@ -512,7 +517,7 @@ final childSource = childArg.argumentExpression.toSource();
 final replacement = 'Gap($valueSource), $childSource';
 ```
 
-**Reference:** [use_gap_fix.dart](../../../lib/src/fixes/use_gap_fix.dart#L55)
+**Reference:** [use_gap_fix.dart](../../../lib/src/fixes/use_gap_fix.dart)
 
 ---
 
@@ -525,7 +530,7 @@ final cases = _buildCases(switchStmt);
 final switchExpr = 'switch ($expression) {\n$cases}';
 ```
 
-**Reference:** [prefer_switch_expression_fix.dart](../../../lib/src/fixes/prefer_switch_expression_fix.dart#L90-L91)
+**Reference:** [prefer_switch_expression_fix.dart](../../../lib/src/fixes/prefer_switch_expression_fix.dart)
 
 ---
 
@@ -536,7 +541,7 @@ final contextVariableName = node.argumentList.arguments.firstOrNull?.toString();
 return 'MediaQuery.$methodReplacement($contextVariableName)';
 ```
 
-**Reference:** [use_dedicated_media_query_methods_fix.dart](../../../lib/src/fixes/use_dedicated_media_query_methods_fix.dart#L41-L48)
+**Reference:** [use_dedicated_media_query_methods_fix.dart](../../../lib/src/fixes/use_dedicated_media_query_methods_fix.dart)
 
 ---
 
@@ -544,14 +549,14 @@ return 'MediaQuery.$methodReplacement($contextVariableName)';
 
 ### Pattern: Switch Statement -> Expression
 
-Full transformation in [prefer_switch_expression_fix.dart](../../../lib/src/fixes/prefer_switch_expression_fix.dart#L59-L110):
+Full transformation in [prefer_switch_expression_fix.dart](../../../lib/src/fixes/prefer_switch_expression_fix.dart):
 
 ```dart
 @override
 Future<void> compute(ChangeBuilder builder) async {
-  // 1. Validate node type
-  final switchNode = node.parent;
-  if (switchNode is! SwitchStatement) return;
+  // 1. Resolve the semantic target from the reported range
+  final switchNode = node.thisOrAncestorOfType<SwitchStatement>();
+  if (switchNode == null) return;
 
   // 2. Determine conversion type (return-based vs assignment-based)
   final builtExpression = _buildSwitchExpression(switchNode);
@@ -614,7 +619,7 @@ if (refParam != null) {
 
 ### Pattern: Conditional Widget Transformation
 
-From [use_gap_fix.dart](../../../lib/src/fixes/use_gap_fix.dart#L28-L105):
+From [use_gap_fix.dart](../../../lib/src/fixes/use_gap_fix.dart):
 
 ```dart
 // Dispatch based on widget type
@@ -661,7 +666,7 @@ class PreferReturningShorthandsFix extends ResolvedCorrectionProducer {
   PreferReturningShorthandsFix({required super.context});
 
   /// Override this in subclasses for different behavior
-  String get unnamedConstructorReplacement => '';
+  String get unnamedConstructorReplacement => 'new';
 
   @override
   FixKind get fixKind => _fixKind;
@@ -680,7 +685,7 @@ class PreferShorthandsWithConstructorsFix extends PreferReturningShorthandsFix {
   PreferShorthandsWithConstructorsFix({required super.context});
 
   @override
-  String get unnamedConstructorReplacement => 'new';
+  String get unnamedConstructorReplacement => '';
 
   @override
   FixKind get fixKind => _fixKind;
@@ -736,8 +741,8 @@ final arg = arguments
     .firstWhereOrNull((e) => e.name.lexeme == 'alignment');
 ```
 
-**Used in 6 of 15 fixes!**
-**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart#L36-L39)
+**Use when an element may be absent:**
+**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart)
 
 ---
 
@@ -790,7 +795,7 @@ final replacement = isNullable
     : 'void Function()';
 ```
 
-**Reference:** [prefer_explicit_function_type_fix.dart](../../../lib/src/fixes/prefer_explicit_function_type_fix.dart#L30-L31)
+**Reference:** [prefer_explicit_function_type_fix.dart](../../../lib/src/fixes/prefer_explicit_function_type_fix.dart)
 
 ---
 
@@ -801,27 +806,19 @@ final shouldAddQuestionMark = usedMaybe && node.parent?.parent is PropertyAccess
 final replacement = 'MediaQuery.$method($context)${shouldAddQuestionMark ? '?' : ''}';
 ```
 
-**Reference:** [use_dedicated_media_query_methods_fix.dart](../../../lib/src/fixes/use_dedicated_media_query_methods_fix.dart#L45-L48)
+**Reference:** [use_dedicated_media_query_methods_fix.dart](../../../lib/src/fixes/use_dedicated_media_query_methods_fix.dart)
 
 ---
 
 ### String Manipulation with Edit Distance
 
-[add_suffix_fix.dart](../../../lib/src/fixes/add_suffix_fix.dart#L106-L132) includes Levenshtein distance to strip misspelled suffixes:
+[add_suffix_fix.dart](../../../lib/src/fixes/add_suffix_fix.dart) uses the shared
+`computeEditDistance` helper from `lib/src/text_distance.dart` to strip
+misspelled suffixes:
 
 ```dart
-static int _editDistance(String a, String b) {
-  // Dynamic programming algorithm
-  final matrix = List.generate(
-    a.length + 1,
-    (i) => List.filled(b.length + 1, 0),
-  );
-
-  // ... implementation
-}
-
 // Usage: Remove "Blac" (misspelled "Bloc") before adding correct suffix
-final distance = _editDistance(existingSuffix, correctSuffix);
+final distance = computeEditDistance(existingSuffix, correctSuffix);
 if (distance <= threshold) {
   // Strip and replace
 }
@@ -831,14 +828,14 @@ if (distance <= threshold) {
 
 ### Early Returns for Validation
 
-**Every fix uses this pattern:**
+**Use early returns after resolving each required semantic node:**
 
 ```dart
 @override
 Future<void> compute(ChangeBuilder builder) async {
   // Validate step 1
-  final targetNode = node;
-  if (targetNode is! ExpectedType) return;
+  final targetNode = node.thisOrAncestorOfType<ExpectedType>();
+  if (targetNode == null) return;
 
   // Validate step 2
   final parent = targetNode.parent;
@@ -884,7 +881,7 @@ class ManyLintsPlugin extends Plugin {
   @override
   void register(PluginRegistry registry) {
     // Register the rule
-    registry.registerWarningRule(MyRule());
+    _registerWarningRule(registry, MyRule());
 
     // Register fix for the rule's LintCode
     registry.registerFixForRule(MyRule.code, MyRuleFix.new);
@@ -896,20 +893,16 @@ class ManyLintsPlugin extends Plugin {
 
 ---
 
-## Pattern Distribution (15 Fixes)
+## Choosing an Edit Pattern
 
-| Pattern | Usage | Files |
-|---------|-------|-------|
-| `addSimpleReplacement` | 15/15 | All fixes |
-| `range.node()` | 15/15 | All fixes |
-| `CorrectionApplicability.singleLocation` | 15/15 | All fixes |
-| `DartFixKindPriority.standard` | 15/15 | All fixes |
-| `firstWhereOrNull` | 6/15 | Common for finding args/members |
-| `addDeletion` | 2/15 | Removing parameters |
-| `range.nodeInList()` | 2/15 | List deletions |
-| `range.startStart()` | 2/15 | Prefix replacements |
-| Factory pattern | 2/15 | Shared logic across rules |
-| Helper methods | 3/15 | Complex transformations |
+| Goal | Preferred pattern |
+|------|-------------------|
+| Replace a complete AST node | `addSimpleReplacement(range.node(...), ...)` |
+| Remove an item and its comma | `addDeletion(range.nodeInList(...))` |
+| Replace only a prefix | `addSimpleReplacement(range.startStart(...), ...)` |
+| Find an optional argument/member | `firstWhereOrNull` with an early return |
+| Share behavior across related rules | A base fix or constructor factory |
+| Perform a structural transformation | Focused helper methods plus output tests |
 
 ---
 
@@ -922,8 +915,8 @@ When a fix needs to insert a statement into an existing method (e.g., `dispose()
 ```dart
 @override
 Future<void> compute(ChangeBuilder builder) async {
-  final targetNode = node;
-  if (targetNode is! MethodInvocation) return;
+  final targetNode = node.thisOrAncestorOfType<MethodInvocation>();
+  if (targetNode == null) return;
 
   // Build the statement to insert
   final removeCall = '${target}.removeListener(${listener})';
@@ -991,7 +984,7 @@ static Statement? _findSuperDispose(Block block) {
 - Use `addSimpleInsertion` (not `addSimpleReplacement`) when adding new code without removing existing code
 
 **When to use:** Fixes that add cleanup code to lifecycle methods, or generate missing lifecycle methods
-**Reference:** [always_remove_listener_fix.dart](../../../lib/src/fixes/always_remove_listener_fix.dart#L29-L94)
+**Reference:** [always_remove_listener_fix.dart](../../../lib/src/fixes/always_remove_listener_fix.dart)
 
 ---
 
@@ -1027,7 +1020,7 @@ Future<void> compute(ChangeBuilder builder) async {
 - `unitResult.content` provides the full source text for line-boundary calculations
 - Use `SourceRange` from `package:analyzer/source/source_range.dart`
 
-**Reference:** [avoid_commented_out_code_fix.dart](../../../lib/src/fixes/avoid_commented_out_code_fix.dart#L27-L49)
+**Reference:** [avoid_commented_out_code_fix.dart](../../../lib/src/fixes/avoid_commented_out_code_fix.dart)
 
 ---
 
@@ -1036,7 +1029,11 @@ Future<void> compute(ChangeBuilder builder) async {
 When a fix needs to add a stack trace parameter (or exception parameter) to a catch clause:
 
 ```dart
-void _addStackTraceParameter(dynamic builder, CatchClause catchClause, String stackParam) {
+void _addStackTraceParameter(
+  DartFileEditBuilder builder,
+  CatchClause catchClause,
+  String stackParam,
+) {
   final exceptionParam = catchClause.exceptionParameter;
 
   if (exceptionParam != null) {
@@ -1057,11 +1054,11 @@ void _addStackTraceParameter(dynamic builder, CatchClause catchClause, String st
 - `CatchClause.catchKeyword` → `Token?` (null when only `on Type`)
 - `CatchClauseParameter.end` → character offset right after the parameter name
 
-**Reference:** [avoid_throw_in_catch_block_fix.dart](../../../lib/src/fixes/avoid_throw_in_catch_block_fix.dart#L63-L84)
+**Reference:** [avoid_throw_in_catch_block_fix.dart](../../../lib/src/fixes/avoid_throw_in_catch_block_fix.dart)
 
 ---
 
-## Never Type-Test `node` Directly
+## Do Not Assume the Shape of `node`
 
 This one silently broke **27 fixes** at once. It is the single most likely way
 a new fix will appear to work and do nothing.
@@ -1082,7 +1079,7 @@ consequences:
 final targetNode = node;
 if (targetNode is! ConstructorName) return;
 
-// ✔ Walk up instead.
+// ✔ Safe default: walk up instead.
 final targetNode = node.thisOrAncestorOfType<ConstructorName>();
 if (targetNode == null) return;
 ```
@@ -1090,6 +1087,10 @@ if (targetNode == null) return;
 The same applies to `node.parent`: when the rule reports at a keyword
 (`reportAtToken(node.switchKeyword)`), `node` is *already* the `SwitchStatement`
 and `node.parent` overshoots it.
+
+A direct type-test is acceptable only when the rule deliberately reports the
+whole semantic node and an output test locks that range contract. For new fixes,
+prefer ancestor lookup unless exact-node behavior is essential.
 
 There is no compile error and no exception — `FixProcessor` treats "no edits"
 as "the fix declined", which is indistinguishable from a fix that legitimately
@@ -1272,7 +1273,7 @@ await builder.addDartFileEdit(file, (builder) {
 - `showName` + `useShow`: creates a show combinator (e.g., `import '...' show AsyncCallback;`)
 
 **When to use:** Fixes that replace code with types/functions from external packages
-**Reference:** [prefer_async_callback_fix.dart](../../../lib/src/fixes/prefer_async_callback_fix.dart#L33-L36)
+**Reference:** [prefer_async_callback_fix.dart](../../../lib/src/fixes/prefer_async_callback_fix.dart)
 
 ---
 

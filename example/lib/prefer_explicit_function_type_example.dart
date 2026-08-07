@@ -1,4 +1,5 @@
-// ignore_for_file: unused_element, unused_field
+// ignore_for_file: unused_element, unused_field, unused_local_variable
+// ignore_for_file: many_lints/prefer_void_callback
 
 /// Examples of the `prefer_explicit_function_type` lint rule.
 

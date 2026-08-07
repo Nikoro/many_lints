@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable, unused_element
+// ignore_for_file: many_lints/avoid_unnecessary_hook_widgets, many_lints/prefer_overriding_parent_equality, many_lints/prefer_use_prefix
 
 // avoid_hooks_outside_build
 //

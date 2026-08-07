@@ -19,7 +19,7 @@ This rule flags `Notifier` and `AsyncNotifier` subclasses that have constructors
 
 Riverpod creates and recreates Notifiers as part of its lifecycle management. The `build()` method is the proper place for initialization because it runs at the right time in the provider lifecycle and has access to `ref`. Constructor logic runs before the Notifier is fully wired up, which means you can't use `ref` there, and the logic won't re-run when the provider is refreshed or invalidated.
 
-**See also:** [Riverpod Notifier documentation](https://riverpod.dev/docs/concepts/providers#notifierprovider)
+**See also:** [Riverpod providers](https://riverpod.dev/docs/concepts2/providers)
 
 ## Don't
 

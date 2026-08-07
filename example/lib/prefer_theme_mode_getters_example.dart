@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable
+// ignore_for_file: many_lints/avoid_wildcard_cases_with_enums, many_lints/prefer_class_destructuring, many_lints/prefer_shorthands_with_enums
 
 // prefer_theme_mode_getters
 //

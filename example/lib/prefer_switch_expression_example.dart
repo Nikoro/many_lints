@@ -1,3 +1,5 @@
+// ignore_for_file: many_lints/prefer_immediate_return, many_lints/prefer_shorthands_with_enums
+// ignore_for_file: unused_local_variable
 // prefer_switch_expression
 //
 // Suggests converting switch statements to switch expressions.

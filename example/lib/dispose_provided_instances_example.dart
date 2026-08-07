@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable
+// ignore_for_file: many_lints/prefer_immediate_return
 
 // dispose_provided_instances
 //

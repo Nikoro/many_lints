@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable, unused_element
+// ignore_for_file: many_lints/prefer_immutable_bloc_state, many_lints/prefer_overriding_parent_equality
 
 // pass_existing_stream_to_stream_builder
 //

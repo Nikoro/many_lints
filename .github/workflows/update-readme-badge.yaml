@@ -12,7 +12,7 @@ concurrency:
 jobs:
   update-badges:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
     permissions:
       contents: write
     steps:
@@ -30,38 +30,11 @@ jobs:
 
       - name: Format coverage to LCOV
         run: |
-          dart pub global activate coverage
-          dart pub global run coverage:format_coverage \
+          dart run coverage:format_coverage \
             --lcov \
             --in=coverage/test \
             --out=coverage/lcov.info \
             --report-on=lib
-
-      - name: Exclude untestable code from coverage
-        run: |
-          set -euo pipefail
-          # Exclude lib/src/fixes/ and lib/src/assists/ from coverage reports.
-          # As of analyzer_testing 0.3.4 (checked 2026-08-07) the package only
-          # exposes AnalysisRuleTest, PubPackageResolutionTest and SkippedTest —
-          # there is still no fix or assist test API. Drop this step once one
-          # ships, so those directories count toward the badge.
-          sudo apt-get install -y lcov
-
-          # format_coverage writes absolute paths, so the patterns must match
-          # anywhere in the path. `--ignore-errors empty` is required: lcov 2.x
-          # treats the missing function-coverage data (which format_coverage
-          # never emits) as a fatal error and then writes no output file at all.
-          lcov --remove coverage/lcov.info \
-            '*/lib/src/fixes/*' \
-            '*/lib/src/assists/*' \
-            --ignore-errors empty \
-            --output-file coverage/lcov.info
-
-          # Fail loudly if the exclusion silently did nothing.
-          if grep -qE '^SF:.*/lib/src/(fixes|assists)/' coverage/lcov.info; then
-            echo "::error::lcov --remove did not exclude fixes/assists"
-            exit 1
-          fi
 
       - name: Compute coverage percentage and color
         id: coverage

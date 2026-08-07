@@ -35,6 +35,19 @@ jobs:
             exit 1
           fi
           echo "✓ Version validated: $PUBSPEC_VERSION"
+
+      - name: Verify changelog entry exists
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          if ! awk -v version="$VERSION" '
+            $0 == "## [" version "]" || index($0, "## [" version "] - ") == 1 {
+              found = 1
+            }
+            END { exit !found }
+          ' CHANGELOG.md; then
+            echo "::error::No CHANGELOG entry found for version $VERSION"
+            exit 1
+          fi
       
       - name: Set up commands
         uses: Nikoro/setup-commands@v1
@@ -78,7 +91,18 @@ jobs:
         run: |
           VERSION="${{ steps.get_version.outputs.version }}"
           # Extract changelog content for this version
-          awk "/## $VERSION/{flag=1; next} /^## /{flag=0} flag" CHANGELOG.md > release_notes.md
+          awk -v version="$VERSION" '
+            $0 == "## [" version "]" || index($0, "## [" version "] - ") == 1 {
+              flag = 1
+              next
+            }
+            /^## / { flag = 0 }
+            flag
+          ' CHANGELOG.md > release_notes.md
+          if ! grep -q '[^[:space:]]' release_notes.md; then
+            echo "::error::No CHANGELOG entry found for version $VERSION"
+            exit 1
+          fi
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:

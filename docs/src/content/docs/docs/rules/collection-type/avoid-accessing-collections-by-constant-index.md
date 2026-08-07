@@ -15,7 +15,7 @@ Accessing a collection with a constant index (like `list[0]`) inside a loop is s
 
 A constant index inside a loop always reads the same element on every iteration. This is either redundant work that belongs before the loop, or a bug where the developer forgot to use the loop variable as the index.
 
-**See also:** [Dart collections](https://dart.dev/guides/libraries/library-tour#collections)
+**See also:** [Dart collections](https://dart.dev/language/collections)
 
 ## Don't
 

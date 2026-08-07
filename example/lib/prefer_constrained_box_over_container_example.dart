@@ -1,3 +1,4 @@
+// ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_shorthands_with_constructors
 import 'package:flutter/material.dart';
 
 // prefer_constrained_box_over_container

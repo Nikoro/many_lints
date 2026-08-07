@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable, dead_code, unreachable_switch_case
+// ignore_for_file: many_lints/avoid_commented_out_code
 
 // prefer_wildcard_pattern
 //

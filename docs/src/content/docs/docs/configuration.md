@@ -9,7 +9,7 @@ Add `many_lints` to the **top-level** `plugins` section in your `analysis_option
 
 ```yaml
 plugins:
-  many_lints: ^0.7.1
+  many_lints: ^0.8.0
 ```
 
 The analysis server will automatically download and resolve the plugin from [pub.dev](https://pub.dev/packages/many_lints). There is no need to add it to your `pubspec.yaml`.
@@ -23,7 +23,7 @@ You can use the extended syntax to pin a version:
 ```yaml
 plugins:
   many_lints:
-    version: ^0.7.1
+    version: ^0.8.0
 ```
 
 ## Local development
@@ -40,18 +40,23 @@ plugins:
     path: /path/to/many_lints
 ```
 
-:::note
-Git dependencies are not directly supported by the plugin system. Clone the repository locally and use the `path` option instead.
-:::
-
-## Configuring diagnostics
-
-All 102 rules are registered as warnings and enabled by default. You can enable or disable individual rules under the `diagnostics` key:
+Git dependencies are also supported and use the same syntax as package
+dependencies:
 
 ```yaml
 plugins:
   many_lints:
-    version: ^0.7.1
+    git: https://github.com/Nikoro/many_lints.git
+```
+
+## Configuring diagnostics
+
+All 133 rules are registered as warnings and enabled by default. You can enable or disable individual rules under the `diagnostics` key:
+
+```yaml
+plugins:
+  many_lints:
+    version: ^0.8.0
     diagnostics:
       prefer_center_over_align: true
       use_bloc_suffix: false
@@ -71,7 +76,8 @@ const Align(...);
 :::caution[The `many_lints/` prefix is required]
 Unlike SDK lints, a plugin diagnostic is only silenced when the rule name is prefixed with the plugin name. A bare `// ignore: prefer_center_over_align` has **no effect** — the analyzer matches the plugin name alongside the rule name, and a comment without a prefix carries none, so it never matches.
 
-The prefix is the key you used under `plugins:` in `analysis_options.yaml`. If you renamed it, use that name instead.
+The prefix is the package name used as the key under `plugins:` in
+`analysis_options.yaml`.
 
 ```dart
 // ignore: prefer_center_over_align             // ❌ does nothing

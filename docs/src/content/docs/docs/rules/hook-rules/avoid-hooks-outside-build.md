@@ -15,7 +15,7 @@ This rule flags a `useX()` call that happens outside a hook context — anywhere
 
 `flutter_hooks` stores hook state in a list attached to the element and matches each call to its slot by *position*. That bookkeeping only exists while a hook widget is building. Call a hook from an event handler, a lifecycle method, or a plain helper and there is no hook context to write into: you get an exception, or worse, state written into an unrelated widget's slots.
 
-Together with [`avoid_conditional_hooks`](/docs/rules/hook-rules/avoid-conditional-hooks/) and [`avoid_misused_hooks`](/docs/rules/hook-rules/avoid-misused-hooks/), this covers the rules of hooks: call them unconditionally, the same number of times, from a hook context.
+Together with [`avoid_conditional_hooks`](/many_lints/docs/rules/widget-best-practices/avoid-conditional-hooks/) and [`avoid_misused_hooks`](/many_lints/docs/rules/hook-rules/avoid-misused-hooks/), this covers the rules of hooks: call them unconditionally, the same number of times, from a hook context.
 
 **See also:** [flutter_hooks rules](https://pub.dev/packages/flutter_hooks#rules)
 

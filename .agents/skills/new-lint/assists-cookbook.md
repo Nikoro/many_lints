@@ -26,7 +26,8 @@ This cookbook provides **copy-paste ready patterns** for implementing code assis
 
 When updating, add:
 - **Working code example** (tested and verified)
-- **File reference** to your implementation (e.g., `[my_assist.dart](../../../lib/src/assists/my_assist.dart#L10-L20)`)
+- **File reference** to the real implementation (for example,
+  `lib/src/assists/my_assist.dart`; link it only after the file exists)
 - **Brief explanation** of when to use this pattern
 - **Common pitfalls** if any
 
@@ -246,7 +247,7 @@ Future<void> compute(ChangeBuilder builder) async {
 ```
 
 **When to use:** Cursor could be anywhere within the target construct
-**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart#L30-L40)
+**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
 
 ---
 
@@ -272,7 +273,7 @@ final isToSet = toListOrSet == 'toSet';
 if (!isToList && !isToSet) return;  // Not applicable
 ```
 
-**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart#L50-L65)
+**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
 
 ---
 
@@ -313,7 +314,7 @@ bool _isApplicable(MethodInvocation node) {
 }
 ```
 
-**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart#L67-L90)
+**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
 
 ---
 
@@ -339,7 +340,7 @@ class MyAssist extends ResolvedCorrectionProducer {
 }
 ```
 
-**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart#L24)
+**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
 
 ---
 
@@ -393,7 +394,7 @@ if (returnExpr == null) return;  // Can't convert complex function
 final returnSource = returnExpr.toSource();
 ```
 
-**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart#L92-L95)
+**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
 
 ---
 
@@ -416,7 +417,7 @@ final replacement = '$openBracket'
     '$closeBracket';
 ```
 
-**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart#L97-L115)
+**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
 
 ---
 
@@ -447,7 +448,7 @@ await builder.addDartFileEdit(file, (builder) {
 ```
 
 **Two replacements preserve the middle (target) unchanged!**
-**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart#L117-L135)
+**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
 
 ---
 
@@ -497,7 +498,7 @@ await builder.addDartFileEdit(file, (builder) {
 });
 ```
 
-**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart#L117-L135)
+**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
 
 ---
 
@@ -524,7 +525,7 @@ final returnExpr = maybeGetSingleReturnExpression(functionBody);
 if (returnExpr == null) return;  // Complex function, can't convert
 ```
 
-**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart#L92)
+**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
 
 ---
 
@@ -553,7 +554,7 @@ if (_iterableChecker.isAssignableFromType(type)) {
 }
 ```
 
-**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart#L24)
+**Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
 
 ---
 

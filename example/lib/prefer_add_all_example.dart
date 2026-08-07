@@ -1,4 +1,5 @@
 // ignore_for_file: unused_element
+// ignore_for_file: many_lints/prefer_type_over_var
 
 // prefer_add_all
 //

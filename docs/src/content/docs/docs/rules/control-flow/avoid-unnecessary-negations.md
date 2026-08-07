@@ -67,7 +67,7 @@ if (isReady == isLoaded) {
 
 Four shapes are reported: `!` applied to a `!` expression, `!` applied to a `!=` comparison, `!` applied to a boolean literal, and `==`/`!=` with a negation on *both* sides. Parentheses are unwrapped first, so `!(!flag)` is caught.
 
-A single negation in a comparison (`!a == b`) is left alone — removing it would change the result. A negated `==` (`!(a == b)`) is also deliberately excluded: it is a single negation, and rewriting it to `!=` is a style preference rather than a redundancy. Negated relational comparisons are handled by [`avoid_inverted_boolean_checks`](/docs/rules/control-flow/avoid-inverted-boolean-checks/) instead, so the same code is never reported twice.
+A single negation in a comparison (`!a == b`) is left alone — removing it would change the result. A negated `==` (`!(a == b)`) is also deliberately excluded: it is a single negation, and rewriting it to `!=` is a style preference rather than a redundancy. Negated relational comparisons are handled by [`avoid_inverted_boolean_checks`](/many_lints/docs/rules/control-flow/avoid-inverted-boolean-checks/) instead, so the same code is never reported twice.
 
 ## Configuration
 

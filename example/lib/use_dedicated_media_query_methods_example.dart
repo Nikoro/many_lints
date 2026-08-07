@@ -1,3 +1,4 @@
+// ignore_for_file: many_lints/prefer_overriding_parent_equality
 import 'package:flutter/material.dart';
 
 // use_dedicated_media_query_methods

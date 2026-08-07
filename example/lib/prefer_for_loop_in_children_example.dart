@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable
+// ignore_for_file: many_lints/avoid_returning_widgets, many_lints/prefer_overriding_parent_equality, many_lints/prefer_single_widget_per_file
 
 import 'package:flutter/widgets.dart';
 

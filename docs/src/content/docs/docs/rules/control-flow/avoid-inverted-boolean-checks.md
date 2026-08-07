@@ -42,7 +42,7 @@ Reporting is restricted to comparisons where **both operands are `int`**, for tw
 - **Doubles break the equivalence.** With NaN involved, `!(a > b)` and `a <= b` differ: `!(double.nan > 1)` is `true`, while `double.nan <= 1` is `false`. Rewriting would change behaviour, so doubles and `num` are never reported.
 - **User-defined operators need not be consistent.** A type may define `>` and `<=` independently, so the opposite operator is not guaranteed to be the negation.
 
-Equality (`!(a == b)`) is out of scope here; see [`avoid_unnecessary_negations`](/docs/rules/control-flow/avoid-unnecessary-negations/) for the double-negation cases.
+Equality (`!(a == b)`) is out of scope here; see [`avoid_unnecessary_negations`](/many_lints/docs/rules/control-flow/avoid-unnecessary-negations/) for the double-negation cases.
 
 ## Configuration
 

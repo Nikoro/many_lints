@@ -1,4 +1,5 @@
 // ignore_for_file: unused_element
+// ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_single_widget_per_file
 
 // avoid_returning_widgets
 //

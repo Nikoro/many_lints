@@ -1,4 +1,5 @@
 // ignore_for_file: unused_element
+// ignore_for_file: many_lints/prefer_shorthands_with_enums
 
 // avoid_missing_enum_constant_in_map
 //

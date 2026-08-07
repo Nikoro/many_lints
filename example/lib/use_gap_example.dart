@@ -1,3 +1,4 @@
+// ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_shorthands_with_constructors, many_lints/prefer_single_widget_per_file, many_lints/prefer_spacing
 import 'package:flutter/material.dart';
 
 // use_gap

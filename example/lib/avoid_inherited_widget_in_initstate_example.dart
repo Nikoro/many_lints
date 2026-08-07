@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable, unused_element, unused_field
+// ignore_for_file: many_lints/prefer_abstract_final_static_class, many_lints/prefer_immutable_bloc_state, many_lints/prefer_overriding_parent_equality, many_lints/prefer_returning_shorthands, many_lints/use_dedicated_media_query_methods
 
 // avoid_inherited_widget_in_initstate
 //

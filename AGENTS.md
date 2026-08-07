@@ -29,6 +29,7 @@ lib/
     flutter_widget_helpers.dart # Flutter widget helpers (FlexAxis enum)
     riverpod_type_checkers.dart # Shared Riverpod TypeChecker constants
     async_guard_utils.dart # Async helpers (containsAwait, isMountedGuardWithReturn)
+    async_builder_utils.dart # Async builder source-allocation detection
     rules/                # Lint rules (AnalysisRule + SimpleAstVisitor pattern)
     fixes/                # Quick fixes (ResolvedCorrectionProducer pattern)
     assists/              # Code assists (ResolvedCorrectionProducer pattern)
@@ -81,7 +82,7 @@ Quick summary:
 2. Extend `AnalysisRule`, define a static `LintCode` with `name`, `problemMessage`, `correctionMessage`
 3. Implement `registerNodeProcessors()` to register visitors via `RuleVisitorRegistry`
 4. Create `_Visitor` extending `SimpleAstVisitor`, report issues with `rule.reportAtNode()`
-5. Register the rule in `lib/many_lints.dart` via `registry.registerWarningRule()`
+5. Register the rule in `lib/many_lints.dart` via the project wrapper `_registerWarningRule(registry, ...)`
 6. Optionally create a fix in `lib/src/fixes/` extending `ResolvedCorrectionProducer`
 7. Create `test/<rule_name>_test.dart` using `analyzer_testing` patterns
 8. Create a documentation page in `docs/src/content/docs/docs/rules/<category>/`
@@ -118,3 +119,4 @@ Quick summary:
 - `lib/src/flutter_widget_helpers.dart` - Flutter widget helpers (FlexAxis enum for spacing rules)
 - `lib/src/riverpod_type_checkers.dart` - Shared Riverpod TypeChecker constants (notifierChecker)
 - `lib/src/async_guard_utils.dart` - Async helpers (containsAwait, isMountedGuardWithReturn)
+- `lib/src/async_builder_utils.dart` - Detect newly allocated Future/Stream sources passed to async builders

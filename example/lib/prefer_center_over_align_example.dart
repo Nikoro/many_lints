@@ -1,3 +1,4 @@
+// ignore_for_file: many_lints/prefer_overriding_parent_equality
 import 'package:flutter/material.dart';
 
 // prefer_center_over_align

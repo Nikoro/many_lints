@@ -1,3 +1,4 @@
+// ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_single_widget_per_file
 import 'package:flutter/material.dart';
 
 // avoid_single_child_in_multi_child_widgets

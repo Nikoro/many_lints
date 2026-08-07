@@ -19,7 +19,7 @@ This rule flags classes that extend `Notifier` but don't include the `Notifier` 
 
 Riverpod Notifiers have a specific lifecycle and behavior -- they're created by providers, have a `build()` method, and manage reactive state. When a class like `CounterManager` extends `Notifier` without the suffix, developers have to inspect the class to understand its role. The `Notifier` suffix makes the architectural intent obvious.
 
-**See also:** [Riverpod Notifier documentation](https://riverpod.dev/docs/concepts/providers#notifierprovider)
+**See also:** [Riverpod providers](https://riverpod.dev/docs/concepts2/providers)
 
 ## Don't
 

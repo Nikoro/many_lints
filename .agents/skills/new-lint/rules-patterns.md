@@ -30,7 +30,8 @@ For common recipes (specific use-case patterns), see [rules-recipes.md](rules-re
 
 When updating, add:
 - **Working code example** (tested and verified)
-- **File reference** to your implementation (e.g., `[rule_name.dart](../../../lib/src/rules/rule_name.dart#L10-L20)`)
+- **File reference** to the real implementation (for example,
+  `lib/src/rules/rule_name.dart`; link it only after the file exists)
 - **Brief explanation** of when to use this pattern
 - **Common pitfalls** if any
 
@@ -44,7 +45,7 @@ When updating, add:
    // Working code example
    ```
    **When to use:** Brief description
-   **Reference:** [file.dart](../../../lib/src/rules/file.dart#L10-L20)
+   **Reference:** link the real source file that implements the pattern
    ```
 3. Keep consistent formatting with existing entries
 4. Update the Pattern Index if adding new sections
@@ -180,7 +181,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 }
 ```
 
-**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart#L1-L60)
+**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart)
 
 ---
 
@@ -218,7 +219,7 @@ static const _strictChecker = TypeChecker.all([
 ]);
 ```
 
-**Reference:** [type_checker.dart](../../../lib/src/type_checker.dart#L1-L134), [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart#L42-L53)
+**Reference:** [type_checker.dart](../../../lib/src/type_checker.dart), [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart)
 
 ### Checking Types
 
@@ -250,7 +251,7 @@ if (_iterableChecker.isAssignableFromType(targetType)) {
 }
 ```
 
-**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart#L51-L53)
+**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart)
 
 ### Checking Expression Types
 
@@ -275,7 +276,7 @@ bool isExpressionExactlyType(Expression expression, TypeChecker checker) {
 }
 ```
 
-**Reference:** [ast_node_analysis.dart](../../../lib/src/ast_node_analysis.dart), [prefer_center_over_align.dart](../../../lib/src/rules/prefer_center_over_align.dart#L43)
+**Reference:** [ast_node_analysis.dart](../../../lib/src/ast_node_analysis.dart), [prefer_center_over_align.dart](../../../lib/src/rules/prefer_center_over_align.dart)
 
 ---
 
@@ -335,7 +336,7 @@ void visitClassDeclaration(ClassDeclaration node) {
 }
 ```
 
-**Reference:** [avoid_unnecessary_consumer_widgets.dart](../../../lib/src/rules/avoid_unnecessary_consumer_widgets.dart#L44-L62)
+**Reference:** [avoid_unnecessary_consumer_widgets.dart](../../../lib/src/rules/avoid_unnecessary_consumer_widgets.dart)
 
 ### Constructor and Arguments
 
@@ -370,7 +371,7 @@ analyzer 13.0.0 a `NamedArgument` is **not** an `Expression`, so it has no
 (`arg.argumentExpression.staticType`) or resolve the target parameter with
 `arg.correspondingParameter`.
 
-**Reference:** [prefer_align_over_container.dart](../../../lib/src/rules/prefer_align_over_container.dart#L40-L70)
+**Reference:** [prefer_align_over_container.dart](../../../lib/src/rules/prefer_align_over_container.dart)
 
 ### Pattern Matching with AST (Dart 3)
 
@@ -394,7 +395,7 @@ void visitPropertyAccess(PropertyAccess node) {
 }
 ```
 
-**Reference:** [prefer_any_or_every.dart](../../../lib/src/rules/prefer_any_or_every.dart#L45-L58)
+**Reference:** [prefer_any_or_every.dart](../../../lib/src/rules/prefer_any_or_every.dart)
 
 ### Analyzing List Literals
 
@@ -424,7 +425,7 @@ if (children case final ListLiteral list) {
 }
 ```
 
-**Reference:** [avoid_single_child_in_multi_child_widgets.dart](../../../lib/src/rules/avoid_single_child_in_multi_child_widgets.dart#L103-L117)
+**Reference:** [avoid_single_child_in_multi_child_widgets.dart](../../../lib/src/rules/avoid_single_child_in_multi_child_widgets.dart)
 
 ---
 
@@ -537,7 +538,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 }
 ```
 
-**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart#L55-L67)
+**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart)
 
 ### RecursiveAstVisitor (Deep Traversal)
 
@@ -569,7 +570,7 @@ bool _isParameterUsed(AstNode? body, String paramName) {
 }
 ```
 
-**Reference:** [avoid_unnecessary_consumer_widgets.dart](../../../lib/src/rules/avoid_unnecessary_consumer_widgets.dart#L71-L88)
+**Reference:** [avoid_unnecessary_consumer_widgets.dart](../../../lib/src/rules/avoid_unnecessary_consumer_widgets.dart)
 
 ### Detecting Variable/Parameter Usage
 
@@ -600,7 +601,7 @@ class _IdentifierVisitor extends RecursiveAstVisitor<void> {
 }
 ```
 
-**Reference:** [avoid_unnecessary_consumer_widgets.dart](../../../lib/src/rules/avoid_unnecessary_consumer_widgets.dart#L71-L88)
+**Reference:** [avoid_unnecessary_consumer_widgets.dart](../../../lib/src/rules/avoid_unnecessary_consumer_widgets.dart)
 
 ---
 
@@ -691,7 +692,7 @@ class MyFix extends ResolvedCorrectionProducer {
 }
 ```
 
-**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart#L1-L54)
+**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart)
 
 ### Using Range Factory
 
@@ -711,7 +712,7 @@ range.startOffsetEndOffset(startToken.offset, endToken.end)
 range.token(token)
 ```
 
-**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart#L40-L50)
+**Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart)
 
 ---
 
@@ -778,7 +779,7 @@ void visitPrefixedIdentifier(PrefixedIdentifier node) {
 }
 ```
 
-**Reference:** [prefer_shorthands_with_enums.dart](../../../lib/src/rules/prefer_shorthands_with_enums.dart#L1-L108), [prefer_shorthands_with_static_fields.dart](../../../lib/src/rules/prefer_shorthands_with_static_fields.dart#L1-L137)
+**Reference:** [prefer_shorthands_with_enums.dart](../../../lib/src/rules/prefer_shorthands_with_enums.dart), [prefer_shorthands_with_static_fields.dart](../../../lib/src/rules/prefer_shorthands_with_static_fields.dart)
 
 ### String Distance Utilities
 
@@ -801,7 +802,7 @@ if (distance > 0 && distance <= 2) {
 }
 ```
 
-**Reference:** [add_suffix_fix.dart](../../../lib/src/fixes/add_suffix_fix.dart#L85-L98)
+**Reference:** [add_suffix_fix.dart](../../../lib/src/fixes/add_suffix_fix.dart)
 
 ### General Helpers
 
@@ -833,7 +834,7 @@ if (isInstanceCreationExpressionOnlyUsingParameter(
 }
 ```
 
-**Reference:** [prefer_padding_over_container.dart](../../../lib/src/rules/prefer_padding_over_container.dart#L44-L50)
+**Reference:** [prefer_padding_over_container.dart](../../../lib/src/rules/prefer_padding_over_container.dart)
 
 **3. Extract single return expression:**
 ```dart
@@ -1021,7 +1022,7 @@ final element = node.element;  // Deprecated
 final element = node.declaredFragment?.element;
 ```
 
-**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart#L51)
+**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart)
 
 ### Checking Class Modifiers (abstract, final, sealed, etc.)
 
@@ -1047,7 +1048,7 @@ final members = body.members;
 ```
 
 **When to use:** Rules that enforce class-level modifiers or analyze class structure
-**Reference:** [prefer_abstract_final_static_class.dart](../../../lib/src/rules/prefer_abstract_final_static_class.dart#L45-L78)
+**Reference:** [prefer_abstract_final_static_class.dart](../../../lib/src/rules/prefer_abstract_final_static_class.dart)
 
 ### Getting Class Name Token
 
@@ -1057,7 +1058,7 @@ final classNameToken = classDecl.namePart.typeName;
 rule.reportAtToken(classNameToken);
 ```
 
-**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart#L53)
+**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart)
 
 ### Type Display String
 
@@ -1109,7 +1110,7 @@ final el = type.element;  // InterfaceElement
 - `FieldElement.isSynthetic` is DEPRECATED → use `f.isOriginDeclaration` instead
 - `declaredFragment?.element` returns `ClassElement` (nullable) — use null check, not `is InterfaceElement` (type promotion doesn't work well here)
 
-**Reference:** [prefer_overriding_parent_equality.dart](../../../lib/src/rules/prefer_overriding_parent_equality.dart#L68-L97)
+**Reference:** [prefer_overriding_parent_equality.dart](../../../lib/src/rules/prefer_overriding_parent_equality.dart)
 
 ### Pattern Matching Features
 
@@ -1125,7 +1126,7 @@ if (node case InstanceCreationExpression(
 }
 ```
 
-**Reference:** [prefer_any_or_every.dart](../../../lib/src/rules/prefer_any_or_every.dart#L45-L58)
+**Reference:** [prefer_any_or_every.dart](../../../lib/src/rules/prefer_any_or_every.dart)
 
 ---
 

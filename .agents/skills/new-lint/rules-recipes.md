@@ -45,7 +45,7 @@ if (alignmentArg != null) {
 }
 ```
 
-**Ref:** [prefer_center_over_align.dart](../../../lib/src/rules/prefer_center_over_align.dart#L40-L70)
+**Ref:** [prefer_center_over_align.dart](../../../lib/src/rules/prefer_center_over_align.dart)
 
 ### Detect Factory Constructor Calls (with and without type args)
 
@@ -77,7 +77,7 @@ void visitMethodInvocation(MethodInvocation node) {
 }
 ```
 
-**Ref:** [prefer_iterable_of.dart](../../../lib/src/rules/prefer_iterable_of.dart#L53-L76)
+**Ref:** [prefer_iterable_of.dart](../../../lib/src/rules/prefer_iterable_of.dart)
 
 ### Extract Element Type from Generic Collection
 
@@ -93,7 +93,7 @@ DartType? _getIterableElementType(InterfaceType type) {
 }
 ```
 
-**Ref:** [prefer_iterable_of.dart](../../../lib/src/rules/prefer_iterable_of.dart#L122-L135)
+**Ref:** [prefer_iterable_of.dart](../../../lib/src/rules/prefer_iterable_of.dart)
 
 ### Check If Node Is Inside a Loop Body
 
@@ -116,7 +116,7 @@ static bool _isInsideLoopBody(AstNode node) {
 }
 ```
 
-**Ref:** [avoid_accessing_collections_by_constant_index.dart](../../../lib/src/rules/avoid_accessing_collections_by_constant_index.dart#L57-L75)
+**Ref:** [avoid_accessing_collections_by_constant_index.dart](../../../lib/src/rules/avoid_accessing_collections_by_constant_index.dart)
 
 ### Check If an Identifier Refers to a Constant
 
@@ -139,7 +139,7 @@ static bool _isConstantIdentifier(SimpleIdentifier id) {
 }
 ```
 
-**Ref:** [avoid_accessing_collections_by_constant_index.dart](../../../lib/src/rules/avoid_accessing_collections_by_constant_index.dart#L78-L118)
+**Ref:** [avoid_accessing_collections_by_constant_index.dart](../../../lib/src/rules/avoid_accessing_collections_by_constant_index.dart)
 
 ### Analyze Cascade Expression Targets
 
@@ -154,7 +154,7 @@ void visitCascadeExpression(CascadeExpression node) {
 }
 ```
 
-**Ref:** [avoid_cascade_after_if_null.dart](../../../lib/src/rules/avoid_cascade_after_if_null.dart#L55-L63)
+**Ref:** [avoid_cascade_after_if_null.dart](../../../lib/src/rules/avoid_cascade_after_if_null.dart)
 
 ### Binary Expression Analysis (Operators, Const Checks, Negative Literals)
 
@@ -200,7 +200,7 @@ static bool _isNegativeOne(Expression expr) {
 
 Always check both operand orders for commutative comparisons (`x == -1` or `-1 == x`).
 
-**Ref:** [avoid_collection_equality_checks.dart](../../../lib/src/rules/avoid_collection_equality_checks.dart#L64-L90), [prefer_contains.dart](../../../lib/src/rules/prefer_contains.dart#L68-L77)
+**Ref:** [avoid_collection_equality_checks.dart](../../../lib/src/rules/avoid_collection_equality_checks.dart), [prefer_contains.dart](../../../lib/src/rules/prefer_contains.dart)
 
 ### Check If Two Types Are Unrelated
 
@@ -224,7 +224,7 @@ static bool _isSubtypeOf(InterfaceElement a, InterfaceElement b) {
 }
 ```
 
-**Ref:** [avoid_collection_methods_with_unrelated_types.dart](../../../lib/src/rules/avoid_collection_methods_with_unrelated_types.dart#L201-L235)
+**Ref:** [avoid_collection_methods_with_unrelated_types.dart](../../../lib/src/rules/avoid_collection_methods_with_unrelated_types.dart)
 
 ### Extract Map Key/Value Types from InterfaceType
 
@@ -242,7 +242,7 @@ static (DartType, DartType)? _getMapTypes(InterfaceType type) {
 }
 ```
 
-**Ref:** [avoid_collection_methods_with_unrelated_types.dart](../../../lib/src/rules/avoid_collection_methods_with_unrelated_types.dart#L173-L184)
+**Ref:** [avoid_collection_methods_with_unrelated_types.dart](../../../lib/src/rules/avoid_collection_methods_with_unrelated_types.dart)
 
 ### Analyze MethodInvocation on Collection Targets
 
@@ -263,7 +263,7 @@ void visitMethodInvocation(MethodInvocation node) {
 }
 ```
 
-**Ref:** [avoid_collection_methods_with_unrelated_types.dart](../../../lib/src/rules/avoid_collection_methods_with_unrelated_types.dart#L86-L143)
+**Ref:** [avoid_collection_methods_with_unrelated_types.dart](../../../lib/src/rules/avoid_collection_methods_with_unrelated_types.dart)
 
 ### Traverse Token Stream for Comment Analysis
 
@@ -295,7 +295,7 @@ void visitCompilationUnit(CompilationUnit node) {
 rule.reportAtOffset(token.offset, token.length);
 ```
 
-**Ref:** [avoid_commented_out_code.dart](../../../lib/src/rules/avoid_commented_out_code.dart#L47-L97)
+**Ref:** [avoid_commented_out_code.dart](../../../lib/src/rules/avoid_commented_out_code.dart)
 
 ### Compare Cascade Sections for Duplicates
 
@@ -327,7 +327,7 @@ static String? _sectionKey(Expression section) {
 
 Cascade section types: `AssignmentExpression`, `MethodInvocation`, `IndexExpression`, `PropertyAccess`, `FunctionReference`.
 
-**Ref:** [avoid_duplicate_cascades.dart](../../../lib/src/rules/avoid_duplicate_cascades.dart#L65-L95)
+**Ref:** [avoid_duplicate_cascades.dart](../../../lib/src/rules/avoid_duplicate_cascades.dart)
 
 ### Get Top-Level Declaration Names (Non-Deprecated API)
 
@@ -358,7 +358,7 @@ for (final declaration in compilationUnit.declarations) {
 - `ExtensionTypeDeclaration.name` → **DEPRECATED**, use `namePart.typeName` (`primaryConstructor` is also deprecated)
 - `MixinDeclaration.name`, `GenericTypeAlias.name`, `FunctionTypeAlias.name` → NOT deprecated
 
-**Ref:** [avoid_generics_shadowing.dart](../../../lib/src/rules/avoid_generics_shadowing.dart#L50-L67)
+**Ref:** [avoid_generics_shadowing.dart](../../../lib/src/rules/avoid_generics_shadowing.dart)
 
 ### Visit TypeParameter Declarations Across a File
 
@@ -383,7 +383,7 @@ class _TypeParameterChecker extends RecursiveAstVisitor<void> {
 }
 ```
 
-**Ref:** [avoid_generics_shadowing.dart](../../../lib/src/rules/avoid_generics_shadowing.dart#L78-L94)
+**Ref:** [avoid_generics_shadowing.dart](../../../lib/src/rules/avoid_generics_shadowing.dart)
 
 ### Analyze If-Case Patterns (Dart 3 Pattern Matching)
 
@@ -415,7 +415,7 @@ void visitIfStatement(IfStatement node) {
 
 **Key DartPattern subtypes:** `LogicalAndPattern` (`&&`), `LogicalOrPattern` (`||`), `RelationalPattern` (`!= null`, `> 5`), `DeclaredVariablePattern` (`final field`), `NullCheckPattern` (postfix `?`), `NullAssertPattern` (postfix `!`), `ConstantPattern`, `WildcardPattern` (`_`).
 
-**Ref:** [prefer_simpler_patterns_null_check.dart](../../../lib/src/rules/prefer_simpler_patterns_null_check.dart#L49-L68)
+**Ref:** [prefer_simpler_patterns_null_check.dart](../../../lib/src/rules/prefer_simpler_patterns_null_check.dart)
 
 ### Detect Property Access: PrefixedIdentifier vs PropertyAccess
 
@@ -458,7 +458,7 @@ if (keysAccess is PrefixedIdentifier) {
 } else { return; }
 ```
 
-**Ref:** [avoid_map_keys_contains.dart](../../../lib/src/rules/avoid_map_keys_contains.dart#L49-L71)
+**Ref:** [avoid_map_keys_contains.dart](../../../lib/src/rules/avoid_map_keys_contains.dart)
 
 ### Validate Function Call Arguments by Name and Type
 
@@ -499,7 +499,7 @@ static bool _isOrSubtypeOf(InterfaceType type, String targetName) {
 }
 ```
 
-**Ref:** [avoid_misused_test_matchers.dart](../../../lib/src/rules/avoid_misused_test_matchers.dart#L82-L218)
+**Ref:** [avoid_misused_test_matchers.dart](../../../lib/src/rules/avoid_misused_test_matchers.dart)
 
 ### Try-Catch Analysis
 
@@ -546,7 +546,7 @@ class _ThrowFinder extends RecursiveAstVisitor<void> {
 
 **Key types:** `TryStatement` (body, catchClauses, finallyBlock), `CatchClause` (body, onKeyword, exceptionType, exceptionParameter, stackTraceParameter), `RethrowExpression` ≠ `ThrowExpression`.
 
-**Ref:** [avoid_only_rethrow.dart](../../../lib/src/rules/avoid_only_rethrow.dart#L68-L82), [avoid_throw_in_catch_block.dart](../../../lib/src/rules/avoid_throw_in_catch_block.dart#L73-L95)
+**Ref:** [avoid_only_rethrow.dart](../../../lib/src/rules/avoid_only_rethrow.dart), [avoid_throw_in_catch_block.dart](../../../lib/src/rules/avoid_throw_in_catch_block.dart)
 
 ### Analyze Return Statements in Async Try-Catch Context
 
@@ -600,7 +600,7 @@ static bool _isDescendantOf(AstNode node, AstNode ancestor) {
 }
 ```
 
-**Ref:** [prefer_return_await.dart](../../../lib/src/rules/prefer_return_await.dart#L70-L139)
+**Ref:** [prefer_return_await.dart](../../../lib/src/rules/prefer_return_await.dart)
 
 ### Detect Unassigned Method Invocation Return Values
 
@@ -629,7 +629,7 @@ static bool _isExpectedType(InterfaceType type) {
 }
 ```
 
-**Ref:** [avoid_unassigned_stream_subscriptions.dart](../../../lib/src/rules/avoid_unassigned_stream_subscriptions.dart#L49-L73)
+**Ref:** [avoid_unassigned_stream_subscriptions.dart](../../../lib/src/rules/avoid_unassigned_stream_subscriptions.dart)
 
 ### Check If Ancestor Overrides Specific Members (== and hashCode)
 
@@ -652,7 +652,7 @@ final overridesHashCode = body.members.any(
 );
 ```
 
-**Ref:** [prefer_overriding_parent_equality.dart](../../../lib/src/rules/prefer_overriding_parent_equality.dart#L68-L97)
+**Ref:** [prefer_overriding_parent_equality.dart](../../../lib/src/rules/prefer_overriding_parent_equality.dart)
 
 ### Detect ObjectPattern in Switch/If-Case Patterns
 
@@ -696,7 +696,7 @@ void _checkPattern(DartPattern pattern) {
 
 No `addObjectPattern` in `RuleVisitorRegistry` — register container nodes and walk patterns manually.
 
-**Ref:** [prefer_wildcard_pattern.dart](../../../lib/src/rules/prefer_wildcard_pattern.dart#L59-L98)
+**Ref:** [prefer_wildcard_pattern.dart](../../../lib/src/rules/prefer_wildcard_pattern.dart)
 
 ### Cross-Method Call Pairing (addListener/removeListener)
 
@@ -758,7 +758,7 @@ class _MethodCallCollector extends RecursiveAstVisitor<void> {
 }
 ```
 
-**Ref:** [always_remove_listener.dart](../../../lib/src/rules/always_remove_listener.dart#L66-L102)
+**Ref:** [always_remove_listener.dart](../../../lib/src/rules/always_remove_listener.dart)
 
 ### Check If Widget Is Direct Child of Specific Parent Widget
 
@@ -788,7 +788,7 @@ static bool _isDirectChildOfFlex(InstanceCreationExpression node) {
 
 Widget parent chains: `child:` → NamedArgument → ArgumentList → InstanceCreationExpression. `children: [...]` → ListLiteral → NamedArgument → ArgumentList → InstanceCreationExpression.
 
-**Ref:** [avoid_flexible_outside_flex.dart](../../../lib/src/rules/avoid_flexible_outside_flex.dart#L80-L119)
+**Ref:** [avoid_flexible_outside_flex.dart](../../../lib/src/rules/avoid_flexible_outside_flex.dart)
 
 ### Detect Wrapper Widget with Specific Child Type
 
@@ -822,7 +822,7 @@ void _checkChildArgument(ArgumentList argumentList, AstNode reportNode) {
 }
 ```
 
-**Ref:** [avoid_incorrect_image_opacity.dart](../../../lib/src/rules/avoid_incorrect_image_opacity.dart#L62-L88)
+**Ref:** [avoid_incorrect_image_opacity.dart](../../../lib/src/rules/avoid_incorrect_image_opacity.dart)
 
 ### Search for Specific Identifiers Inside a Callback
 
@@ -870,7 +870,7 @@ class _IdentifierFinder extends RecursiveAstVisitor<void> {
 }
 ```
 
-**Ref:** [avoid_mounted_in_setstate.dart](../../../lib/src/rules/avoid_mounted_in_setstate.dart#L59-L124)
+**Ref:** [avoid_mounted_in_setstate.dart](../../../lib/src/rules/avoid_mounted_in_setstate.dart)
 
 ### Detect Unnecessary Overrides (Methods, Getters, Setters, Operators, Abstract)
 
@@ -928,7 +928,7 @@ static bool _areArgsPassThrough(FormalParameterList? params, ArgumentList args) 
 - `super.property` is `PropertyAccess(SuperExpression, SimpleIdentifier)`, NOT `PrefixedIdentifier`
 - `FormalParameter.name` returns `Token?` — use `.lexeme` for the string
 
-**Ref:** [avoid_unnecessary_overrides.dart](../../../lib/src/rules/avoid_unnecessary_overrides.dart#L71-L210)
+**Ref:** [avoid_unnecessary_overrides.dart](../../../lib/src/rules/avoid_unnecessary_overrides.dart)
 
 ### Detect Method Calls Inside Specific Lifecycle Methods
 
@@ -964,7 +964,7 @@ static bool _isInsideEventHandlerCallback(AstNode node) {
 }
 ```
 
-**Ref:** [avoid_unnecessary_setstate.dart](../../../lib/src/rules/avoid_unnecessary_setstate.dart#L65-L130)
+**Ref:** [avoid_unnecessary_setstate.dart](../../../lib/src/rules/avoid_unnecessary_setstate.dart)
 
 ### Correlate Two Related Class Declarations (StatefulWidget + State)
 
@@ -1020,7 +1020,7 @@ static bool _hasMutableFields(BlockClassBody body) {
 }
 ```
 
-**Ref:** [avoid_unnecessary_stateful_widgets.dart](../../../lib/src/rules/avoid_unnecessary_stateful_widgets.dart#L66-L148)
+**Ref:** [avoid_unnecessary_stateful_widgets.dart](../../../lib/src/rules/avoid_unnecessary_stateful_widgets.dart)
 
 ### Dynamic Method Detection on Types
 
@@ -1093,7 +1093,7 @@ while (topOfChain.parent is MethodInvocation) {
 
 **When to use:** Detecting if a chained expression result (e.g., `list.expand(...).skip(1).toList()`) is used in a specific context (e.g., as the `children` argument of a widget).
 
-**Ref:** [prefer_spacing.dart](../../../lib/src/rules/prefer_spacing.dart#L200-L205)
+**Ref:** [prefer_spacing.dart](../../../lib/src/rules/prefer_spacing.dart)
 
 ### Handle Both InstanceCreationExpression and MethodInvocation for Constructors
 
@@ -1121,7 +1121,7 @@ void visitMethodInvocation(MethodInvocation node) {
 
 **When to use:** Any rule that needs to detect widget/object construction calls reliably in both real code and test mocks.
 
-**Ref:** [prefer_spacing.dart](../../../lib/src/rules/prefer_spacing.dart#L72-L87)
+**Ref:** [prefer_spacing.dart](../../../lib/src/rules/prefer_spacing.dart)
 
 ### Check Super Call Position in Lifecycle Methods
 
@@ -1175,7 +1175,7 @@ static int _findSuperCallIndex(NodeList<Statement> stmts, String name) {
 
 **When to use:** Rules that validate statement ordering within specific methods (lifecycle, setup/teardown).
 
-**Ref:** [proper_super_calls.dart](../../../lib/src/rules/proper_super_calls.dart#L70-L130)
+**Ref:** [proper_super_calls.dart](../../../lib/src/rules/proper_super_calls.dart)
 
 ### Detect Outer Scope Variable Usage Inside Nested Closures
 
@@ -1251,7 +1251,7 @@ static bool _isTargetType(FormalParameter param) {
 
 **When to use:** Rules that detect incorrect variable scoping (e.g., using outer BuildContext when an inner one is available).
 
-**Ref:** [use_closest_build_context.dart](../../../lib/src/rules/use_closest_build_context.dart#L52-L180)
+**Ref:** [use_closest_build_context.dart](../../../lib/src/rules/use_closest_build_context.dart)
 
 ### Collect Property Accesses Per Variable in a Block
 
@@ -1317,7 +1317,7 @@ class _PropertyAccessCollector extends RecursiveAstVisitor<void> {
 - `LocalElement` is the supertype of both `LocalVariableElement` and `FormalParameterElement`
 - Handle both `PrefixedIdentifier` (simple `obj.prop`) and `PropertyAccess` (chained `a.b.prop`)
 
-**Ref:** [prefer_class_destructuring.dart](../../../lib/src/rules/prefer_class_destructuring.dart#L60-L173)
+**Ref:** [prefer_class_destructuring.dart](../../../lib/src/rules/prefer_class_destructuring.dart)
 
 ### Detect Duplicate Expressions Matching Variable Initializers
 
@@ -1406,7 +1406,7 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
 - Override expression-type visitors individually (not `visitExpression`) to check at the right AST level
 - Return `true` from `_checkExpression()` to suppress child recursion (avoids sub-expression matches when the whole expression already matched)
 
-**Ref:** [use_existing_variable.dart](../../../lib/src/rules/use_existing_variable.dart#L49-L84)
+**Ref:** [use_existing_variable.dart](../../../lib/src/rules/use_existing_variable.dart)
 
 ### Analyze Pattern Variable Declarations (Dart 3 Destructuring)
 
@@ -1456,7 +1456,7 @@ void visitPatternVariableDeclaration(PatternVariableDeclaration node) {
 - `PatternField` — a single field with `.effectiveName` (String?), `.name` (PatternFieldName?), `.pattern` (DartPattern)
 - `DeclaredVariablePattern` — the variable binding inside a field, has `.name` (Token), `.keyword` (Token?), `.type` (TypeAnnotation?)
 
-**Ref:** [avoid_single_field_destructuring.dart](../../../lib/src/rules/avoid_single_field_destructuring.dart#L55-L69)
+**Ref:** [avoid_single_field_destructuring.dart](../../../lib/src/rules/avoid_single_field_destructuring.dart)
 
 ### Track Destructurings in Block and Flag Property Accesses on Same Source
 
@@ -1531,7 +1531,7 @@ class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
 - Handle both `PrefixedIdentifier` (simple `obj.prop`) and `PropertyAccess` (chained access)
 - `PatternField.effectiveName` returns the property name being destructured
 
-**Ref:** [use_existing_destructuring.dart](../../../lib/src/rules/use_existing_destructuring.dart#L81-L248)
+**Ref:** [use_existing_destructuring.dart](../../../lib/src/rules/use_existing_destructuring.dart)
 
 ### Inspect Constructors Within a Class Declaration
 
@@ -1570,7 +1570,7 @@ void visitClassDeclaration(ClassDeclaration node) {
 - `ConstructorDeclaration.initializers` → `NodeList<ConstructorInitializer>` — subtypes: `ConstructorFieldInitializer`, `SuperConstructorInvocation`, `RedirectingConstructorInvocation`, `AssertInitializer`
 - `ConstructorDeclaration.name` → `SimpleIdentifier` (class name), `.period` → `Token?` (for named constructors)
 
-**Ref:** [avoid_state_constructors.dart](../../../lib/src/rules/avoid_state_constructors.dart#L55-L77)
+**Ref:** [avoid_state_constructors.dart](../../../lib/src/rules/avoid_state_constructors.dart)
 
 ### Analyze GenericFunctionType Annotations (e.g., `Future<void> Function()`)
 
@@ -1609,7 +1609,7 @@ void visitGenericFunctionType(GenericFunctionType node) {
 - `node.question` is the `?` token for nullable function types like `void Function()?`
 - Length of `Future<void> Function()` is **23 characters** (not 24)
 
-**Ref:** [prefer_async_callback.dart](../../../lib/src/rules/prefer_async_callback.dart#L60-L85)
+**Ref:** [prefer_async_callback.dart](../../../lib/src/rules/prefer_async_callback.dart)
 
 ### Verify Target Resolves to a dart: SDK Class
 
@@ -1641,7 +1641,7 @@ void visitMethodInvocation(MethodInvocation node) {
 - Use `startsWith('dart:isolate')` for dart: libraries
 - This prevents false positives when users define their own class with the same name
 
-**Ref:** [prefer_compute_over_isolate_run.dart](../../../lib/src/rules/prefer_compute_over_isolate_run.dart#L60-L75)
+**Ref:** [prefer_compute_over_isolate_run.dart](../../../lib/src/rules/prefer_compute_over_isolate_run.dart)
 
 ### Check If a Widget's Constructor Has a Specific Named Parameter
 
@@ -1682,7 +1682,7 @@ if (!_hasPaddingParam(childType)) return;
 - `FormalParameterElement.isNamed` and `.name` for checking named parameters
 - Works for any widget/class, not just Flutter-specific types
 
-**Ref:** [avoid_wrapping_in_padding.dart](../../../lib/src/rules/avoid_wrapping_in_padding.dart#L106-L112)
+**Ref:** [avoid_wrapping_in_padding.dart](../../../lib/src/rules/avoid_wrapping_in_padding.dart)
 
 ### Detect Functional List Building Patterns (map/toList, spread+map, List.generate, fold)
 
@@ -1738,7 +1738,7 @@ void visitListLiteral(ListLiteral node) {
 - Use `registry.addListLiteral` to visit `ListLiteral` nodes and inspect `SpreadElement` children
 - Check `node.parent is SpreadElement` to avoid double-reporting when both patterns match
 
-**Ref:** [prefer_for_loop_in_children.dart](../../../lib/src/rules/prefer_for_loop_in_children.dart#L43-L166)
+**Ref:** [prefer_for_loop_in_children.dart](../../../lib/src/rules/prefer_for_loop_in_children.dart)
 
 ### Detect Identifier Usage After Async Gaps (await points)
 
@@ -1819,7 +1819,7 @@ static bool _isMountedGuardWithReturn(Statement statement) {
 - For target detection, handle all identifier forms: `MethodInvocation` (ref.read), `PrefixedIdentifier` (ref.prop), `SimpleIdentifier` (bare ref), `AssignmentExpression` (state = x), `PropertyAccess` (this.ref.prop)
 - Exclude `ref.mounted` from being flagged (it's the guard itself)
 
-**Ref:** [use_ref_and_state_synchronously.dart](../../../lib/src/rules/use_ref_and_state_synchronously.dart#L55-L148)
+**Ref:** [use_ref_and_state_synchronously.dart](../../../lib/src/rules/use_ref_and_state_synchronously.dart)
 
 ### Detect Calls Inside Conditional Branches (Depth Counter Pattern)
 
@@ -1892,4 +1892,4 @@ class _ConditionalCallFinder extends RecursiveAstVisitor<void> {
 - Override all conditional node types: `IfStatement`, `IfElement`, `SwitchStatement`, `SwitchExpression`, `ConditionalExpression`, `BinaryExpression` (`&&`/`||`)
 - `RecursiveAstVisitor` does NOT have `visitInvocationExpression` — use `visitMethodInvocation`, `visitFunctionExpressionInvocation`, and `visitInstanceCreationExpression` separately
 
-**Ref:** [avoid_conditional_hooks.dart](../../../lib/src/rules/avoid_conditional_hooks.dart#L88-L189)
+**Ref:** [avoid_conditional_hooks.dart](../../../lib/src/rules/avoid_conditional_hooks.dart)

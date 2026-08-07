@@ -1,4 +1,5 @@
 // ignore_for_file: unused_element, unused_field, unused_local_variable
+// ignore_for_file: many_lints/avoid_commented_out_code, many_lints/prefer_async_callback
 
 /// Examples of the `prefer_void_callback` lint rule.
 

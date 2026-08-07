@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable
+// ignore_for_file: many_lints/avoid_commented_out_code, many_lints/avoid_constant_conditions, many_lints/avoid_equal_expressions, many_lints/use_existing_variable
 
 // avoid_collection_equality_checks
 //

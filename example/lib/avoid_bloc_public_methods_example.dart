@@ -1,3 +1,5 @@
+// ignore_for_file: many_lints/avoid_unnecessary_overrides
+// ignore_for_file: unused_element
 import 'package:bloc/bloc.dart';
 
 // avoid_bloc_public_methods

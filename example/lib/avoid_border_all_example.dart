@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable
+// ignore_for_file: many_lints/prefer_shorthands_with_enums
 
 // avoid_border_all
 //

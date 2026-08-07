@@ -19,7 +19,7 @@ The failure is easy to miss: the throw happens inside a detached future, so it u
 
 Guarding with `if (isClosed) return;` after each await makes the handler exit cleanly instead.
 
-This is the bloc counterpart to [`use_ref_and_state_synchronously`](/docs/rules/riverpod-state/use-ref-and-state-synchronously/) and to Dart's own `use_build_context_synchronously`.
+This is the bloc counterpart to [`use_ref_and_state_synchronously`](/many_lints/docs/rules/async-safety/use-ref-and-state-synchronously/) and to Dart's own `use_build_context_synchronously`.
 
 **See also:** [bloc: BlocBase.isClosed](https://pub.dev/documentation/bloc/latest/bloc/BlocBase/isClosed.html)
 

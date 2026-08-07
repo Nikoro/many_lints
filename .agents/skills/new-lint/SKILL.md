@@ -1,13 +1,13 @@
 ---
 name: new-lint
-description: Creates a new lint rule with quick fix and tests for the many_lints package. Use when the user wants to add a new lint rule.
+description: Creates a new lint rule with tests and, when safe and useful, a quick fix for the many_lints package. Use when the user wants to add a new lint rule.
 ---
 
 You are creating a new lint rule for the **many_lints** Dart linter package. The user will provide context describing what the lint should detect, possibly a lint name, and optionally reference links.
 
 ## Step 1: Parse the user's input
 
-Extract from the `$ARGUMENTS`:
+Extract from the user's request:
 - **Lint name** (snake_case) — if not provided, derive one from the description
 - **Description** — what the lint should detect/warn about
 - **Reference links** — any URLs for documentation or examples
@@ -28,7 +28,7 @@ Before writing any code:
    - [Testing rules](https://github.com/dart-lang/sdk/blob/main/pkg/analysis_server_plugin/doc/testing_rules.md)
    - [Writing assists](https://github.com/dart-lang/sdk/blob/main/pkg/analysis_server_plugin/doc/writing_assists.md)
 
-3. Read any reference links the user provided in `$ARGUMENTS`.
+3. Read any reference links the user provided.
 
 4. If the cookbook doesn't cover your specific pattern, read 1-2 existing rules in `lib/src/rules/` and their corresponding fixes in `lib/src/fixes/` and tests in `test/` to understand the codebase patterns. Pick rules that are most similar to the new lint being created.
 
@@ -36,7 +36,8 @@ Before writing any code:
 
 ## Step 3: Ask clarifying questions
 
-Before implementing, use `AskUserQuestion` to clarify:
+Before implementing, use the input mechanism available in the current
+environment to clarify:
 - What specific AST nodes/patterns should trigger the lint?
 - What should the quick fix do exactly? (e.g., replace widget, rename, remove argument)
 - Are there edge cases to consider? (e.g., const constructors, nested expressions, generics)
@@ -65,7 +66,7 @@ class <RuleClass> extends AnalysisRule {
   static const LintCode code = LintCode(
     '<lint_name>',
     '<problem message describing what is wrong>',
-    // Optional: correctionMessage: '<suggestion for how to fix>',
+    correctionMessage: '<suggestion for how to fix>',
   );
 
   <RuleClass>()
@@ -108,8 +109,13 @@ Key conventions:
 - Use `TypeChecker.fromName()` or `TypeChecker.fromUrl()` for type checks
 - Use Dart 3.0+ pattern matching for AST analysis
 - Use helpers from `lib/src/ast_node_analysis.dart` when applicable
+- `correctionMessage` is required by the docs generator; always provide it
 
-## Step 5: Create the quick fix
+## Step 5: Create a quick fix when applicable
+
+Create a fix when the user requests one or when the transformation is safe,
+deterministic, and preserves behavior. If no safe automatic edit exists, skip
+the fix and document the rule without fix badges.
 
 **📖 Consult the Quick Fix Cookbook:** See [fixes-cookbook.md](fixes-cookbook.md) for comprehensive patterns and examples.
 
@@ -141,9 +147,10 @@ class <FixClass> extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // Access the reported node:
-    final targetNode = node;
-    // Navigate to the relevant AST node
+    // nodeCovering returns the deepest matching node. Walk up to the semantic
+    // target instead of type-testing node or node.parent directly.
+    final targetNode = node.thisOrAncestorOfType<RelevantAstNode>();
+    if (targetNode == null) return;
     // Apply fix using builder.addDartFileEdit(file, (builder) { ... });
   }
 }
@@ -160,9 +167,10 @@ Key conventions:
 
 Edit `lib/many_lints.dart`:
 
-1. Add imports for the new rule and fix
-2. Add `registry.registerWarningRule(<RuleClass>());` in the rules section
-3. Add `registry.registerFixForRule(<RuleClass>.code, <FixClass>.new);` in the fixes section
+1. Add the rule import and, when applicable, the fix import
+2. Add `_registerWarningRule(registry, <RuleClass>());` in the rules section.
+   This project wrapper is required to keep plugin diagnostics/configuration in sync.
+3. If a fix exists, add `registry.registerFixForRule(<RuleClass>.code, <FixClass>.new);` in the fixes section
 
 ## Step 7: Create tests
 
@@ -230,10 +238,14 @@ Note that `analyzer_testing` (0.3.4) still exposes no API for testing quick-fix
 or assist *output* — only `AnalysisRuleTest` for diagnostics. Fixes are covered
 anyway: `PluginServer` answers `edit.getFixes`, and `test/fix_harness.dart`
 wraps that so a fix can be checked by the text it actually produces. Every fix
-gets output tests under `test/fix_output/`; see
+has output tests. New batches belong under `test/fix_output/`; a few older
+batches remain in `test/plugin_fix_output_test.dart`. See
 [Testing a Fix](fixes-cookbook.md#testing-a-fix). Assist tests drive
 `CorrectionProducerContext` directly; see
 [assists-cookbook.md](assists-cookbook.md).
+
+If Step 5 created a fix, add its output-test group under `test/fix_output/`
+before proceeding.
 - `lint(offset, length)` — offset is the character position, length is the length of the reported node/token
 - Method names start with `test_` and use camelCase
 
@@ -287,6 +299,9 @@ Create `docs/src/content/docs/docs/rules/<category>/<lint-name>.md` for the new 
 
 If no existing category fits, create a new directory AND add a matching `autogenerate` entry in `docs/astro.config.mjs` sidebar config.
 
+Add `<lint_name>` exactly once to the matching category in
+`docs/scripts/generate-rule-pages.mjs`, even when the category already exists.
+
 **Use this template** (match the format of existing pages):
 
 ```markdown
@@ -311,7 +326,7 @@ sidebar:
 
 <Real-world context explaining why this pattern is problematic. Include "See also" links to relevant official docs.>
 
-**See also:** [Link](url) | [Link](url)
+**See also:** <replace with descriptive links to authoritative references>
 
 ## Don't
 
@@ -352,6 +367,8 @@ Create `example/lib/<lint_name>_example.dart` to demonstrate the lint rule. Look
 
 The example file should include:
 - A file-level `// ignore_for_file: unused_local_variable` (or similar) to suppress unrelated warnings
+- Prefixed ignores such as `// ignore_for_file: many_lints/<other_rule>` for
+  unrelated plugin diagnostics; never suppress the rule demonstrated by the file
 - A comment header with the lint name and brief description
 - **Bad examples** (code that triggers the lint) with `// LINT:` comments explaining each case
 - **Good examples** (correct code that does NOT trigger the lint)
@@ -385,7 +402,16 @@ class GoodExamples {
 
 Run the following commands from the project root to ensure everything works:
 
-1. `dart analyze` - Ensure there are **no issues at all** (errors, warnings, or infos). Fix any that appear before proceeding.
-2. `dart test` - Ensure all tests pass
+1. Synchronize the registered-rule total and indexes in `README.md`,
+   `example/README.md`, `docs/src/content/docs/docs/configuration.md`, and
+   `docs/src/content/docs/docs/getting-started.mdx`. Verify exact set equality
+   among registered rules, rule sources, examples, docs pages, the example README
+   table, and the generator category map.
+2. `dart format --output=none --set-exit-if-changed .` - Ensure all Dart files are formatted.
+3. `dart analyze` - Ensure there are **no issues at all** (errors, warnings, or infos). Fix any that appear before proceeding.
+4. `dart test` - Ensure all tests pass
+5. Analyze `example/` in machine format and verify that the new example emits
+   its target rule and no unrelated `many_lints` or SDK diagnostics.
+6. Run `bun run build` from `docs/` as the final gate.
 
-If either command fails or reports issues, fix them and re-run until both are fully clean.
+If any check fails or reports issues, fix it and re-run the affected checks until all are fully clean.

@@ -15,7 +15,7 @@ Flags access to `state`, `stateOrNull`, `future` or `ref` on a `Notifier` from o
 
 Reading `notifier.state` bypasses the provider system: the value is read once, and the reader is never rebuilt when it changes. Writing it from outside moves state transitions out of the notifier, which is where the rest of the codebase expects to find them. Going through the provider gives correct reactivity and keeps mutations in one place.
 
-**See also:** [Riverpod - Notifier](https://riverpod.dev/docs/concepts/providers)
+**See also:** [Riverpod providers](https://riverpod.dev/docs/concepts2/providers)
 
 ## Don't
 

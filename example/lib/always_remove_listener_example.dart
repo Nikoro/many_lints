@@ -1,4 +1,5 @@
 // ignore_for_file: unused_field, unused_element
+// ignore_for_file: many_lints/avoid_empty_setstate, many_lints/dispose_fields, many_lints/prefer_immutable_bloc_state, many_lints/prefer_overriding_parent_equality, many_lints/prefer_single_widget_per_file
 
 // always_remove_listener
 //

@@ -5,22 +5,24 @@ This directory contains quick fix implementations. Each fix extends `ResolvedCor
 **Full implementation guide:** [fixes-cookbook.md](../../../.claude/skills/new-lint/fixes-cookbook.md)
 **To create a new lint with fix:** use the `/new-lint` skill
 
-**Testing:** every fix has output tests under `test/fix_output/`, driven by
-`test/fix_harness.dart` (a real `PluginServer` answering `edit.getFixes`, whose
-edit is applied to the source and compared). `analyzer_testing` has no fix test
-API — do not conclude fixes are untestable. See
+**Testing:** every registered fix has output tests. New batches live under
+`test/fix_output/`; a few older batches remain in
+`test/plugin_fix_output_test.dart`. Both use `test/fix_harness.dart` (a real
+`PluginServer` answering `edit.getFixes`, whose edit is applied to the source
+and compared). `analyzer_testing` has no fix test API — do not conclude fixes
+are untestable. See
 [Testing a Fix](../../../.claude/skills/new-lint/fixes-cookbook.md#testing-a-fix).
 
 ## Fix Pattern
 
-Every fix follows: `ResolvedCorrectionProducer` + `FixKind` + `compute(ChangeBuilder builder)` + `builder.addDartFileEdit(file, ...)`.
+Concrete fixes generally follow: `ResolvedCorrectionProducer` + `FixKind` + `compute(ChangeBuilder builder)` + `builder.addDartFileEdit(file, ...)`.
 
 - **FixKind ID:** `'many_lints.fix.<camelCase>'`
-- **Priority:** All fixes use `DartFixKindPriority.standard`
-- **Applicability:** All fixes use `CorrectionApplicability.singleLocation`
+- **Priority:** Default to `DartFixKindPriority.standard`
+- **Applicability:** Default to `CorrectionApplicability.singleLocation`
 - **Constructor:** `MyFix({required super.context})`
 
-## Never type-test `node` directly
+## Do not assume the shape of `node`
 
 `node` comes from `nodeCovering(offset, length)`, which returns the **deepest**
 node with the diagnostic's range. An unnamed `Foo(...)` therefore gives
@@ -32,13 +34,17 @@ final targetNode = node.thisOrAncestorOfType<ConstructorName>(); // ✔
 if (targetNode == null) return;
 ```
 
+Direct type-tests are reserved for rules that deliberately report the whole
+semantic node and have output tests locking that exact range contract. Prefer
+ancestor lookup for new fixes.
+
 Getting this wrong produces no error and no exception — the fix is offered and
 does nothing. It silently broke 27 fixes at once; only output tests caught it.
 
 ## Common Patterns
 
 ```dart
-// Replace entire node (used in all 15 fixes)
+// Replace an entire node
 builder.addSimpleReplacement(range.node(targetNode), 'NewText');
 
 // Delete from argument list (handles commas)

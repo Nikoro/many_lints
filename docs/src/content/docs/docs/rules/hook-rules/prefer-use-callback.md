@@ -19,7 +19,7 @@ Flags uses of `useMemoized` where the factory function returns another function.
 
 `useCallback` communicates intent more clearly than `useMemoized(() => someFunction)`. It signals that you are memoizing a callback, not computing an expensive value. Using the right hook improves readability and aligns with the hooks naming conventions from React and flutter_hooks.
 
-**See also:** [flutter_hooks - useCallback](https://pub.dev/packages/flutter_hooks#usecallback)
+**See also:** [flutter_hooks - useCallback](https://pub.dev/documentation/flutter_hooks/latest/flutter_hooks/useCallback.html)
 
 ## Don't
 

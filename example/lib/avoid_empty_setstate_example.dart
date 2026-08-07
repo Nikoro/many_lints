@@ -1,4 +1,5 @@
 // ignore_for_file: unused_element, unused_field
+// ignore_for_file: many_lints/prefer_immutable_bloc_state, many_lints/prefer_overriding_parent_equality, many_lints/prefer_void_callback
 
 // avoid_empty_setstate
 //

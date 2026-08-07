@@ -17,9 +17,9 @@ This rule flags `ref.watch()` calls that appear outside a `build()` method of a 
 
 The correct alternative depends on intent. For a one-off read in a callback, use `ref.read`. To react to provider changes with a side effect (navigation, showing a snackbar), use `ref.listen` inside `build`.
 
-This rule is the counterpart to [`avoid_ref_read_inside_build`](/docs/rules/riverpod-state/avoid-ref-read-inside-build/): together they express the rule that `watch` belongs in `build` and `read` belongs outside it.
+This rule is the counterpart to [`avoid_ref_read_inside_build`](/many_lints/docs/rules/riverpod-state/avoid-ref-read-inside-build/): together they express the rule that `watch` belongs in `build` and `read` belongs outside it.
 
-**See also:** [Reading a provider](https://riverpod.dev/docs/concepts/reading)
+**See also:** [Riverpod refs](https://riverpod.dev/docs/concepts2/refs)
 
 ## Don't
 

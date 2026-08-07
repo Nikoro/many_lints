@@ -1,4 +1,5 @@
-// ignore_for_file: unused_field
+// ignore_for_file: deprecated_member_use, unused_field
+// ignore_for_file: many_lints/prefer_overriding_parent_equality
 
 // prefer_equatable_mixin
 //

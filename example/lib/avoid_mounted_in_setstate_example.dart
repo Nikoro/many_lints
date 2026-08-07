@@ -1,4 +1,5 @@
-// ignore_for_file: unused_local_variable, unnecessary_lambdas
+// ignore_for_file: unnecessary_lambdas, unused_element, unused_local_variable
+// ignore_for_file: many_lints/avoid_empty_setstate, many_lints/prefer_immutable_bloc_state, many_lints/prefer_overriding_parent_equality, many_lints/prefer_single_setstate, many_lints/prefer_single_widget_per_file
 
 // avoid_mounted_in_setstate
 //

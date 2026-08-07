@@ -33,6 +33,7 @@ docs/
     assets/
       custom.css            # Custom theme (Flutter docs-inspired colors, badge styling, hero layout)
     components/
+      Footer.astro          # Compact custom footer with project links
       SocialIcons.astro     # Custom header links (Docs, GitHub, pub.dev with external icons)
       ThemeSelect.astro     # Icon-only dark/light toggle (replaces Starlight dropdown)
     content.config.ts       # Astro content collection config
@@ -66,7 +67,7 @@ docs/
 
 ## Rule Pages
 
-Rule documentation pages are **hand-maintained** and committed directly. The generation script (`scripts/generate-rule-pages.mjs`) can bootstrap new pages but does not run in CI.
+Rule documentation pages are **hand-maintained** and committed directly. The generation script (`scripts/generate-rule-pages.mjs`) can bootstrap new pages but does not run in CI. It exits non-zero when a rule is uncategorized, listed in multiple categories, or referenced without a matching rule source.
 
 Each rule page follows this format:
 - **Badges**: `<span class="rule-badge rule-badge--{version,warning,fix,category}">` — version introduced, severity, fix availability, category
@@ -94,6 +95,7 @@ Custom CSS in `src/assets/custom.css`:
 - Styled "Get Started" button (rounded rectangle, white text on accent)
 
 Starlight component overrides (registered in `astro.config.mjs` under `components`):
+- `Footer.astro` — Replaces the default footer with a compact project footer and links.
 - `SocialIcons.astro` — Replaces default icon-only social links with text labels ("Docs", "GitHub", "pub.dev"). External links get an arrow icon and open in new tabs.
 - `ThemeSelect.astro` — Replaces the dropdown theme selector with a single sun/moon icon toggle (dark/light only, no "auto").
 

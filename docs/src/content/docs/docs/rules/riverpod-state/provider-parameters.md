@@ -15,7 +15,7 @@ Flags an argument passed to a family provider that has no stable equality — a 
 
 Riverpod caches one provider instance per family argument, keyed by `==`. An argument that allocates a new object on every build never compares equal to the previous one, so Riverpod treats each rebuild as a brand-new provider: the old one is disposed, state is lost, and any network request behind it runs again. The symptom is an infinite rebuild loop or a widget that never keeps its data — both hard to trace back to the argument.
 
-**See also:** [Riverpod - Passing arguments to your requests](https://riverpod.dev/docs/concepts/modifiers/family)
+**See also:** [Riverpod families](https://riverpod.dev/docs/concepts2/family)
 
 ## Don't
 

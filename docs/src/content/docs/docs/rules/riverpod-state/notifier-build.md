@@ -19,7 +19,7 @@ Flags a class annotated with `@riverpod` (or `@Riverpod(...)`) that has no `buil
 
 The generator turns a notifier's `build` method into the provider's create function. Without one, the build step fails — and the error points at the generated file, not the class that caused it. Catching this at analysis time names the actual class and offers a stub.
 
-**See also:** [Riverpod - Code generation](https://riverpod.dev/docs/concepts/about_code_generation)
+**See also:** [Riverpod - Code generation](https://riverpod.dev/docs/concepts2/about_code_generation)
 
 ## Don't
 

@@ -1,3 +1,4 @@
+// ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_shorthands_with_static_fields, many_lints/prefer_single_widget_per_file
 import 'package:flutter/widgets.dart';
 
 // prefer_text_rich

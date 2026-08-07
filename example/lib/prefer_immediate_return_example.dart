@@ -1,4 +1,5 @@
 // ignore_for_file: unused_element, unused_local_variable
+// ignore_for_file: many_lints/prefer_type_over_var
 
 // prefer_immediate_return
 //

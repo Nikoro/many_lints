@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable, unused_element
+// ignore_for_file: many_lints/prefer_type_over_var
 
 // avoid_accessing_collections_by_constant_index
 //

@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable, unused_element
+// ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_returning_shorthands, many_lints/use_existing_variable
 
 // use_ref_read_synchronously
 //

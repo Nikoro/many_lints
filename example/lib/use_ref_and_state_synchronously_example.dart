@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable, unused_element
+// ignore_for_file: many_lints/use_notifier_suffix
 
 // use_ref_and_state_synchronously
 //

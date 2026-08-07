@@ -1,6 +1,6 @@
 # many_lints Examples
 
-This directory contains example code demonstrating each lint rule provided by `many_lints`. Each file in `lib/` corresponds to a single rule and contains code that triggers the lint.
+This directory contains example code demonstrating each lint rule provided by `many_lints`. Each file in `lib/` corresponds to a single rule and contains code that triggers the lint. Unrelated SDK and `many_lints` diagnostics are suppressed per file, so `dart analyze example` shows only the rule each example is meant to demonstrate.
 
 ## Setup
 
@@ -8,7 +8,7 @@ Add to your `analysis_options.yaml`:
 
 ```yaml
 plugins:
-  many_lints: ^0.3.0
+  many_lints: ^0.8.0
 ```
 
 ## All Rules
@@ -16,10 +16,13 @@ plugins:
 | Rule | Description | Fix |
 |------|-------------|-----|
 | `always_remove_listener` | Listener added but never removed in `dispose()` | Yes |
+| `async_value_nullable_pattern` | Matching `AsyncValue(:final value?)` on a nullable value hides a legitimate null result | Yes |
 | `avoid_accessing_collections_by_constant_index` | Avoid accessing a collection by a constant index inside a loop | — |
 | `avoid_bloc_public_methods` | Avoid declaring public members in Bloc classes | — |
 | `avoid_border_all` | Prefer `Border.fromBorderSide` over `Border.all` | Yes |
+| `avoid_build_context_in_providers` | Providers outlive widgets, so they should not receive a `BuildContext` | — |
 | `avoid_cascade_after_if_null` | Cascade after if-null operator can produce unexpected results | Yes |
+| `avoid_collapsible_if` | Merge nested if statements with `&&` | Yes |
 | `avoid_conditional_hooks` | Hooks called inside conditionals or loops | — |
 | `avoid_collection_equality_checks` | Comparing collections with `==`/`!=` checks reference equality | — |
 | `avoid_collection_methods_with_unrelated_types` | Collection method calls with arguments unrelated to the collection's type | — |
@@ -27,24 +30,39 @@ plugins:
 | `avoid_constant_conditions` | Both sides of a comparison are constants | — |
 | `avoid_constant_switches` | The switch expression is a constant | — |
 | `avoid_contradictory_expressions` | Contradictory comparisons in `&&` chains | — |
+| `avoid_default_tostring` | Don't interpolate objects that don't override `toString` | — |
+| `avoid_duplicate_bloc_event_handlers` | Register each Bloc event type exactly once | — |
 | `avoid_duplicate_cascades` | Duplicate cascade sections that indicate copy-paste errors | Yes |
+| `avoid_duplicate_collection_elements` | Don't repeat the same element in a collection literal | Yes |
+| `avoid_empty_setstate` | Don't call `setState` with an empty callback | — |
+| `avoid_empty_spread` | Remove spreads of empty collection literals | Yes |
+| `avoid_equal_expressions` | Both operands of a binary expression should not be identical | — |
 | `avoid_expanded_as_spacer` | Prefer `Spacer` over `Expanded` with empty child | Yes |
 | `avoid_flexible_outside_flex` | `Flexible`/`Expanded` should only be inside `Row`/`Column`/`Flex` | — |
 | `avoid_generics_shadowing` | Generic type parameter shadows a top-level declaration | Yes |
+| `avoid_hooks_outside_build` | Only call hooks from a hook context | — |
 | `avoid_incomplete_copy_with` | `copyWith` is missing constructor parameters | Yes |
 | `avoid_incorrect_image_opacity` | Use `Image`'s `opacity` instead of wrapping in `Opacity` | Yes |
+| `avoid_inherited_widget_in_initstate` | Don't look up inherited widgets inside `initState` | — |
+| `avoid_inverted_boolean_checks` | Use the opposite operator instead of negating a comparison | Yes |
 | `avoid_map_keys_contains` | Use `containsKey()` instead of `.keys.contains()` | Yes |
+| `avoid_missing_enum_constant_in_map` | Cover every enum constant in a map keyed by that enum | — |
+| `avoid_misused_hooks` | Don't call hooks inside loops | — |
 | `avoid_misused_test_matchers` | Incompatible matcher usage with the actual value type | — |
 | `avoid_mounted_in_setstate` | Checking `mounted` inside `setState` is too late | — |
+| `avoid_nested_futures` | Don't declare `Future<Future<T>>` | — |
 | `avoid_notifier_constructors` | Avoid constructors with logic in Notifier classes | Yes |
 | `avoid_only_rethrow` | Catch clause contains only a rethrow statement | Yes |
 | `avoid_passing_bloc_to_bloc` | Avoid passing a Bloc/Cubit to another Bloc/Cubit | — |
 | `avoid_passing_build_context_to_blocs` | Avoid passing `BuildContext` to a Bloc/Cubit | — |
 | `avoid_public_notifier_properties` | Public non-overridden properties in Notifier classes | — |
+| `avoid_recursive_widget_calls` | Don't build a widget from inside its own `build` method | — |
+| `avoid_redundant_else` | Drop the `else` when the `if` branch always exits | Yes |
 | `avoid_ref_inside_state_dispose` | Avoid accessing `ref` inside `dispose()` | — |
 | `avoid_ref_read_inside_build` | Avoid using `ref.read` inside the `build` method | Yes |
+| `avoid_ref_watch_outside_build` | Use `ref.read` or `ref.listen` instead of `ref.watch` outside `build` | — |
 | `avoid_returning_widgets` | Avoid returning widgets from functions/methods/getters | — |
-| `avoid_shrink_wrap_in_lists` | Avoid using `shrinkWrap` in `ListView` | — |
+| `avoid_shrink_wrap_in_lists` | Avoid using `shrinkWrap` in `ListView` | Yes |
 | `avoid_single_child_in_multi_child_widgets` | Single child in multi-child widgets | — |
 | `avoid_single_field_destructuring` | Avoid single-field destructuring | Yes |
 | `avoid_state_constructors` | Avoid constructors with logic in State classes | Yes |
@@ -53,15 +71,24 @@ plugins:
 | `avoid_unnecessary_consumer_widgets` | `ConsumerWidget` does not use `WidgetRef` | Yes |
 | `avoid_unnecessary_gesture_detector` | `GestureDetector` with no event handlers | Yes |
 | `avoid_unnecessary_hook_widgets` | `HookWidget` does not use hooks | Yes |
+| `avoid_unnecessary_negations` | Collapse unnecessary boolean negations | Yes |
 | `avoid_unnecessary_overrides` | Override only calls `super` without additional logic | Yes |
 | `avoid_unnecessary_overrides_in_state` | State method override only calls `super` | Yes |
 | `avoid_unnecessary_setstate` | Unnecessary call to `setState` | Yes |
 | `avoid_unnecessary_stateful_widgets` | `StatefulWidget` with no mutable state | Yes |
+| `avoid_unsafe_collection_methods` | Check for emptiness before using `first`, `last`, `single`, or `reduce` | — |
+| `avoid_wildcard_cases_with_enums` | Keep exhaustiveness checking by listing enum cases explicitly | — |
 | `avoid_wrapping_in_padding` | Avoid wrapping a widget in `Padding` when it has padding support | Yes |
+| `check_is_not_closed_after_async_gap` | Check `isClosed` before emitting state after an `await` | — |
 | `dispose_fields` | Field not disposed in `dispose()` | Yes |
 | `dispose_provided_instances` | Instance not disposed via `ref.onDispose()` | Yes |
 | `list_all_equatable_fields` | Equatable subclass missing fields in `props` | Yes |
+| `missing_provider_scope` | Riverpod applications must have a `ProviderScope` at the root | Yes |
+| `notifier_build` | Classes annotated with `@riverpod` must define a `build` method | Yes |
+| `pass_existing_future_to_future_builder` | Don't create a new `Future` inline inside `FutureBuilder` | — |
+| `pass_existing_stream_to_stream_builder` | Don't create a new `Stream` inline inside `StreamBuilder` | — |
 | `prefer_abstract_final_static_class` | Classes with only static members → `abstract final` | Yes |
+| `prefer_add_all` | Replace an add-only loop or call sequence with `addAll` | Yes |
 | `prefer_align_over_container` | Use `Align` instead of `Container` with only alignment | Yes |
 | `prefer_any_or_every` | `.any()`/`.every()` over `.where().isEmpty/.isNotEmpty` | Yes |
 | `prefer_async_callback` | Use `AsyncCallback` instead of `Future<void> Function()` | Yes |
@@ -79,11 +106,13 @@ plugins:
 | `prefer_expect_later` | `expectLater` when testing Futures | Yes |
 | `prefer_explicit_function_type` | Explicit return type over bare `Function` | Yes |
 | `prefer_for_loop_in_children` | For-loop instead of functional list building | Yes |
+| `prefer_immediate_return` | Return an expression directly instead of via a throwaway variable | Yes |
 | `prefer_immutable_bloc_state` | Bloc state classes → `@immutable` | Yes |
 | `prefer_iterable_of` | `.of()` instead of `.from()` for type safety | Yes |
 | `prefer_multi_bloc_provider` | `MultiBlocProvider` instead of nested `BlocProvider`s | Yes |
 | `prefer_overriding_parent_equality` | Parent overrides `==`/`hashCode` but subclass does not | Yes |
 | `prefer_padding_over_container` | `Padding` over `Container` with only margin | Yes |
+| `prefer_private_named_parameters` | Prefer private named parameters over initializer-list boilerplate | Yes |
 | `prefer_return_await` | Missing `await` on returned `Future` in `try-catch` | Yes |
 | `prefer_returning_shorthands` | Dot shorthands when instance type matches return type | Yes |
 | `prefer_shorthands_with_constructors` | Dot shorthands instead of explicit class instantiations | Yes |
@@ -95,8 +124,10 @@ plugins:
 | `prefer_sized_box_square` | `SizedBox.square` instead of equal width/height | Yes |
 | `prefer_spacing` | `spacing` argument instead of `SizedBox` | — |
 | `prefer_switch_expression` | Switch expressions over switch statements | Yes |
+| `prefer_switch_with_enums` | Use a switch instead of an if-else chain over enum constants | — |
 | `prefer_test_matchers` | `Matcher` instead of literal value in `expect()` | — |
 | `prefer_text_rich` | `Text.rich` instead of `RichText` | Yes |
+| `prefer_theme_mode_getters` | Prefer `ThemeMode` getters over comparisons against enum constants | Yes |
 | `prefer_transform_over_container` | `Transform` over `Container` with only transform | Yes |
 | `prefer_type_over_var` | Explicit type annotation over `var` | Yes |
 | `prefer_use_callback` | `useCallback` instead of inline closures in hooks | Yes |
@@ -104,6 +135,8 @@ plugins:
 | `prefer_void_callback` | `VoidCallback` instead of `void Function()` | Yes |
 | `prefer_wildcard_pattern` | Wildcard pattern `_` instead of `Object()` | Yes |
 | `proper_super_calls` | `super` calls placed correctly in lifecycle methods | Yes |
+| `protected_notifier_properties` | Don't access a Notifier's `state`, `ref`, or `future` externally | — |
+| `provider_parameters` | Family provider arguments must have stable equality | — |
 | `use_bloc_suffix` | `Bloc` suffix for `Bloc` subclasses | Yes |
 | `use_closest_build_context` | Use closest available `BuildContext` | Yes |
 | `use_cubit_suffix` | `Cubit` suffix for `Cubit` subclasses | Yes |

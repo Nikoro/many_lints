@@ -15,7 +15,7 @@ Collections in Dart (List, Set, Map) use reference equality by default, not stru
 
 Using `==` on collections is a common source of bugs. Two lists with the same elements will return `false` when compared with `==` because they are different objects in memory. Use `DeepCollectionEquality` from the `collection` package or compare individual elements instead.
 
-**See also:** [Dart collections](https://dart.dev/guides/libraries/library-tour#collections) | [collection package](https://pub.dev/packages/collection) | [Dart lint: unrelated_type_equality_checks](https://dart.dev/tools/linter-rules/unrelated_type_equality_checks)
+**See also:** [Dart collections](https://dart.dev/language/collections) | [collection package](https://pub.dev/packages/collection) | [Dart lint: unrelated_type_equality_checks](https://dart.dev/tools/linter-rules/unrelated_type_equality_checks)
 
 ## Don't
 

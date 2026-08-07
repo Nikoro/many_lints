@@ -1,4 +1,4 @@
-// ignore_for_file: unused_local_variable, unused_catch_clause
+// ignore_for_file: unused_catch_clause, unused_catch_stack, unused_local_variable
 
 // avoid_only_rethrow
 //

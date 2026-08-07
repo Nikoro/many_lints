@@ -1,13 +1,13 @@
 ---
 name: release
-description: Automate release preparation for the many_lints package. Determines version bump, updates pubspec.yaml/README.md/CHANGELOG.md, commits, tags, and pushes. Use when the user wants to publish a new release.
+description: Automate release preparation for the many_lints package. Determines the version bump, synchronizes package and documentation metadata, validates the release, commits, tags, and pushes. Use when the user wants to publish a new release.
 ---
 
 You are preparing a new release for the **many_lints** Dart linter package. The user may optionally provide a version number or bump keyword.
 
 ## Step 1: Parse User Input
 
-Extract from `$ARGUMENTS`:
+Extract from the user's request:
 - **Explicit version** (e.g., `0.3.0`, `1.0.0`) — use this exact version
 - **Bump keyword** (`major`, `minor`, or `patch`) — apply this bump to the current version
 - **Empty** — auto-determine the bump type from commit analysis
@@ -26,6 +26,9 @@ Run these checks to ensure the package is in a releasable state. If any fail, **
 
 1. `dart analyze` — must produce **zero** issues (errors, warnings, or infos)
 2. `dart test` — all tests must pass
+3. `dart format --output=none --set-exit-if-changed .` — formatting must be clean
+4. `dart pub publish --dry-run` — package validation must pass
+5. `bun run build` from `docs/` — documentation must build successfully
 
 ## Step 4: Analyze Commits & Determine Version
 
@@ -42,7 +45,7 @@ Run these checks to ensure the package is in a releasable state. If any fail, **
    - Any breaking change → **MAJOR** bump
    - Any `feat` commit → **MINOR** bump
    - Only `fix`, `refactor`, `style`, `perf`, `docs` → **PATCH** bump
-   - No user-facing commits (only `chore`, `test`, `ci`, `build`) → Use `AskUserQuestion` to ask whether to proceed with a PATCH release or abort
+   - No user-facing commits (only `chore`, `test`, `ci`, `build`) → ask the user whether to proceed with a PATCH release or abort, using the available input mechanism
 
 6. If user provided a bump keyword (`major`/`minor`/`patch`), apply it to the current version.
 7. If user provided an explicit version, validate it is higher than the current version.
@@ -108,7 +111,7 @@ CHANGELOG preview:
 - ...
 ```
 
-Use `AskUserQuestion` to confirm: "Does this release summary look correct? Should I proceed with updating files?"
+Ask the user to confirm: "Does this release summary look correct? Should I proceed with updating files?" Use the input mechanism available in the current environment.
 
 Allow the user to request edits to the CHANGELOG content before proceeding.
 
@@ -116,25 +119,56 @@ Allow the user to request edits to the CHANGELOG content before proceeding.
 
 1. **`pubspec.yaml`**: Update the `version:` field to the new version.
 
-2. **`README.md`**: Find **all** lines matching the pattern `many_lints: ^` or `version: ^` followed by a semver version and update them to `^X.Y.Z`. There are two occurrences: the simple plugin syntax (`many_lints: ^X.Y.Z`) and the extended syntax with diagnostics (`version: ^X.Y.Z`). Do NOT hardcode line numbers — use pattern matching to find them robustly.
+2. **Published-version references**: Find every install/configuration example that
+   names the package version and update it to `X.Y.Z`. Do not rely on a fixed
+   number of occurrences; search for the old version and verify that none remain.
+   The maintained locations are:
+   - `README.md`
+   - `docs/src/content/docs/docs/configuration.md`
+   - `docs/src/content/docs/docs/getting-started.mdx`
+   - `example/README.md`
+   - the package documentation example in `lib/many_lints.dart`
 
    **If the release changes the `analyzer` dependency**, also update the analyzer version badge in `README.md` (the `img.shields.io/badge/analyzer-<version>-blue` line — update both the `src` URL and the `alt` text) to the analyzer version from `pubspec.lock`. Additionally check that the `environment.sdk` constraint in `pubspec.yaml` and `example/pubspec.yaml` and the pinned `sdk:` version in `.github/workflows/*.yaml` satisfy the new analyzer's minimum SDK requirement — a mismatch makes CI fail at `dart pub get` after the tag is pushed. Finally, update the "Requires Dart X.Y+ (Flutter A.B+)" line in `README.md`, `docs/src/content/docs/docs/configuration.md`, and `docs/src/content/docs/docs/getting-started.mdx` to match the new minimum Dart SDK and the Flutter stable release that ships it.
 
 3. **`CHANGELOG.md`**: Insert the new version section at the top of the file, directly after the `# Changelog` heading. Preserve all existing content below.
 
-4. **Docs site version references**: Update the installable version in these files (same `many_lints: ^` / `version: ^` pattern as README):
-   - `docs/src/content/docs/docs/configuration.md` — 3 occurrences (`many_lints: ^X.Y.Z` and `version: ^X.Y.Z`)
-   - `docs/src/content/docs/docs/getting-started.mdx` — 1 occurrence (`many_lints: ^X.Y.Z`)
-   - Do NOT update version badges on rule pages (`rule-badge--version`) — those are historical and indicate the version that introduced each rule.
+4. **Generated counts and indexes**: derive the registered rule count from the
+   `_registerWarningRule(registry, ...)` calls inside `ManyLintsPlugin.register`
+   (do not count the helper definition), then synchronize any prose or tables that state the
+   total in `README.md`, the docs pages, and `example/README.md`. Verify that:
+   - every registered rule has one docs page and one example;
+   - the example README table contains every registered rule exactly once;
+   - `docs/scripts/generate-rule-pages.mjs` categorizes every rule exactly once.
+
+   Validate these sets explicitly. Running `bun run generate` alone is not a
+   sufficient gate because the generator skips existing pages and does not fail
+   for duplicate category entries.
+
+   Do NOT update version badges on rule pages (`rule-badge--version`) — those are
+   historical and indicate the version that introduced each rule.
+
+5. Search the repository for the previous package version and previous rule
+   count. Review each remaining match explicitly; historical changelog entries
+   and rule-introduction badges are expected, current setup instructions are not.
 
 ## Step 8: Commit & Tag
 
-1. Stage changes: `git add pubspec.yaml README.md CHANGELOG.md docs/src/content/docs/docs/configuration.md docs/src/content/docs/docs/getting-started.mdx`
-2. Create commit:
+1. Repeat the format, analyze, test, and docs-build gates from Step 3 after the
+   version, changelog, and docs edits. Run the final publish dry-run after the
+   release commit so the dirty working tree does not create a false failure.
+2. Review `git diff`, then stage every release-consistency file changed in Step
+   7. At minimum this normally includes `pubspec.yaml`, `README.md`,
+   `CHANGELOG.md`, both setup docs, `example/README.md`, and
+   `lib/many_lints.dart`.
+3. Create commit:
    ```
    git commit -m "chore(release): bump version to X.Y.Z"
    ```
-3. Create annotated tag:
+4. Run `dart pub publish --dry-run`. If it fails, fix the problem, repeat the
+   relevant gates, amend the release commit, and rerun the dry-run. Do not tag
+   until it passes from a clean working tree.
+5. Create annotated tag:
    ```
    git tag -a vX.Y.Z -m "Release version X.Y.Z"
    ```
@@ -143,11 +177,11 @@ Allow the user to request edits to the CHANGELOG content before proceeding.
 
 **IMPORTANT**: Pushing the tag will trigger the `release.yaml` CI workflow, which publishes to pub.dev. This is irreversible.
 
-Use `AskUserQuestion` to confirm: "Ready to push? This will trigger pub.dev publishing and create a GitHub release."
+Ask the user to confirm: "Ready to push? This will trigger pub.dev publishing and create a GitHub release." Use the input mechanism available in the current environment.
 
 If confirmed:
 ```
-git push origin main --follow-tags
+git push origin main vX.Y.Z
 ```
 
 After pushing, inform the user:
@@ -155,7 +189,9 @@ After pushing, inform the user:
 - It will: validate the version, run checks, publish to pub.dev, and create a GitHub release
 - They can monitor progress at: `https://github.com/Nikoro/many_lints/actions`
 
-If something goes wrong after push, provide rollback instructions:
+If something goes wrong after push, explain that a pub.dev publication cannot
+be rolled back. The following commands only repair Git/GitHub metadata; they do
+not remove or replace the published package:
 ```bash
 # Delete remote tag
 git push origin :refs/tags/vX.Y.Z

@@ -19,7 +19,7 @@ When a parent class overrides `==` and `hashCode`, child classes that add new fi
 
 Inheriting a parent's `==` without overriding it in the child means the child's own fields are excluded from equality checks. This causes silent bugs in collections, state comparison, and testing where logically different objects appear identical.
 
-**See also:** [Dart operator == and hashCode](https://dart.dev/guides/language/effective-dart/design#equality) | [Dart lint: hash_and_equals](https://dart.dev/tools/linter-rules/hash_and_equals)
+**See also:** [Dart operator == and hashCode](https://dart.dev/effective-dart/design#equality) | [Dart lint: hash_and_equals](https://dart.dev/tools/linter-rules/hash_and_equals)
 
 ## Don't
 

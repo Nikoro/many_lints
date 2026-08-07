@@ -1,3 +1,4 @@
+// ignore_for_file: many_lints/prefer_overriding_parent_equality
 // missing_provider_scope
 //
 // Warns when runApp() is called without a ProviderScope at the root of the

@@ -15,7 +15,7 @@ Flags a `BuildContext` parameter on a `@riverpod` provider — either a function
 
 Providers outlive the widgets that read them. A `BuildContext` held by a provider can easily refer to a widget that has already been unmounted, and using it then throws `dependOnInheritedWidgetOfExactType was called on a defunct widget` — or quietly reads stale inherited data. Passing the *value* you need instead keeps the provider independent of the widget tree, which is also what makes it testable without pumping a widget.
 
-**See also:** [Riverpod - Passing arguments to your requests](https://riverpod.dev/docs/concepts/modifiers/family)
+**See also:** [Riverpod families](https://riverpod.dev/docs/concepts2/family)
 
 ## Don't
 

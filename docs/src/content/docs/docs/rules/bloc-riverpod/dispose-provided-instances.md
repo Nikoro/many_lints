@@ -19,7 +19,7 @@ This rule flags instances created inside Riverpod provider callbacks or Notifier
 
 When a provider creates a disposable resource (like a controller, stream subscription, or service with a `close()` method) without registering cleanup, the resource leaks when the provider is destroyed. This leads to memory leaks and resource exhaustion over time. The `ref.onDispose()` callback ensures proper cleanup regardless of how or when the provider is disposed.
 
-**See also:** [Riverpod ref.onDispose](https://riverpod.dev/docs/concepts/modifiers/auto_dispose)
+**See also:** [Riverpod automatic disposal](https://riverpod.dev/docs/concepts2/auto_dispose)
 
 ## Don't
 

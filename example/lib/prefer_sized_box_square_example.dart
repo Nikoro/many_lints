@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable, prefer_const_constructors
+// ignore_for_file: many_lints/avoid_returning_widgets
 
 // prefer_sized_box_square
 //

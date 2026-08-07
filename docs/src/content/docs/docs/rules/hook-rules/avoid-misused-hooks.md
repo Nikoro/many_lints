@@ -17,7 +17,7 @@ Hook state is addressed by call position. A hook inside a loop runs as many time
 
 The symptom is state that appears to jump between unrelated widgets, or a `useEffect` firing with the wrong dependencies — bugs that are hard to trace back to the loop.
 
-This is the loop half of the rules of hooks; [`avoid_conditional_hooks`](/docs/rules/hook-rules/avoid-conditional-hooks/) covers the branching half.
+This is the loop half of the rules of hooks; [`avoid_conditional_hooks`](/many_lints/docs/rules/widget-best-practices/avoid-conditional-hooks/) covers the branching half.
 
 **See also:** [flutter_hooks rules](https://pub.dev/packages/flutter_hooks#rules)
 

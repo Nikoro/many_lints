@@ -34,6 +34,7 @@ const CATEGORIES = {
     label: 'Bloc / Riverpod',
     rules: [
       'avoid_bloc_public_methods',
+      'avoid_duplicate_bloc_event_handlers',
       'avoid_passing_bloc_to_bloc',
       'avoid_passing_build_context_to_blocs',
       'prefer_bloc_extensions',
@@ -46,16 +47,32 @@ const CATEGORIES = {
   },
   'riverpod-state': {
     label: 'Riverpod State',
-    rules: ['avoid_ref_inside_state_dispose', 'avoid_ref_read_inside_build'],
+    rules: [
+      'async_value_nullable_pattern',
+      'avoid_build_context_in_providers',
+      'avoid_ref_inside_state_dispose',
+      'avoid_ref_read_inside_build',
+      'avoid_ref_watch_outside_build',
+      'missing_provider_scope',
+      'notifier_build',
+      'protected_notifier_properties',
+      'provider_parameters',
+    ],
   },
   'async-safety': {
     label: 'Async Safety',
-    rules: ['use_ref_and_state_synchronously', 'use_ref_read_synchronously'],
+    rules: [
+      'avoid_nested_futures',
+      'check_is_not_closed_after_async_gap',
+      'use_ref_and_state_synchronously',
+      'use_ref_read_synchronously',
+    ],
   },
   'widget-best-practices': {
     label: 'Widget Best Practices',
     rules: [
       'avoid_flexible_outside_flex',
+      'avoid_recursive_widget_calls',
       'avoid_returning_widgets',
       'avoid_shrink_wrap_in_lists',
       'avoid_single_child_in_multi_child_widgets',
@@ -63,11 +80,14 @@ const CATEGORIES = {
       'avoid_unnecessary_gesture_detector',
       'avoid_unnecessary_hook_widgets',
       'avoid_conditional_hooks',
+      'pass_existing_future_to_future_builder',
+      'pass_existing_stream_to_stream_builder',
       'prefer_single_widget_per_file',
       'use_closest_build_context',
       'use_gap',
       'use_sliver_prefix',
       'prefer_spacing',
+      'prefer_theme_mode_getters',
       'use_dedicated_media_query_methods',
     ],
   },
@@ -93,6 +113,8 @@ const CATEGORIES = {
     label: 'State Management',
     rules: [
       'avoid_state_constructors',
+      'avoid_empty_setstate',
+      'avoid_inherited_widget_in_initstate',
       'avoid_unnecessary_stateful_widgets',
       'avoid_unnecessary_overrides',
       'avoid_unnecessary_overrides_in_state',
@@ -104,12 +126,16 @@ const CATEGORIES = {
     label: 'Control Flow',
     rules: [
       'avoid_cascade_after_if_null',
+      'avoid_collapsible_if',
       'avoid_constant_conditions',
       'avoid_constant_switches',
       'avoid_contradictory_expressions',
       'avoid_duplicate_cascades',
+      'avoid_inverted_boolean_checks',
       'avoid_only_rethrow',
+      'avoid_redundant_else',
       'avoid_throw_in_catch_block',
+      'avoid_unnecessary_negations',
       'prefer_switch_expression',
       'proper_super_calls',
       'prefer_return_await',
@@ -122,9 +148,14 @@ const CATEGORIES = {
       'avoid_accessing_collections_by_constant_index',
       'avoid_collection_equality_checks',
       'avoid_collection_methods_with_unrelated_types',
+      'avoid_duplicate_collection_elements',
+      'avoid_empty_spread',
       'avoid_map_keys_contains',
+      'avoid_missing_enum_constant_in_map',
+      'avoid_unsafe_collection_methods',
       'avoid_incomplete_copy_with',
       'list_all_equatable_fields',
+      'prefer_add_all',
       'prefer_any_or_every',
       'prefer_contains',
       'prefer_enums_by_name',
@@ -138,6 +169,8 @@ const CATEGORIES = {
     label: 'Pattern Matching',
     rules: [
       'avoid_single_field_destructuring',
+      'avoid_wildcard_cases_with_enums',
+      'prefer_switch_with_enums',
       'use_existing_destructuring',
       'use_existing_variable',
       'prefer_wildcard_pattern',
@@ -172,7 +205,12 @@ const CATEGORIES = {
   },
   'hook-rules': {
     label: 'Hook Rules',
-    rules: ['prefer_use_callback', 'prefer_use_prefix'],
+    rules: [
+      'avoid_hooks_outside_build',
+      'avoid_misused_hooks',
+      'prefer_use_callback',
+      'prefer_use_prefix',
+    ],
   },
   'testing-rules': {
     label: 'Testing Rules',
@@ -180,7 +218,6 @@ const CATEGORIES = {
       'avoid_misused_test_matchers',
       'prefer_test_matchers',
       'prefer_expect_later',
-      'prefer_compute_over_isolate_run',
     ],
   },
   'resource-management': {
@@ -195,6 +232,11 @@ const CATEGORIES = {
     label: 'Code Quality',
     rules: [
       'avoid_commented_out_code',
+      'avoid_default_tostring',
+      'avoid_equal_expressions',
+      'prefer_compute_over_isolate_run',
+      'prefer_immediate_return',
+      'prefer_private_named_parameters',
       'prefer_single_setstate',
     ],
   },
@@ -202,8 +244,13 @@ const CATEGORIES = {
 
 // Build reverse lookup: rule_name → { categorySlug, categoryLabel }
 const ruleCategoryMap = {};
+const duplicateCategoryRules = [];
 for (const [slug, cat] of Object.entries(CATEGORIES)) {
   for (const rule of cat.rules) {
+    if (Object.hasOwn(ruleCategoryMap, rule)) {
+      duplicateCategoryRules.push(rule);
+      continue;
+    }
     ruleCategoryMap[rule] = { slug, label: cat.label };
   }
 }
@@ -352,6 +399,7 @@ function main() {
   let skipped = 0;
   let errors = 0;
   const uncategorized = [];
+  const parsedRules = new Set();
 
   for (const file of ruleFiles) {
     const rule = parseRuleFile(join(RULES_DIR, file));
@@ -360,6 +408,7 @@ function main() {
       errors++;
       continue;
     }
+    parsedRules.add(rule.name);
 
     const category = ruleCategoryMap[rule.name];
     if (!category) {
@@ -391,6 +440,22 @@ function main() {
   if (uncategorized.length) {
     console.warn(`\n  Uncategorized rules: ${uncategorized.join(', ')}`);
   }
+  if (duplicateCategoryRules.length) {
+    console.warn(`\n  Rules listed in multiple categories: ${duplicateCategoryRules.join(', ')}`);
+  }
+
+  const unknownCategoryRules = Object.keys(ruleCategoryMap)
+    .filter((rule) => !parsedRules.has(rule));
+  if (unknownCategoryRules.length) {
+    console.warn(`\n  Category entries without a rule source: ${unknownCategoryRules.join(', ')}`);
+  }
+
+  if (errors || uncategorized.length || duplicateCategoryRules.length || unknownCategoryRules.length) {
+    console.error('\nGeneration failed validation.');
+    process.exitCode = 1;
+    return;
+  }
+
   console.log('\nDone!');
 }
 

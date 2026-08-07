@@ -15,7 +15,7 @@ This rule flags public properties (fields, getters, and setters) on `Notifier` a
 
 Riverpod Notifiers are designed to expose a single reactive `state` property. When you add extra public getters or fields, consumers can read stale values that don't trigger rebuilds, leading to UI inconsistencies. Instead, consolidate all data into a model class used as the `state` type. This keeps the reactive contract intact and makes state changes predictable.
 
-**See also:** [Riverpod Notifier documentation](https://riverpod.dev/docs/concepts/providers#notifierprovider)
+**See also:** [Riverpod providers](https://riverpod.dev/docs/concepts2/providers)
 
 ## Don't
 

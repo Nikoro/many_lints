@@ -1,3 +1,5 @@
+// ignore_for_file: many_lints/avoid_missing_enum_constant_in_map, many_lints/use_existing_variable
+// ignore_for_file: unused_local_variable
 enum LogLevel { debug, warning }
 
 void exampleFunction(LogLevel? e) {
