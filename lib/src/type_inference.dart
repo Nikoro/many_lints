@@ -42,6 +42,14 @@ DartType? inferContextType(Expression node) {
     ListLiteral() || SetOrMapLiteral() when parent != null =>
       resolveCollectionElementType(parent),
 
+    // Map entry: `{key: value}` — which type argument applies depends on
+    // whether the expression is the key or the value.
+    MapLiteralEntry(:final key, :final value) => resolveMapEntryType(
+      parent,
+      isKey: node == key,
+      isValue: node == value,
+    ),
+
     // Switch case: `case value:`
     SwitchCase() => resolveSwitchExpressionType(parent),
 
@@ -65,21 +73,67 @@ DartType? inferContextType(Expression node) {
 ///
 /// For example, given `List<String>`, returns `String`.
 /// For `Set<int>`, returns `int`.
+///
+/// Only a genuine *downward* context counts. A literal's `staticType` cannot be
+/// trusted here: when the literal has no context of its own, the analyzer
+/// infers its type upward from the elements themselves, so
+/// `equals([MyEnum.first])` would report `List<MyEnum>` and any element would
+/// trivially "match" its own context. Dot shorthands require a downward context
+/// type, so this returns `null` unless the element type comes from an explicit
+/// type argument or from the collection's own context type.
 DartType? resolveCollectionElementType(AstNode collectionNode) {
-  // Get the static type of the collection
-  final collectionType = switch (collectionNode) {
-    ListLiteral(:final staticType) ||
-    SetOrMapLiteral(:final staticType) => staticType,
-    _ => null,
-  };
+  final typeArguments = resolveCollectionTypeArguments(collectionNode);
 
-  if (collectionType is! InterfaceType) return null;
+  // A list or set contributes exactly one type argument. Two means the literal
+  // is a map, whose entries are handled by [resolveMapEntryType] instead.
+  if (typeArguments == null || typeArguments.length != 1) return null;
 
-  // Extract the element type from List<T>, Set<T>, or Map<K,V>
-  final typeArgs = collectionType.typeArguments;
-  if (typeArgs.isEmpty) return null;
+  return typeArguments.first;
+}
 
-  return typeArgs.first; // For List/Set, this is the element type
+/// Resolves the context type of the key or value half of a map entry.
+///
+/// `{MyEnum.first: 'a'}` under a `Map<MyEnum, String>` context gives the key
+/// `MyEnum` and the value `String`. Returns `null` when the entry belongs to a
+/// literal without a genuine downward context.
+DartType? resolveMapEntryType(
+  MapLiteralEntry entry, {
+  required bool isKey,
+  required bool isValue,
+}) {
+  if (isKey == isValue) return null; // Neither half, or ambiguous.
+
+  final typeArguments = resolveCollectionTypeArguments(entry.parent);
+  if (typeArguments == null || typeArguments.length != 2) return null;
+
+  return isKey ? typeArguments.first : typeArguments.last;
+}
+
+/// Resolves the type arguments that give a collection literal its element
+/// types, using only a genuine *downward* context.
+///
+/// A literal's `staticType` cannot be trusted here: when the literal has no
+/// context of its own, the analyzer infers its type upward from the elements
+/// themselves, so `equals([MyEnum.first])` would report `List<MyEnum>` and any
+/// element would trivially "match" its own context. Dot shorthands require a
+/// downward context type, so this returns `null` unless the types come from an
+/// explicit type argument or from the literal's own context type.
+List<DartType?>? resolveCollectionTypeArguments(AstNode? collectionNode) {
+  if (collectionNode is! TypedLiteral) return null;
+
+  // An explicit type argument is written by the user, so it is a real context:
+  // `<MyEnum>[MyEnum.first]` accepts `<MyEnum>[.first]`.
+  if (collectionNode.typeArguments?.arguments case final typeArgs?
+      when typeArgs.isNotEmpty) {
+    return typeArgs.map((t) => t.type).toList();
+  }
+
+  // Otherwise the types have to come from the literal's own downward context,
+  // not from its upward-inferred static type.
+  final contextType = inferContextType(collectionNode);
+  if (contextType is! InterfaceType) return null;
+
+  return contextType.typeArguments;
 }
 
 /// Resolves the type of the expression being switched on.

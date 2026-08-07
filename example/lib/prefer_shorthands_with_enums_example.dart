@@ -52,3 +52,33 @@ MyEnum getEnum2() => .first;
 
 // ✅ Allowed: Full prefix when type is not inferable
 Object getObject() => MyEnum.first; // No lint - type is Object, not MyEnum
+
+void takesDynamic(dynamic value) {}
+void takesTyped({required List<MyEnum> items}) {}
+
+void collectionExamples() {
+  // ✅ Allowed: The list sits in a `dynamic` position, so it has no downward
+  // context type. A shorthand here would not compile
+  // (dot_shorthand_missing_context).
+  takesDynamic([MyEnum.first]); // No lint
+
+  // ❌ Bad: Explicit type argument provides a real context
+  takesDynamic(<MyEnum>[MyEnum.first]); // LINT
+
+  // ✅ Good: Dot shorthand under an explicit type argument
+  takesDynamic(<MyEnum>[.first]);
+
+  // ❌ Bad: Typed named argument provides context
+  takesTyped(items: [MyEnum.first]); // LINT
+
+  // ✅ Good: Dot shorthand under a typed named argument
+  takesTyped(items: [.first]);
+
+  // ❌ Bad: Map key inherits the key type argument
+  final Map<MyEnum, String> m = {MyEnum.first: 'a'}; // LINT
+
+  // ✅ Good: Dot shorthand in the key position
+  final Map<MyEnum, String> m2 = {.first: 'a'};
+
+  print([m, m2]);
+}

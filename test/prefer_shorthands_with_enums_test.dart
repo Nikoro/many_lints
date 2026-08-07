@@ -309,6 +309,147 @@ void fn() {
     );
   }
 
+  // --- collection literals without a downward context type ---
+  // A literal in a `dynamic`/`Object?` position gets its static type inferred
+  // upward from its own elements, which is not a context type. Reporting there
+  // produces uncompilable code (`dot_shorthand_missing_context`).
+
+  Future<void> test_listLiteral_dynamicParameter_notReported() async {
+    await assertNoDiagnostics(r'''
+enum MyEnum { first, second }
+
+void expect(dynamic actual, dynamic matcher) {}
+dynamic equals(Object? expected) => expected;
+
+void fn(List<MyEnum> rankings) {
+  expect(rankings, equals([MyEnum.first]));
+}
+''');
+  }
+
+  Future<void> test_listLiteral_objectNullableParameter_notReported() async {
+    await assertNoDiagnostics(r'''
+enum MyEnum { first, second }
+
+void takes(Object? value) {}
+
+void fn() {
+  takes([MyEnum.first]);
+}
+''');
+  }
+
+  Future<void> test_setLiteral_dynamicParameter_notReported() async {
+    await assertNoDiagnostics(r'''
+enum MyEnum { first, second }
+
+void takes(dynamic value) {}
+
+void fn() {
+  takes({MyEnum.first});
+}
+''');
+  }
+
+  Future<void> test_listLiteral_explicitTypeArgument() async {
+    // The user wrote the type argument, so it is a genuine context type and
+    // `<MyEnum>[.first]` compiles.
+    await assertDiagnostics(
+      r'''
+enum MyEnum { first, second }
+
+void takes(dynamic value) {}
+
+void fn() {
+  takes(<MyEnum>[MyEnum.first]);
+}
+''',
+      [lint(90, 12)],
+    );
+  }
+
+  Future<void> test_nestedListLiteral_typedContext() async {
+    await assertDiagnostics(
+      r'''
+enum MyEnum { first, second }
+
+void fn() {
+  final List<List<MyEnum>> nested = [[MyEnum.first]];
+}
+''',
+      [lint(81, 12)],
+    );
+  }
+
+  Future<void> test_listLiteral_typedNamedArgument() async {
+    await assertDiagnostics(
+      r'''
+enum MyEnum { first, second }
+
+void takes({required List<MyEnum> items}) {}
+
+void fn() {
+  takes(items: [MyEnum.first]);
+}
+''',
+      [lint(105, 12)],
+    );
+  }
+
+  Future<void> test_mapLiteral_keyPosition() async {
+    await assertDiagnostics(
+      r'''
+enum MyEnum { first, second }
+
+void fn() {
+  final Map<MyEnum, String> m = {MyEnum.first: 'a'};
+}
+''',
+      [lint(76, 12)],
+    );
+  }
+
+  Future<void> test_mapLiteral_valuePosition() async {
+    // The value half must resolve to the second type argument, not the key.
+    await assertDiagnostics(
+      r'''
+enum MyEnum { first, second }
+
+void fn() {
+  final Map<String, MyEnum> m = {'a': MyEnum.first};
+}
+''',
+      [lint(81, 12)],
+    );
+  }
+
+  Future<void> test_mapLiteral_valueAgainstKeyType_notReported() async {
+    // Only the key half may use a shorthand here: the value's context is
+    // `Object`, so `MyEnum.second` must be left alone.
+    await assertDiagnostics(
+      r'''
+enum MyEnum { first, second }
+
+void fn() {
+  final Map<MyEnum, Object> m = {MyEnum.first: MyEnum.second};
+}
+''',
+      [lint(76, 12)],
+    );
+  }
+
+  Future<void> test_mapLiteral_dynamicParameter_notReported() async {
+    await assertNoDiagnostics(r'''
+enum MyEnum { first, second }
+
+void takes(dynamic value) {}
+
+void fn() {
+  takes({MyEnum.first: 'a'});
+}
+''');
+  }
+
   // --- type_inference.dart coverage: resolveReturnType via MethodDeclaration ---
 
   Future<void> test_returnInMethodDeclaration() async {
