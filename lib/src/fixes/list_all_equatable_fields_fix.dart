@@ -25,8 +25,10 @@ class ListAllEquatableFieldsFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
-    if (targetNode is! MethodDeclaration) return;
+    // The rule reports at the `props` name token, so the covering node may be
+    // the declaration itself rather than a child of it.
+    final targetNode = node.thisOrAncestorOfType<MethodDeclaration>();
+    if (targetNode == null) return;
     if (!targetNode.isGetter || targetNode.name.lexeme != 'props') return;
 
     // Navigate to enclosing class

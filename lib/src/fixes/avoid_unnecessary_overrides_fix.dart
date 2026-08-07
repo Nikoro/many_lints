@@ -24,8 +24,10 @@ class AvoidUnnecessaryOverridesFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
-    if (targetNode is! MethodDeclaration) return;
+    // The rule reports at the member-name token, so the covering node may be
+    // the declaration itself rather than a child of it.
+    final targetNode = node.thisOrAncestorOfType<MethodDeclaration>();
+    if (targetNode == null) return;
 
     final content = unitResult.content;
 

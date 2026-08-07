@@ -5,6 +5,12 @@ This directory contains quick fix implementations. Each fix extends `ResolvedCor
 **Full implementation guide:** [fixes-cookbook.md](../../../.claude/skills/new-lint/fixes-cookbook.md)
 **To create a new lint with fix:** use the `/new-lint` skill
 
+**Testing:** every fix has output tests under `test/fix_output/`, driven by
+`test/fix_harness.dart` (a real `PluginServer` answering `edit.getFixes`, whose
+edit is applied to the source and compared). `analyzer_testing` has no fix test
+API — do not conclude fixes are untestable. See
+[Testing a Fix](../../../.claude/skills/new-lint/fixes-cookbook.md#testing-a-fix).
+
 ## Fix Pattern
 
 Every fix follows: `ResolvedCorrectionProducer` + `FixKind` + `compute(ChangeBuilder builder)` + `builder.addDartFileEdit(file, ...)`.
@@ -13,6 +19,21 @@ Every fix follows: `ResolvedCorrectionProducer` + `FixKind` + `compute(ChangeBui
 - **Priority:** All fixes use `DartFixKindPriority.standard`
 - **Applicability:** All fixes use `CorrectionApplicability.singleLocation`
 - **Constructor:** `MyFix({required super.context})`
+
+## Never type-test `node` directly
+
+`node` comes from `nodeCovering(offset, length)`, which returns the **deepest**
+node with the diagnostic's range. An unnamed `Foo(...)` therefore gives
+`NamedType`, not `ConstructorName`; a `reportAtToken` on a class name gives a
+name-part wrapper, not `ClassDeclaration`. `node.parent` is just as fragile.
+
+```dart
+final targetNode = node.thisOrAncestorOfType<ConstructorName>(); // ✔
+if (targetNode == null) return;
+```
+
+Getting this wrong produces no error and no exception — the fix is offered and
+does nothing. It silently broke 27 fixes at once; only output tests caught it.
 
 ## Common Patterns
 
@@ -86,6 +107,9 @@ final value = arg.argumentExpression;
 | Hoist block to outer scope | [avoid_redundant_else_fix.dart](avoid_redundant_else_fix.dart) | `range.endEnd(thenStatement, elseStatement)` to drop the `else` wrapper and re-emit its statements; refuse when the body contains a `VariableDeclarationStatement`, since hoisting could collide with a name in the enclosing scope |
 | Collapse statement pair | [prefer_immediate_return_fix.dart](prefer_immediate_return_fix.dart) | `range.startEnd(declaration, returnStatement)` replaced by a single `return <initializer>;` |
 | Loop → single call | [prefer_add_all_fix.dart](prefer_add_all_fix.dart) | Rebuild `target.addAll(source)` from the `ForEachPartsWithDeclaration.iterable` and the `add` call's `realTarget` |
+| Collapse a statement run | [prefer_add_all_fix.dart](prefer_add_all_fix.dart) | Second shape of the same fix: the rule reports the run's *second* call, so re-derive the run from the enclosing `Block` (walk back and forward while the receiver matches), then `range.startEnd(first, last)` to replace all of them with one call |
+| Delete duplicate element | [avoid_duplicate_collection_elements_fix.dart](avoid_duplicate_collection_elements_fix.dart) | Walk up to the child of the enclosing literal so one lookup works for `Expression`, `SpreadElement` and `IfElement` alike; `range.nodeInList` takes the separating comma |
+| Drop a default-valued argument | [avoid_shrink_wrap_in_lists_fix.dart](avoid_shrink_wrap_in_lists_fix.dart) | Deleting a named argument is only behaviour-preserving when the parameter's default equals the removed value — verify that before reaching for this pattern; `range.nodeInList(argumentList.arguments, arg)` handles the comma |
 
 ## Updating Documentation
 

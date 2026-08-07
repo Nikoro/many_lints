@@ -35,9 +35,36 @@ int _next() => 0;
 
 final _goodCalls = [_next(), _next()];
 
-// ✅ Edge case: a spread makes the contents unknowable
+// ❌ Bad: a spread no longer hides duplicates around it
 final _base = [1, 2];
-final _goodSpread = [1, ..._base, 1];
+// LINT: 1 already appears in this list
+final badAroundSpread = [1, ..._base, 1];
 
-// ✅ Edge case: an if element has the same problem
-List<int> goodConditional(bool flag) => [1, if (flag) 2, 1];
+// ❌ Bad: an if element does not hide them either
+// LINT: 1 already appears in this list
+List<int> badAroundConditional(bool flag) => [1, if (flag) 2, 1];
+
+// ❌ Bad: the same spread twice
+// LINT: the second spread repeats every value
+final badDuplicateSpread = [..._base, ..._base];
+
+// ❌ Bad: the same if element twice
+List<String> badDuplicateIfElement(List<int> items) => [
+  if (items.isNotEmpty) 'value',
+  // LINT: identical to the entry above
+  if (items.isNotEmpty) 'value',
+];
+
+// ✅ Good: different spreads
+final _extra = [3];
+final goodSpreads = [..._base, ..._extra];
+
+// ✅ Good: complementary conditions
+List<String> goodIfElements(List<int> items) => [
+  if (items.isNotEmpty) 'full',
+  if (items.isEmpty) 'empty',
+];
+
+// ✅ Edge case: two calls may return different values, so they are not compared
+List<int> _fetch() => [1];
+final edgeCaseCallSpreads = [..._fetch(), ..._fetch()];

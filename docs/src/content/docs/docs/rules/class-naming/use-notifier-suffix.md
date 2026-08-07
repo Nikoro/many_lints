@@ -13,7 +13,7 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Class Naming</span>
 
-This rule flags classes that extend `Notifier` (or `AsyncNotifier`) but don't include the `Notifier` suffix in their name. Consistent naming makes it immediately clear which classes are Riverpod Notifiers when scanning through your codebase.
+This rule flags classes that extend `Notifier` but don't include the `Notifier` suffix in their name. `AsyncNotifier` is a separate hierarchy in Riverpod and is not checked by this rule. Consistent naming makes it immediately clear which classes are Riverpod Notifiers when scanning through your codebase.
 
 ## Why use this rule
 

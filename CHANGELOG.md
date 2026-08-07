@@ -1,5 +1,45 @@
 # Changelog
 
+## [0.8.0] - 2026-08-07
+
+### Added
+
+- `avoid_duplicate_collection_elements` now has a quick fix that removes the duplicate, keeping the first occurrence. It covers all three reported shapes: plain values, spreads and `if` elements.
+- `avoid_shrink_wrap_in_lists` now has a quick fix that removes the `shrinkWrap: true` argument. The parameter defaults to `false`, so this is behaviour-preserving; a list that was shrink-wrapped because it nests inside another scrollable still needs the documented `CustomScrollView` restructuring, which the fix deliberately does not attempt.
+- Quick fixes for the two widened rules that already had one now cover the newly reported shapes. `prefer_add_all` collapses a run of consecutive `add` calls into `addAll([...])` (it previously only rewrote loops, so the new shape was reported with no fix available), and `avoid_unnecessary_negations` rewrites `!true` and `!a == !b`.
+- `test/plugin_fix_output_test.dart` asserts the text a quick fix actually produces, by driving `edit.getFixes` through the `PluginServer` harness and applying the returned edit. `analyzer_testing` still has no fix test API, so fix output previously went unverified.
+
+### Fixed
+
+- **27 quick fixes never fired at all.** They were registered and offered by name, but the IDE only ever showed the "Ignore …" suppression actions — selecting the fix did nothing. Each one type-tested the correction producer's `node` directly (`if (node is! ConstructorName) return;`, `node.parent`, …), which stopped matching after the analyzer 13 AST refactor: `nodeCovering` resolves the diagnostic range to the *deepest* node, so an unnamed `Foo(...)` yields `NamedType` rather than `ConstructorName`, and a `reportAtToken` on a class name yields a name-part wrapper rather than the `ClassDeclaration`. Every affected fix now walks up with `thisOrAncestorOfType` instead. Affected: `avoid_incomplete_copy_with`, `avoid_incorrect_image_opacity`, `avoid_unnecessary_consumer_widgets`, `avoid_unnecessary_gesture_detector`, `avoid_unnecessary_overrides`, `avoid_unnecessary_overrides_in_state`, `avoid_unnecessary_setstate`, `avoid_unnecessary_stateful_widgets`, `avoid_wrapping_in_padding`, `list_all_equatable_fields`, `prefer_abstract_final_static_class`, `prefer_align_over_container`, `prefer_center_over_align`, `prefer_constrained_box_over_container`, `prefer_container`, `prefer_multi_bloc_provider`, `prefer_overriding_parent_equality`, `prefer_padding_over_container`, `prefer_returning_shorthands`, `prefer_sized_box_square`, `prefer_switch_expression`, `prefer_text_rich`, `prefer_transform_over_container`, `prefer_type_over_var`, `use_closest_build_context`, `use_gap`, `use_sliver_prefix`.
+- The three suffix fixes (`use_bloc_suffix`, `use_cubit_suffix`, `use_notifier_suffix`) had the same problem, and additionally renamed only the class — leaving `class FooBloc { Foo(); }`, which does not compile. They now rename any same-named constructor along with the class.
+- `avoid_generics_shadowing` renamed the type parameter's declaration but left its usages behind (`void process<T>(Config c) {}` — not compilable). It located the declaring scope with a fixed `parent.parent` hop, which stopped reaching class and top-level-function declarations once analyzer 13 added intermediate nodes; it now walks up.
+- `avoid_incomplete_copy_with` emitted `dynamic` for any parameter declared as a field formal (`required this.name`), since those carry no type annotation. It now falls back to the resolved element type, producing `String? surname`.
+- `prefer_switch_expression` handled only pre-Dart-3 `SwitchCase` members. Dart 3 parses `case Status.active:` as a `SwitchPatternCase`, so the fix bailed on essentially every modern switch it was offered for.
+- `prefer_expect_later` emitted two edits starting at the same offset (replacing `expect` and inserting `await ` before it). Overlapping edits raise `ConflictingEditException`, which `FixProcessor` catches and logs — silently discarding the entire fix. It now emits a single edit.
+- `use_closest_build_context` ignored untyped closure parameters (`(_) { … }`), because it read only the type annotation while the rule itself falls back to the resolved element type. The two now agree, so the fix can act on every case the rule reports.
+- `avoid_commented_out_code` no longer merges unrelated comments into one block. Comments were grouped by character distance (any gap under 150 characters), which reached across blank lines, closing braces, and whole class boundaries — the check for a blank line compared the same distance as the grouping condition, so it could never fire. A block of commented-out code followed by ordinary prose comments elsewhere in the file merged into a single group whose code-line ratio fell below the threshold, silencing the diagnostic for the entire file. Comments are now grouped only when they sit on directly consecutive lines with nothing but whitespace between them, and a comment trailing code (`foo(); // note`) starts its own group. This makes the rule report in files where it previously found nothing.
+
+### Changed
+
+Four rules were widened so that a rule name means here what it conventionally means. Each now covers everything it did before **plus** the shapes commonly reported elsewhere, so existing projects will see new diagnostics on code that previously passed.
+
+- `prefer_add_all` now also reports consecutive `add` calls on the same collection (`values.add(a); values.add(b);`), not only an add-only `for-in` loop. A run is broken by any other statement, and the receiver must be a stable expression of a collection type, so `add` on an unrelated class is left alone.
+- `avoid_duplicate_collection_elements` now reports repeated spreads (`[...items, ...items]`) and repeated `if` elements, and no longer stops analysing a literal at the first spread or `if` element — `[1, ...base, 1]` was previously missed. Spreads inside set and map literals are checked too; plain values there remain out of scope, since the analyzer reports those natively.
+- `avoid_unnecessary_negations` now reports a negated boolean literal (`!true`) and negations on both sides of a comparison (`!a == !b`, `!a != !b`). A single negation in a comparison is still left alone, since removing it would change the result.
+- `prefer_switch_with_enums` now counts comparisons joined by `||` toward its threshold, and reports a membership test over a literal collection of enum constants (`{E.a, E.b, E.c}.contains(value)`). A named collection is not reported — it is a reusable set rather than an inlined branch.
+
+`avoid_misused_hooks` and `avoid_shrink_wrap_in_lists` were reviewed and left unchanged: hooks called outside a hook context are already covered by `avoid_hooks_outside_build`, and `avoid_shrink_wrap_in_lists` already reports every `shrinkWrap: true` rather than only nested ones.
+
+### Documentation
+
+- Example files and rule pages for the four widened rules now show the added shapes.
+- Rewrote the code examples for 17 rules that had drifted into reproducing third-party documentation verbatim (shared class names, method names, and literal values). Behaviour is unchanged.
+- `use_notifier_suffix` no longer claims to cover `AsyncNotifier`; it checks `Notifier` only, and the two are unrelated hierarchies in Riverpod.
+- `prefer_shorthands_with_constructors` documents that it does not resolve the destination parameter's declared type, so a `dynamic` parameter is still reported.
+- Fixed a type error in the `prefer_use_prefix` example (`useState` returns `ValueNotifier<T>`, not `T`) and an undeclared class in the `avoid_passing_bloc_to_bloc` example.
+- Moved `prefer_compute_over_isolate_run` out of the "Testing Rules" category; it is about web platform compatibility.
+
 ## [0.7.1] - 2026-08-03
 
 ### Fixed

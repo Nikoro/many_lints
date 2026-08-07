@@ -27,7 +27,10 @@ class AvoidWrappingInPaddingFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
+    // For an unnamed constructor, `ConstructorName` and its `NamedType` child
+    // share a source range and the covering node resolves to the deeper one,
+    // so look up before matching.
+    final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
 
     // The report node is either a ConstructorName or SimpleIdentifier
     final (paddingWidget, paddingArgList) = switch (targetNode) {

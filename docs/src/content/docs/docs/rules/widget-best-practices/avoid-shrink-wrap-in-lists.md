@@ -2,14 +2,20 @@
 title: avoid_shrink_wrap_in_lists
 description: "Avoid using shrinkWrap in ListView for better scroll performance"
 sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
   label: avoid_shrink_wrap_in_lists
 ---
 
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
 This rule flags `ListView` widgets that use `shrinkWrap: true`. When shrink-wrapping is enabled, the ListView lays out all of its children eagerly to determine its own size, which defeats the lazy rendering that makes scrollable lists performant.
+
+The quick fix removes the argument. `shrinkWrap` defaults to `false`, so that restores lazy layout without changing anything else — but if the list was shrink-wrapped because it sits inside another scrollable, removing the argument alone will surface an unbounded-height error. That case needs the `CustomScrollView` restructuring shown below, which is a decision the fix cannot make for you.
 
 ## Why use this rule
 

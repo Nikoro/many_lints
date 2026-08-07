@@ -30,7 +30,10 @@ class AvoidIncorrectImageOpacityFix extends ResolvedCorrectionProducer {
     final Expression opacityCreation;
     final NodeList<Argument> arguments;
 
-    final targetNode = node;
+    // An unnamed `Opacity(...)` makes `ConstructorName` and its `NamedType`
+    // child share a source range, and the covering node resolves to the
+    // deeper one — so look up rather than type-testing `node` directly.
+    final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
     if (targetNode is ConstructorName &&
         targetNode.parent is InstanceCreationExpression) {
       final ice = targetNode.parent! as InstanceCreationExpression;

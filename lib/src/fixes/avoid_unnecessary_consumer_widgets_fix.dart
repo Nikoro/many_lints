@@ -27,11 +27,11 @@ class AvoidUnnecessaryConsumerWidgetsFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
-    if (targetNode is! SimpleIdentifier) return;
-
-    final classDecl = targetNode.parent;
-    if (classDecl is! ClassDeclaration) return;
+    // The rule reports at the class-name token. Since analyzer 13 that token
+    // sits under a `ClassNamePart`, so `node.parent` is not the declaration —
+    // walk up to it instead.
+    final classDecl = node.thisOrAncestorOfType<ClassDeclaration>();
+    if (classDecl == null) return;
 
     final superclass = classDecl.extendsClause?.superclass;
     if (superclass == null) return;

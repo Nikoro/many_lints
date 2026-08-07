@@ -24,32 +24,32 @@ Using `.firstWhere((e) => e.name == value)` on enum values can be replaced with 
 ## Don't
 
 ```dart
-enum Style { bold, italic, underline }
+enum Style { standard, express, overnight }
 
 void example() {
   // Use .byName() instead of .firstWhere()
   final style = Style.values.firstWhere(
-    (def) => def.name == 'bold',
+    (speed) => speed.name == 'express',
   );
 
   // Reversed comparison also detected
   final style2 = Style.values.firstWhere(
-    (def) => 'italic' == def.name,
+    (speed) => 'overnight' == speed.name,
   );
 
   // Variable comparison
   final name = 'underline';
-  final style3 = Style.values.firstWhere((def) => def.name == name);
+  final style3 = Style.values.firstWhere((speed) => speed.name == name);
 }
 ```
 
 ## Do
 
 ```dart
-enum Style { bold, italic, underline }
+enum Style { standard, express, overnight }
 
 void example() {
-  final style = Style.values.byName('bold');
+  final style = Style.values.byName('express');
 
   final name = 'underline';
   final style2 = Style.values.byName(name);

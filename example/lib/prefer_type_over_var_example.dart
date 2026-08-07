@@ -5,7 +5,7 @@
 // ❌ Bad: Using var instead of explicit type
 class BadExamples {
   void method() {
-    var variable = nullableMethod(); // LINT: Prefer explicit type
+    var nickname = lookupNickname(); // LINT: Prefer explicit type
     var anotherVar = 'string'; // LINT: Prefer explicit type
     var number = 42; // LINT: Prefer explicit type
     var list = [1, 2, 3]; // LINT: Prefer explicit type
@@ -20,14 +20,14 @@ class BadExamples {
 }
 
 // LINT: Prefer explicit type
-var badTopLevelVariable = nullableMethod();
+var badTopLevelVariable = lookupNickname();
 
-String? nullableMethod() => null;
+String? lookupNickname() => null;
 
 // ✅ Good: Using explicit types
 class GoodExamples {
   void method() {
-    String? variable = nullableMethod();
+    String? nickname = lookupNickname();
     String anotherVar = 'string';
     int number = 42;
     List<int> list = [1, 2, 3];
@@ -40,18 +40,18 @@ class GoodExamples {
   }
 }
 
-String? goodTopLevelVariable = nullableMethod();
+String? goodTopLevelVariable = lookupNickname();
 
 // ✅ Good: Using final for type inference (when appropriate)
 class FinalExamples {
   void method() {
-    final variable = nullableMethod(); // OK: final with inference
+    final nickname = lookupNickname(); // OK: final with inference
     final anotherVar = 'string'; // OK: final with inference
     final number = 42; // OK: final with inference
   }
 }
 
-final okTopLevelFinal = nullableMethod();
+final okTopLevelFinal = lookupNickname();
 
 // ✅ Good: Using const for compile-time constants
 class ConstExamples {
@@ -78,10 +78,10 @@ class UseCase {
   // When dealing with nullable types
   void nullableTypes() {
     // ❌ Bad: Nullability not obvious
-    var maybeNull = nullableMethod(); // LINT
+    var maybeNull = lookupNickname(); // LINT
 
     // ✅ Good: Nullability is clear
-    String? maybeNull2 = nullableMethod();
+    String? maybeNull2 = lookupNickname();
   }
 
   Map<String, dynamic> processData() => {};

@@ -32,9 +32,11 @@ class UseClosestBuildContextFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The reported node is the SimpleIdentifier referencing the outer context
-    final targetNode = node;
-    if (targetNode is! SimpleIdentifier) return;
+    // The rule reports the identifier referencing the outer context, but the
+    // covering node can resolve to a narrower node than that identifier.
+    final SimpleIdentifier? targetNode = node
+        .thisOrAncestorOfType<SimpleIdentifier>();
+    if (targetNode == null) return;
 
     final outerContextName = targetNode.name;
 
@@ -73,7 +75,14 @@ class UseClosestBuildContextFix extends ResolvedCorrectionProducer {
 
   static bool _isBuildContextType(FormalParameter param) {
     final type = param.type?.type;
-    if (type == null) return false;
-    return _buildContextChecker.isExactlyType(type);
+    if (type != null) return _buildContextChecker.isExactlyType(type);
+
+    // An untyped closure parameter (`(_) { ... }`) carries no annotation, so
+    // fall back to the resolved element — this mirrors the rule, which would
+    // otherwise report a case the fix cannot act on.
+    final element = param.declaredFragment?.element;
+    if (element == null) return false;
+
+    return _buildContextChecker.isExactlyType(element.type);
   }
 }

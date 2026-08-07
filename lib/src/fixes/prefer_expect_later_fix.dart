@@ -24,25 +24,26 @@ class PreferExpectLaterFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
-    if (targetNode is! SimpleIdentifier) return;
-
-    final methodInvocation = targetNode.parent;
-    if (methodInvocation is! MethodInvocation) return;
+    // The covering node may be the invocation itself rather than its name
+    // identifier, so walk up instead of type-testing `node`.
+    final methodInvocation = node.thisOrAncestorOfType<MethodInvocation>();
+    if (methodInvocation == null) return;
 
     // Determine if already preceded by `await`
     final parent = methodInvocation.parent;
     final alreadyAwaited =
         parent is AwaitExpression && parent.expression == methodInvocation;
 
-    await builder.addDartFileEdit(file, (builder) {
-      // Replace `expect` with `expectLater`
-      builder.addSimpleReplacement(range.node(targetNode), 'expectLater');
+    // `await ` would be inserted at the same offset the method name starts
+    // at, and two edits sharing an offset raise ConflictingEditException —
+    // which FixProcessor swallows, dropping the whole fix. Emit one edit.
+    final replacement = alreadyAwaited ? 'expectLater' : 'await expectLater';
 
-      // Add `await` if not already awaited
-      if (!alreadyAwaited) {
-        builder.addSimpleInsertion(methodInvocation.offset, 'await ');
-      }
+    await builder.addDartFileEdit(file, (builder) {
+      builder.addSimpleReplacement(
+        range.node(methodInvocation.methodName),
+        replacement,
+      );
     });
   }
 }

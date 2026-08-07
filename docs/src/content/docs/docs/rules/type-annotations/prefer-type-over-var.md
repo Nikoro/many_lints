@@ -13,7 +13,7 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Type Annotations</span>
 
-Flags variables declared with the `var` keyword instead of an explicit type annotation. Using `var` can make it harder to understand the type of a variable, especially when the initializer is complex or the nullability is not obvious. This rule does not flag `final` or `const` declarations.
+Flags variables declared with the `var` keyword instead of an explicit type annotation. Using `var` can make it harder to understand the type of a nickname, especially when the initializer is complex or the nullability is not obvious. This rule does not flag `final` or `const` declarations.
 
 :::caution[Conflicts with an SDK rule you probably have enabled]
 The SDK rule [`omit_local_variable_types`](https://dart.dev/tools/linter-rules/omit_local_variable_types) mandates the **opposite** of this rule — it asks you to remove type annotations that inference can supply. It ships in `package:lints/recommended.yaml`, so most projects have it on by default.
@@ -32,14 +32,14 @@ If you want explicit types but find this rule too strict, the SDK offers softer 
 
 ## Why use this rule
 
-Explicit type annotations improve code readability and make the type system work for you. When a variable is declared with `var`, readers must mentally resolve the initializer to understand the type, which slows down code review and increases the chance of subtle bugs around nullability or unexpected inference.
+Explicit type annotations improve code readability and make the type system work for you. When a nickname is declared with `var`, readers must mentally resolve the initializer to understand the type, which slows down code review and increases the chance of subtle bugs around nullability or unexpected inference.
 
 **See also:** [Effective Dart - Type annotations](https://dart.dev/effective-dart/design#types)
 
 ## Don't
 
 ```dart
-var variable = nullableMethod();
+var nickname = lookupNickname();
 var anotherVar = 'string';
 var number = 42;
 var list = [1, 2, 3];
@@ -48,13 +48,13 @@ for (var i = 0; i < 10; i++) {
   print(i);
 }
 
-var topLevelVariable = nullableMethod();
+var cachedNickname = lookupNickname();
 ```
 
 ## Do
 
 ```dart
-String? variable = nullableMethod();
+String? nickname = lookupNickname();
 String anotherVar = 'string';
 int number = 42;
 List<int> list = [1, 2, 3];
@@ -63,10 +63,10 @@ for (int i = 0; i < 10; i++) {
   print(i);
 }
 
-String? topLevelVariable = nullableMethod();
+String? cachedNickname = lookupNickname();
 
 // final and const are allowed:
-final inferred = nullableMethod();
+final inferred = lookupNickname();
 const text = 'hello';
 ```
 

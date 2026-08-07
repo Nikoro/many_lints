@@ -16,12 +16,12 @@ class BadExample extends StatelessWidget {
     return Builder(
       builder: (_) {
         // LINT: Uses outer `context` when the Builder provides its own
-        return _buildMyWidget(context);
+        return _banner(context);
       },
     );
   }
 
-  Widget _buildMyWidget(BuildContext ctx) => const Text('hello');
+  Widget _banner(BuildContext ctx) => const Text('hello');
 }
 
 // ❌ Bad: Same issue with LayoutBuilder
@@ -33,15 +33,12 @@ class BadLayoutBuilderExample extends StatelessWidget {
     return LayoutBuilder(
       builder: (_, constraints) {
         // LINT: Uses outer `context` when LayoutBuilder provides its own
-        return SizedBox(
-          width: constraints.maxWidth,
-          child: _buildMyWidget(context),
-        );
+        return SizedBox(width: constraints.maxWidth, child: _banner(context));
       },
     );
   }
 
-  Widget _buildMyWidget(BuildContext ctx) => const Text('hello');
+  Widget _banner(BuildContext ctx) => const Text('hello');
 }
 
 // ✅ Good: Uses the Builder's own context
@@ -52,12 +49,12 @@ class GoodExample extends StatelessWidget {
   Widget build(BuildContext context) {
     return Builder(
       builder: (context) {
-        return _buildMyWidget(context);
+        return _banner(context);
       },
     );
   }
 
-  Widget _buildMyWidget(BuildContext ctx) => const Text('hello');
+  Widget _banner(BuildContext ctx) => const Text('hello');
 }
 
 // ✅ Good: Inner context has a different name but is actually used
@@ -68,12 +65,12 @@ class GoodNamedContextExample extends StatelessWidget {
   Widget build(BuildContext context) {
     return Builder(
       builder: (innerContext) {
-        return _buildMyWidget(innerContext);
+        return _banner(innerContext);
       },
     );
   }
 
-  Widget _buildMyWidget(BuildContext ctx) => const Text('hello');
+  Widget _banner(BuildContext ctx) => const Text('hello');
 }
 
 // ✅ Good: No nested builder — using context directly is fine
@@ -82,8 +79,8 @@ class GoodNoBuilderExample extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _buildMyWidget(context);
+    return _banner(context);
   }
 
-  Widget _buildMyWidget(BuildContext ctx) => const Text('hello');
+  Widget _banner(BuildContext ctx) => const Text('hello');
 }

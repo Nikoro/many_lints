@@ -16,7 +16,7 @@ class BadExamples extends StatelessWidget {
       children: [
         // LINT: Container with only transform parameter
         Container(
-          transform: Matrix4.skewY(0.3)..rotateZ(-math.pi / 12.0),
+          transform: Matrix4.rotationZ(math.pi / 6)..rotateX(0.15),
           child: const Text('Skewed'),
         ),
 
@@ -41,7 +41,7 @@ class GoodExamples extends StatelessWidget {
       children: [
         // Good: Using Transform directly
         Transform(
-          transform: Matrix4.skewY(0.3)..rotateZ(-math.pi / 12.0),
+          transform: Matrix4.rotationZ(math.pi / 6)..rotateX(0.15),
           child: const Text('Skewed'),
         ),
 

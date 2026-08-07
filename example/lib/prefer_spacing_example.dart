@@ -58,13 +58,10 @@ class BadExpand extends StatelessWidget {
     final widgets = [Text('A'), Text('B'), Text('C')];
     // LINT: Prefer passing the 'spacing' argument
     return Column(
-      children: widgets
-          .expand((widget) sync* {
-            yield const SizedBox(height: 10);
-            yield widget;
-          })
-          .skip(1)
-          .toList(),
+      children: widgets.expand((row) sync* {
+        yield row;
+        yield const SizedBox(height: 12);
+      }).toList(),
     );
   }
 }

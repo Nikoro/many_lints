@@ -39,26 +39,45 @@ jobs:
 
       - name: Exclude untestable code from coverage
         run: |
+          set -euo pipefail
           # Exclude lib/src/fixes/ and lib/src/assists/ from coverage reports.
-          # analyzer_testing 0.2.0 only provides AnalysisRuleTest — there is no
-          # fix or assist test API yet. Revisit when analyzer_testing 0.3.0+ ships.
+          # As of analyzer_testing 0.3.4 (checked 2026-08-07) the package only
+          # exposes AnalysisRuleTest, PubPackageResolutionTest and SkippedTest —
+          # there is still no fix or assist test API. Drop this step once one
+          # ships, so those directories count toward the badge.
           sudo apt-get install -y lcov
+
+          # format_coverage writes absolute paths, so the patterns must match
+          # anywhere in the path. `--ignore-errors empty` is required: lcov 2.x
+          # treats the missing function-coverage data (which format_coverage
+          # never emits) as a fatal error and then writes no output file at all.
           lcov --remove coverage/lcov.info \
-            'lib/src/fixes/*' \
-            'lib/src/assists/*' \
+            '*/lib/src/fixes/*' \
+            '*/lib/src/assists/*' \
+            --ignore-errors empty \
             --output-file coverage/lcov.info
+
+          # Fail loudly if the exclusion silently did nothing.
+          if grep -qE '^SF:.*/lib/src/(fixes|assists)/' coverage/lcov.info; then
+            echo "::error::lcov --remove did not exclude fixes/assists"
+            exit 1
+          fi
 
       - name: Compute coverage percentage and color
         id: coverage
         run: |
-          LF=$(grep -oP 'LF:\K\d+' coverage/lcov.info | paste -sd+ | bc)
-          LH=$(grep -oP 'LH:\K\d+' coverage/lcov.info | paste -sd+ | bc)
+          set -uo pipefail
+          # Anchor the match: an unanchored 'LF:' also matches the FNF/BRF
+          # counters, which would inflate the totals. `|| true` keeps a
+          # no-match grep from killing the step before the check below runs.
+          LF=$(grep -oP '^LF:\K\d+' coverage/lcov.info | paste -sd+ | bc || true)
+          LH=$(grep -oP '^LH:\K\d+' coverage/lcov.info | paste -sd+ | bc || true)
 
-          if [ "$LF" -eq 0 ]; then
-            PERCENT=0
-          else
-            PERCENT=$((LH * 100 / LF))
+          if [ -z "$LF" ] || [ "$LF" -eq 0 ]; then
+            echo "::error::No line coverage data found in coverage/lcov.info"
+            exit 1
           fi
+          PERCENT=$((LH * 100 / LF))
 
           if [ "$PERCENT" -lt 40 ]; then
             COLOR="red"

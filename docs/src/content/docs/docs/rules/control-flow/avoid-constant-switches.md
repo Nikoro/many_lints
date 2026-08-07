@@ -20,24 +20,24 @@ Switching on a constant means only one branch can ever execute, turning the swit
 ## Don't
 
 ```dart
-const _another = 10;
+const _retryLimit = 4;
 
 abstract final class Config {
-  static const value = '1';
+  static const channel = 'stable';
 }
 
 void bad() {
   // Switching on a static const field
-  switch (Config.value) {
-    case '1':
+  switch (Config.channel) {
+    case 'stable':
       print('always');
     case '2':
       print('never');
   }
 
   // Switching on a top-level const
-  switch (_another) {
-    case 10:
+  switch (_retryLimit) {
+    case 4:
       print('always');
     default:
       print('never');
@@ -57,7 +57,7 @@ void bad() {
 void good(int another) {
   // Parameter
   switch (another) {
-    case 10:
+    case 4:
       print('maybe');
     default:
       print('maybe');
@@ -65,13 +65,13 @@ void good(int another) {
 
   // Switch expression on parameter
   final x = switch (another) {
-    10 => 'ten',
+    4 => 'ten',
     _ => 'other',
   };
 
   // Method call result
   switch (another.toString()) {
-    case '10':
+    case '4':
       print('maybe');
   }
 }

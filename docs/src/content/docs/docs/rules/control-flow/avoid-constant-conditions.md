@@ -13,32 +13,32 @@ Warns when a binary comparison has constant operands on both sides, meaning the 
 
 ## Why use this rule
 
-A condition like `10 == 11` or `Config.value == '1'` (where `Config.value` is a `static const`) always evaluates to the same boolean. One branch becomes unreachable dead code while the other always executes. This is almost never intentional and typically signals a mistake where one operand should have been a variable.
+A condition like `4 == 11` or `Config.channel == 'stable'` (where `Config.channel` is a `static const`) always evaluates to the same boolean. One branch becomes unreachable dead code while the other always executes. This is almost never intentional and typically signals a mistake where one operand should have been a variable.
 
 **See also:** [Effective Dart: Usage](https://dart.dev/effective-dart/usage)
 
 ## Don't
 
 ```dart
-const _another = 10;
+const _retryLimit = 4;
 
 abstract final class Config {
-  static const value = '1';
+  static const channel = 'stable';
 }
 
 void bad() {
   // Two integer literals compared
-  if (10 == 11) {
+  if (4 == 11) {
     print('unreachable');
   }
 
   // Static const field compared to a string literal
-  if (Config.value == '1') {
+  if (Config.channel == 'stable') {
     print('always true');
   }
 
   // Top-level const compared to a literal
-  final result = _another != 10;
+  final result = _retryLimit != 4;
 
   // Boolean literals compared
   final b = true == false;
@@ -50,12 +50,12 @@ void bad() {
 ```dart
 void good(String value, int count) {
   // Variable compared to literal
-  if (value == '1') {
+  if (value == 'stable') {
     print('hello');
   }
 
   // Variable compared to const
-  if (count > _another) {
+  if (count > _retryLimit) {
     print('big');
   }
 

@@ -69,3 +69,33 @@ String edgeCaseMixed(Status status, bool flag) {
   }
   return '';
 }
+
+// ❌ Bad: comparisons combined with ||
+bool badOrChain(Status status) {
+  // LINT: three comparisons against the same subject
+  if (status == Status.active ||
+      status == Status.inactive ||
+      status == Status.pending) {
+    return true;
+  }
+  return false;
+}
+
+// ❌ Bad: membership test over a literal set of constants
+bool badContains(Status status) {
+  // LINT: adding a constant leaves this silently unchanged
+  return {Status.active, Status.inactive, Status.pending}.contains(status);
+}
+
+// ✅ Good: a switch the compiler checks for exhaustiveness
+bool goodOrPattern(Status status) => switch (status) {
+  Status.active || Status.inactive || Status.pending => true,
+};
+
+// ✅ Good: fewer than three comparisons
+bool goodShortOrChain(Status status) =>
+    status == Status.active || status == Status.inactive;
+
+// ✅ Good: a named set is a reusable collection, not an inlined branch
+const _known = {Status.active, Status.inactive, Status.pending};
+bool goodNamedSetContains(Status status) => _known.contains(status);

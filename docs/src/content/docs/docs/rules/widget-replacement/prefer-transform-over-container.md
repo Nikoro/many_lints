@@ -34,7 +34,7 @@ The SDK's [`avoid_unnecessary_containers`](https://dart.dev/tools/linter-rules/a
 ```dart
 // Container with only transform parameter
 Container(
-  transform: Matrix4.skewY(0.3)..rotateZ(-math.pi / 12.0),
+  transform: Matrix4.rotationZ(math.pi / 6)..rotateX(0.15),
   child: const Text('Skewed'),
 );
 
@@ -51,7 +51,7 @@ Container(
 ```dart
 // Use Transform directly
 Transform(
-  transform: Matrix4.skewY(0.3)..rotateZ(-math.pi / 12.0),
+  transform: Matrix4.rotationZ(math.pi / 6)..rotateX(0.15),
   child: const Text('Skewed'),
 );
 

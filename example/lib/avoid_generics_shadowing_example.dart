@@ -23,10 +23,10 @@ class Repository<MyModel> {
 }
 
 // ❌ Bad: Method type parameter shadows a top-level enum
-class SomeClass {
-  void method<MyEnum>(MyEnum p) {} // LINT: MyEnum shadows the enum
+class Encoder {
+  void encode<MyEnum>(MyEnum p) {} // LINT: MyEnum shadows the enum
 
-  AnotherClass anotherMethod<AnotherClass>() {
+  AnotherClass decode<AnotherClass>() {
     // LINT: AnotherClass shadows the class
     throw '';
   }

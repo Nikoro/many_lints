@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:analyzer/source/line_info.dart';
 
 /// Warns when commented-out code is found.
 ///
@@ -56,8 +57,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
+    // The visitor is reused across files; drop the previous unit's tokens.
+    _precedingCode.clear();
+
     final allComments = _collectAllComments(node);
-    final groups = _groupConsecutiveComments(allComments);
+    final lineInfo = node.lineInfo;
+    final groups = _groupConsecutiveComments(allComments, lineInfo);
 
     for (final group in groups) {
       final stripped = group
@@ -87,16 +92,19 @@ class _Visitor extends SimpleAstVisitor<void> {
   List<Token> _collectAllComments(CompilationUnit node) {
     final comments = <Token>[];
     Token? token = node.beginToken;
+    Token? lastCode;
 
     while (token != null && !token.isEof) {
       Token? comment = token.precedingComments;
       while (comment != null) {
         if (_isSingleLineComment(comment)) {
           comments.add(comment);
+          if (lastCode != null) _precedingCode[comment] = lastCode;
           if (comments.length >= _maxComments) return comments;
         }
         comment = comment.next;
       }
+      lastCode = token;
       token = token.next;
     }
 
@@ -106,6 +114,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       while (comment != null) {
         if (_isSingleLineComment(comment)) {
           comments.add(comment);
+          if (lastCode != null) _precedingCode[comment] = lastCode;
           if (comments.length >= _maxComments) return comments;
         }
         comment = comment.next;
@@ -127,8 +136,18 @@ class _Visitor extends SimpleAstVisitor<void> {
     return true;
   }
 
-  /// Groups comment tokens that appear on consecutive lines.
-  List<List<Token>> _groupConsecutiveComments(List<Token> comments) {
+  /// Groups comment tokens that appear on directly consecutive lines with
+  /// nothing but whitespace between them.
+  ///
+  /// Two comments belong together only when the second starts on the line
+  /// right after the first ends. A blank line ends the group, and so does
+  /// any code between them — otherwise unrelated comments elsewhere in the
+  /// file would merge into one block and dilute the code-vs-prose ratio,
+  /// hiding real detections.
+  List<List<Token>> _groupConsecutiveComments(
+    List<Token> comments,
+    LineInfo lineInfo,
+  ) {
     if (comments.isEmpty) return [];
 
     final groups = <List<Token>>[];
@@ -138,16 +157,15 @@ class _Visitor extends SimpleAstVisitor<void> {
       final prev = comments[i - 1];
       final curr = comments[i];
 
-      // Check if comments are on consecutive lines by comparing offsets.
-      // A single-line comment ends at its token end. If the next comment
-      // starts on the very next line, group them together.
-      final prevEnd = prev.end;
-      final currStart = curr.offset;
-      final gap = currStart - prevEnd;
+      final prevLine = lineInfo.getLocation(prev.end).lineNumber;
+      final currLine = lineInfo.getLocation(curr.offset).lineNumber;
 
-      // Allow small gaps (whitespace + newline between consecutive lines).
-      // Typically the gap is just \n + indentation spaces.
-      if (gap < _maxAdjacentCommentGap && !_hasBlankLineBetween(prev, curr)) {
+      // A comment that trails code starts its own group: `} // note` is a
+      // remark about that line, not part of the block below it.
+      if (currLine == prevLine + 1 &&
+          !_hasCodeBetween(prev, curr) &&
+          !_trailsCode(prev, lineInfo) &&
+          !_trailsCode(curr, lineInfo)) {
         currentGroup.add(curr);
       } else {
         groups.add(currentGroup);
@@ -158,14 +176,36 @@ class _Visitor extends SimpleAstVisitor<void> {
     return groups;
   }
 
-  /// Maximum character offset gap between two comment tokens to consider them
-  /// adjacent (accounts for newline + indentation).
-  static const _maxAdjacentCommentGap = 150;
+  /// Whether [comment] follows code on its own line.
+  ///
+  /// A trailing comment annotates the code beside it, so it does not belong
+  /// to a block of full-line comments above or below it. The token the
+  /// comment hangs off is recorded while collecting, and the code before it
+  /// is on the same line exactly when that token's predecessor ends there.
+  bool _trailsCode(Token comment, LineInfo lineInfo) {
+    final previous = _precedingCode[comment];
+    if (previous == null) return false;
 
-  /// Checks whether there is a blank line between two comment tokens.
-  bool _hasBlankLineBetween(Token a, Token b) {
-    final gap = b.offset - a.end;
-    return gap > _maxAdjacentCommentGap;
+    final commentLine = lineInfo.getLocation(comment.offset).lineNumber;
+    final previousLine = lineInfo.getLocation(previous.end).lineNumber;
+    return previousLine == commentLine;
+  }
+
+  /// Maps each collected comment to the last real token before it.
+  final Map<Token, Token> _precedingCode = {};
+
+  /// Whether a real token sits between two comment tokens.
+  ///
+  /// Comments hang off the token that follows them, so two comments attached
+  /// to different tokens have code between them — even when they land on
+  /// adjacent lines, as in `} // trailing` followed by `// next`.
+  bool _hasCodeBetween(Token a, Token b) {
+    // Comments in the same `precedingComments` chain share a parent token
+    // and therefore have nothing but whitespace between them.
+    for (Token? comment = a.next; comment != null; comment = comment.next) {
+      if (identical(comment, b)) return false;
+    }
+    return true;
   }
 
   /// Strips the `//` prefix and optional leading space from a comment.

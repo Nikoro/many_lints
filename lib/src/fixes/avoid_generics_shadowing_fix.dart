@@ -109,17 +109,28 @@ class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
   }
 
   /// Finds the AST node that scopes this type parameter (class, method, etc.).
+  ///
+  /// The declaration is not at a fixed depth: since analyzer 13 a class's type
+  /// parameters hang off a name-part node and a top-level function's off its
+  /// `FunctionExpression`, so walk up instead of assuming `parent.parent`.
+  /// Getting this wrong renames the declaration but leaves every usage behind,
+  /// producing code that does not compile.
   AstNode? _findDeclaringScope(TypeParameter typeParam) {
-    final current = typeParam.parent?.parent;
-    if (current is ClassDeclaration ||
-        current is MixinDeclaration ||
-        current is EnumDeclaration ||
-        current is ExtensionTypeDeclaration ||
-        current is MethodDeclaration ||
-        current is FunctionDeclaration ||
-        current is GenericTypeAlias ||
-        current is FunctionTypeAlias) {
-      return current;
+    for (
+      AstNode? current = typeParam.parent;
+      current != null;
+      current = current.parent
+    ) {
+      if (current is ClassDeclaration ||
+          current is MixinDeclaration ||
+          current is EnumDeclaration ||
+          current is ExtensionTypeDeclaration ||
+          current is MethodDeclaration ||
+          current is FunctionDeclaration ||
+          current is GenericTypeAlias ||
+          current is FunctionTypeAlias) {
+        return current;
+      }
     }
     return null;
   }

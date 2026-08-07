@@ -150,4 +150,125 @@ String describe(Status? status) {
 }
 ''');
   }
+
+  // ---- Comparisons combined with || ----
+
+  Future<void> test_orChainInSingleCondition() async {
+    await assertDiagnostics(
+      r'''
+enum Status { active, inactive, pending }
+
+bool isSettled(Status status) {
+  if (status == Status.active ||
+      status == Status.inactive ||
+      status == Status.pending) {
+    return true;
+  }
+  return false;
+}
+''',
+      [lint(81, 92)],
+    );
+  }
+
+  Future<void> test_orChainSplitAcrossBranches() async {
+    await assertDiagnostics(
+      r'''
+enum Status { active, inactive, pending }
+
+String describe(Status status) {
+  if (status == Status.active || status == Status.inactive) {
+    return 'Known';
+  } else if (status == Status.pending) {
+    return 'Pending';
+  }
+  return '';
+}
+''',
+      [lint(82, 52)],
+    );
+  }
+
+  Future<void> test_orChainBelowThreshold() async {
+    await assertNoDiagnostics(r'''
+enum Status { active, inactive, pending }
+
+bool isKnown(Status status) {
+  if (status == Status.active || status == Status.inactive) {
+    return true;
+  }
+  return false;
+}
+''');
+  }
+
+  Future<void> test_orChainWithDifferentSubjects() async {
+    await assertNoDiagnostics(r'''
+enum Status { active, inactive, pending }
+
+bool anyActive(Status a, Status b, Status c) {
+  if (a == Status.active || b == Status.active || c == Status.active) {
+    return true;
+  }
+  return false;
+}
+''');
+  }
+
+  // ---- contains() over a literal collection of constants ----
+
+  Future<void> test_containsOnSetLiteral() async {
+    await assertDiagnostics(
+      r'''
+enum Status { active, inactive, pending }
+
+bool isKnown(Status status) {
+  return {Status.active, Status.inactive, Status.pending}.contains(status);
+}
+''',
+      [lint(82, 65)],
+    );
+  }
+
+  Future<void> test_containsOnListLiteral() async {
+    await assertDiagnostics(
+      r'''
+enum Status { active, inactive, pending }
+
+bool isKnown(Status status) {
+  return [Status.active, Status.inactive, Status.pending].contains(status);
+}
+''',
+      [lint(82, 65)],
+    );
+  }
+
+  Future<void> test_containsBelowThreshold() async {
+    await assertNoDiagnostics(r'''
+enum Status { active, inactive, pending }
+
+bool isKnown(Status status) {
+  return {Status.active, Status.inactive}.contains(status);
+}
+''');
+  }
+
+  /// A named collection is a reusable set, not an inlined branch.
+  Future<void> test_containsOnNamedCollection() async {
+    await assertNoDiagnostics(r'''
+enum Status { active, inactive, pending }
+
+const known = {Status.active, Status.inactive, Status.pending};
+
+bool isKnown(Status status) => known.contains(status);
+''');
+  }
+
+  Future<void> test_containsOnNonEnumLiteral() async {
+    await assertNoDiagnostics(r'''
+bool isKnown(String value) {
+  return {'a', 'b', 'c'}.contains(value);
+}
+''');
+  }
 }

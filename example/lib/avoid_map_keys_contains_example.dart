@@ -7,10 +7,10 @@
 
 // ❌ Bad: Using .keys.contains()
 void bad() {
-  final map = {'hello': 'world', 'foo': 'bar'};
+  final map = {'lat': 52.2, 'lon': 21.0};
 
   // LINT: Use containsKey() instead
-  final exists = map.keys.contains('hello');
+  final exists = map.keys.contains('lat');
 
   // LINT: Also in conditions
   if (map.keys.contains('foo')) {
@@ -20,9 +20,9 @@ void bad() {
 
 // ✅ Good: Using containsKey()
 void good() {
-  final map = {'hello': 'world', 'foo': 'bar'};
+  final map = {'lat': 52.2, 'lon': 21.0};
 
-  final exists = map.containsKey('hello');
+  final exists = map.containsKey('lat');
 
   if (map.containsKey('foo')) {
     print('found');

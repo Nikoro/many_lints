@@ -86,18 +86,99 @@ final values = [next(), next()];
 ''');
   }
 
-  Future<void> test_listWithSpread() async {
-    await assertNoDiagnostics(r'''
+  /// A spread no longer hides duplicates that follow it.
+  Future<void> test_listWithSpreadStillFindsDuplicate() async {
+    await assertDiagnostics(
+      r'''
 final base = [1, 2];
 final values = [1, ...base, 1];
-''');
+''',
+      [lint(49, 1)],
+    );
   }
 
-  Future<void> test_listWithIfElement() async {
-    await assertNoDiagnostics(r'''
+  /// An `if` element no longer hides duplicates that follow it.
+  Future<void> test_listWithIfElementStillFindsDuplicate() async {
+    await assertDiagnostics(
+      r'''
 List<int> build(bool flag) {
   return [1, if (flag) 2, 1];
 }
+''',
+      [lint(55, 1)],
+    );
+  }
+
+  // ---- Duplicate spreads and if elements ----
+
+  Future<void> test_duplicateSpread() async {
+    await assertDiagnostics(
+      r'''
+final base = [1, 2];
+final values = [...base, ...base];
+''',
+      [lint(46, 7)],
+    );
+  }
+
+  Future<void> test_duplicateSpreadInSet() async {
+    await assertDiagnostics(
+      r'''
+final base = {1, 2};
+final values = <int>{...base, ...base};
+''',
+      [lint(51, 7)],
+    );
+  }
+
+  Future<void> test_duplicateSpreadInMap() async {
+    await assertDiagnostics(
+      r'''
+final base = {'k': 'v'};
+final values = {...base, ...base};
+''',
+      [lint(50, 7)],
+    );
+  }
+
+  Future<void> test_duplicateIfElement() async {
+    await assertDiagnostics(
+      r'''
+List<String> build(List<int> items) {
+  return [
+    if (items.isNotEmpty) 'value',
+    if (items.isNotEmpty) 'value',
+  ];
+}
+''',
+      [lint(88, 29)],
+    );
+  }
+
+  Future<void> test_differentSpreads() async {
+    await assertNoDiagnostics(r'''
+final a = [1];
+final b = [2];
+final values = [...a, ...b];
+''');
+  }
+
+  Future<void> test_differentIfElements() async {
+    await assertNoDiagnostics(r'''
+List<String> build(List<int> items) {
+  return [
+    if (items.isNotEmpty) 'full',
+    if (items.isEmpty) 'empty',
+  ];
+}
+''');
+  }
+
+  Future<void> test_spreadOfMethodCallNotCompared() async {
+    await assertNoDiagnostics(r'''
+List<int> fetch() => [1];
+
+final values = [...fetch(), ...fetch()];
 ''');
   }
 

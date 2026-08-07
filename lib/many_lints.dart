@@ -194,6 +194,8 @@ import 'package:many_lints/src/fixes/avoid_unnecessary_setstate_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_overrides_in_state_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_stateful_widgets_fix.dart';
 import 'package:many_lints/src/fixes/avoid_duplicate_cascades_fix.dart';
+import 'package:many_lints/src/fixes/avoid_duplicate_collection_elements_fix.dart';
+import 'package:many_lints/src/fixes/avoid_shrink_wrap_in_lists_fix.dart';
 import 'package:many_lints/src/fixes/add_suffix_fix.dart';
 import 'package:many_lints/src/fixes/avoid_generics_shadowing_fix.dart';
 import 'package:many_lints/src/fixes/avoid_map_keys_contains_fix.dart';
@@ -428,6 +430,14 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidDuplicateCascades.code,
       AvoidDuplicateCascadesFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidDuplicateCollectionElements.code,
+      AvoidDuplicateCollectionElementsFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidShrinkWrapInLists.code,
+      AvoidShrinkWrapInListsFix.new,
     );
     registry.registerFixForRule(
       PreferAbstractFinalStaticClass.code,

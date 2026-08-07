@@ -54,6 +54,8 @@ Quick navigation:
 - [Helper Utilities](#helper-utilities)
 - [Common Gotchas](#common-gotchas--edge-cases)
 - [Registration](#registration)
+- [Never Type-Test `node` Directly](#never-type-test-node-directly)
+- [Testing a Fix](#testing-a-fix)
 
 ---
 
@@ -88,8 +90,10 @@ class MyFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
-    if (targetNode is! ExpectedType) return;
+    // Walk up — never type-test `node` directly. See
+    // "Never Type-Test `node` Directly" below.
+    final targetNode = node.thisOrAncestorOfType<ExpectedType>();
+    if (targetNode == null) return;
 
     // Validation and navigation
     // ...
@@ -220,15 +224,19 @@ User-facing string, concise and action-oriented:
 
 The `node` property contains the AST node where the diagnostic was reported.
 
-### Pattern 1: Direct Type Check
+### Pattern 1: Walk Up to the Node You Need
+
+**Do not type-test `node` directly** — see
+[Never Type-Test `node` Directly](#never-type-test-node-directly) for why this
+silently broke 27 fixes at once.
 
 ```dart
 @override
 Future<void> compute(ChangeBuilder builder) async {
-  final targetNode = node;
-  if (targetNode is! ConstructorName) return;
+  final targetNode = node.thisOrAncestorOfType<ConstructorName>();
+  if (targetNode == null) return;
 
-  // targetNode is now known to be ConstructorName
+  // targetNode is a ConstructorName regardless of how the rule reported it
 }
 ```
 
@@ -236,14 +244,20 @@ Future<void> compute(ChangeBuilder builder) async {
 
 ---
 
-### Pattern 2: Parent Navigation
+### Pattern 2: Reaching an Enclosing Declaration
+
+Walk up here too. `node.parent` assumes an exact depth that the reported range
+does not guarantee:
 
 ```dart
-final targetNode = node;
-if (targetNode is! SimpleIdentifier) return;
-
-final classDecl = targetNode.parent;
+// ✘ Breaks when the rule uses reportAtToken — node is already the declaration,
+//   or a name-part wrapper, so .parent overshoots or misses.
+final classDecl = node.parent;
 if (classDecl is! ClassDeclaration) return;
+
+// ✔ Depth-independent.
+final classDecl = node.thisOrAncestorOfType<ClassDeclaration>();
+if (classDecl == null) return;
 ```
 
 **Reference:** [avoid_unnecessary_consumer_widgets_fix.dart](../../../lib/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart#L28-L32)
@@ -1047,6 +1061,172 @@ void _addStackTraceParameter(dynamic builder, CatchClause catchClause, String st
 
 ---
 
+## Never Type-Test `node` Directly
+
+This one silently broke **27 fixes** at once. It is the single most likely way
+a new fix will appear to work and do nothing.
+
+The framework resolves `node` with `unit.nodeCovering(offset, length)` over the
+diagnostic's range, which returns the **deepest** node with that range. Two
+consequences:
+
+- An unnamed constructor call (`Opacity(...)`) makes `ConstructorName` and its
+  child `NamedType` share a range, so `node` is the `NamedType`.
+- `reportAtToken(...)` on a class or member name gives a range covering just
+  that token, so `node` is a name-part wrapper or the declaration itself —
+  never a `SimpleIdentifier`, which no longer wraps names since analyzer 13.
+
+```dart
+// ✘ Silently never fires. Compiles, registers, shows up in the fix list —
+//   but compute() returns at the first line and produces zero edits.
+final targetNode = node;
+if (targetNode is! ConstructorName) return;
+
+// ✔ Walk up instead.
+final targetNode = node.thisOrAncestorOfType<ConstructorName>();
+if (targetNode == null) return;
+```
+
+The same applies to `node.parent`: when the rule reports at a keyword
+(`reportAtToken(node.switchKeyword)`), `node` is *already* the `SwitchStatement`
+and `node.parent` overshoots it.
+
+There is no compile error and no exception — `FixProcessor` treats "no edits"
+as "the fix declined", which is indistinguishable from a fix that legitimately
+did not apply. Only an output test catches it, which is why every fix needs one.
+
+### Two edits at the same offset drop the whole fix
+
+`ChangeBuilder` raises `ConflictingEditException` when two edits touch the same
+range — and `FixProcessor` catches it, logs it, and silently discards the fix.
+Same symptom as above: offered in the list, does nothing.
+
+```dart
+// ✘ The insertion offset equals where methodName starts → conflict → fix lost.
+builder.addSimpleReplacement(range.node(invocation.methodName), 'expectLater');
+builder.addSimpleInsertion(invocation.offset, 'await ');
+
+// ✔ One edit carrying both changes.
+builder.addSimpleReplacement(
+  range.node(invocation.methodName),
+  'await expectLater',
+);
+```
+
+Multiple edits are fine when their ranges are genuinely disjoint (e.g. renaming
+a class name token *and* a constructor name token). Only overlap is fatal.
+
+---
+
+## Testing a Fix
+
+`analyzer_testing` has **no** fix test API — as of 0.3.4 it exposes only
+`AnalysisRuleTest`, `PubPackageResolutionTest` and `SkippedTest`. That does not
+mean fixes cannot be tested: `PluginServer` answers `edit.getFixes`, so a real
+fix can be requested and the returned edit applied to the source.
+
+`test/fix_harness.dart` wraps that. Use it for every new fix.
+
+### The basic shape
+
+```dart
+import 'package:test/test.dart';
+
+import '../fix_harness.dart';
+
+void main() {
+  late FixHarness harness;
+
+  setUp(() async {
+    harness = FixHarness();
+    await harness.setUp();
+  });
+
+  tearDown(() async {
+    await harness.tearDown();
+  });
+
+  group('avoid_redundant_else', () {
+    test('hoists the else body', () async {
+      final fixed = await harness.applyFix(r'''
+int classify(int value) {
+  if (value > 0) {
+    return 1;
+  } else {
+    return -1;
+  }
+}
+''', 'avoid_redundant_else');
+
+      expect(fixed, contains('return -1;'));
+      expect(fixed, isNot(contains('else')));
+    });
+  });
+}
+```
+
+`applyFix(source, ruleName)` returns the source **after** the fix is applied.
+It fails the test outright when the rule does not fire, or when the fix
+produces no edits — which is exactly the failure a fix that silently returns
+early would otherwise hide.
+
+### Rules that need another package
+
+Many rules only match types from Flutter, Bloc or Riverpod. Pass a mock:
+
+```dart
+final fixed = await harness.applyFix(
+  r'''
+import 'package:flutter/flutter.dart';
+
+Widget build() => ListView(shrinkWrap: true);
+''',
+  'avoid_shrink_wrap_in_lists',
+  packages: {'flutter': flutterWidgets},
+);
+```
+
+`flutterWidgets` is a minimal stand-in exported from the harness (`Key`,
+`Widget`, `Text`, `ListView`). For anything else, pass your own source string —
+the rule's own test in `test/<rule_name>_test.dart` already contains a working
+mock package you can lift.
+
+Note the import is `package:flutter/flutter.dart`: the harness writes each mock
+to `lib/<name>.dart`, not to Flutter's real `widgets.dart` path.
+
+### What to assert
+
+Assert the **text the fix produced**, not merely that something changed:
+
+```dart
+// Good — pins the actual result.
+expect(fixed, contains("values.addAll(['first', 'second']);"));
+expect(fixed, isNot(contains("values.add('first');")));
+
+// Weak — passes even if the fix mangles the code.
+expect(fixed, isNot(equals(original)));
+```
+
+Cover **each branch of the fix**, not just the happy path. A fix that handles
+two shapes needs a test per shape; this is how the gap in `prefer_add_all`
+(loop rewritten, consecutive `add` calls silently unfixed) was found.
+
+Worth testing explicitly:
+
+- the argument being removed is the **only** argument (comma handling)
+- expression body vs block body
+- `const` vs non-const constructor invocations
+- the fix running on already-partially-correct code
+
+### When the fix is wrong, let the test fail
+
+If the produced output does not compile or changes behaviour, **do not weaken
+the assertion to make the test green**. A red test here is the tool working:
+fix the producer, or record the limitation in the rule's docs under "Known
+limitations".
+
+---
+
 ## Quick Fix Implementation Checklist
 
 1. Import standard packages (analysis_server_plugin, analyzer, analyzer_plugin)
@@ -1066,7 +1246,7 @@ void _addStackTraceParameter(dynamic builder, CatchClause catchClause, String st
    - Use `builder.addDartFileEdit(file, (builder) { ... })`
    - Use appropriate range + edit methods
 9. Register in lib/many_lints.dart: `registerFixForRule(RuleCode, FixConstructor.new)`
-10. Test manually (test infrastructure for fixes not yet established)
+10. Write output tests with `FixHarness` — see [Testing a Fix](#testing-a-fix); cover every branch of the fix, not just the happy path
 
 ---
 
@@ -1105,7 +1285,7 @@ await builder.addDartFileEdit(file, (builder) {
 3. Study a complex fix: [prefer_switch_expression_fix.dart](../../../lib/src/fixes/prefer_switch_expression_fix.dart)
 4. Use templates from this cookbook
 5. Remember to register in lib/many_lints.dart
-6. Test manually in a test project
+6. Write output tests with `FixHarness` — see [Testing a Fix](#testing-a-fix)
 7. Update this cookbook if you discover new patterns!
 
 ---

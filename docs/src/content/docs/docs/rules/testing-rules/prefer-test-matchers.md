@@ -20,24 +20,24 @@ When a test fails, matchers provide descriptive output such as "Expected: has le
 ## Don't
 
 ```dart
-expect(array.length, 1);
+expect(scores.length, 1);
 expect(value, 'hello');
 expect(true, true);
-expect(array, [1, 2, 3]);
+expect(scores, [7, 8, 9]);
 expect(maybeNull, null);
-expectLater(array.length, 1);
+expectLater(scores.length, 1);
 ```
 
 ## Do
 
 ```dart
-expect(array, hasLength(1));
+expect(scores, hasLength(1));
 expect(value, equals('hello'));
 expect(true, isTrue);
-expect(array, equals([1, 2, 3]));
+expect(scores, equals([7, 8, 9]));
 expect(maybeNull, isNull);
 expect(value, isA<String>());
-expectLater(array, hasLength(3));
+expectLater(scores, hasLength(3));
 ```
 
 ## Configuration

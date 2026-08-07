@@ -55,7 +55,10 @@ class ChangeWidgetNameFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
+    // For an unnamed constructor, `ConstructorName` and its `NamedType`
+    // child share a source range and the covering node resolves to the
+    // deeper one, so look up before type-testing.
+    final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
     if (targetNode is! ConstructorName) return;
 
     await builder.addDartFileEdit(file, (builder) {

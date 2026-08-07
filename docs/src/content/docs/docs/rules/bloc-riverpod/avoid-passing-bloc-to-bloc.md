@@ -28,6 +28,10 @@ class Increment extends CounterEvent {}
 
 abstract class TimerEvent {}
 
+class CounterBloc extends Bloc<CounterEvent, int> {
+  CounterBloc() : super(0);
+}
+
 // Bloc depends on another Bloc
 class TimerBloc extends Bloc<TimerEvent, int> {
   final CounterBloc counterBloc;

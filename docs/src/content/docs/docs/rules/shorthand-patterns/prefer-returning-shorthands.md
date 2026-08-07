@@ -13,7 +13,7 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Shorthand Patterns</span>
 
-Flags expression function bodies that return an instance whose type matches the declared return type. Since the return type is already explicit, the class name in the constructor call is redundant and can be replaced with a dot shorthand (e.g., `.new()` or `.named()`).
+Flags expression function bodies that return an instance whose type matches the declared return type. Since the return type is already explicit, the class name in the constructor call is redundant and can be replaced with a dot shorthand (e.g., `.new()` or `.symbol()`).
 
 ## Why use this rule
 
@@ -24,42 +24,42 @@ When a function already declares its return type, repeating the class name in th
 ## Don't
 
 ```dart
-class SomeClass {
-  final String value;
-  const SomeClass(this.value);
-  const SomeClass.named(this.value);
+class Currency {
+  final String code;
+  const Currency(this.code);
+  const Currency.symbol(this.code);
 }
 
-SomeClass getInstance() => SomeClass('val');
+Currency getInstance() => Currency('PLN');
 
-SomeClass getNamedInstance() => SomeClass.named('val');
+Currency getNamedInstance() => Currency.symbol('PLN');
 
-SomeClass getConditional(bool flag) =>
-    flag ? SomeClass('value') : SomeClass.named('val');
+Currency getConditional(bool flag) =>
+    flag ? Currency('EUR') : Currency.symbol('PLN');
 
-SomeClass? getNullable() => SomeClass('val');
+Currency? getNullable() => Currency('PLN');
 ```
 
 ## Do
 
 ```dart
-SomeClass getInstance() => .new('val');
+Currency getInstance() => .new('PLN');
 
-SomeClass getNamedInstance() => .named('val');
+Currency getNamedInstance() => .symbol('PLN');
 
-SomeClass getConditional(bool flag) =>
-    flag ? .new('value') : .named('val');
+Currency getConditional(bool flag) =>
+    flag ? .new('EUR') : .symbol('PLN');
 
 // Block function bodies are not flagged:
-SomeClass getWithBlock() {
-  return SomeClass('val');
+Currency getWithBlock() {
+  return Currency('PLN');
 }
 
 // No explicit return type — not flagged:
-getInstance() => SomeClass('val');
+getInstance() => Currency('PLN');
 
 // Dynamic return type — not flagged:
-dynamic getDynamic() => SomeClass('val');
+dynamic getDynamic() => Currency('PLN');
 ```
 
 ## Configuration

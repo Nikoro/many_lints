@@ -17,6 +17,8 @@ A `switch` over an enum is checked for exhaustiveness. Add a constant to the enu
 
 An if-else chain gets no such check. A new constant falls through to the final `else`, or past the chain entirely, and the bug shows up at runtime in whichever branch forgot about it. The chain is also longer to read: the reader has to confirm each branch tests the same subject.
 
+The same blind spot applies to a condition that `||`-chains comparisons, and to a membership test over a literal set of constants: in both cases adding an enum constant changes nothing and the compiler stays silent.
+
 **See also:** [Dart: exhaustiveness checking](https://dart.dev/language/branches#exhaustiveness-checking)
 
 ## Don't
@@ -32,6 +34,18 @@ String describe(Status status) {
   }
   return '';
 }
+
+// Comparisons combined with ||
+if (status == Status.active ||
+    status == Status.inactive ||
+    status == Status.pending) {
+  handle();
+}
+
+// Membership test over a literal set of constants
+if ({Status.active, Status.inactive, Status.pending}.contains(status)) {
+  handle();
+}
 ```
 
 ## Do
@@ -42,15 +56,21 @@ String describe(Status status) => switch (status) {
   Status.inactive => 'Inactive',
   Status.pending => 'Pending',
 };
+
+final handled = switch (status) {
+  Status.active || Status.inactive || Status.pending => true,
+};
 ```
 
 ## Known limitations
 
-The rule requires the whole chain to be replaceable, so it stays silent when:
+The rule requires the whole condition to be replaceable, so it stays silent when:
 
-- Fewer than three branches compare enum constants — a short chain is not worth restructuring.
+- Fewer than three enum comparisons are involved — a short chain is not worth restructuring. Comparisons joined by `||` count individually, so `a == E.x || a == E.y` in one branch plus `a == E.z` in the next reaches the threshold.
 - The branches test different subjects, or mix an enum comparison with an unrelated condition.
 - The enum is nullable, since a `null` case needs handling a plain switch over constants does not give.
+
+For `contains`, only a literal receiver is reported. A named collection (`const known = {...}; known.contains(v)`) is a deliberate, reusable set rather than an inlined branch, so it is left alone.
 
 Operand order does not matter: `Status.active == status` is recognised the same as `status == Status.active`.
 

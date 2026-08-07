@@ -49,6 +49,12 @@ class GoodExamples {
 }
 ```
 
+## Known limitations
+
+Detection is a heuristic over each block of comments: a block is reported when at least half its non-empty lines look like Dart rather than prose. Blocks are formed from comments on directly consecutive lines — a blank line ends one, and so does any code between them. A comment trailing code (`foo(); // note`) is its own block, since it annotates the line beside it.
+
+That means a single commented-out line surrounded by explanatory prose may not reach the ratio, and prose that reads like code (`// returns null;`) can be reported. Suppress those with `// ignore: many_lints/avoid_commented_out_code`.
+
 ## Configuration
 
 To disable this rule:

@@ -24,8 +24,10 @@ class PreferOverridingParentEqualityFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
-    if (targetNode is! ClassDeclaration) return;
+    // The rule reports at the class-name token, so the covering node is a
+    // name-part wrapper rather than the declaration itself.
+    final targetNode = node.thisOrAncestorOfType<ClassDeclaration>();
+    if (targetNode == null) return;
 
     final element = targetNode.declaredFragment?.element;
     if (element == null) return;

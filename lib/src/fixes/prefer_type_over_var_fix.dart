@@ -26,8 +26,10 @@ class PreferTypeOverVarFix extends ResolvedCorrectionProducer {
   Future<void> compute(ChangeBuilder builder) async {
     // The node should be the 'var' keyword token
     // We need to navigate to the VariableDeclarationList
-    final parent = node.parent;
-    if (parent is! VariableDeclarationList) return;
+    // The rule reports at the `var` keyword, so the covering node is already
+    // the declaration list — `node.parent` would overshoot it.
+    final parent = node.thisOrAncestorOfType<VariableDeclarationList>();
+    if (parent == null) return;
 
     final variables = parent.variables;
     if (variables.isEmpty) return;

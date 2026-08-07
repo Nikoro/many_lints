@@ -24,14 +24,16 @@ class UseSliverPrefixFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
-    if (targetNode is! SimpleIdentifier) return;
+    // The rule reports at the class-name token, so there is no identifier
+    // node to replace — rename the token on the enclosing declaration.
+    final declaration = node.thisOrAncestorOfType<ClassDeclaration>();
+    if (declaration == null) return;
 
-    final currentName = targetNode.name;
-    final newName = 'Sliver$currentName';
+    final nameToken = declaration.namePart.typeName;
+    final newName = 'Sliver${nameToken.lexeme}';
 
     await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(range.node(targetNode), newName);
+      builder.addSimpleReplacement(range.token(nameToken), newName);
     });
   }
 }

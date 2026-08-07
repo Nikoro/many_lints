@@ -64,3 +64,28 @@ void edgeCaseIndexed(List<int> target, List<int> source) {
     target.add(source[i]);
   }
 }
+
+// ❌ Bad: consecutive add() calls on the same collection
+void badConsecutiveAdds(List<String> values) {
+  values.add('first');
+  // LINT: use values.addAll(['first', 'second'])
+  values.add('second');
+}
+
+// ✅ Good: one addAll with a collection literal
+void goodConsecutiveAdds(List<String> values) {
+  values.addAll(['first', 'second']);
+}
+
+// ✅ Good: another statement breaks the run
+void goodInterleaved(List<String> values) {
+  values.add('first');
+  print('between');
+  values.add('second');
+}
+
+// ✅ Good: different receivers
+void goodDifferentTargets(List<String> a, List<String> b) {
+  a.add('x');
+  b.add('y');
+}

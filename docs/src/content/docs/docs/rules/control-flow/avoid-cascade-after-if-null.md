@@ -24,30 +24,30 @@ Dart's cascade operator and if-null operator have surprising precedence interact
 ## Don't
 
 ```dart
-void bad(Cow? nullableCow) {
-  // Unclear whether ..moo() applies to the result of ?? or just Cow()
-  final cow = nullableCow ?? Cow()
-    ..moo();
+void bad(Kettle? spareKettle) {
+  // Unclear whether ..boil() applies to the result of ?? or just Kettle()
+  final kettle = spareKettle ?? Kettle()
+    ..boil();
 
   // Multiple cascades after if-null
-  final cow2 = nullableCow ?? Cow()
-    ..moo()
-    ..age = 5;
+  final kettle2 = spareKettle ?? Kettle()
+    ..boil()
+    ..litres = 5;
 }
 ```
 
 ## Do
 
 ```dart
-void good(Cow? nullableCow) {
+void good(Kettle? spareKettle) {
   // Cascade applies to the entire if-null expression
-  final cow = (nullableCow ?? Cow())..moo();
+  final kettle = (spareKettle ?? Kettle())..boil();
 
   // Cascade applies only to the new instance
-  final cow2 = nullableCow ?? (Cow()..moo());
+  final kettle2 = spareKettle ?? (Kettle()..boil());
 
   // No if-null involved, cascade is unambiguous
-  final cow3 = Cow()..moo();
+  final kettle3 = Kettle()..boil();
 }
 ```
 

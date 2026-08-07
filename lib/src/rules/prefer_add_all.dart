@@ -7,16 +7,19 @@ import 'package:analyzer/error/error.dart';
 
 import '../type_checker.dart';
 
-/// Warns when a `for-in` loop does nothing but add each element to a
-/// collection.
+/// Warns when several elements are added to a collection one at a time.
 ///
-/// `for (final x in source) target.add(x);` is `target.addAll(source)`
-/// written out. The loop form hides a simple operation behind control flow
-/// the reader has to decode.
+/// Two shapes are reported:
+///
+/// 1. A `for-in` loop whose only statement adds the loop variable —
+///    `for (final x in source) target.add(x);` is `target.addAll(source)`
+///    written out, with control flow the reader has to decode.
+/// 2. Consecutive `add` calls on the same receiver — `target.add(a);
+///    target.add(b);` is `target.addAll([a, b])`.
 class PreferAddAll extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_add_all',
-    "This loop only adds elements and can be replaced with 'addAll'.",
+    "Elements are added one at a time and can be replaced with 'addAll'.",
     correctionMessage: "Use 'addAll' with the source collection instead.",
   );
 
@@ -24,8 +27,8 @@ class PreferAddAll extends AnalysisRule {
     : super(
         name: 'prefer_add_all',
         description:
-            'Warns when a for-in loop only calls add() and could be an '
-            'addAll() call.',
+            'Warns when elements are added to a collection one at a time '
+            'instead of with a single addAll() call.',
       );
 
   @override
@@ -38,6 +41,7 @@ class PreferAddAll extends AnalysisRule {
   ) {
     final visitor = _Visitor(this);
     registry.addForStatement(this, visitor);
+    registry.addBlock(this, visitor);
   }
 }
 
@@ -91,5 +95,83 @@ class _Visitor extends SimpleAstVisitor<void> {
     Block(:final statements) when statements.length == 1 => statements.first,
     ExpressionStatement() => body,
     _ => null,
+  };
+
+  /// Reports runs of consecutive `add` calls on the same receiver.
+  ///
+  /// `target.add(a); target.add(b);` is `target.addAll([a, b])`. A run is
+  /// broken by any other statement, so unrelated work between the calls
+  /// keeps them separate.
+  @override
+  void visitBlock(Block node) {
+    String? runReceiver;
+    var runLength = 0;
+    MethodInvocation? runSecondCall;
+
+    void flush() {
+      if (runLength > 1 && runSecondCall != null) {
+        rule.reportAtNode(runSecondCall!);
+      }
+      runReceiver = null;
+      runLength = 0;
+      runSecondCall = null;
+    }
+
+    for (final statement in node.statements) {
+      final receiver = _addReceiver(statement);
+
+      if (receiver == null) {
+        flush();
+        continue;
+      }
+
+      if (receiver.name != runReceiver) {
+        flush();
+        runReceiver = receiver.name;
+        runLength = 1;
+        continue;
+      }
+
+      runLength++;
+      runSecondCall ??= receiver.invocation;
+    }
+
+    flush();
+  }
+
+  /// Returns the receiver of a lone `receiver.add(value)` statement.
+  ///
+  /// Only a stable receiver is returned: comparing by source is sound for an
+  /// identifier or property chain, but `list()..add(x)` or `map[k].add(x)`
+  /// may denote a different object on each call.
+  ({String name, MethodInvocation invocation})? _addReceiver(
+    Statement statement,
+  ) {
+    if (statement is! ExpressionStatement) return null;
+
+    final invocation = statement.expression;
+    if (invocation is! MethodInvocation) return null;
+    if (invocation.methodName.name != 'add') return null;
+    if (invocation.argumentList.arguments.length != 1) return null;
+
+    final target = invocation.realTarget;
+    if (target == null) return null;
+    if (!_isStableReceiver(target)) return null;
+
+    // Only collections: `add` exists on many unrelated types.
+    final targetType = target.staticType;
+    if (targetType == null) return null;
+    if (!_iterableChecker.isAssignableFromType(targetType)) return null;
+
+    return (name: target.toSource(), invocation: invocation);
+  }
+
+  /// Whether [expression] denotes the same object every time it appears.
+  bool _isStableReceiver(Expression expression) => switch (expression) {
+    SimpleIdentifier() => true,
+    PrefixedIdentifier() => true,
+    PropertyAccess(:final target) =>
+      target == null || _isStableReceiver(target),
+    _ => false,
   };
 }

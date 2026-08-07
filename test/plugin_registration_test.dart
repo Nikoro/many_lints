@@ -57,7 +57,7 @@ void main() {
       0,
       (sum, v) => sum + v.length,
     );
-    expect(totalFixes, equals(90));
+    expect(totalFixes, equals(92));
   });
 
   test('assists are registered', () {

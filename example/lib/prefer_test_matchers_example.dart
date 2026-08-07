@@ -48,11 +48,11 @@ void expectLater(dynamic actual, dynamic matcher) {}
 
 // ❌ Bad: Using raw literals instead of matchers
 void bad() {
-  final array = [1, 2, 3];
+  final scores = [7, 8, 9];
   const value = 'hello';
 
   // LINT: Literal int instead of equals()
-  expect(array.length, 1);
+  expect(scores.length, 1);
 
   // LINT: Literal string instead of equals()
   expect(value, 'hello');
@@ -61,23 +61,23 @@ void bad() {
   expect(true, true);
 
   // LINT: Literal list instead of equals()
-  expect(array, [1, 2, 3]);
+  expect(scores, [7, 8, 9]);
 
   // LINT: null instead of isNull
   int? maybeNull;
   expect(maybeNull, null);
 
   // LINT: Also applies to expectLater
-  expectLater(array.length, 1);
+  expectLater(scores.length, 1);
 }
 
 // ✅ Good: Using matchers for better failure messages
 void good() {
-  final array = [1, 2, 3];
+  final scores = [7, 8, 9];
   const value = 'hello';
 
   // Correct: Use hasLength() for length checks
-  expect(array, hasLength(1));
+  expect(scores, hasLength(1));
 
   // Correct: Use equals() for value comparison
   expect(value, equals('hello'));
@@ -86,7 +86,7 @@ void good() {
   expect(true, isTrue);
 
   // Correct: Use equals() for list comparison
-  expect(array, equals([1, 2, 3]));
+  expect(scores, equals([7, 8, 9]));
 
   // Correct: Use isNull for null checks
   int? maybeNull;
@@ -96,5 +96,5 @@ void good() {
   expect(value, isA<String>());
 
   // Correct: expectLater with matcher
-  expectLater(array, hasLength(3));
+  expectLater(scores, hasLength(3));
 }

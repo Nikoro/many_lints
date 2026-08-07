@@ -19,13 +19,13 @@ class BadExamples extends StatelessWidget {
         // LINT: Use Text.rich instead of RichText
         RichText(
           text: TextSpan(
-            text: 'Hello ',
+            text: 'Total: ',
             children: [
               TextSpan(
-                text: 'bold',
+                text: '42 PLN',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              TextSpan(text: ' world!'),
+              TextSpan(text: ' incl. VAT'),
             ],
           ),
         ),
@@ -47,13 +47,13 @@ class GoodExamples extends StatelessWidget {
       children: [
         Text.rich(
           TextSpan(
-            text: 'Hello ',
+            text: 'Total: ',
             children: [
               TextSpan(
-                text: 'bold',
+                text: '42 PLN',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              TextSpan(text: ' world!'),
+              TextSpan(text: ' incl. VAT'),
             ],
           ),
         ),

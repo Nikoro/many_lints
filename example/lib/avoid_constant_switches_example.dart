@@ -5,25 +5,25 @@
 // Warns when a switch statement or expression evaluates a constant expression.
 // The result is always the same branch, which usually indicates a typo or bug.
 
-const _another = 10;
+const _retryLimit = 4;
 
 abstract final class Config {
-  static const value = '1';
+  static const channel = 'stable';
 }
 
 // ❌ Bad: Switch on a constant — always takes the same branch
 void bad() {
   // LINT: Switching on a static const field
-  switch (Config.value) {
-    case '1':
+  switch (Config.channel) {
+    case 'stable':
       print('always');
     case '2':
       print('never');
   }
 
   // LINT: Switching on a top-level const
-  switch (_another) {
-    case 10:
+  switch (_retryLimit) {
+    case 4:
       print('always');
     default:
       print('never');
@@ -40,7 +40,7 @@ void bad() {
 void good(int another) {
   // Parameter — fine
   switch (another) {
-    case 10:
+    case 4:
       print('maybe');
     default:
       print('maybe');
@@ -48,13 +48,13 @@ void good(int another) {
 
   // Switch expression on parameter — fine
   final x = switch (another) {
-    10 => 'ten',
+    4 => 'ten',
     _ => 'other',
   };
 
   // Method call result — fine
   switch (another.toString()) {
-    case '10':
+    case '4':
       print('maybe');
   }
 }

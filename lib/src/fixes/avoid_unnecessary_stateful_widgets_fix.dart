@@ -27,16 +27,15 @@ class AvoidUnnecessaryStatefulWidgetsFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
-    if (targetNode is! SimpleIdentifier) return;
-
-    final widgetClass = targetNode.parent;
-    if (widgetClass is! ClassDeclaration) return;
+    // The rule reports at the class-name token, so walk up to the
+    // declaration rather than expecting an identifier node.
+    final widgetClass = node.thisOrAncestorOfType<ClassDeclaration>();
+    if (widgetClass == null) return;
 
     final superclass = widgetClass.extendsClause?.superclass;
     if (superclass == null) return;
 
-    final widgetName = targetNode.name;
+    final widgetName = widgetClass.namePart.typeName.lexeme;
 
     // Find the companion State class in the same compilation unit
     final compilationUnit = widgetClass.parent;

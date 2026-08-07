@@ -5,28 +5,28 @@
 // Warns when a binary comparison has constant operands on both sides.
 // The result is always the same, which usually indicates a typo or a bug.
 
-const _another = 10;
+const _retryLimit = 4;
 
 abstract final class Config {
-  static const value = '1';
+  static const channel = 'stable';
 }
 
 // ❌ Bad: Both sides are constants — condition is always the same
 void bad() {
   // LINT: Two integer literals compared
-  if (10 == 11) {
+  if (4 == 11) {
     print('unreachable');
   }
 
   // LINT: Static const field compared to a string literal
-  if (Config.value == '1') {
+  if (Config.channel == 'stable') {
     print('always true');
   } else {
     print('unreachable');
   }
 
   // LINT: Top-level const compared to a literal
-  final result = _another != 10;
+  final result = _retryLimit != 4;
 
   // LINT: Boolean literals compared
   final b = true == false;
@@ -38,12 +38,12 @@ void bad() {
 // ✅ Good: At least one side is a variable
 void good(String value, int count) {
   // Variable compared to literal — fine
-  if (value == '1') {
+  if (value == 'stable') {
     print('hello');
   }
 
   // Variable compared to const — fine
-  if (count > _another) {
+  if (count > _retryLimit) {
     print('big');
   }
 

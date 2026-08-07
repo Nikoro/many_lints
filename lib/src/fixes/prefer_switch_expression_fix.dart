@@ -43,8 +43,10 @@ class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
   @override
   Future<void> compute(ChangeBuilder builder) async {
     // Find the switch statement
-    final switchNode = node.parent;
-    if (switchNode is! SwitchStatement) return;
+    // The rule reports at the `switch` keyword, so the covering node is
+    // already the statement — `node.parent` would overshoot it.
+    final switchNode = node.thisOrAncestorOfType<SwitchStatement>();
+    if (switchNode == null) return;
 
     // Determine the conversion type and build the replacement
     final replacement = _buildSwitchExpression(switchNode);
@@ -113,13 +115,15 @@ class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
 
     String pattern;
 
-    // Get the pattern/guard
-    if (member is SwitchCase) {
-      pattern = member.expression.toSource();
-    } else if (member is SwitchDefault) {
-      pattern = '_';
-    } else {
-      return null;
+    // Get the pattern/guard. Dart 3 parses `case Foo.bar:` as a
+    // `SwitchPatternCase`; only pre-3.0 constant cases are `SwitchCase`.
+    switch (member) {
+      case SwitchPatternCase(:final guardedPattern):
+        pattern = guardedPattern.toSource();
+      case SwitchCase(:final expression):
+        pattern = expression.toSource();
+      case SwitchDefault():
+        pattern = '_';
     }
 
     final statement = statements.first;

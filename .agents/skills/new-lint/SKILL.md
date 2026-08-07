@@ -227,8 +227,12 @@ analysis_server_plugin 0.3.18+:
   makes background analysis report to a closed channel.
 
 Note that `analyzer_testing` (0.3.4) still exposes no API for testing quick-fix
-or assist *output* — only `AnalysisRuleTest` for diagnostics. Assist tests
-therefore drive `CorrectionProducerContext` directly; see
+or assist *output* — only `AnalysisRuleTest` for diagnostics. Fixes are covered
+anyway: `PluginServer` answers `edit.getFixes`, and `test/fix_harness.dart`
+wraps that so a fix can be checked by the text it actually produces. Every fix
+gets output tests under `test/fix_output/`; see
+[Testing a Fix](fixes-cookbook.md#testing-a-fix). Assist tests drive
+`CorrectionProducerContext` directly; see
 [assists-cookbook.md](assists-cookbook.md).
 - `lint(offset, length)` — offset is the character position, length is the length of the reported node/token
 - Method names start with `test_` and use camelCase

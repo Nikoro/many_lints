@@ -196,6 +196,8 @@ void f() {}
     );
   }
 
+  /// A blank line ends a group, so these are two separate findings rather
+  /// than one span covering the gap.
   Future<void> test_separatedCommentGroups() async {
     await assertDiagnostics(
       r'''
@@ -204,7 +206,45 @@ void f() {}
 // final y = 99;
 void f() {}
 ''',
-      [lint(0, 34)],
+      [lint(0, 16), lint(18, 16)],
+    );
+  }
+
+  /// Prose comments elsewhere in the file must not merge into a code block
+  /// and dilute it below the code-line ratio, which silenced the diagnostic
+  /// entirely.
+  Future<void> test_proseInLaterClassDoesNotSuppress() async {
+    await assertDiagnostics(
+      r'''
+class BadExamples {
+  // void apply(String value) {
+  //   print(value);
+  // }
+
+  void another() {}
+}
+
+class GoodExamples {
+  // This method handles the main processing logic
+  // and delegates to the appropriate handler
+
+  void another() {}
+}
+''',
+      [lint(22, 57)],
+    );
+  }
+
+  /// A trailing comment and the comment on the next line are separated by
+  /// code, so they are not one group.
+  Future<void> test_trailingCommentNotGroupedWithNextLine() async {
+    await assertDiagnostics(
+      r'''
+void f() {} // final x = 42;
+// final y = 99;
+void g() {}
+''',
+      [lint(12, 16), lint(29, 16)],
     );
   }
 

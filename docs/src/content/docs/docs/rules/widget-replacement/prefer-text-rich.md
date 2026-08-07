@@ -27,13 +27,13 @@ Flags usages of `RichText` which should be replaced with `Text.rich`. `RichText`
 // RichText does not handle text scaling
 RichText(
   text: TextSpan(
-    text: 'Hello ',
+    text: 'Total: ',
     children: [
       TextSpan(
-        text: 'bold',
+        text: '42 PLN',
         style: TextStyle(fontWeight: FontWeight.bold),
       ),
-      TextSpan(text: ' world!'),
+      TextSpan(text: ' incl. VAT'),
     ],
   ),
 );
@@ -48,13 +48,13 @@ RichText(text: TextSpan(text: 'Simple text'));
 // Text.rich handles text scaling and inherits default style
 Text.rich(
   TextSpan(
-    text: 'Hello ',
+    text: 'Total: ',
     children: [
       TextSpan(
-        text: 'bold',
+        text: '42 PLN',
         style: TextStyle(fontWeight: FontWeight.bold),
       ),
-      TextSpan(text: ' world!'),
+      TextSpan(text: ' incl. VAT'),
     ],
   ),
 );

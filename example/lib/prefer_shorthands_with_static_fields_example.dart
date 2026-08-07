@@ -5,69 +5,69 @@
 /// This rule suggests using dot shorthands with static fields when the type
 /// can be inferred from context.
 
-class SomeClass {
-  final String value;
+class Currency {
+  final String code;
 
-  const SomeClass(this.value);
+  const Currency(this.code);
 
-  static const first = SomeClass('first');
-  static const second = SomeClass('second');
+  static const zloty = Currency('PLN');
+  static const euro = Currency('EUR');
 }
 
-void badExamples(SomeClass? e) {
+void badExamples(Currency? e) {
   // ❌ BAD: Using explicit class prefix in switch case
   switch (e) {
-    case SomeClass.first: // LINT
+    case Currency.zloty: // LINT
       print(e);
   }
 
   // ❌ BAD: Using explicit class prefix in switch expression
   final v = switch (e) {
-    SomeClass.first => 1, // LINT
+    Currency.zloty => 1, // LINT
     _ => 2,
   };
 
   // ❌ BAD: Using explicit class prefix in variable declaration
-  final SomeClass another = SomeClass.first; // LINT
+  final Currency another = Currency.zloty; // LINT
 
   // ❌ BAD: Using explicit class prefix in comparison
-  if (e == SomeClass.first) {} // LINT
+  if (e == Currency.zloty) {} // LINT
 }
 
 // ❌ BAD: Using explicit class prefix in default parameter
-void badDefaultParameter({SomeClass value = SomeClass.first}) {} // LINT
+void badDefaultParameter({Currency value = Currency.zloty}) {} // LINT
 
 // ❌ BAD: Using explicit class prefix in return expression
-SomeClass badReturnExpression() => SomeClass.first; // LINT
+Currency badReturnExpression() => Currency.zloty; // LINT
 
-void goodExamples(SomeClass? e) {
+void goodExamples(Currency? e) {
   // ✅ GOOD: Using dot shorthand in switch case
   switch (e) {
-    case .first:
+    case .zloty:
       print(e);
   }
 
   // ✅ GOOD: Using dot shorthand in switch expression
   final v = switch (e) {
-    .first => 1,
+    .zloty => 1,
     _ => 2,
   };
 
   // ✅ GOOD: Using dot shorthand in variable declaration
-  final SomeClass another = .first;
+  final Currency another = .zloty;
 
   // ✅ GOOD: Using dot shorthand in comparison
-  if (e == .first) {}
+  if (e == .zloty) {}
 }
 
 // ✅ GOOD: Using dot shorthand in default parameter
-void goodDefaultParameter({SomeClass value = .first}) {}
+void goodDefaultParameter({Currency value = .zloty}) {}
 
 // ✅ GOOD: Using dot shorthand in return expression
-SomeClass goodReturnExpression() => .first;
+Currency goodReturnExpression() => .zloty;
 
 // ✅ GOOD: Explicit prefix is OK when type cannot be inferred
-Object getObject() => SomeClass.first;
+Object getObject() => Currency.zloty;
 
 // ✅ GOOD: Not applicable when static field type differs from class
 class Container {

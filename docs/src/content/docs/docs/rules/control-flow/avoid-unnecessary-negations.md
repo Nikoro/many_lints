@@ -13,11 +13,13 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-This rule flags a negation applied to something already negated — `!!flag` and `!(a != b)`.
+This rule flags a negation that can be removed without changing the meaning — `!!flag`, `!(a != b)`, `!true`, and `!a == !b`.
 
 ## Why use this rule
 
 A double negation states a positive condition the long way. The reader has to unwind both operators before knowing what is actually being tested, and it is easy to miscount when the expression is longer.
+
+Negating a boolean literal (`!true`) is just the other literal written indirectly. Negating both sides of an equality (`!a == !b`) cancels out entirely — the comparison gives the same answer without either `!`.
 
 These usually appear when a condition is inverted during a change and the inner expression is left as it was.
 
@@ -31,6 +33,14 @@ if (!!isEnabled) {
 if (!(status != Status.active)) {
   activate();
 }
+
+if (!true) {
+  unreachable();
+}
+
+if (!isReady == !isLoaded) {
+  sync();
+}
 ```
 
 ## Do
@@ -43,13 +53,21 @@ if (isEnabled) {
 if (status == Status.active) {
   activate();
 }
+
+if (false) {
+  unreachable();
+}
+
+if (isReady == isLoaded) {
+  sync();
+}
 ```
 
 ## Known limitations
 
-Only two shapes are reported: `!` applied to a `!` expression, and `!` applied to a `!=` comparison. Parentheses around either are unwrapped first, so `!(!flag)` is caught.
+Four shapes are reported: `!` applied to a `!` expression, `!` applied to a `!=` comparison, `!` applied to a boolean literal, and `==`/`!=` with a negation on *both* sides. Parentheses are unwrapped first, so `!(!flag)` is caught.
 
-A negated `==` (`!(a == b)`) is deliberately excluded — it is a single negation, and rewriting it to `!=` is a style preference rather than a redundancy. Negated relational comparisons are handled by [`avoid_inverted_boolean_checks`](/docs/rules/control-flow/avoid-inverted-boolean-checks/) instead, so the same code is never reported twice.
+A single negation in a comparison (`!a == b`) is left alone — removing it would change the result. A negated `==` (`!(a == b)`) is also deliberately excluded: it is a single negation, and rewriting it to `!=` is a style preference rather than a redundancy. Negated relational comparisons are handled by [`avoid_inverted_boolean_checks`](/docs/rules/control-flow/avoid-inverted-boolean-checks/) instead, so the same code is never reported twice.
 
 ## Configuration
 

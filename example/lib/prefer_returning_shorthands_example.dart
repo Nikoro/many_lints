@@ -6,56 +6,55 @@
 // cases when that type is the same as the returned instance, the instance can be
 // simplified to a dot shorthand without reducing readability.
 
-class SomeClass {
-  final String value;
+class Currency {
+  final String code;
 
-  const SomeClass(this.value);
-  const SomeClass.named(this.value);
+  const Currency(this.code);
+  const Currency.symbol(this.code);
 }
 
 class ExampleService {
   // === BAD examples ===
 
-  // LINT: Use .new('val') instead of SomeClass('val')
-  SomeClass getInstance() => SomeClass('val');
+  // LINT: Use .new('PLN') instead of Currency('PLN')
+  Currency getInstance() => Currency('PLN');
 
-  // LINT: Use .named('val') instead of SomeClass.named('val')
-  SomeClass getNamedInstance() => SomeClass.named('val');
+  // LINT: Use .symbol('PLN') instead of Currency.symbol('PLN')
+  Currency getNamedInstance() => Currency.symbol('PLN');
 
   // LINT: Both branches can use shorthands
-  SomeClass getConditional(bool flag) =>
-      flag ? SomeClass('value') : SomeClass.named('val');
+  Currency getConditional(bool flag) =>
+      flag ? Currency('EUR') : Currency.symbol('PLN');
 
   // LINT: Works with nullable return types too
-  SomeClass? getNullable() => SomeClass('val');
+  Currency? getNullable() => Currency('PLN');
 
   // === GOOD examples ===
 
   // GOOD: Using dot shorthand for default constructor
-  SomeClass getInstanceGood() => .new('val');
+  Currency getInstanceGood() => .new('PLN');
 
   // GOOD: Using dot shorthand for named constructor
-  SomeClass getNamedInstanceGood() => .named('val');
+  Currency getNamedInstanceGood() => .symbol('PLN');
 
   // GOOD: Using shorthands in conditional
-  SomeClass getConditionalGood(bool flag) =>
-      flag ? .new('value') : .named('val');
+  Currency getConditionalGood(bool flag) => flag ? .new('EUR') : .symbol('PLN');
 
   // === Cases where the lint does NOT trigger ===
 
   // GOOD: Block function body (not an expression function)
-  SomeClass getWithBlock() {
-    return SomeClass('val');
+  Currency getWithBlock() {
+    return Currency('PLN');
   }
 
   // GOOD: No explicit return type
-  getInstanceInferred() => SomeClass('val');
+  getInstanceInferred() => Currency('PLN');
 
   // GOOD: Dynamic return type
-  dynamic getDynamic() => SomeClass('val');
+  dynamic getDynamic() => Currency('PLN');
 
   // GOOD: Already using shorthand
-  SomeClass getAlreadyShorthand() => .new('val');
+  Currency getAlreadyShorthand() => .new('PLN');
 }
 
 // Example with generics
@@ -67,10 +66,10 @@ class GenericClass<T> {
 
 class GenericService {
   // LINT: Generic classes also benefit from shorthands
-  GenericClass<String> getGeneric() => GenericClass<String>('val');
+  GenericClass<String> getGeneric() => GenericClass<String>('PLN');
 
   // GOOD: Using shorthand
-  GenericClass<String> getGenericGood() => .new('val');
+  GenericClass<String> getGenericGood() => .new('PLN');
 }
 
 // Example showing the benefits

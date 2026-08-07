@@ -8,17 +8,20 @@ import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
-/// Warns when an if-else chain compares one enum value against several
+/// Warns when a condition compares one enum value against several
 /// constants.
 ///
+/// Three shapes are reported: an if-else chain, a single condition that
+/// `||`-chains comparisons, and `{E.a, E.b, E.c}.contains(value)`.
+///
 /// A `switch` over an enum is checked for exhaustiveness: add a constant
-/// and the compiler points at every switch that must handle it. An if-else
-/// chain gets no such check, so a new constant silently falls through to
-/// the final `else` — or to nothing at all.
+/// and the compiler points at every switch that must handle it. None of
+/// these shapes gets that check, so a new constant silently falls through
+/// to the final `else` — or to nothing at all.
 class PreferSwitchWithEnums extends AnalysisRule {
   static const LintCode code = LintCode(
     'prefer_switch_with_enums',
-    "This if-else chain compares '{0}' against several enum constants.",
+    "This condition compares '{0}' against several enum constants.",
     correctionMessage:
         'Use a switch so the compiler checks that every constant is '
         'handled.',
@@ -45,6 +48,7 @@ class PreferSwitchWithEnums extends AnalysisRule {
   ) {
     final visitor = _Visitor(this);
     registry.addIfStatement(this, visitor);
+    registry.addMethodInvocation(this, visitor);
   }
 }
 
@@ -62,14 +66,16 @@ class _Visitor extends SimpleAstVisitor<void> {
     var comparisons = 0;
 
     for (IfStatement? current = node; current != null;) {
-      final compared = _comparedEnumSubject(current.expression);
-      if (compared == null) return;
+      // A branch may test the same value several times with `||`, as in
+      // `v == E.a || v == E.b`. Each comparison counts toward the threshold.
+      final branch = _branchComparisons(current.expression);
+      if (branch == null) return;
 
-      subject ??= compared;
+      subject ??= branch.subject;
       // Every branch must test the same value for a switch to replace it.
-      if (compared != subject) return;
+      if (branch.subject != subject) return;
 
-      comparisons++;
+      comparisons += branch.count;
 
       final elseStatement = current.elseStatement;
       current = elseStatement is IfStatement ? elseStatement : null;
@@ -78,6 +84,67 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (comparisons < PreferSwitchWithEnums._threshold) return;
 
     rule.reportAtNode(node.expression, arguments: [subject!]);
+  }
+
+  /// Reports `{E.a, E.b, E.c}.contains(value)` used as a condition.
+  ///
+  /// A membership test over a literal set of constants has the same blind
+  /// spot as an if-else chain: adding a constant changes nothing and the
+  /// compiler stays silent. Only a literal receiver is reported — a named
+  /// collection is a deliberate, reusable set, not an inlined branch.
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.methodName.name != 'contains') return;
+
+    final arguments = node.argumentList.arguments;
+    if (arguments.length != 1) return;
+
+    final argument = arguments.first;
+    if (argument is! Expression) return;
+    if (!_isNonNullableEnum(argument)) return;
+
+    final target = node.realTarget;
+    if (target == null) return;
+
+    final elements = switch (target) {
+      ListLiteral(:final elements) => elements,
+      SetOrMapLiteral(:final elements) => elements,
+      _ => null,
+    };
+    if (elements == null) return;
+
+    // Every element must be an enum constant, and there must be enough of
+    // them that a switch is clearer than the test.
+    if (elements.length < PreferSwitchWithEnums._threshold) return;
+    for (final element in elements) {
+      if (element is! Expression) return;
+      if (!_isEnumConstant(element)) return;
+    }
+
+    rule.reportAtNode(node, arguments: [argument.toSource()]);
+  }
+
+  /// Counts the enum comparisons in one branch condition.
+  ///
+  /// Handles a single `subject == E.a` and an `||` chain of them. Returns
+  /// `null` when the condition tests anything else, or mixes subjects.
+  ({String subject, int count})? _branchComparisons(Expression expression) {
+    if (expression is BinaryExpression && expression.operator.lexeme == '||') {
+      final left = _branchComparisons(expression.leftOperand);
+      if (left == null) return null;
+
+      final right = _branchComparisons(expression.rightOperand);
+      if (right == null) return null;
+
+      if (left.subject != right.subject) return null;
+
+      return (subject: left.subject, count: left.count + right.count);
+    }
+
+    final subject = _comparedEnumSubject(expression);
+    if (subject == null) return null;
+
+    return (subject: subject, count: 1);
   }
 
   /// Returns the source of the compared value when [expression] is

@@ -6,35 +6,35 @@
 // assign to the same variable, using a switch expression can make the code more
 // compact and easier to understand.
 
-enum AssetSensorCategory { vibration, energy, temperature }
+enum DeliveryStage { packed, shipped, delivered }
 
-enum AssetSensorType { first, second, third }
+enum DeliveryIcon { box, truck, home }
 
 class ExampleService {
   // === BAD examples ===
 
   // LINT: All cases return a value - use switch expression
-  AssetSensorType convertBad(AssetSensorCategory sensorCategory) {
-    switch (sensorCategory) {
-      case AssetSensorCategory.vibration:
-        return AssetSensorType.first;
-      case AssetSensorCategory.energy:
-        return AssetSensorType.second;
-      case AssetSensorCategory.temperature:
-        return AssetSensorType.third;
+  DeliveryIcon iconForBad(DeliveryStage stage) {
+    switch (stage) {
+      case DeliveryStage.packed:
+        return DeliveryIcon.box;
+      case DeliveryStage.shipped:
+        return DeliveryIcon.truck;
+      case DeliveryStage.delivered:
+        return DeliveryIcon.home;
     }
   }
 
   // LINT: All cases assign to the same variable
-  String getDescriptionBad(AssetSensorType type) {
+  String getDescriptionBad(DeliveryIcon icon) {
     String description;
-    switch (type) {
-      case AssetSensorType.first:
-        description = 'First sensor';
-      case AssetSensorType.second:
-        description = 'Second sensor';
-      case AssetSensorType.third:
-        description = 'Third sensor';
+    switch (icon) {
+      case DeliveryIcon.box:
+        description = 'Waiting in the warehouse';
+      case DeliveryIcon.truck:
+        description = 'On the road';
+      case DeliveryIcon.home:
+        description = 'Dropped at the door';
     }
     return description;
   }
@@ -54,20 +54,20 @@ class ExampleService {
   // === GOOD examples ===
 
   // GOOD: Using switch expression with return
-  AssetSensorType convertGood(AssetSensorCategory sensorCategory) {
-    return switch (sensorCategory) {
-      AssetSensorCategory.vibration => AssetSensorType.first,
-      AssetSensorCategory.energy => AssetSensorType.second,
-      AssetSensorCategory.temperature => AssetSensorType.third,
+  DeliveryIcon iconForGood(DeliveryStage stage) {
+    return switch (stage) {
+      DeliveryStage.packed => DeliveryIcon.box,
+      DeliveryStage.shipped => DeliveryIcon.truck,
+      DeliveryStage.delivered => DeliveryIcon.home,
     };
   }
 
   // GOOD: Using switch expression with assignment
-  String getDescriptionGood(AssetSensorType type) {
-    final description = switch (type) {
-      AssetSensorType.first => 'First sensor',
-      AssetSensorType.second => 'Second sensor',
-      AssetSensorType.third => 'Third sensor',
+  String getDescriptionGood(DeliveryIcon icon) {
+    final description = switch (icon) {
+      DeliveryIcon.box => 'Waiting in the warehouse',
+      DeliveryIcon.truck => 'On the road',
+      DeliveryIcon.home => 'Dropped at the door',
     };
     return description;
   }

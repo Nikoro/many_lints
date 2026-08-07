@@ -57,7 +57,90 @@ class Holder {
     );
   }
 
+  // ---- Consecutive add() calls ----
+
+  Future<void> test_twoConsecutiveAdds() async {
+    await assertDiagnostics(
+      r'''
+void fill(List<String> values) {
+  values.add('first');
+  values.add('second');
+}
+''',
+      [lint(58, 20)],
+    );
+  }
+
+  Future<void> test_threeConsecutiveAddsReportedOnce() async {
+    await assertDiagnostics(
+      r'''
+void fill(List<String> values) {
+  values.add('a');
+  values.add('b');
+  values.add('c');
+}
+''',
+      [lint(54, 15)],
+    );
+  }
+
+  Future<void> test_consecutiveAddsOnField() async {
+    await assertDiagnostics(
+      r'''
+class Holder {
+  final List<int> items = [];
+
+  void fill() {
+    items.add(1);
+    items.add(2);
+  }
+}
+''',
+      [lint(84, 12)],
+    );
+  }
+
   // ---- Negative cases (should NOT trigger lint) ----
+
+  Future<void> test_singleAdd() async {
+    await assertNoDiagnostics(r'''
+void fill(List<String> values) {
+  values.add('only');
+}
+''');
+  }
+
+  Future<void> test_addsOnDifferentReceivers() async {
+    await assertNoDiagnostics(r'''
+void fill(List<String> a, List<String> b) {
+  a.add('x');
+  b.add('y');
+}
+''');
+  }
+
+  Future<void> test_addsSeparatedByOtherStatement() async {
+    await assertNoDiagnostics(r'''
+void fill(List<String> values) {
+  values.add('first');
+  print('between');
+  values.add('second');
+}
+''');
+  }
+
+  Future<void> test_addsOnNonCollection() async {
+    await assertNoDiagnostics(r'''
+class Sink {
+  void add(String value) {}
+}
+
+void fill(Sink sink) {
+  sink.add('a');
+  sink.add('b');
+}
+''');
+  }
 
   Future<void> test_loopWithTransformation() async {
     await assertNoDiagnostics(r'''

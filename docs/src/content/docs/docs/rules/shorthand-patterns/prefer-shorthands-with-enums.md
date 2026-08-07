@@ -13,7 +13,7 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Shorthand Patterns</span>
 
-Flags explicit enum prefixes (e.g., `MyEnum.first`) when the enum type can be inferred from context and a dot shorthand (`.first`) would suffice. This applies to switch cases, switch expressions, variable declarations with explicit types, comparisons, default parameter values, and return expressions.
+Flags explicit enum prefixes (e.g., `LogLevel.debug`) when the enum type can be inferred from context and a dot shorthand (`.debug`) would suffice. This applies to switch cases, switch expressions, variable declarations with explicit types, comparisons, default parameter values, and return expressions.
 
 ## Why use this rule
 
@@ -24,62 +24,62 @@ When the expected enum type is already known from context, repeating the enum na
 ## Don't
 
 ```dart
-enum MyEnum { first, second }
+enum LogLevel { debug, warning }
 
-void example(MyEnum? e) {
+void example(LogLevel? e) {
   switch (e) {
-    case MyEnum.first:
+    case LogLevel.debug:
       print(e);
   }
 
   final v = switch (e) {
-    MyEnum.first => 1,
+    LogLevel.debug => 1,
     _ => 2,
   };
 
-  final MyEnum another = MyEnum.first;
+  final LogLevel defaultLevel = LogLevel.debug;
 
-  if (e == MyEnum.first) {}
+  if (e == LogLevel.debug) {}
 }
 
-void fn({MyEnum value = MyEnum.first}) {}
+void fn({LogLevel value = LogLevel.debug}) {}
 
-MyEnum getEnum() => MyEnum.first;
+LogLevel levelForBad() => LogLevel.debug;
 ```
 
 ## Do
 
 ```dart
-enum MyEnum { first, second }
+enum LogLevel { debug, warning }
 
-void example(MyEnum? e) {
+void example(LogLevel? e) {
   switch (e) {
-    case .first:
+    case .debug:
       print(e);
   }
 
   final v = switch (e) {
-    .first => 1,
+    .debug => 1,
     _ => 2,
   };
 
-  final MyEnum another = .first;
+  final LogLevel defaultLevel = .debug;
 
-  if (e == .first) {}
+  if (e == .debug) {}
 }
 
-void fn({MyEnum value = .first}) {}
+void fn({LogLevel value = .debug}) {}
 
-MyEnum getEnum() => .first;
+LogLevel levelForBad() => .debug;
 
 // Explicit prefix is fine when type cannot be inferred:
-Object getObject() => MyEnum.first;
+Object asObject() => LogLevel.debug;
 
 // Collection in an untyped position — no context type, so no lint:
-expect(rankings, equals([MyEnum.first]));
+expect(rankings, equals([LogLevel.debug]));
 
 // An explicit type argument does provide context:
-takes(<MyEnum>[.first]);
+takes(<LogLevel>[.debug]);
 ```
 
 ## Collection literals need a real context type
@@ -91,7 +91,7 @@ the elements themselves:
 
 ```dart
 // Not reported: `equals(Object? expected)` gives the list no context type.
-expect(rankings, equals([MyEnum.first]));
+expect(rankings, equals([LogLevel.debug]));
 
 // Writing `.ligex` here would fail to compile:
 //   error: A dot shorthand can't be used where there is no context type.
@@ -103,11 +103,11 @@ genuine context — a typed variable, a typed parameter, or an explicit type
 argument:
 
 ```dart
-final List<MyEnum> list = [.first];      // reported
-takes(items: [.first]);                  // reported (typed named argument)
-takes(<MyEnum>[.first]);                 // reported (explicit type argument)
+final List<LogLevel> list = [.debug];      // reported
+takes(items: [.debug]);                  // reported (typed named argument)
+takes(<LogLevel>[.debug]);                 // reported (explicit type argument)
 
-final Map<MyEnum, String> m = {.first: 'a'};  // key half has context
+final Map<LogLevel, String> m = {.debug: 'a'};  // key half has context
 ```
 
 ## Configuration

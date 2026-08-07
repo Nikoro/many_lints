@@ -16,8 +16,8 @@ void bad() {
 
   // LINT: Border.all() with arguments
   final border2 = Border.all(
-    color: const Color(0xFF000000),
-    width: 1.0,
+    color: const Color(0xFF3355AA),
+    width: 2.5,
     style: BorderStyle.solid,
   );
 }
@@ -27,6 +27,6 @@ void good() {
   final border1 = const Border.fromBorderSide(BorderSide());
 
   final border2 = const Border.fromBorderSide(
-    BorderSide(color: Color(0xFF000000), width: 1.0, style: BorderStyle.solid),
+    BorderSide(color: Color(0xFF3355AA), width: 2.5, style: BorderStyle.solid),
   );
 }

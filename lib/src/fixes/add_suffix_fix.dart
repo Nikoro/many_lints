@@ -68,15 +68,39 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
-    if (targetNode is! SimpleIdentifier) return;
+    // The rule reports at the class-name *token*, so the covering node is the
+    // declaration, not an identifier. Rename that token directly.
+    final declaration = node.thisOrAncestorOfType<ClassDeclaration>();
+    if (declaration == null) return;
 
-    final baseName = _stripMisspelledSuffix(targetNode.name, suffix);
+    final nameToken = declaration.namePart.typeName;
+    final oldName = nameToken.lexeme;
+    final newName = '${_stripMisspelledSuffix(oldName, suffix)}$suffix';
+    if (newName == oldName) return;
+
+    // A constructor repeats the class name, so renaming only the declaration
+    // would leave `class FooBloc { Foo(); }`, which does not compile.
+    final constructorNames = [
+      for (final member in _members(declaration))
+        if (member is ConstructorDeclaration)
+          if (member.typeName case final typeName?)
+            if (typeName.name == oldName) typeName,
+    ];
 
     await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(range.node(targetNode), '$baseName$suffix');
+      builder.addSimpleReplacement(range.token(nameToken), newName);
+      for (final returnType in constructorNames) {
+        builder.addSimpleReplacement(range.node(returnType), newName);
+      }
     });
   }
+
+  /// Returns the members of [declaration], or empty when the body has none.
+  List<ClassMember> _members(ClassDeclaration declaration) =>
+      switch (declaration.body) {
+        BlockClassBody(:final members) => members.toList(),
+        _ => const [],
+      };
 
   /// Strips a potentially misspelled suffix from [name].
   ///

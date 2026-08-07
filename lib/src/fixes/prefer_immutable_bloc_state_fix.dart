@@ -23,11 +23,10 @@ class PreferImmutableBlocStateFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = node;
-    if (targetNode is! SimpleIdentifier) return;
-
-    final classDecl = targetNode.parent;
-    if (classDecl is! ClassDeclaration) return;
+    // The rule reports at the class-name token, so the covering node is the
+    // declaration (or a name-part wrapper) rather than an identifier.
+    final classDecl = node.thisOrAncestorOfType<ClassDeclaration>();
+    if (classDecl == null) return;
 
     await builder.addDartFileEdit(file, (builder) {
       builder.importLibrary(Uri.parse('package:meta/meta.dart'));

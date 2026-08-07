@@ -30,12 +30,12 @@ String myCustomHook() {
 }
 
 // Private function without '_use' prefix
-int _myPrivateHook() {
+ValueNotifier<int> _myPrivateHook() {
   return useState(0);
 }
 
 class BadWidget extends HookWidget {
-  int _fetchData() {
+  ValueNotifier<int> _fetchData() {
     return useState(42);
   }
 

@@ -1,9 +1,9 @@
-enum MyEnum { first, second }
+enum LogLevel { debug, warning }
 
-void exampleFunction(MyEnum? e) {
+void exampleFunction(LogLevel? e) {
   // ❌ Bad: Using explicit enum prefix
   switch (e) {
-    case MyEnum.first: // LINT
+    case LogLevel.debug: // LINT
       print(e);
     default:
       break;
@@ -11,7 +11,7 @@ void exampleFunction(MyEnum? e) {
 
   // ✅ Good: Using dot shorthand
   switch (e) {
-    case .first:
+    case .debug:
       print(e);
     default:
       break;
@@ -19,70 +19,70 @@ void exampleFunction(MyEnum? e) {
 
   // ❌ Bad: Explicit prefix in switch expression
   final v = switch (e) {
-    MyEnum.first => 1, // LINT
+    LogLevel.debug => 1, // LINT
     _ => 2,
   };
 
   // ✅ Good: Dot shorthand in switch expression
   final v2 = switch (e) {
-    .first => 1,
+    .debug => 1,
     _ => 2,
   };
 
   // ❌ Bad: Explicit prefix in variable declaration
-  final MyEnum another = MyEnum.first; // LINT
+  final LogLevel defaultLevel = LogLevel.debug; // LINT
 
   // ✅ Good: Dot shorthand in variable declaration
-  final MyEnum another2 = .first;
+  final LogLevel fallbackLevel = .debug;
 
   // ❌ Bad: Explicit prefix in comparison
-  if (e == MyEnum.first) {} // LINT
+  if (e == LogLevel.debug) {} // LINT
 
   // ✅ Good: Dot shorthand in comparison
-  if (e == .first) {}
+  if (e == .debug) {}
 }
 
 // ❌ Bad: Explicit prefix in default parameter
-void anotherFunction({MyEnum value = MyEnum.first}) {} // LINT
+void configureBad({LogLevel value = LogLevel.debug}) {} // LINT
 
 // ✅ Good: Dot shorthand in default parameter
-void anotherFunction2({MyEnum value = .first}) {}
+void configureGood({LogLevel value = .debug}) {}
 
 // ❌ Bad: Explicit prefix in return expression
-MyEnum getEnum() => MyEnum.first; // LINT
+LogLevel levelForBad() => LogLevel.debug; // LINT
 
 // ✅ Good: Dot shorthand in return expression
-MyEnum getEnum2() => .first;
+LogLevel levelForGood() => .debug;
 
 // ✅ Allowed: Full prefix when type is not inferable
-Object getObject() => MyEnum.first; // No lint - type is Object, not MyEnum
+Object asObject() => LogLevel.debug; // No lint - type is Object, not LogLevel
 
 void takesDynamic(dynamic value) {}
-void takesTyped({required List<MyEnum> items}) {}
+void takesTyped({required List<LogLevel> items}) {}
 
 void collectionExamples() {
   // ✅ Allowed: The list sits in a `dynamic` position, so it has no downward
   // context type. A shorthand here would not compile
   // (dot_shorthand_missing_context).
-  takesDynamic([MyEnum.first]); // No lint
+  takesDynamic([LogLevel.debug]); // No lint
 
   // ❌ Bad: Explicit type argument provides a real context
-  takesDynamic(<MyEnum>[MyEnum.first]); // LINT
+  takesDynamic(<LogLevel>[LogLevel.debug]); // LINT
 
   // ✅ Good: Dot shorthand under an explicit type argument
-  takesDynamic(<MyEnum>[.first]);
+  takesDynamic(<LogLevel>[.debug]);
 
   // ❌ Bad: Typed named argument provides context
-  takesTyped(items: [MyEnum.first]); // LINT
+  takesTyped(items: [LogLevel.debug]); // LINT
 
   // ✅ Good: Dot shorthand under a typed named argument
-  takesTyped(items: [.first]);
+  takesTyped(items: [.debug]);
 
   // ❌ Bad: Map key inherits the key type argument
-  final Map<MyEnum, String> m = {MyEnum.first: 'a'}; // LINT
+  final Map<LogLevel, String> m = {LogLevel.debug: 'a'}; // LINT
 
   // ✅ Good: Dot shorthand in the key position
-  final Map<MyEnum, String> m2 = {.first: 'a'};
+  final Map<LogLevel, String> m2 = {.debug: 'a'};
 
   print([m, m2]);
 }

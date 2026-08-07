@@ -23,17 +23,20 @@ class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // node is the copyWith method name token — parent is MethodDeclaration
-    final copyWithMethod = node.parent;
-    if (copyWithMethod is! MethodDeclaration) return;
+    // The rule reports at the copyWith name *token*. Since analyzer 13 that
+    // token is not its own node, so the covering node is already the method —
+    // walk up rather than assuming a particular depth.
+    final copyWithMethod = node.thisOrAncestorOfType<MethodDeclaration>();
+    if (copyWithMethod == null) return;
 
-    final classDecl = copyWithMethod.parent;
-    if (classDecl is! BlockClassBody) return;
-    final classNode = classDecl.parent;
-    if (classNode is! ClassDeclaration) return;
+    final classNode = copyWithMethod.thisOrAncestorOfType<ClassDeclaration>();
+    if (classNode == null) return;
 
     // Find the default (unnamed) constructor
-    final constructor = classDecl.members
+    final classBody = classNode.body;
+    if (classBody is! BlockClassBody) return;
+
+    final constructor = classBody.members
         .whereType<ConstructorDeclaration>()
         .where((c) => c.name == null)
         .firstOrNull;
@@ -113,6 +116,14 @@ class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
       return (name, null);
     }
 
-    return (name, param.type?.toSource());
+    final annotation = param.type?.toSource();
+    if (annotation != null) return (name, annotation);
+
+    // A field formal (`this.name`) carries no annotation, so fall back to the
+    // resolved element — otherwise the generated parameter would be `dynamic`.
+    final type = param.declaredFragment?.element.type;
+    if (type == null) return (name, null);
+
+    return (name, type.getDisplayString());
   }
 }

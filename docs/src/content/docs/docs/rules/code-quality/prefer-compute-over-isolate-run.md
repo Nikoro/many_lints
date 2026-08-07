@@ -11,7 +11,7 @@ sidebar:
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--fix">Fix</span>
-<span class="rule-badge rule-badge--category">Testing Rules</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
 
 Flags uses of `Isolate.run()` from `dart:isolate`, which is not supported on the web platform. Flutter's `compute()` function from `package:flutter/foundation.dart` provides the same background execution capability while working across all platforms including web.
 

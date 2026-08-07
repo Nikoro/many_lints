@@ -25,10 +25,10 @@ Using `map.keys.contains(key)` iterates through all keys to check for existence,
 
 ```dart
 void example() {
-  final map = {'hello': 'world', 'foo': 'bar'};
+  final map = {'lat': 52.2, 'lon': 21.0};
 
   // Use containsKey() instead
-  final exists = map.keys.contains('hello');
+  final exists = map.keys.contains('lat');
 
   // Also in conditions
   if (map.keys.contains('foo')) {
@@ -41,9 +41,9 @@ void example() {
 
 ```dart
 void example() {
-  final map = {'hello': 'world', 'foo': 'bar'};
+  final map = {'lat': 52.2, 'lon': 21.0};
 
-  final exists = map.containsKey('hello');
+  final exists = map.containsKey('lat');
 
   if (map.containsKey('foo')) {
     print('found');

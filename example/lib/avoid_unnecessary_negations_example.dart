@@ -41,3 +41,21 @@ bool goodNegatedConjunction(bool a, bool b) => !(a && b);
 
 // ✅ Edge case: negating a property read
 bool goodNegatedProperty(List<int> items) => !items.isEmpty;
+
+// ❌ Bad: negating a boolean literal
+// LINT: !true is just false
+bool badNegatedLiteral() => !true;
+
+// ❌ Bad: negations on both sides of a comparison cancel out
+// LINT: drop both negations
+bool badNegationsAroundEquality(bool a, bool b) => !a == !b;
+
+// ❌ Bad: same for inequality
+// LINT: drop both negations
+bool badNegationsAroundInequality(bool a, bool b) => !a != !b;
+
+// ✅ Good: the comparison without either negation
+bool goodComparison(bool a, bool b) => a == b;
+
+// ✅ Good: a single negation changes the result, so it stays
+bool goodSingleNegationInComparison(bool a, bool b) => !a == b;

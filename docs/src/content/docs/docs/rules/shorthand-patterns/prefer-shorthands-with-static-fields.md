@@ -13,7 +13,7 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Shorthand Patterns</span>
 
-Flags explicit class prefixes on static field accesses (e.g., `SomeClass.first`) when the type can be inferred from context and a dot shorthand (`.first`) would suffice. This applies to switch cases, switch expressions, typed variable declarations, comparisons, default parameters, and return expressions.
+Flags explicit class prefixes on static field accesses (e.g., `Currency.zloty`) when the type can be inferred from context and a dot shorthand (`.first`) would suffice. This applies to switch cases, switch expressions, typed variable declarations, comparisons, default parameters, and return expressions.
 
 ## Why use this rule
 
@@ -22,47 +22,47 @@ When the expected type is already known from context, repeating the class name o
 ## Don't
 
 ```dart
-class SomeClass {
-  final String value;
-  const SomeClass(this.value);
-  static const first = SomeClass('first');
-  static const second = SomeClass('second');
+class Currency {
+  final String code;
+  const Currency(this.code);
+  static const zloty = Currency('PLN');
+  static const euro = Currency('EUR');
 }
 
-void example(SomeClass? e) {
+void example(Currency? e) {
   switch (e) {
-    case SomeClass.first:
+    case Currency.zloty:
       print(e);
   }
 
-  final SomeClass another = SomeClass.first;
-  if (e == SomeClass.first) {}
+  final Currency another = Currency.zloty;
+  if (e == Currency.zloty) {}
 }
 
-void fn({SomeClass value = SomeClass.first}) {}
+void fn({Currency value = Currency.zloty}) {}
 
-SomeClass getResult() => SomeClass.first;
+Currency getResult() => Currency.zloty;
 ```
 
 ## Do
 
 ```dart
-void example(SomeClass? e) {
+void example(Currency? e) {
   switch (e) {
-    case .first:
+    case .zloty:
       print(e);
   }
 
-  final SomeClass another = .first;
-  if (e == .first) {}
+  final Currency another = .zloty;
+  if (e == .zloty) {}
 }
 
-void fn({SomeClass value = .first}) {}
+void fn({Currency value = .first}) {}
 
-SomeClass getResult() => .first;
+Currency getResult() => .zloty;
 
 // Explicit prefix is fine when type cannot be inferred:
-Object getObject() => SomeClass.first;
+Object getObject() => Currency.zloty;
 ```
 
 ## Configuration

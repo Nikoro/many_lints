@@ -22,7 +22,7 @@ class PreferShorthandsWithConstructorsExample extends StatelessWidget {
 
         // LINT: Use .symmetric instead of EdgeInsets.symmetric
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 6),
           child: Text('Hello'),
         ),
 
@@ -40,9 +40,9 @@ class PreferShorthandsWithConstructorsExample extends StatelessWidget {
         // LINT: Use .circular instead of BorderRadius.circular
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(10),
             // LINT: Use .all instead of Border.all
-            border: Border.all(color: Colors.blue, width: 2),
+            border: Border.all(color: Colors.blue, width: 3),
           ),
         ),
 
@@ -58,7 +58,7 @@ class PreferShorthandsWithConstructorsExample extends StatelessWidget {
 
         // === Good examples (already using shorthand) ===
         Padding(
-          padding: .symmetric(horizontal: 16, vertical: 12),
+          padding: .symmetric(horizontal: 20, vertical: 6),
           child: Text('Good: Using dot shorthand'),
         ),
 

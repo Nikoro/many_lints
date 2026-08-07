@@ -92,4 +92,60 @@ bool check(List<int> items) {
 }
 ''');
   }
+
+  // ---- Negated boolean literals ----
+
+  Future<void> test_negatedTrue() async {
+    await assertDiagnostics(
+      r'''
+bool check() {
+  return !true;
+}
+''',
+      [lint(24, 5)],
+    );
+  }
+
+  Future<void> test_negatedFalse() async {
+    await assertDiagnostics(
+      r'''
+bool check() {
+  return !false;
+}
+''',
+      [lint(24, 6)],
+    );
+  }
+
+  // ---- Negations on both sides of a comparison ----
+
+  Future<void> test_negationsAroundEquality() async {
+    await assertDiagnostics(
+      r'''
+bool check(bool a, bool b) {
+  return !a == !b;
+}
+''',
+      [lint(38, 8)],
+    );
+  }
+
+  Future<void> test_negationsAroundInequality() async {
+    await assertDiagnostics(
+      r'''
+bool check(bool a, bool b) {
+  return !a != !b;
+}
+''',
+      [lint(38, 8)],
+    );
+  }
+
+  Future<void> test_singleNegationInComparison() async {
+    await assertNoDiagnostics(r'''
+bool check(bool a, bool b) {
+  return !a == b;
+}
+''');
+  }
 }
