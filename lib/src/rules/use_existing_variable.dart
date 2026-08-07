@@ -71,6 +71,9 @@ class _Visitor extends SimpleAstVisitor<void> {
           final source = initializer.toSource();
           // Skip trivial expressions (single identifiers, literals)
           if (_isTrivialExpression(initializer)) continue;
+          // Skip expressions whose re-evaluation is meaningful (allocation,
+          // await, cascade) — reusing the variable would change behaviour.
+          if (_isSideEffectingExpression(initializer)) continue;
 
           variables.add((
             name: variable.name.lexeme,
@@ -79,6 +82,36 @@ class _Visitor extends SimpleAstVisitor<void> {
         }
       }
     }
+  }
+
+  /// Returns true for expressions whose re-evaluation may be the point.
+  ///
+  /// Source-text equality cannot tell "this value was already computed" from
+  /// "this deliberately produces a fresh one". Re-running an allocation or an
+  /// `await` is observably different from reusing the earlier result:
+  ///
+  /// ```dart
+  /// final old = Database.forTesting(connection);
+  /// await old.close();
+  /// final upgraded = Database.forTesting(connection); // must not be reported
+  /// ```
+  ///
+  /// Reusing `old` there would operate on a closed connection. Property chains
+  /// and ordinary method calls stay reportable — they are the case the rule
+  /// exists for.
+  static bool _isSideEffectingExpression(Expression expression) {
+    return switch (expression) {
+      // Allocates a new instance every time it is evaluated.
+      InstanceCreationExpression() => true,
+      // Re-runs asynchronous work, and its result may be single-use.
+      AwaitExpression() => true,
+      // Mutates its target: `[]..add(1)` builds a distinct list each time.
+      CascadeExpression() => true,
+      ParenthesizedExpression(:final expression) => _isSideEffectingExpression(
+        expression,
+      ),
+      _ => false,
+    };
   }
 
   /// Returns true for expressions that are too simple to warrant a lint.

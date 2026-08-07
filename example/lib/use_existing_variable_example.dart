@@ -85,3 +85,38 @@ void goodTrivial() {
   final y = true;
   print(true);
 }
+
+class Database {
+  Database(String file);
+  Future<void> close() async {}
+}
+
+Future<int> fetchValue() async => 42;
+
+// ✅ Good: Re-allocating a resource on purpose. Reusing 'old' would operate on
+// a closed connection, so the duplication is not reported.
+Future<void> goodReallocation(String file) async {
+  final old = Database(file);
+  await old.close();
+  final upgraded = Database(file);
+  print(upgraded);
+}
+
+// ✅ Good: Constructor calls allocate a fresh instance each time
+void goodRepeatedConstruction() {
+  final list = List<int>.filled(10, 0);
+  print(List<int>.filled(10, 0));
+}
+
+// ✅ Good: Re-running async work is a separate operation
+Future<void> goodRepeatedAwait() async {
+  final first = await fetchValue();
+  final second = await fetchValue();
+  print(first + second);
+}
+
+// ✅ Good: Cascades build and mutate a distinct object each time
+void goodRepeatedCascade() {
+  final list = []..add(1);
+  print([]..add(1));
+}

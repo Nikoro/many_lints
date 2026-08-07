@@ -171,18 +171,6 @@ void fn2(String value) {
 ''');
   }
 
-  Future<void> test_duplicateInstanceCreation_triggers() async {
-    await assertDiagnostics(
-      r'''
-void fn() {
-  final list = List<int>.filled(10, 0);
-  print(List<int>.filled(10, 0));
-}
-''',
-      [lint(60, 23)],
-    );
-  }
-
   Future<void> test_trivialNegativeLiteral_noLint() async {
     await assertNoDiagnostics(r'''
 void fn() {
@@ -258,18 +246,6 @@ void fn(int Function(int) apply) {
     );
   }
 
-  Future<void> test_duplicateCascadeExpression_triggers() async {
-    await assertDiagnostics(
-      r'''
-void fn() {
-  final list = []..add(1)..add(2);
-  print([]..add(1)..add(2));
-}
-''',
-      [lint(55, 18)],
-    );
-  }
-
   Future<void> test_duplicatePrefixExpression_triggers() async {
     await assertDiagnostics(
       r'''
@@ -315,19 +291,6 @@ void fn() {
 }
 ''',
       [lint(47, 9)],
-    );
-  }
-
-  Future<void> test_duplicateAwaitExpression_triggers() async {
-    await assertDiagnostics(
-      r'''
-Future<int> getValue() async => 42;
-void fn() async {
-  final val = await getValue();
-  print(await getValue());
-}
-''',
-      [lint(94, 16)],
     );
   }
 
@@ -506,6 +469,78 @@ void fn(String value) {
 }
 ''',
       [lint(68, 18)],
+    );
+  }
+
+  // --- expressions whose re-evaluation is the point ---
+  // Reusing the variable would change behaviour, so these must not report even
+  // though the source text matches.
+
+  Future<void> test_reallocatedResourceAfterClose_noLint() async {
+    await assertNoDiagnostics(r'''
+class Database {
+  Database(String file);
+  Future<void> close() async {}
+}
+
+void fn(String file) async {
+  final old = Database(file);
+  await old.close();
+  final upgraded = Database(file);
+  print(upgraded);
+}
+''');
+  }
+
+  Future<void> test_repeatedInstanceCreation_noLint() async {
+    await assertNoDiagnostics(r'''
+void fn() {
+  final list = List<int>.filled(10, 0);
+  print(List<int>.filled(10, 0));
+}
+''');
+  }
+
+  Future<void> test_repeatedAwait_noLint() async {
+    await assertNoDiagnostics(r'''
+Future<int> getValue() async => 42;
+void fn() async {
+  final val = await getValue();
+  print(await getValue());
+}
+''');
+  }
+
+  Future<void> test_repeatedCascade_noLint() async {
+    await assertNoDiagnostics(r'''
+void fn() {
+  final list = []..add(1)..add(2);
+  print([]..add(1)..add(2));
+}
+''');
+  }
+
+  Future<void> test_repeatedParenthesizedInstanceCreation_noLint() async {
+    await assertNoDiagnostics(r'''
+class Thing {}
+
+void fn() {
+  final a = (Thing());
+  print((Thing()));
+}
+''');
+  }
+
+  Future<void> test_pureMethodCallStillReported() async {
+    // The purity gate must not swallow the case the rule exists for.
+    await assertDiagnostics(
+      r'''
+void fn(List<int> list) {
+  final copy = list.toList();
+  print(list.toList());
+}
+''',
+      [lint(64, 13)],
     );
   }
 }

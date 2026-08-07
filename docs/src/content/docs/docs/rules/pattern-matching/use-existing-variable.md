@@ -93,7 +93,37 @@ void goodTrivial() {
   final x = 42;
   print(42);
 }
+
+// Re-allocating a resource on purpose — no lint
+void goodReallocation(String file) async {
+  final old = Database(file);
+  await old.close();
+  final upgraded = Database(file);
+  print(upgraded);
+}
+
+// Re-running async work — no lint
+void goodRepeatedAwait() async {
+  final first = await fetchValue();
+  final second = await fetchValue();
+  print(first + second);
+}
 ```
+
+## Expressions that are never flagged
+
+Source-text equality cannot distinguish "this value was already computed" from
+"this deliberately produces a fresh one", so the rule skips expressions whose
+re-evaluation is observable:
+
+| Expression | Why it is skipped |
+|------------|-------------------|
+| Constructor calls (`Database(file)`, `List<int>.filled(10, 0)`) | Each evaluation allocates a new instance. Reusing the variable could hand back a closed or already-consumed resource. |
+| `await` expressions | Re-running async work is a separate operation, and the earlier result may be single-use. |
+| Cascades (`[]..add(1)`) | Each evaluation builds and mutates a distinct object. |
+
+This matters most in tests that acquire, release, then re-acquire a resource —
+suggesting reuse there would be semantically wrong, not merely noisy.
 
 ## Configuration
 
