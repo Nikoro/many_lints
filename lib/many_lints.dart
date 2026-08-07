@@ -57,6 +57,7 @@ import 'package:many_lints/src/rules/avoid_ref_inside_state_dispose.dart';
 import 'package:many_lints/src/rules/avoid_ref_read_inside_build.dart';
 import 'package:many_lints/src/rules/avoid_ref_watch_outside_build.dart';
 import 'package:many_lints/src/rules/avoid_duplicate_bloc_event_handlers.dart';
+import 'package:many_lints/src/rules/avoid_missing_enum_constant_in_map.dart';
 import 'package:many_lints/src/rules/avoid_unsafe_collection_methods.dart';
 import 'package:many_lints/src/rules/avoid_empty_setstate.dart';
 import 'package:many_lints/src/rules/check_is_not_closed_after_async_gap.dart';
@@ -332,6 +333,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidRefReadInsideBuild());
     _registerWarningRule(registry, AvoidRefWatchOutsideBuild());
     _registerWarningRule(registry, AvoidDuplicateBlocEventHandlers());
+    _registerWarningRule(registry, AvoidMissingEnumConstantInMap());
     _registerWarningRule(registry, AvoidUnsafeCollectionMethods());
     _registerWarningRule(registry, AvoidEmptySetstate());
     _registerWarningRule(registry, CheckIsNotClosedAfterAsyncGap());
