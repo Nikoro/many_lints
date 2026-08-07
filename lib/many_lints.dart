@@ -57,6 +57,7 @@ import 'package:many_lints/src/rules/avoid_ref_inside_state_dispose.dart';
 import 'package:many_lints/src/rules/avoid_ref_read_inside_build.dart';
 import 'package:many_lints/src/rules/avoid_ref_watch_outside_build.dart';
 import 'package:many_lints/src/rules/avoid_inherited_widget_in_initstate.dart';
+import 'package:many_lints/src/rules/avoid_recursive_widget_calls.dart';
 import 'package:many_lints/src/rules/pass_existing_future_to_future_builder.dart';
 import 'package:many_lints/src/rules/pass_existing_stream_to_stream_builder.dart';
 import 'package:many_lints/src/rules/dispose_provided_instances.dart';
@@ -325,6 +326,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidRefReadInsideBuild());
     _registerWarningRule(registry, AvoidRefWatchOutsideBuild());
     _registerWarningRule(registry, AvoidInheritedWidgetInInitstate());
+    _registerWarningRule(registry, AvoidRecursiveWidgetCalls());
     _registerWarningRule(registry, PassExistingFutureToFutureBuilder());
     _registerWarningRule(registry, PassExistingStreamToStreamBuilder());
     _registerWarningRule(registry, AvoidStateConstructors());
