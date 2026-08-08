@@ -5,6 +5,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../rule_config.dart';
+
 /// Warns when a catch clause contains only a `rethrow` statement.
 ///
 /// Such catch clauses are redundant because they don't handle exceptions —
@@ -55,19 +57,36 @@ class AvoidOnlyRethrow extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final visitor = _Visitor(this);
+    final visitor = _Visitor(this, context);
     registry.addTryStatement(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AvoidOnlyRethrow rule;
+  final RuleContext context;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.context);
 
   @override
   void visitTryStatement(TryStatement node) {
+    // Resolved per node rather than once at registration time: the lookup
+    // needs `RuleContext.currentUnit`, which is null while
+    // `registerNodeProcessors` runs.
+    final resolved = ResolvedRuleConfig.of(context, rule.name);
+    if (resolved.isExcluded) return;
+
+    // `ignore_typed_catches: true` limits the rule to untyped `catch (e)`
+    // clauses, leaving `on SomeError catch (e) { rethrow; }` alone — that
+    // form narrows which exceptions propagate, so it is not always redundant.
+    final ignoreTyped = resolved.config.boolOption(
+      'ignore_typed_catches',
+      defaultValue: false,
+    );
+
     for (final catchClause in node.catchClauses) {
+      if (ignoreTyped && catchClause.exceptionType != null) continue;
+
       final statements = catchClause.body.statements;
       if (statements.length != 1) continue;
 
