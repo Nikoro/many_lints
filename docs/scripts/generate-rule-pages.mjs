@@ -30,6 +30,17 @@ const CATEGORIES = {
     label: 'Class Naming',
     rules: ['use_class_suffix', 'use_class_prefix'],
   },
+  architecture: {
+    label: 'Architecture',
+    rules: [
+      'avoid_banned_imports',
+      'avoid_banned_exports',
+      'avoid_banned_types',
+      'avoid_banned_names',
+      'avoid_banned_annotations',
+      'banned_usage',
+    ],
+  },
   'bloc-riverpod': {
     label: 'Bloc / Riverpod',
     rules: [

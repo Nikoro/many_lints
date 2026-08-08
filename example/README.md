@@ -29,7 +29,7 @@ run `dart analyze` again to see the two diagnostics come back.
 
 Note that `avoid_commented_out_code` *does* still report in that file. Each `exclude`
 sits under one rule and affects only that rule — excluding a path from
-`avoid_only_rethrow` says nothing about the other 131 rules. To skip a path for several
+`avoid_only_rethrow` says nothing about the other 137 rules. To skip a path for several
 rules, give each of them its own `exclude`.
 
 Paths are globs, but a plain path works too — `lib/generated/foo.dart` is a valid
@@ -54,6 +54,11 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `always_remove_listener` | Listener added but never removed in `dispose()` | Yes |
 | `async_value_nullable_pattern` | Matching `AsyncValue(:final value?)` on a nullable value hides a legitimate null result | Yes |
 | `avoid_accessing_collections_by_constant_index` | Avoid accessing a collection by a constant index inside a loop | — |
+| `avoid_banned_annotations` | Configured annotations, optionally scoped by path | — |
+| `avoid_banned_exports` | Configured re-exports, optionally scoped by path | — |
+| `avoid_banned_imports` | Configured imports, optionally scoped by path | — |
+| `avoid_banned_names` | Configured declaration names, optionally scoped by path | — |
+| `avoid_banned_types` | Configured types, optionally scoped by path | — |
 | `avoid_bloc_public_methods` | Avoid declaring public members in Bloc classes | — |
 | `avoid_border_all` | Prefer `Border.fromBorderSide` over `Border.all` | Yes |
 | `avoid_build_context_in_providers` | Providers outlive widgets, so they should not receive a `BuildContext` | — |
@@ -115,6 +120,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_unsafe_collection_methods` | Check for emptiness before using `first`, `last`, `single`, or `reduce` | — |
 | `avoid_wildcard_cases_with_enums` | Keep exhaustiveness checking by listing enum cases explicitly | — |
 | `avoid_wrapping_in_padding` | Avoid wrapping a widget in `Padding` when it has padding support | Yes |
+| `banned_usage` | Configured members such as `DateTime.now`, optionally scoped by path | — |
 | `check_is_not_closed_after_async_gap` | Check `isClosed` before emitting state after an `await` | — |
 | `dispose_fields` | Field not disposed in `dispose()` | Yes |
 | `dispose_provided_instances` | Instance not disposed via `ref.onDispose()` | Yes |
@@ -337,6 +343,43 @@ Padding(
   padding: EdgeInsets.all(16),
   child: Text('Hello'),
 )
+```
+
+---
+
+### The `banned` family
+
+`avoid_banned_imports`, `avoid_banned_exports`, `avoid_banned_types`,
+`avoid_banned_names`, `avoid_banned_annotations` and `banned_usage` all read
+the same `banned:` entry shape and report nothing until configured — they
+enforce *your* policy, not a built-in one. See `many_lints.yaml`.
+
+```yaml
+rules:
+  avoid_banned_imports:
+    banned:
+      - deny: ['dart:io']              # exact match
+        in: ['lib/domain/**']          # optional glob scope; omit for everywhere
+        message: 'Keep the domain layer platform-independent.'
+      - deny_pattern: ['package:legacy_.*']   # anchored to the whole value
+```
+
+Each entry takes `deny` and/or `deny_pattern`, plus optional `in` and
+`message`. `deny` matches **exactly** — banning `async` does not ban
+`dart:async` — so patterns are always opt-in.
+
+❌ **Bad:**
+```dart
+// in lib/domain/user_repository.dart
+import 'dart:io';
+```
+
+✅ **Good:**
+```dart
+// in lib/domain/user_repository.dart
+abstract class ConfigSource {
+  Future<String> read();
+}
 ```
 
 ---

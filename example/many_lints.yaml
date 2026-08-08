@@ -25,3 +25,46 @@ rules:
     entries:
       - type: Repository
         prefix: Db
+
+  # The `avoid_banned_*` family and `banned_usage` are entirely config-driven:
+  # they enforce *your* policy, so they report nothing until a `banned:` entry
+  # names something. `deny:` matches exactly; `deny_pattern:` matches a regular
+  # expression anchored to the whole value; `in:` scopes an entry to globs.
+  # `in:` normally scopes an entry to a layer (`lib/domain/**`). The example
+  # package keeps every file flat in `lib/`, so these entries scope to the one
+  # example file instead — the mechanism is identical.
+  avoid_banned_imports:
+    banned:
+      - deny: ['dart:io']
+        in: ['lib/avoid_banned_imports_example.dart']
+        message: 'The domain layer must stay platform-independent.'
+
+  avoid_banned_exports:
+    banned:
+      - deny_pattern: ['.*_internal\.dart']
+        in: ['lib/avoid_banned_exports_example.dart']
+        message: 'Internal libraries must not be part of the public API.'
+
+  avoid_banned_types:
+    banned:
+      - deny: ['LegacyUser']
+        in: ['lib/avoid_banned_types_example.dart']
+        message: 'Use User instead; LegacyUser is removed in v3.'
+
+  avoid_banned_names:
+    banned:
+      - deny: ['data', 'temp', 'manager']
+        in: ['lib/avoid_banned_names_example.dart']
+        message: 'Name it for what it holds.'
+
+  avoid_banned_annotations:
+    banned:
+      - deny: ['visibleForTesting']
+        in: ['lib/avoid_banned_annotations_example.dart']
+        message: 'Production code must not widen visibility for tests.'
+
+  banned_usage:
+    banned:
+      - deny: ['DateTime.now']
+        in: ['lib/banned_usage_example.dart']
+        message: 'Inject a clock so this stays testable.'

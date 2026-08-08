@@ -48,6 +48,7 @@ This cookbook covers **making a lint rule configurable** in the `many_lints` pac
 - [The Configuration Mechanism](#the-configuration-mechanism)
 - [Recipe: Adding `exclude` to a Rule](#recipe-adding-exclude-to-a-rule)
 - [Recipe: Adding a Mode Option](#recipe-adding-a-mode-option)
+- [Recipe: A Policy Rule That Ships With No Policy](#recipe-a-policy-rule-that-ships-with-no-policy)
 - [Naming Conventions](#naming-conventions-decide-nothing-per-rule)
 - [Reading Options: Typed Accessors](#reading-options-typed-accessors)
 - [Prefer Configuration Over a Hardcoded Constructor Argument](#prefer-configuration-over-a-hardcoded-constructor-argument)
@@ -303,6 +304,112 @@ Note the semantics of an **empty** list: `classes: []` means "no names", not "th
 Reach into `config.options` directly only for a shape none of these covers — and if you do, add a typed accessor to `RuleConfig` rather than parsing inline, then document it here.
 
 **Nested YAML survives parsing.** `RuleConfig._fromYaml` stores `options[name] = value.value`, which preserves nested `YamlMap`/`YamlList` structure (verified empirically). A list-of-maps option therefore requires only a **new typed accessor**, not a parser change. `entriesOption(key)` is that accessor: it returns `List<Map<String, Object?>>`, dropping non-map items and non-string keys so a malformed entry costs the user that entry and nothing else. `class_affix_validator.dart` is the worked example, and it is the same shape the `avoid_banned_*` family needs.
+
+## Recipe: A Policy Rule That Ships With No Policy
+
+Six rules (`avoid_banned_imports` / `_exports` / `_types` / `_names` /
+`_annotations`, plus `banned_usage`) exist only to enforce user-supplied
+policy: with no config they report nothing at all. `lib/src/banned_entry.dart`
+is the shared implementation, and the shape generalises to any "list of things
+this project forbids" rule.
+
+**One entry shape across the whole family.** Every one of those rules reads the
+same `banned:` list with the same four keys, so learning one teaches all six:
+
+```yaml
+rules:
+  avoid_banned_imports:
+    banned:
+      - deny: ['package:flutter/material.dart']   # exact match
+        deny_pattern: ['package:legacy_.*']       # anchored regex, opt-in
+        in: ['lib/domain/**']                     # globs; omit = everywhere
+        message: 'Domain must not depend on Flutter.'
+```
+
+This is the mistake worth *not* repeating: an `entries:` key that means six
+unrelated shapes across twelve rules, so you cannot infer the shape from the
+key. Name the key after the concept (`banned:`), and keep the field set fixed.
+
+### Match exactly by default; make patterns opt-in
+
+`deny:` is exact. Were it a regex matched as a *substring*, banning
+`visibleForTesting` would also hit `notVisibleForTesting`, leaving users to
+anchor every pattern with `^`/`$`. Exact-by-default plus a
+separate `deny_pattern:` removes the whole class of surprise.
+
+When you do accept a regex, anchor it **for** the user, and do it by checking
+the match span rather than by wrapping the source:
+
+```dart
+bool matchesWholeValue(String value) {
+  final match = firstMatch(value);
+  return match != null && match.start == 0 && match.end == value.length;
+}
+```
+
+Wrapping as `RegExp('^(?:${p.pattern})\$')` also works, but naive `'^$p\$'`
+concatenation silently rebinds a top-level alternation: `foo|bar` becomes
+`^foo|bar$`, which matches `xbar`. There is a regression test for this.
+
+### Scope by glob, never by regex
+
+Path scoping (`in:`) uses the same `Glob` as `exclude:`, so path semantics are
+identical everywhere in the config file — and because `relativeIfContains`
+normalizes separators, the Windows-path caveat that separator-sensitive
+matching invites simply does not arise.
+
+To match a glob you need the file's path relative to the package root.
+`ManyLintsRule` now exposes it as `rule.relativePath`, captured in the reporter
+setter alongside `config` (so, like `config`, it is only meaningful inside a
+visitor callback). Take it from the reporter's source rather than
+`RuleContext`: `isInLibDir` / `isInTestDirectory` are computed from the
+*defining* unit and misreport for part files.
+
+### Accept a scalar where a list is expected
+
+`deny: package:flutter/material.dart` and `deny: [package:...]` both work.
+Normalizing a bare scalar into a one-item list costs three lines and removes a
+recurring "why is my config ignored" confusion.
+
+### Degrade quietly, entry by entry
+
+A plugin cannot report diagnostics against a YAML file at all, so bad config
+must never throw. Push the degradation down to the smallest unit: an invalid
+regex costs the user *that pattern*, a malformed entry costs *that entry*, and
+everything else still applies. `readBannedEntries` also drops entries that deny
+nothing, so callers never re-check emptiness.
+
+### Prefer declarations over references
+
+`avoid_banned_names` reports only declaration sites, not every reference. This
+is a general principle for naming rules: a reference is not separately fixable
+(renaming the declaration fixes them all), so reporting references buries the
+one actionable line under noise. Register the specific declaration callbacks
+rather than `addSimpleIdentifier`.
+
+Note `MixinDeclaration` uses `.name` while `ClassDeclaration` / `EnumDeclaration` /
+`ExtensionTypeDeclaration` use `.namePart.typeName`.
+
+### Match members through the declaring type
+
+`banned_usage` resolves `Type.member` against the type that **declares** the
+member, walking `allSupertypes`, so banning `Iterable.first` also catches a
+`List` receiver. Matching the *static receiver* type instead would let any
+subclass slip past.
+
+Two shapes are easy to miss: the unnamed constructor has an empty
+`ConstructorElement.name` (normalize it to `new` so `Random.new` is writable),
+and a `target.member` read parses as `PropertyAccess` **except** when the
+target is a simple identifier, where it is a `PrefixedIdentifier` — register
+both or tear-offs are missed.
+
+### Disambiguate a bare name with a qualified form
+
+`avoid_banned_types` accepts both `Border` and
+`package:flutter/src/painting/border.dart#Border`. Try the qualified spelling
+first so a `Type.member`-style entry wins over a bare one when both could
+match. Match on the **declared** name (`element.name`), not the written one, or
+an import prefix hides the usage.
 
 ## Prefer Configuration Over a Hardcoded Constructor Argument
 

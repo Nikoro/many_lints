@@ -52,6 +52,20 @@ abstract class ManyLintsRule extends AnalysisRule {
   /// once per library before assigning any reporter.
   Folder? _packageRoot;
 
+  /// The path of the file currently being visited, relative to the package
+  /// root and separated by `/`, or `null` when it lies outside the root.
+  ///
+  /// Rules whose options scope by path (`in:` on a banned entry) match globs
+  /// against this. It is captured alongside [config] when the reporter is set,
+  /// so like [config] it is only meaningful inside a visitor callback.
+  ///
+  /// The path comes from the reporter's own source rather than
+  /// [RuleContext.currentUnit] so it always names the file being reported on:
+  /// [RuleContext.isInLibDir] and `isInTestDirectory` are computed from the
+  /// *defining* unit and misreport for part files.
+  String? get relativePath => _relativePath;
+  String? _relativePath;
+
   @override
   void registerNodeProcessors(
     RuleVisitorRegistry registry,
@@ -75,16 +89,21 @@ abstract class ManyLintsRule extends AnalysisRule {
     final root = _packageRoot;
     if (root == null) {
       _config = RuleConfig.empty;
+      _relativePath = null;
       super.reporter = value;
       return;
     }
 
+    final path = value.source.fullName;
     final resolved = ResolvedRuleConfig.forPath(
       packageRoot: root,
-      path: value.source.fullName,
+      path: path,
       ruleName: name,
     );
     _config = resolved.config;
+    // Normalize Windows separators the way analyzer's own exclude handling
+    // does, so a single glob spelling works on every platform.
+    _relativePath = root.relativeIfContains(path)?.replaceAll(r'\', '/');
 
     super.reporter = resolved.isExcluded
         ? DiagnosticReporter(DiagnosticListener.nullListener, value.source)

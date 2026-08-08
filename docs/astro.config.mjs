@@ -35,6 +35,10 @@ export default defineConfig({
               items: [{ autogenerate: { directory: 'docs/rules/class-naming' } }],
             },
             {
+              label: 'Architecture',
+              items: [{ autogenerate: { directory: 'docs/rules/architecture' } }],
+            },
+            {
               label: 'Bloc / Riverpod',
               items: [{ autogenerate: { directory: 'docs/rules/bloc-riverpod' } }],
             },

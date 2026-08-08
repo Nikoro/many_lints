@@ -109,11 +109,12 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-132 lints with 91 quick fixes, all enabled by default as warnings. Each rule links to its full documentation with examples and fix details.
+138 lints with 91 quick fixes, all enabled by default as warnings. Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
 | [Class Naming](https://nikoro.github.io/many_lints/docs/rules/class-naming/) | 2 | Class and type naming conventions |
+| [Architecture](https://nikoro.github.io/many_lints/docs/rules/architecture/) | 6 | Configurable bans on imports, types, names and members |
 | [Bloc / Riverpod](https://nikoro.github.io/many_lints/docs/rules/bloc-riverpod/) | 10 | BLoC and Riverpod state management patterns |
 | [Riverpod State](https://nikoro.github.io/many_lints/docs/rules/riverpod-state/) | 9 | Riverpod-specific state rules |
 | [Async Safety](https://nikoro.github.io/many_lints/docs/rules/async-safety/) | 4 | Async/await and state mutation safety |
