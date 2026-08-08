@@ -24,21 +24,25 @@ class Cubit<State> {}
 ''',
   };
 
-  const riverpodSuffixPackage = {
-    'riverpod': r'''
-class Notifier<State> {}
-''',
-  };
+  group('use_class_suffix', () {
+    const suffixConfig = '''
+rules:
+  use_class_suffix:
+    entries:
+      - type: Bloc
+        package: bloc
+        suffix: Bloc
+''';
 
-  group('use_bloc_suffix', () {
-    test('adds the Bloc suffix to the class name', () async {
+    test('adds the configured suffix to the class name', () async {
       final fixed = await harness.applyFix(
         r'''
 import 'package:bloc/bloc.dart';
 class Counter extends Bloc<String, int> {}
 ''',
-        'use_bloc_suffix',
+        'use_class_suffix',
         packages: blocPackage,
+        manyLintsConfig: suffixConfig,
       );
 
       expect(fixed, contains('class CounterBloc extends Bloc<String, int>'));
@@ -49,79 +53,99 @@ class Counter extends Bloc<String, int> {}
         r'''
 import 'package:bloc/bloc.dart';
 class Counter extends Bloc<String, int> {
-  Counter() : super(0);
+  Counter();
 }
 ''',
-        'use_bloc_suffix',
+        'use_class_suffix',
         packages: blocPackage,
+        manyLintsConfig: suffixConfig,
       );
 
       expect(fixed, contains('class CounterBloc extends Bloc<String, int>'));
-      expect(fixed, contains('CounterBloc() : super(0);'));
-      expect(fixed, isNot(contains('Counter()')));
+      expect(fixed, contains('CounterBloc();'));
+      expect(fixed, isNot(contains('  Counter();')));
     });
-  });
 
-  group('use_cubit_suffix', () {
-    test('adds the Cubit suffix to the class name', () async {
+    test('repairs a misspelled suffix instead of appending', () async {
+      final fixed = await harness.applyFix(
+        r'''
+import 'package:bloc/bloc.dart';
+class CounterBlok extends Bloc<String, int> {}
+''',
+        'use_class_suffix',
+        packages: blocPackage,
+        manyLintsConfig: suffixConfig,
+      );
+
+      expect(fixed, contains('class CounterBloc extends'));
+      expect(fixed, isNot(contains('CounterBlokBloc')));
+    });
+
+    test('uses the suffix of the entry the class actually matches', () async {
+      // Two entries, so a wrong lookup would append 'Bloc' to a Cubit.
       final fixed = await harness.applyFix(
         r'''
 import 'package:bloc/bloc.dart';
 class Counter extends Cubit<int> {}
 ''',
-        'use_cubit_suffix',
+        'use_class_suffix',
         packages: blocPackage,
+        manyLintsConfig: '''
+rules:
+  use_class_suffix:
+    entries:
+      - type: Bloc
+        package: bloc
+        suffix: Bloc
+      - type: Cubit
+        package: bloc
+        suffix: Cubit
+''',
       );
 
       expect(fixed, contains('class CounterCubit extends Cubit<int>'));
+    });
+  });
+
+  group('use_class_prefix', () {
+    const prefixConfig = '''
+rules:
+  use_class_prefix:
+    entries:
+      - type: Bloc
+        package: bloc
+        prefix: App
+''';
+
+    test('adds the configured prefix to the class name', () async {
+      final fixed = await harness.applyFix(
+        r'''
+import 'package:bloc/bloc.dart';
+class Counter extends Bloc<String, int> {}
+''',
+        'use_class_prefix',
+        packages: blocPackage,
+        manyLintsConfig: prefixConfig,
+      );
+
+      expect(fixed, contains('class AppCounter extends Bloc<String, int>'));
     });
 
     test('also renames a same-named unnamed constructor', () async {
       final fixed = await harness.applyFix(
         r'''
 import 'package:bloc/bloc.dart';
-class Counter extends Cubit<int> {
-  Counter() : super(0);
-}
-''',
-        'use_cubit_suffix',
-        packages: blocPackage,
-      );
-
-      expect(fixed, contains('class CounterCubit extends Cubit<int>'));
-      expect(fixed, contains('CounterCubit() : super(0);'));
-      expect(fixed, isNot(contains('Counter()')));
-    });
-  });
-
-  group('use_notifier_suffix', () {
-    test('adds the Notifier suffix to the class name', () async {
-      final fixed = await harness.applyFix(
-        r'''
-import 'package:riverpod/riverpod.dart';
-class Counter extends Notifier<int> {}
-''',
-        'use_notifier_suffix',
-        packages: riverpodSuffixPackage,
-      );
-
-      expect(fixed, contains('class CounterNotifier extends Notifier<int>'));
-    });
-
-    test('also renames a same-named unnamed constructor', () async {
-      final fixed = await harness.applyFix(
-        r'''
-import 'package:riverpod/riverpod.dart';
-class Counter extends Notifier<int> {
+class Counter extends Bloc<String, int> {
   Counter();
 }
 ''',
-        'use_notifier_suffix',
-        packages: riverpodSuffixPackage,
+        'use_class_prefix',
+        packages: blocPackage,
+        manyLintsConfig: prefixConfig,
       );
 
-      expect(fixed, contains('class CounterNotifier extends Notifier<int>'));
-      expect(fixed, contains('CounterNotifier();'));
+      expect(fixed, contains('class AppCounter extends Bloc<String, int>'));
+      expect(fixed, contains('AppCounter();'));
       expect(fixed, isNot(contains('  Counter();')));
     });
   });

@@ -13,6 +13,7 @@ import 'package:analyzer_plugin/src/protocol/protocol_internal.dart'
 import 'package:analyzer_testing/package_config_file_builder.dart';
 import 'package:analyzer_testing/resource_provider_mixin.dart';
 import 'package:many_lints/many_lints.dart';
+import 'package:many_lints/src/rule_config.dart';
 import 'package:test/test.dart';
 
 /// Drives a real `PluginServer` so a quick fix can be checked by the text it
@@ -44,16 +45,24 @@ class FixHarness with ResourceProviderMixin {
   ///
   /// [packages] maps a package name to the source of its `lib/<name>.dart`,
   /// for rules that only fire on types from another package.
+  ///
+  /// [manyLintsConfig] is written to `many_lints.yaml` at the package root,
+  /// for fixes whose behaviour depends on per-rule configuration.
   Future<String> applyFix(
     String content,
     String ruleName, {
     Map<String, String> packages = const {},
+    String? manyLintsConfig,
   }) async {
     newAnalysisOptionsYamlFile(packagePath, '''
 plugins:
   many_lints:
     path: /many_lints
 ''');
+
+    if (manyLintsConfig != null) {
+      newFile(join(packagePath, ConfigLoader.fileName), manyLintsConfig);
+    }
 
     final config = PackageConfigFileBuilder()
       ..add(name: 'test', rootFolder: getFolder(packagePath));
@@ -129,6 +138,11 @@ plugins:
   }
 
   Future<void> setUp() async {
+    // The config cache is static and keyed by package root, which every
+    // harness instance reuses — without this, one test's `many_lints.yaml`
+    // leaks into the next.
+    ConfigLoader.clearCache();
+
     createMockSdk(resourceProvider: resourceProvider, root: getFolder(sdkRoot));
 
     pluginServer = PluginServer.new2(

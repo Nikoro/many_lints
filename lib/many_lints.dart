@@ -136,8 +136,8 @@ import 'package:many_lints/src/rules/prefer_simpler_patterns_null_check.dart';
 import 'package:many_lints/src/rules/prefer_switch_expression.dart';
 import 'package:many_lints/src/rules/prefer_wildcard_pattern.dart';
 import 'package:many_lints/src/rules/prefer_type_over_var.dart';
-import 'package:many_lints/src/rules/use_bloc_suffix.dart';
-import 'package:many_lints/src/rules/use_cubit_suffix.dart';
+import 'package:many_lints/src/rules/use_class_prefix.dart';
+import 'package:many_lints/src/rules/use_class_suffix.dart';
 import 'package:many_lints/src/rules/use_dedicated_media_query_methods.dart';
 import 'package:many_lints/src/rules/use_gap.dart';
 import 'package:many_lints/src/rules/prefer_class_destructuring.dart';
@@ -149,7 +149,6 @@ import 'package:many_lints/src/rules/prefer_correct_edge_insets_constructor.dart
 import 'package:many_lints/src/rules/prefer_for_loop_in_children.dart';
 import 'package:many_lints/src/rules/prefer_single_setstate.dart';
 import 'package:many_lints/src/rules/prefer_sized_box_square.dart';
-import 'package:many_lints/src/rules/use_notifier_suffix.dart';
 import 'package:many_lints/src/rules/prefer_text_rich.dart';
 import 'package:many_lints/src/rules/prefer_transform_over_container.dart';
 import 'package:many_lints/src/rules/prefer_void_callback.dart';
@@ -196,7 +195,7 @@ import 'package:many_lints/src/fixes/avoid_unnecessary_stateful_widgets_fix.dart
 import 'package:many_lints/src/fixes/avoid_duplicate_cascades_fix.dart';
 import 'package:many_lints/src/fixes/avoid_duplicate_collection_elements_fix.dart';
 import 'package:many_lints/src/fixes/avoid_shrink_wrap_in_lists_fix.dart';
-import 'package:many_lints/src/fixes/add_suffix_fix.dart';
+import 'package:many_lints/src/fixes/add_affix_fix.dart';
 import 'package:many_lints/src/fixes/avoid_generics_shadowing_fix.dart';
 import 'package:many_lints/src/fixes/avoid_map_keys_contains_fix.dart';
 import 'package:many_lints/src/fixes/avoid_only_rethrow_fix.dart';
@@ -324,9 +323,8 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidUnnecessaryHookWidgets());
     _registerWarningRule(registry, AvoidConditionalHooks());
     _registerWarningRule(registry, AvoidUnnecessaryConsumerWidgets());
-    _registerWarningRule(registry, UseBlocSuffix());
-    _registerWarningRule(registry, UseCubitSuffix());
-    _registerWarningRule(registry, UseNotifierSuffix());
+    _registerWarningRule(registry, UseClassSuffix());
+    _registerWarningRule(registry, UseClassPrefix());
     _registerWarningRule(registry, UseDedicatedMediaQueryMethods());
     _registerWarningRule(registry, UseGap());
     _registerWarningRule(registry, PreferSingleWidgetPerFile());
@@ -518,12 +516,8 @@ class ManyLintsPlugin extends Plugin {
       UseDedicatedMediaQueryMethods.code,
       UseDedicatedMediaQueryMethodsFix.new,
     );
-    registry.registerFixForRule(UseBlocSuffix.code, AddSuffixFix.blocFix);
-    registry.registerFixForRule(UseCubitSuffix.code, AddSuffixFix.cubitFix);
-    registry.registerFixForRule(
-      UseNotifierSuffix.code,
-      AddSuffixFix.notifierFix,
-    );
+    registry.registerFixForRule(UseClassSuffix.code, AddAffixFix.suffixFix);
+    registry.registerFixForRule(UseClassPrefix.code, AddAffixFix.prefixFix);
     registry.registerFixForRule(
       AvoidUnnecessaryConsumerWidgets.code,
       AvoidUnnecessaryConsumerWidgetsFix.new,

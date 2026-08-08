@@ -9,7 +9,12 @@ class TypeChecker {
   ///
   /// Use this when checking for types from external packages.
   /// Example: `TypeChecker.fromName('Widget', packageName: 'flutter')`
-  const TypeChecker.fromName(this._name, {required String packageName})
+  ///
+  /// Omitting [packageName] matches a type of that name from **any** library.
+  /// That is only appropriate for user-supplied configuration, where the type
+  /// may live in the analyzed package itself and has no package URI to pin
+  /// against. Rules in this package should always pass a package.
+  const TypeChecker.fromName(this._name, {String? packageName})
     : _packageName = packageName,
       _url = null,
       _checkers = null;
@@ -118,7 +123,9 @@ class TypeChecker {
   }
 
   bool _isFromPackage(InterfaceElement element) {
-    if (_packageName == null) return false;
+    // No package pin: match the name wherever it is declared, including in the
+    // analyzed package itself (which has no `package:` URI here).
+    if (_packageName == null) return true;
 
     final libraryUri = element.library.identifier;
 

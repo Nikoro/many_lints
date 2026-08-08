@@ -62,6 +62,35 @@ class RuleConfig {
     return value.whereType<String>().toList(growable: false);
   }
 
+  /// Reads option [key] as a list of maps, for options whose entries carry
+  /// several fields (`- type: Bloc` / `package: bloc` / `suffix: Bloc`).
+  ///
+  /// Returns `[]` when the key is absent or is not a list. Non-map items are
+  /// dropped, and keys that are not strings are ignored, so a malformed entry
+  /// costs the user that entry rather than crashing analysis — config problems
+  /// cannot be reported as diagnostics, so they must degrade quietly.
+  ///
+  /// Nested structure survives parsing because [_fromYaml] stores the raw
+  /// `value.value`, which keeps `YamlMap`/`YamlList` (both implement
+  /// `Map`/`List`).
+  List<Map<String, Object?>> entriesOption(String key) {
+    final value = options[key];
+    if (value is! List) return const [];
+
+    final entries = <Map<String, Object?>>[];
+    for (final item in value) {
+      if (item is! Map) continue;
+
+      final entry = <String, Object?>{};
+      for (final MapEntry(:key, :value) in item.entries) {
+        if (key is String) entry[key] = value;
+      }
+      if (entry.isNotEmpty) entries.add(entry);
+    }
+
+    return entries;
+  }
+
   /// Resolves a built-in list of names against two options: [key], which
   /// *replaces* [defaultValue] outright, and `additional_<key>`, which
   /// *appends* to whichever list won.
