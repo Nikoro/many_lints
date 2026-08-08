@@ -53,7 +53,7 @@ plugins:
     version: ^0.9.0
     diagnostics:
       prefer_center_over_align: true
-      use_bloc_suffix: false
+      use_class_suffix: false
 ```
 
 ### Excluding paths per rule
@@ -109,11 +109,11 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-133 lints with 92 quick fixes, all enabled by default as warnings. Each rule links to its full documentation with examples and fix details.
+132 lints with 91 quick fixes, all enabled by default as warnings. Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
-| [Class Naming](https://nikoro.github.io/many_lints/docs/rules/class-naming/) | 3 | Class and type naming conventions |
+| [Class Naming](https://nikoro.github.io/many_lints/docs/rules/class-naming/) | 2 | Class and type naming conventions |
 | [Bloc / Riverpod](https://nikoro.github.io/many_lints/docs/rules/bloc-riverpod/) | 10 | BLoC and Riverpod state management patterns |
 | [Riverpod State](https://nikoro.github.io/many_lints/docs/rules/riverpod-state/) | 9 | Riverpod-specific state rules |
 | [Async Safety](https://nikoro.github.io/many_lints/docs/rules/async-safety/) | 4 | Async/await and state mutation safety |
@@ -143,7 +143,7 @@ To suppress a specific lint, use comments:
 // ignore: many_lints/prefer_center_over_align
 const Align(...);
 
-// ignore_for_file: many_lints/use_bloc_suffix
+// ignore_for_file: many_lints/use_class_suffix
 ```
 
 The `many_lints/` prefix is **required**. Unlike SDK lints, a plugin diagnostic is only silenced when the rule name is prefixed with the plugin name, so a bare `// ignore: prefer_center_over_align` has no effect. The prefix is the key used under `plugins:` in `analysis_options.yaml`.

@@ -1,5 +1,5 @@
 // ignore_for_file: unused_field, unused_element
-// ignore_for_file: many_lints/prefer_immutable_bloc_state, many_lints/prefer_returning_shorthands, many_lints/use_notifier_suffix
+// ignore_for_file: many_lints/prefer_immutable_bloc_state, many_lints/prefer_returning_shorthands
 
 // avoid_public_notifier_properties
 //

@@ -51,7 +51,7 @@ plugins:
 
 ## Configuring diagnostics
 
-All 133 rules are registered as warnings and enabled by default. You can enable or disable individual rules under the `diagnostics` key:
+All 132 rules are registered as warnings and enabled by default. You can enable or disable individual rules under the `diagnostics` key:
 
 ```yaml
 plugins:
@@ -59,7 +59,7 @@ plugins:
     version: ^0.9.0
     diagnostics:
       prefer_center_over_align: true
-      use_bloc_suffix: false
+      use_class_suffix: false
 ```
 
 ## Excluding paths per rule
@@ -142,8 +142,59 @@ because the analyzer never parses it. If you share a base `analysis_options.yaml
 across packages, use Option B in each package instead.
 :::
 
-Some rules also accept options that change what they report; those are listed in the
-**Configuration** section of the individual rule's page.
+## Per-rule options
+
+Beyond `exclude`, some rules accept options that change *what* they report. They go in
+the same place, alongside `exclude`:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_container:
+    exclude:
+      - test/**
+    min_sequence: 4        # an option
+```
+
+Every option defaults to the rule's previous behaviour, so adding this package's
+options never changes results until you set one.
+
+| Rule | Options |
+|------|---------|
+| [`avoid_only_rethrow`](/many_lints/docs/rules/control-flow/avoid-only-rethrow/) | `ignore_typed_catches` |
+| [`dispose_fields`](/many_lints/docs/rules/resource-management/dispose-fields/) | `cleanup_methods`, `additional_cleanup_methods` |
+| [`dispose_provided_instances`](/many_lints/docs/rules/bloc-riverpod/dispose-provided-instances/) | `cleanup_methods`, `additional_cleanup_methods` |
+| [`prefer_class_destructuring`](/many_lints/docs/rules/collection-type/prefer-class-destructuring/) | `min_occurrences` |
+| [`prefer_container`](/many_lints/docs/rules/widget-replacement/prefer-container/) | `min_sequence` |
+| [`prefer_shorthands_with_constructors`](/many_lints/docs/rules/shorthand-patterns/prefer-shorthands-with-constructors/) | `classes`, `additional_classes` |
+| [`use_class_prefix`](/many_lints/docs/rules/class-naming/use-class-prefix/) | `entries`, `ignore_private` |
+| [`use_class_suffix`](/many_lints/docs/rules/class-naming/use-class-suffix/) | `entries`, `ignore_private` |
+
+Each option is documented with its type and default in the **Configuration** section
+of the rule's own page.
+
+### Naming conventions
+
+Option names follow a fixed vocabulary, so the same idea always reads the same way:
+
+| Pattern | Meaning |
+|---------|---------|
+| `max_<unit>` / `min_<unit>` | A numeric bound; the unit is always named |
+| `ignore_<singular>` | A toggle that skips a whole class of thing (`ignore_private`) |
+| `ignored_<plural>` | A list of specific things to skip |
+| `<plural>` | **Replaces** a built-in list (`cleanup_methods`) |
+| `additional_<plural>` | **Extends** a built-in list (`additional_cleanup_methods`) |
+| `entries` | A list of maps, for rules driven entirely by what you configure |
+
+Prefer `additional_*` over restating a built-in list: a copied-out default silently
+misses any entry added in a later release.
+
+### Invalid values never break analysis
+
+A misspelled key is ignored, and a wrong-typed value falls back to the default rather
+than throwing. This is deliberate — a plugin cannot report problems against a YAML
+file, so a bad option cannot be surfaced as a diagnostic. If an option seems to have
+no effect, check its spelling and type against the rule's page.
 
 ## Suppressing diagnostics
 
@@ -153,7 +204,7 @@ To suppress a specific lint, use comments:
 // ignore: many_lints/prefer_center_over_align
 const Align(...);
 
-// ignore_for_file: many_lints/use_bloc_suffix
+// ignore_for_file: many_lints/use_class_suffix
 ```
 
 :::caution[The `many_lints/` prefix is required]

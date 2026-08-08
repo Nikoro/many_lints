@@ -29,7 +29,7 @@ run `dart analyze` again to see the two diagnostics come back.
 
 Note that `avoid_commented_out_code` *does* still report in that file. Each `exclude`
 sits under one rule and affects only that rule — excluding a path from
-`avoid_only_rethrow` says nothing about the other 132 rules. To skip a path for several
+`avoid_only_rethrow` says nothing about the other 131 rules. To skip a path for several
 rules, give each of them its own `exclude`.
 
 Paths are globs, but a plain path works too — `lib/generated/foo.dart` is a valid
@@ -173,14 +173,13 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `proper_super_calls` | `super` calls placed correctly in lifecycle methods | Yes |
 | `protected_notifier_properties` | Don't access a Notifier's `state`, `ref`, or `future` externally | — |
 | `provider_parameters` | Family provider arguments must have stable equality | — |
-| `use_bloc_suffix` | `Bloc` suffix for `Bloc` subclasses | Yes |
+| `use_class_prefix` | Configured name prefix for subtypes of a configured type | Yes |
+| `use_class_suffix` | Configured name suffix for subtypes of a configured type | Yes |
 | `use_closest_build_context` | Use closest available `BuildContext` | Yes |
-| `use_cubit_suffix` | `Cubit` suffix for `Cubit` subclasses | Yes |
 | `use_dedicated_media_query_methods` | Dedicated `MediaQuery` methods | Yes |
 | `use_existing_destructuring` | Use existing destructuring instead of direct access | Yes |
 | `use_existing_variable` | Expression duplicates an existing variable's initializer | Yes |
 | `use_gap` | `Gap` widget for spacing in multi-child widgets | Yes |
-| `use_notifier_suffix` | `Notifier` suffix for `Notifier` subclasses | Yes |
 | `use_ref_and_state_synchronously` | Async gap before `ref`/`state` access | Yes |
 | `use_ref_read_synchronously` | `ref.read` stored across async gaps | Yes |
 | `use_sliver_prefix` | `Sliver` prefix for sliver-returning widgets | Yes |
@@ -342,9 +341,44 @@ Padding(
 
 ---
 
-### use_bloc_suffix
+### use_class_prefix
 
-Classes extending `Bloc` should have the `Bloc` suffix.
+Requires a configured name prefix for classes deriving from a configured type.
+Reports nothing until configured — see `many_lints.yaml`.
+
+```yaml
+rules:
+  use_class_prefix:
+    entries:
+      - type: Repository
+        prefix: Db
+```
+
+❌ **Bad:**
+```dart
+class UserRepository implements Repository {}
+```
+
+✅ **Good:**
+```dart
+class DbUserRepository implements Repository {}
+```
+
+---
+
+### use_class_suffix
+
+Requires a configured name suffix for classes deriving from a configured type.
+Matches through `extends`, `implements`, `with`, or an indirect ancestor.
+
+```yaml
+rules:
+  use_class_suffix:
+    entries:
+      - type: Bloc
+        package: bloc
+        suffix: Bloc
+```
 
 ❌ **Bad:**
 ```dart
@@ -354,22 +388,6 @@ class CounterManager extends Bloc<CounterEvent, int> {}
 ✅ **Good:**
 ```dart
 class CounterBloc extends Bloc<CounterEvent, int> {}
-```
-
----
-
-### use_cubit_suffix
-
-Classes extending `Cubit` should have the `Cubit` suffix.
-
-❌ **Bad:**
-```dart
-class Counter extends Cubit<int> {}
-```
-
-✅ **Good:**
-```dart
-class CounterCubit extends Cubit<int> {}
 ```
 
 ---
@@ -422,19 +440,6 @@ Column(
 
 ---
 
-### use_notifier_suffix
-
-Classes extending `Notifier` should have the `Notifier` suffix.
-
-❌ **Bad:**
-```dart
-class CounterManager extends Notifier<int> {}
-```
-
-✅ **Good:**
-```dart
-class CounterNotifier extends Notifier<int> {}
-```
 
 ---
 
@@ -446,7 +451,7 @@ To suppress a specific lint, use comments:
 // ignore: many_lints/prefer_center_over_align
 const Align(...);
 
-// ignore_for_file: many_lints/use_bloc_suffix
+// ignore_for_file: many_lints/use_class_suffix
 ```
 
 The `many_lints/` prefix is **required**. Unlike SDK lints, a plugin diagnostic is only silenced when the rule name is prefixed with the plugin name, so a bare `// ignore: prefer_center_over_align` has no effect. The prefix is the key used under `plugins:` in `analysis_options.yaml`.

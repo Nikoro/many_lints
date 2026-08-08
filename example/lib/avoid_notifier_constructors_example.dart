@@ -1,5 +1,4 @@
 // ignore_for_file: unused_field, unused_element
-// ignore_for_file: many_lints/use_notifier_suffix
 
 // avoid_notifier_constructors
 //

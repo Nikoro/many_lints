@@ -1,5 +1,40 @@
 # Changelog
 
+## [Unreleased]
+
+### Breaking
+
+- `use_bloc_suffix`, `use_cubit_suffix` and `use_notifier_suffix` are replaced by two general rules, `use_class_suffix` and `use_class_prefix`. The old rules enforced naming for exactly three hardcoded base types; the new ones work for any type, including one declared in your own package, so a project using `...Store`, `...Repository` or `...UseCase` can adopt them instead of forking.
+
+  Both are entirely config-driven and report nothing until configured. To restore the previous behaviour:
+
+  ```yaml
+  # many_lints.yaml
+  rules:
+    use_class_suffix:
+      entries:
+        - type: Bloc
+          package: bloc
+          suffix: Bloc
+        - type: Cubit
+          package: bloc
+          suffix: Cubit
+        - type: Notifier
+          package: riverpod
+          suffix: Notifier
+  ```
+
+  Any `// ignore: many_lints/use_bloc_suffix` comment (or the `_cubit_`/`_notifier_` variants) must be renamed to the new rule, and `diagnostics:` entries likewise.
+
+### Added
+
+- `use_class_suffix` and `use_class_prefix`, each taking an `entries:` list of `{type, suffix|prefix, package?, ignore_private?}`. A base type matches whether it is reached by `extends`, `implements`, `with`, or an indirect ancestor, and `package:` is optional — omit it to match a type of that name from any library. Both ship a quick fix that renames the class and any same-named unnamed constructor.
+- A rule-wide `ignore_private` option on both rules, overridable per entry.
+
+### Fixed
+
+- The suffix quick fix no longer eats a character when repairing a near-miss. It scanned candidate lengths longest-first and took the first match within two edits, so `CounterBlok` became `CounterBloc` by way of stripping `rBlok` — producing `CounteBloc`. It now ranks candidates by edit distance and prefers the length closest to the affix.
+
 ## [0.9.0] - 2026-08-08
 
 ### Added

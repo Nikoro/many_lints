@@ -28,7 +28,7 @@ const FORCE = process.argv.includes('--force');
 const CATEGORIES = {
   'class-naming': {
     label: 'Class Naming',
-    rules: ['use_bloc_suffix', 'use_cubit_suffix', 'use_notifier_suffix'],
+    rules: ['use_class_suffix', 'use_class_prefix'],
   },
   'bloc-riverpod': {
     label: 'Bloc / Riverpod',

@@ -10,3 +10,18 @@ rules:
   avoid_only_rethrow:
     exclude:
       - lib/excluded/**
+
+  # `use_class_suffix` and `use_class_prefix` report nothing until configured:
+  # they enforce your naming convention, not a built-in one. `package:` is
+  # optional — omit it to match a type of that name from any library,
+  # including one declared in this package.
+  use_class_suffix:
+    entries:
+      - type: Bloc
+        package: bloc
+        suffix: Bloc
+
+  use_class_prefix:
+    entries:
+      - type: Repository
+        prefix: Db
