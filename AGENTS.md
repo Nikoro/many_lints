@@ -20,7 +20,7 @@ lib/
   src/
     type_checker.dart     # Type matching utilities for analyzer
     type_inference.dart   # Context type inference utilities
-    class_suffix_validator.dart # Base class for suffix naming rules
+    class_affix_validator.dart  # Base class for configurable class prefix/suffix rules
     text_distance.dart    # String distance utilities (Levenshtein)
     hook_detection.dart   # Hook widget detection helpers
     ast_node_analysis.dart # AST node analysis helpers
@@ -40,7 +40,7 @@ docs/                     # Astro Starlight docs site (see docs/AGENTS.md)
 
 ## Findings
 
-See [FINDINGS.md](FINDINGS.md) for crucial discoveries and "aha moments" captured during development sessions. Review before making changes to unfamiliar areas.
+See [findings/INDEX.md](findings/INDEX.md) for crucial discoveries and "aha moments" captured during development sessions. Review before making changes to unfamiliar areas.
 
 ## Reference Docs
 
@@ -96,8 +96,8 @@ Quick summary:
 ## Code Conventions
 
 - **Language**: English only (code, comments, commits)
-- **Lint names**: snake_case (`use_cubit_suffix`, `prefer_align_over_container`)
-- **Rule classes**: PascalCase (`UseCubitSuffix`, `PreferCenterOverAlign`)
+- **Lint names**: snake_case (`use_class_suffix`, `prefer_align_over_container`)
+- **Rule classes**: PascalCase (`UseClassSuffix`, `PreferCenterOverAlign`)
 - **Fix classes**: PascalCase with Fix suffix (`PreferCenterOverAlignFix`)
 - **Type checking**: Use `TypeChecker.fromName()` or `TypeChecker.fromUrl()`
 - **Pattern matching**: Dart 3.0+ patterns for AST analysis
@@ -115,7 +115,7 @@ Quick summary:
 
 - `lib/src/type_checker.dart` - Type matching utilities
 - `lib/src/type_inference.dart` - Context type inference (inferContextType, resolveReturnType, etc.)
-- `lib/src/class_suffix_validator.dart` - Base class for suffix naming rules
+- `lib/src/class_affix_validator.dart` - Base class for configurable class prefix/suffix rules
 - `lib/src/text_distance.dart` - Levenshtein edit distance
 - `lib/src/hook_detection.dart` - Hook widget detection helpers
 - `lib/src/ast_node_analysis.dart` - AST node analysis helpers (enclosingClassDeclaration, hasOverrideAnnotation, negateExpression, buildEveryReplacement)

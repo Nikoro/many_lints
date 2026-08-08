@@ -48,7 +48,9 @@ This cookbook covers **making a lint rule configurable** in the `many_lints` pac
 - [The Configuration Mechanism](#the-configuration-mechanism)
 - [Recipe: Adding `exclude` to a Rule](#recipe-adding-exclude-to-a-rule)
 - [Recipe: Adding a Mode Option](#recipe-adding-a-mode-option)
+- [Naming Conventions](#naming-conventions-decide-nothing-per-rule)
 - [Reading Options: Typed Accessors](#reading-options-typed-accessors)
+- [Prefer Configuration Over a Hardcoded Constructor Argument](#prefer-configuration-over-a-hardcoded-constructor-argument)
 - [Testing a Configurable Rule](#testing-a-configurable-rule)
 - [Documenting a Configurable Rule](#documenting-a-configurable-rule)
 - [Common Gotchas](#common-gotchas)
@@ -259,6 +261,22 @@ Design rules for options:
 
 ---
 
+## Naming Conventions (decide nothing per-rule)
+
+Large rule catalogues are the cautionary tale here: one ships six spellings for "a numeric limit" (`max-number`, `max-length`, `threshold`, `acceptable-level`, `min-sequence`, `break-on`) and three for "list of names to skip" (`ignored-names`, `exceptions`, `excluded`). `avoid-long-files` uses `max-length` for *lines* while `prefer-correct-type-name` uses it for *characters*.
+
+This package uses one fixed vocabulary. **Do not invent a new key shape for a new rule.**
+
+| Concept | Key | Notes |
+|---------|-----|-------|
+| Numeric upper bound | `max_<unit>` | Always name the unit — `max_lines`, not `max_number` |
+| Numeric lower bound | `min_<unit>` | `min_sequence`, `min_occurrences` |
+| Toggle skipping a class of thing | `ignore_<singular>` | `ignore_private`, `ignore_nested` |
+| List of specific exclusions | `ignored_<plural>` | `ignored_names`, `ignored_types` |
+| **Replace** a built-in list | `<plural>` | `cleanup_methods`, `classes` |
+| **Append** to a built-in list | `additional_<plural>` | `additional_cleanup_methods` |
+| Regex on a name | `name_pattern` | one spelling only |
+
 ## Reading Options: Typed Accessors
 
 `RuleConfig` provides accessors that fall back to the default when the key is absent **or** the YAML value has the wrong type — a user typo can never crash analysis or produce a `TypeError`:
@@ -267,9 +285,98 @@ Design rules for options:
 config.boolOption('ignore_typed_catches', defaultValue: false)
 config.intOption('max_count', defaultValue: 10)
 config.stringListOption('allowed_names')            // defaults to const []
+config.nameSetOption('classes', defaultValue: _defaults)   // replace + append
 ```
 
+### `nameSetOption` — the replace/append pair
+
+`nameSetOption('classes', defaultValue: ...)` reads **two** keys: `classes` replaces the default set outright, and `additional_classes` extends whichever set won. Both may be combined.
+
+Prefer it over a bare `stringListOption` for any built-in list of names. With a single option a user cannot express "the defaults plus one more" without restating every default, and restated defaults silently rot when a later version of this package adds a name.
+
+Note the semantics of an **empty** list: `classes: []` means "no names", not "the defaults". That is intentional — a user who writes an empty list means it.
+
+### When order matters, use a `List`, not a `Set`
+
+`nameSetOption` returns a `Set`, which is wrong when the list encodes a priority. `disposal_utils.dart` resolves cleanup methods through its own `resolveCleanupMethods(rule)` helper returning a `List`, because `findCleanupMethod` picks the *first* match and a type declaring both `close` and `cancel` must resolve deterministically. Configured names are appended after the base list so a project's `release()` never pre-empts a standard method.
+
 Reach into `config.options` directly only for a shape none of these covers — and if you do, add a typed accessor to `RuleConfig` rather than parsing inline, then document it here.
+
+**Nested YAML survives parsing.** `RuleConfig._fromYaml` stores `options[name] = value.value`, which preserves nested `YamlMap`/`YamlList` structure (verified empirically). A list-of-maps option therefore requires only a **new typed accessor**, not a parser change. `entriesOption(key)` is that accessor: it returns `List<Map<String, Object?>>`, dropping non-map items and non-string keys so a malformed entry costs the user that entry and nothing else. `class_affix_validator.dart` is the worked example, and it is the same shape the `avoid_banned_*` family needs.
+
+## Prefer Configuration Over a Hardcoded Constructor Argument
+
+`use_bloc_suffix` / `use_cubit_suffix` / `use_notifier_suffix` were originally three rules over one base class, each passing its base type as a **constructor argument**. Making the *suffix* configurable still left the *type* hardcoded, so the package enforced naming for exactly three types and a project wanting `...Repository` had to fork.
+
+They were replaced by `use_class_suffix` / `use_class_prefix`, which read `entries:` and work for any type. The lesson generalises: when a rule's constructor argument encodes *which thing to look for*, that is usually configuration, not a subclass. Three near-identical subclasses is the smell.
+
+### Gotcha: `isSuperOf` is reflexive
+
+`TypeChecker.isSuperOf` calls `isExactly(element)` first, so **the configured base type matches itself**. With `type: Repository` the abstract `Repository` gets reported for not being named `DbRepository`. The three old rules never hit this because their base types lived in dependencies and were never declared locally — a user-configured type usually is. Guard with an explicit `if (checker.isExactly(element)) continue;`.
+
+Relatedly, `TypeChecker.fromName`'s `packageName` is optional, and null means "any library". That is required for config (a locally declared type has no `package:` URI) but wrong as a default for a rule shipped in this package — always pin the package in first-party rules.
+
+### Gotcha: a `LintCode` built in the constructor goes stale
+
+The old `ClassSuffixValidator` stored its `LintCode` in a field built from `requiredSuffix`. With a configurable suffix that message keeps advertising the default (`'Use Bloc suffix'`) while the rule enforces `Store`.
+
+The fix is to make `diagnosticCode` a **getter** that rebuilds the code per access:
+
+```dart
+@override
+LintCode get diagnosticCode => LintCode(
+  name,
+  'Use $requiredSuffix suffix',
+  correctionMessage: 'Ex. {0}$requiredSuffix',
+);
+```
+
+This works because every `reportAt*` method reads the `diagnosticCode` getter at report time rather than capturing it. Assert on the message in a test — a stale message is invisible to a test that only checks the diagnostic's `code`.
+
+**Prefer message arguments when the value varies per report.** The getter above is only safe while the text is constant for a whole file. Once one file can produce several different affixes (one per matched entry), a per-access `LintCode` would mint a *different* code object per report — and `registerFixForRule` keys the fix registry on the `LintCode`, so the fix stops being found. Keep one `static const` code with `{0}` placeholders and pass the varying part through `arguments:`:
+
+```dart
+rule.reportAtToken(name, arguments: [violated.affix, className]);
+```
+
+Rule of thumb: option affects the message **per file** → getter is fine; **per diagnostic** → `static const` code plus arguments.
+
+### Guard against options that silently disable a rule
+
+An empty `suffix: ""` would make every class name "end with" it, turning the rule off without saying so. Treat empty as absent:
+
+```dart
+return configured is String && configured.isNotEmpty ? configured : defaultSuffix;
+```
+
+Apply the same scepticism to any option whose degenerate value neutralises the rule.
+
+### A quick fix can read config too
+
+A fix has no `RuleContext`, but it can reach the package root from its unit result and resolve exactly what the rule resolved:
+
+```dart
+final resolved = ResolvedRuleConfig.forPath(
+  packageRoot: unitResult.session.analysisContext.contextRoot.root,
+  path: unitResult.path,
+  ruleName: 'use_class_suffix',
+);
+```
+
+Two constraints shape the design:
+
+- **`fixKind` must be constant.** `registerFixForRule` instantiates the producer at registration time with a stub context and throws if `fixKind` is null (`analysis_server_plugin/src/registry.dart:52`). So the *kind* cannot depend on config — one `FixKind` per rule, with the config-derived part living only inside `compute`.
+- **Re-derive, don't parse the message.** Recomputing from config (the pattern `dispose_fields_fix.dart` uses for cleanup methods) keeps the fix correct if the diagnostic is reworded.
+
+Factor the entry matching into a shared helper taking a `RuleConfig` — not a rule — so the fix and the rule cannot drift apart. `readAffixEntries` / `findViolatedEntry` in `class_affix_validator.dart` are shared exactly this way.
+
+To test such a fix, `FixHarness.applyFix` takes a `manyLintsConfig:` parameter. It also calls `ConfigLoader.clearCache()` in `setUp`, without which one test's config leaks into the next.
+
+### Keep detection and recognition on the same list
+
+`dispose_fields` uses the cleanup-method list twice: once to decide a field *needs* cleanup, and once (in a separate collector) to recognise a call that *performs* it. Threading the resolved list into only one of them makes a configured `release()` report as never-disposed — a false positive created by the option itself.
+
+Resolve such a list **once per callback** and pass it into every collector that consumes it.
 
 ---
 
@@ -303,7 +410,30 @@ Harness requirements (analysis_server_plugin 0.3.18+):
 
 ### 🚨 Two mandatory test-design rules
 
-**1. Pick a pure-Dart rule fixture.** Rules whose `TypeChecker` needs Flutter types do **not** resolve under `createMockSdk`. A first attempt at these tests used `avoid_border_all`; the rule reported nothing at all, so every "excluded" assertion passed **vacuously** while proving nothing. If the rule under test needs external types, mock them, and always include a no-config test asserting the rule *does* fire.
+**1. Pick a pure-Dart rule fixture, or mock the package.** Rules whose `TypeChecker` needs Flutter types do **not** resolve under `createMockSdk`. A first attempt at these tests used `avoid_border_all`; the rule reported nothing at all, so every "excluded" assertion passed **vacuously** while proving nothing.
+
+A pure-Dart rule (`prefer_class_destructuring`, `avoid_only_rethrow`) is the easy path. When the rule is inherently package-bound, **mock the package** rather than dropping to a unit test — write the library and a `package_config.json` pointing at it, and the `TypeChecker` resolves normally:
+
+```dart
+void _addBlocPackage() {
+  final blocRoot = convertPath('/pkg/bloc');
+  newFile(join(blocRoot, 'lib', 'bloc.dart'), 'class Bloc<Event, State> {}');
+
+  newFile(join(packagePath, '.dart_tool', 'package_config.json'), '''
+{
+  "configVersion": 2,
+  "packages": [
+    {"name": "package", "rootUri": "${toUri(packagePath)}", "packageUri": "lib/"},
+    {"name": "bloc", "rootUri": "${toUri(blocRoot)}", "packageUri": "lib/"}
+  ]
+}
+''');
+}
+```
+
+See `test/rule_options_test.dart` for the working version. This is what makes end-to-end option tests possible for `use_class_suffix` and the other package-keyed rules.
+
+**Always include a control test asserting the rule fires with no config**, whichever route you take. It is the only thing separating "the option worked" from "nothing ran".
 
 **2. Pair every negative test with an asymmetric positive one.** A test that only asserts silence cannot distinguish "exclusion worked" from "the rule never fired":
 
@@ -328,6 +458,9 @@ Apply the same logic to modes: assert both that the option suppresses the case i
 - [ ] Excluding one rule leaves other rules reporting
 - [ ] Mode option suppresses its target case
 - [ ] Mode option leaves non-target cases reporting (asymmetric)
+- [ ] A wrong-typed option value falls back to the default (does not throw, does not disable)
+- [ ] A degenerate value (empty string / empty list) does not silently disable the rule
+- [ ] If the option feeds the diagnostic text, assert on the **message**, not just the code
 - [ ] Config via the `analysis_options.yaml` section works
 - [ ] Precedence: dedicated file wins, and the losing source is ignored **outright** (assert a merge would have produced a different result)
 - [ ] Unit tests for parsing: malformed YAML, wrong-typed option, absent rule

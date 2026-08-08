@@ -167,7 +167,7 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
 ```
 
 **When to use:** Multiple related lint rules with similar fix logic
-**Reference:** [add_suffix_fix.dart](../../../lib/src/fixes/add_suffix_fix.dart) (Bloc, Cubit, Notifier), [change_widget_name_fix.dart](../../../lib/src/fixes/change_widget_name_fix.dart) (HookWidget, ConsumerWidget)
+**Reference:** [add_affix_fix.dart](../../../lib/src/fixes/add_affix_fix.dart) (Bloc, Cubit, Notifier), [change_widget_name_fix.dart](../../../lib/src/fixes/change_widget_name_fix.dart) (HookWidget, ConsumerWidget)
 
 ---
 
@@ -812,7 +812,7 @@ final replacement = 'MediaQuery.$method($context)${shouldAddQuestionMark ? '?' :
 
 ### String Manipulation with Edit Distance
 
-[add_suffix_fix.dart](../../../lib/src/fixes/add_suffix_fix.dart) uses the shared
+[add_affix_fix.dart](../../../lib/src/fixes/add_affix_fix.dart) uses the shared
 `computeEditDistance` helper from `lib/src/text_distance.dart` to strip
 misspelled suffixes:
 

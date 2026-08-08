@@ -11,7 +11,7 @@ Every rule follows: `ManyLintsRule` + `_Visitor extends SimpleAstVisitor` + `reg
 
 ⚠️ Override `registerManyLintsProcessors()`, **not** `registerNodeProcessors()` — `ManyLintsRule` implements the latter to wire up per-rule `exclude`. Overriding it directly silently disables `exclude` for that rule.
 
-For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 lines vs ~55 lines).
+For class prefix/suffix naming rules, use the `ClassAffixValidator` base class — the base type is user configuration (`entries:`), not a constructor argument.
 
 ## Key Concepts
 
@@ -20,11 +20,14 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 - **AST helpers** (`../ast_node_analysis.dart`) — `isExpressionExactlyType()`, `maybeGetSingleReturnExpression()`, `firstWhereOrNull`, `enclosingClassDeclaration()`, `hasOverrideAnnotation()`, `negateExpression()`, `buildEveryReplacement()`
 - **Hook detection** (`../hook_detection.dart`) — `getAllInnerHookExpressions()`, `maybeHookBuilderBody()`
 - **String distance** (`../text_distance.dart`) — `computeEditDistance()`
-- **Disposal utils** (`../disposal_utils.dart`) — `findCleanupMethod()`, `cleanupMethods` (shared by dispose_fields + dispose_provided_instances)
+- **Disposal utils** (`../disposal_utils.dart`) — `findCleanupMethod()`, `cleanupMethods`, `resolveCleanupMethods(rule)` (shared by dispose_fields + dispose_provided_instances). Returns a `List`, not a `Set`: order is the priority used when a type declares several cleanup methods. Resolve once per callback and pass into **every** collector — using the configured list for detection but not recognition turns an option into a false positive
 - **Widget helpers** (`../flutter_widget_helpers.dart`) — `FlexAxis` enum (shared by prefer_spacing + use_gap)
 - **Riverpod checkers** (`../riverpod_type_checkers.dart`) — `notifierChecker` TypeChecker (shared by avoid_notifier_constructors + dispose_provided_instances)
 - **Rule base** (`../many_lints_rule.dart`) — `ManyLintsRule` applies per-rule `exclude` for **every** rule automatically by intercepting `set reporter` (the single field all `reportAt*` methods funnel through) and swapping in a null-listener reporter for excluded files. No visitor-level guard needed, so a rule with several registered callbacks cannot leak diagnostics from one it forgot
-- **Rule config** (`../rule_config.dart`) — `exclude` globs + free-form options from `many_lints.yaml` (or a top-level `many_lints:` section in `analysis_options.yaml`; the file wins, no merge). Read mode options via `rule.config.boolOption(...)`, resolved per file. The analyzer cannot carry per-rule options itself; see [config-cookbook.md](../../../.agents/skills/new-lint/config-cookbook.md)
+- **Rule config** (`../rule_config.dart`) — `exclude` globs + free-form options from `many_lints.yaml` (or a top-level `many_lints:` section in `analysis_options.yaml`; the file wins, no merge). Read mode options via `rule.config.boolOption(...)` / `intOption(...)` / `stringListOption(...)` / `nameSetOption(...)`, resolved per file. Follow the fixed key vocabulary (`max_<unit>`, `min_<unit>`, `ignore_<singular>`, `ignored_<plural>`, `<plural>` replaces, `additional_<plural>` appends) — do not invent new key shapes. The analyzer cannot carry per-rule options itself; see [config-cookbook.md](../../../.agents/skills/new-lint/config-cookbook.md)
+  - ⚠️ Never cache resolved config on the rule or in a visitor constructor — rule instances are long-lived singletons reused across package roots, so cached config leaks between packages. Read it inside the callback.
+  - ⚠️ If an option feeds the diagnostic message, make `diagnosticCode` a **getter** that rebuilds the `LintCode`; one built once in the constructor keeps advertising the default (see `ClassAffixValidator`). But when the value varies **per diagnostic** rather than per file, keep one `static const` code and pass the value via `arguments:` — a per-access `LintCode` breaks fix registration, which keys on the code object.
+  - Configurable today: `avoid_only_rethrow`, `prefer_shorthands_with_constructors`, `prefer_container`, `prefer_class_destructuring`, `use_class_suffix`, `use_class_prefix`, `dispose_fields`, `dispose_provided_instances`
 - **Reporting** — `reportAtNode()`, `reportAtToken()`, `reportAtOffset()`, with `{0}` placeholder interpolation
 - **Analyzer 14.1.0** — use `node.declaredFragment?.element` (not deprecated `.element`), `node.body` (not `.members`), `namePart.typeName` for class/enum names; `ClassBody`/`EnumBody` are sealed (use `BlockClassBody`/`BlockEnumBody` to access `.members`); use `is DynamicType` (not `identical`) since 12.1.0 allows aliases for `dynamic`/`Never`/`void`. Since 13.0.0: `NamedExpression` → `NamedArgument` (NOT an `Expression`; `.name` is a `Token`, value is `.argumentExpression`), `ArgumentList.arguments` is `NodeList<Argument>` (sealed: `Expression` | `NamedArgument`), `DefaultFormalParameter`/`SimpleFormalParameter` → `RegularFormalParameter` with `.name`/`.type`/`.defaultClause` directly on `FormalParameter`, `Label.name` is a `Token`, `MethodDeclaration.isAbstract` → `!isComplete`, `ExtensionTypeDeclaration.primaryConstructor` → `namePart`
 
@@ -32,7 +35,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 
 | Pattern | Example | Description |
 |---------|---------|-------------|
-| Suffix naming | [use_bloc_suffix.dart](use_bloc_suffix.dart) | Uses `ClassSuffixValidator` base class |
+| Configurable naming | [use_class_suffix.dart](use_class_suffix.dart), [use_class_prefix.dart](use_class_prefix.dart) | `ClassAffixValidator` base reads `entries:` (type + affix + optional package). Matches `extends`/`implements`/`with`/indirect via `allSupertypes`; skips the configured base type itself, since `isSuperOf` is reflexive |
 | Widget replacement | [prefer_center_over_align.dart](prefer_center_over_align.dart), [prefer_transform_over_container.dart](prefer_transform_over_container.dart) | Checks constructor params with `isInstanceCreationExpressionOnlyUsingParameter` |
 | Type context | [prefer_shorthands_with_enums.dart](prefer_shorthands_with_enums.dart) | Uses `inferContextType()` + `isTypeCompatible()` |
 | Pattern matching | [prefer_any_or_every.dart](prefer_any_or_every.dart) | Complex Dart 3 pattern matching on AST |

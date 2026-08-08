@@ -84,48 +84,52 @@ For recipes and testing, see [rules-recipes.md](rules-recipes.md).
 
 For common patterns, use base classes instead of duplicating logic!
 
-**Class Suffix Validator Pattern:**
+**Class Affix Validator Pattern:**
 
-When enforcing naming conventions for classes extending/implementing a specific type:
+When enforcing naming conventions for classes extending/implementing a configured type:
 
 ```dart
 import 'package:analyzer/error/error.dart';
 
-import '../class_suffix_validator.dart';
+import '../class_affix_validator.dart';
 
-class UseBlocSuffix extends ClassSuffixValidator {
-  static final LintCode code = LintCode(
-    'use_bloc_suffix',
-    'Use Bloc suffix',
-    correctionMessage: 'Ex. {0}Bloc',
+class UseClassSuffix extends ClassAffixValidator {
+  static const LintCode code = LintCode(
+    'use_class_suffix',
+    "Class '{1}' does not end with the required '{0}' suffix.",
+    correctionMessage: "Rename the class to end with '{0}'.",
   );
 
-  UseBlocSuffix()
+  UseClassSuffix()
       : super(
-          name: 'use_bloc_suffix',
-          description: 'Warns if a Bloc class does not have the Bloc suffix.',
-          requiredSuffix: 'Bloc',
-          baseClassName: 'Bloc',
-          packageName: 'bloc',
+          name: 'use_class_suffix',
+          description: 'Warns when a class deriving from a configured type '
+              'lacks the required name suffix.',
+          kind: AffixKind.suffix,
         );
+
+  @override
+  LintCode get diagnosticCode => code;
 }
 ```
 
 **That's it!** The base class handles:
-- Type checking with TypeChecker
-- Visitor registration
-- Class name validation
-- Lint code generation
-- Error reporting with parameters
+- Reading the `entries:` config (type / affix / optional package / `ignore_private`)
+- Type checking with TypeChecker, covering `extends`, `implements`, `with` and indirect ancestors
+- Visitor registration and class name validation
+- Reporting, with the affix passed as a message argument
 
-**When to use:** Any rule that validates class name suffixes based on inheritance/implementation.
+**When to use:** Any rule that validates class names based on inheritance/implementation.
+
+Note the base type is **configuration**, not a constructor argument. Both rules built on this
+report nothing until the user supplies `entries:`, so installing the package never imposes a
+naming convention.
 
 **Examples:**
-- [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart) - ~20 lines (was ~55 lines)
-- [use_cubit_suffix.dart](../../../lib/src/rules/use_cubit_suffix.dart) - ~20 lines (was ~57 lines)
-- [use_notifier_suffix.dart](../../../lib/src/rules/use_notifier_suffix.dart) - ~21 lines (was ~59 lines)
+- [use_class_suffix.dart](../../../lib/src/rules/use_class_suffix.dart) - ~50 lines, mostly docs
+- [use_class_prefix.dart](../../../lib/src/rules/use_class_prefix.dart) - same, mirrored
 
-**Reference:** [class_suffix_validator.dart](../../../lib/src/class_suffix_validator.dart) - Reusable base implementation
+**Reference:** [class_affix_validator.dart](../../../lib/src/class_affix_validator.dart) - Reusable base implementation
 
 ### Minimal Lint Rule
 
@@ -184,7 +188,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 }
 ```
 
-**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart)
+**Reference:** [use_class_suffix.dart](../../../lib/src/rules/use_class_suffix.dart)
 
 ---
 
@@ -222,7 +226,7 @@ static const _strictChecker = TypeChecker.all([
 ]);
 ```
 
-**Reference:** [type_checker.dart](../../../lib/src/type_checker.dart), [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart)
+**Reference:** [type_checker.dart](../../../lib/src/type_checker.dart), [use_class_suffix.dart](../../../lib/src/rules/use_class_suffix.dart)
 
 ### Checking Types
 
@@ -254,7 +258,7 @@ if (_iterableChecker.isAssignableFromType(targetType)) {
 }
 ```
 
-**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart)
+**Reference:** [use_class_suffix.dart](../../../lib/src/rules/use_class_suffix.dart)
 
 ### Checking Expression Types
 
@@ -541,7 +545,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 }
 ```
 
-**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart)
+**Reference:** [use_class_suffix.dart](../../../lib/src/rules/use_class_suffix.dart)
 
 ### RecursiveAstVisitor (Deep Traversal)
 
@@ -805,7 +809,7 @@ if (distance > 0 && distance <= 2) {
 }
 ```
 
-**Reference:** [add_suffix_fix.dart](../../../lib/src/fixes/add_suffix_fix.dart)
+**Reference:** [add_affix_fix.dart](../../../lib/src/fixes/add_affix_fix.dart)
 
 ### General Helpers
 
@@ -1025,7 +1029,7 @@ final element = node.element;  // Deprecated
 final element = node.declaredFragment?.element;
 ```
 
-**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart)
+**Reference:** [use_class_suffix.dart](../../../lib/src/rules/use_class_suffix.dart)
 
 ### Checking Class Modifiers (abstract, final, sealed, etc.)
 
@@ -1061,7 +1065,7 @@ final classNameToken = classDecl.namePart.typeName;
 rule.reportAtToken(classNameToken);
 ```
 
-**Reference:** [use_bloc_suffix.dart](../../../lib/src/rules/use_bloc_suffix.dart)
+**Reference:** [use_class_suffix.dart](../../../lib/src/rules/use_class_suffix.dart)
 
 ### Type Display String
 

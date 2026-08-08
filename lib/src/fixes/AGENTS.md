@@ -73,7 +73,7 @@ final value = arg.argumentExpression;
 | Simple replacement | [prefer_center_over_align_fix.dart](prefer_center_over_align_fix.dart) | Replace widget + delete argument |
 | Multiple edits | [avoid_unnecessary_consumer_widgets_fix.dart](avoid_unnecessary_consumer_widgets_fix.dart) | Replace superclass + remove parameter |
 | Complex transform | [prefer_switch_expression_fix.dart](prefer_switch_expression_fix.dart) | Switch statement → expression |
-| Multi-factory | [add_suffix_fix.dart](add_suffix_fix.dart) | Shared logic for Bloc/Cubit/Notifier suffixes |
+| Config-driven affix | [add_affix_fix.dart](add_affix_fix.dart) | Re-resolves `many_lints.yaml` from `unitResult.session.analysisContext.contextRoot.root` to learn the affix, since it is not known at registration time |
 | Widget dispatch | [use_gap_fix.dart](use_gap_fix.dart) | Different fix logic per widget type |
 | Unwrap try body | [avoid_only_rethrow_fix.dart](avoid_only_rethrow_fix.dart) | Remove try-catch, keep body statements |
 | Add catch params | [avoid_throw_in_catch_block_fix.dart](avoid_throw_in_catch_block_fix.dart) | Replace throw + add stack trace param to catch clause |

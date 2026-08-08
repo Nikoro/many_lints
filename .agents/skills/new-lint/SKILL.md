@@ -109,7 +109,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 ```
 
 Key conventions:
-- Rule class name: PascalCase version of lint name (e.g., `use_cubit_suffix` -> `UseCubitSuffix`)
+- Rule class name: PascalCase version of lint name (e.g., `use_class_suffix` -> `UseClassSuffix`)
 - Use `TypeChecker.fromName()` or `TypeChecker.fromUrl()` for type checks
 - Use Dart 3.0+ pattern matching for AST analysis
 - Use helpers from `lib/src/ast_node_analysis.dart` when applicable
