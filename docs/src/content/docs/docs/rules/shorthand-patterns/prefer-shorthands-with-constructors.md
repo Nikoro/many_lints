@@ -73,3 +73,30 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+### Options
+
+Configure in `many_lints.yaml` at your package root:
+
+```yaml
+rules:
+  prefer_shorthands_with_constructors:
+    classes: [EdgeInsets, BorderRadius]
+    additional_classes: [Alignment, TextStyle]
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `classes` | list of strings | `[EdgeInsets, BorderRadius, Radius, Border]` | **Replaces** the default class list outright |
+| `additional_classes` | list of strings | `[]` | **Extends** whichever list applies |
+
+Use `additional_classes` when you want the defaults plus your own — restating
+every default in `classes` means your config silently misses any class added in
+a later release. Set `classes: []` to disable the rule for all classes (though
+`diagnostics: false` is clearer for that).
+
+Common additions: `Alignment`, `AlignmentDirectional`, `EdgeInsetsGeometry`, `TextStyle`.
+
+Alternatively, use a top-level `many_lints:` section in `analysis_options.yaml`.
+Note this section does **not** inherit through `include:`; when both sources
+exist, `many_lints.yaml` wins and the section is ignored entirely.

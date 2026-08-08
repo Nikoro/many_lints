@@ -72,9 +72,14 @@ class _Visitor extends SimpleAstVisitor<void> {
         .where((m) => m.name.lexeme == 'dispose')
         .firstOrNull;
 
+    // Resolved once per class and shared by both the collector and the field
+    // scan below: if the two used different lists, a configured method would
+    // mark a field as needing cleanup but never count as cleaning it up.
+    final methods = resolveCleanupMethods(rule);
+
     final cleanedUpTargets = <String, Set<String>>{};
     if (disposeMethod != null) {
-      final collector = _CleanupCallCollector();
+      final collector = _CleanupCallCollector(methods);
       disposeMethod.body.visitChildren(collector);
       for (final call in collector.calls) {
         cleanedUpTargets
@@ -91,7 +96,7 @@ class _Visitor extends SimpleAstVisitor<void> {
         final type = variable.declaredFragment?.element.type;
         if (type == null) continue;
 
-        final expectedCleanup = findCleanupMethod(type);
+        final expectedCleanup = findCleanupMethod(type, methods: methods);
         if (expectedCleanup == null) continue;
 
         final fieldName = variable.name.lexeme;
@@ -126,14 +131,19 @@ class _CleanupCall {
   _CleanupCall({required this.targetSource, required this.methodName});
 }
 
-/// Collects all dispose/close/cancel calls within a method body.
+/// Collects all cleanup calls within a method body.
 class _CleanupCallCollector extends RecursiveAstVisitor<void> {
   final List<_CleanupCall> calls = [];
+
+  /// The cleanup method names to recognise, resolved from configuration.
+  final List<String> methods;
+
+  _CleanupCallCollector(this.methods);
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
     final methodName = node.methodName.name;
-    if (cleanupMethods.contains(methodName)) {
+    if (methods.contains(methodName)) {
       final target = node.realTarget;
       if (target != null) {
         calls.add(

@@ -92,9 +92,11 @@ const _containerCompatibleWidgets = {
   'LimitedBox',
 };
 
-/// The minimum number of consecutive Container-compatible widgets in a
+/// The default minimum number of consecutive Container-compatible widgets in a
 /// nesting chain before the lint triggers.
-const _minSequence = 3;
+///
+/// Configurable per project via the `min_sequence` option.
+const _defaultMinSequence = 3;
 
 class _Visitor extends SimpleAstVisitor<void> {
   final PreferContainer rule;
@@ -148,9 +150,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     // container-compatible parent (the parent's chain already includes us).
     if (_isChildOfContainerCompatibleWidget(node)) return;
 
-    // Walk the child chain to find the sequence length
+    // Walk the child chain to find the sequence length. Resolved per visit,
+    // not cached: rule instances are reused across package roots.
+    final minSequence = rule.config.intOption(
+      'min_sequence',
+      defaultValue: _defaultMinSequence,
+    );
     final sequence = _collectSequence(node);
-    if (sequence.length < _minSequence) return;
+    if (sequence.length < minSequence) return;
 
     // Check for conflicting parameters (e.g., two Padding widgets would
     // both try to set `padding` on Container — only one is allowed).

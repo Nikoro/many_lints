@@ -141,13 +141,18 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _checkFunctionBody(FunctionBody body) {
+    // Resolved once and shared by both collectors: detecting a disposable and
+    // recognising its disposal must use the same list, or a configured method
+    // would be reported as never disposed.
+    final methods = resolveCleanupMethods(rule);
+
     // Collect all ref.onDispose(...) calls
-    final onDisposeCalls = _OnDisposeCollector();
+    final onDisposeCalls = _OnDisposeCollector(methods);
     body.visitChildren(onDisposeCalls);
     final disposedSources = onDisposeCalls.disposedSources;
 
     // Find all variable declarations with disposable types
-    final varFinder = _DisposableVariableFinder();
+    final varFinder = _DisposableVariableFinder(methods);
     body.visitChildren(varFinder);
 
     for (final variable in varFinder.variables) {
@@ -186,6 +191,11 @@ class _DisposableVariable {
 class _DisposableVariableFinder extends RecursiveAstVisitor<void> {
   final List<_DisposableVariable> variables = [];
 
+  /// The cleanup method names to recognise, resolved from configuration.
+  final List<String> methods;
+
+  _DisposableVariableFinder(this.methods);
+
   @override
   void visitVariableDeclaration(VariableDeclaration node) {
     final type = node.declaredFragment?.element.type;
@@ -194,7 +204,7 @@ class _DisposableVariableFinder extends RecursiveAstVisitor<void> {
       return;
     }
 
-    final cleanupMethod = findCleanupMethod(type);
+    final cleanupMethod = findCleanupMethod(type, methods: methods);
     if (cleanupMethod != null) {
       variables.add(
         _DisposableVariable(
@@ -226,6 +236,11 @@ class _OnDisposeCollector extends RecursiveAstVisitor<void> {
   /// Set of source patterns that are disposed.
   /// Contains entries like `instance.dispose` (tear-off) or `instance` (lambda).
   final Set<String> disposedSources = {};
+
+  /// The cleanup method names to recognise, resolved from configuration.
+  final List<String> methods;
+
+  _OnDisposeCollector(this.methods);
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
@@ -263,7 +278,7 @@ class _OnDisposeCollector extends RecursiveAstVisitor<void> {
     // ref.onDispose(() => instance.dispose())
     // ref.onDispose(() { instance.dispose(); })
     if (arg is FunctionExpression) {
-      final callFinder = _CleanupCallFinder();
+      final callFinder = _CleanupCallFinder(methods);
       arg.body.visitChildren(callFinder);
       for (final source in callFinder.sources) {
         disposedSources.add(source);
@@ -286,9 +301,14 @@ class _OnDisposeCollector extends RecursiveAstVisitor<void> {
 class _CleanupCallFinder extends RecursiveAstVisitor<void> {
   final Set<String> sources = {};
 
+  /// The cleanup method names to recognise, resolved from configuration.
+  final List<String> methods;
+
+  _CleanupCallFinder(this.methods);
+
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (cleanupMethods.contains(node.methodName.name)) {
+    if (methods.contains(node.methodName.name)) {
       final target = node.realTarget;
       if (target != null) {
         sources.add(target.toSource());

@@ -62,6 +62,30 @@ class RuleConfig {
     return value.whereType<String>().toList(growable: false);
   }
 
+  /// Resolves a built-in list of names against two options: [key], which
+  /// *replaces* [defaultValue] outright, and `additional_<key>`, which
+  /// *appends* to whichever list won.
+  ///
+  /// Both may be combined — `key` chooses the base list and
+  /// `additional_<key>` extends it — so a project can narrow the built-in set
+  /// and add its own names in one place.
+  ///
+  /// The two-option split is deliberate: with a single option there is no way
+  /// to say "the defaults plus one more" without restating every default, and
+  /// restated defaults silently rot when this package adds a name in a later
+  /// version.
+  Set<String> nameSetOption(String key, {required Set<String> defaultValue}) {
+    final replacement = options[key];
+    final base = replacement is List
+        ? replacement.whereType<String>().toSet()
+        : defaultValue;
+
+    final additional = stringListOption('additional_$key');
+    if (additional.isEmpty) return base;
+
+    return {...base, ...additional};
+  }
+
   factory RuleConfig._fromYaml(YamlMap map) {
     final exclude = <String>[];
     final options = <String, Object?>{};

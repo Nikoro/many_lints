@@ -35,8 +35,10 @@ class PreferClassDestructuring extends ManyLintsRule {
         'Use a destructuring declaration to extract all properties at once.',
   );
 
-  /// Minimum number of distinct property accesses to trigger the lint.
-  static const _minOccurrences = 3;
+  /// Default minimum number of distinct property accesses to trigger the lint.
+  ///
+  /// Configurable per project via the `min_occurrences` option.
+  static const _defaultMinOccurrences = 3;
 
   PreferClassDestructuring()
     : super(
@@ -72,12 +74,19 @@ class _Visitor extends SimpleAstVisitor<void> {
       statement.accept(collector);
     }
 
+    // Resolved per visit, not cached: rule instances are reused across
+    // package roots.
+    final minOccurrences = rule.config.intOption(
+      'min_occurrences',
+      defaultValue: PreferClassDestructuring._defaultMinOccurrences,
+    );
+
     // Report variables with enough distinct property accesses
     for (final entry in collector.accessesByVariable.entries) {
       final variableName = entry.key;
       final info = entry.value;
 
-      if (info.properties.length < PreferClassDestructuring._minOccurrences) {
+      if (info.properties.length < minOccurrences) {
         continue;
       }
 

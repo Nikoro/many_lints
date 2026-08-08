@@ -10,9 +10,18 @@ import '../many_lints_rule.dart';
 
 /// Suggests using dot shorthand constructor invocations for specific classes.
 ///
-/// **Supported classes:** EdgeInsets, BorderRadius, Radius, Border
+/// **Default classes:** EdgeInsets, BorderRadius, Radius, Border
 ///
 /// This rule only works for arguments (both positional and named).
+///
+/// **Configuration** (`many_lints.yaml`):
+///
+/// ```yaml
+/// rules:
+///   prefer_shorthands_with_constructors:
+///     classes: [EdgeInsets, BorderRadius]   # replaces the defaults
+///     additional_classes: [Alignment]       # extends whichever list applies
+/// ```
 ///
 /// **BAD:**
 /// ```dart
@@ -84,23 +93,23 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Default list of classes that should use dot shorthands.
   ///
-  /// To customize this list for your project:
-  /// 1. Fork the package or create a custom rule
-  /// 2. Modify this set to include your desired classes
-  ///
-  /// Common candidates for addition:
-  /// - 'Alignment' (e.g., Alignment.center -> .center)
-  /// - 'AlignmentDirectional' (e.g., AlignmentDirectional.topStart -> .topStart)
-  /// - 'EdgeInsetsGeometry' (base class for EdgeInsets)
-  /// - 'TextStyle' (if using const constructors)
-  ///
-  /// Note: Future versions may support configuration via analysis_options.yaml
+  /// Configurable per project — `classes` replaces this list and
+  /// `additional_classes` extends it. Common additions are `Alignment`,
+  /// `AlignmentDirectional`, `EdgeInsetsGeometry` and `TextStyle`.
   static const _defaultClasses = {
     'EdgeInsets',
     'BorderRadius',
     'Radius',
     'Border',
   };
+
+  /// The classes to report, resolved against this file's configuration.
+  ///
+  /// Read per visit rather than cached in the constructor: rule instances are
+  /// long-lived singletons reused across package roots, so caching here would
+  /// leak one package's configuration into another's analysis.
+  Set<String> get _classes =>
+      rule.config.nameSetOption('classes', defaultValue: _defaultClasses);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
@@ -112,7 +121,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final className = typeName.name.lexeme;
 
     // Check if this is one of the configured classes
-    if (!_defaultClasses.contains(className)) return;
+    if (!_classes.contains(className)) return;
 
     // Check if this is used as an argument
     if (!_isUsedAsArgument(node)) return;
@@ -138,7 +147,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final className = target.name;
 
     // Check if this is one of the configured classes
-    if (!_defaultClasses.contains(className)) return;
+    if (!_classes.contains(className)) return;
 
     // Check if this is used as an argument
     if (!_isUsedAsArgument(node)) return;

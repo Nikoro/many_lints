@@ -95,3 +95,30 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+### Options
+
+Configure in `many_lints.yaml` at your package root:
+
+```yaml
+rules:
+  dispose_fields:
+    additional_cleanup_methods: [release, shutdown]
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `cleanup_methods` | list of strings | `[dispose, close, cancel]` | **Replaces** the cleanup method names the rule looks for |
+| `additional_cleanup_methods` | list of strings | `[]` | **Extends** whichever list applies |
+
+Order matters: it is the priority used when a type declares more than one
+cleanup method. Names added via `additional_cleanup_methods` are appended, so a
+project's own `release()` is only chosen when the type declares no standard
+cleanup method.
+
+Both options apply to detection *and* recognition — a method listed here counts
+both as "this field needs cleaning up" and as "this call cleans it up".
+
+Alternatively, use a top-level `many_lints:` section in `analysis_options.yaml`.
+Note this section does **not** inherit through `include:`; when both sources
+exist, `many_lints.yaml` wins and the section is ignored entirely.
