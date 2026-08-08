@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -7,6 +6,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a `ThemeMode` value is compared with `==`/`!=` against a
@@ -22,7 +22,7 @@ import '../type_checker.dart';
 /// ```dart
 /// if (themeMode.isDark) { ... }
 /// ```
-class PreferThemeModeGetters extends AnalysisRule {
+class PreferThemeModeGetters extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_theme_mode_getters',
     'ThemeMode is compared against ThemeMode.{0}.',
@@ -41,7 +41,7 @@ class PreferThemeModeGetters extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

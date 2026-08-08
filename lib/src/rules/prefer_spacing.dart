@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -7,6 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../flutter_widget_helpers.dart';
 import '../type_checker.dart';
@@ -18,7 +18,7 @@ import '../type_checker.dart';
 /// 1. Direct SizedBox in children list with uniform spacing
 /// 2. `.separatedBy()` with SizedBox
 /// 3. `.expand()` with generator yielding SizedBox
-class PreferSpacing extends AnalysisRule {
+class PreferSpacing extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_spacing',
     "Prefer passing the 'spacing' argument instead of using SizedBox.",
@@ -38,7 +38,7 @@ class PreferSpacing extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

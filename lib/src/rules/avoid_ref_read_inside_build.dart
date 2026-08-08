@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when `ref.read()` is called inside a `build()` method of a
@@ -13,7 +13,7 @@ import '../type_checker.dart';
 /// `ref.read` reads the provider value once and does not listen for changes.
 /// Using it inside `build()` means the widget won't rebuild when the
 /// provider's value changes. Use `ref.watch()` instead.
-class AvoidRefReadInsideBuild extends AnalysisRule {
+class AvoidRefReadInsideBuild extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_ref_read_inside_build',
     "Avoid using 'ref.read' inside the build method.",
@@ -34,7 +34,7 @@ class AvoidRefReadInsideBuild extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

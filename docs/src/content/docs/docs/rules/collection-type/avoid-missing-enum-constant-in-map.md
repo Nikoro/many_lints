@@ -65,3 +65,5 @@ plugins:
     diagnostics:
       avoid_missing_enum_constant_in_map: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

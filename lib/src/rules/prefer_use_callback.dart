@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,13 +5,14 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 
 /// Warns when `useMemoized` is used to memoize a function expression.
 ///
 /// `useCallback` is specifically designed for memoizing callbacks and is more
 /// semantically correct than wrapping a function in `useMemoized`.
-class PreferUseCallback extends AnalysisRule {
+class PreferUseCallback extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_use_callback',
     "Use 'useCallback' instead of 'useMemoized' for memoizing functions.",
@@ -30,7 +30,7 @@ class PreferUseCallback extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

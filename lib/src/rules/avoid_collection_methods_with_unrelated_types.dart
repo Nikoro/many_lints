@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,6 +5,8 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when collection methods are called with arguments whose types are
 /// unrelated to the collection's type parameter.
@@ -30,7 +31,7 @@ import 'package:analyzer/error/error.dart';
 /// final set = <int>{};
 /// set.contains(42);
 /// ```
-class AvoidCollectionMethodsWithUnrelatedTypes extends AnalysisRule {
+class AvoidCollectionMethodsWithUnrelatedTypes extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_collection_methods_with_unrelated_types',
     "The argument type '{0}' is unrelated to the collection's type '{1}'.",
@@ -48,7 +49,7 @@ class AvoidCollectionMethodsWithUnrelatedTypes extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

@@ -81,3 +81,5 @@ plugins:
     diagnostics:
       check_is_not_closed_after_async_gap: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

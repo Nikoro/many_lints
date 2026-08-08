@@ -1,9 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when `BlocProvider.of(context)` or `RepositoryProvider.of(context)`
 /// is used instead of `context.read()` / `context.watch()` extensions.
@@ -26,7 +27,7 @@ import 'package:analyzer/error/error.dart';
 /// final repo = context.read<MyRepo>();
 /// final bloc = context.watch<CounterBloc>();
 /// ```
-class PreferBlocExtensions extends AnalysisRule {
+class PreferBlocExtensions extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_bloc_extensions',
     "Use 'context.{0}' instead of '{1}.of()'.",
@@ -45,7 +46,7 @@ class PreferBlocExtensions extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

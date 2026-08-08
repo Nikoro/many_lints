@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -7,11 +6,13 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer/source/line_info.dart';
 
+import '../many_lints_rule.dart';
+
 /// Warns when commented-out code is found.
 ///
 /// Commented-out code is a sign of technical debt. Use version control
 /// instead of keeping old code in comments.
-class AvoidCommentedOutCode extends AnalysisRule {
+class AvoidCommentedOutCode extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_commented_out_code',
     'This comment looks like commented-out code.',
@@ -30,7 +31,7 @@ class AvoidCommentedOutCode extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

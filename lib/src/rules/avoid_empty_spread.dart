@@ -1,16 +1,17 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
+
 /// Warns when a spread element spreads an empty literal.
 ///
 /// `...[]`, `...{}` and their null-aware forms contribute nothing to the
 /// surrounding collection. They are usually left behind after a refactor,
 /// or written as a placeholder that was never filled in.
-class AvoidEmptySpread extends AnalysisRule {
+class AvoidEmptySpread extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_empty_spread',
     'Spreading an empty collection has no effect.',
@@ -29,7 +30,7 @@ class AvoidEmptySpread extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

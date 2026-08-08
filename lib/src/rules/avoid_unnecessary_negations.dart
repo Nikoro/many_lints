@@ -1,9 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when a negation can be removed without changing the meaning.
 ///
@@ -17,7 +18,7 @@ import 'package:analyzer/error/error.dart';
 ///
 /// They usually appear after a condition is inverted and the inner
 /// expression is left as it was.
-class AvoidUnnecessaryNegations extends AnalysisRule {
+class AvoidUnnecessaryNegations extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_negations',
     'This negation cancels another negation.',
@@ -38,7 +39,7 @@ class AvoidUnnecessaryNegations extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

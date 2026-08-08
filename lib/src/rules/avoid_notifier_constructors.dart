@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
 
 /// Warns when a `Notifier` or `AsyncNotifier` subclass declares a constructor
@@ -13,7 +13,7 @@ import '../riverpod_type_checkers.dart';
 /// Constructors in Notifier classes should not contain initialization logic.
 /// All setup should go into the `build()` method instead, which is the proper
 /// lifecycle method for initialization in Riverpod.
-class AvoidNotifierConstructors extends AnalysisRule {
+class AvoidNotifierConstructors extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_notifier_constructors',
     'Avoid constructors with logic in Notifier classes.',
@@ -32,7 +32,7 @@ class AvoidNotifierConstructors extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

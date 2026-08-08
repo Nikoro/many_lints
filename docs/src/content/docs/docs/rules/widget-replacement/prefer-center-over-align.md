@@ -50,3 +50,5 @@ plugins:
     diagnostics:
       prefer_center_over_align: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

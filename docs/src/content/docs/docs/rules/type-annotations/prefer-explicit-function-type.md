@@ -69,3 +69,5 @@ plugins:
     diagnostics:
       prefer_explicit_function_type: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

@@ -1,7 +1,6 @@
 // Ported from riverpod_lint (MIT, Copyright (c) 2023 Remi Rousselet).
 // See the NOTICE file at the repository root.
 
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -10,6 +9,7 @@ import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
 
 /// Warns when `AsyncValue(:final value?)` is used on a possibly-nullable value.
@@ -33,7 +33,7 @@ import '../riverpod_type_checkers.dart';
 ///     print(value);
 /// }
 /// ```
-class AsyncValueNullablePattern extends AnalysisRule {
+class AsyncValueNullablePattern extends ManyLintsRule {
   static const LintCode code = LintCode(
     'async_value_nullable_pattern',
     'Using AsyncValue(:final value?) on a possibly nullable value is unsafe.',
@@ -53,7 +53,7 @@ class AsyncValueNullablePattern extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

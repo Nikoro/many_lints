@@ -292,14 +292,28 @@ class ResolvedRuleConfig {
     final root = context.package?.root;
     if (root == null) return _notExcluded;
 
-    final config = ConfigLoader.loadFor(root).forRule(ruleName);
+    return ResolvedRuleConfig.forPath(
+      packageRoot: root,
+      path: context.currentUnit?.file.path ?? context.definingUnit.file.path,
+      ruleName: ruleName,
+    );
+  }
+
+  /// Resolves configuration for [ruleName] against an explicit [path].
+  ///
+  /// Used by `ManyLintsRule`, which intercepts the diagnostic reporter and so
+  /// knows the file being reported on without holding a [RuleContext].
+  factory ResolvedRuleConfig.forPath({
+    required Folder packageRoot,
+    required String path,
+    required String ruleName,
+  }) {
+    final config = ConfigLoader.loadFor(packageRoot).forRule(ruleName);
     if (config.exclude.isEmpty) {
       return ResolvedRuleConfig(config, isExcluded: false);
     }
 
-    final path =
-        context.currentUnit?.file.path ?? context.definingUnit.file.path;
-    final relative = root.relativeIfContains(path);
+    final relative = packageRoot.relativeIfContains(path);
     if (relative == null) {
       return ResolvedRuleConfig(config, isExcluded: false);
     }

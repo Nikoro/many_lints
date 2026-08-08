@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,6 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
 
 /// Warns when a `Notifier` or `AsyncNotifier` subclass declares public
@@ -13,7 +13,7 @@ import '../riverpod_type_checkers.dart';
 ///
 /// All state should be consolidated into the `state` property using a dedicated
 /// model class, rather than exposing multiple public properties on the notifier.
-class AvoidPublicNotifierProperties extends AnalysisRule {
+class AvoidPublicNotifierProperties extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_public_notifier_properties',
     'Avoid public properties on Notifier classes.',
@@ -34,7 +34,7 @@ class AvoidPublicNotifierProperties extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

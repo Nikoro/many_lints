@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when `BorderRadius.circular()` is used instead of
@@ -12,7 +12,7 @@ import '../type_checker.dart';
 ///
 /// `BorderRadius.circular` calls `BorderRadius.all(Radius.circular())` under
 /// the hood. Using the explicit form allows the expression to be const.
-class PreferConstBorderRadius extends AnalysisRule {
+class PreferConstBorderRadius extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_const_border_radius',
     'Prefer BorderRadius.all(Radius.circular()) over BorderRadius.circular().',
@@ -31,7 +31,7 @@ class PreferConstBorderRadius extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

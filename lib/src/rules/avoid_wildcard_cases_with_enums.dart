@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -8,6 +7,8 @@ import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
+
 /// Warns when a switch over an enum uses a wildcard or `default` case.
 ///
 /// Switching over an enum without a catch-all gives you an exhaustiveness
@@ -15,7 +16,7 @@ import 'package:analyzer/error/error.dart';
 /// every switch that must handle it. A `_` or `default` case silences that
 /// check permanently — new constants fall into the catch-all and take
 /// whatever behaviour was written for the cases nobody thought about.
-class AvoidWildcardCasesWithEnums extends AnalysisRule {
+class AvoidWildcardCasesWithEnums extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_wildcard_cases_with_enums',
     'This catch-all case disables exhaustiveness checking for {0}.',
@@ -36,7 +37,7 @@ class AvoidWildcardCasesWithEnums extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

@@ -56,3 +56,5 @@ plugins:
     diagnostics:
       avoid_border_all: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

@@ -1,14 +1,15 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
+
 /// Warns when functional approaches (`.map().toList()`, `List.generate()`,
 /// `.fold()`, spread with `.map()`) are used to build widget lists instead
 /// of collection-for syntax.
-class PreferForLoopInChildren extends AnalysisRule {
+class PreferForLoopInChildren extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_for_loop_in_children',
     'Prefer using a for-loop instead of functional list building.',
@@ -29,7 +30,7 @@ class PreferForLoopInChildren extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

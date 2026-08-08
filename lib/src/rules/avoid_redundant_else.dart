@@ -1,9 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when an `else` follows a then-branch that always exits.
 ///
@@ -11,7 +12,7 @@ import 'package:analyzer/error/error.dart';
 /// control can never reach the `else` from it. Keeping the branch adds a
 /// level of indentation for the entire remainder of the method without
 /// changing behaviour.
-class AvoidRedundantElse extends AnalysisRule {
+class AvoidRedundantElse extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_redundant_else',
     "This 'else' is redundant because the if branch always exits.",
@@ -31,7 +32,7 @@ class AvoidRedundantElse extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

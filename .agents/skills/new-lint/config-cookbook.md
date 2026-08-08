@@ -172,84 +172,70 @@ Key types:
 | `RuleConfig` | One rule's config: `exclude` list + free-form `options` map, with typed accessors |
 | `ManyLintsConfig` | All rules for one package; `.parse()` / `.parseOptionsFile()` |
 | `ConfigLoader` | Loads + caches per package root, keyed on both files' modification stamps |
-| `ResolvedRuleConfig` | Per-callback resolution: the config plus whether the current file is excluded |
+| `ResolvedRuleConfig` | Resolution for one file: the config plus whether that file is excluded |
+| `ManyLintsRule` | Base class for every rule; applies `exclude` automatically |
 
 ---
 
-## Recipe: Adding `exclude` to a Rule
+## `exclude` Is Automatic — Do Not Hand-Write It
 
-Two changes to any existing rule. Reference implementation: [`lib/src/rules/avoid_only_rethrow.dart`](../../../lib/src/rules/avoid_only_rethrow.dart).
+Every rule in this package extends [`ManyLintsRule`](../../../lib/src/many_lints_rule.dart) instead of `AnalysisRule`, and that base class applies `exclude` for you. **A new rule needs no code at all to support it.**
 
-### 1. Pass the `RuleContext` into the visitor
+The only difference when writing a rule: override `registerManyLintsProcessors` rather than `registerNodeProcessors`.
 
 ```dart
-import '../rule_config.dart';
+import '../many_lints_rule.dart';
+
+class MyRule extends ManyLintsRule {
+  // ...
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final visitor = _Visitor(this, context);   // ← pass context
+    final visitor = _Visitor(this);
     registry.addTryStatement(this, visitor);
   }
+}
 ```
 
-```dart
-class _Visitor extends SimpleAstVisitor<void> {
-  final AvoidOnlyRethrow rule;
-  final RuleContext context;                   // ← store it
+`registerNodeProcessors` is `final`-in-spirit here: `ManyLintsRule` implements it to capture the package root, then delegates. Overriding it directly skips that capture and silently disables `exclude` for the rule.
 
-  _Visitor(this.rule, this.context);
-```
+### Why it intercepts the reporter
 
-### 2. Resolve **inside** the callback and bail when excluded
+`ManyLintsRule` overrides `set reporter`, the single field every reporting method (`reportAtNode`, `reportAtToken`, `reportAtOffset`, `reportAtSourceRange`, `reportAtPubNode`) funnels through. Both drivers — analyzer's `LibraryAnalyzer` and `PluginServer` — assign it once per compilation unit, immediately before visiting that unit. When the file is excluded, the rule is handed a reporter backed by `DiagnosticListener.nullListener`: visitors still run and still "report", but the diagnostics go nowhere.
 
-```dart
-  @override
-  void visitTryStatement(TryStatement node) {
-    // Resolved per node rather than once at registration time: the lookup
-    // needs `RuleContext.currentUnit`, which is null while
-    // `registerNodeProcessors` runs.
-    final resolved = ResolvedRuleConfig.of(context, rule.name);
-    if (resolved.isExcluded) return;
+The alternative — a `ResolvedRuleConfig.of(context, rule.name)` guard at the top of each callback — was rejected. It has to be repeated in *every* registered callback, and 42 rules here register more than one. A single missed callback leaks diagnostics from an excluded file, and no rule's own tests would catch it, because they never configure an exclude. Suppressing at the sink is structural: it cannot be forgotten, and it is independent of how a rule's visitors are shaped (per-node, `addCompilationUnit`, or `afterLibrary`).
 
-    // ... existing detection logic
-  }
-```
-
-> 🚨 **Never resolve config in `registerNodeProcessors`.** `RuleContext.currentUnit` is `null` there — `PluginServer` assigns it immediately before `unit.accept(...)`. Resolving early yields the wrong file path or none at all.
-
-For a rule with several registered callbacks, add the same two lines to each entry point, or factor them into a private `_shouldReport(node)` helper.
+`ResolvedRuleConfig.of()` still exists for code that holds a `RuleContext` and needs the answer directly. If you ever call it, do so **inside** a callback — `RuleContext.currentUnit` is `null` during `registerNodeProcessors`.
 
 ### How exclusion resolves internally
 
 ```dart
-final path = context.currentUnit?.file.path ?? context.definingUnit.file.path;
-final root = context.package?.root;                  // Folder?
-final relative = root?.relativeIfContains(path);     // e.g. 'test/foo.dart'
+final relative = packageRoot.relativeIfContains(path);   // e.g. 'test/foo.dart'
+Glob('/', pattern).matches(relative.replaceAll(r'\', '/'));
 ```
 
-`relativeIfContains` is the same helper analyzer's own `LocatedGlob.matches` uses, so glob semantics match analyzer's exclude handling. Matching uses `Glob('/', pattern)` from `analyzer/src/util/glob.dart` (an implementation import — hence `ignore_for_file: implementation_imports` in `rule_config.dart`).
+`relativeIfContains` is the same helper analyzer's own `LocatedGlob.matches` uses, so glob semantics match analyzer's exclude handling. `Glob` comes from `analyzer/src/util/glob.dart` (an implementation import — hence `ignore_for_file: implementation_imports` in `rule_config.dart`).
 
-Prefer `currentUnit` over `definingUnit`: a library's parts can live in different directories than its defining unit. For the same reason, `RuleContext.isInLibDir` and `isInTestDirectory` are computed from `definingUnit` and **misreport for part files** — do not use them as a substitute for path matching.
+The path comes from the reporter's own `source.fullName`, which is always the file being reported on. That sidesteps a trap in the context-based route: `RuleContext.isInLibDir` and `isInTestDirectory` are computed from `definingUnit` and **misreport for part files**, so they are not a substitute for path matching.
 
 ---
 
 ## Recipe: Adding a Mode Option
 
-A mode narrows or widens what the rule reports. Read it from the resolved config and branch:
+`exclude` is free; a *mode* option is the only thing a rule implements by hand. A mode narrows or widens what the rule reports. Read it from `rule.config` — already resolved for the current file — and branch:
 
 ```dart
   @override
   void visitTryStatement(TryStatement node) {
-    final resolved = ResolvedRuleConfig.of(context, rule.name);
-    if (resolved.isExcluded) return;
+    // No exclude guard needed: `ManyLintsRule` handles it at the reporter.
 
     // `ignore_typed_catches: true` limits the rule to untyped `catch (e)`
     // clauses, leaving `on SomeError catch (e) { rethrow; }` alone — that
     // form narrows which exceptions propagate, so it is not always redundant.
-    final ignoreTyped = resolved.config.boolOption(
+    final ignoreTyped = rule.config.boolOption(
       'ignore_typed_catches',
       defaultValue: false,
     );
@@ -260,6 +246,8 @@ A mode narrows or widens what the rule reports. Read it from the resolved config
     }
   }
 ```
+
+`rule.config` is refreshed per file, so read it inside the callback rather than caching it in the visitor's constructor.
 
 Design rules for options:
 

@@ -68,3 +68,5 @@ plugins:
     diagnostics:
       prefer_simpler_patterns_null_check: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

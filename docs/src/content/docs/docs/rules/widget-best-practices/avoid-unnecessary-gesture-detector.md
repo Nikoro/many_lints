@@ -53,3 +53,5 @@ plugins:
     diagnostics:
       avoid_unnecessary_gesture_detector: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

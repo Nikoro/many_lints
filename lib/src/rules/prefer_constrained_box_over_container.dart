@@ -1,15 +1,15 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
 /// Suggests using ConstrainedBox widget instead of Container with only constraints.
-class PreferConstrainedBoxOverContainer extends AnalysisRule {
+class PreferConstrainedBoxOverContainer extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_constrained_box_over_container',
     'Use ConstrainedBox widget instead of the Container widget with only the constraints parameter.',
@@ -27,7 +27,7 @@ class PreferConstrainedBoxOverContainer extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

@@ -1,16 +1,16 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../hook_detection.dart';
 import '../type_checker.dart';
 
 /// Warns when a HookWidget does not use any hooks in the build method.
-class AvoidUnnecessaryHookWidgets extends AnalysisRule {
+class AvoidUnnecessaryHookWidgets extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_hook_widgets',
     'This HookWidget does not use hooks.',
@@ -27,7 +27,7 @@ class AvoidUnnecessaryHookWidgets extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

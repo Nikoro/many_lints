@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when an `EdgeInsets` constructor can be replaced with a simpler one.
@@ -14,7 +14,7 @@ import '../type_checker.dart';
 /// - `EdgeInsets.only` can be `EdgeInsets.all`, `.symmetric`, or `.zero`
 /// - `EdgeInsets.symmetric` can be `EdgeInsets.all` or `.zero`
 /// - `EdgeInsets.all(0)` can be `EdgeInsets.zero`
-class PreferCorrectEdgeInsetsConstructor extends AnalysisRule {
+class PreferCorrectEdgeInsetsConstructor extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_correct_edge_insets_constructor',
     'Use a simpler EdgeInsets constructor.',
@@ -32,7 +32,7 @@ class PreferCorrectEdgeInsetsConstructor extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

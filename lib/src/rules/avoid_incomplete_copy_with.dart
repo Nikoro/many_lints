@@ -1,13 +1,14 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
+
 /// Warns when a `copyWith` method does not include all parameters from the
 /// class's default constructor, which can lead to incomplete copies.
-class AvoidIncompleteCopyWith extends AnalysisRule {
+class AvoidIncompleteCopyWith extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_incomplete_copy_with',
     'copyWith is missing constructor parameters: {0}.',
@@ -27,7 +28,7 @@ class AvoidIncompleteCopyWith extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

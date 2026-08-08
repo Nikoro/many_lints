@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a Bloc/Cubit class accepts a `BuildContext` parameter in its
@@ -13,7 +13,7 @@ import '../type_checker.dart';
 /// Passing `BuildContext` creates unnecessary coupling between Blocs and
 /// widgets. It can also introduce bugs when the context is no longer mounted.
 /// Business logic in Blocs/Cubits should remain independent of the UI layer.
-class AvoidPassingBuildContextToBlocs extends AnalysisRule {
+class AvoidPassingBuildContextToBlocs extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_passing_build_context_to_blocs',
     'Avoid passing BuildContext to a Bloc/Cubit.',
@@ -33,7 +33,7 @@ class AvoidPassingBuildContextToBlocs extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

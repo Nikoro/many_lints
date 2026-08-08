@@ -1,14 +1,14 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Suggests using .any() or .every() instead of .where().isEmpty/.isNotEmpty.
-class PreferAnyOrEvery extends AnalysisRule {
+class PreferAnyOrEvery extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_any_or_every',
     'Use .{0}() instead of .where().{1}.',
@@ -27,7 +27,7 @@ class PreferAnyOrEvery extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

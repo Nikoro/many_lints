@@ -60,3 +60,5 @@ plugins:
     diagnostics:
       protected_notifier_properties: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

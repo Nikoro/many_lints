@@ -1,9 +1,9 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+import '../many_lints_rule.dart';
 import '../constant_expression.dart';
 
 /// Warns when a collection is accessed by a constant index inside a loop body.
@@ -11,7 +11,7 @@ import '../constant_expression.dart';
 /// Accessing a collection with a constant index (e.g. `list[0]`) inside a loop
 /// is suspicious — the index never changes, so the access likely belongs
 /// outside the loop or the index should depend on the loop variable.
-class AvoidAccessingCollectionsByConstantIndex extends AnalysisRule {
+class AvoidAccessingCollectionsByConstantIndex extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_accessing_collections_by_constant_index',
     'Avoid accessing a collection by a constant index inside a loop.',
@@ -31,7 +31,7 @@ class AvoidAccessingCollectionsByConstantIndex extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

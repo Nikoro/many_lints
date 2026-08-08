@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,11 +5,12 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a StatefulWidget can be replaced with a StatelessWidget because
 /// its State class has no mutable state, lifecycle methods, or setState calls.
-class AvoidUnnecessaryStatefulWidgets extends AnalysisRule {
+class AvoidUnnecessaryStatefulWidgets extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_stateful_widgets',
     'This StatefulWidget has no mutable state. Consider using StatelessWidget instead.',
@@ -28,7 +28,7 @@ class AvoidUnnecessaryStatefulWidgets extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

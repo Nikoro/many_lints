@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -7,6 +6,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a widget's `build` method instantiates the widget itself
@@ -17,7 +17,7 @@ import '../type_checker.dart';
 ///
 /// Recursion guarded by a condition is a legitimate way to render trees, so
 /// only *unconditional* self-instantiation is reported.
-class AvoidRecursiveWidgetCalls extends AnalysisRule {
+class AvoidRecursiveWidgetCalls extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_recursive_widget_calls',
     "The widget '{0}' builds itself unconditionally.",
@@ -38,7 +38,7 @@ class AvoidRecursiveWidgetCalls extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

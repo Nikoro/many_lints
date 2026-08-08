@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,6 +5,8 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when a map literal keyed by an enum omits some of its constants.
 ///
@@ -17,7 +18,7 @@ import 'package:analyzer/error/error.dart';
 /// Unlike a `switch`, the compiler performs no exhaustiveness check here,
 /// so adding a new enum constant later leaves every such map quietly
 /// incomplete.
-class AvoidMissingEnumConstantInMap extends AnalysisRule {
+class AvoidMissingEnumConstantInMap extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_missing_enum_constant_in_map',
     "This map is missing the enum constant(s): {0}.",
@@ -38,7 +39,7 @@ class AvoidMissingEnumConstantInMap extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

@@ -1,9 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when a `Function` type does not specify the return type and arguments.
 ///
@@ -28,7 +29,7 @@ import 'package:analyzer/error/error.dart';
 ///   const SomeWidget(this.onTap);
 /// }
 /// ```
-class PreferExplicitFunctionType extends AnalysisRule {
+class PreferExplicitFunctionType extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_explicit_function_type',
     "This 'Function' type does not specify a return type or parameter list.",
@@ -46,7 +47,7 @@ class PreferExplicitFunctionType extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

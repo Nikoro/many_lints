@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../async_guard_utils.dart';
 import '../type_checker.dart';
 
@@ -18,7 +18,7 @@ import '../type_checker.dart';
 /// the call site.
 ///
 /// Guard the emit with `if (isClosed) return;` after each await.
-class CheckIsNotClosedAfterAsyncGap extends AnalysisRule {
+class CheckIsNotClosedAfterAsyncGap extends ManyLintsRule {
   static const LintCode code = LintCode(
     'check_is_not_closed_after_async_gap',
     "State is emitted after an await without checking 'isClosed'.",
@@ -39,7 +39,7 @@ class CheckIsNotClosedAfterAsyncGap extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

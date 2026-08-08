@@ -1,13 +1,15 @@
 # Lint Rules — Quick Reference
 
-This directory contains lint rule implementations. Each rule extends `AnalysisRule` and uses the `SimpleAstVisitor` pattern.
+This directory contains lint rule implementations. Each rule extends `ManyLintsRule` (this package's `AnalysisRule` subclass) and uses the `SimpleAstVisitor` pattern.
 
 **Full implementation guides:** [rules-patterns.md](../../../.agents/skills/new-lint/rules-patterns.md) | [rules-recipes.md](../../../.agents/skills/new-lint/rules-recipes.md)
 **To create a new lint rule:** use the `/new-lint` skill
 
 ## Rule Pattern
 
-Every rule follows: `AnalysisRule` + `_Visitor extends SimpleAstVisitor` + `registerNodeProcessors()` + `rule.reportAtNode()`.
+Every rule follows: `ManyLintsRule` + `_Visitor extends SimpleAstVisitor` + `registerManyLintsProcessors()` + `rule.reportAtNode()`.
+
+⚠️ Override `registerManyLintsProcessors()`, **not** `registerNodeProcessors()` — `ManyLintsRule` implements the latter to wire up per-rule `exclude`. Overriding it directly silently disables `exclude` for that rule.
 
 For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 lines vs ~55 lines).
 
@@ -21,7 +23,8 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 - **Disposal utils** (`../disposal_utils.dart`) — `findCleanupMethod()`, `cleanupMethods` (shared by dispose_fields + dispose_provided_instances)
 - **Widget helpers** (`../flutter_widget_helpers.dart`) — `FlexAxis` enum (shared by prefer_spacing + use_gap)
 - **Riverpod checkers** (`../riverpod_type_checkers.dart`) — `notifierChecker` TypeChecker (shared by avoid_notifier_constructors + dispose_provided_instances)
-- **Rule config** (`../rule_config.dart`) — per-rule `exclude` globs + free-form options from `many_lints.yaml` (or a top-level `many_lints:` section in `analysis_options.yaml`; the file wins, no merge). Pass `RuleContext` into the visitor, then `ResolvedRuleConfig.of(context, rule.name)` **inside** each callback — `currentUnit` is null during `registerNodeProcessors`. The analyzer cannot carry per-rule options itself; see [config-cookbook.md](../../../.agents/skills/new-lint/config-cookbook.md)
+- **Rule base** (`../many_lints_rule.dart`) — `ManyLintsRule` applies per-rule `exclude` for **every** rule automatically by intercepting `set reporter` (the single field all `reportAt*` methods funnel through) and swapping in a null-listener reporter for excluded files. No visitor-level guard needed, so a rule with several registered callbacks cannot leak diagnostics from one it forgot
+- **Rule config** (`../rule_config.dart`) — `exclude` globs + free-form options from `many_lints.yaml` (or a top-level `many_lints:` section in `analysis_options.yaml`; the file wins, no merge). Read mode options via `rule.config.boolOption(...)`, resolved per file. The analyzer cannot carry per-rule options itself; see [config-cookbook.md](../../../.agents/skills/new-lint/config-cookbook.md)
 - **Reporting** — `reportAtNode()`, `reportAtToken()`, `reportAtOffset()`, with `{0}` placeholder interpolation
 - **Analyzer 14.1.0** — use `node.declaredFragment?.element` (not deprecated `.element`), `node.body` (not `.members`), `namePart.typeName` for class/enum names; `ClassBody`/`EnumBody` are sealed (use `BlockClassBody`/`BlockEnumBody` to access `.members`); use `is DynamicType` (not `identical`) since 12.1.0 allows aliases for `dynamic`/`Never`/`void`. Since 13.0.0: `NamedExpression` → `NamedArgument` (NOT an `Expression`; `.name` is a `Token`, value is `.argumentExpression`), `ArgumentList.arguments` is `NodeList<Argument>` (sealed: `Expression` | `NamedArgument`), `DefaultFormalParameter`/`SimpleFormalParameter` → `RegularFormalParameter` with `.name`/`.type`/`.defaultClause` directly on `FormalParameter`, `Label.name` is a `Token`, `MethodDeclaration.isAbstract` → `!isComplete`, `ExtensionTypeDeclaration.primaryConstructor` → `namePart`
 

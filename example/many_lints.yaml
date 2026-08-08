@@ -1,0 +1,12 @@
+# Per-rule configuration for many_lints.
+#
+# This demonstrates `exclude`: the rule stays enabled everywhere else, but is
+# skipped for the listed paths. See lib/excluded/excluded_example.dart.
+#
+# The same block can instead live under a top-level `many_lints:` key in
+# `analysis_options.yaml` — the two forms are equivalent. If both exist, this
+# file wins outright and the section there is ignored (they are not merged).
+rules:
+  avoid_only_rethrow:
+    exclude:
+      - lib/excluded/**

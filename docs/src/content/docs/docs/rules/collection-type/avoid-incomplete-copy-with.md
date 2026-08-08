@@ -90,3 +90,5 @@ plugins:
     diagnostics:
       avoid_incomplete_copy_with: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

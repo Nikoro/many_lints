@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns about a `Future<Future<T>>` type annotation.
@@ -15,7 +15,7 @@ import '../type_checker.dart';
 /// nested type means the annotation does not describe what the code
 /// actually produces, and callers get a type they cannot usefully await
 /// twice.
-class AvoidNestedFutures extends AnalysisRule {
+class AvoidNestedFutures extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_nested_futures',
     'Nested futures are flattened automatically.',
@@ -36,7 +36,7 @@ class AvoidNestedFutures extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

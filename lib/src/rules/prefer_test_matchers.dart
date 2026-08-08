@@ -1,10 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when the second argument of `expect()` or `expectLater()` is not a
 /// `Matcher` subclass.
@@ -25,7 +26,7 @@ import 'package:analyzer/error/error.dart';
 /// expect(value, equals('hello'));
 /// expect(flag, isTrue);
 /// ```
-class PreferTestMatchers extends AnalysisRule {
+class PreferTestMatchers extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_test_matchers',
     'Prefer using a Matcher instead of a literal value in expect().',
@@ -46,7 +47,7 @@ class PreferTestMatchers extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a listener is added in a State lifecycle method but never
@@ -14,7 +14,7 @@ import '../type_checker.dart';
 /// `ChangeNotifier`, `AnimationController`) inside `initState`,
 /// `didUpdateWidget`, or `didChangeDependencies` must have a corresponding
 /// `removeListener()` call in `dispose()` to prevent memory leaks.
-class AlwaysRemoveListener extends AnalysisRule {
+class AlwaysRemoveListener extends ManyLintsRule {
   static const LintCode code = LintCode(
     'always_remove_listener',
     'Listener added but never removed in dispose().',
@@ -34,7 +34,7 @@ class AlwaysRemoveListener extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

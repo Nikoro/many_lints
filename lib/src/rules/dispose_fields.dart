@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../disposal_utils.dart';
 import '../type_checker.dart';
 
@@ -15,7 +15,7 @@ import '../type_checker.dart';
 /// `StreamController`, `StreamSubscription`, `FocusNode`, `Timer`, etc. must
 /// be properly disposed/closed/cancelled in `dispose()` to prevent memory
 /// leaks.
-class DisposeFields extends AnalysisRule {
+class DisposeFields extends ManyLintsRule {
   static const LintCode code = LintCode(
     'dispose_fields',
     "Field '{0}' is not disposed. Call '{0}.{1}()' in dispose().",
@@ -35,7 +35,7 @@ class DisposeFields extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

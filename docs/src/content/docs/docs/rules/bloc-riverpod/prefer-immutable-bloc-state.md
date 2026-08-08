@@ -79,3 +79,5 @@ plugins:
     diagnostics:
       prefer_immutable_bloc_state: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

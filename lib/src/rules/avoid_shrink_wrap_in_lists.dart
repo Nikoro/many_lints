@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,6 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a `ListView` uses `shrinkWrap: true`.
@@ -13,7 +13,7 @@ import '../type_checker.dart';
 /// Using `shrinkWrap` in lists is expensive performance-wise because the
 /// list must be fully laid out to determine its size. Prefer using slivers
 /// via `CustomScrollView` with `SliverList` for better performance.
-class AvoidShrinkWrapInLists extends AnalysisRule {
+class AvoidShrinkWrapInLists extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_shrink_wrap_in_lists',
     'Avoid using shrinkWrap in ListView.',
@@ -32,7 +32,7 @@ class AvoidShrinkWrapInLists extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

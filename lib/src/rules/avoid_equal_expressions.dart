@@ -1,9 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when both operands of a binary expression are identical.
 ///
@@ -11,7 +12,7 @@ import 'package:analyzer/error/error.dart';
 /// operand was meant to be a different variable, field, or index. The
 /// expression compiles and produces a constant result, so nothing fails
 /// until the wrong branch is taken.
-class AvoidEqualExpressions extends AnalysisRule {
+class AvoidEqualExpressions extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_equal_expressions',
     "Both operands of '{0}' are identical.",
@@ -32,7 +33,7 @@ class AvoidEqualExpressions extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

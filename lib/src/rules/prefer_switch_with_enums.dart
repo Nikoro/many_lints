@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -7,6 +6,8 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when a condition compares one enum value against several
 /// constants.
@@ -18,7 +19,7 @@ import 'package:analyzer/error/error.dart';
 /// and the compiler points at every switch that must handle it. None of
 /// these shapes gets that check, so a new constant silently falls through
 /// to the final `else` — or to nothing at all.
-class PreferSwitchWithEnums extends AnalysisRule {
+class PreferSwitchWithEnums extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_switch_with_enums',
     "This condition compares '{0}' against several enum constants.",
@@ -42,7 +43,7 @@ class PreferSwitchWithEnums extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

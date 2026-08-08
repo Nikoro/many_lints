@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,6 +5,8 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when test matchers are used with incompatible types in `expect()`.
 ///
@@ -26,7 +27,7 @@ import 'package:analyzer/error/error.dart';
 /// expect([1, 2], hasLength(2)); // List has length
 /// expect(null, isNull);       // nullable type with isNull
 /// ```
-class AvoidMisusedTestMatchers extends AnalysisRule {
+class AvoidMisusedTestMatchers extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_misused_test_matchers',
     "The matcher '{0}' is incompatible with the actual value type '{1}'.",
@@ -44,7 +45,7 @@ class AvoidMisusedTestMatchers extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

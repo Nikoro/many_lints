@@ -2,6 +2,7 @@
 import 'package:analysis_server_plugin/src/registry.dart';
 import 'package:many_lints/many_lints.dart' as many_lints;
 import 'package:many_lints/many_lints.dart';
+import 'package:many_lints/src/many_lints_rule.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -63,5 +64,26 @@ void main() {
   test('assists are registered', () {
     plugin.register(registry);
     expect(registry.assistKinds.length, equals(1));
+  });
+
+  // Per-rule `exclude` is applied by `ManyLintsRule`, so a rule that extends
+  // `AnalysisRule` directly silently ignores every `exclude` a user writes for
+  // it. Nothing else fails in that case — the rule's own tests never configure
+  // an exclude — so the invariant is asserted here instead.
+  test('every registered rule extends ManyLintsRule', () {
+    plugin.register(registry);
+
+    final offenders = [
+      ...registry.warningRules.values,
+      ...registry.lintRules.values,
+    ].where((rule) => rule is! ManyLintsRule).map((rule) => rule.name).toList();
+
+    expect(
+      offenders,
+      isEmpty,
+      reason:
+          'These rules do not extend ManyLintsRule, so per-rule `exclude` '
+          'would be ignored for them: $offenders',
+    );
   });
 }

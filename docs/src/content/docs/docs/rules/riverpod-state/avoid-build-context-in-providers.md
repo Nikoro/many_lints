@@ -57,3 +57,5 @@ plugins:
     diagnostics:
       avoid_build_context_in_providers: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

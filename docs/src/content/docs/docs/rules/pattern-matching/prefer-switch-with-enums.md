@@ -84,3 +84,5 @@ plugins:
     diagnostics:
       prefer_switch_with_enums: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

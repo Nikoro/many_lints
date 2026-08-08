@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../async_builder_utils.dart';
 import '../type_checker.dart';
 
@@ -14,7 +14,7 @@ import '../type_checker.dart';
 /// a fresh one is built on every rebuild, so the `FutureBuilder` restarts
 /// from `ConnectionState.waiting` and the underlying work — often a network
 /// request — is repeated.
-class PassExistingFutureToFutureBuilder extends AnalysisRule {
+class PassExistingFutureToFutureBuilder extends ManyLintsRule {
   static const LintCode code = LintCode(
     'pass_existing_future_to_future_builder',
     'This creates a new Future on every rebuild.',
@@ -35,7 +35,7 @@ class PassExistingFutureToFutureBuilder extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

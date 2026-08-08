@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -7,10 +6,12 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
+
 /// Warns when a class extends a parent that overrides `==` and `hashCode`
 /// but does not override them itself, which can lead to incorrect equality
 /// comparisons.
-class PreferOverridingParentEquality extends AnalysisRule {
+class PreferOverridingParentEquality extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_overriding_parent_equality',
     'Parent class overrides == and hashCode but this class does not.',
@@ -30,7 +31,7 @@ class PreferOverridingParentEquality extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

@@ -132,14 +132,15 @@ class UseBlocSuffix extends ClassSuffixValidator {
 For custom patterns, every lint rule follows this structure:
 
 ```dart
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-class RuleName extends AnalysisRule {
+import '../many_lints_rule.dart';
+
+class RuleName extends ManyLintsRule {
   static const LintCode code = LintCode(
     'rule_name',
     'Brief description of the issue.',
@@ -155,8 +156,10 @@ class RuleName extends AnalysisRule {
   @override
   LintCode get diagnosticCode => code;
 
+  // `ManyLintsRule` implements `registerNodeProcessors` itself to wire up
+  // per-rule `exclude`, so rules override this hook instead.
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
@@ -288,7 +291,7 @@ Register specific AST node types you want to visit:
 
 ```dart
 @override
-void registerNodeProcessors(
+void registerManyLintsProcessors(
   RuleVisitorRegistry registry,
   RuleContext context,
 ) {

@@ -1,9 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when a local variable is declared only to be returned on the next
 /// line.
@@ -12,7 +13,7 @@ import 'package:analyzer/error/error.dart';
 /// carries no information the return statement does not already give. The
 /// extra line is one more thing to read and to keep in sync when the
 /// expression changes.
-class PreferImmediateReturn extends AnalysisRule {
+class PreferImmediateReturn extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_immediate_return',
     "The variable '{0}' is only used by the return on the next line.",
@@ -31,7 +32,7 @@ class PreferImmediateReturn extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

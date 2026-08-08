@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,6 +5,8 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Suggests using dot shorthand constructor invocations for specific classes.
 ///
@@ -48,7 +49,7 @@ import 'package:analyzer/error/error.dart';
 ///   borderRadius: .circular(18),
 /// )
 /// ```
-class PreferShorthandsWithConstructors extends AnalysisRule {
+class PreferShorthandsWithConstructors extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_shorthands_with_constructors',
     'Prefer dot shorthands instead of explicit class instantiations.',
@@ -66,7 +67,7 @@ class PreferShorthandsWithConstructors extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

@@ -62,3 +62,5 @@ plugins:
     diagnostics:
       avoid_duplicate_bloc_event_handlers: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

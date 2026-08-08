@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../async_guard_utils.dart';
 import '../riverpod_type_checkers.dart';
 
@@ -13,7 +13,7 @@ import '../riverpod_type_checkers.dart';
 ///
 /// If the notifier is disposed before the async operation completes, accessing
 /// `ref` or `state` will throw an `UnmountedRefException`.
-class UseRefAndStateSynchronously extends AnalysisRule {
+class UseRefAndStateSynchronously extends ManyLintsRule {
   static const LintCode code = LintCode(
     'use_ref_and_state_synchronously',
     "Don't use 'ref' or 'state' after an async gap without checking "
@@ -35,7 +35,7 @@ class UseRefAndStateSynchronously extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

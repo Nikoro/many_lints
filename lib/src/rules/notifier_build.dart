@@ -1,13 +1,13 @@
 // Ported from riverpod_lint (MIT, Copyright (c) 2023 Remi Rousselet).
 // See the NOTICE file at the repository root.
 
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
 
 /// Warns when a `@riverpod` class does not define a `build` method.
@@ -30,7 +30,7 @@ import '../riverpod_type_checkers.dart';
 ///   int build() => 0;
 /// }
 /// ```
-class NotifierBuild extends AnalysisRule {
+class NotifierBuild extends ManyLintsRule {
   static const LintCode code = LintCode(
     'notifier_build',
     "Classes annotated with '@riverpod' must define a 'build' method.",
@@ -48,7 +48,7 @@ class NotifierBuild extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../hook_detection.dart';
 import '../type_checker.dart';
 
@@ -15,7 +15,7 @@ import '../type_checker.dart';
 /// `HookWidget.build`, a `HookBuilder`'s `builder`, or another hook
 /// function. Calling a hook from an event handler, a lifecycle method, or a
 /// plain helper either throws or corrupts the hook order.
-class AvoidHooksOutsideBuild extends AnalysisRule {
+class AvoidHooksOutsideBuild extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_hooks_outside_build',
     "The hook '{0}' is called outside a hook context.",
@@ -36,7 +36,7 @@ class AvoidHooksOutsideBuild extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

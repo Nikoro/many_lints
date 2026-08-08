@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,6 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
@@ -14,7 +14,7 @@ import '../type_checker.dart';
 ///
 /// Consistent naming with a 'Sliver' prefix helps developers quickly identify
 /// which widgets are sliver-based and can be used inside CustomScrollView.
-class UseSliverPrefix extends AnalysisRule {
+class UseSliverPrefix extends ManyLintsRule {
   static const LintCode code = LintCode(
     'use_sliver_prefix',
     "Widget returns a sliver but its name does not start with 'Sliver'.",
@@ -32,7 +32,7 @@ class UseSliverPrefix extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

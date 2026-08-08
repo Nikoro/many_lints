@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,11 +5,12 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when `Expanded` wraps an empty `SizedBox` or `Container` instead of
 /// using the dedicated `Spacer` widget.
-class AvoidExpandedAsSpacer extends AnalysisRule {
+class AvoidExpandedAsSpacer extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_expanded_as_spacer',
     "Prefer replacing Expanded with an empty child with 'Spacer'.",
@@ -28,7 +28,7 @@ class AvoidExpandedAsSpacer extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

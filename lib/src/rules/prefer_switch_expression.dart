@@ -1,9 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Suggests converting switch statements to switch expressions.
 ///
@@ -32,7 +33,7 @@ import 'package:analyzer/error/error.dart';
 ///   };
 /// }
 /// ```
-class PreferSwitchExpression extends AnalysisRule {
+class PreferSwitchExpression extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_switch_expression',
     'This switch statement can be converted to a switch expression.',
@@ -50,7 +51,7 @@ class PreferSwitchExpression extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

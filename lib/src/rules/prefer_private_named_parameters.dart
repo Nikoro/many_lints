@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/analysis/features.dart';
@@ -6,6 +5,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when a constructor declares a public named parameter whose only
 /// purpose is to initialize a private field with the same name.
@@ -29,7 +30,7 @@ import 'package:analyzer/error/error.dart';
 ///   Bird({required this._petName});
 /// }
 /// ```
-class PreferPrivateNamedParameters extends AnalysisRule {
+class PreferPrivateNamedParameters extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_private_named_parameters',
     'Named parameter is only used to initialize the private field {0}.',
@@ -48,7 +49,7 @@ class PreferPrivateNamedParameters extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

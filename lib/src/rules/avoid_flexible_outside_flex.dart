@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a Flexible or Expanded widget is used outside a Flex widget.
@@ -12,7 +12,7 @@ import '../type_checker.dart';
 /// Flexible and Expanded widgets should only be used as direct children of
 /// Row, Column, or Flex widgets. Using them elsewhere has no effect and
 /// indicates a structural issue in the widget tree.
-class AvoidFlexibleOutsideFlex extends AnalysisRule {
+class AvoidFlexibleOutsideFlex extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_flexible_outside_flex',
     '{0} should only be used as a direct child of Row, Column, or Flex.',
@@ -32,7 +32,7 @@ class AvoidFlexibleOutsideFlex extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

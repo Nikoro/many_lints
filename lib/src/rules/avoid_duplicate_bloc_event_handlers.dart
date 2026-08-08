@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -7,6 +6,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when the same event type is registered with `on<E>` more than once.
@@ -16,7 +16,7 @@ import '../type_checker.dart';
 /// added. Because that happens in the constructor, the failure surfaces the
 /// first time the bloc is created rather than where the duplicate was
 /// written.
-class AvoidDuplicateBlocEventHandlers extends AnalysisRule {
+class AvoidDuplicateBlocEventHandlers extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_duplicate_bloc_event_handlers',
     "The event '{0}' already has a handler registered.",
@@ -37,7 +37,7 @@ class AvoidDuplicateBlocEventHandlers extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

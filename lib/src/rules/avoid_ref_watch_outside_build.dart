@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when `ref.watch()` is called outside of a `build()` method.
@@ -13,7 +13,7 @@ import '../type_checker.dart';
 /// lifecycle method or an event handler creates a subscription that is never
 /// torn down properly, which leaks listeners and can rebuild at unexpected
 /// times. Use `ref.read()` in callbacks and `ref.listen()` for side effects.
-class AvoidRefWatchOutsideBuild extends AnalysisRule {
+class AvoidRefWatchOutsideBuild extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_ref_watch_outside_build',
     "Avoid using 'ref.watch' outside the build method.",
@@ -34,7 +34,7 @@ class AvoidRefWatchOutsideBuild extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

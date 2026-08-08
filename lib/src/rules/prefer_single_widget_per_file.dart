@@ -1,15 +1,15 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a file contains more than one public widget class.
 /// Private widgets (prefixed with underscore) are ignored.
-class PreferSingleWidgetPerFile extends AnalysisRule {
+class PreferSingleWidgetPerFile extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_single_widget_per_file',
     'Only one public widget per file. Move additional widgets to separate files.',
@@ -27,7 +27,7 @@ class PreferSingleWidgetPerFile extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

@@ -1,16 +1,16 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a class directly extends `Equatable` instead of using
 /// `EquatableMixin`. Using the mixin preserves the ability to extend another
 /// base class while keeping all equatable features.
-class PreferEquatableMixin extends AnalysisRule {
+class PreferEquatableMixin extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_equatable_mixin',
     'Prefer using EquatableMixin instead of extending Equatable.',
@@ -30,7 +30,7 @@ class PreferEquatableMixin extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

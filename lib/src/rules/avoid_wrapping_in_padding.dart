@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,13 +5,14 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
 /// Warns when a widget that supports a `padding` parameter is wrapped in a
 /// `Padding` widget. The padding should be passed directly to the child widget
 /// instead.
-class AvoidWrappingInPadding extends AnalysisRule {
+class AvoidWrappingInPadding extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_wrapping_in_padding',
     "Avoid wrapping a '{0}' in a 'Padding' widget.",
@@ -31,7 +31,7 @@ class AvoidWrappingInPadding extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

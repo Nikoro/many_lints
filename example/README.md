@@ -11,6 +11,42 @@ plugins:
   many_lints: ^0.8.0
 ```
 
+## Excluding paths per rule
+
+[`many_lints.yaml`](many_lints.yaml) in this directory demonstrates per-rule `exclude`:
+
+```yaml
+rules:
+  avoid_only_rethrow:
+    exclude:
+      - lib/excluded/**
+```
+
+[`lib/excluded/excluded_example.dart`](lib/excluded/excluded_example.dart) contains the
+same redundant catch clauses as [`lib/avoid_only_rethrow_example.dart`](lib/avoid_only_rethrow_example.dart),
+but reports nothing — that path is excluded for the rule. Delete `many_lints.yaml` and
+run `dart analyze` again to see the two diagnostics come back.
+
+Note that `avoid_commented_out_code` *does* still report in that file. Each `exclude`
+sits under one rule and affects only that rule — excluding a path from
+`avoid_only_rethrow` says nothing about the other 132 rules. To skip a path for several
+rules, give each of them its own `exclude`.
+
+Paths are globs, but a plain path works too — `lib/generated/foo.dart` is a valid
+pattern, and you can list as many entries as you like:
+
+```yaml
+rules:
+  avoid_only_rethrow:
+    exclude:
+      - lib/legacy/parser.dart      # one specific file
+      - lib/generated/**            # a whole directory tree
+      - "**/*.g.dart"               # every generated file
+```
+
+The same `rules:` block can instead live under a top-level `many_lints:` key in
+`analysis_options.yaml` — the two forms are equivalent.
+
 ## All Rules
 
 | Rule | Description | Fix |

@@ -1,10 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when a property is accessed directly on an object that already has a
 /// destructuring declaration in the same scope. The property should be added
@@ -19,7 +20,7 @@ import 'package:analyzer/error/error.dart';
 /// final SomeClass(:value, :another) = variable;
 /// print(another);
 /// ```
-class UseExistingDestructuring extends AnalysisRule {
+class UseExistingDestructuring extends ManyLintsRule {
   static const LintCode code = LintCode(
     'use_existing_destructuring',
     "Use existing destructuring of '{0}' instead of accessing '{1}' directly.",
@@ -40,7 +41,7 @@ class UseExistingDestructuring extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

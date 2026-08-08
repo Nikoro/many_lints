@@ -1,10 +1,11 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when a Future is returned without `await` inside a try-catch block.
 ///
@@ -34,7 +35,7 @@ import 'package:analyzer/error/error.dart';
 ///   }
 /// }
 /// ```
-class PreferReturnAwait extends AnalysisRule {
+class PreferReturnAwait extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_return_await',
     'Missing await on returned Future inside try-catch block.',
@@ -53,7 +54,7 @@ class PreferReturnAwait extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

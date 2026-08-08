@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 
 /// Warns when a class or mixin overrides a member without adding
@@ -20,7 +20,7 @@ import '../ast_node_analysis.dart';
 /// override is not reported when it adds a documentation comment, an
 /// annotation other than `@override`, or a `covariant` parameter, nor when
 /// the member is `noSuchMethod`.
-class AvoidUnnecessaryOverrides extends AnalysisRule {
+class AvoidUnnecessaryOverrides extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_overrides',
     'This override of {0} does not add any implementation.',
@@ -39,7 +39,7 @@ class AvoidUnnecessaryOverrides extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

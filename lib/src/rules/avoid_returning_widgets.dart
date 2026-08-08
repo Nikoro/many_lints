@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -7,6 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a function, method, or getter returns a Widget or Widget subclass.
@@ -18,7 +18,7 @@ import '../type_checker.dart';
 ///
 /// The `build()` override method is exempted since it is the standard
 /// way to build widgets.
-class AvoidReturningWidgets extends AnalysisRule {
+class AvoidReturningWidgets extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_returning_widgets',
     'Avoid returning widgets from functions, methods, or getters.',
@@ -37,7 +37,7 @@ class AvoidReturningWidgets extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

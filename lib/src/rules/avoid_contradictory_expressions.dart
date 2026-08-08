@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,6 +5,7 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../constant_expression.dart';
 
 /// Warns when a logical AND (`&&`) expression contains contradictory
@@ -14,7 +14,7 @@ import '../constant_expression.dart';
 ///
 /// For example, `x == 3 && x == 4` can never be true because `x` cannot
 /// be both 3 and 4 at the same time.
-class AvoidContradictoryExpressions extends AnalysisRule {
+class AvoidContradictoryExpressions extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_contradictory_expressions',
     'This condition contains contradictory comparisons and always evaluates '
@@ -35,7 +35,7 @@ class AvoidContradictoryExpressions extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

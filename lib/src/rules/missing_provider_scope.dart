@@ -1,13 +1,13 @@
 // Ported from riverpod_lint (MIT, Copyright (c) 2023 Remi Rousselet).
 // See the NOTICE file at the repository root.
 
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
 
 /// Warns when `runApp()` is called without a `ProviderScope` at the root of
@@ -30,7 +30,7 @@ import '../riverpod_type_checkers.dart';
 ///   runApp(ProviderScope(child: MyApp()));
 /// }
 /// ```
-class MissingProviderScope extends AnalysisRule {
+class MissingProviderScope extends ManyLintsRule {
   static const LintCode code = LintCode(
     'missing_provider_scope',
     'Flutter applications using Riverpod must contain a ProviderScope at the '
@@ -50,7 +50,7 @@ class MissingProviderScope extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

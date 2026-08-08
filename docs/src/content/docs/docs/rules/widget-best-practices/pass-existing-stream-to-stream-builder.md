@@ -70,3 +70,5 @@ plugins:
     diagnostics:
       pass_existing_stream_to_stream_builder: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

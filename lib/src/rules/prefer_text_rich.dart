@@ -1,17 +1,17 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when RichText is used instead of Text.rich.
 ///
 /// RichText does not handle text scaling well. Prefer Text.rich
 /// for better accessibility support.
-class PreferTextRich extends AnalysisRule {
+class PreferTextRich extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_text_rich',
     'Use Text.rich instead of RichText for better text scaling and accessibility.',
@@ -29,7 +29,7 @@ class PreferTextRich extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

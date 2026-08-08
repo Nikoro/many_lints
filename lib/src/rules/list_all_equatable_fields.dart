@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,12 +5,13 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
 /// Warns when a class extending `Equatable` or using `EquatableMixin` does not
 /// include all of its declared instance fields in the `props` getter.
-class ListAllEquatableFields extends AnalysisRule {
+class ListAllEquatableFields extends ManyLintsRule {
   static const LintCode code = LintCode(
     'list_all_equatable_fields',
     'Not all fields are listed in props. Missing: {0}.',
@@ -30,7 +30,7 @@ class ListAllEquatableFields extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

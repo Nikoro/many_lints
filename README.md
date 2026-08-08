@@ -56,6 +56,57 @@ plugins:
       use_bloc_suffix: false
 ```
 
+### Excluding paths per rule
+
+`diagnostics:` turns a rule on or off everywhere. To keep a rule on but skip certain paths, write a `rules:` block — in **either** of these two places, whichever you prefer:
+
+**Option A — in your existing `analysis_options.yaml`**, under a top-level `many_lints:` key (note: top-level, a sibling of `plugins:`, not nested inside it):
+
+```yaml
+# analysis_options.yaml
+plugins:
+  many_lints: ^0.8.0
+
+many_lints:
+  rules:
+    avoid_only_rethrow:
+      exclude:
+        - test/**
+        - "**/*.g.dart"
+```
+
+**Option B — in a separate `many_lints.yaml`** next to your `pubspec.yaml`:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_only_rethrow:
+    exclude:
+      - test/**
+      - "**/*.g.dart"
+```
+
+Both are fully equivalent — the `rules:` block is identical, it just sits one level deeper in Option A. Use Option A to keep everything in one file, or Option B to keep lint config separate.
+
+If you create both, `many_lints.yaml` wins outright and the `analysis_options.yaml` section is ignored — they are **not** merged.
+
+Every rule supports `exclude`. Each `exclude` sits under one rule and affects only that rule — to skip a path for several rules, give each of them its own `exclude`.
+
+Patterns are globs matched against the path relative to the package root, using the same semantics as the analyzer's own `analyzer: exclude:`. A plain path is a valid pattern too, and the list can hold as many entries as you need:
+
+```yaml
+rules:
+  avoid_only_rethrow:
+    exclude:
+      - lib/legacy/parser.dart      # one specific file
+      - lib/generated/**            # a whole directory tree
+      - "**/*.g.dart"               # every generated file
+```
+
+> The `rules:` block cannot live *inside* `plugins: many_lints:` — the analyzer only accepts enable/disable and severity there, and reports any other key as an unsupported option.
+
+See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excluding-paths-per-rule) for details.
+
 ## Available Lints
 
 133 lints with 92 quick fixes, all enabled by default as warnings. Each rule links to its full documentation with examples and fix details.

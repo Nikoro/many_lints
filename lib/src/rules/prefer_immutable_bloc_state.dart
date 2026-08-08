@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a Bloc/Cubit state class is not annotated with `@immutable`.
@@ -16,7 +16,7 @@ import '../type_checker.dart';
 /// 1. Classes whose name ends with `State` that extend/implement other state
 ///    classes in the Bloc pattern.
 /// 2. Classes used as the state type parameter of a `Bloc` or `Cubit`.
-class PreferImmutableBlocState extends AnalysisRule {
+class PreferImmutableBlocState extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_immutable_bloc_state',
     'Bloc state classes should be annotated with @immutable.',
@@ -34,7 +34,7 @@ class PreferImmutableBlocState extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

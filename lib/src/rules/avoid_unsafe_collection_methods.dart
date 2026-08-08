@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when an operation that throws on an empty collection is used
@@ -17,7 +17,7 @@ import '../type_checker.dart';
 /// Detection is intentionally narrow: only a directly named collection —
 /// a local, parameter, or field — with no emptiness check anywhere in the
 /// enclosing function is reported.
-class AvoidUnsafeCollectionMethods extends AnalysisRule {
+class AvoidUnsafeCollectionMethods extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unsafe_collection_methods',
     "'{0}' throws if the collection is empty.",
@@ -38,7 +38,7 @@ class AvoidUnsafeCollectionMethods extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

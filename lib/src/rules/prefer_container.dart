@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,6 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../flutter_widget_helpers.dart';
 import '../type_checker.dart';
@@ -17,7 +17,7 @@ import '../type_checker.dart';
 /// `ConstrainedBox`, `Transform`, `ClipPath`, `ColoredBox`, and `SizedBox`
 /// widgets. When 3+ of these widgets are nested, they can be collapsed into
 /// a single `Container`.
-class PreferContainer extends AnalysisRule {
+class PreferContainer extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_container',
     'This sequence of {0} nested widgets can be replaced with a single '
@@ -39,7 +39,7 @@ class PreferContainer extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

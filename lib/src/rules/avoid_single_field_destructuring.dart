@@ -1,9 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when a pattern variable declaration destructures only a single field.
 ///
@@ -19,7 +20,7 @@ import 'package:analyzer/error/error.dart';
 /// final value = input.value;
 /// final length = [1, 2, 3].length;
 /// ```
-class AvoidSingleFieldDestructuring extends AnalysisRule {
+class AvoidSingleFieldDestructuring extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_single_field_destructuring',
     'Avoid single-field destructuring. Use direct property access instead.',
@@ -39,7 +40,7 @@ class AvoidSingleFieldDestructuring extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

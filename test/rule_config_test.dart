@@ -29,6 +29,33 @@ void main() {
 }
 ''';
 
+/// Triggers `prefer_type_over_var` from all three of the callbacks it
+/// registers — a top-level declaration, a local statement, and a `for` loop.
+///
+/// A rule that guards only some of its entry points still reports from the
+/// unguarded ones, so exclusion has to silence all three at once.
+const _varCode = '''
+var topLevel = 1;
+
+void main() {
+  var local = 2;
+  for (var i = 0; i < 3; i++) {
+    print(i);
+    print(local);
+  }
+  print(topLevel);
+}
+''';
+
+/// Commented-out code, which `avoid_commented_out_code` reports from an
+/// `addCompilationUnit` callback rather than a per-node one.
+const _commentedOutCode = '''
+void main() {
+  // print('hello');
+  // var x = 1;
+}
+''';
+
 /// The same, but with a typed `on ... catch` clause.
 const _typedRethrowCode = '''
 void doSomething() {}
@@ -168,6 +195,63 @@ rules:
       expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
     });
 
+    // A glob is not required: an exact path is a valid pattern, which is the
+    // form users reach for first when silencing a single file.
+    test('an exact file path with no glob excludes that file', () async {
+      final errors = await harness.analyze(
+        _rethrowCode,
+        fileName: 'legacy.dart',
+        config: '''
+rules:
+  avoid_only_rethrow:
+    exclude:
+      - lib/legacy.dart
+''',
+      );
+
+      expect(errors.map((e) => e.code), isNot(contains('avoid_only_rethrow')));
+    });
+
+    test('an exact file path does not affect a different file', () async {
+      final errors = await harness.analyze(
+        _rethrowCode,
+        fileName: 'other.dart',
+        config: '''
+rules:
+  avoid_only_rethrow:
+    exclude:
+      - lib/legacy.dart
+''',
+      );
+
+      expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
+    });
+
+    test('exclude lists apply per rule, not across rules', () async {
+      final errors = await harness.analyze(
+        '''
+$_rethrowCode
+
+class StillLinted {
+  // final retries = 3;
+
+  void another() {}
+}
+''',
+        config: '''
+rules:
+  avoid_only_rethrow:
+    exclude:
+      - lib/**
+''',
+      );
+
+      final codes = errors.map((e) => e.code);
+      expect(codes, isNot(contains('avoid_only_rethrow')));
+      // Excluding one rule leaves every other rule running on the same file.
+      expect(codes, contains('avoid_commented_out_code'));
+    });
+
     test('exclude pattern silences the rule in a matching file', () async {
       final errors = await harness.analyze(
         _rethrowCode,
@@ -240,6 +324,88 @@ rules:
       expect(codes, isNot(contains('avoid_only_rethrow')));
       expect(codes, contains('prefer_overriding_parent_equality'));
     });
+
+    // `ManyLintsRule` suppresses diagnostics at the reporter rather than in
+    // each visitor, so exclusion should hold whatever shape a rule's visitor
+    // has. These cover one rule per shape in the package.
+    test(
+      'exclude silences every callback of a multi-registration rule',
+      () async {
+        final errors = await harness.analyze(
+          _varCode,
+          config: '''
+rules:
+  prefer_type_over_var:
+    exclude:
+      - lib/**
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('prefer_type_over_var')),
+        );
+      },
+    );
+
+    test(
+      'a multi-registration rule reports from each of its callbacks',
+      () async {
+        final errors = await harness.analyze(_varCode);
+
+        // Asymmetric positive: without the exclusion the same source reports
+        // three times, so the test above cannot pass by reporting nothing.
+        final offsets = errors
+            .where((e) => e.code == 'prefer_type_over_var')
+            .map((e) => e.location.offset)
+            .toSet();
+        expect(offsets, hasLength(3));
+      },
+    );
+
+    test('exclude silences a compilation-unit rule', () async {
+      final errors = await harness.analyze(
+        _commentedOutCode,
+        config: '''
+rules:
+  avoid_commented_out_code:
+    exclude:
+      - lib/**
+''',
+      );
+
+      expect(
+        errors.map((e) => e.code),
+        isNot(contains('avoid_commented_out_code')),
+      );
+    });
+
+    test('a compilation-unit rule reports without the exclusion', () async {
+      final errors = await harness.analyze(_commentedOutCode);
+
+      expect(errors.map((e) => e.code), contains('avoid_commented_out_code'));
+    });
+
+    test(
+      'exclude applies to the file being analyzed, not the whole run',
+      () async {
+        final excluded = await harness.analyze(
+          _varCode,
+          fileName: 'generated.g.dart',
+          config: '''
+rules:
+  prefer_type_over_var:
+    exclude:
+      - "**/*.g.dart"
+''',
+        );
+
+        expect(
+          excluded.map((e) => e.code),
+          isNot(contains('prefer_type_over_var')),
+        );
+      },
+    );
 
     test('mode option narrows what the rule reports', () async {
       final errors = await harness.analyze(

@@ -70,3 +70,5 @@ plugins:
     diagnostics:
       pass_existing_future_to_future_builder: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

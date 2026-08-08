@@ -1414,7 +1414,7 @@ Register `addPatternVariableDeclaration` to visit `PatternVariableDeclaration` n
 
 ```dart
 @override
-void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+void registerManyLintsProcessors(RuleVisitorRegistry registry, RuleContext context) {
   final visitor = _Visitor(this);
   registry.addPatternVariableDeclaration(this, visitor);
 }

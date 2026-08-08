@@ -1,7 +1,6 @@
 // Ported from riverpod_lint (MIT, Copyright (c) 2023 Remi Rousselet).
 // See the NOTICE file at the repository root.
 
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -9,6 +8,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
 
 /// Warns when a family provider is passed an argument that has no stable
@@ -33,7 +33,7 @@ import '../riverpod_type_checkers.dart';
 /// ref.watch(myProvider(42));
 /// ref.watch(myProvider(const Foo()));
 /// ```
-class ProviderParameters extends AnalysisRule {
+class ProviderParameters extends ManyLintsRule {
   static const LintCode code = LintCode(
     'provider_parameters',
     'This argument has no stable equality, so the provider is recreated on '
@@ -54,7 +54,7 @@ class ProviderParameters extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

@@ -1,13 +1,13 @@
 // Ported from riverpod_lint (MIT, Copyright (c) 2023 Remi Rousselet).
 // See the NOTICE file at the repository root.
 
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
 import '../type_checker.dart';
 
@@ -33,7 +33,7 @@ const _buildContextChecker = TypeChecker.fromName(
 /// @riverpod
 /// int example(Ref ref) => 0;
 /// ```
-class AvoidBuildContextInProviders extends AnalysisRule {
+class AvoidBuildContextInProviders extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_build_context_in_providers',
     'Providers should not receive a BuildContext.',
@@ -53,7 +53,7 @@ class AvoidBuildContextInProviders extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../hook_detection.dart';
 
 /// Warns when a hook is called inside a loop.
@@ -16,7 +16,7 @@ import '../hook_detection.dart';
 ///
 /// This complements `avoid_conditional_hooks`, which covers the
 /// if/switch/ternary half of the same rule.
-class AvoidMisusedHooks extends AnalysisRule {
+class AvoidMisusedHooks extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_misused_hooks',
     'Hooks must be called the same number of times on every build.',
@@ -36,7 +36,7 @@ class AvoidMisusedHooks extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,13 +5,15 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
+
 /// Suggests using `List.of()` / `Set.of()` instead of `List.from()` /
 /// `Set.from()` when the argument type is already assignable to the target
 /// element type.
 ///
 /// `.of()` enforces type safety at compile time, while `.from()` allows
 /// potentially unsafe downcasting checked only at runtime.
-class PreferIterableOf extends AnalysisRule {
+class PreferIterableOf extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_iterable_of',
     'Use {0}.of() instead of {0}.from().',
@@ -33,7 +34,7 @@ class PreferIterableOf extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

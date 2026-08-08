@@ -1,15 +1,15 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a `GestureDetector` widget is created without any event handler
 /// callbacks, making it functionally useless.
-class AvoidUnnecessaryGestureDetector extends AnalysisRule {
+class AvoidUnnecessaryGestureDetector extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_gesture_detector',
     "This 'GestureDetector' has no event handlers.",
@@ -28,7 +28,7 @@ class AvoidUnnecessaryGestureDetector extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a Bloc/Cubit class receives another Bloc/Cubit as a constructor
@@ -13,7 +13,7 @@ import '../type_checker.dart';
 /// Blocs should only receive information through events and from injected
 /// repositories. Direct bloc-to-bloc dependencies bypass the event-driven
 /// architecture and create tight coupling.
-class AvoidPassingBlocToBloc extends AnalysisRule {
+class AvoidPassingBlocToBloc extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_passing_bloc_to_bloc',
     'Avoid passing a Bloc/Cubit to another Bloc/Cubit.',
@@ -33,7 +33,7 @@ class AvoidPassingBlocToBloc extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

@@ -1,9 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when a cascade expression contains duplicate cascade sections.
 ///
@@ -24,7 +25,7 @@ import 'package:analyzer/error/error.dart';
 ///   ..field1 = '2'
 ///   ..field2 = '1';
 /// ```
-class AvoidDuplicateCascades extends AnalysisRule {
+class AvoidDuplicateCascades extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_duplicate_cascades',
     'Duplicate cascade section found.',
@@ -43,7 +44,7 @@ class AvoidDuplicateCascades extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

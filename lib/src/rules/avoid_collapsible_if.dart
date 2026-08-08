@@ -1,9 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when an `if` statement contains nothing but another `if`.
 ///
@@ -11,7 +12,7 @@ import 'package:analyzer/error/error.dart';
 /// statement between them are just a conjunction written across two
 /// blocks. Merging them with `&&` removes a level of indentation and makes
 /// the real condition readable in one line.
-class AvoidCollapsibleIf extends AnalysisRule {
+class AvoidCollapsibleIf extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_collapsible_if',
     'This if statement can be merged with the nested one.',
@@ -30,7 +31,7 @@ class AvoidCollapsibleIf extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

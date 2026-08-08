@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,11 +5,12 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
 /// Warns when a ConsumerWidget does not use WidgetRef.
-class AvoidUnnecessaryConsumerWidgets extends AnalysisRule {
+class AvoidUnnecessaryConsumerWidgets extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_consumer_widgets',
     'ConsumerWidget does not use WidgetRef. Consider using StatelessWidget instead.',
@@ -27,7 +27,7 @@ class AvoidUnnecessaryConsumerWidgets extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

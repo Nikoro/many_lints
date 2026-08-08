@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when `super` lifecycle methods are called in the wrong order
@@ -17,7 +17,7 @@ import '../type_checker.dart';
 ///
 /// Calling `super` at the wrong position can lead to bugs where properties
 /// are not yet initialized or have already been disposed.
-class ProperSuperCalls extends AnalysisRule {
+class ProperSuperCalls extends ManyLintsRule {
   static const LintCode code = LintCode(
     'proper_super_calls',
     "'{0}' should call 'super.{0}()' {1}.",
@@ -36,7 +36,7 @@ class ProperSuperCalls extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

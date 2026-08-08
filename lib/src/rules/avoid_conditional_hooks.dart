@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../hook_detection.dart';
 import '../type_checker.dart';
@@ -14,7 +14,7 @@ import '../type_checker.dart';
 /// Hooks rely on call order to maintain state correctly. Calling hooks
 /// conditionally can cause hooks to be called in a different order between
 /// builds, leading to unexpected behavior.
-class AvoidConditionalHooks extends AnalysisRule {
+class AvoidConditionalHooks extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_conditional_hooks',
     'Hooks should not be called conditionally.',
@@ -32,7 +32,7 @@ class AvoidConditionalHooks extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

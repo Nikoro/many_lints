@@ -1,16 +1,17 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
+
 /// Warns when a generic type parameter shadows a top-level type declaration
 /// in the same file (class, mixin, enum, typedef, or extension type).
 ///
 /// Shadowing can be confusing when a parameter or variable annotated with the
 /// generic looks like it refers to the real class.
-class AvoidGenericsShadowing extends AnalysisRule {
+class AvoidGenericsShadowing extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_generics_shadowing',
     "The type parameter '{0}' shadows the top-level declaration '{0}'.",
@@ -30,7 +31,7 @@ class AvoidGenericsShadowing extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

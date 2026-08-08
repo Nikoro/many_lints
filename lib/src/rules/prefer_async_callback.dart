@@ -1,9 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
+
+import '../many_lints_rule.dart';
 
 /// Warns when `Future<void> Function()` is used instead of `AsyncCallback`.
 ///
@@ -22,7 +23,7 @@ import 'package:analyzer/error/error.dart';
 /// ```dart
 /// void fn(AsyncCallback callback) {}
 /// ```
-class PreferAsyncCallback extends AnalysisRule {
+class PreferAsyncCallback extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_async_callback',
     "Use 'AsyncCallback' instead of 'Future<void> Function()'.",
@@ -42,7 +43,7 @@ class PreferAsyncCallback extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

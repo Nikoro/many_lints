@@ -51,19 +51,20 @@ Only ask questions that aren't already answered by the user's input.
 Create `lib/src/rules/<lint_name>.dart` following this exact pattern:
 
 ```dart
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
+
 // Add if needed:
 // import 'package:many_lints/src/type_checker.dart';
 // import 'package:many_lints/src/ast_node_analysis.dart';
 
 /// <doc comment describing what the rule does>
-class <RuleClass> extends AnalysisRule {
+class <RuleClass> extends ManyLintsRule {
   static const LintCode code = LintCode(
     '<lint_name>',
     '<problem message describing what is wrong>',
@@ -79,8 +80,10 @@ class <RuleClass> extends AnalysisRule {
   @override
   LintCode get diagnosticCode => code;
 
+  // Note: `registerManyLintsProcessors`, not `registerNodeProcessors` —
+  // `ManyLintsRule` implements the latter to wire up per-rule `exclude`.
   @override
-  void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+  void registerManyLintsProcessors(RuleVisitorRegistry registry, RuleContext context) {
     final visitor = _Visitor(this);
     // Register for the appropriate AST node type, e.g.:
     // registry.addInstanceCreationExpression(this, visitor);
@@ -112,9 +115,24 @@ Key conventions:
 - Use helpers from `lib/src/ast_node_analysis.dart` when applicable
 - `correctionMessage` is required by the docs generator; always provide it
 
-## Step 4b: Add configuration only when it earns its place
+## Step 4b: Add a mode option only when it earns its place
 
-Most rules need **no** configuration. Before adding any, check in this order:
+**Per-rule `exclude` is already handled.** Because the rule extends
+`ManyLintsRule` and overrides `registerManyLintsProcessors`, users can write
+
+```yaml
+# many_lints.yaml
+rules:
+  <lint_name>:
+    exclude: ["**/*.g.dart"]
+```
+
+with no code in the rule. Do not add an `exclude` option, and do not add a
+`ResolvedRuleConfig` guard to your visitor callbacks — the base class suppresses
+diagnostics for excluded files at the reporter.
+
+This step is therefore only about **mode options**. Most rules need none.
+Before adding one, check in this order:
 
 1. **Severity already covers it.** Enable/disable and severity overrides work
    natively with zero code — `plugins: many_lints: diagnostics: {<lint_name>: false}`.
@@ -123,35 +141,29 @@ Most rules need **no** configuration. Before adding any, check in this order:
    heuristic ought to make correctly, fix the heuristic instead.
 3. **Only one project would set it.** Not worth the maintenance and testing cost.
 
-Add configuration when the rule has a legitimately project-dependent policy —
-paths where it does not apply (`exclude`), or a genuine mode where reasonable
-teams disagree.
+Add a mode option only when the rule has a genuine policy where reasonable
+teams disagree. "Turn this off in tests" is
+not one — that is `exclude`, which you already get for free.
 
-**📖 If you are adding configuration, read [config-cookbook.md](config-cookbook.md) first.**
+**📖 If you are adding a mode option, read [config-cookbook.md](config-cookbook.md) first.**
 It documents hard constraints that are expensive to rediscover — in short:
 per-rule options **cannot** live in `analysis_options.yaml` under `plugins:`
 (custom keys there emit `unsupported_option`, and map-valued `diagnostics:`
 entries are a reported error); a rule cannot reach `AnalysisOptions`; and a
 plugin cannot report diagnostics against YAML files at all.
 
-The working mechanism lives in `lib/src/rule_config.dart`, reading
-`many_lints.yaml` at the package root (or a top-level `many_lints:` section in
-`analysis_options.yaml`). Adding it to a rule is two changes — pass the
-`RuleContext` into the visitor, then resolve **inside** each callback:
+Read the option from `rule.config`, which is already resolved for the file
+being visited:
 
 ```dart
-final resolved = ResolvedRuleConfig.of(context, rule.name);
-if (resolved.isExcluded) return;
-
-final someMode = resolved.config.boolOption('some_mode', defaultValue: false);
+final someMode = rule.config.boolOption('some_mode', defaultValue: false);
 ```
 
-🚨 Never resolve config in `registerNodeProcessors` — `RuleContext.currentUnit`
-is `null` there. Every option's default must reproduce the rule's existing
-behavior exactly, so upgrading never changes results silently.
+Every option's default must reproduce the rule's existing behavior exactly, so
+upgrading never changes results silently.
 
-Configurable rules need the extra tests in Step 7 and the extra docs section in
-Step 9; both are specified in the cookbook.
+Rules with a mode option need the extra tests in Step 7 and the extra docs
+section in Step 9; both are specified in the cookbook.
 
 ## Step 5: Create a quick fix when applicable
 

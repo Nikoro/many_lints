@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -7,6 +6,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_inference.dart';
 
 /// Suggests returning dot shorthands from an expression function body.
@@ -34,7 +34,7 @@ import '../type_inference.dart';
 /// SomeClass getInstance(bool flag) =>
 ///     flag ? .new('value') : .named('val');
 /// ```
-class PreferReturningShorthands extends AnalysisRule {
+class PreferReturningShorthands extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_returning_shorthands',
     'This instance type matches the return type and can be replaced with a dot shorthand.',
@@ -52,7 +52,7 @@ class PreferReturningShorthands extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

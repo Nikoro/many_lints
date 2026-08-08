@@ -1,13 +1,14 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
+
 /// Warns when a class containing only static members is not marked as
 /// `abstract final`, which would prevent instantiation and inheritance.
-class PreferAbstractFinalStaticClass extends AnalysisRule {
+class PreferAbstractFinalStaticClass extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_abstract_final_static_class',
     'Classes with only static members should be declared as abstract final.',
@@ -27,7 +28,7 @@ class PreferAbstractFinalStaticClass extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

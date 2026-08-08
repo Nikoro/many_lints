@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -6,12 +5,14 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
+
 /// Warns when a comparison is negated instead of being inverted.
 ///
 /// `!(a > b)` is `a <= b` written the long way. Every relational operator
 /// has a direct opposite, so the negation adds a step for the reader
 /// without adding meaning.
-class AvoidInvertedBooleanChecks extends AnalysisRule {
+class AvoidInvertedBooleanChecks extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_inverted_boolean_checks',
     "This negated comparison can be written as '{0}'.",
@@ -31,7 +32,7 @@ class AvoidInvertedBooleanChecks extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

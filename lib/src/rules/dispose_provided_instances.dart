@@ -1,4 +1,3 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
@@ -7,6 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../disposal_utils.dart';
 import '../riverpod_type_checkers.dart';
 
@@ -17,7 +17,7 @@ import '../riverpod_type_checkers.dart';
 /// Failing to properly dispose of resources can lead to memory leaks. When
 /// objects with cleanup logic are created within providers but never cleaned
 /// up, they retain memory unnecessarily.
-class DisposeProvidedInstances extends AnalysisRule {
+class DisposeProvidedInstances extends ManyLintsRule {
   static const LintCode code = LintCode(
     'dispose_provided_instances',
     "Instance '{0}' has a dispose method but is not disposed via "
@@ -39,7 +39,7 @@ class DisposeProvidedInstances extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

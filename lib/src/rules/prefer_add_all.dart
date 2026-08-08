@@ -1,10 +1,10 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when several elements are added to a collection one at a time.
@@ -16,7 +16,7 @@ import '../type_checker.dart';
 ///    written out, with control flow the reader has to decode.
 /// 2. Consecutive `add` calls on the same receiver — `target.add(a);
 ///    target.add(b);` is `target.addAll([a, b])`.
-class PreferAddAll extends AnalysisRule {
+class PreferAddAll extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_add_all',
     "Elements are added one at a time and can be replaced with 'addAll'.",
@@ -35,7 +35,7 @@ class PreferAddAll extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {

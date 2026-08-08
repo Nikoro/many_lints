@@ -1,17 +1,17 @@
-import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when using `map.keys.contains(key)` instead of `map.containsKey(key)`.
 ///
 /// `.keys.contains` iterates through all keys and is significantly slower
 /// than the built-in `containsKey` method.
-class AvoidMapKeysContains extends AnalysisRule {
+class AvoidMapKeysContains extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_map_keys_contains',
     'Use containsKey() instead of .keys.contains().',
@@ -29,7 +29,7 @@ class AvoidMapKeysContains extends AnalysisRule {
   LintCode get diagnosticCode => code;
 
   @override
-  void registerNodeProcessors(
+  void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
