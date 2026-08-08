@@ -9,7 +9,7 @@ Add `many_lints` to the **top-level** `plugins` section in your `analysis_option
 
 ```yaml
 plugins:
-  many_lints: ^0.8.0
+  many_lints: ^0.9.0
 ```
 
 The analysis server will automatically download and resolve the plugin from [pub.dev](https://pub.dev/packages/many_lints). There is no need to add it to your `pubspec.yaml`.
@@ -23,7 +23,7 @@ You can use the extended syntax to pin a version:
 ```yaml
 plugins:
   many_lints:
-    version: ^0.8.0
+    version: ^0.9.0
 ```
 
 ## Local development
@@ -56,7 +56,7 @@ All 133 rules are registered as warnings and enabled by default. You can enable 
 ```yaml
 plugins:
   many_lints:
-    version: ^0.8.0
+    version: ^0.9.0
     diagnostics:
       prefer_center_over_align: true
       use_bloc_suffix: false
@@ -76,7 +76,7 @@ not nested inside it.
 ```yaml
 # analysis_options.yaml
 plugins:
-  many_lints: ^0.8.0
+  many_lints: ^0.9.0
 
 many_lints:
   rules:

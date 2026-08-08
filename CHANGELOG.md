@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.0] - 2026-08-08
+
+### Added
+
+- Per-rule configuration, read from a `many_lints.yaml` file at the package root and falling back to a top-level `many_lints:` section in `analysis_options.yaml`. The analyzer cannot carry per-rule configuration for a plugin — `RuleConfig` exposes only name, group and severity, and custom keys under `plugins:` are reported as unsupported options — so configuration lives in its own file. When both sources exist the dedicated file wins outright rather than merging, so a pattern always has one traceable origin.
+- An `exclude` key on every one of the 133 rules, taking a list of glob patterns relative to the package root. Exclusion is per rule: silencing a noisy rule in generated or legacy code says nothing about the other 132, so a path can be skipped without weakening the rest of the suite.
+- `avoid_only_rethrow` gains an `ignore_typed_catches` option, which stops it reporting a catch clause that narrows the caught type (`on FooException catch (e) { rethrow; }`).
+
 ## [0.8.0] - 2026-08-07
 
 ### Added

@@ -10,7 +10,7 @@
 ///
 /// ```yaml
 /// plugins:
-///   many_lints: ^0.8.0
+///   many_lints: ^0.9.0
 /// ```
 ///
 /// The analysis server will automatically download and resolve the plugin
