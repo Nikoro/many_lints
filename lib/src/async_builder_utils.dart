@@ -9,7 +9,6 @@ library;
 
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
-import 'package:analyzer/dart/element/element.dart';
 
 import 'type_checker.dart';
 
@@ -67,11 +66,3 @@ bool _isMatchingType(Expression expression, TypeChecker typeChecker) {
   if (type == null) return false;
   return typeChecker.isAssignableFromType(type);
 }
-
-/// Whether [element] is a field or top-level/local variable that is `final`
-/// or `const`, i.e. a stable instance that survives rebuilds.
-bool isStableReference(Element? element) => switch (element) {
-  FieldElement(:final isFinal, :final isConst) => isFinal || isConst,
-  TopLevelVariableElement(:final isFinal, :final isConst) => isFinal || isConst,
-  _ => false,
-};

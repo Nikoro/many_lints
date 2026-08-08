@@ -26,6 +26,9 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
   FixKind get fixKind => _fixKind;
 
   /// Maps widget names to the Container parameter names they contribute.
+  ///
+  /// Must stay in sync with the same-named set in `prefer_container.dart`: a
+  /// widget the rule refuses to collapse must not be collapsible here either.
   static const _widgetParamMapping = <String, List<String>>{
     'Padding': ['padding'],
     'Align': ['alignment'],
@@ -39,10 +42,6 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
     'ClipOval': ['clipBehavior'],
     'ClipPath': ['clipBehavior'],
     'FractionallySizedBox': ['widthFactor', 'heightFactor', 'alignment'],
-    'Opacity': ['opacity'],
-    'IntrinsicHeight': [],
-    'IntrinsicWidth': [],
-    'LimitedBox': ['maxWidth', 'maxHeight'],
   };
 
   /// Widget names that are container-compatible.
@@ -59,10 +58,6 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
     'ClipOval',
     'ClipPath',
     'FractionallySizedBox',
-    'Opacity',
-    'IntrinsicHeight',
-    'IntrinsicWidth',
-    'LimitedBox',
   };
 
   @override
@@ -230,9 +225,6 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
       ('FractionallySizedBox', 'widthFactor') => null,
       ('FractionallySizedBox', 'heightFactor') => null,
       ('FractionallySizedBox', 'alignment') => 'alignment',
-      ('Opacity', 'opacity') => null,
-      ('LimitedBox', 'maxWidth') => null,
-      ('LimitedBox', 'maxHeight') => null,
       _ => null,
     };
   }

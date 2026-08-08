@@ -41,6 +41,16 @@ class ConsumerState<T extends ConsumerStatefulWidget> extends State<T> {
   WidgetRef get ref => throw '';
 }
 ''');
+    newPackage('hooks_riverpod').addFile('lib/hooks_riverpod.dart', r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class HookConsumerWidget extends Widget {
+  Widget build(BuildContext context, WidgetRef ref) => Widget();
+}
+class HookConsumerState<T extends ConsumerStatefulWidget> extends State<T> {
+  WidgetRef get ref => throw '';
+}
+''');
     super.setUp();
   }
 
@@ -240,6 +250,38 @@ mixin GreetingMixin {
 class MyWidget extends ConsumerWidget with GreetingMixin {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return Widget();
+  }
+}
+''');
+  }
+
+  Future<void> test_hookConsumerWidget_withoutRef() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+class MyWidget extends HookConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Widget();
+  }
+}
+''',
+      [lint(155, 8)],
+    );
+  }
+
+  Future<void> test_hookConsumerWidget_usesRef_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+class MyWidget extends HookConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(Object());
     return Widget();
   }
 }

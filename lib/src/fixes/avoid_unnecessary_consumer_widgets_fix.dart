@@ -37,14 +37,15 @@ class AvoidUnnecessaryConsumerWidgetsFix extends ResolvedCorrectionProducer {
     if (superclass == null) return;
 
     final superclassName = superclass.name.lexeme;
-    final String replacement;
-    if (superclassName == 'ConsumerWidget') {
-      replacement = 'StatelessWidget';
-    } else if (superclassName == 'ConsumerStatefulWidget') {
-      replacement = 'StatefulWidget';
-    } else {
-      return;
-    }
+    // A `HookConsumerWidget` drops only the Riverpod half: its `build` still
+    // calls hooks, so it becomes a `HookWidget`, not a `StatelessWidget`.
+    final replacement = switch (superclassName) {
+      'ConsumerWidget' => 'StatelessWidget',
+      'ConsumerStatefulWidget' => 'StatefulWidget',
+      'HookConsumerWidget' => 'HookWidget',
+      _ => null,
+    };
+    if (replacement == null) return;
 
     // Find the build method and its ref parameter
     final body = classDecl.body;

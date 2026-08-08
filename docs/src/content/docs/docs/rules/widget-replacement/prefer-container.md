@@ -15,6 +15,8 @@ sidebar:
 
 Flags chains of 3 or more nested widgets that can all be replaced with a single `Container` widget. `Container` internally composes `Align`, `Padding`, `DecoratedBox`, `ConstrainedBox`, `Transform`, `ColoredBox`, `SizedBox`, and other layout widgets -- so nesting them individually is redundant.
 
+The collapsible set is exactly `Padding`, `Align`, `Center`, `ColoredBox`, `DecoratedBox`, `ConstrainedBox`, `SizedBox`, `Transform`, `ClipRRect`, `ClipOval`, `ClipPath`, and `FractionallySizedBox`. Widgets `Container` cannot express -- notably `Opacity`, `IntrinsicHeight`, `IntrinsicWidth`, and `LimitedBox` -- are excluded, and a chain containing one of them is split rather than collapsed across it.
+
 :::note[Points the opposite way from the `prefer_*_over_container` rules]
 This rule collapses **3 or more** nested layout widgets *into* a `Container`, while [`prefer_padding_over_container`](/many_lints/docs/rules/widget-replacement/prefer-padding-over-container/), [`prefer_align_over_container`](/many_lints/docs/rules/widget-replacement/prefer-align-over-container/), [`prefer_constrained_box_over_container`](/many_lints/docs/rules/widget-replacement/prefer-constrained-box-over-container/), and [`prefer_transform_over_container`](/many_lints/docs/rules/widget-replacement/prefer-transform-over-container/) replace a **single-parameter** `Container` with the specific widget.
 

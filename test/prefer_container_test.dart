@@ -335,11 +335,14 @@ Widget f() {
     );
   }
 
-  // === Tests for FractionallySizedBox, Opacity, IntrinsicHeight, IntrinsicWidth, LimitedBox ===
+  // === Widgets Container cannot express ===
+  //
+  // `Container` has no `opacity`, `intrinsicHeight`, `intrinsicWidth` or
+  // `limitedBox` parameter, so collapsing a chain containing one of these
+  // would silently drop behaviour and produce code that does not compile.
 
-  Future<void> test_fractionallySizedBoxOpacityIntrinsicHeight() async {
-    await assertDiagnostics(
-      r'''
+  Future<void> test_opacityIsNotCollapsible() async {
+    await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 Widget f() {
   return FractionallySizedBox(
@@ -352,14 +355,11 @@ Widget f() {
     ),
   );
 }
-''',
-      [lint(61, 20)],
-    );
+''');
   }
 
-  Future<void> test_intrinsicWidthLimitedBoxPadding() async {
-    await assertDiagnostics(
-      r'''
+  Future<void> test_intrinsicWidthAndLimitedBoxAreNotCollapsible() async {
+    await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 Widget f() {
   return IntrinsicWidth(
@@ -372,8 +372,51 @@ Widget f() {
     ),
   );
 }
+''');
+  }
+
+  Future<void> test_nonCollapsibleWidgetBreaksTheChain() async {
+    // Padding + Align are collapsible, but the Opacity between them is not, so
+    // no run of three ever forms.
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+Widget f() {
+  return Padding(
+    padding: EdgeInsets.all(8),
+    child: Opacity(
+      opacity: 0.5,
+      child: Align(
+        alignment: Alignment.center,
+        child: Text('Hello'),
+      ),
+    ),
+  );
+}
+''');
+  }
+
+  Future<void> test_collapsibleRunBelowNonCollapsibleWidget() async {
+    // The three collapsible widgets sit below the Opacity and still report.
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+Widget f() {
+  return Opacity(
+    opacity: 0.5,
+    child: Padding(
+      padding: EdgeInsets.all(8),
+      child: Align(
+        alignment: Alignment.center,
+        child: SizedBox(
+          width: 100,
+          child: Text('Hello'),
+        ),
+      ),
+    ),
+  );
+}
 ''',
-      [lint(61, 14)],
+      [lint(99, 7)],
     );
   }
 

@@ -31,6 +31,15 @@ class HookBuilder extends Widget {
   HookBuilder({required Widget Function(BuildContext) builder});
 }
 ''');
+    newPackage('hooks_riverpod').addFile('lib/hooks_riverpod.dart', r'''
+import 'package:flutter/widgets.dart';
+class WidgetRef {
+  T watch<T>(Object provider) => throw '';
+}
+class HookConsumerWidget extends Widget {
+  Widget build(BuildContext context, WidgetRef ref) => Widget();
+}
+''');
     super.setUp();
   }
 
@@ -114,6 +123,41 @@ Widget f() {
     final value = useState(0);
     return Widget();
   });
+}
+''');
+  }
+
+  /// Overlap with `avoid_unnecessary_consumer_widgets`, which also reports a
+  /// `HookConsumerWidget`. The two rules answer different questions — "does it
+  /// use hooks?" versus "does it use ref?" — so both firing on a widget that
+  /// uses neither is correct, and each reports at a different node.
+  Future<void> test_hookConsumerWidget_withoutHooks() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+class MyWidget extends HookConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Widget();
+  }
+}
+''',
+      [lint(115, 18)],
+    );
+  }
+
+  Future<void> test_hookConsumerWidget_withHooks_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+class MyWidget extends HookConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = useState(0);
+    return Widget();
+  }
 }
 ''');
   }

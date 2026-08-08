@@ -294,6 +294,17 @@ void f() {}
     );
   }
 
+  // --- Prose starting with a keyword-like word ---
+
+  Future<void> test_proseStartingWithOverride() async {
+    // The code-keyword list anchors on `@override`; bare `override` opens
+    // ordinary English and must not be treated as commented-out code.
+    await assertNoDiagnostics(r'''
+// override this method in subclasses to customize the behaviour
+void f() {}
+''');
+  }
+
   // --- Cover EOF token comment processing (line 51 area) ---
 
   Future<void> test_commentedOutCodeAfterEofToken() async {

@@ -41,10 +41,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _consumerWidgetChecker = TypeChecker.fromName(
-    'ConsumerWidget',
-    packageName: 'flutter_riverpod',
-  );
+  static const _consumerWidgetChecker = TypeChecker.any([
+    TypeChecker.fromName('ConsumerWidget', packageName: 'flutter_riverpod'),
+    TypeChecker.fromName('HookConsumerWidget', packageName: 'hooks_riverpod'),
+  ]);
 
   static const _consumerStatefulWidgetChecker = TypeChecker.fromName(
     'ConsumerStatefulWidget',

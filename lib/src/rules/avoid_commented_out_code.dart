@@ -347,7 +347,9 @@ class _Visitor extends SimpleAstVisitor<void> {
       'part ',
       'late ',
       'static ',
-      'override',
+      // Anchored on the `@`: bare `override` also opens ordinary prose such as
+      // "override this in subclasses", and the annotation is what code uses.
+      '@override',
       'Widget ',
       'State<',
       'BuildContext ',

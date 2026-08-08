@@ -51,6 +51,10 @@ class PreferContainer extends ManyLintsRule {
 
 /// Maps a widget type name to the Container parameter it corresponds to.
 ///
+/// Every entry must name a real `Container` parameter: the diagnostic tells
+/// users to move the widget's configuration onto a `Container`, so a widget
+/// whose behaviour `Container` cannot express has no place here.
+///
 /// Returns `null` if the widget is not a Container-compatible widget.
 String? _containerParamForWidget(String widgetName) {
   return switch (widgetName) {
@@ -64,15 +68,15 @@ String? _containerParamForWidget(String widgetName) {
     'Transform' => 'transform',
     'ClipRRect' || 'ClipOval' || 'ClipPath' => 'clipBehavior',
     'FractionallySizedBox' => 'widthFactor', // maps to widthFactor/heightFactor
-    'Opacity' => 'opacity', // no direct Container param, but still valid
-    'IntrinsicHeight' => 'intrinsicHeight',
-    'IntrinsicWidth' => 'intrinsicWidth',
-    'LimitedBox' => 'limitedBox',
     _ => null,
   };
 }
 
 /// The set of widget names that are "Container-compatible".
+///
+/// Deliberately excludes `Opacity`, `IntrinsicHeight`, `IntrinsicWidth` and
+/// `LimitedBox`. `Container` has no parameter for any of them, so collapsing
+/// such a chain would silently drop behaviour.
 const _containerCompatibleWidgets = {
   'Padding',
   'Align',
@@ -86,10 +90,6 @@ const _containerCompatibleWidgets = {
   'ClipOval',
   'ClipPath',
   'FractionallySizedBox',
-  'Opacity',
-  'IntrinsicHeight',
-  'IntrinsicWidth',
-  'LimitedBox',
 };
 
 /// The default minimum number of consecutive Container-compatible widgets in a
@@ -116,10 +116,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     TypeChecker.fromName('ClipOval', packageName: 'flutter'),
     TypeChecker.fromName('ClipPath', packageName: 'flutter'),
     TypeChecker.fromName('FractionallySizedBox', packageName: 'flutter'),
-    TypeChecker.fromName('Opacity', packageName: 'flutter'),
-    TypeChecker.fromName('IntrinsicHeight', packageName: 'flutter'),
-    TypeChecker.fromName('IntrinsicWidth', packageName: 'flutter'),
-    TypeChecker.fromName('LimitedBox', packageName: 'flutter'),
   ]);
 
   @override
