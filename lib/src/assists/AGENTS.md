@@ -2,7 +2,7 @@
 
 This directory contains code assist implementations. Assists are standalone refactoring actions, independent of lint diagnostics.
 
-**Full implementation guide:** [assists-cookbook.md](../../../.claude/skills/new-lint/assists-cookbook.md)
+**Full implementation guide:** [assists-cookbook.md](../../../.agents/skills/new-lint/assists-cookbook.md)
 
 ## Assists vs Fixes
 
@@ -46,4 +46,4 @@ builder.addSimpleReplacement(SourceRange(suffixStart, suffixLen), 'suffix');
 
 When discovering new patterns while implementing assists:
 1. Add a **brief mention** to this file (table row or bullet point)
-2. Add **full details** to [assists-cookbook.md](../../../.claude/skills/new-lint/assists-cookbook.md)
+2. Add **full details** to [assists-cookbook.md](../../../.agents/skills/new-lint/assists-cookbook.md)

@@ -2,7 +2,7 @@
 
 This directory contains lint rule implementations. Each rule extends `AnalysisRule` and uses the `SimpleAstVisitor` pattern.
 
-**Full implementation guides:** [rules-patterns.md](../../../.claude/skills/new-lint/rules-patterns.md) | [rules-recipes.md](../../../.claude/skills/new-lint/rules-recipes.md)
+**Full implementation guides:** [rules-patterns.md](../../../.agents/skills/new-lint/rules-patterns.md) | [rules-recipes.md](../../../.agents/skills/new-lint/rules-recipes.md)
 **To create a new lint rule:** use the `/new-lint` skill
 
 ## Rule Pattern
@@ -21,6 +21,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 - **Disposal utils** (`../disposal_utils.dart`) — `findCleanupMethod()`, `cleanupMethods` (shared by dispose_fields + dispose_provided_instances)
 - **Widget helpers** (`../flutter_widget_helpers.dart`) — `FlexAxis` enum (shared by prefer_spacing + use_gap)
 - **Riverpod checkers** (`../riverpod_type_checkers.dart`) — `notifierChecker` TypeChecker (shared by avoid_notifier_constructors + dispose_provided_instances)
+- **Rule config** (`../rule_config.dart`) — per-rule `exclude` globs + free-form options from `many_lints.yaml` (or a top-level `many_lints:` section in `analysis_options.yaml`; the file wins, no merge). Pass `RuleContext` into the visitor, then `ResolvedRuleConfig.of(context, rule.name)` **inside** each callback — `currentUnit` is null during `registerNodeProcessors`. The analyzer cannot carry per-rule options itself; see [config-cookbook.md](../../../.agents/skills/new-lint/config-cookbook.md)
 - **Reporting** — `reportAtNode()`, `reportAtToken()`, `reportAtOffset()`, with `{0}` placeholder interpolation
 - **Analyzer 14.1.0** — use `node.declaredFragment?.element` (not deprecated `.element`), `node.body` (not `.members`), `namePart.typeName` for class/enum names; `ClassBody`/`EnumBody` are sealed (use `BlockClassBody`/`BlockEnumBody` to access `.members`); use `is DynamicType` (not `identical`) since 12.1.0 allows aliases for `dynamic`/`Never`/`void`. Since 13.0.0: `NamedExpression` → `NamedArgument` (NOT an `Expression`; `.name` is a `Token`, value is `.argumentExpression`), `ArgumentList.arguments` is `NodeList<Argument>` (sealed: `Expression` | `NamedArgument`), `DefaultFormalParameter`/`SimpleFormalParameter` → `RegularFormalParameter` with `.name`/`.type`/`.defaultClause` directly on `FormalParameter`, `Label.name` is a `Token`, `MethodDeclaration.isAbstract` → `!isComplete`, `ExtensionTypeDeclaration.primaryConstructor` → `namePart`
 
@@ -38,7 +39,7 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 | If-case patterns | [prefer_simpler_patterns_null_check.dart](prefer_simpler_patterns_null_check.dart) | Dart 3 if-case pattern analysis |
 | Property+method chain | [avoid_map_keys_contains.dart](avoid_map_keys_contains.dart) | PrefixedIdentifier vs PropertyAccess duality |
 | Test matcher validation | [avoid_misused_test_matchers.dart](avoid_misused_test_matchers.dart) | Method name matching, nullability/type category checks |
-| Try-catch analysis | [avoid_only_rethrow.dart](avoid_only_rethrow.dart) | CatchClause body inspection, RethrowExpression detection |
+| Try-catch analysis | [avoid_only_rethrow.dart](avoid_only_rethrow.dart) | CatchClause body inspection, RethrowExpression detection; also the reference implementation for a **configurable** rule (`exclude` + a mode option via `ResolvedRuleConfig.of()` resolved inside the callback) |
 | Throw in catch | [avoid_throw_in_catch_block.dart](avoid_throw_in_catch_block.dart) | RecursiveAstVisitor for ThrowExpression, function boundary stopping |
 | Return in try-catch | [prefer_return_await.dart](prefer_return_await.dart) | ReturnStatement visitor, async detection, Future type check |
 | Matcher type check | [prefer_test_matchers.dart](prefer_test_matchers.dart) | Check if arg extends a class by walking `allSupertypes` |
@@ -115,4 +116,4 @@ For class suffix naming rules, use the `ClassSuffixValidator` base class (~20 li
 
 When discovering new patterns while implementing rules:
 1. Add a **brief mention** to this file (table row or bullet point)
-2. Add **full details** to the cookbook files in `.claude/skills/new-lint/`
+2. Add **full details** to the cookbook files in `.agents/skills/new-lint/`

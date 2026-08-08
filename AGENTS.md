@@ -38,6 +38,10 @@ test/
 docs/                     # Astro Starlight docs site (see docs/AGENTS.md)
 ```
 
+## Findings
+
+See [FINDINGS.md](FINDINGS.md) for crucial discoveries and "aha moments" captured during development sessions. Review before making changes to unfamiliar areas.
+
 ## Reference Docs
 
 Before writing any code:
@@ -71,10 +75,11 @@ This is verifiable end-to-end with the `PluginServer` harness in `test/plugin_di
 
 **Use the `/new-lint` skill** for step-by-step guidance, or **`/release`** to prepare a new version. See the full cookbooks:
 
-- [Rules patterns](.claude/skills/new-lint/rules-patterns.md) - Rule structure, type checking, AST, visitors, reporting
-- [Rules recipes](.claude/skills/new-lint/rules-recipes.md) - Copy-paste recipes for common patterns
-- [Fixes cookbook](.claude/skills/new-lint/fixes-cookbook.md) - Quick fix implementation patterns
-- [Assists cookbook](.claude/skills/new-lint/assists-cookbook.md) - Code assist implementation patterns
+- [Rules patterns](.agents/skills/new-lint/rules-patterns.md) - Rule structure, type checking, AST, visitors, reporting
+- [Rules recipes](.agents/skills/new-lint/rules-recipes.md) - Copy-paste recipes for common patterns
+- [Fixes cookbook](.agents/skills/new-lint/fixes-cookbook.md) - Quick fix implementation patterns
+- [Assists cookbook](.agents/skills/new-lint/assists-cookbook.md) - Code assist implementation patterns
+- [Config cookbook](.agents/skills/new-lint/config-cookbook.md) - Per-rule `exclude` and options; read before designing any rule configuration
 
 Quick summary:
 

@@ -19,6 +19,7 @@ Before writing any code:
 1. **📖 ALWAYS START HERE: Read the Lint Rule Cookbooks** (in this directory)
    - [rules-patterns.md](rules-patterns.md) — Rule structure, type checking, AST navigation, visitors, reporting, utilities, analyzer APIs
    - [rules-recipes.md](rules-recipes.md) — Copy-paste ready recipes for common scenarios
+   - [config-cookbook.md](config-cookbook.md) — **Read before designing any configuration.** Per-rule `exclude` and options. The analyzer's options system cannot carry per-rule options; several obvious approaches warn or silently do nothing.
    - These are your **primary reference** for all implementation patterns
    - **Check the cookbooks FIRST** before researching elsewhere
 
@@ -110,6 +111,47 @@ Key conventions:
 - Use Dart 3.0+ pattern matching for AST analysis
 - Use helpers from `lib/src/ast_node_analysis.dart` when applicable
 - `correctionMessage` is required by the docs generator; always provide it
+
+## Step 4b: Add configuration only when it earns its place
+
+Most rules need **no** configuration. Before adding any, check in this order:
+
+1. **Severity already covers it.** Enable/disable and severity overrides work
+   natively with zero code — `plugins: many_lints: diagnostics: {<lint_name>: false}`.
+   Never build an option for something this handles.
+2. **The rule should just be right.** If an "option" encodes a decision the
+   heuristic ought to make correctly, fix the heuristic instead.
+3. **Only one project would set it.** Not worth the maintenance and testing cost.
+
+Add configuration when the rule has a legitimately project-dependent policy —
+paths where it does not apply (`exclude`), or a genuine mode where reasonable
+teams disagree.
+
+**📖 If you are adding configuration, read [config-cookbook.md](config-cookbook.md) first.**
+It documents hard constraints that are expensive to rediscover — in short:
+per-rule options **cannot** live in `analysis_options.yaml` under `plugins:`
+(custom keys there emit `unsupported_option`, and map-valued `diagnostics:`
+entries are a reported error); a rule cannot reach `AnalysisOptions`; and a
+plugin cannot report diagnostics against YAML files at all.
+
+The working mechanism lives in `lib/src/rule_config.dart`, reading
+`many_lints.yaml` at the package root (or a top-level `many_lints:` section in
+`analysis_options.yaml`). Adding it to a rule is two changes — pass the
+`RuleContext` into the visitor, then resolve **inside** each callback:
+
+```dart
+final resolved = ResolvedRuleConfig.of(context, rule.name);
+if (resolved.isExcluded) return;
+
+final someMode = resolved.config.boolOption('some_mode', defaultValue: false);
+```
+
+🚨 Never resolve config in `registerNodeProcessors` — `RuleContext.currentUnit`
+is `null` there. Every option's default must reproduce the rule's existing
+behavior exactly, so upgrading never changes results silently.
+
+Configurable rules need the extra tests in Step 7 and the extra docs section in
+Step 9; both are specified in the cookbook.
 
 ## Step 5: Create a quick fix when applicable
 
@@ -246,6 +288,25 @@ batches remain in `test/plugin_fix_output_test.dart`. See
 
 If Step 5 created a fix, add its output-test group under `test/fix_output/`
 before proceeding.
+
+If Step 4b made the rule configurable, `AnalysisRuleTest` **cannot** cover it —
+it has no package root to hold a config file. Add a `PluginServer`-driven group
+following `test/rule_config_test.dart`, and remember `ConfigLoader.clearCache()`
+in `setUp` (the cache is static and survives across tests).
+
+🚨 Two traps that make config tests pass while proving nothing:
+
+- **Pick a pure-Dart fixture.** Rules needing Flutter types do not resolve under
+  `createMockSdk`, so the rule reports nothing and every "excluded" assertion
+  passes vacuously. Always include a no-config test asserting the rule *does* fire.
+- **Pair every negative test with an asymmetric positive one.** `exclude: [lib/**]`
+  on a file in `lib/` must be silent, *and* `exclude: [test/**]` on that same file
+  must still report. Silence alone cannot distinguish "exclusion worked" from
+  "the rule never fired". Same for modes: assert the option suppresses its target
+  case **and** leaves other cases reporting.
+
+See [config-cookbook.md](config-cookbook.md#testing-a-configurable-rule) for the
+full coverage checklist.
 - `lint(offset, length)` — offset is the character position, length is the length of the reported node/token
 - Method names start with `test_` and use camelCase
 
@@ -268,6 +329,7 @@ You must update if you:
    - [rules-patterns.md](rules-patterns.md) for foundational patterns (type checking, AST, visitors, etc.)
    - [rules-recipes.md](rules-recipes.md) for new recipes (specific use-case patterns)
    - [fixes-cookbook.md](fixes-cookbook.md) for fix-related patterns
+   - [config-cookbook.md](config-cookbook.md) for configuration patterns, and whenever an analyzer upgrade changes what `AnalysisOptionsFileKeys.pluginsOptions` or `RuleConfig` support
    - Follow the format in each file's Meta-Instructions section
 
 2. **Brief mention** — Add a short entry to the lean quick reference at `lib/src/rules/AGENTS.md` (or `lib/src/fixes/AGENTS.md` for fix patterns)
@@ -353,6 +415,13 @@ plugins:
       <lint_name>: false
 ```
 ```
+
+If Step 4b made the rule configurable, extend that `## Configuration` section
+with an `### Options` block: a `many_lints.yaml` example plus a table of
+option / type / **default** / description. Always state defaults, and note that
+the `analysis_options.yaml` section form does not inherit through `include:`.
+See [config-cookbook.md](config-cookbook.md#documenting-a-configurable-rule) for
+the exact template.
 
 Key notes:
 - Omit the `sidebar.badge` block entirely if the lint has **no quick fix**

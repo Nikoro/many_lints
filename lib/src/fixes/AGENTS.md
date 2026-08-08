@@ -2,7 +2,7 @@
 
 This directory contains quick fix implementations. Each fix extends `ResolvedCorrectionProducer` and is registered for a specific `LintCode`.
 
-**Full implementation guide:** [fixes-cookbook.md](../../../.claude/skills/new-lint/fixes-cookbook.md)
+**Full implementation guide:** [fixes-cookbook.md](../../../.agents/skills/new-lint/fixes-cookbook.md)
 **To create a new lint with fix:** use the `/new-lint` skill
 
 **Testing:** every registered fix has output tests. New batches live under
@@ -11,7 +11,7 @@ This directory contains quick fix implementations. Each fix extends `ResolvedCor
 `PluginServer` answering `edit.getFixes`, whose edit is applied to the source
 and compared). `analyzer_testing` has no fix test API — do not conclude fixes
 are untestable. See
-[Testing a Fix](../../../.claude/skills/new-lint/fixes-cookbook.md#testing-a-fix).
+[Testing a Fix](../../../.agents/skills/new-lint/fixes-cookbook.md#testing-a-fix).
 
 ## Fix Pattern
 
@@ -121,4 +121,4 @@ final value = arg.argumentExpression;
 
 When discovering new patterns while implementing fixes:
 1. Add a **brief mention** to this file (table row or bullet point)
-2. Add **full details** to [fixes-cookbook.md](../../../.claude/skills/new-lint/fixes-cookbook.md)
+2. Add **full details** to [fixes-cookbook.md](../../../.agents/skills/new-lint/fixes-cookbook.md)
