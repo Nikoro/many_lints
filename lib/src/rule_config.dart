@@ -30,10 +30,27 @@ class RuleConfig {
   /// Glob patterns, relative to the package root, that this rule skips.
   final List<String> exclude;
 
+  /// Glob patterns, relative to the package root, that this rule is limited
+  /// to. An empty list means "everywhere", which is the default.
+  ///
+  /// [exclude] wins over this: a file matching both is skipped. Narrowing is
+  /// always safe, so the two compose without the user having to reason about
+  /// ordering.
+  final List<String> include;
+
+  /// A project-specific sentence appended to every diagnostic this rule
+  /// reports, or `null` to leave the message as written.
+  final String? message;
+
   /// Free-form options for the rule, as written in YAML.
   final Map<String, Object?> options;
 
-  const RuleConfig({this.exclude = const [], this.options = const {}});
+  const RuleConfig({
+    this.exclude = const [],
+    this.include = const [],
+    this.message,
+    this.options = const {},
+  });
 
   static const empty = RuleConfig();
 
@@ -91,6 +108,28 @@ class RuleConfig {
     return entries;
   }
 
+  /// Reads option [key] as a regular expression, returning [defaultValue]
+  /// when absent, not a string, or not valid regex syntax.
+  ///
+  /// An invalid pattern falls back rather than throwing: config problems
+  /// cannot be surfaced as diagnostics, so they must degrade quietly.
+  ///
+  /// The returned pattern is meant to be applied with [matchesWholeValue],
+  /// which anchors by inspecting the match span. Anchoring by wrapping the
+  /// source in `^(?:...)$` would be equivalent, but the naive `'^$p\$'`
+  /// spelling silently rebinds a top-level alternation — `foo|bar` becomes
+  /// `^foo|bar$`, which matches `xbar`.
+  RegExp? patternOption(String key, {RegExp? defaultValue}) {
+    final value = options[key];
+    if (value is! String || value.isEmpty) return defaultValue;
+
+    try {
+      return RegExp(value);
+    } on FormatException {
+      return defaultValue;
+    }
+  }
+
   /// Resolves a built-in list of names against two options: [key], which
   /// *replaces* [defaultValue] outright, and `additional_<key>`, which
   /// *appends* to whichever list won.
@@ -117,6 +156,8 @@ class RuleConfig {
 
   factory RuleConfig._fromYaml(YamlMap map) {
     final exclude = <String>[];
+    final include = <String>[];
+    String? message;
     final options = <String, Object?>{};
 
     for (final entry in map.nodes.entries) {
@@ -125,19 +166,51 @@ class RuleConfig {
       final name = key.value as String;
       final value = entry.value;
 
-      if (name == 'exclude') {
-        if (value is YamlList) {
+      if (name == 'exclude' || name == 'include') {
+        final target = name == 'exclude' ? exclude : include;
+        // Accept a bare scalar where a list is expected, matching how the
+        // banned-* entries treat `deny:`. `include: lib/**` is the spelling
+        // users reach for first.
+        final raw = value.value;
+        if (raw is String) {
+          target.add(raw);
+        } else if (value is YamlList) {
           for (final item in value) {
-            if (item is String) exclude.add(item);
+            if (item is String) target.add(item);
           }
         }
+        continue;
+      }
+
+      if (name == 'message') {
+        final raw = value.value;
+        // An empty message would append a stray separator to every
+        // diagnostic, so treat it as absent.
+        if (raw is String && raw.trim().isNotEmpty) message = raw.trim();
         continue;
       }
 
       options[name] = value.value;
     }
 
-    return RuleConfig(exclude: exclude, options: options);
+    return RuleConfig(
+      exclude: exclude,
+      include: include,
+      message: message,
+      options: options,
+    );
+  }
+}
+
+extension RegExpWholeValue on RegExp {
+  /// Whether this pattern matches [value] in its entirety.
+  ///
+  /// `firstMatch` is used rather than wrapping the source in `^(?:...)$`,
+  /// because a user pattern may contain a top-level alternation that anchoring
+  /// by concatenation would rebind incorrectly.
+  bool matchesWholeValue(String value) {
+    final match = firstMatch(value);
+    return match != null && match.start == 0 && match.end == value.length;
   }
 }
 
@@ -362,10 +435,15 @@ class ResolvedRuleConfig {
     required String ruleName,
   }) {
     final config = ConfigLoader.loadFor(packageRoot).forRule(ruleName);
-    if (config.exclude.isEmpty) {
+    if (config.exclude.isEmpty && config.include.isEmpty) {
       return ResolvedRuleConfig(config, isExcluded: false);
     }
 
+    // A file outside the package root has no path for a glob to match, so
+    // neither list can apply and the rule reports as if unconfigured. That
+    // keeps `include` consistent with `exclude`, and errs toward reporting:
+    // silently dropping diagnostics for a path we cannot classify would be
+    // the harder failure to notice.
     final relative = packageRoot.relativeIfContains(path);
     if (relative == null) {
       return ResolvedRuleConfig(config, isExcluded: false);
@@ -375,10 +453,21 @@ class ResolvedRuleConfig {
     // to the options file's folder, with '/' as the separator, so normalize
     // Windows separators the same way before matching.
     final normalized = relative.replaceAll(r'\', '/');
+
+    // `exclude` is checked first so it wins over `include` for a file matching
+    // both. Both directions narrow, so the combination can only ever be
+    // quieter than either alone — there is no ordering the user has to learn.
     for (final pattern in config.exclude) {
       if (Glob('/', pattern).matches(normalized)) {
         return ResolvedRuleConfig(config, isExcluded: true);
       }
+    }
+
+    if (config.include.isNotEmpty) {
+      final included = config.include.any(
+        (pattern) => Glob('/', pattern).matches(normalized),
+      );
+      if (!included) return ResolvedRuleConfig(config, isExcluded: true);
     }
 
     return ResolvedRuleConfig(config, isExcluded: false);

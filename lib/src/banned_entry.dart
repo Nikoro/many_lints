@@ -74,18 +74,6 @@ class BannedEntry {
   }
 }
 
-extension on RegExp {
-  /// Whether this pattern matches [value] in its entirety.
-  ///
-  /// `firstMatch` is used rather than wrapping the source in `^(?:...)$`,
-  /// because a user pattern may contain a top-level alternation that anchoring
-  /// by concatenation would rebind incorrectly.
-  bool matchesWholeValue(String value) {
-    final match = firstMatch(value);
-    return match != null && match.start == 0 && match.end == value.length;
-  }
-}
-
 /// Reads the `banned:` list from [config].
 ///
 /// Takes a [RuleConfig] rather than a rule so any consumer holding a resolved

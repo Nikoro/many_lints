@@ -1,13 +1,71 @@
 import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
+import 'package:analyzer/diagnostic/diagnostic.dart';
 import 'package:analyzer/error/listener.dart';
 import 'package:analyzer/file_system/file_system.dart';
 
 import 'rule_config.dart';
 
-/// Base class for every rule in this package, adding per-rule `exclude`
-/// support from `many_lints.yaml` to the stock [AnalysisRule].
+/// Forwards diagnostics into an existing [DiagnosticReporter].
+///
+/// Needed because [_MessageAppendingReporter] must be constructed with a
+/// listener, while the reporter handed to the rule exposes none — so the way
+/// back to the driver's own listener is through the reporter's public
+/// [DiagnosticReporter.reportError].
+class _ForwardingListener implements DiagnosticListener {
+  final DiagnosticReporter _target;
+
+  const _ForwardingListener(this._target);
+
+  @override
+  void onDiagnostic(Diagnostic diagnostic) => _target.reportError(diagnostic);
+}
+
+/// A [DiagnosticReporter] that appends a project-configured sentence to every
+/// diagnostic's problem message.
+///
+/// This sits at the same seam as `exclude`: every `reportAt*` method on
+/// [AnalysisRule] funnels through the reporter, and inside the reporter
+/// `atNode` / `atToken` / `atSourceRange` all delegate to `atOffset`, which
+/// ends at the single public, overridable [reportError]. Overriding that one
+/// method therefore catches every diagnostic a rule can emit, so no rule needs
+/// code of its own to support `message:`.
+///
+/// Subclassing is what makes this possible: `DiagnosticReporter` keeps its
+/// listener in a private field with no accessor, so a wrapping *listener*
+/// cannot be built from an existing reporter — the incoming one is opaque.
+///
+/// The rebuilt diagnostic keeps the original `diagnosticCode`, so
+/// `// ignore: many_lints/<rule>` comments, severity overrides and the fix
+/// registry — which is keyed on the code — all keep working. Only the rendered
+/// problem message changes.
+class _MessageAppendingReporter extends DiagnosticReporter {
+  final String _suffix;
+
+  _MessageAppendingReporter(super.listener, super.source, this._suffix);
+
+  @override
+  void reportError(Diagnostic diagnostic) {
+    final problem = diagnostic.problemMessage;
+
+    super.reportError(
+      Diagnostic.forValues(
+        source: diagnostic.source,
+        offset: problem.offset,
+        length: problem.length,
+        diagnosticCode: diagnostic.diagnosticCode,
+        message: '${problem.messageText(includeUrl: false)} $_suffix',
+        correctionMessage: diagnostic.correctionMessage,
+        contextMessages: diagnostic.contextMessages,
+      ),
+    );
+  }
+}
+
+/// Base class for every rule in this package, adding per-rule `exclude`,
+/// `include` and `message` support from `many_lints.yaml` to the stock
+/// [AnalysisRule].
 ///
 /// ## Why this intercepts the reporter instead of guarding each visitor
 ///
@@ -31,6 +89,12 @@ import 'rule_config.dart';
 /// still "report" — the diagnostics are simply discarded. Suppressing at the
 /// sink rather than skipping the visit keeps this independent of how any
 /// individual rule is structured.
+///
+/// The same seam carries the other two universal options. `include` resolves
+/// alongside `exclude` in [ResolvedRuleConfig] and reaches the rule as the
+/// same null reporter, and `message` swaps in a reporter that rewrites each
+/// diagnostic on its way out. All three are therefore free for every rule in
+/// the package, including rules written after this comment.
 abstract class ManyLintsRule extends AnalysisRule {
   ManyLintsRule({required super.name, required super.description, super.state});
 
@@ -105,8 +169,28 @@ abstract class ManyLintsRule extends AnalysisRule {
     // does, so a single glob spelling works on every platform.
     _relativePath = root.relativeIfContains(path)?.replaceAll(r'\', '/');
 
-    super.reporter = resolved.isExcluded
-        ? DiagnosticReporter(DiagnosticListener.nullListener, value.source)
-        : value;
+    if (resolved.isExcluded) {
+      super.reporter = DiagnosticReporter(
+        DiagnosticListener.nullListener,
+        value.source,
+      );
+      return;
+    }
+
+    final message = resolved.config.message;
+    if (message == null) {
+      super.reporter = value;
+      return;
+    }
+
+    // The rewritten diagnostic is handed back to the *original* reporter, via
+    // a listener that forwards into it. `DiagnosticReporter` keeps its
+    // listener private with no accessor, so the incoming one cannot be
+    // unwrapped — but it can still be delegated to.
+    super.reporter = _MessageAppendingReporter(
+      _ForwardingListener(value),
+      value.source,
+      message,
+    );
   }
 }
