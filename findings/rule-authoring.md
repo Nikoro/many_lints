@@ -103,3 +103,44 @@ Three suffix rules shared one base class that took the suffix as a constructor p
 **Generalisation:** when a constructor argument encodes *which thing the rule looks for*, that is usually configuration, not a subclass. Three near-identical subclasses is the smell. Also check the inverse — `prefer_shorthands_with_constructors` hardcoded its class list at *two* call sites in one file, and both had to be updated.
 
 **Guard against degenerate values:** an empty `suffix: ""` would make every name "end with" it, silently disabling the rule. Treat empty as absent, and test it.
+
+---
+
+### [GOTCHA] [CRITICAL] "The rule already does that" argues *for* an option, not against it
+**Area:** `lib/src/rules/` (Tier 3 option pass)
+**Tags:** `#gotcha` `#design-decision`
+**Verified:** 2026-08-09
+
+**Symptom:** eight proposed per-rule options were rejected with the reasoning *"the rule already behaves that way, so the flag would control nothing."* All eight were later reinstated as working, tested options.
+
+**Root cause:** that reasoning silently assumes an option **narrows**. When the rule's current behaviour *is* the narrow one, the option **widens** — and the default still reproduces today's results exactly, which is all the "defaults preserve behaviour" rule actually demands.
+
+| Rule's current behaviour | Wrong conclusion | Actual option |
+|---|---|---|
+| Enums exempt from `avoid_default_tostring` | "`ignore_enums` is dead code" | `report_enums: true` widens to them |
+| Parameter must match the field name | "`only_same_name: true` is permanent" | `only_same_name: false` widens to renamed parameters |
+| Fallthrough cases never reported | "the quick fix can't act on them" | Teach the fix `case a \|\| b`, then `allow_fallthrough_cases` |
+| Keys on Bloc's `on` / `emit` | "a project can't rename Bloc's API" | It can *wrap* it — `additional_methods` |
+
+**The misread guidance:** the cookbook's "prefer options that make a rule quieter" is about which behaviour ships as the **default**, so upgrades never surprise anyone. It does not mean an option may only subtract. `state_base_classes`, `report_enums` and `additional_methods` all add reports and are all correct.
+
+**Test before concluding a flag is inert:** ask *"what would `true` do?"*. Reject only when there is genuinely no dimension to act on — `dispose_fields.ignore_blocs` fails because the rule never reaches a Bloc at all, and the fix there is the widening `state_base_classes`, not the narrowing flag.
+
+**If widening needs the quick fix to handle a new shape, extend the fix.** `allow_fallthrough_cases` was worth the extra work in `prefer_switch_expression_fix.dart` (accumulate empty cases, join with `||`, collapse to `_` when the body is `default`'s). When a fix genuinely must *not* act — `only_same_name: false` would rename a named argument and break call sites — let the rule report and have the fix decline, with a comment saying why.
+
+**Record rejections in the rule's source, naming the missing dimension.** A bare "not configurable" invites the next pass to re-add it; a stated reason survives.
+
+---
+
+### [GOTCHA] [GOTCHA] An option that gates nothing still compiles and still tests green
+**Area:** `lib/src/rules/avoid_default_tostring.dart`, `avoid_misused_hooks.dart`
+**Tags:** `#gotcha` `#testing`
+**Verified:** 2026-08-09
+
+The mirror image of the finding above: a plausible option list — a rule catalogue, a planning document, earlier notes — is a *hypothesis* about the rule, not a fact about it.
+
+`avoid_default_tostring` gates on `element is! ClassElement`, which already excluded enums, so an `ignore_enums` flag would have been dead code — with a passing test asserting enums are exempt, which they were regardless of the option. `avoid_misused_hooks` reports hooks inside loops and never resolves an enclosing widget, so a proposed `ignored_widgets` had nothing to match until the widget lookup was actually added.
+
+**Rule:** every option needs a fixture where the rule's output differs with and without it. If you cannot construct one, the option is not real. This is the vacuous-test trap one level up — there, a rule that never fires makes assertions meaningless; here, an option that gates nothing does, even though the rule fires correctly.
+
+**Corollary for planning documents:** a proposed-options table is worth exactly as much as the reading behind it. Read the visitor before wiring, and note in the doc which rows were checked against source.

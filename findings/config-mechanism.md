@@ -83,3 +83,30 @@ final relative = root?.relativeIfContains(path);    // e.g. 'test/foo.dart'
 **Workaround:** Cache configuration keyed by package root path in a static map, invalidated on the config file's `modificationStamp` so edits are picked up without restarting the analysis server. Never store per-context state on the rule.
 
 ---
+
+### [GOTCHA] [CRITICAL] Rewriting a diagnostic needs a `DiagnosticReporter` subclass — the listener cannot be wrapped
+**Area:** `lib/src/many_lints_rule.dart`
+**Tags:** `#gotcha` `#architecture`
+**Verified:** 2026-08-09
+
+**Context:** the universal `message:` option appends a project sentence to every diagnostic a rule reports. Unlike `exclude`, which only has to *drop* diagnostics, this has to **modify** them — and the two obvious routes both fail to compile.
+
+**Dead end 1 — wrap the reporter's listener.** `DiagnosticReporter` keeps its listener in a private `_diagnosticListener` field with **no accessor** (`analyzer/src/error/listener.dart:157`). An existing reporter is opaque: there is no way to reach what it forwards to, so a decorating `DiagnosticListener` cannot be built from it.
+
+**Dead end 2 — override the rule's reporting methods.** `AnalysisRule.reportAtNode` and friends delegate to private `_reportAt*` helpers that read the private `_reporter` field directly. Not virtual, not interceptable.
+
+**What works:** every reporting path funnels through one public, overridable method:
+
+```
+atNode ─┐
+atToken ┼─► atOffset ──► reportError ──► _diagnosticListener.onDiagnostic
+atSourceRange ─┘
+```
+
+So subclass `DiagnosticReporter`, override `reportError`, and rebuild the `Diagnostic` with `Diagnostic.forValues`. To reach the driver's own listener, hand the subclass a tiny forwarding listener that calls the **original** reporter's public `reportError` — delegation replaces the unwrapping that is impossible.
+
+**Keep `diagnosticCode` unchanged in the rebuilt diagnostic.** The code is what `// ignore: many_lints/<rule>`, severity overrides and `registerFixForRule` all key on. Changing it would silently break suppression and quick fixes while the rendered message still looked correct.
+
+**Verified end-to-end** in `test/rule_config_test.dart`, including a rule that reports from several callbacks — proving the seam catches all of them, not just the first.
+
+---
