@@ -1,8 +1,9 @@
 # Configurable Rules — Remaining Work
 
-**Researched:** 2026-08-08 · **Revised:** 2026-08-09 (Phases 1–3 shipped, sections pruned)
-**Status:** Tier 1 and the banned-* family are implemented. Tier 2 structural work and
-the Tier 3 per-rule options remain.
+**Researched:** 2026-08-08 · **Revised:** 2026-08-09 (all phases shipped)
+**Status:** Everything actionable in this document is implemented. What is left is
+§4.1 `package_names`, deliberately deferred until someone reports it, and the §5 new
+rule ideas.
 
 Read [config-cookbook.md](../.agents/skills/new-lint/config-cookbook.md) before implementing
 anything here — it documents what the analyzer can and cannot do, and why.
@@ -14,10 +15,12 @@ anything here — it documents what the analyzer can and cannot do, and why.
 | Fact | Value |
 |------|-------|
 | Rule files in `lib/src/rules/` | **138** |
-| Rules reading an option | **10** — 4 directly, 6 via shared helpers (below) |
-| Accessors available | `boolOption`, `intOption`, `stringListOption`, `entriesOption`, `nameSetOption` |
+| Rules reading configuration | **40** (29%) |
+| Rules supporting `exclude` / `include` / `message` | **138** (all, via `ManyLintsRule`) |
+| Accessors available | `boolOption`, `intOption`, `stringListOption`, `entriesOption`, `nameSetOption`, `patternOption` |
 
-Started at 1/133. another linter, for reference, configures 147 of 514 rules (28.6%).
+Started at 1/133. another linter, for reference, configures 147 of 514 rules (28.6%) — and every
+one of theirs also takes a universal layer, which is what `include`/`message` match.
 
 ### Already shipped — do not redo
 
@@ -62,50 +65,82 @@ that make a rule *quieter*; never add an option that duplicates `exclude` or `se
 
 ---
 
-## 2. Universal `include:` and `message:` — highest remaining value
+## 2. Universal `include:` and `message:` — shipped
 
-Implement once in `ManyLintsRule`, applies to all 138 rules. This is the best
-effort-to-value ratio left in the document.
+Both live in `ManyLintsRule` and apply to all 138 rules.
 
-- **`include:`** — inverse of `exclude`; "only run this rule in `lib/features/**`".
-  Architectural rules are far more useful scoped than global. `exclude` is already applied at
-  the reporter seam (`ManyLintsRule.reporter`), so `include` slots into the same place —
-  the resolved-config path is already there and tested.
-- **`message:`** — append a project-specific sentence to the diagnostic ("Use our `AppSpacing`
-  tokens instead"). Turns a generic lint into house style with one line of YAML. Needs the
-  reporter wrapper to rewrite the diagnostic message rather than just suppress it, so it is
-  the more invasive of the two.
+- **`include:`** — inverse of `exclude`, resolved in `ResolvedRuleConfig.forPath`
+  alongside it. `exclude` is checked first so a file matching both is skipped; both
+  only narrow, so there is no ordering for users to learn.
+- **`message:`** — appends a sentence to every diagnostic the rule reports.
 
-Note `rule_config.dart:225` already documents an `include:`-inheritance caveat in a comment —
-reconcile that text with whatever actually ships.
+The `message:` implementation is worth knowing about before touching that seam, because
+two obvious approaches do not work. `DiagnosticReporter` keeps its listener in a private
+field with no accessor, so an incoming reporter cannot be unwrapped; and
+`AnalysisRule.reportAt*` delegate to private, non-virtual helpers, so they cannot be
+overridden either. What works is subclassing `DiagnosticReporter` and overriding the
+public `reportError` — every path (`atNode`/`atToken`/`atSourceRange` → `atOffset`)
+funnels through it — and handing that subclass a forwarding listener that calls the
+*original* reporter's `reportError`. The rebuilt `Diagnostic` keeps its
+`diagnosticCode`, so ignores, severity overrides and the fix registry are unaffected.
+Full write-up in the cookbook.
 
 ---
 
 ## 3. Tier 3 — per-rule options
 
-Grouped by the another linter precedent that validates them. Defaults preserve current behaviour.
-None of these are implemented.
+Shipped. Defaults reproduce the previous behaviour exactly.
 
-| Our rule | Proposed option | Default | another linter precedent |
-|----------|-----------------|---------|---------------|
-| `prefer_single_widget_per_file` | `ignore_private_widgets`, `ignore_visible_for_testing` | `false`, `false` | exact match |
-| `avoid_returning_widgets` | `ignored_names`, `ignored_annotations`, `allow_nullable` | `[]`, `[]`, `false` | exact match |
-| `avoid_commented_out_code` | `min_lines` | `1` | exact match |
-| `avoid_collection_methods_with_unrelated_types` | `strict` | `true` | exact match |
-| `avoid_default_tostring` | `ignore_enums` | `false` | exact match |
-| `avoid_duplicate_collection_elements` | `ignore_literals` | `false` | exact match |
-| `prefer_switch_expression` | `ignore_fallthrough_cases` | `false` | exact match |
-| `prefer_switch_with_enums` | `ignore_contains` | `false` | exact match |
-| `prefer_private_named_parameters` | `only_same_name` | `true` | exact match |
-| `prefer_class_destructuring` | `ignored_types` | `[]` | exact match (`min_occurrences` done) |
-| `avoid_duplicate_bloc_event_handlers` | `additional_methods` | `[]` | exact match |
-| `check_is_not_closed_after_async_gap` | `additional_methods` | `[]` | exact match |
-| `avoid_hooks_outside_build` | `additional_methods` | `[]` | exact match |
-| `avoid_misused_hooks` | `ignored_widgets` | `[]` | exact match |
-| `prefer_immutable_bloc_state` | `name_pattern` | `State$` | exact match |
-| `dispose_fields` | `ignore_blocs` | `false` | exact match |
-| `avoid_unassigned_stream_subscriptions` | `ignored_instances` | `[]` | analogous |
-| `prefer_spacing` / `use_gap` | `min_children`, `ignored_widgets` | — | our own |
+| Our rule | Option | Default |
+|----------|--------|---------|
+| `prefer_single_widget_per_file` | `ignore_private_widgets`, `ignore_visible_for_testing` | `true`, `false` |
+| `avoid_returning_widgets` | `ignored_names`, `ignored_annotations`, `allow_nullable` | `[]`, `[]`, `false` |
+| `avoid_commented_out_code` | `min_lines` | `1` |
+| `avoid_duplicate_collection_elements` | `ignore_literals` | `false` |
+| `prefer_switch_with_enums` | `ignore_contains` | `false` |
+| `prefer_class_destructuring` | `ignored_types` | `[]` |
+| `avoid_hooks_outside_build` | `additional_methods` | `[]` |
+| `avoid_misused_hooks` | `ignored_names` | `[]` |
+| `prefer_immutable_bloc_state` | `name_pattern` | `State$` |
+| `avoid_unassigned_stream_subscriptions` | `ignored_instances` | `[]` |
+| `prefer_spacing` | `min_children` | `3` |
+
+Note `prefer_single_widget_per_file.ignore_private_widgets` defaults to **`true`**, not
+the `false` this table originally proposed: the rule always skipped private widgets, and
+the rule that a default must preserve existing behaviour outranks matching another linter.
+
+### Widening options — the rest of the table
+
+An earlier pass rejected eight of these rows as "the option would control nothing."
+That reasoning was wrong: it assumed every option *narrows*. When a rule is already
+narrow, the option **widens** it, and the default still reproduces today's behaviour.
+
+| Our rule | Option | Default | Widens to |
+|----------|--------|---------|-----------|
+| `avoid_default_tostring` | `report_enums` | `false` | Enums without a `toString` override |
+| `prefer_private_named_parameters` | `only_same_name` | `true` | A renamed parameter (`_id` from `identifier`) |
+| `prefer_switch_expression` | `allow_fallthrough_cases` | `false` | Labels sharing a body, fixed as `case a \|\| b` |
+| `avoid_duplicate_bloc_event_handlers` | `additional_methods` | `[]` | A project's own `on`-wrapper |
+| `check_is_not_closed_after_async_gap` | `additional_methods` | `[]` | A project's own `emit`-wrapper |
+| `avoid_misused_hooks` | `ignored_widgets` | `[]` | (narrowing) exempt a whole widget |
+| `use_gap` | `min_children` | `1` | (narrowing) skip short children lists |
+| `avoid_collection_methods_with_unrelated_types` | `strict` | `false` | A `dynamic` argument against a known element type |
+
+Two required real work rather than a flag:
+
+- **`allow_fallthrough_cases`** needed the quick fix taught to merge patterns. It now
+  accumulates empty cases and joins them with `||` onto the next body, collapsing to `_`
+  when the body belongs to `default`. A *trailing* fallthrough has nothing to merge into,
+  so rule and fix both still decline it — verified by its own test.
+- **`only_same_name: false`** reports a renamed parameter but the fix deliberately
+  declines: `this._id` would rename the named argument too, a breaking API change a quick
+  fix must not make silently.
+
+### Genuinely not applicable
+
+- **`dispose_fields.ignore_blocs`** — this rule only scans `State`, so there is no Bloc to
+  ignore. The widening knob that *does* apply is `state_base_classes`: point it at `Bloc`
+  or `Cubit` and their fields get covered. another linter's option is the mirror image of ours.
 
 ### Deliberately NOT configurable — decision, not an oversight
 
@@ -127,11 +162,9 @@ Two more that were considered and rejected during Tier 1:
 
 ---
 
-## 4. Structural — only if demanded
+## 4. Structural
 
-Both need shared-helper extraction first, and both were deferred deliberately.
-
-### 4.1 `package_names` — the `TypeChecker` monoculture
+### 4.1 `package_names` — the `TypeChecker` monoculture (still open)
 
 `packageName:` is hardcoded at **136 sites**: `flutter` 87, `hooks_riverpod` 12,
 `flutter_riverpod` 12, `bloc` 11, `riverpod` 8, `flutter_bloc` 6, `flutter_hooks` 5,
@@ -142,23 +175,33 @@ no signal explaining why. That is a "rules mysteriously don't work" bug class, n
 preference. Should be a **global** config section rather than per-rule. Deferred until someone
 reports it; noted so the cost is known.
 
-### 4.2 The `State` base-class cluster
+### 4.2 The `State` base-class cluster — shipped
 
-**14 files** hardcode `TypeChecker.fromName('State', packageName: 'flutter')`, spread across
-multiple lines — a single-line grep for `fromName('State'` misses it, which is how an earlier
-pass under-counted this.
+The 13 rules that pinned `TypeChecker.fromName('State', packageName: 'flutter')` now go
+through `isStateElement(rule, element)` in `lib/src/state_base_classes.dart`, which adds
+the `state_base_classes` option. All 156 of their existing tests pass unchanged.
 
-Affected: `dispose_fields`, `prefer_single_setstate`, `avoid_unnecessary_overrides_in_state`,
-`avoid_unnecessary_setstate`, `use_sliver_prefix`, `avoid_empty_setstate`, `proper_super_calls`,
-`avoid_unnecessary_stateful_widgets`, `avoid_recursive_widget_calls`, `always_remove_listener`,
-`avoid_mounted_in_setstate`, `avoid_state_constructors`, `avoid_inherited_widget_in_initstate`.
+Worth being precise about what the option is *for*, because the original framing here was
+wrong: an intermediate `BaseState<T>` that extends Flutter's `State` was **never** a
+problem — `isSuperOf` walks the hierarchy. The real gap is a state-like base that does
+not extend `State` at all, which every one of these rules skipped silently. Configured
+names match without a package pin (a locally declared type has no `package:` URI);
+Flutter's `State` stays pinned, so a user type coincidentally named `State` cannot widen
+a rule by accident.
 
-A shared `state_base_classes` option would fix all 14 at once, but only routed through a shared
-helper that does not exist yet.
+**The lifecycle-method prerequisite was a false alarm.** This document claimed four rules
+define four different memberships for "State lifecycle methods" and that reconciling them
+was a correctness cleanup. Reading all four shows they encode genuinely different
+concepts and must not be merged:
 
-**Prerequisite, and worth doing regardless of config:** four rules define four different
-memberships for "State lifecycle methods." Reconciling those is a correctness cleanup that
-should precede any config work here.
+- `proper_super_calls` — `_superFirstMethods` / `_superLastMethods`, a Flutter API
+  *ordering* contract (`initState` calls super first, `dispose` last).
+- `avoid_unnecessary_setstate` — `_lifecycleMethods`, the methods that already trigger a
+  rebuild, so `setState` in them is redundant.
+- `avoid_unnecessary_overrides_in_state` — no list at all; matches any overridden member.
+- `dispose_fields` / `avoid_empty_setstate` — no lifecycle list.
+
+Only two of the four have a list, and they answer different questions. Nothing to fix.
 
 ---
 
@@ -175,13 +218,14 @@ should precede any config work here.
 
 ---
 
-## Sequencing
+## What is left
 
-1. **§2 universal `include:`** — one change, 138 rules, the seam already exists. Do `message:`
-   after, since it needs the reporter to rewrite rather than suppress.
-2. **§3 Tier 3 breadth** — each a few hours; work down the table by demand.
-3. **§4 structural** — only when someone reports the fork/wrapper problem. Extract the shared
-   helper and reconcile the lifecycle-method sets first.
+1. **§4.1 `package_names`** — still deferred, still the right call until someone reports
+   the fork/wrapper problem. It is the only item here with a known user-visible cost.
+2. **§5 new rule ideas** — `require_import_alias` and `banned_widget_in_path`; the latter
+   may need no new rule at all, only configuration of `avoid_banned_types`.
+Per-rule docs pages are done: every configurable rule now carries an `## Options` table,
+and the configuration page lists all 24 in one place.
 
 ### Testing
 
