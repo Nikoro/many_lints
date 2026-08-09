@@ -180,9 +180,17 @@ Key types:
 
 ---
 
-## `exclude` Is Automatic — Do Not Hand-Write It
+## `exclude`, `include` and `message` Are Automatic — Do Not Hand-Write Them
 
-Every rule in this package extends [`ManyLintsRule`](../../../lib/src/many_lints_rule.dart) instead of `AnalysisRule`, and that base class applies `exclude` for you. **A new rule needs no code at all to support it.**
+Every rule in this package extends [`ManyLintsRule`](../../../lib/src/many_lints_rule.dart) instead of `AnalysisRule`, and that base class applies all three universal options for you. **A new rule needs no code at all to support them.**
+
+| Option | Effect |
+|--------|--------|
+| `exclude` | Globs where the rule is skipped |
+| `include` | Globs the rule is limited to; empty means everywhere |
+| `message` | A sentence appended to every diagnostic the rule reports |
+
+`exclude` is checked before `include`, so a file matching both is skipped. Both only ever narrow, which is why they compose without the user having to learn an ordering.
 
 The only difference when writing a rule: override `registerManyLintsProcessors` rather than `registerNodeProcessors`.
 
@@ -212,6 +220,27 @@ class MyRule extends ManyLintsRule {
 The alternative — a `ResolvedRuleConfig.of(context, rule.name)` guard at the top of each callback — was rejected. It has to be repeated in *every* registered callback, and 42 rules here register more than one. A single missed callback leaks diagnostics from an excluded file, and no rule's own tests would catch it, because they never configure an exclude. Suppressing at the sink is structural: it cannot be forgotten, and it is independent of how a rule's visitors are shaped (per-node, `addCompilationUnit`, or `afterLibrary`).
 
 `ResolvedRuleConfig.of()` still exists for code that holds a `RuleContext` and needs the answer directly. If you ever call it, do so **inside** a callback — `RuleContext.currentUnit` is `null` during `registerNodeProcessors`.
+
+### Rewriting a diagnostic needs a reporter subclass, not a wrapping listener
+
+`message:` has to *modify* diagnostics rather than drop them, and the obvious route — wrap the incoming reporter's listener — does not compile. `DiagnosticReporter` stores its listener in a private `_diagnosticListener` field with **no accessor**, so an existing reporter is opaque; you cannot get at what it forwards to.
+
+Two other dead ends, both checked against analyzer 14.1.0:
+
+- **Overriding `reportAtNode` and friends on the rule.** `AnalysisRule.reportAt*` delegate to private `_reportAt*` helpers that read the private `_reporter` field directly. Not virtual, not interceptable.
+- **Wrapping the listener at construction.** Only the driver builds the original reporter (`PluginServer` at `plugin_server.dart:400`, `LibraryAnalyzer` at `library_analyzer.dart:452`); a rule never sees the listener.
+
+What does work is subclassing the reporter, because every reporting path funnels through one public, overridable method:
+
+```
+atNode ─┐
+atToken ┼─► atOffset ──► reportError ──► _diagnosticListener.onDiagnostic
+atSourceRange ─┘
+```
+
+So `_MessageAppendingReporter extends DiagnosticReporter` overriding `reportError` catches everything a rule can emit. To reach the driver's listener, hand the subclass a tiny `_ForwardingListener` that calls the *original* reporter's public `reportError` — delegation replaces the unwrapping you cannot do.
+
+Rebuild with `Diagnostic.forValues`, preserving `diagnosticCode`. The code is what `// ignore: many_lints/<rule>`, severity overrides and `registerFixForRule` all key on, so changing it would silently break suppression and quick fixes while the message still looked right.
 
 ### How exclusion resolves internally
 
@@ -287,7 +316,11 @@ config.boolOption('ignore_typed_catches', defaultValue: false)
 config.intOption('max_count', defaultValue: 10)
 config.stringListOption('allowed_names')            // defaults to const []
 config.nameSetOption('classes', defaultValue: _defaults)   // replace + append
+config.patternOption('name_pattern', defaultValue: _default)  // RegExp?
+config.entriesOption('banned')                      // List<Map<String, Object?>>
 ```
+
+`patternOption` returns `null` (or your default) when the key is absent, is not a string, or fails to compile — an invalid regex must not take down analysis. Apply the result with `matchesWholeValue` from `rule_config.dart`, which anchors by checking the match span; see the banned-* section below for why naive `'^$p\$'` concatenation is wrong.
 
 ### `nameSetOption` — the replace/append pair
 
@@ -649,3 +682,28 @@ Configuration is a maintenance cost and a combinatorial testing burden. Skip it 
 - Only one project would ever set it — fix the rule's heuristic instead
 
 Prefer a rule that is right by default over a rule with knobs.
+
+### "The rule already does that" is usually an argument *for* the option, not against it
+
+The most tempting way to dismiss a proposed option is: *the rule already behaves that way, so the flag would control nothing.* That reasoning only holds if the option **narrows**. When the current behaviour is the narrow one, the option **widens** — and the default still reproduces today's results exactly, which is all the "defaults preserve behaviour" rule actually demands.
+
+A whole round of Tier 3 options was rejected on this mistake and later reinstated:
+
+| Rule's current behaviour | Wrong conclusion | Actual option |
+|---|---|---|
+| Enums exempt from `avoid_default_tostring` | "`ignore_enums` is dead code" | `report_enums: true` widens to them |
+| Parameter must match the field name | "`only_same_name: true` is permanent" | `only_same_name: false` widens to renamed parameters |
+| Fallthrough cases never reported | "the fix can't act on them" | Teach the fix `case a \|\| b`, then `allow_fallthrough_cases` |
+| Keys on Bloc's `on` / `emit` | "a project can't rename Bloc's API" | It can *wrap* it — `additional_methods` |
+
+**Prefer narrowing defaults, not narrowing options.** The cookbook's "prefer options that make a rule quieter" is about which behaviour ships as the default, so upgrades never surprise anyone. It does not mean an option may only subtract. `state_base_classes`, `report_enums`, and `additional_methods` all add reports, and all are correct.
+
+Ask "what would `true` do?" before concluding a flag is inert. Reach for a rejection only when there is genuinely no dimension to act on — `dispose_fields.ignore_blocs` fails because the rule never reaches a Bloc at all, and the fix there is the widening `state_base_classes`, not the narrowing flag.
+
+If widening an option needs the quick fix to handle a new shape, **extend the fix** rather than dropping the option. `allow_fallthrough_cases` was worth the extra work in `prefer_switch_expression_fix.dart`. When a fix genuinely must not act — `only_same_name: false` would rename a named argument and break call sites — let the rule report and have the fix decline, with a comment saying why.
+
+When you do reject a proposed option, **write down why in the rule's source**, and state which dimension is missing. A bare "not configurable" invites the next pass to re-add it.
+
+### An option must change behaviour a test can observe
+
+Every option needs a fixture where the rule's output differs with and without it. If you cannot construct one, the option is not real. This is the same failure the harness rules guard against, one level up: there, a rule that never fires makes assertions vacuous; here, an option that gates nothing makes them vacuous even though the rule fires correctly.

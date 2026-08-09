@@ -142,10 +142,49 @@ because the analyzer never parses it. If you share a base `analysis_options.yaml
 across packages, use Option B in each package instead.
 :::
 
+## Limiting a rule to certain paths
+
+`include` is the inverse of `exclude`: the rule runs **only** where it matches.
+
+```yaml
+rules:
+  avoid_banned_imports:
+    include:
+      - lib/domain/**       # architectural rules are most useful scoped
+```
+
+Like `exclude`, it takes globs relative to the package root, and a bare string works
+where you only need one pattern (`include: lib/domain/**`).
+
+Omitting `include`, or leaving it empty, means "everywhere" — the default. When a file
+matches both lists `exclude` wins, so the two only ever narrow further and you never
+have to reason about which was written first.
+
+## Adding a note to a rule's message
+
+`message` appends a sentence to every diagnostic a rule reports, which turns a generic
+lint into your team's house style:
+
+```yaml
+rules:
+  avoid_border_all:
+    message: Use AppBorders from our design system.
+```
+
+```
+warning • Prefer Border.fromBorderSide over Border.all. Use AppBorders from our
+          design system. • many_lints/avoid_border_all
+```
+
+The rule's own text is kept and the diagnostic code is unchanged, so `// ignore:`
+comments, severity overrides and quick fixes all keep working.
+
+Both `include` and `message` work on **every** rule, exactly like `exclude`.
+
 ## Per-rule options
 
-Beyond `exclude`, some rules accept options that change *what* they report. They go in
-the same place, alongside `exclude`:
+Beyond `exclude`, `include` and `message`, some rules accept options that change *what*
+they report. They go in the same place:
 
 ```yaml
 # many_lints.yaml
@@ -161,14 +200,36 @@ options never changes results until you set one.
 
 | Rule | Options |
 |------|---------|
+| [`avoid_collection_methods_with_unrelated_types`](/many_lints/docs/rules/collection-type/avoid-collection-methods-with-unrelated-types/) | `strict` |
+| [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) | `min_lines` |
+| [`avoid_default_tostring`](/many_lints/docs/rules/code-quality/avoid-default-tostring/) | `report_enums` |
+| [`avoid_duplicate_bloc_event_handlers`](/many_lints/docs/rules/bloc-riverpod/avoid-duplicate-bloc-event-handlers/) | `additional_methods` |
+| [`avoid_duplicate_collection_elements`](/many_lints/docs/rules/collection-type/avoid-duplicate-collection-elements/) | `ignore_literals` |
+| [`avoid_hooks_outside_build`](/many_lints/docs/rules/hook-rules/avoid-hooks-outside-build/) | `additional_methods` |
+| [`avoid_misused_hooks`](/many_lints/docs/rules/hook-rules/avoid-misused-hooks/) | `ignored_names`, `ignored_widgets` |
 | [`avoid_only_rethrow`](/many_lints/docs/rules/control-flow/avoid-only-rethrow/) | `ignore_typed_catches` |
-| [`dispose_fields`](/many_lints/docs/rules/resource-management/dispose-fields/) | `cleanup_methods`, `additional_cleanup_methods` |
+| [`avoid_returning_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-returning-widgets/) | `ignored_names`, `ignored_annotations`, `allow_nullable` |
+| [`avoid_unassigned_stream_subscriptions`](/many_lints/docs/rules/resource-management/avoid-unassigned-stream-subscriptions/) | `ignored_instances` |
+| [`check_is_not_closed_after_async_gap`](/many_lints/docs/rules/async-safety/check-is-not-closed-after-async-gap/) | `additional_methods` |
+| [`dispose_fields`](/many_lints/docs/rules/resource-management/dispose-fields/) | `cleanup_methods`, `additional_cleanup_methods`, `state_base_classes` |
 | [`dispose_provided_instances`](/many_lints/docs/rules/bloc-riverpod/dispose-provided-instances/) | `cleanup_methods`, `additional_cleanup_methods` |
-| [`prefer_class_destructuring`](/many_lints/docs/rules/collection-type/prefer-class-destructuring/) | `min_occurrences` |
+| [`prefer_class_destructuring`](/many_lints/docs/rules/collection-type/prefer-class-destructuring/) | `min_occurrences`, `ignored_types` |
 | [`prefer_container`](/many_lints/docs/rules/widget-replacement/prefer-container/) | `min_sequence` |
+| [`prefer_immutable_bloc_state`](/many_lints/docs/rules/bloc-riverpod/prefer-immutable-bloc-state/) | `name_pattern` |
+| [`prefer_private_named_parameters`](/many_lints/docs/rules/code-quality/prefer-private-named-parameters/) | `only_same_name` |
 | [`prefer_shorthands_with_constructors`](/many_lints/docs/rules/shorthand-patterns/prefer-shorthands-with-constructors/) | `classes`, `additional_classes` |
+| [`prefer_single_widget_per_file`](/many_lints/docs/rules/widget-best-practices/prefer-single-widget-per-file/) | `ignore_private_widgets`, `ignore_visible_for_testing` |
+| [`prefer_spacing`](/many_lints/docs/rules/widget-best-practices/prefer-spacing/) | `min_children` |
+| [`prefer_switch_expression`](/many_lints/docs/rules/control-flow/prefer-switch-expression/) | `allow_fallthrough_cases` |
+| [`prefer_switch_with_enums`](/many_lints/docs/rules/pattern-matching/prefer-switch-with-enums/) | `ignore_contains` |
 | [`use_class_prefix`](/many_lints/docs/rules/class-naming/use-class-prefix/) | `entries`, `ignore_private` |
+| [`use_gap`](/many_lints/docs/rules/widget-best-practices/use-gap/) | `min_children` |
 | [`use_class_suffix`](/many_lints/docs/rules/class-naming/use-class-suffix/) | `entries`, `ignore_private` |
+
+`state_base_classes` is accepted by every rule that only applies inside a
+`StatefulWidget`'s `State`. Name a base class that does **not** extend Flutter's
+`State` and those rules will treat it as one; an intermediate `BaseState<T>` that
+already extends `State` is recognised without any configuration.
 
 Each option is documented with its type and default in the **Configuration** section
 of the rule's own page.
@@ -184,6 +245,7 @@ Option names follow a fixed vocabulary, so the same idea always reads the same w
 | `ignored_<plural>` | A list of specific things to skip |
 | `<plural>` | **Replaces** a built-in list (`cleanup_methods`) |
 | `additional_<plural>` | **Extends** a built-in list (`additional_cleanup_methods`) |
+| `name_pattern` | A regular expression matched against a name |
 | `entries` | A list of maps, for rules driven entirely by what you configure |
 
 Prefer `additional_*` over restating a built-in list: a copied-out default silently

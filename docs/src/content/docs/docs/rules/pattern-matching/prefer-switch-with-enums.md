@@ -86,3 +86,21 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+### Options
+
+Configure in `many_lints.yaml` at your package root:
+
+```yaml
+rules:
+  prefer_switch_with_enums:
+    ignore_contains: true
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ignore_contains` | bool | `false` | Skip `{E.a, E.b}.contains(value)` membership tests, reporting only if-else and `||` chains |
+
+Alternatively, use a top-level `many_lints:` section in `analysis_options.yaml`.
+Note this section does **not** inherit through `include:`; when both sources
+exist, `many_lints.yaml` wins and the section is ignored entirely.

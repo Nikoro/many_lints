@@ -92,11 +92,13 @@ Configure in `many_lints.yaml` at your package root:
 rules:
   prefer_class_destructuring:
     min_occurrences: 4
+    ignored_types: [BuildContext, ThemeData]
 ```
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `min_occurrences` | int | `3` | Minimum number of distinct property accesses on the same variable before the rule reports |
+| `ignored_types` | list of strings | `[]` | Type names never reported, for types where destructuring reads worse than repeated access |
 
 Alternatively, use a top-level `many_lints:` section in `analysis_options.yaml`.
 Note this section does **not** inherit through `include:`; when both sources

@@ -110,6 +110,7 @@ rules:
 |--------|------|---------|-------------|
 | `cleanup_methods` | list of strings | `[dispose, close, cancel]` | **Replaces** the cleanup method names the rule looks for |
 | `additional_cleanup_methods` | list of strings | `[]` | **Extends** whichever list applies |
+| `state_base_classes` | list of strings | `[]` | Extra base classes treated as state. Only needed for a base that does **not** extend Flutter's `State`; an intermediate `BaseState<T>` is already recognised |
 
 Order matters: it is the priority used when a type declares more than one
 cleanup method. Names added via `additional_cleanup_methods` are appended, so a

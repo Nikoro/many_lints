@@ -67,3 +67,21 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+### Options
+
+Configure in `many_lints.yaml` at your package root:
+
+```yaml
+rules:
+  avoid_commented_out_code:
+    min_lines: 2
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `min_lines` | int | `1` | Minimum number of consecutive commented-out lines before a block is reported |
+
+Alternatively, use a top-level `many_lints:` section in `analysis_options.yaml`.
+Note this section does **not** inherit through `include:`; when both sources
+exist, `many_lints.yaml` wins and the section is ignored entirely.

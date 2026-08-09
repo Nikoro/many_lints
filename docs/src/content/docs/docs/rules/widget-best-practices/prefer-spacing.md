@@ -52,3 +52,21 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+### Options
+
+Configure in `many_lints.yaml` at your package root:
+
+```yaml
+rules:
+  prefer_spacing:
+    min_children: 5
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `min_children` | int | `3` | Minimum number of children in the list before spacers are reported |
+
+Alternatively, use a top-level `many_lints:` section in `analysis_options.yaml`.
+Note this section does **not** inherit through `include:`; when both sources
+exist, `many_lints.yaml` wins and the section is ignored entirely.
