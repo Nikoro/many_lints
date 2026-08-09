@@ -205,13 +205,27 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Two types are "unrelated" if neither is a subtype of the other.
   ///
-  /// In strict mode, even `dynamic` and `Object` are not special-cased.
-  static bool _areUnrelatedTypes(DartType argType, DartType expectedType) {
-    // Never flag dynamic or void — the analyzer can't know the actual type.
-    if (argType is DynamicType || expectedType is DynamicType) return false;
+  /// `dynamic` and type parameters are skipped by default because their real
+  /// type is unknown here, so reporting them would guess. `strict: true`
+  /// widens the rule to a `dynamic` argument — worth it for a codebase that
+  /// has eliminated `dynamic` and wants the remaining ones surfaced.
+  bool _areUnrelatedTypes(DartType argType, DartType expectedType) {
+    final strict = rule.config.boolOption('strict', defaultValue: false);
+
+    // `void` is never a meaningful argument, strict or not.
     if (argType is VoidType || expectedType is VoidType) return false;
 
-    // If either type is a type parameter (generic), skip — too imprecise.
+    if (argType is DynamicType || expectedType is DynamicType) {
+      // Only an untyped *argument* against a known element type is a useful
+      // report; a dynamic collection tells us nothing about the argument.
+      return strict &&
+          argType is DynamicType &&
+          expectedType is InterfaceType &&
+          !expectedType.isDartCoreObject;
+    }
+
+    // A type parameter's argument is unknown at this point even in strict
+    // mode — the instantiation decides it.
     if (argType is TypeParameterType || expectedType is TypeParameterType) {
       return false;
     }

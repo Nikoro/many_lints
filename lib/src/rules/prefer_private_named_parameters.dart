@@ -81,9 +81,25 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (publicName.isEmpty || publicName.startsWith('_')) continue;
 
       final value = initializer.expression;
-      if (value is! SimpleIdentifier || value.name != publicName) continue;
+      if (value is! SimpleIdentifier) continue;
 
-      final parameter = _findNamedParameter(node, publicName);
+      // By default only `_name` initialized from a parameter literally called
+      // `name` is reported, because that is the case `this._name` converts
+      // without touching call sites.
+      //
+      // `only_same_name: false` widens the rule to a renamed parameter
+      // (`_id` initialized from `identifier`). Adopting the shorthand there
+      // also renames the named argument, so it is a breaking change to the
+      // constructor's API — hence opt-in, and the quick fix declines it (see
+      // `prefer_private_named_parameters_fix.dart`), leaving the edit to the
+      // author.
+      final onlySameName = rule.config.boolOption(
+        'only_same_name',
+        defaultValue: true,
+      );
+      if (onlySameName && value.name != publicName) continue;
+
+      final parameter = _findNamedParameter(node, value.name);
       if (parameter == null) continue;
 
       // The declared parameter type must match the field type exactly,

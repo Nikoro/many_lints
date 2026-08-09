@@ -64,8 +64,11 @@ class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
     final members = switchStmt.members;
     if (members.isEmpty) return null;
 
-    // Check what type of conversion we need
-    final firstStatement = members.first.statements.firstOrNull;
+    // Check what type of conversion we need. Leading fallthrough cases have
+    // no statements of their own, so look at the first member that does.
+    final firstStatement = members
+        .map((m) => m.statements.firstOrNull)
+        .firstWhere((s) => s != null, orElse: () => null);
     if (firstStatement == null) return null;
 
     final isReturnBased = firstStatement is ReturnStatement;
@@ -75,20 +78,32 @@ class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
 
     if (!isReturnBased && !isAssignmentBased) return null;
 
-    // Build the switch expression cases
+    // Build the switch expression cases.
+    //
+    // A fallthrough case (`case a:` with no body) shares the next case's
+    // body, which a switch expression writes as a single `a || b` pattern.
+    // Pending patterns accumulate until a member with a body closes them.
     final casesBuffer = StringBuffer();
-    for (var i = 0; i < members.length; i++) {
-      final member = members[i];
-      final caseStr = _buildCaseExpression(member);
+    final pending = <String>[];
+    for (final member in members) {
+      final pattern = _patternOf(member);
+
+      if (member.statements.isEmpty) {
+        pending.add(pattern);
+        continue;
+      }
+
+      final caseStr = _buildCaseExpression(member, leadingPatterns: pending);
       if (caseStr == null) return null;
+      pending.clear();
 
       casesBuffer.write(caseStr);
-      if (i < members.length - 1) {
-        casesBuffer.writeln(',');
-      } else {
-        casesBuffer.writeln(',');
-      }
+      casesBuffer.writeln(',');
     }
+
+    // A trailing fallthrough case has no body to fall into, so the switch is
+    // not convertible — bail rather than silently dropping it.
+    if (pending.isNotEmpty) return null;
 
     final expression = switchStmt.expression.toSource();
     final switchExpr = 'switch ($expression) {\n$casesBuffer}';
@@ -106,24 +121,37 @@ class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
     return null;
   }
 
+  /// The pattern text for [member].
+  ///
+  /// Dart 3 parses `case Foo.bar:` as a `SwitchPatternCase`; only pre-3.0
+  /// constant cases are `SwitchCase`.
+  String _patternOf(SwitchMember member) => switch (member) {
+    SwitchPatternCase(:final guardedPattern) => guardedPattern.toSource(),
+    SwitchCase(:final expression) => expression.toSource(),
+    SwitchDefault() => '_',
+  };
+
   /// Builds a single case expression for the switch expression.
   ///
+  /// [leadingPatterns] holds the patterns of any fallthrough cases directly
+  /// above this one; they are joined with `||` so several labels sharing one
+  /// body become a single case.
+  ///
   /// Returns null if the case cannot be converted.
-  String? _buildCaseExpression(SwitchMember member) {
+  String? _buildCaseExpression(
+    SwitchMember member, {
+    List<String> leadingPatterns = const [],
+  }) {
     final statements = member.statements;
     if (statements.isEmpty || statements.length != 1) return null;
 
-    String pattern;
-
-    // Get the pattern/guard. Dart 3 parses `case Foo.bar:` as a
-    // `SwitchPatternCase`; only pre-3.0 constant cases are `SwitchCase`.
-    switch (member) {
-      case SwitchPatternCase(:final guardedPattern):
-        pattern = guardedPattern.toSource();
-      case SwitchCase(:final expression):
-        pattern = expression.toSource();
-      case SwitchDefault():
-        pattern = '_';
+    var pattern = _patternOf(member);
+    if (leadingPatterns.isNotEmpty) {
+      // A `default` reached by fallthrough already covers everything, so
+      // `a || _` would be redundant — collapse to the wildcard.
+      pattern = member is SwitchDefault
+          ? '_'
+          : [...leadingPatterns, pattern].join(' || ');
     }
 
     final statement = statements.first;

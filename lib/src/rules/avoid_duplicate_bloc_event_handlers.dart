@@ -86,7 +86,15 @@ class _EventHandlerFinder extends RecursiveAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     super.visitMethodInvocation(node);
 
-    if (node.methodName.name != 'on') return;
+    // `on` is Bloc's own registration API. `additional_methods` widens this
+    // to a project's own wrapper (`onEvent<E>()`, `handle<E>()`) that
+    // forwards to it — the duplicate-registration crash is the same, but the
+    // name is not one this package can know. Default `[]` keeps only `on`.
+    final name = node.methodName.name;
+    if (name != 'on' &&
+        !rule.config.stringListOption('additional_methods').contains(name)) {
+      return;
+    }
 
     // Only an unqualified `on<E>(...)` or `this.on<E>(...)`.
     final target = node.target;

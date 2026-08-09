@@ -4,8 +4,9 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../many_lints_rule.dart';
+import '../ast_node_analysis.dart';
 import '../hook_detection.dart';
+import '../many_lints_rule.dart';
 
 /// Warns when a hook is called inside a loop.
 ///
@@ -59,7 +60,21 @@ class _Visitor extends SimpleAstVisitor<void> {
       _check(node);
 
   void _check(InvocationExpression node) {
-    if (!hookNameRegex.hasMatch(node.beginToken.lexeme)) return;
+    final name = node.beginToken.lexeme;
+    if (!hookNameRegex.hasMatch(name)) return;
+
+    // `ignored_names` exempts specific hooks. A project's own `useX()` helper
+    // that merely *looks* like a hook — matching the naming convention
+    // without calling one — is safe inside a loop.
+    if (rule.config.stringListOption('ignored_names').contains(name)) return;
+
+    // `ignored_widgets` exempts whole widgets, for a class that legitimately
+    // drives hook order itself (a fixed-length builder, a generated widget).
+    final ignoredWidgets = rule.config.stringListOption('ignored_widgets');
+    if (ignoredWidgets.isNotEmpty) {
+      final widget = enclosingClassDeclaration(node)?.namePart.typeName.lexeme;
+      if (widget != null && ignoredWidgets.contains(widget)) return;
+    }
 
     // A qualified call like `controller.useSomething()` is not a hook.
     if (node case MethodInvocation(

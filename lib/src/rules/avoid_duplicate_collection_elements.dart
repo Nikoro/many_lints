@@ -74,11 +74,20 @@ class _Visitor extends SimpleAstVisitor<void> {
   void _check(NodeList<CollectionElement> elements) {
     final seen = <String>{};
 
+    // `ignore_literals: true` exempts repeated literals, which are often
+    // intentional in fixtures and padding lists (`[0, 0, 0]`), while still
+    // reporting a duplicated identifier or property access.
+    final ignoreLiterals = rule.config.boolOption(
+      'ignore_literals',
+      defaultValue: false,
+    );
+
     for (final element in elements) {
       // A spread or an `if` element contributes an unknown number of values,
       // but writing the identical one twice is still a duplicate: the second
       // copy either repeats every value or is dead weight.
       if (!_isComparable(element)) continue;
+      if (ignoreLiterals && element is Literal) continue;
 
       final source = element.toSource();
       if (!seen.add(source)) {

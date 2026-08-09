@@ -97,6 +97,13 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name != 'contains') return;
 
+    // `ignore_contains: true` limits the rule to if-else and `||` chains,
+    // leaving membership tests alone — a set literal reads well enough that
+    // some projects prefer it over a switch.
+    if (rule.config.boolOption('ignore_contains', defaultValue: false)) {
+      return;
+    }
+
     final arguments = node.argumentList.arguments;
     if (arguments.length != 1) return;
 

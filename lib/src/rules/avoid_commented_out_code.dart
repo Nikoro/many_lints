@@ -65,7 +65,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     final lineInfo = node.lineInfo;
     final groups = _groupConsecutiveComments(allComments, lineInfo);
 
+    // `min_lines` reports only blocks of at least this many comment lines.
+    // Default 1 reports every block, reproducing the previous behaviour; a
+    // project tolerating single commented-out lines can raise it.
+    final minLines = rule.config.intOption('min_lines', defaultValue: 1);
+
     for (final group in groups) {
+      if (group.length < minLines) continue;
+
       final stripped = group
           .map((t) => _stripCommentPrefix(t.lexeme))
           .join('\n')

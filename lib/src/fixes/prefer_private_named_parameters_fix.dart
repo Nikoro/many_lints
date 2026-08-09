@@ -33,6 +33,13 @@ class PreferPrivateNamedParametersFix extends ResolvedCorrectionProducer {
 
     final parameterName = parameter.name?.lexeme;
     if (parameterName == null) return;
+
+    // Only the same-name case is fixable. Under `only_same_name: false` the
+    // rule also reports a renamed parameter (`_id` from `identifier`), but
+    // `this._id` would rename the named argument too — a breaking change to
+    // the constructor's API that a quick fix must not make silently. The
+    // lookup below finds no initializer for `_$parameterName` in that case,
+    // so the fix simply declines and the diagnostic stays.
     final fieldName = '_$parameterName';
 
     final constructor = parameter

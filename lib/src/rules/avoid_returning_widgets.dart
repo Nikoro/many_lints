@@ -62,19 +62,41 @@ class _Visitor extends SimpleAstVisitor<void> {
     // Exempt build() overrides
     if (node.name.lexeme == 'build') return;
 
-    _checkReturnType(node.returnType, node.name);
+    _checkReturnType(node.returnType, node.name, node.metadata);
   }
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
-    _checkReturnType(node.returnType, node.name);
+    _checkReturnType(node.returnType, node.name, node.metadata);
   }
 
-  void _checkReturnType(TypeAnnotation? returnType, Token nameToken) {
+  void _checkReturnType(
+    TypeAnnotation? returnType,
+    Token nameToken,
+    NodeList<Annotation> metadata,
+  ) {
     if (returnType == null) return;
+
+    final ignoredNames = rule.config.stringListOption('ignored_names');
+    if (ignoredNames.contains(nameToken.lexeme)) return;
+
+    final ignoredAnnotations = rule.config.stringListOption(
+      'ignored_annotations',
+    );
+    if (ignoredAnnotations.isNotEmpty &&
+        metadata.any((a) => ignoredAnnotations.contains(a.name.name))) {
+      return;
+    }
 
     final type = returnType.type;
     if (type == null) return;
+
+    // `allow_nullable: true` exempts `Widget?` returns, where the null case
+    // usually means "render nothing" rather than a widget-building helper.
+    if (rule.config.boolOption('allow_nullable', defaultValue: false) &&
+        returnType.question != null) {
+      return;
+    }
 
     // Handle nullable types: Widget? -> check the underlying type
     final effectiveType = type is InterfaceType ? type : null;

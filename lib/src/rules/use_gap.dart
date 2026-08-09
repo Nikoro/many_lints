@@ -5,9 +5,9 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../flutter_widget_helpers.dart';
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when SizedBox or Padding is used for spacing inside multi-child
@@ -168,6 +168,15 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (current is! ListLiteral) return null;
 
     final listLiteral = current;
+
+    // `min_children` skips short lists, where a single spacer reads fine
+    // inline. Default 1 reports every list, reproducing the previous
+    // behaviour; `prefer_spacing` exposes the same key.
+    if (listLiteral.elements.length <
+        rule.config.intOption('min_children', defaultValue: 1)) {
+      return null;
+    }
+
     current = listLiteral.parent;
 
     // The ListLiteral should be the value of a NamedArgument named 'children'

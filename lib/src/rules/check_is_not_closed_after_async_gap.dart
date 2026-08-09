@@ -4,8 +4,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../many_lints_rule.dart';
 import '../async_guard_utils.dart';
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a bloc emits state after an `await` without checking
@@ -149,10 +149,20 @@ class _EmitFinder extends RecursiveAstVisitor<void> {
 
   _EmitFinder(this.rule);
 
+  /// Whether [name] emits state: Bloc's own `emit`, plus any wrapper the
+  /// project named in `additional_methods`.
+  ///
+  /// A helper like `safeEmit(...)` that forwards to `emit` has exactly the
+  /// same after-close hazard, but only the project knows it exists. Default
+  /// `[]` keeps `emit` as the only name.
+  bool _emitsState(String name) =>
+      name == 'emit' ||
+      rule.config.stringListOption('additional_methods').contains(name);
+
   @override
   void visitMethodInvocation(MethodInvocation node) {
     // Cubit form: `emit(...)` resolves to the inherited method.
-    if (node.methodName.name == 'emit') {
+    if (_emitsState(node.methodName.name)) {
       final target = node.target;
       if (target == null || target is ThisExpression) {
         rule.reportAtNode(node);
@@ -166,7 +176,9 @@ class _EmitFinder extends RecursiveAstVisitor<void> {
   void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
     // Bloc form: `emit` is the handler's Emitter parameter, so calling it
     // parses as an invocation of a function-typed expression.
-    if (node.function case SimpleIdentifier(name: 'emit')) {
+    if (node.function case SimpleIdentifier(
+      name: final name,
+    ) when _emitsState(name)) {
       rule.reportAtNode(node);
       return;
     }

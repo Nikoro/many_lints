@@ -55,10 +55,20 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final element = type.element;
 
-    // Only classes declared in the analysed code are worth reporting;
-    // an SDK or package type without toString is not the user's to fix.
-    if (element is! ClassElement) return;
+    // Only classes and enums are considered; a mixin or extension type
+    // reached here is not a value being interpolated in the sense this rule
+    // means. An SDK or package type is not the user's to fix either.
+    final isEnum = element is EnumElement;
+    if (element is! ClassElement && !isEnum) return;
     if (element.library.isInSdk) return;
+
+    // Enums render as `Status.active` by default — informative enough that
+    // they stay exempt unless a project opts in. The option widens the rule,
+    // so the default reproduces the previous behaviour exactly.
+    if (isEnum &&
+        !rule.config.boolOption('report_enums', defaultValue: false)) {
+      return;
+    }
 
     // Enums, records and the like render usefully by default.
     if (_hasToStringOverride(type)) return;

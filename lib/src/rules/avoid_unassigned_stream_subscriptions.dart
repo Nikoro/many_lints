@@ -57,6 +57,15 @@ class _Visitor extends SimpleAstVisitor<void> {
     // not passed as an argument, etc.)
     if (node.parent is! ExpressionStatement) return;
 
+    // `ignored_instances` exempts receivers whose subscriptions are managed
+    // elsewhere — a stream owned by a bus or service that outlives the caller
+    // and is torn down centrally.
+    final ignored = rule.config.stringListOption('ignored_instances');
+    if (ignored.isNotEmpty) {
+      final receiver = node.realTarget?.toSource();
+      if (receiver != null && ignored.contains(receiver)) return;
+    }
+
     rule.reportAtNode(node);
   }
 

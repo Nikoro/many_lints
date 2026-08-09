@@ -4,8 +4,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../many_lints_rule.dart';
 import '../hook_detection.dart';
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a hook is called outside a hook context.
@@ -92,7 +92,16 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (current is MethodDeclaration) {
         // A hook method, or the build method of a hook widget.
         if (hookNameRegex.hasMatch(current.name.lexeme)) return true;
-        if (current.name.lexeme != 'build') return false;
+        // `additional_methods` names further methods of a hook widget that
+        // may call hooks — a project with its own `buildBody()` convention
+        // splits its build across several methods, all of them valid
+        // contexts. Default `[]` keeps `build` as the only one.
+        if (current.name.lexeme != 'build' &&
+            !rule.config
+                .stringListOption('additional_methods')
+                .contains(current.name.lexeme)) {
+          return false;
+        }
         return _isHookWidgetMember(current);
       }
 

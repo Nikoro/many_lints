@@ -80,6 +80,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       'min_occurrences',
       defaultValue: PreferClassDestructuring._defaultMinOccurrences,
     );
+    final ignoredTypes = rule.config.stringListOption('ignored_types');
 
     // Report variables with enough distinct property accesses
     for (final entry in collector.accessesByVariable.entries) {
@@ -91,7 +92,13 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
 
       // Only suggest destructuring for interface types (classes, enums, etc.)
-      if (info.targetType is! InterfaceType) continue;
+      final targetType = info.targetType;
+      if (targetType is! InterfaceType) continue;
+
+      // `ignored_types` exempts types where destructuring reads worse than
+      // repeated access — a context or theme object accessed for several
+      // unrelated properties.
+      if (ignoredTypes.contains(targetType.element.name)) continue;
 
       // Report at the first property access occurrence
       rule.reportAtNode(

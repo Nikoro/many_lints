@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
+import '../rule_config.dart';
 import '../type_checker.dart';
 
 /// Warns when a Bloc/Cubit state class is not annotated with `@immutable`.
@@ -48,6 +49,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
+  /// Reproduces the original `endsWith('State')` heuristic.
+  static final _defaultNamePattern = RegExp(r'State$');
+
   static const _blocChecker = TypeChecker.fromName('Bloc', packageName: 'bloc');
 
   static const _cubitChecker = TypeChecker.fromName(
@@ -59,6 +63,14 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitCompilationUnit(CompilationUnit node) {
     final stateClassNames = <String>{};
     final childrenOf = <String, List<String>>{};
+
+    // Strategy 2 below recognises state classes by name. The default `State$`
+    // reproduces the previous hardcoded `endsWith('State')` heuristic; a
+    // project naming them `FooUiState` or `FooStatus` can say so.
+    final namePattern = rule.config.patternOption(
+      'name_pattern',
+      defaultValue: _defaultNamePattern,
+    )!;
 
     // Single pass: collect state type names, *State classes, and hierarchy.
     for (final declaration in node.declarations) {
@@ -92,8 +104,11 @@ class _Visitor extends SimpleAstVisitor<void> {
         }
       }
 
-      // Strategy 2: Classes whose name ends with 'State'
-      if (className.endsWith('State') && className.length > 5) {
+      // Strategy 2: Classes whose name matches the configured pattern.
+      // The bare affix itself (`State`) is not a state class, so a match
+      // covering the whole name is rejected the way `length > 5` did.
+      if (namePattern.hasMatch(className) &&
+          !namePattern.matchesWholeValue(className)) {
         stateClassNames.add(className);
       }
 

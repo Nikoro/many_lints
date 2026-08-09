@@ -48,14 +48,29 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
+    // Defaults reproduce the previous behaviour exactly: private widgets were
+    // always skipped, and `@visibleForTesting` was never considered.
+    final ignorePrivateWidgets = rule.config.boolOption(
+      'ignore_private_widgets',
+      defaultValue: true,
+    );
+    final ignoreVisibleForTesting = rule.config.boolOption(
+      'ignore_visible_for_testing',
+      defaultValue: false,
+    );
+
     final publicWidgets = <ClassDeclaration>[];
 
     for (final declaration in node.declarations) {
       if (declaration is! ClassDeclaration) continue;
 
-      // Skip private widgets
       final name = declaration.namePart.typeName.lexeme;
-      if (name.startsWith('_')) continue;
+      if (ignorePrivateWidgets && name.startsWith('_')) continue;
+
+      if (ignoreVisibleForTesting &&
+          declaration.metadata.any((a) => a.name.name == 'visibleForTesting')) {
+        continue;
+      }
 
       final element = declaration.declaredFragment?.element;
       if (element == null) continue;

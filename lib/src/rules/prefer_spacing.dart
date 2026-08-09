@@ -6,9 +6,9 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../flutter_widget_helpers.dart';
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when SizedBox widgets are used for spacing inside Row, Column, or Flex
@@ -119,7 +119,12 @@ class _Visitor extends SimpleAstVisitor<void> {
   /// Only triggers when all SizedBox spacers have the same value (uniform).
   void _checkDirectSizedBoxInList(ListLiteral list, FlexAxis? parentAxis) {
     final elements = list.elements;
-    if (elements.length < 3) return;
+    // Below this many children a spacer reads fine inline; 3 is the smallest
+    // list that can hold two widgets separated by one spacer.
+    if (elements.length <
+        rule.config.intOption('min_children', defaultValue: 3)) {
+      return;
+    }
 
     // Collect all SizedBox spacers and their values
     final sizedBoxes = <Expression>[];

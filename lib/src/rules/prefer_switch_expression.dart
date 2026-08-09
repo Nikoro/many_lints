@@ -89,15 +89,29 @@ class _Visitor extends SimpleAstVisitor<void> {
   bool _canConvertToExpression(List<SwitchMember> members) {
     String? assignmentTarget;
     bool hasReturn = false;
+    // Tracks a fallthrough case still waiting for a body to share.
+    bool pendingFallthrough = false;
 
     for (final member in members) {
       final statements = member.statements;
 
-      // Check for fallthrough cases (cases with no statements)
+      // A fallthrough case (no statements of its own) shares the next case's
+      // body. A switch expression writes that as `a || b`, so with
+      // `allow_fallthrough_cases: true` these are convertible too and the
+      // quick fix joins the patterns. Off by default because it changes a
+      // familiar shape into a less familiar one.
       if (statements.isEmpty) {
-        // Don't convert if there are fallthrough cases
+        if (rule.config.boolOption(
+          'allow_fallthrough_cases',
+          defaultValue: false,
+        )) {
+          pendingFallthrough = true;
+          continue;
+        }
         return false;
       }
+
+      pendingFallthrough = false;
 
       // Check if the case has exactly one statement
       if (statements.length != 1) return false;
@@ -137,6 +151,8 @@ class _Visitor extends SimpleAstVisitor<void> {
       return false;
     }
 
-    return true;
+    // A trailing fallthrough has no body to fall into, so there is nothing to
+    // merge its pattern with. The quick fix bails on the same shape.
+    return !pendingFallthrough;
   }
 }
