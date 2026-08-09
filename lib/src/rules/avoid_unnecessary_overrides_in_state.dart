@@ -4,9 +4,9 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import '../many_lints_rule.dart';
+import '../state_base_classes.dart';
 
 /// Warns when a `State` class contains method overrides that only call the
 /// super implementation without any additional logic.
@@ -43,17 +43,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _stateChecker = TypeChecker.fromName(
-    'State',
-    packageName: 'flutter',
-  );
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final element = node.declaredFragment?.element;
     if (element == null) return;
 
-    if (!_stateChecker.isSuperOf(element)) return;
+    if (!isStateElement(rule, element)) return;
 
     final body = node.body;
     if (body is! BlockClassBody) return;

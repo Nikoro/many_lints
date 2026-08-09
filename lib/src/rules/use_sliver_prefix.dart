@@ -5,8 +5,9 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
+import '../many_lints_rule.dart';
+import '../state_base_classes.dart';
 import '../type_checker.dart';
 
 /// Warns when a widget's build method returns a sliver widget but the class
@@ -56,11 +57,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     packageName: 'flutter',
   );
 
-  static const _stateChecker = TypeChecker.fromName(
-    'State',
-    packageName: 'flutter',
-  );
-
   @override
   void visitCompilationUnit(CompilationUnit node) {
     final statefulWidgets = <ClassDeclaration>[];
@@ -82,7 +78,7 @@ class _Visitor extends SimpleAstVisitor<void> {
         }
       } else if (_statefulWidgetChecker.isSuperOf(element)) {
         statefulWidgets.add(declaration);
-      } else if (_stateChecker.isSuperOf(element)) {
+      } else if (isStateElement(rule, element)) {
         stateClasses.add(declaration);
       }
     }

@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
+import '../state_base_classes.dart';
 
 /// Warns when a method in a `State` subclass contains multiple `setState` calls
 /// that could be merged into a single invocation.
@@ -45,11 +45,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _stateChecker = TypeChecker.fromName(
-    'State',
-    packageName: 'flutter',
-  );
-
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
     // Verify we're inside a State subclass
@@ -59,7 +54,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (classDecl is! ClassDeclaration) return;
 
     final element = classDecl.declaredFragment?.element;
-    if (element == null || !_stateChecker.isSuperOf(element)) return;
+    if (element == null || !isStateElement(rule, element)) return;
 
     // Collect all setState calls in this method (not inside nested closures)
     final collector = _SetStateCollector();

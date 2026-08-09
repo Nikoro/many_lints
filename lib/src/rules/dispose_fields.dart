@@ -4,9 +4,9 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../many_lints_rule.dart';
 import '../disposal_utils.dart';
-import '../type_checker.dart';
+import '../many_lints_rule.dart';
+import '../state_base_classes.dart';
 
 /// Warns when a widget State field that has a disposal method (`dispose`,
 /// `close`, or `cancel`) is not cleaned up in the `dispose()` method.
@@ -49,17 +49,17 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _stateChecker = TypeChecker.fromName(
-    'State',
-    packageName: 'flutter',
-  );
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final element = node.declaredFragment?.element;
     if (element == null) return;
 
-    if (!_stateChecker.isSuperOf(element)) return;
+    // Only `State` subclasses are scanned, so `state_base_classes` is the
+    // knob that matters here: point it at `Bloc`, `Cubit`, or any disposable
+    // base and this rule covers their fields too. A narrowing `ignore_blocs` is
+    // the mirror image — it narrows a rule that already scans blocs, which
+    // this one does not do until configured to.
+    if (!isStateElement(rule, element)) return;
 
     final body = node.body;
     if (body is! BlockClassBody) return;

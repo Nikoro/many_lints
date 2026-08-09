@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
+import '../state_base_classes.dart';
 
 /// Warns when a `State` subclass declares a constructor with a non-empty body
 /// or initializer list.
@@ -46,15 +46,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _stateChecker = TypeChecker.fromName(
-    'State',
-    packageName: 'flutter',
-  );
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final element = node.declaredFragment?.element;
-    if (element == null || !_stateChecker.isSuperOf(element)) return;
+    if (element == null || !isStateElement(rule, element)) return;
 
     final body = node.body;
     if (body is! BlockClassBody) return;

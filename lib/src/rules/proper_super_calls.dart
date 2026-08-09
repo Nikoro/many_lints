@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
+import '../state_base_classes.dart';
 
 /// Warns when `super` lifecycle methods are called in the wrong order
 /// inside a `State` subclass.
@@ -50,11 +50,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _stateChecker = TypeChecker.fromName(
-    'State',
-    packageName: 'flutter',
-  );
-
   /// Methods where super must be called first.
   static const _superFirstMethods = {
     'initState',
@@ -87,7 +82,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (classDecl is! ClassDeclaration) return;
 
     final element = classDecl.declaredFragment?.element;
-    if (element == null || !_stateChecker.isSuperOf(element)) return;
+    if (element == null || !isStateElement(rule, element)) return;
 
     // Must have a block body
     final body = node.body;

@@ -7,6 +7,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
+import '../state_base_classes.dart';
 import '../type_checker.dart';
 
 /// Warns when a widget's `build` method instantiates the widget itself
@@ -57,11 +58,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     packageName: 'flutter',
   );
 
-  static const _stateChecker = TypeChecker.fromName(
-    'State',
-    packageName: 'flutter',
-  );
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final element = node.declaredFragment?.element;
@@ -72,7 +68,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final InterfaceElement target;
     if (_widgetChecker.isSuperOf(element)) {
       target = element;
-    } else if (_stateChecker.isSuperOf(element)) {
+    } else if (isStateElement(rule, element)) {
       final widget = _stateWidgetType(node);
       if (widget == null) return;
       target = widget;

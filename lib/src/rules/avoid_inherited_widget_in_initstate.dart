@@ -6,6 +6,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
+import '../state_base_classes.dart';
 import '../type_checker.dart';
 
 /// Warns when an inherited widget is looked up inside `initState`.
@@ -52,11 +53,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _stateChecker = TypeChecker.fromName(
-    'State',
-    packageName: 'flutter',
-  );
-
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
     if (node.name.lexeme != 'initState') return;
@@ -67,7 +63,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (classDecl is! ClassDeclaration) return;
 
     final element = classDecl.declaredFragment?.element;
-    if (element == null || !_stateChecker.isSuperOf(element)) return;
+    if (element == null || !isStateElement(rule, element)) return;
 
     node.body.visitChildren(_InheritedLookupFinder(rule));
   }

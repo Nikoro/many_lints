@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
+import '../state_base_classes.dart';
 
 /// Warns when `mounted` is checked inside a `setState` callback.
 ///
@@ -44,11 +44,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _stateChecker = TypeChecker.fromName(
-    'State',
-    packageName: 'flutter',
-  );
-
   @override
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name != 'setState') return;
@@ -80,7 +75,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     while (current != null) {
       if (current is ClassDeclaration) {
         final element = current.declaredFragment?.element;
-        if (element != null && _stateChecker.isSuperOf(element)) {
+        if (element != null && isStateElement(rule, element)) {
           return true;
         }
         return false;

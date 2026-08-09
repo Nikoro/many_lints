@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
+import '../state_base_classes.dart';
 
 /// Warns when `setState` is called directly inside `initState`,
 /// `didUpdateWidget`, or `build` methods in a `State` subclass.
@@ -51,11 +51,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _stateChecker = TypeChecker.fromName(
-    'State',
-    packageName: 'flutter',
-  );
-
   /// Lifecycle methods where setState is unnecessary.
   static const _lifecycleMethods = {'initState', 'didUpdateWidget', 'build'};
 
@@ -68,7 +63,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (method == null || classDecl == null) return;
 
     final element = classDecl.declaredFragment?.element;
-    if (element == null || !_stateChecker.isSuperOf(element)) return;
+    if (element == null || !isStateElement(rule, element)) return;
 
     final methodName = method.name.lexeme;
 

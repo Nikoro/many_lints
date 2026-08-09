@@ -6,6 +6,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
+import '../state_base_classes.dart';
 import '../type_checker.dart';
 
 /// Warns when a StatefulWidget can be replaced with a StatelessWidget because
@@ -47,11 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     packageName: 'flutter',
   );
 
-  static const _stateChecker = TypeChecker.fromName(
-    'State',
-    packageName: 'flutter',
-  );
-
   static const _lifecycleMethods = {
     'initState',
     'dispose',
@@ -83,7 +79,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       if (_statefulWidgetChecker.isSuperOf(element)) {
         statefulWidgets.add(declaration);
-      } else if (_stateChecker.isSuperOf(element)) {
+      } else if (isStateElement(rule, element)) {
         stateClasses.add(declaration);
       }
     }
