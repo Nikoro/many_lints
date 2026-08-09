@@ -1,4 +1,7 @@
 // ignore_for_file: unused_element
+// These blocs deliberately register only some events, to keep the duplicate
+// registration the single point of the file.
+// ignore_for_file: many_lints/handle_bloc_event_subclasses
 
 // avoid_duplicate_bloc_event_handlers
 //

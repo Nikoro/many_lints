@@ -1119,6 +1119,58 @@ final el = type.element;  // InterfaceElement
 
 **Reference:** [prefer_overriding_parent_equality.dart](../../../lib/src/rules/prefer_overriding_parent_equality.dart)
 
+### Resolving the target of an assignment (`writeElement`)
+
+**⚠️ `SimpleIdentifier.element` is `null` on the left of a compound assignment.**
+For `_value += 1` the identifier resolves through `writeElement`, not `element`,
+so an element lookup that only reads `.element` silently finds nothing and the
+rule never reports:
+
+```dart
+@override
+void visitAssignmentExpression(AssignmentExpression node) {
+  final target = switch (node.leftHandSide) {
+    SimpleIdentifier() => node.leftHandSide as SimpleIdentifier,
+    PropertyAccess(target: ThisExpression()) =>
+      (node.leftHandSide as PropertyAccess).propertyName,
+    _ => null,
+  };
+  if (target == null) return;
+
+  // `writeElement` covers `x = 1` and `x += 1`; fall back for safety.
+  final element = node.writeElement ?? target.element;
+}
+```
+
+`writeElement` is declared on `CompoundAssignmentExpression`, which **is**
+exported from `package:analyzer/dart/ast/ast.dart` — no implementation import
+is needed, even though the declaration lives under `src/`.
+
+**The same storage reaches you as different elements.** A read resolves to a
+`GetterElement` (or `FieldElement`), a write to a `SetterElement`. Comparing raw
+elements treats `_value` on the left of an assignment as different storage from
+`_value` on the right. Canonicalize through `.variable` before comparing:
+
+```dart
+Element _canonicalElement(Element element) => switch (element) {
+  GetterElement(:final variable) => variable,
+  SetterElement(:final variable) => variable,
+  _ => element,
+};
+```
+
+Note `GetterElement.variable` / `SetterElement.variable` are **non-nullable** in
+analyzer 14.1.0 — a `?` null-check pattern there is a "will have no effect"
+warning.
+
+Canonicalize **before** predicate checks too, not after: an `isStatic` test that
+only handles `FieldElement` is skipped entirely by a setter-typed write, so a
+static field gets reported despite being excluded by design.
+
+**When to use:** Any rule that tracks reads and writes of the same variable —
+assignment analysis, staleness/atomicity checks, use-before-set.
+**Reference:** [require_atomic_async_updates.dart](../../../lib/src/rules/require_atomic_async_updates.dart)
+
 ### Pattern Matching Features
 
 Analyzer 14.1.0 works well with Dart 3 pattern matching:

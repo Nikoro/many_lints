@@ -1,5 +1,8 @@
 // ignore_for_file: unused_local_variable, unused_element
 // ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_returning_shorthands, many_lints/use_existing_variable
+// The async `onPressed` handlers below are the setup this rule needs; the
+// dropped-future warning belongs to its own example file.
+// ignore_for_file: many_lints/avoid_passing_async_when_sync_expected
 
 // use_ref_read_synchronously
 //

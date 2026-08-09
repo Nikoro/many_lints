@@ -46,6 +46,8 @@ const CATEGORIES = {
     rules: [
       'avoid_bloc_public_methods',
       'avoid_duplicate_bloc_event_handlers',
+      'emit_new_bloc_state_instances',
+      'handle_bloc_event_subclasses',
       'avoid_passing_bloc_to_bloc',
       'avoid_passing_build_context_to_blocs',
       'prefer_bloc_extensions',
@@ -73,8 +75,11 @@ const CATEGORIES = {
   'async-safety': {
     label: 'Async Safety',
     rules: [
+      'avoid_missing_completer_stack_trace',
       'avoid_nested_futures',
+      'avoid_passing_async_when_sync_expected',
       'check_is_not_closed_after_async_gap',
+      'require_atomic_async_updates',
       'use_ref_and_state_synchronously',
       'use_ref_read_synchronously',
     ],
@@ -82,7 +87,9 @@ const CATEGORIES = {
   'widget-best-practices': {
     label: 'Widget Best Practices',
     rules: [
+      'always_pass_global_key',
       'avoid_flexible_outside_flex',
+      'check_for_equals_in_render_object_setters',
       'avoid_recursive_widget_calls',
       'avoid_returning_widgets',
       'avoid_shrink_wrap_in_lists',
@@ -123,6 +130,7 @@ const CATEGORIES = {
   'state-management': {
     label: 'State Management',
     rules: [
+      'avoid_late_context',
       'avoid_state_constructors',
       'avoid_empty_setstate',
       'avoid_inherited_widget_in_initstate',
@@ -145,8 +153,11 @@ const CATEGORIES = {
       'avoid_inverted_boolean_checks',
       'avoid_only_rethrow',
       'avoid_redundant_else',
+      'no_equal_then_else',
       'avoid_throw_in_catch_block',
       'avoid_unnecessary_negations',
+      'avoid_unmodified_loop_condition',
+      'avoid_unused_after_null_check',
       'prefer_switch_expression',
       'proper_super_calls',
       'prefer_return_await',
@@ -163,6 +174,9 @@ const CATEGORIES = {
       'avoid_empty_spread',
       'avoid_map_keys_contains',
       'avoid_missing_enum_constant_in_map',
+      'avoid_not_encodable_in_to_json',
+      'prefer_correct_json_casts',
+      'avoid_unrelated_type_casts',
       'avoid_unsafe_collection_methods',
       'avoid_incomplete_copy_with',
       'list_all_equatable_fields',
@@ -236,12 +250,15 @@ const CATEGORIES = {
     rules: [
       'always_remove_listener',
       'avoid_unassigned_stream_subscriptions',
+      'avoid_unremovable_callbacks_in_listeners',
       'dispose_fields',
     ],
   },
   'code-quality': {
     label: 'Code Quality',
     rules: [
+      'avoid_shadowed_extension_methods',
+      'function_always_returns_null',
       'avoid_commented_out_code',
       'avoid_default_tostring',
       'avoid_equal_expressions',

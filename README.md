@@ -109,28 +109,28 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-138 lints with 91 quick fixes, all enabled by default as warnings. Each rule links to its full documentation with examples and fix details.
+155 lints with 91 quick fixes, all enabled by default as warnings. Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
 | [Class Naming](https://nikoro.github.io/many_lints/docs/rules/class-naming/) | 2 | Class and type naming conventions |
 | [Architecture](https://nikoro.github.io/many_lints/docs/rules/architecture/) | 6 | Configurable bans on imports, types, names and members |
-| [Bloc / Riverpod](https://nikoro.github.io/many_lints/docs/rules/bloc-riverpod/) | 10 | BLoC and Riverpod state management patterns |
+| [Bloc / Riverpod](https://nikoro.github.io/many_lints/docs/rules/bloc-riverpod/) | 12 | BLoC and Riverpod state management patterns |
 | [Riverpod State](https://nikoro.github.io/many_lints/docs/rules/riverpod-state/) | 9 | Riverpod-specific state rules |
-| [Async Safety](https://nikoro.github.io/many_lints/docs/rules/async-safety/) | 4 | Async/await and state mutation safety |
-| [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/widget-best-practices/) | 18 | General widget best practices |
+| [Async Safety](https://nikoro.github.io/many_lints/docs/rules/async-safety/) | 7 | Async/await and state mutation safety |
+| [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/widget-best-practices/) | 20 | General widget best practices |
 | [Widget Replacement](https://nikoro.github.io/many_lints/docs/rules/widget-replacement/) | 13 | Simpler widget alternatives |
-| [State Management](https://nikoro.github.io/many_lints/docs/rules/state-management/) | 8 | StatefulWidget and state patterns |
-| [Control Flow](https://nikoro.github.io/many_lints/docs/rules/control-flow/) | 15 | Control flow statements and patterns |
-| [Collection & Type](https://nikoro.github.io/many_lints/docs/rules/collection-type/) | 18 | Collection and type-related checks |
+| [State Management](https://nikoro.github.io/many_lints/docs/rules/state-management/) | 9 | StatefulWidget and state patterns |
+| [Control Flow](https://nikoro.github.io/many_lints/docs/rules/control-flow/) | 18 | Control flow statements and patterns |
+| [Collection & Type](https://nikoro.github.io/many_lints/docs/rules/collection-type/) | 21 | Collection and type-related checks |
 | [Pattern Matching](https://nikoro.github.io/many_lints/docs/rules/pattern-matching/) | 6 | Dart pattern matching best practices |
 | [Type Annotations](https://nikoro.github.io/many_lints/docs/rules/type-annotations/) | 5 | Type annotation conventions |
 | [Code Organization](https://nikoro.github.io/many_lints/docs/rules/code-organization/) | 3 | Code structure and organization |
 | [Shorthand Patterns](https://nikoro.github.io/many_lints/docs/rules/shorthand-patterns/) | 4 | Dot shorthand syntax patterns |
 | [Hook Rules](https://nikoro.github.io/many_lints/docs/rules/hook-rules/) | 4 | Flutter Hooks conventions |
 | [Testing Rules](https://nikoro.github.io/many_lints/docs/rules/testing-rules/) | 3 | Testing best practices and matchers |
-| [Resource Management](https://nikoro.github.io/many_lints/docs/rules/resource-management/) | 3 | Resource cleanup and disposal |
-| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/code-quality/) | 7 | General code quality improvements |
+| [Resource Management](https://nikoro.github.io/many_lints/docs/rules/resource-management/) | 4 | Resource cleanup and disposal |
+| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/code-quality/) | 9 | General code quality improvements |
 
 ## Available Assists
 

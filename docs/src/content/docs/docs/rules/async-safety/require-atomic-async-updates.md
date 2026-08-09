@@ -1,0 +1,114 @@
+---
+title: require_atomic_async_updates
+description: "Re-read shared state after an await instead of writing back a stale value"
+sidebar:
+  label: require_atomic_async_updates
+---
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Async Safety</span>
+
+This rule flags a field that is read before an `await` and then written after it using the value read beforehand. The read and the write are not atomic, so a concurrent call can slip in between them and have its update silently discarded.
+
+## Why use this rule
+
+Dart is single-threaded, which makes it tempting to treat a method body as indivisible. It is not: every `await` is a suspension point where the event loop is free to run other code, including a second call to the very same method.
+
+Two calls to an `increment()` that reads into a local, awaits, then writes the local back will both read `0`, both compute `1`, and both store `1`. One increment is lost. Nothing throws, nothing logs — the counter is just quietly wrong, and only under the interleaving that a test rarely reproduces.
+
+The fix is to re-read the field after the await, so the value written is derived from the state as it exists at write time rather than as it existed before the suspension.
+
+**See also:** [Dart: asynchronous programming](https://dart.dev/libraries/async/async-await), [Dart: concurrency and isolates](https://dart.dev/language/concurrency)
+
+## Don't
+
+```dart
+class Counter {
+  int _value = 0;
+
+  Future<void> increment() async {
+    final current = _value;
+    await _repository.save();
+    // `current` may be stale — another call may have written `_value`
+    // while this one was suspended
+    _value = current + 1;
+  }
+}
+```
+
+A compound assignment has the same hazard, because it reads the field before writing it:
+
+```dart
+Future<void> increment() async {
+  await _repository.save();
+  _value += 1;   // reads `_value` that a concurrent call may have changed
+}
+```
+
+## Do
+
+Re-read the field after the await so the update is computed from current state:
+
+```dart
+class Counter {
+  int _value = 0;
+
+  Future<void> increment() async {
+    await _repository.save();
+    _value = _value + 1;
+  }
+}
+```
+
+When the write does not depend on the previous value, there is nothing to lose and the rule stays silent:
+
+```dart
+Future<void> load() async {
+  final result = await _repository.fetch();
+  _value = result;   // unconditional overwrite — no lost update possible
+}
+```
+
+For genuinely contended state, serialize the whole read-modify-write instead — for example with a lock or a queue — so no other call can interleave.
+
+## Known limitations
+
+Statements are scanned in source order within one function body. Only fields of the enclosing instance are tracked: `other.field` belongs to an object this method does not control, and static fields are excluded because they are not per-instance state.
+
+A local initialized from a tracked read inherits that read's staleness, which is what catches the common `final current = _value;` shape. A write inside a nested closure is not reported, because that closure runs on its own schedule.
+
+The rule does not attempt to prove that two calls can actually interleave. A method that is only ever called from one place still reports if it has the shape — the pattern is fragile enough that the annotation cost is preferred over silence.
+
+## Configuration
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      require_atomic_async_updates: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+### Options
+
+Configure in `many_lints.yaml` at your package root:
+
+```yaml
+rules:
+  require_atomic_async_updates:
+    include_local_variables: true
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `include_local_variables` | bool | `false` | Also track local variables, for code where a closure captures and writes one |
+
+A local is only shared when a closure captures and writes it, which is rarer and harder to confirm than a field, so the default tracks fields only.
+
+Alternatively, use a top-level `many_lints:` section in `analysis_options.yaml`.
+Note this section does **not** inherit through `include:`; when both sources
+exist, `many_lints.yaml` wins and the section is ignored entirely.

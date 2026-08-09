@@ -1,0 +1,102 @@
+---
+title: emit_new_bloc_state_instances
+description: "Emit a new state instance instead of the existing state object"
+sidebar:
+  label: emit_new_bloc_state_instances
+---
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
+
+This rule flags an `emit(state)` call that hands the current state object straight back to `emit`. Bloc compares the incoming state with `==` and drops it when it is equal to the current one, so the call does nothing.
+
+## Why use this rule
+
+`BlocBase.emit` short-circuits when the new state equals the current one. Passing `state` back is therefore always a no-op: no listener is notified, no widget rebuilds, and the UI keeps rendering the previous data.
+
+The usual way to hit this is mutating the existing state and re-emitting it:
+
+```dart
+state.items.add(newItem);
+emit(state);   // same instance — `==` holds, so nothing happens
+```
+
+This is the reason Bloc state is expected to be immutable, and why [`prefer_immutable_bloc_state`](/many_lints/docs/rules/bloc-riverpod/prefer-immutable-bloc-state/) exists. The two rules attack the same bug from opposite ends: that one asks for state that *cannot* be mutated in place, this one catches the mutation-and-re-emit pattern directly.
+
+The failure mode is what makes it worth a lint. Nothing throws, the handler runs to completion, and the symptom — a list that will not refresh — looks like a rendering problem rather than a state one, so it is usually debugged in the wrong place.
+
+**See also:** [bloc: why doesn't my state update?](https://bloclibrary.dev/faqs/), [bloc: BlocBase.emit](https://pub.dev/documentation/bloc/latest/bloc/BlocBase/emit.html)
+
+## Don't
+
+```dart
+class TodoCubit extends Cubit<TodoState> {
+  TodoCubit() : super(TodoState.initial());
+
+  void add(Todo todo) {
+    state.items.add(todo);
+    emit(state);   // dropped: the instance never changed
+  }
+}
+```
+
+## Do
+
+Build a new instance so the equality check sees a change:
+
+```dart
+class TodoCubit extends Cubit<TodoState> {
+  TodoCubit() : super(TodoState.initial());
+
+  void add(Todo todo) {
+    emit(state.copyWith(items: [...state.items, todo]));
+  }
+}
+```
+
+Any expression derived from the state is accepted — `state.copyWith(...)`, `state + 1`, or a freshly constructed instance:
+
+```dart
+void increment() => emit(state + 1);
+void reset() => emit(TodoState.initial());
+```
+
+## Known limitations
+
+Only the bare reads `state` and `this.state` are reported. Anything built from the state is left alone, including `state.copyWith()` with no arguments — that returns a new instance, so `emit` accepts it even though the contents are identical.
+
+A state object reached through a local variable (`final s = state; emit(s);`) is not reported. Doing so would require tracking assignments through the method body for a shape that is rare in practice, and the direct form is what appears in real code.
+
+Both call shapes are recognised: a Cubit's inherited `emit(...)`, and a Bloc handler's `Emitter` parameter, which parses as an invocation of a function-typed expression rather than a method call.
+
+## Configuration
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      emit_new_bloc_state_instances: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+### Options
+
+Configure in `many_lints.yaml` at your package root:
+
+```yaml
+rules:
+  emit_new_bloc_state_instances:
+    additional_methods: [safeEmit]
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `additional_methods` | list of strings | `[]` | Extra methods treated like `emit`, for a project wrapper that forwards to it |
+
+Alternatively, use a top-level `many_lints:` section in `analysis_options.yaml`.
+Note this section does **not** inherit through `include:`; when both sources
+exist, `many_lints.yaml` wins and the section is ignored entirely.

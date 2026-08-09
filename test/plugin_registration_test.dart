@@ -49,7 +49,7 @@ void main() {
   test('expected number of rules are registered', () {
     plugin.register(registry);
     final totalRules = registry.warningRules.length + registry.lintRules.length;
-    expect(totalRules, equals(138));
+    expect(totalRules, equals(155));
   });
 
   test('fixes are registered', () {

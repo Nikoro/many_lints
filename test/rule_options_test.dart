@@ -57,6 +57,123 @@ enum Status { active, inactive }
 String describe(Status status) => 'status: \$status';
 ''';
 
+/// A local read before an await and written back after it. Exempt by default
+/// (only fields are shared), reported under `include_local_variables: true`.
+const _staleLocalCode = '''
+Future<void> run() async {
+  var total = 0;
+  final current = total;
+  await Future<void>.delayed(Duration.zero);
+  total = current + 1;
+}
+''';
+
+/// The same shape on a field, which is reported regardless of the option — the
+/// control proving `include_local_variables` widens rather than replaces.
+const _staleFieldCode = '''
+class Counter {
+  int value = 0;
+
+  Future<void> increment() async {
+    final current = value;
+    await Future<void>.delayed(Duration.zero);
+    value = current + 1;
+  }
+}
+''';
+
+/// A Cubit emitting the current state through `emit`, which is reported with
+/// no configuration at all.
+const _emitStateCode = '''
+import 'package:bloc/bloc.dart';
+
+class CounterCubit extends Cubit<int> {
+  void refresh() {
+    emit(state);
+  }
+}
+''';
+
+/// The same no-op through a project wrapper, which only `additional_methods`
+/// can reach.
+const _safeEmitStateCode = '''
+import 'package:bloc/bloc.dart';
+
+class CounterCubit extends Cubit<int> {
+  void refresh() {
+    safeEmit(state);
+  }
+}
+''';
+
+/// An async closure passed to a `void`-returning parameter named `onPressed`,
+/// so both `ignored_parameters` and `ignore_widget_callbacks` can reach it.
+const _asyncVoidCallbackCode = '''
+void build({required void Function() onPressed}) {}
+
+Future<void> save() async {}
+
+void f() {
+  build(onPressed: () async {
+    await save();
+  });
+}
+''';
+
+/// The same shape on a plainly named parameter, which neither option targets —
+/// the asymmetric control proving they narrow rather than disable.
+const _asyncVoidPlainCode = '''
+void schedule(void Function() task) {}
+
+Future<void> save() async {}
+
+void f() {
+  schedule(() async {
+    await save();
+  });
+}
+''';
+
+/// An `is` check between unrelated core types, which `report_is_checks: false`
+/// silences.
+const _unrelatedIsCheckCode = '''
+bool f(String value) => value is int;
+''';
+
+/// The `as` form of the same mismatch, which stays reported either way — the
+/// asymmetric control for `report_is_checks`.
+const _unrelatedAsCastCode = '''
+int f(String value) => value as int;
+''';
+
+/// A `toJson` map holding a type the project converts elsewhere, reachable
+/// only via `allowed_types`.
+const _customEncodableCode = '''
+class Decimal {}
+
+class Price {
+  Price(this.amount);
+
+  final Decimal amount;
+
+  Map<String, dynamic> toJson() => {'amount': amount};
+}
+''';
+
+/// A `toJson` map holding a plainly non-encodable type, which stays reported
+/// even with an unrelated `allowed_types` entry.
+const _plainNotEncodableCode = '''
+class Other {}
+
+class Price {
+  Price(this.other);
+
+  final Other other;
+
+  Map<String, dynamic> toJson() => {'other': other};
+}
+''';
+
 /// An enum that *does* override toString, which stays exempt even under
 /// `report_enums` — the asymmetric half of that option's tests.
 const _enumWithToStringCode = '''
@@ -307,6 +424,115 @@ rules:
         });
       });
 
+      group('emit_new_bloc_state_instances additional_methods', () {
+        test('emit(state) is reported with no config', () async {
+          final errors = await harness.analyze(_emitStateCode, withBloc: true);
+
+          expect(
+            errors.map((e) => e.code),
+            contains('emit_new_bloc_state_instances'),
+          );
+        });
+
+        test('a project wrapper is not reached by default', () async {
+          final errors = await harness.analyze(
+            _safeEmitStateCode,
+            withBloc: true,
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            isNot(contains('emit_new_bloc_state_instances')),
+          );
+        });
+
+        test('additional_methods reaches the wrapper', () async {
+          final errors = await harness.analyze(
+            _safeEmitStateCode,
+            withBloc: true,
+            config: '''
+rules:
+  emit_new_bloc_state_instances:
+    additional_methods: [safeEmit]
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            contains('emit_new_bloc_state_instances'),
+          );
+        });
+
+        test('additional_methods still leaves emit reporting', () async {
+          final errors = await harness.analyze(
+            _emitStateCode,
+            withBloc: true,
+            config: '''
+rules:
+  emit_new_bloc_state_instances:
+    additional_methods: [safeEmit]
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            contains('emit_new_bloc_state_instances'),
+          );
+        });
+      });
+
+      group('require_atomic_async_updates include_local_variables', () {
+        test('a field is reported with no config', () async {
+          final errors = await harness.analyze(_staleFieldCode);
+
+          expect(
+            errors.map((e) => e.code),
+            contains('require_atomic_async_updates'),
+          );
+        });
+
+        test('a local is exempt by default', () async {
+          final errors = await harness.analyze(_staleLocalCode);
+
+          expect(
+            errors.map((e) => e.code),
+            isNot(contains('require_atomic_async_updates')),
+          );
+        });
+
+        test('include_local_variables reports it', () async {
+          final errors = await harness.analyze(
+            _staleLocalCode,
+            config: '''
+rules:
+  require_atomic_async_updates:
+    include_local_variables: true
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            contains('require_atomic_async_updates'),
+          );
+        });
+
+        test('a wrong-typed value falls back to the default', () async {
+          final errors = await harness.analyze(
+            _staleLocalCode,
+            config: '''
+rules:
+  require_atomic_async_updates:
+    include_local_variables: "yes"
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            isNot(contains('require_atomic_async_updates')),
+          );
+        });
+      });
+
       group('prefer_switch_expression allow_fallthrough_cases', () {
         test('a fallthrough switch is not reported by default', () async {
           final errors = await harness.analyze(_fallthroughSwitchCode);
@@ -378,6 +604,170 @@ rules:
           );
         });
       });
+    });
+
+    group('avoid_not_encodable_in_to_json allowed_types', () {
+      test('a non-encodable type is reported with no config', () async {
+        final errors = await harness.analyze(_customEncodableCode);
+
+        expect(
+          errors.map((e) => e.code),
+          contains('avoid_not_encodable_in_to_json'),
+        );
+      });
+
+      test('allowed_types silences the named type', () async {
+        final errors = await harness.analyze(
+          _customEncodableCode,
+          config: '''
+rules:
+  avoid_not_encodable_in_to_json:
+    allowed_types: [Decimal]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_not_encodable_in_to_json')),
+        );
+      });
+
+      test('allowed_types leaves other types reporting', () async {
+        final errors = await harness.analyze(
+          _plainNotEncodableCode,
+          config: '''
+rules:
+  avoid_not_encodable_in_to_json:
+    allowed_types: [Decimal]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('avoid_not_encodable_in_to_json'),
+        );
+      });
+    });
+
+    group('avoid_unrelated_type_casts report_is_checks', () {
+      test('an unrelated is check is reported by default', () async {
+        final errors = await harness.analyze(_unrelatedIsCheckCode);
+
+        expect(
+          errors.map((e) => e.code),
+          contains('avoid_unrelated_type_casts'),
+        );
+      });
+
+      test('report_is_checks: false silences it', () async {
+        final errors = await harness.analyze(
+          _unrelatedIsCheckCode,
+          config: '''
+rules:
+  avoid_unrelated_type_casts:
+    report_is_checks: false
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_unrelated_type_casts')),
+        );
+      });
+
+      test('report_is_checks: false leaves as casts reporting', () async {
+        final errors = await harness.analyze(
+          _unrelatedAsCastCode,
+          config: '''
+rules:
+  avoid_unrelated_type_casts:
+    report_is_checks: false
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('avoid_unrelated_type_casts'),
+        );
+      });
+    });
+
+    group('avoid_passing_async_when_sync_expected exemptions', () {
+      test('an async void callback is reported with no config', () async {
+        final errors = await harness.analyze(_asyncVoidCallbackCode);
+
+        expect(
+          errors.map((e) => e.code),
+          contains('avoid_passing_async_when_sync_expected'),
+        );
+      });
+
+      test('ignored_parameters silences the named parameter', () async {
+        final errors = await harness.analyze(
+          _asyncVoidCallbackCode,
+          config: '''
+rules:
+  avoid_passing_async_when_sync_expected:
+    ignored_parameters: [onPressed]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_passing_async_when_sync_expected')),
+        );
+      });
+
+      test('ignored_parameters leaves other parameters reporting', () async {
+        final errors = await harness.analyze(
+          _asyncVoidPlainCode,
+          config: '''
+rules:
+  avoid_passing_async_when_sync_expected:
+    ignored_parameters: [onPressed]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('avoid_passing_async_when_sync_expected'),
+        );
+      });
+
+      test('ignore_widget_callbacks silences onPressed', () async {
+        final errors = await harness.analyze(
+          _asyncVoidCallbackCode,
+          config: '''
+rules:
+  avoid_passing_async_when_sync_expected:
+    ignore_widget_callbacks: true
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_passing_async_when_sync_expected')),
+        );
+      });
+
+      test(
+        'ignore_widget_callbacks leaves a plain parameter reporting',
+        () async {
+          final errors = await harness.analyze(
+            _asyncVoidPlainCode,
+            config: '''
+rules:
+  avoid_passing_async_when_sync_expected:
+    ignore_widget_callbacks: true
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            contains('avoid_passing_async_when_sync_expected'),
+          );
+        },
+      );
     });
 
     group('state_base_classes', () {
@@ -1017,9 +1407,20 @@ class _OptionsHarness with ResourceProviderMixin {
   /// and a rule that never fires makes every negative assertion vacuous.
   void _addBlocPackage() {
     final blocRoot = convertPath('/pkg/bloc');
+    // `state` and `emit` exist so `emit_new_bloc_state_instances` can resolve
+    // them; the suffix/prefix rules below only use these as bare type markers
+    // and are unaffected by the extra members.
     newFile(join(blocRoot, 'lib', 'bloc.dart'), '''
-class Bloc<Event, State> {}
-class Cubit<State> {}
+class Bloc<Event, State> {
+  late State state;
+  void emit(State state) {}
+  void safeEmit(State state) {}
+}
+class Cubit<State> {
+  late State state;
+  void emit(State state) {}
+  void safeEmit(State state) {}
+}
 abstract class Repository {}
 mixin Trackable {}
 ''');

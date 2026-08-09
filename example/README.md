@@ -52,6 +52,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | Rule | Description | Fix |
 |------|-------------|-----|
 | `always_remove_listener` | Listener added but never removed in `dispose()` | Yes |
+| `always_pass_global_key` | `GlobalKey` created inside `build` loses subtree state | — |
 | `async_value_nullable_pattern` | Matching `AsyncValue(:final value?)` on a nullable value hides a legitimate null result | Yes |
 | `avoid_accessing_collections_by_constant_index` | Avoid accessing a collection by a constant index inside a loop | — |
 | `avoid_banned_annotations` | Configured annotations, optionally scoped by path | — |
@@ -86,14 +87,18 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_incorrect_image_opacity` | Use `Image`'s `opacity` instead of wrapping in `Opacity` | Yes |
 | `avoid_inherited_widget_in_initstate` | Don't look up inherited widgets inside `initState` | — |
 | `avoid_inverted_boolean_checks` | Use the opposite operator instead of negating a comparison | Yes |
+| `avoid_late_context` | `late` field initializer reads `context`, freezing the value | — |
 | `avoid_map_keys_contains` | Use `containsKey()` instead of `.keys.contains()` | Yes |
 | `avoid_missing_enum_constant_in_map` | Cover every enum constant in a map keyed by that enum | — |
+| `avoid_missing_completer_stack_trace` | Pass the stack trace to `Completer.completeError` | — |
 | `avoid_misused_hooks` | Don't call hooks inside loops | — |
 | `avoid_misused_test_matchers` | Incompatible matcher usage with the actual value type | — |
 | `avoid_mounted_in_setstate` | Checking `mounted` inside `setState` is too late | — |
 | `avoid_nested_futures` | Don't declare `Future<Future<T>>` | — |
+| `avoid_not_encodable_in_to_json` | `toJson` map holds a value `jsonEncode` cannot serialize | — |
 | `avoid_notifier_constructors` | Avoid constructors with logic in Notifier classes | Yes |
 | `avoid_only_rethrow` | Catch clause contains only a rethrow statement | Yes |
+| `avoid_passing_async_when_sync_expected` | Async closure passed where a `void` function is expected | — |
 | `avoid_passing_bloc_to_bloc` | Avoid passing a Bloc/Cubit to another Bloc/Cubit | — |
 | `avoid_passing_build_context_to_blocs` | Avoid passing `BuildContext` to a Bloc/Cubit | — |
 | `avoid_public_notifier_properties` | Public non-overridden properties in Notifier classes | — |
@@ -103,12 +108,14 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_ref_read_inside_build` | Avoid using `ref.read` inside the `build` method | Yes |
 | `avoid_ref_watch_outside_build` | Use `ref.read` or `ref.listen` instead of `ref.watch` outside `build` | — |
 | `avoid_returning_widgets` | Avoid returning widgets from functions/methods/getters | — |
+| `avoid_shadowed_extension_methods` | Extension member the extended type already declares | — |
 | `avoid_shrink_wrap_in_lists` | Avoid using `shrinkWrap` in `ListView` | Yes |
 | `avoid_single_child_in_multi_child_widgets` | Single child in multi-child widgets | — |
 | `avoid_single_field_destructuring` | Avoid single-field destructuring | Yes |
 | `avoid_state_constructors` | Avoid constructors with logic in State classes | Yes |
 | `avoid_throw_in_catch_block` | Avoid using `throw` inside a catch block | Yes |
 | `avoid_unassigned_stream_subscriptions` | Stream subscription not assigned to a variable | — |
+| `avoid_unmodified_loop_condition` | Loop condition the body can never change | — |
 | `avoid_unnecessary_consumer_widgets` | `ConsumerWidget` does not use `WidgetRef` | Yes |
 | `avoid_unnecessary_gesture_detector` | `GestureDetector` with no event handlers | Yes |
 | `avoid_unnecessary_hook_widgets` | `HookWidget` does not use hooks | Yes |
@@ -117,15 +124,23 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_unnecessary_overrides_in_state` | State method override only calls `super` | Yes |
 | `avoid_unnecessary_setstate` | Unnecessary call to `setState` | Yes |
 | `avoid_unnecessary_stateful_widgets` | `StatefulWidget` with no mutable state | Yes |
+| `avoid_unrelated_type_casts` | `as` cast or `is` check between unrelated types | — |
+| `avoid_unremovable_callbacks_in_listeners` | Inline closure passed to `addListener` can never be removed | — |
 | `avoid_unsafe_collection_methods` | Check for emptiness before using `first`, `last`, `single`, or `reduce` | — |
+| `avoid_unused_after_null_check` | Variable null-checked but unused in the guarded branch | — |
 | `avoid_wildcard_cases_with_enums` | Keep exhaustiveness checking by listing enum cases explicitly | — |
 | `avoid_wrapping_in_padding` | Avoid wrapping a widget in `Padding` when it has padding support | Yes |
 | `banned_usage` | Configured members such as `DateTime.now`, optionally scoped by path | — |
+| `check_for_equals_in_render_object_setters` | `RenderObject` setter marks dirty without comparing first | — |
 | `check_is_not_closed_after_async_gap` | Check `isClosed` before emitting state after an `await` | — |
 | `dispose_fields` | Field not disposed in `dispose()` | Yes |
 | `dispose_provided_instances` | Instance not disposed via `ref.onDispose()` | Yes |
+| `emit_new_bloc_state_instances` | Emit a new state instance instead of the existing state object | — |
+| `function_always_returns_null` | Nullable-returning function whose every path returns null | — |
+| `handle_bloc_event_subclasses` | Sealed Bloc event subclass with no `on<E>` handler | — |
 | `list_all_equatable_fields` | Equatable subclass missing fields in `props` | Yes |
 | `missing_provider_scope` | Riverpod applications must have a `ProviderScope` at the root | Yes |
+| `no_equal_then_else` | Both branches of a condition are identical | — |
 | `notifier_build` | Classes annotated with `@riverpod` must define a `build` method | Yes |
 | `pass_existing_future_to_future_builder` | Don't create a new `Future` inline inside `FutureBuilder` | — |
 | `pass_existing_stream_to_stream_builder` | Don't create a new `Stream` inline inside `StreamBuilder` | — |
@@ -138,7 +153,8 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `prefer_center_over_align` | `Center` over `Align` with center alignment | Yes |
 | `prefer_class_destructuring` | Use class destructuring for repeated property accesses | Yes |
 | `prefer_compute_over_isolate_run` | Use `compute()` instead of `Isolate.run()` | Yes |
-| `prefer_const_border_radius` | `BorderRadius.all(Radius.circular())` over `BorderRadius.circular()` | Yes |
+| `prefer_const_border_radius` | Prefer `BorderRadius.all` over `BorderRadius.circular` | Yes |
+| `prefer_correct_json_casts` | JSON value cast to a non-nullable type throws on a missing key | — | `BorderRadius.all(Radius.circular())` over `BorderRadius.circular()` | Yes |
 | `prefer_constrained_box_over_container` | `ConstrainedBox` over `Container` with only constraints | Yes |
 | `prefer_container` | Nested widgets → single `Container` | Yes |
 | `prefer_contains` | `.contains()` instead of `.indexOf()` compared to `-1` | Yes |
@@ -179,6 +195,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `proper_super_calls` | `super` calls placed correctly in lifecycle methods | Yes |
 | `protected_notifier_properties` | Don't access a Notifier's `state`, `ref`, or `future` externally | — |
 | `provider_parameters` | Family provider arguments must have stable equality | — |
+| `require_atomic_async_updates` | Re-read shared state after an `await` instead of writing back a stale value | — |
 | `use_class_prefix` | Configured name prefix for subtypes of a configured type | Yes |
 | `use_class_suffix` | Configured name suffix for subtypes of a configured type | Yes |
 | `use_closest_build_context` | Use closest available `BuildContext` | Yes |
