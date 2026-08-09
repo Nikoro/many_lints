@@ -49,6 +49,110 @@ void f(Foo foo) {
 }
 ''';
 
+/// An enum interpolated into a string. Exempt by default (it renders as
+/// `Status.active`), reported under `report_enums: true`.
+const _interpolatedEnumCode = '''
+enum Status { active, inactive }
+
+String describe(Status status) => 'status: \$status';
+''';
+
+/// An enum that *does* override toString, which stays exempt even under
+/// `report_enums` — the asymmetric half of that option's tests.
+const _enumWithToStringCode = '''
+enum Status {
+  active,
+  inactive;
+
+  @override
+  String toString() => 'Status(\$name)';
+}
+
+String describe(Status status) => 'status: \$status';
+''';
+
+/// Two labels sharing one body. Convertible only as `case 'a' || 'b' =>`,
+/// so it is reported only under `allow_fallthrough_cases: true`.
+const _fallthroughSwitchCode = '''
+int score(String grade) {
+  switch (grade) {
+    case 'a':
+    case 'b':
+      return 1;
+    default:
+      return 0;
+  }
+}
+''';
+
+/// A fallthrough case with nothing after it to share a body with, so there is
+/// no pattern to merge into — unreported even with the option on.
+const _trailingFallthroughCode = '''
+int score(String grade) {
+  switch (grade) {
+    default:
+      return 0;
+    case 'a':
+  }
+}
+''';
+
+/// A `dynamic` argument passed to `contains` on a typed list. Skipped by
+/// default because the real type is unknown; reported under `strict: true`.
+const _dynamicContainsCode = '''
+bool check(List<int> values, dynamic candidate) => values.contains(candidate);
+''';
+
+/// A state-like class that does **not** extend Flutter's `State`, holding a
+/// disposable field that is never disposed.
+///
+/// `dispose_fields` skips it entirely by default, which is exactly the gap
+/// `state_base_classes` exists to close. Pure Dart, so it resolves under
+/// `createMockSdk` — a Flutter-typed fixture would report nothing and make
+/// every assertion here pass vacuously.
+const _customStateBaseCode = '''
+class DisposableController {
+  void dispose() {}
+}
+
+class Ticker {
+  void dispose() {}
+}
+
+class MyController extends DisposableController {
+  final Ticker ticker = Ticker();
+}
+''';
+
+/// A single commented-out line — the smallest block `avoid_commented_out_code`
+/// reports by default.
+const _oneLineCommentedCode = '''
+void main() {
+  // print('hello');
+}
+''';
+
+/// Two consecutive commented-out lines, which stay reported at `min_lines: 2`.
+const _twoLineCommentedCode = '''
+void main() {
+  // print('hello');
+  // print('world');
+}
+''';
+
+/// A list literal repeating the same literal value.
+const _duplicateLiteralCode = '''
+final values = [1, 2, 1];
+''';
+
+/// A list literal repeating the same identifier, which `ignore_literals` must
+/// still report — the asymmetric half of that option's tests.
+const _duplicateIdentifierCode = '''
+const a = 1;
+const b = 2;
+final values = [a, b, a];
+''';
+
 /// A Bloc subclass named without the default `Bloc` suffix, but *with* a
 /// `Store` suffix — so it reports by default and falls silent once `suffix`
 /// is reconfigured.
@@ -159,6 +263,274 @@ void main() {
     });
 
     tearDown(() async => harness.tearDown());
+
+    // Options that make a rule report *more* than it does by default. Each
+    // pair proves the default is unchanged and the option genuinely widens.
+    group('widening options', () {
+      group('avoid_default_tostring report_enums', () {
+        test('an interpolated enum is exempt by default', () async {
+          final errors = await harness.analyze(_interpolatedEnumCode);
+
+          expect(
+            errors.map((e) => e.code),
+            isNot(contains('avoid_default_tostring')),
+          );
+        });
+
+        test('report_enums reports it', () async {
+          final errors = await harness.analyze(
+            _interpolatedEnumCode,
+            config: '''
+rules:
+  avoid_default_tostring:
+    report_enums: true
+''',
+          );
+
+          expect(errors.map((e) => e.code), contains('avoid_default_tostring'));
+        });
+
+        test('report_enums leaves an enum with toString alone', () async {
+          final errors = await harness.analyze(
+            _enumWithToStringCode,
+            config: '''
+rules:
+  avoid_default_tostring:
+    report_enums: true
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            isNot(contains('avoid_default_tostring')),
+          );
+        });
+      });
+
+      group('prefer_switch_expression allow_fallthrough_cases', () {
+        test('a fallthrough switch is not reported by default', () async {
+          final errors = await harness.analyze(_fallthroughSwitchCode);
+
+          expect(
+            errors.map((e) => e.code),
+            isNot(contains('prefer_switch_expression')),
+          );
+        });
+
+        test('the option reports it', () async {
+          final errors = await harness.analyze(
+            _fallthroughSwitchCode,
+            config: '''
+rules:
+  prefer_switch_expression:
+    allow_fallthrough_cases: true
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            contains('prefer_switch_expression'),
+          );
+        });
+
+        test('a trailing fallthrough stays unreported', () async {
+          // Nothing to merge the dangling pattern into, so neither the rule
+          // nor the fix can act.
+          final errors = await harness.analyze(
+            _trailingFallthroughCode,
+            config: '''
+rules:
+  prefer_switch_expression:
+    allow_fallthrough_cases: true
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            isNot(contains('prefer_switch_expression')),
+          );
+        });
+      });
+
+      group('avoid_collection_methods_with_unrelated_types strict', () {
+        test('a dynamic argument is not reported by default', () async {
+          final errors = await harness.analyze(_dynamicContainsCode);
+
+          expect(
+            errors.map((e) => e.code),
+            isNot(contains('avoid_collection_methods_with_unrelated_types')),
+          );
+        });
+
+        test('strict reports it', () async {
+          final errors = await harness.analyze(
+            _dynamicContainsCode,
+            config: '''
+rules:
+  avoid_collection_methods_with_unrelated_types:
+    strict: true
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            contains('avoid_collection_methods_with_unrelated_types'),
+          );
+        });
+      });
+    });
+
+    group('state_base_classes', () {
+      // `dispose_fields` normally only looks inside a Flutter `State`
+      // subclass. A state-like base that does not extend `State` is invisible
+      // to it — that is the gap this option closes, not the intermediate
+      // `BaseState<T>` case, which `isSuperOf` already walks to.
+      test('a non-State base is ignored by default', () async {
+        final errors = await harness.analyze(_customStateBaseCode);
+
+        expect(errors.map((e) => e.code), isNot(contains('dispose_fields')));
+      });
+
+      test('configuring the base makes the rule apply', () async {
+        final errors = await harness.analyze(
+          _customStateBaseCode,
+          config: '''
+rules:
+  dispose_fields:
+    state_base_classes: [DisposableController]
+''',
+        );
+
+        expect(errors.map((e) => e.code), contains('dispose_fields'));
+      });
+
+      test('an unrelated configured name changes nothing', () async {
+        final errors = await harness.analyze(
+          _customStateBaseCode,
+          config: '''
+rules:
+  dispose_fields:
+    state_base_classes: [SomethingElse]
+''',
+        );
+
+        expect(errors.map((e) => e.code), isNot(contains('dispose_fields')));
+      });
+    });
+
+    group('prefer_class_destructuring ignored_types', () {
+      test('exempts a listed type', () async {
+        final errors = await harness.analyze(
+          _threePropertyCode,
+          config: '''
+rules:
+  prefer_class_destructuring:
+    ignored_types: [Foo]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('prefer_class_destructuring')),
+        );
+      });
+
+      test('leaves an unlisted type reporting', () async {
+        final errors = await harness.analyze(
+          _threePropertyCode,
+          config: '''
+rules:
+  prefer_class_destructuring:
+    ignored_types: [SomethingElse]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('prefer_class_destructuring'),
+        );
+      });
+    });
+
+    group('avoid_commented_out_code min_lines', () {
+      test('reports a single commented-out line by default', () async {
+        final errors = await harness.analyze(_oneLineCommentedCode);
+
+        expect(errors.map((e) => e.code), contains('avoid_commented_out_code'));
+      });
+
+      test('min_lines: 2 silences a one-line block', () async {
+        final errors = await harness.analyze(
+          _oneLineCommentedCode,
+          config: '''
+rules:
+  avoid_commented_out_code:
+    min_lines: 2
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_commented_out_code')),
+        );
+      });
+
+      test('min_lines: 2 still reports a two-line block', () async {
+        final errors = await harness.analyze(
+          _twoLineCommentedCode,
+          config: '''
+rules:
+  avoid_commented_out_code:
+    min_lines: 2
+''',
+        );
+
+        expect(errors.map((e) => e.code), contains('avoid_commented_out_code'));
+      });
+    });
+
+    group('avoid_duplicate_collection_elements ignore_literals', () {
+      test('reports duplicate literals by default', () async {
+        final errors = await harness.analyze(_duplicateLiteralCode);
+
+        expect(
+          errors.map((e) => e.code),
+          contains('avoid_duplicate_collection_elements'),
+        );
+      });
+
+      test('ignore_literals exempts them', () async {
+        final errors = await harness.analyze(
+          _duplicateLiteralCode,
+          config: '''
+rules:
+  avoid_duplicate_collection_elements:
+    ignore_literals: true
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_duplicate_collection_elements')),
+        );
+      });
+
+      test('ignore_literals still reports a duplicate identifier', () async {
+        final errors = await harness.analyze(
+          _duplicateIdentifierCode,
+          config: '''
+rules:
+  avoid_duplicate_collection_elements:
+    ignore_literals: true
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('avoid_duplicate_collection_elements'),
+        );
+      });
+    });
 
     group('prefer_class_destructuring min_occurrences', () {
       test('reports at the default threshold with no config', () async {

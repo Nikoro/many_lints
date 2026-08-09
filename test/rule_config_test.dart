@@ -118,6 +118,86 @@ rules:
       );
     });
 
+    test('parses include patterns and a message', () {
+      final config = ManyLintsConfig.parse('''
+rules:
+  avoid_border_all:
+    include:
+      - lib/ui/**
+    message: Use AppBorder.
+''');
+
+      final rule = config.forRule('avoid_border_all');
+      expect(rule.include, ['lib/ui/**']);
+      expect(rule.message, 'Use AppBorder.');
+    });
+
+    test('include and message are not exposed as free-form options', () {
+      final config = ManyLintsConfig.parse('''
+rules:
+  avoid_border_all:
+    include: [lib/**]
+    message: hi
+''');
+
+      // They are structural, like `exclude` — leaking them into `options`
+      // would let a rule read `include` as if it were its own option.
+      final rule = config.forRule('avoid_border_all');
+      expect(rule.options.keys, isEmpty);
+    });
+
+    test('a bare scalar include becomes a one-item list', () {
+      final config = ManyLintsConfig.parse('''
+rules:
+  avoid_border_all:
+    include: lib/ui/**
+''');
+
+      expect(config.forRule('avoid_border_all').include, ['lib/ui/**']);
+    });
+
+    // `exclude` gained scalar support alongside `include`, so the two spell
+    // the same idea the same way.
+    test('a bare scalar exclude becomes a one-item list', () {
+      final config = ManyLintsConfig.parse('''
+rules:
+  avoid_border_all:
+    exclude: lib/legacy.dart
+''');
+
+      expect(config.forRule('avoid_border_all').exclude, ['lib/legacy.dart']);
+    });
+
+    test('a list exclude still parses as before', () {
+      final config = ManyLintsConfig.parse('''
+rules:
+  avoid_border_all:
+    exclude: [a.dart, b.dart]
+''');
+
+      expect(config.forRule('avoid_border_all').exclude, ['a.dart', 'b.dart']);
+    });
+
+    test('a blank message is dropped', () {
+      final config = ManyLintsConfig.parse('''
+rules:
+  avoid_border_all:
+    message: "   "
+''');
+
+      expect(config.forRule('avoid_border_all').message, isNull);
+    });
+
+    test('a wrong-typed include yields an empty list', () {
+      final config = ManyLintsConfig.parse('''
+rules:
+  avoid_border_all:
+    include: 42
+''');
+
+      expect(config.forRule('avoid_border_all').include, isEmpty);
+    });
+
     test('malformed yaml degrades to empty instead of throwing', () {
       final config = ManyLintsConfig.parse('rules: [unclosed');
       expect(config.forRule('avoid_border_all').exclude, isEmpty);
@@ -484,6 +564,178 @@ many_lints:
       // The analyzer only validates the interior of sections it knows, so an
       // unrecognized top-level key must not yield `unsupported_option`.
       expect(errors.map((e) => e.code), isNot(contains('unsupported_option')));
+    });
+
+    group('include', () {
+      test('limits the rule to matching paths', () async {
+        final errors = await harness.analyze(
+          _rethrowCode,
+          fileName: 'feature/a.dart',
+          config: '''
+rules:
+  avoid_only_rethrow:
+    include:
+      - lib/feature/**
+''',
+        );
+
+        expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
+      });
+
+      // The asymmetric half: without this, the test above could pass purely
+      // because the rule fires everywhere and `include` does nothing.
+      test('silences the rule outside matching paths', () async {
+        final errors = await harness.analyze(
+          _rethrowCode,
+          fileName: 'other/a.dart',
+          config: '''
+rules:
+  avoid_only_rethrow:
+    include:
+      - lib/feature/**
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_only_rethrow')),
+        );
+      });
+
+      test('an empty include list means everywhere, not nowhere', () async {
+        final errors = await harness.analyze(
+          _rethrowCode,
+          config: '''
+rules:
+  avoid_only_rethrow:
+    include: []
+''',
+        );
+
+        expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
+      });
+
+      test('accepts a bare scalar as a one-item list', () async {
+        final errors = await harness.analyze(
+          _rethrowCode,
+          fileName: 'feature/a.dart',
+          config: '''
+rules:
+  avoid_only_rethrow:
+    include: lib/feature/**
+''',
+        );
+
+        expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
+      });
+
+      test('exclude wins over include for a file matching both', () async {
+        final errors = await harness.analyze(
+          _rethrowCode,
+          fileName: 'feature/generated.dart',
+          config: '''
+rules:
+  avoid_only_rethrow:
+    include:
+      - lib/feature/**
+    exclude:
+      - "**/generated.dart"
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_only_rethrow')),
+        );
+      });
+
+      test('a wrong-typed include does not disable the rule', () async {
+        final errors = await harness.analyze(
+          _rethrowCode,
+          config: '''
+rules:
+  avoid_only_rethrow:
+    include: 42
+''',
+        );
+
+        expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
+      });
+    });
+
+    group('message', () {
+      test('appends the configured sentence to the diagnostic', () async {
+        final errors = await harness.analyze(
+          _rethrowCode,
+          config: '''
+rules:
+  avoid_only_rethrow:
+    message: Use our AppError helper instead.
+''',
+        );
+
+        final error = errors.firstWhere((e) => e.code == 'avoid_only_rethrow');
+        expect(error.message, endsWith('Use our AppError helper instead.'));
+        // The original text must survive — appending, not replacing.
+        expect(error.message, contains('rethrow'));
+      });
+
+      test('leaves the message alone when unset', () async {
+        final errors = await harness.analyze(_rethrowCode);
+
+        final error = errors.firstWhere((e) => e.code == 'avoid_only_rethrow');
+        expect(error.message, isNot(contains('AppError')));
+      });
+
+      test(
+        'keeps the diagnostic code so ignores and fixes still work',
+        () async {
+          final errors = await harness.analyze(
+            _rethrowCode,
+            config: '''
+rules:
+  avoid_only_rethrow:
+    message: House rule.
+''',
+          );
+
+          expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
+        },
+      );
+
+      test('an empty message is treated as absent', () async {
+        final errors = await harness.analyze(
+          _rethrowCode,
+          config: '''
+rules:
+  avoid_only_rethrow:
+    message: "   "
+''',
+        );
+
+        final error = errors.firstWhere((e) => e.code == 'avoid_only_rethrow');
+        // No trailing separator from an empty suffix.
+        expect(error.message.trimRight(), error.message);
+      });
+
+      test('applies to a rule reporting from several callbacks', () async {
+        final errors = await harness.analyze(
+          _varCode,
+          config: '''
+rules:
+  prefer_type_over_var:
+    message: See the style guide.
+''',
+        );
+
+        final reported = errors.where((e) => e.code == 'prefer_type_over_var');
+        expect(reported, isNotEmpty);
+        expect(
+          reported.every((e) => e.message.endsWith('See the style guide.')),
+          isTrue,
+          reason: 'every callback must go through the same reporter seam',
+        );
+      });
     });
 
     group('precedence when both sources exist', () {
