@@ -58,13 +58,16 @@ The check descends into closures declared inside `initState`, because a closure 
 
 ## Turning this rule off
 
-To disable this rule:
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`avoid_inherited_widget_in_initstate: true`.
+
+To turn it off:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      avoid_inherited_widget_in_initstate: false
+# many_lints.yaml
+rules:
+  avoid_inherited_widget_in_initstate: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

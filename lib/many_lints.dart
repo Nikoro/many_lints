@@ -286,9 +286,17 @@ class ManyLintsPlugin extends Plugin {
   @override
   String get name => 'Many Lints';
 
+  /// The names of every rule this plugin registers.
+  ///
+  /// Populated by [register]. Exposed so tests can assert that each name in a
+  /// preset still corresponds to a real rule — a preset entry left behind by a
+  /// rename would otherwise shrink the preset silently.
+  final registeredRuleNames = <String>{};
+
   @override
   void register(PluginRegistry registry) {
-    // Register warning rules (enabled by default)
+    // Every rule is registered opt-in: nothing reports until the project
+    // selects a preset or enables the rule by name. See lib/src/presets.dart.
     _registerWarningRule(registry, AlwaysRemoveListener());
     _registerWarningRule(registry, AvoidBlocPublicMethods());
     _registerWarningRule(registry, AvoidPassingBlocToBloc());
@@ -782,15 +790,40 @@ class ManyLintsPlugin extends Plugin {
   }
 }
 
-void _registerWarningRule(PluginRegistry registry, AbstractAnalysisRule rule) {
-  if (registry is plugin_registry.PluginRegistryImpl) {
-    PluginServer.registries['many_lints'] = registry;
-    registry.warningRules[rule.name.toLowerCase()] = rule;
-    for (final code in rule.diagnosticCodes) {
-      registry.codeMap[code.lowerCaseUniqueName] = code;
-    }
-    return;
-  }
+/// Registers [rule] so that it runs, but reports only where this package's own
+/// configuration says it should.
+///
+/// The rule is still installed as a *warning* rule, which the analyzer treats
+/// as on-by-default. That is deliberate, and is not the same thing as the
+/// package being on by default:
+///
+/// - `registerLintRule` would make a rule opt-in through the analyzer's own
+///   `diagnostics:` map, but that map is the only channel the analyzer offers
+///   and it cannot express a preset — `diagnostics:` accepts severity scalars
+///   only, and a `plugins:` block is replaced wholesale rather than merged
+///   across `include:`. Presets would be unavailable.
+/// - Keeping the rules registered means every rule's visitors still run, and
+///   enablement is decided per file in [ManyLintsRule]'s reporter seam, where
+///   `preset:`, `enabled:`, `exclude:` and `include:` all already resolve.
+///
+/// So the default is enforced one layer in: with no configuration, every
+/// rule's diagnostics are discarded and the package is silent.
+extension on ManyLintsPlugin {
+  void _registerWarningRule(
+    PluginRegistry registry,
+    AbstractAnalysisRule rule,
+  ) {
+    registeredRuleNames.add(rule.name);
 
-  registry.registerWarningRule(rule);
+    if (registry is plugin_registry.PluginRegistryImpl) {
+      PluginServer.registries['many_lints'] = registry;
+      registry.warningRules[rule.name.toLowerCase()] = rule;
+      for (final code in rule.diagnosticCodes) {
+        registry.codeMap[code.lowerCaseUniqueName] = code;
+      }
+      return;
+    }
+
+    registry.registerWarningRule(rule);
+  }
 }

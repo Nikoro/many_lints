@@ -54,13 +54,16 @@ Opacity(opacity: 0.5, child: Text('Hello'));
 
 ## Configuration
 
-To disable this rule:
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`avoid_incorrect_image_opacity: true`.
+
+To turn it off:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      avoid_incorrect_image_opacity: false
+# many_lints.yaml
+rules:
+  avoid_incorrect_image_opacity: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

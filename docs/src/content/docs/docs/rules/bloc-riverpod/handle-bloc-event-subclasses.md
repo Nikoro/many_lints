@@ -59,13 +59,16 @@ Handlers are found by scanning the class for `on<E>(...)` calls, so a registrati
 
 ## Configuration
 
-To disable this rule:
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`handle_bloc_event_subclasses: true`.
+
+To turn it off:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      handle_bloc_event_subclasses: false
+# many_lints.yaml
+rules:
+  handle_bloc_event_subclasses: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

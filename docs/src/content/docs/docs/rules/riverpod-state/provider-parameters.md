@@ -57,13 +57,16 @@ ref.watch(myProvider(Foo(1)));
 
 ## Configuration
 
-To disable this rule:
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`provider_parameters: true`.
+
+To turn it off:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      provider_parameters: false
+# many_lints.yaml
+rules:
+  provider_parameters: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

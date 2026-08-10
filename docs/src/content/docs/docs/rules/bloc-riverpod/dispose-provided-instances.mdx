@@ -89,13 +89,16 @@ class GoodNotifier extends Notifier<DisposableService> {
 
 ## Turning this rule off
 
-To disable this rule:
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`dispose_provided_instances: true`.
+
+To turn it off:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      dispose_provided_instances: false
+# many_lints.yaml
+rules:
+  dispose_provided_instances: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

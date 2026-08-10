@@ -1,4 +1,4 @@
-import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'many_lints_rule_test_base.dart';
 import 'package:many_lints/src/rules/avoid_mounted_in_setstate.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -9,7 +9,7 @@ void main() {
 }
 
 @reflectiveTest
-class AvoidMountedInSetstateTest extends AnalysisRuleTest {
+class AvoidMountedInSetstateTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = AvoidMountedInSetstate();

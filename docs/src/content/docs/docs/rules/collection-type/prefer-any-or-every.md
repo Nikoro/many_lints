@@ -53,13 +53,16 @@ class Example {
 
 ## Configuration
 
-To disable this rule:
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`prefer_any_or_every: true`.
+
+To turn it off:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      prefer_any_or_every: false
+# many_lints.yaml
+rules:
+  prefer_any_or_every: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:analyzer/src/diagnostic/diagnostic.dart' as diag;
-import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'many_lints_rule_test_base.dart';
 import 'package:many_lints/src/type_checker.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -77,7 +77,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 // --- fromName + isExactly ---
 
 @reflectiveTest
-class TypeCheckerFromNameExactTest extends AnalysisRuleTest {
+class TypeCheckerFromNameExactTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = TypeCheckerTestRule(
@@ -126,7 +126,7 @@ class MyWidget extends BaseWidget {}
 // --- fromName + isExactly but checking the exact class ---
 
 @reflectiveTest
-class TypeCheckerFromNameNoMatchTest extends AnalysisRuleTest {
+class TypeCheckerFromNameNoMatchTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = TypeCheckerTestRule(
@@ -152,7 +152,7 @@ class Unrelated {}
 // --- isSuperOf ---
 
 @reflectiveTest
-class TypeCheckerIsSuperOfTest extends AnalysisRuleTest {
+class TypeCheckerIsSuperOfTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = TypeCheckerTestRule(
@@ -202,7 +202,7 @@ class Unrelated {}
 // --- any ---
 
 @reflectiveTest
-class TypeCheckerAnyTest extends AnalysisRuleTest {
+class TypeCheckerAnyTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = TypeCheckerTestRule(
@@ -257,7 +257,7 @@ class MyC extends TypeC {}
 // --- isAssignableFromType ---
 
 @reflectiveTest
-class TypeCheckerIsAssignableFromTypeTest extends AnalysisRuleTest {
+class TypeCheckerIsAssignableFromTypeTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = TypeCheckerTestRule(
@@ -295,7 +295,7 @@ class Unrelated {}
 // --- fromName with packageName 'dart' ---
 
 @reflectiveTest
-class TypeCheckerDartPackageTest extends AnalysisRuleTest {
+class TypeCheckerDartPackageTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = TypeCheckerTestRule(

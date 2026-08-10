@@ -34,38 +34,69 @@ Add `many_lints` to the **top-level** `plugins` section in your `analysis_option
 
 ```yaml
 plugins:
-  many_lints: ^0.9.0
+  many_lints: ^1.0.0
 ```
 
-That's it — the analysis server will automatically download and resolve the plugin from [pub.dev](https://pub.dev/packages/many_lints). There is no need to add it to your `pubspec.yaml`.
+The analysis server will automatically download and resolve the plugin from [pub.dev](https://pub.dev/packages/many_lints). There is no need to add it to your `pubspec.yaml`.
+
+Then pick a preset. **Every rule is off until you do**, so installing the plugin never floods an existing codebase:
+
+```yaml
+# many_lints.yaml — next to your pubspec.yaml
+preset: recommended
+```
+
+> **Seeing no warnings?** That is expected without a preset, not a broken install.
 
 > **Important**: After any change to the `plugins` section, you must restart the Dart Analysis Server.
 
 For local development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-### Configuring diagnostics
+### Presets
 
-All rules are registered as warnings and enabled by default. You can enable or disable individual rules under the `diagnostics` key:
+| Preset | Rules | Contents |
+|--------|-------|----------|
+| `none` | 0 | Nothing. The default, and the explicit way to opt out. |
+| `core` | 31 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
+| `recommended` | 79 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
+| `all` | 156 | Every rule, including opinionated ones. |
+
+Each preset builds on the one above it, the same way `package:lints/recommended.yaml` includes `core.yaml`. `core` and `recommended` deliberately exclude anything that imposes an architecture, a naming scheme, or a contested style choice.
+
+Adjust a preset in either direction without restating it:
+
+```yaml
+# many_lints.yaml
+preset: recommended
+rules:
+  prefer_type_over_var: true     # add a rule the preset omits
+  avoid_only_rethrow: false      # drop one it includes
+```
+
+Configuring a rule by name — an `exclude:`, an option, a `message:` — also opts it in.
+
+### Configuring severity
+
+`preset:` decides *whether* a rule runs. To change how loudly it reports, use the analyzer's `diagnostics` key:
 
 ```yaml
 plugins:
   many_lints:
-    version: ^0.9.0
+    version: ^1.0.0
     diagnostics:
-      prefer_center_over_align: true
-      use_class_suffix: false
+      avoid_equal_expressions: error   # error | warning | info
 ```
 
 ### Excluding paths per rule
 
-`diagnostics:` turns a rule on or off everywhere. To keep a rule on but skip certain paths, write a `rules:` block — in **either** of these two places, whichever you prefer:
+A preset turns a rule on everywhere. To keep a rule on but skip certain paths, write a `rules:` block — in **either** of these two places, whichever you prefer:
 
 **Option A — in your existing `analysis_options.yaml`**, under a top-level `many_lints:` key (note: top-level, a sibling of `plugins:`, not nested inside it):
 
 ```yaml
 # analysis_options.yaml
 plugins:
-  many_lints: ^0.9.0
+  many_lints: ^1.0.0
 
 many_lints:
   rules:
@@ -109,7 +140,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-156 lints with 91 quick fixes, all enabled by default as warnings. Each rule links to its full documentation with examples and fix details.
+156 lints with 91 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|

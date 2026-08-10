@@ -1,4 +1,4 @@
-import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'many_lints_rule_test_base.dart';
 import 'package:many_lints/src/rules/prefer_type_over_var.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -7,7 +7,7 @@ void main() {
 }
 
 @reflectiveTest
-class PreferTypeOverVarTest extends AnalysisRuleTest {
+class PreferTypeOverVarTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = PreferTypeOverVar();

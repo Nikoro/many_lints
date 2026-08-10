@@ -123,20 +123,36 @@ The trade-off: because the analyzer never parses it, this section does **not** i
 
 ---
 
-## What Works Without Any Code: Severity
+## What Works Without Any Code: Enablement and Severity
 
-Before adding configuration, check whether severity alone solves the user's problem. Enable/disable and severity override are natively supported and need **zero** implementation:
+Before adding configuration, check whether enablement or severity alone solves the user's problem. Both need **zero** implementation.
+
+**Enablement** is decided by this package, in `many_lints.yaml` (or the top-level `many_lints:` section). Rules are **opt-in**: nothing reports until a preset is selected or the rule is named.
+
+```yaml
+# many_lints.yaml
+preset: recommended
+rules:
+  my_rule: true         # add a rule the preset omits
+  other_rule: false     # drop one it includes
+```
+
+Resolution order lives in `ManyLintsConfig.isRuleEnabled`: an explicit `enabled:` wins, then the preset, then *any* config block at all opts the rule in — so writing an `exclude:` never silently does nothing. See [`lib/src/presets.dart`](../../../lib/src/presets.dart).
+
+**Severity** is the analyzer's own axis, and is the one thing `diagnostics:` still does well:
 
 ```yaml
 plugins:
   many_lints:
     diagnostics:
-      my_rule: error      # error | warning | info | true | false
+      my_rule: error      # error | warning | info
 ```
 
-This works because every rule in this project is registered via `_registerWarningRule`, and `RegistryMixin.enabled` treats warning rules as opt-out.
+:::caution
+`diagnostics:` can *disable* a rule, but it cannot *enable* one the preset left off. Rules are registered via `_registerWarningRule` (so the analyzer considers them on), and the real gate is applied per file in `ManyLintsRule.set reporter`, which the analyzer's options never reach.
+:::
 
-**Do not build configuration for something severity already covers.**
+**Do not build configuration for something enablement or severity already covers.**
 
 ---
 
@@ -522,7 +538,7 @@ Resolve such a list **once per callback** and pass it into every collector that 
 
 ## Testing a Configurable Rule
 
-`AnalysisRuleTest` **cannot** test configuration — it has no package root with a config file. Drive a real `PluginServer` instead, following [`test/rule_config_test.dart`](../../../test/rule_config_test.dart).
+`ManyLintsRuleTest` **cannot** test configuration — it writes its own `preset: all` file, which is the very thing a config test needs to control. Drive a real `PluginServer` instead, following [`test/rule_config_test.dart`](../../../test/rule_config_test.dart).
 
 The harness writes `analysis_options.yaml` (with the `plugins:` block), optionally `many_lints.yaml`, then the Dart file, and asserts on emitted diagnostic codes:
 

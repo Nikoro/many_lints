@@ -2148,8 +2148,19 @@ plugins:
     path: /many_lints
 ${optionsSection ?? ''}''');
 
+    // Rules are opt-in as of 1.0.0, so a test asserting a rule's *default*
+    // option behaviour still has to switch the rule on. A test that supplies
+    // either config source enables the rule through that block, since
+    // configuring a rule by name opts it in.
+    //
+    // The fallback is only written when neither source is given: a
+    // `many_lints.yaml` wins outright over the analysis_options section, so
+    // writing one unconditionally would silently defeat every test that
+    // exercises the `optionsSection` route.
     if (config != null) {
       newFile(join(packagePath, ConfigLoader.fileName), config);
+    } else if (optionsSection == null) {
+      newFile(join(packagePath, ConfigLoader.fileName), 'preset: all\n');
     }
     newFile(filePath, content);
 

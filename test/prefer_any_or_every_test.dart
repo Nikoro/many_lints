@@ -1,5 +1,5 @@
 import 'package:analyzer/src/diagnostic/diagnostic.dart' as diag;
-import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'many_lints_rule_test_base.dart';
 import 'package:many_lints/src/rules/prefer_any_or_every.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -8,7 +8,7 @@ void main() {
 }
 
 @reflectiveTest
-class PreferAnyOrEveryTest extends AnalysisRuleTest {
+class PreferAnyOrEveryTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = PreferAnyOrEvery();
@@ -82,7 +82,7 @@ void f() {
 }
 
 @reflectiveTest
-class PreferAnyOrEveryHelperFunctionsTest extends AnalysisRuleTest {
+class PreferAnyOrEveryHelperFunctionsTest extends ManyLintsRuleTest {
   Future<void> test_buildEveryReplacement_simple() async {
     await assertDiagnostics(
       r'''

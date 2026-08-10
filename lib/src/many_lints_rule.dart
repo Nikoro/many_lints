@@ -152,9 +152,18 @@ abstract class ManyLintsRule extends AnalysisRule {
   set reporter(DiagnosticReporter value) {
     final root = _packageRoot;
     if (root == null) {
+      // Without a package root there is no configuration file to read, and so
+      // no preset that could have switched this rule on. Rules are opt-in, so
+      // the honest answer is silence rather than the pre-1.0.0 default of
+      // reporting everything.
+      //
+      // Analyzing a file outside any package is the case that reaches here.
       _config = RuleConfig.empty;
       _relativePath = null;
-      super.reporter = value;
+      super.reporter = DiagnosticReporter(
+        DiagnosticListener.nullListener,
+        value.source,
+      );
       return;
     }
 

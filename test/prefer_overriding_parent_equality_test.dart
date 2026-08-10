@@ -1,4 +1,4 @@
-import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'many_lints_rule_test_base.dart';
 import 'package:many_lints/src/rules/prefer_overriding_parent_equality.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -9,7 +9,7 @@ void main() {
 }
 
 @reflectiveTest
-class PreferOverridingParentEqualityTest extends AnalysisRuleTest {
+class PreferOverridingParentEqualityTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = PreferOverridingParentEquality();

@@ -90,14 +90,35 @@ This is verifiable end-to-end with the `PluginServer` harness in `test/plugin_di
 Quick summary:
 
 1. Create `lib/src/rules/<rule_name>.dart`
-2. Extend `AnalysisRule`, define a static `LintCode` with `name`, `problemMessage`, `correctionMessage`
-3. Implement `registerNodeProcessors()` to register visitors via `RuleVisitorRegistry`
+2. Extend `ManyLintsRule`, define a static `LintCode` with `name`, `problemMessage`, `correctionMessage`
+3. Implement `registerManyLintsProcessors()` to register visitors via `RuleVisitorRegistry`
 4. Create `_Visitor` extending `SimpleAstVisitor`, report issues with `rule.reportAtNode()`
 5. Register the rule in `lib/many_lints.dart` via the project wrapper `_registerWarningRule(registry, ...)`
-6. Optionally create a fix in `lib/src/fixes/` extending `ResolvedCorrectionProducer`
-7. Create `test/<rule_name>_test.dart` using `analyzer_testing` patterns
-8. Create a documentation page in `docs/src/content/docs/docs/rules/<category>/`
-9. Create `example/lib/<lint_name>_example.dart` with bad/good/edge-case examples
+6. Assign the rule to a preset in `lib/src/presets.dart` (`coreRules`, `_recommendedOnlyRules`, or neither) — registering a rule does **not** switch it on
+7. Optionally create a fix in `lib/src/fixes/` extending `ResolvedCorrectionProducer`
+8. Create `test/<rule_name>_test.dart` extending `ManyLintsRuleTest` (from `test/many_lints_rule_test_base.dart`), **not** `AnalysisRuleTest`
+9. Create a documentation page in `docs/src/content/docs/docs/rules/<category>/`, stating which preset the rule belongs to
+10. Create `example/lib/<lint_name>_example.dart` with bad/good/edge-case examples
+
+## Rule Enablement (1.0.0)
+
+Every rule is **opt-in**. With no configuration the package is silent; a project selects
+rules with `preset:` in `many_lints.yaml` (or the top-level `many_lints:` section):
+
+| Preset | Rules | Contents |
+|--------|-------|----------|
+| `none` | 0 | Nothing. The default. |
+| `core` | 31 | Near-certain bugs only. |
+| `recommended` | 79 | `core` plus idiomatic, uncontroversial practice. |
+| `all` | 156 | Every rule, including opinionated ones. |
+
+Presets **cannot** ship as includable YAML the way `package:lints` does: the analyzer
+replaces a plugin's config wholesale across `include:` rather than merging it, and
+`diagnostics:` accepts severity scalars only. So rules stay registered as *warning* rules
+and the real gate is applied per file in `ManyLintsRule.set reporter`, which hands a
+disabled rule a null-listener reporter. Resolution order in
+`ManyLintsConfig.isRuleEnabled`: explicit `enabled:` → preset → any config block at all
+(so an `exclude:` never silently does nothing).
 
 ## Code Conventions
 

@@ -4,6 +4,48 @@
 
 ### Breaking
 
+- **Every rule is now off by default, and rules are selected with a preset.** Previously all 156 rules were enabled the moment the plugin was installed, which meant adopting the package on an existing codebase produced thousands of warnings before any of them could be judged useful.
+
+  Installing the plugin now reports nothing until a preset is chosen:
+
+  ```yaml
+  # many_lints.yaml
+  preset: recommended
+  ```
+
+  Four presets are available, each building on the previous one the way `package:lints/recommended.yaml` includes `core.yaml`:
+
+  | Preset | Rules | Contents |
+  |--------|-------|----------|
+  | `none` | 0 | Nothing. The default. |
+  | `core` | 31 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
+  | `recommended` | 79 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
+  | `all` | 156 | Every rule, including opinionated ones. |
+
+  `core` and `recommended` are deliberately conservative: a rule that imposes an architecture, a naming scheme, or a contested style choice is in neither, and rules that do nothing until configured (the `banned_*` family, `use_class_prefix`/`use_class_suffix`) are in no preset at all.
+
+  **To restore the previous behaviour**, select every rule explicitly:
+
+  ```yaml
+  # many_lints.yaml
+  preset: all
+  ```
+
+  A preset can be tuned in either direction without restating its contents, using `enabled:`:
+
+  ```yaml
+  preset: recommended
+  rules:
+    prefer_type_over_var:
+      enabled: true      # add a rule the preset omits
+    avoid_only_rethrow:
+      enabled: false     # drop one it includes
+  ```
+
+  The terse `rule_name: true` / `rule_name: false` spelling works too. Configuring a rule by name — giving it an `exclude:`, an `include:`, a `message:` or an option — also opts it in, so an existing `rules:` block keeps working without an added `enabled: true`.
+
+  `preset:` is read from the same two places as the rest of this package's configuration: `many_lints.yaml` at the package root, or a top-level `many_lints:` section in `analysis_options.yaml`. Presets cannot be distributed as includable YAML the way `package:lints` does, because the analyzer replaces a plugin's configuration wholesale across `include:` rather than merging it, and the `diagnostics:` key accepts only severity values.
+
 - Removed `prefer_contains`. The Dart SDK rule with the same name covers the
   same cases plus additional `indexOf` comparisons and provides its own quick
   fix. A removed-rule tombstone remains registered so existing configurations

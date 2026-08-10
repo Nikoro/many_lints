@@ -46,13 +46,16 @@ Equality (`!(a == b)`) is out of scope here; see [`avoid_unnecessary_negations`]
 
 ## Configuration
 
-To disable this rule:
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`avoid_inverted_boolean_checks: true`.
+
+To turn it off:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      avoid_inverted_boolean_checks: false
+# many_lints.yaml
+rules:
+  avoid_inverted_boolean_checks: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

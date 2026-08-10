@@ -1,7 +1,13 @@
 # Per-rule configuration for many_lints.
 #
-# This demonstrates `exclude`: the rule stays enabled everywhere else, but is
-# skipped for the listed paths. See lib/excluded/excluded_example.dart.
+# Every rule is off by default, so a project selects a rule set with `preset:`.
+# This example carries one file per rule, so it uses `all`; a real project
+# normally wants `core` or `recommended`.
+preset: all
+
+# The rest of this file demonstrates `exclude`: the rule stays enabled
+# everywhere else, but is skipped for the listed paths. See
+# lib/excluded/excluded_example.dart.
 #
 # The same block can instead live under a top-level `many_lints:` key in
 # `analysis_options.yaml` — the two forms are equivalent. If both exist, this

@@ -226,21 +226,44 @@ Edit `lib/many_lints.dart`:
    This project wrapper is required to keep plugin diagnostics/configuration in sync.
 3. If a fix exists, add `registry.registerFixForRule(<RuleClass>.code, <FixClass>.new);` in the fixes section
 
+## Step 6b: Decide the rule's preset
+
+Registering a rule does **not** switch it on — rules are opt-in. Decide which preset in
+[`lib/src/presets.dart`](../../../lib/src/presets.dart) the rule belongs to, and add its
+name there if any:
+
+- **`coreRules`** — the rule flags a near-certain bug: dead, contradictory or unreachable
+  code, a guaranteed runtime misbehaviour, a leaked resource. No stylistic judgement, and
+  essentially no false positives.
+- **`_recommendedOnlyRules`** — idiomatic, widely-agreed Dart/Flutter practice, or a
+  likely-but-not-certain mistake. Must be uncontroversial: something the Dart or Flutter
+  team would plausibly endorse.
+- **neither** — the rule imposes an architecture, a naming scheme, or a contested style
+  choice, has a meaningful false-positive rate, or does nothing until configured (any
+  `banned_*`-style rule). Leave it out of both sets; `preset: all` still picks it up.
+
+When torn, pick the lower tier. A preset must stay defensible as "safe and
+non-opinionated" — a user enabling `recommended` must not get taste imposed on them.
+
+`presets_test.dart` asserts every preset name is a real registered rule, so a typo or a
+later rename fails the suite rather than silently shrinking a preset.
+
 ## Step 7: Create tests
 
 Create `test/<lint_name>_test.dart` following this exact pattern:
 
 ```dart
-import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
 import 'package:many_lints/src/rules/<lint_name>.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'many_lints_rule_test_base.dart';
 
 void main() {
   defineReflectiveSuite(() => defineReflectiveTests(<RuleClass>Test));
 }
 
 @reflectiveTest
-class <RuleClass>Test extends AnalysisRuleTest {
+class <RuleClass>Test extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = <RuleClass>();
@@ -277,7 +300,14 @@ Key conventions:
 - Use `newPackage('name').addFile()` to mock external package dependencies
 - Include at least: 2 positive cases (triggers lint), 2 negative cases (no lint), 1 edge case
 
-`AnalysisRuleTest` covers essentially every rule. The only exception is an
+🚨 Extend `ManyLintsRuleTest` (from `test/many_lints_rule_test_base.dart`), **not**
+`AnalysisRuleTest` directly. Rules are opt-in, and a rule test writes no configuration,
+so against the stock base class every assertion would run against a rule that is switched
+off — `assertDiagnostics` would find nothing and `assertNoDiagnostics` would pass
+vacuously. The base class writes `preset: all` into the test package and clears
+`ConfigLoader`'s static cache, restoring the state these tests assume.
+
+`ManyLintsRuleTest` covers essentially every rule. The only exception is an
 end-to-end test driving a real `PluginServer` (see
 `test/plugin_diagnostics_config_test.dart`), where two details matter with
 analysis_server_plugin 0.3.18+:
@@ -301,8 +331,8 @@ batches remain in `test/plugin_fix_output_test.dart`. See
 If Step 5 created a fix, add its output-test group under `test/fix_output/`
 before proceeding.
 
-If Step 4b made the rule configurable, `AnalysisRuleTest` **cannot** cover it —
-it has no package root to hold a config file. Add a `PluginServer`-driven group
+If Step 4b made the rule configurable, `ManyLintsRuleTest` **cannot** cover it —
+its `preset: all` config file is exactly what a config test needs to replace. Add a `PluginServer`-driven group
 following `test/rule_config_test.dart`, and remember `ConfigLoader.clearCache()`
 in `setUp` (the cache is static and survives across tests).
 

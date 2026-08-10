@@ -1,4 +1,4 @@
-import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'many_lints_rule_test_base.dart';
 import 'package:many_lints/src/rules/avoid_cascade_after_if_null.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -9,7 +9,7 @@ void main() {
 }
 
 @reflectiveTest
-class AvoidCascadeAfterIfNullTest extends AnalysisRuleTest {
+class AvoidCascadeAfterIfNullTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = AvoidCascadeAfterIfNull();

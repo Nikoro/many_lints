@@ -1,4 +1,4 @@
-import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'many_lints_rule_test_base.dart';
 import 'package:many_lints/src/rules/missing_provider_scope.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -7,7 +7,7 @@ void main() {
 }
 
 @reflectiveTest
-class MissingProviderScopeTest extends AnalysisRuleTest {
+class MissingProviderScopeTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = MissingProviderScope();

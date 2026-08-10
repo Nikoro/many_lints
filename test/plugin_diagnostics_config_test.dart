@@ -13,6 +13,7 @@ import 'package:analyzer_plugin/src/protocol/protocol_internal.dart'
     as protocol;
 import 'package:analyzer_testing/resource_provider_mixin.dart';
 import 'package:many_lints/many_lints.dart';
+import 'package:many_lints/src/rule_config.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -27,7 +28,7 @@ void main() {
     await harness.tearDown();
   });
 
-  test('reports prefer_overriding_parent_equality by default', () async {
+  test('reports prefer_overriding_parent_equality when enabled', () async {
     final errors = await harness.analyze(_preferOverridingParentEqualityCode);
 
     expect(
@@ -200,6 +201,11 @@ class _PluginAnalysisHarness with ResourceProviderMixin {
     Map<String, String> diagnostics = const {},
   }) async {
     _writeAnalysisOptions(diagnostics);
+
+    // Rules are opt-in as of 1.0.0. This suite is about the analyzer's own
+    // `diagnostics:` key and `// ignore` comments, both of which act on a rule
+    // that is already running, so the preset puts every rule in that state.
+    newFile(join(packagePath, ConfigLoader.fileName), 'preset: all\n');
     newFile(filePath, content);
 
     final errors = channel.notifications

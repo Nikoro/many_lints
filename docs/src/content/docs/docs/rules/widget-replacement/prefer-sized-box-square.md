@@ -56,13 +56,21 @@ SizedBox(height: 10);
 
 ## Configuration
 
-To disable this rule:
+This rule is in **no preset**, so it is off unless you enable it — with
+`preset: all`, or by name:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      prefer_sized_box_square: false
+# many_lints.yaml
+rules:
+  prefer_sized_box_square: true
+```
+
+To turn it off again:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_sized_box_square: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

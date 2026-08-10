@@ -69,13 +69,15 @@ void onData(AsyncValue<int?> asyncValue) {
 
 ## Configuration
 
-To disable this rule:
+This rule is in the **`core`** preset, so it is on with `preset: core`,
+`preset: recommended` or `preset: all`.
+
+To turn it off:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      async_value_nullable_pattern: false
+# many_lints.yaml
+rules:
+  async_value_nullable_pattern: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

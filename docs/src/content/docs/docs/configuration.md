@@ -9,7 +9,7 @@ Add `many_lints` to the **top-level** `plugins` section in your `analysis_option
 
 ```yaml
 plugins:
-  many_lints: ^0.9.0
+  many_lints: ^1.0.0
 ```
 
 The analysis server will automatically download and resolve the plugin from [pub.dev](https://pub.dev/packages/many_lints). There is no need to add it to your `pubspec.yaml`.
@@ -23,7 +23,7 @@ You can use the extended syntax to pin a version:
 ```yaml
 plugins:
   many_lints:
-    version: ^0.9.0
+    version: ^1.0.0
 ```
 
 ## Local development
@@ -49,22 +49,105 @@ plugins:
     git: https://github.com/Nikoro/many_lints.git
 ```
 
-## Configuring diagnostics
+## Choosing a preset
 
-All 156 active rules are registered as warnings and enabled by default. You can enable or disable individual rules under the `diagnostics` key:
+**Every rule is off by default.** Installing the plugin reports nothing until you pick a
+preset — so adding `many_lints` to an existing codebase never floods it with warnings on
+day one.
+
+Pick a preset with the `preset:` key, in **either** of the two config locations described
+below:
+
+```yaml
+# many_lints.yaml
+preset: recommended
+```
+
+:::caution[No diagnostics after installing?]
+That is the intended behaviour, not a broken setup. Add `preset: recommended` and restart
+the analysis server.
+:::
+
+### The presets
+
+| Preset | Rules | What it contains |
+|--------|-------|------------------|
+| `none` | 0 | Nothing. The default, and the explicit way to opt out. |
+| `core` | 31 | Near-certain bugs only. |
+| `recommended` | 79 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
+| `all` | 156 | Every rule, including opinionated ones. |
+
+Each preset builds on the one above it, the same way `package:lints/recommended.yaml`
+includes `core.yaml` — moving up a tier only ever adds rules.
+
+**`core`** flags what is almost certainly a bug: a condition that is always true, a cast
+that can never succeed, an undisposed controller, an `emit(state)` that is silently
+dropped. Near-zero false positives and no stylistic judgement, so it is safe to adopt in
+a large legacy codebase.
+
+**`recommended`** is the tier most projects want. It adds widely-agreed practice — using
+`containsKey` over `keys.contains`, passing an existing future to a `FutureBuilder`,
+keeping enum switches exhaustive. It deliberately excludes anything that imposes an
+architecture, a naming scheme, or a contested style choice.
+
+**`all`** turns on the entire catalogue, including rules that enforce a particular taste
+(widget-swapping rules, naming conventions, shorthand preferences). This is also the
+setting that reproduces the pre-1.0.0 behaviour, when every rule was on by default.
+
+Rules that do nothing until you configure them — `avoid_banned_imports`,
+`use_class_suffix` and the rest of the `banned_*` family — are in no preset, since an
+unconfigured banned-list has nothing to report.
+
+### Adjusting a preset
+
+`enabled:` overrides the preset for one rule, in either direction, so you never have to
+restate a preset's contents to tweak it:
+
+```yaml
+# many_lints.yaml
+preset: recommended
+rules:
+  # Add a rule the preset leaves out.
+  use_class_suffix:
+    enabled: true
+    entries:
+      - class: Bloc
+        suffix: Bloc
+  # Drop one the preset includes.
+  avoid_only_rethrow:
+    enabled: false
+```
+
+When a rule needs nothing but on-or-off, the terse spelling works too:
+
+```yaml
+rules:
+  prefer_type_over_var: true
+  avoid_only_rethrow: false
+```
+
+### Severity
+
+`preset:` and `enabled:` decide *whether* a rule runs. To change how loudly it reports,
+use the analyzer's own `diagnostics:` key:
 
 ```yaml
 plugins:
   many_lints:
-    version: ^0.9.0
+    version: ^1.0.0
     diagnostics:
-      prefer_center_over_align: true
-      use_class_suffix: false
+      avoid_equal_expressions: error   # error | warning | info
 ```
+
+:::note
+`diagnostics:` can also disable a rule, but it cannot enable one that a preset left off —
+that is what `enabled:` is for. Prefer keeping enablement in one place and using
+`diagnostics:` only for severity.
+:::
 
 ## Excluding paths per rule
 
-`diagnostics:` turns a rule on or off everywhere. To keep a rule on but silence it for
+A preset turns a rule on everywhere. To keep a rule on but silence it for
 certain paths, write a `rules:` block — in **either** of these two places, whichever
 you prefer.
 
@@ -76,7 +159,7 @@ not nested inside it.
 ```yaml
 # analysis_options.yaml
 plugins:
-  many_lints: ^0.9.0
+  many_lints: ^1.0.0
 
 many_lints:
   rules:

@@ -57,13 +57,15 @@ A function with no `return` at all is not this rule's concern; the analyzer alre
 
 ## Configuration
 
-To disable this rule:
+This rule is in the **`core`** preset, so it is on with `preset: core`,
+`preset: recommended` or `preset: all`.
+
+To turn it off:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      function_always_returns_null: false
+# many_lints.yaml
+rules:
+  function_always_returns_null: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

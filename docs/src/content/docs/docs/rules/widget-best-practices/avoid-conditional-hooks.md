@@ -54,13 +54,15 @@ class MyWidget extends HookWidget {
 
 ## Configuration
 
-To disable this rule:
+This rule is in the **`core`** preset, so it is on with `preset: core`,
+`preset: recommended` or `preset: all`.
+
+To turn it off:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      avoid_conditional_hooks: false
+# many_lints.yaml
+rules:
+  avoid_conditional_hooks: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

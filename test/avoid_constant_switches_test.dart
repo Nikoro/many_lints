@@ -1,4 +1,4 @@
-import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'many_lints_rule_test_base.dart';
 import 'package:many_lints/src/rules/avoid_constant_switches.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -7,7 +7,7 @@ void main() {
 }
 
 @reflectiveTest
-class AvoidConstantSwitchesTest extends AnalysisRuleTest {
+class AvoidConstantSwitchesTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = AvoidConstantSwitches();

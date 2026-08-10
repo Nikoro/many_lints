@@ -4,6 +4,8 @@ import 'package:analyzer/file_system/file_system.dart';
 import 'package:analyzer/src/util/glob.dart';
 import 'package:yaml/yaml.dart';
 
+import 'presets.dart';
+
 /// Per-rule configuration read from a `many_lints.yaml` file at the package
 /// root.
 ///
@@ -42,6 +44,13 @@ class RuleConfig {
   /// reports, or `null` to leave the message as written.
   final String? message;
 
+  /// Whether this rule was explicitly switched on or off with `enabled:`,
+  /// or `null` when the selected preset decides.
+  ///
+  /// This is what lets a project keep a preset and still tune it, in either
+  /// direction, without restating the preset's contents.
+  final bool? enabled;
+
   /// Free-form options for the rule, as written in YAML.
   final Map<String, Object?> options;
 
@@ -49,10 +58,22 @@ class RuleConfig {
     this.exclude = const [],
     this.include = const [],
     this.message,
+    this.enabled,
     this.options = const {},
   });
 
   static const empty = RuleConfig();
+
+  /// Whether the project wrote anything at all for this rule.
+  ///
+  /// Used to treat a configuration block as opting the rule in, so that
+  /// `exclude:`, `include:`, `message:` or an option does not silently do
+  /// nothing on a rule no preset covers.
+  bool get isConfigured =>
+      exclude.isNotEmpty ||
+      include.isNotEmpty ||
+      message != null ||
+      options.isNotEmpty;
 
   /// Reads option [key] as a bool, returning [defaultValue] when absent or
   /// when the YAML value is not a bool.
@@ -158,6 +179,7 @@ class RuleConfig {
     final exclude = <String>[];
     final include = <String>[];
     String? message;
+    bool? enabled;
     final options = <String, Object?>{};
 
     for (final entry in map.nodes.entries) {
@@ -190,6 +212,15 @@ class RuleConfig {
         continue;
       }
 
+      if (name == 'enabled') {
+        // A non-bool leaves `enabled` null, so the preset keeps deciding.
+        // Falling back rather than guessing matches how every other malformed
+        // option degrades: config problems cannot be reported as diagnostics.
+        final raw = value.value;
+        if (raw is bool) enabled = raw;
+        continue;
+      }
+
       options[name] = value.value;
     }
 
@@ -197,6 +228,7 @@ class RuleConfig {
       exclude: exclude,
       include: include,
       message: message,
+      enabled: enabled,
       options: options,
     );
   }
@@ -218,11 +250,38 @@ extension RegExpWholeValue on RegExp {
 class ManyLintsConfig {
   final Map<String, RuleConfig> _rules;
 
-  const ManyLintsConfig(this._rules);
+  /// The rule set this package selected with `preset:`.
+  final Preset preset;
+
+  const ManyLintsConfig(this._rules, {this.preset = Preset.fallback});
 
   static const empty = ManyLintsConfig({});
 
   RuleConfig forRule(String ruleName) => _rules[ruleName] ?? RuleConfig.empty;
+
+  /// Whether [ruleName] runs in this package.
+  ///
+  /// Resolved in three steps:
+  ///
+  /// 1. An explicit `enabled:` wins in both directions, so a project can add a
+  ///    rule its preset omits or drop one the preset includes.
+  /// 2. Otherwise the selected preset decides.
+  /// 3. A rule the preset does not cover still runs if the project gave it a
+  ///    configuration block of its own.
+  ///
+  /// Step 3 exists because the alternative reads as a bug. Writing an
+  /// `exclude:` or an option for a rule is a clear statement that the rule is
+  /// wanted — silently ignoring that block until an `enabled: true` is added
+  /// beside it would make careful configuration look broken.
+  bool isRuleEnabled(String ruleName) {
+    final config = forRule(ruleName);
+    final explicit = config.enabled;
+    if (explicit != null) return explicit;
+
+    if (preset.enables(ruleName)) return true;
+
+    return config.isConfigured;
+  }
 
   /// Parses [content] as a `many_lints.yaml` file, whose `rules:` key sits at
   /// the document root.
@@ -242,9 +301,9 @@ class ManyLintsConfig {
   /// Shared parser for both sources.
   ///
   /// [sectionKey] names a top-level key to descend into before looking for
-  /// `rules:`; `null` reads `rules:` straight off the document root. Beyond
-  /// that the two formats are identical, so a rule behaves the same however
-  /// its configuration was written.
+  /// `preset:` and `rules:`; `null` reads them straight off the document root.
+  /// Beyond that the two formats are identical, so a rule behaves the same
+  /// however its configuration was written.
   static ManyLintsConfig _parse(String content, {required String? sectionKey}) {
     final YamlNode doc;
     try {
@@ -262,19 +321,40 @@ class ManyLintsConfig {
       root = section;
     }
 
-    final rules = root.nodes['rules'];
-    if (rules is! YamlMap) return empty;
+    // An unrecognized or wrongly-typed preset name falls back to the default
+    // rather than throwing, for the same reason a bad rule option does: a
+    // plugin cannot report a diagnostic against a YAML file, so a typo must
+    // degrade quietly instead of taking down analysis.
+    final presetValue = root.nodes['preset']?.value;
+    final preset = presetValue is String
+        ? Preset.parse(presetValue) ?? Preset.fallback
+        : Preset.fallback;
 
     final parsed = <String, RuleConfig>{};
-    for (final entry in rules.nodes.entries) {
-      final key = entry.key;
-      if (key is! YamlScalar || key.value is! String) continue;
-      final value = entry.value;
-      if (value is! YamlMap) continue;
-      parsed[key.value as String] = RuleConfig._fromYaml(value);
+    final rules = root.nodes['rules'];
+    // A preset alone is a complete configuration, so a missing or malformed
+    // `rules:` block is not a reason to discard the preset.
+    if (rules is YamlMap) {
+      for (final entry in rules.nodes.entries) {
+        final key = entry.key;
+        if (key is! YamlScalar || key.value is! String) continue;
+        final name = key.value as String;
+        final value = entry.value;
+
+        // `rule: true` / `rule: false` is the terse spelling of
+        // `rule: {enabled: <bool>}`, so toggling one rule on top of a preset
+        // does not require a nested block.
+        if (value is YamlScalar && value.value is bool) {
+          parsed[name] = RuleConfig(enabled: value.value as bool);
+          continue;
+        }
+
+        if (value is! YamlMap) continue;
+        parsed[name] = RuleConfig._fromYaml(value);
+      }
     }
 
-    return ManyLintsConfig(parsed);
+    return ManyLintsConfig(parsed, preset: preset);
   }
 }
 
@@ -397,6 +477,10 @@ class _CacheEntry {
 
 /// Resolves the configuration for [ruleName] in the package currently being
 /// analyzed, and reports whether the current file is excluded from it.
+///
+/// "Excluded" covers both a rule the selected preset never switched on and a
+/// file the rule's own `exclude`/`include` globs rule out. Both end in the same
+/// place — the rule's diagnostics are discarded — so they share one flag.
 class ResolvedRuleConfig {
   final RuleConfig config;
   final bool isExcluded;
@@ -434,7 +518,15 @@ class ResolvedRuleConfig {
     required String path,
     required String ruleName,
   }) {
-    final config = ConfigLoader.loadFor(packageRoot).forRule(ruleName);
+    final packageConfig = ConfigLoader.loadFor(packageRoot);
+    final config = packageConfig.forRule(ruleName);
+
+    // Enablement is checked before the globs: a rule the project never turned
+    // on is silent everywhere, so there is no path left to match against.
+    if (!packageConfig.isRuleEnabled(ruleName)) {
+      return ResolvedRuleConfig(config, isExcluded: true);
+    }
+
     if (config.exclude.isEmpty && config.include.isEmpty) {
       return ResolvedRuleConfig(config, isExcluded: false);
     }

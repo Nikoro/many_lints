@@ -269,8 +269,34 @@ rules:
 
     tearDown(() async => harness.tearDown());
 
-    test('reports the rule when no config file exists', () async {
+    // Rules are opt-in as of 1.0.0: with no configuration at all the package
+    // is silent, so installing it never floods an existing codebase.
+    test('reports nothing when no config file exists', () async {
       final errors = await harness.analyze(_rethrowCode);
+
+      expect(errors.map((e) => e.code), isNot(contains('avoid_only_rethrow')));
+    });
+
+    test('a preset alone enables the rule', () async {
+      final errors = await harness.analyze(
+        _rethrowCode,
+        config: 'preset: recommended',
+      );
+
+      expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
+    });
+
+    // Configuring a rule is itself a statement that the rule is wanted, so an
+    // `exclude:` or an option does not silently do nothing without a preset.
+    test('a config block alone enables the rule', () async {
+      final errors = await harness.analyze(
+        _typedRethrowCode,
+        config: '''
+rules:
+  avoid_only_rethrow:
+    ignore_typed_catches: false
+''',
+      );
 
       expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
     });
@@ -318,7 +344,11 @@ class StillLinted {
   void another() {}
 }
 ''',
+        // `preset: all` so that the rule which must *keep* reporting is on
+        // without needing a config block of its own — a block would itself
+        // opt the rule in and blunt what this test checks.
         config: '''
+preset: all
 rules:
   avoid_only_rethrow:
     exclude:
@@ -393,6 +423,7 @@ class Child extends Base {
 }
 ''',
         config: '''
+preset: all
 rules:
   avoid_only_rethrow:
     exclude:
@@ -431,7 +462,7 @@ rules:
     test(
       'a multi-registration rule reports from each of its callbacks',
       () async {
-        final errors = await harness.analyze(_varCode);
+        final errors = await harness.analyze(_varCode, config: 'preset: all');
 
         // Asymmetric positive: without the exclusion the same source reports
         // three times, so the test above cannot pass by reporting nothing.
@@ -461,7 +492,10 @@ rules:
     });
 
     test('a compilation-unit rule reports without the exclusion', () async {
-      final errors = await harness.analyze(_commentedOutCode);
+      final errors = await harness.analyze(
+        _commentedOutCode,
+        config: 'preset: all',
+      );
 
       expect(errors.map((e) => e.code), contains('avoid_commented_out_code'));
     });
@@ -501,7 +535,10 @@ rules:
     });
 
     test('mode option leaves the default behaviour untouched', () async {
-      final errors = await harness.analyze(_typedRethrowCode);
+      final errors = await harness.analyze(
+        _typedRethrowCode,
+        config: 'preset: all',
+      );
 
       expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
     });
@@ -606,6 +643,7 @@ rules:
         final errors = await harness.analyze(
           _rethrowCode,
           config: '''
+preset: all
 rules:
   avoid_only_rethrow:
     include: []
@@ -653,6 +691,7 @@ rules:
         final errors = await harness.analyze(
           _rethrowCode,
           config: '''
+preset: all
 rules:
   avoid_only_rethrow:
     include: 42
@@ -681,7 +720,10 @@ rules:
       });
 
       test('leaves the message alone when unset', () async {
-        final errors = await harness.analyze(_rethrowCode);
+        final errors = await harness.analyze(
+          _rethrowCode,
+          config: 'preset: all',
+        );
 
         final error = errors.firstWhere((e) => e.code == 'avoid_only_rethrow');
         expect(error.message, isNot(contains('AppError')));
@@ -707,6 +749,7 @@ rules:
         final errors = await harness.analyze(
           _rethrowCode,
           config: '''
+preset: all
 rules:
   avoid_only_rethrow:
     message: "   "

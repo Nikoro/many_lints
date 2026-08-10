@@ -54,13 +54,16 @@ Matching is by static type, so any subtype of `Completer` is covered, and a same
 
 ## Turning this rule off
 
-To disable this rule:
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`avoid_missing_completer_stack_trace: true`.
+
+To turn it off:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      avoid_missing_completer_stack_trace: false
+# many_lints.yaml
+rules:
+  avoid_missing_completer_stack_trace: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

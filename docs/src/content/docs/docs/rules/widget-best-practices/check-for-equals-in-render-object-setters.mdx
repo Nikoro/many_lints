@@ -70,13 +70,16 @@ Only setters that call a mark-dirty method are considered — a setter that mere
 
 ## Turning this rule off
 
-To disable this rule:
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`check_for_equals_in_render_object_setters: true`.
+
+To turn it off:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      check_for_equals_in_render_object_setters: false
+# many_lints.yaml
+rules:
+  check_for_equals_in_render_object_setters: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

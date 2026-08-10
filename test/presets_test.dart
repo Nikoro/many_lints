@@ -1,0 +1,461 @@
+// ignore_for_file: implementation_imports
+import 'dart:async';
+
+import 'package:analysis_server_plugin/src/plugin_server.dart';
+import 'package:analysis_server_plugin/src/registry.dart' as plugin_registry;
+import 'package:analyzer/src/test_utilities/mock_sdk.dart';
+import 'package:analyzer_plugin/channel/channel.dart';
+import 'package:analyzer_plugin/protocol/protocol.dart' as protocol;
+import 'package:analyzer_plugin/protocol/protocol_common.dart' as protocol;
+import 'package:analyzer_plugin/protocol/protocol_constants.dart' as protocol;
+import 'package:analyzer_plugin/protocol/protocol_generated.dart' as protocol;
+import 'package:analyzer_plugin/src/protocol/protocol_internal.dart'
+    as protocol;
+import 'package:analyzer_testing/resource_provider_mixin.dart';
+import 'package:many_lints/many_lints.dart';
+import 'package:many_lints/src/presets.dart';
+import 'package:many_lints/src/rule_config.dart';
+import 'package:test/test.dart';
+
+/// Reported by `avoid_equal_expressions`, which is a **core** rule.
+const _coreCode = '''
+bool check(int a) {
+  return a == a;
+}
+''';
+
+/// Reported by `avoid_collapsible_if`, which is a **recommended** rule but not
+/// a core one.
+const _recommendedCode = '''
+void main() {
+  bool a = true;
+  bool b = false;
+  if (a) {
+    if (b) {
+      print('both');
+    }
+  }
+}
+''';
+
+/// Reported by `prefer_type_over_var`, which is in **no** preset — it is
+/// opinionated (it contradicts `omit_local_variable_types` from
+/// `package:lints/recommended.yaml`).
+const _opinionatedCode = '''
+var topLevel = 1;
+''';
+
+void main() {
+  group('Preset', () {
+    test('parses each known name', () {
+      expect(Preset.parse('none'), Preset.none);
+      expect(Preset.parse('core'), Preset.core);
+      expect(Preset.parse('recommended'), Preset.recommended);
+      expect(Preset.parse('all'), Preset.all);
+    });
+
+    test('returns null for an unknown name', () {
+      expect(Preset.parse('reccomended'), isNull);
+      expect(Preset.parse(''), isNull);
+    });
+
+    test('recommended is a strict superset of core', () {
+      expect(recommendedRules, containsAll(coreRules));
+      expect(recommendedRules.length, greaterThan(coreRules.length));
+    });
+
+    test('none enables nothing, all enables anything', () {
+      expect(Preset.none.enables('avoid_equal_expressions'), isFalse);
+      expect(Preset.all.enables('avoid_equal_expressions'), isTrue);
+      expect(Preset.all.enables('prefer_type_over_var'), isTrue);
+    });
+
+    test('core enables core rules but not recommended-only ones', () {
+      expect(Preset.core.enables('avoid_equal_expressions'), isTrue);
+      expect(Preset.core.enables('avoid_collapsible_if'), isFalse);
+    });
+
+    test('recommended enables both tiers but not opinionated rules', () {
+      expect(Preset.recommended.enables('avoid_equal_expressions'), isTrue);
+      expect(Preset.recommended.enables('avoid_collapsible_if'), isTrue);
+      expect(Preset.recommended.enables('prefer_type_over_var'), isFalse);
+    });
+
+    // Guards against a preset naming a rule that was renamed or removed, which
+    // would silently shrink the preset with nothing to notice it.
+    test('every preset rule name is a real registered rule', () {
+      // `registeredRuleNames` is filled by `register`, so the plugin has to be
+      // registered against a throwaway registry before it is meaningful.
+      final plugin = ManyLintsPlugin()
+        ..register(plugin_registry.PluginRegistryImpl('many_lints'));
+      final registered = plugin.registeredRuleNames;
+
+      expect(registered, isNotEmpty);
+      for (final name in recommendedRules) {
+        expect(
+          registered,
+          contains(name),
+          reason: '$name is in a preset but is not a registered rule',
+        );
+      }
+    });
+  });
+
+  group('ManyLintsConfig preset parsing', () {
+    test('defaults to none when no preset is given', () {
+      expect(ManyLintsConfig.parse('rules: {}').preset, Preset.none);
+      expect(ManyLintsConfig.empty.preset, Preset.none);
+    });
+
+    test('reads a preset with no rules block at all', () {
+      expect(ManyLintsConfig.parse('preset: core').preset, Preset.core);
+    });
+
+    test('an unknown preset name falls back rather than throwing', () {
+      expect(ManyLintsConfig.parse('preset: nonsense').preset, Preset.none);
+      expect(ManyLintsConfig.parse('preset: 42').preset, Preset.none);
+    });
+
+    test('reads a preset from the analysis_options section', () {
+      final config = ManyLintsConfig.parseOptionsFile('''
+many_lints:
+  preset: recommended
+''');
+
+      expect(config.preset, Preset.recommended);
+    });
+
+    test('an explicit enabled: overrides the preset in both directions', () {
+      final config = ManyLintsConfig.parse('''
+preset: core
+rules:
+  avoid_equal_expressions:
+    enabled: false
+  prefer_type_over_var:
+    enabled: true
+''');
+
+      // In the preset, but switched off.
+      expect(config.isRuleEnabled('avoid_equal_expressions'), isFalse);
+      // Not in any preset, but switched on.
+      expect(config.isRuleEnabled('prefer_type_over_var'), isTrue);
+      // Untouched, so the preset still decides.
+      expect(config.isRuleEnabled('no_equal_then_else'), isTrue);
+      expect(config.isRuleEnabled('avoid_collapsible_if'), isFalse);
+    });
+
+    test('the terse rule: bool spelling toggles a rule', () {
+      final config = ManyLintsConfig.parse('''
+preset: core
+rules:
+  prefer_type_over_var: true
+  avoid_equal_expressions: false
+''');
+
+      expect(config.isRuleEnabled('prefer_type_over_var'), isTrue);
+      expect(config.isRuleEnabled('avoid_equal_expressions'), isFalse);
+    });
+
+    test('a non-bool enabled: leaves the preset in charge', () {
+      final config = ManyLintsConfig.parse('''
+preset: core
+rules:
+  avoid_equal_expressions:
+    enabled: "yes"
+''');
+
+      expect(config.isRuleEnabled('avoid_equal_expressions'), isTrue);
+    });
+
+    test('enabled: composes with other per-rule options', () {
+      final config = ManyLintsConfig.parse('''
+rules:
+  avoid_only_rethrow:
+    enabled: true
+    exclude:
+      - test/**
+    ignore_typed_catches: true
+''');
+
+      expect(config.isRuleEnabled('avoid_only_rethrow'), isTrue);
+      expect(config.forRule('avoid_only_rethrow').exclude, ['test/**']);
+      expect(
+        config
+            .forRule('avoid_only_rethrow')
+            .boolOption('ignore_typed_catches', defaultValue: false),
+        isTrue,
+      );
+    });
+  });
+
+  group('end-to-end through PluginServer', () {
+    late _PresetHarness harness;
+
+    setUp(() async {
+      ConfigLoader.clearCache();
+      harness = _PresetHarness();
+      await harness.setUp();
+    });
+
+    tearDown(() async => harness.tearDown());
+
+    test('reports nothing when no configuration exists', () async {
+      final errors = await harness.analyze(_coreCode);
+
+      expect(
+        errors.map((e) => e.code),
+        isNot(contains('avoid_equal_expressions')),
+      );
+    });
+
+    test('preset: core enables a core rule', () async {
+      final errors = await harness.analyze(_coreCode, config: 'preset: core');
+
+      expect(errors.map((e) => e.code), contains('avoid_equal_expressions'));
+    });
+
+    test('preset: core leaves a recommended-only rule off', () async {
+      final errors = await harness.analyze(
+        _recommendedCode,
+        config: 'preset: core',
+      );
+
+      expect(
+        errors.map((e) => e.code),
+        isNot(contains('avoid_collapsible_if')),
+      );
+    });
+
+    test('preset: recommended enables both tiers', () async {
+      final coreErrors = await harness.analyze(
+        _coreCode,
+        config: 'preset: recommended',
+      );
+      expect(
+        coreErrors.map((e) => e.code),
+        contains('avoid_equal_expressions'),
+      );
+    });
+
+    test('preset: recommended enables a recommended-only rule', () async {
+      final errors = await harness.analyze(
+        _recommendedCode,
+        config: 'preset: recommended',
+      );
+
+      expect(errors.map((e) => e.code), contains('avoid_collapsible_if'));
+    });
+
+    test('preset: recommended leaves an opinionated rule off', () async {
+      final errors = await harness.analyze(
+        _opinionatedCode,
+        config: 'preset: recommended',
+      );
+
+      expect(
+        errors.map((e) => e.code),
+        isNot(contains('prefer_type_over_var')),
+      );
+    });
+
+    test('preset: all enables an opinionated rule', () async {
+      final errors = await harness.analyze(
+        _opinionatedCode,
+        config: 'preset: all',
+      );
+
+      expect(errors.map((e) => e.code), contains('prefer_type_over_var'));
+    });
+
+    test('a rule can be added on top of a preset', () async {
+      final errors = await harness.analyze(
+        _opinionatedCode,
+        config: '''
+preset: core
+rules:
+  prefer_type_over_var:
+    enabled: true
+''',
+      );
+
+      expect(errors.map((e) => e.code), contains('prefer_type_over_var'));
+    });
+
+    test('a rule can be removed from a preset', () async {
+      final errors = await harness.analyze(
+        _coreCode,
+        config: '''
+preset: core
+rules:
+  avoid_equal_expressions:
+    enabled: false
+''',
+      );
+
+      expect(
+        errors.map((e) => e.code),
+        isNot(contains('avoid_equal_expressions')),
+      );
+    });
+
+    test('a rule enabled without any preset reports', () async {
+      final errors = await harness.analyze(
+        _coreCode,
+        config: '''
+rules:
+  avoid_equal_expressions:
+    enabled: true
+''',
+      );
+
+      expect(errors.map((e) => e.code), contains('avoid_equal_expressions'));
+    });
+
+    test('exclude still applies to a rule a preset enabled', () async {
+      final errors = await harness.analyze(
+        _coreCode,
+        fileName: 'legacy.dart',
+        config: '''
+preset: core
+rules:
+  avoid_equal_expressions:
+    exclude:
+      - lib/legacy.dart
+''',
+      );
+
+      expect(
+        errors.map((e) => e.code),
+        isNot(contains('avoid_equal_expressions')),
+      );
+    });
+
+    test('a preset can be selected from analysis_options.yaml', () async {
+      final errors = await harness.analyze(
+        _coreCode,
+        optionsSection: '''
+many_lints:
+  preset: core
+''',
+      );
+
+      expect(errors.map((e) => e.code), contains('avoid_equal_expressions'));
+    });
+  });
+}
+
+class _PresetHarness with ResourceProviderMixin {
+  final channel = _FakeChannel();
+
+  late final PluginServer pluginServer;
+
+  String get byteStoreRoot => convertPath('/byteStore');
+
+  String get packagePath => convertPath('/package');
+
+  String get sdkRoot => convertPath('/sdk');
+
+  Future<List<protocol.AnalysisError>> analyze(
+    String content, {
+    String? config,
+    String? optionsSection,
+    String fileName = 'test.dart',
+  }) async {
+    final filePath = join(packagePath, 'lib', fileName);
+
+    newAnalysisOptionsYamlFile(packagePath, '''
+plugins:
+  many_lints:
+    path: /many_lints
+${optionsSection ?? ''}''');
+
+    if (config != null) {
+      newFile(join(packagePath, ConfigLoader.fileName), config);
+    }
+    newFile(filePath, content);
+
+    final errors = channel.notifications
+        .where((n) => n.event == protocol.ANALYSIS_NOTIFICATION_ERRORS)
+        .map(protocol.AnalysisErrorsParams.fromNotification)
+        .where((params) => params.file == filePath)
+        .map((params) => params.errors)
+        .first;
+
+    await channel.sendRequest(
+      protocol.AnalysisSetAnalysisRootsParams([packagePath], []),
+    );
+
+    return errors.timeout(const Duration(seconds: 10));
+  }
+
+  Future<void> setUp() async {
+    createMockSdk(resourceProvider: resourceProvider, root: getFolder(sdkRoot));
+
+    pluginServer = PluginServer.new2(
+      resourceProvider: resourceProvider,
+      plugins: {'many_lints': ManyLintsPlugin()},
+    );
+
+    await pluginServer.initialize();
+    pluginServer.start(channel);
+    await pluginServer.handlePluginVersionCheck(
+      protocol.PluginVersionCheckParams(byteStoreRoot, sdkRoot, '0.0.1'),
+    );
+  }
+
+  Future<void> tearDown() async {
+    await pluginServer.waitForIdle();
+    channel.close();
+  }
+}
+
+class _FakeChannel implements PluginCommunicationChannel {
+  final _completers = <String, Completer<protocol.Response>>{};
+  final _notificationsController =
+      StreamController<protocol.Notification>.broadcast();
+
+  void Function(protocol.Request)? _onRequest;
+  int _idCounter = 0;
+
+  Stream<protocol.Notification> get notifications =>
+      _notificationsController.stream;
+
+  @override
+  void close() {
+    _notificationsController.close();
+  }
+
+  @override
+  void listen(
+    void Function(protocol.Request request)? onRequest, {
+    void Function()? onDone,
+    Function? onError,
+    Function? onNotification,
+  }) {
+    _onRequest = onRequest;
+  }
+
+  @override
+  void sendNotification(protocol.Notification notification) {
+    if (_notificationsController.isClosed) return;
+    _notificationsController.add(notification);
+  }
+
+  Future<protocol.Response> sendRequest(protocol.RequestParams params) {
+    final onRequest = _onRequest;
+    if (onRequest == null) {
+      fail('Plugin channel has not started listening.');
+    }
+
+    final id = '${_idCounter++}';
+    final completer = Completer<protocol.Response>();
+    _completers[id] = completer;
+    onRequest(params.toRequest(id));
+    return completer.future;
+  }
+
+  @override
+  void sendResponse(protocol.Response response) {
+    _completers.remove(response.id)?.complete(response);
+  }
+}

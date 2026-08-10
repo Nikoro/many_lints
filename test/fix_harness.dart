@@ -48,6 +48,11 @@ class FixHarness with ResourceProviderMixin {
   ///
   /// [manyLintsConfig] is written to `many_lints.yaml` at the package root,
   /// for fixes whose behaviour depends on per-rule configuration.
+  ///
+  /// When it is omitted, `preset: all` is written instead. Rules are opt-in as
+  /// of 1.0.0, so without a preset the rule under test never reports and there
+  /// is no diagnostic for a fix to attach to. A test that passes its own
+  /// config is responsible for enabling the rule it exercises.
   Future<String> applyFix(
     String content,
     String ruleName, {
@@ -60,9 +65,10 @@ plugins:
     path: /many_lints
 ''');
 
-    if (manyLintsConfig != null) {
-      newFile(join(packagePath, ConfigLoader.fileName), manyLintsConfig);
-    }
+    newFile(
+      join(packagePath, ConfigLoader.fileName),
+      manyLintsConfig ?? 'preset: all\n',
+    );
 
     final config = PackageConfigFileBuilder()
       ..add(name: 'test', rootFolder: getFolder(packagePath));
