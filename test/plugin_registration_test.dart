@@ -72,19 +72,19 @@ void main() {
       ...registry.warningRules.keys,
       ...registry.lintRules.keys,
     }..removeAll(removedRules);
-    final sources = _baseNames(Directory('lib/src/rules'), suffix: '.dart')
+    final sources = _baseNames(Directory('lib/src/rules'), suffixes: ['.dart'])
       ..remove('AGENTS');
     final docs = _baseNames(
       Directory('docs/src/content/docs/docs/rules'),
-      suffix: '.md',
+      suffixes: ['.md', '.mdx'],
       recursive: true,
       normalizeHyphens: true,
     );
     final examples = _baseNames(
       Directory('example/lib'),
-      suffix: '_example.dart',
+      suffixes: ['_example.dart'],
     );
-    final directTests = _baseNames(Directory('test'), suffix: '_test.dart');
+    final directTests = _baseNames(Directory('test'), suffixes: ['_test.dart']);
 
     expect(sources, registered, reason: 'Rule source and registry drifted.');
     expect(docs, registered, reason: 'Rule documentation is incomplete.');
@@ -113,13 +113,14 @@ void main() {
     final registeredFixes = registry.fixKinds.values
         .expand((codes) => codes)
         .toSet();
+    const pageSuffixes = ['.md', '.mdx'];
     final documentedFixes = <String>{
       for (final file in Directory(
         'docs/src/content/docs/docs/rules',
       ).listSync(recursive: true).whereType<File>())
-        if (file.path.endsWith('.md') &&
-            file.readAsStringSync().contains('rule-badge--fix'))
-          _baseName(file.path, suffix: '.md', normalizeHyphens: true),
+        if (_matchingSuffix(file.path, pageSuffixes) case final suffix?)
+          if (file.readAsStringSync().contains('rule-badge--fix'))
+            _baseName(file.path, suffix: suffix, normalizeHyphens: true),
     };
 
     expect(
@@ -198,16 +199,36 @@ void main() {
   });
 }
 
+/// The base names of every file in [directory] ending in one of [suffixes].
+///
+/// [suffixes] is a list because a rule page is `.md` or `.mdx` depending on
+/// whether the rule takes options — a configurable rule shows its snippets in
+/// both config locations via Starlight tabs, which needs MDX. Matching only
+/// `.md` silently skipped all 52 configurable rules, so this test compared a
+/// 104-entry set against the full registry and could never pass.
+///
+/// The longest matching suffix wins, so `.mdx` is stripped as `.mdx` rather
+/// than leaving a trailing `.` behind from a shorter `.md` match.
 Set<String> _baseNames(
   Directory directory, {
-  required String suffix,
+  required List<String> suffixes,
   bool recursive = false,
   bool normalizeHyphens = false,
 }) => {
   for (final file in directory.listSync(recursive: recursive).whereType<File>())
-    if (file.path.endsWith(suffix))
+    if (_matchingSuffix(file.path, suffixes) case final suffix?)
       _baseName(file.path, suffix: suffix, normalizeHyphens: normalizeHyphens),
 };
+
+/// The longest entry of [suffixes] that [path] ends with, or `null` for none.
+String? _matchingSuffix(String path, List<String> suffixes) {
+  String? longest;
+  for (final suffix in suffixes) {
+    if (!path.endsWith(suffix)) continue;
+    if (longest == null || suffix.length > longest.length) longest = suffix;
+  }
+  return longest;
+}
 
 String _baseName(
   String path, {
