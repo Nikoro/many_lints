@@ -26,8 +26,14 @@ lib/
     ast_node_analysis.dart # AST node analysis helpers
     constant_expression.dart # Constant expression/identifier checking helpers
     disposal_utils.dart   # Shared disposal helpers (findCleanupMethod, cleanupMethods)
+    dispose_method_editing.dart # Insert into / synthesise a dispose() override
     flutter_widget_helpers.dart # Flutter widget helpers (FlexAxis enum)
     riverpod_type_checkers.dart # Shared Riverpod TypeChecker constants
+    flutter_type_checkers.dart  # Shared Flutter widget TypeChecker constants
+    bloc_type_checkers.dart     # Shared Bloc/Cubit TypeChecker constants
+    hook_type_checkers.dart     # Shared flutter_hooks TypeChecker constants
+    state_class_pairing.dart    # Match a StatefulWidget to its State class
+    set_state_collection.dart   # SetStateCollector (shared rule + fix visitor)
     async_guard_utils.dart # Async helpers (containsAwait, isMountedGuardWithReturn)
     async_builder_utils.dart # Async builder source-allocation detection
     rules/                # Lint rules (AnalysisRule + SimpleAstVisitor pattern)
@@ -121,7 +127,13 @@ Quick summary:
 - `lib/src/ast_node_analysis.dart` - AST node analysis helpers (enclosingClassDeclaration, hasOverrideAnnotation, negateExpression, buildEveryReplacement)
 - `lib/src/constant_expression.dart` - Constant expression and identifier checking (isConstantExpression, isConstantIdentifier)
 - `lib/src/disposal_utils.dart` - Shared disposal helpers (findCleanupMethod, cleanupMethods)
+- `lib/src/dispose_method_editing.dart` - Insert a statement into an existing `dispose()` or generate the whole override (shared by dispose_fields_fix + always_remove_listener_fix)
 - `lib/src/flutter_widget_helpers.dart` - Flutter widget helpers (FlexAxis enum for spacing rules)
-- `lib/src/riverpod_type_checkers.dart` - Shared Riverpod TypeChecker constants (notifierChecker)
+- `lib/src/riverpod_type_checkers.dart` - Shared Riverpod TypeChecker constants (notifierChecker, consumerWidgetChecker, consumerStateChecker, consumerChecker, ...)
+- `lib/src/flutter_type_checkers.dart` - Shared Flutter widget TypeChecker constants (buildContextChecker, containerChecker, sizedBoxChecker, anyFlexChecker, ...)
+- `lib/src/bloc_type_checkers.dart` - Shared Bloc TypeChecker constants. `blocBaseChecker` (the real `BlocBase`) and `blocOrCubitChecker` (`Bloc|Cubit`) are deliberately distinct
+- `lib/src/hook_type_checkers.dart` - `hookWidgetChecker` (is a hook *widget*) vs `hookScopeChecker` (may a hook be called here — adds `HookState`)
+- `lib/src/state_class_pairing.dart` - `findStateClassFor()` matches a StatefulWidget to its State via the `extends State<Widget>` type argument
+- `lib/src/set_state_collection.dart` - `SetStateCollector`, shared by the prefer_single_setstate rule and its fix
 - `lib/src/async_guard_utils.dart` - Async helpers (containsAwait, isMountedGuardWithReturn)
 - `lib/src/async_builder_utils.dart` - Detect newly allocated Future/Stream sources passed to async builders

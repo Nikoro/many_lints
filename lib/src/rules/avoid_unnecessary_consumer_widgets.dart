@@ -5,9 +5,10 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import '../many_lints_rule.dart';
+import '../riverpod_type_checkers.dart';
+import '../state_class_pairing.dart';
 
 /// Warns when a ConsumerWidget does not use WidgetRef.
 class AvoidUnnecessaryConsumerWidgets extends ManyLintsRule {
@@ -41,21 +42,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _consumerWidgetChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerWidget', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerWidget', packageName: 'hooks_riverpod'),
-  ]);
-
-  static const _consumerStatefulWidgetChecker = TypeChecker.fromName(
-    'ConsumerStatefulWidget',
-    packageName: 'flutter_riverpod',
-  );
-
-  static const _consumerStateChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerState', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerState', packageName: 'hooks_riverpod'),
-  ]);
-
   @override
   void visitCompilationUnit(CompilationUnit node) {
     // `ConsumerStatefulWidget` keeps its `ref` in the companion `ConsumerState`,
@@ -76,9 +62,9 @@ class _Visitor extends SimpleAstVisitor<void> {
       final element = declaration.declaredFragment?.element;
       if (element == null) continue;
 
-      if (_consumerStatefulWidgetChecker.isSuperOf(element)) {
+      if (consumerStatefulWidgetChecker.isSuperOf(element)) {
         consumerStatefulWidgets.add(declaration);
-      } else if (_consumerStateChecker.isSuperOf(element)) {
+      } else if (consumerStateChecker.isSuperOf(element)) {
         consumerStates.add(declaration);
       } else {
         _checkConsumerWidget(declaration, localMixins);
@@ -88,7 +74,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     for (final widget in consumerStatefulWidgets) {
       final widgetName = widget.namePart.typeName.lexeme;
 
-      final stateClass = _findStateClass(consumerStates, widgetName);
+      final stateClass = findStateClassFor(consumerStates, widgetName);
       if (stateClass == null) continue;
 
       // `ref` is a getter on `ConsumerState`, usable from every member, so the
@@ -108,7 +94,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final superclassElement = cls.extendsClause?.superclass.element;
     if (superclassElement == null) return;
 
-    if (!_consumerWidgetChecker.isExactly(superclassElement)) return;
+    if (!consumerWidgetChecker.isExactly(superclassElement)) return;
 
     final body = cls.body;
     if (body is! BlockClassBody) return;
@@ -132,27 +118,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (_mixesInRefUsage(cls, localMixins)) return;
 
     rule.reportAtToken(cls.namePart.typeName);
-  }
-
-  /// Finds the ConsumerState class that corresponds to the given widget name.
-  /// Looks for `ConsumerState<WidgetName>` in the extends clause.
-  static ClassDeclaration? _findStateClass(
-    List<ClassDeclaration> stateClasses,
-    String widgetName,
-  ) {
-    for (final stateClass in stateClasses) {
-      final superclass = stateClass.extendsClause?.superclass;
-      if (superclass == null) continue;
-
-      final typeArgs = superclass.typeArguments?.arguments;
-      if (typeArgs != null && typeArgs.length == 1) {
-        final typeArg = typeArgs.first;
-        if (typeArg is NamedType && typeArg.name.lexeme == widgetName) {
-          return stateClass;
-        }
-      }
-    }
-    return null;
   }
 
   /// Whether a mixin applied to the class uses the `ref` on its behalf.
@@ -184,7 +149,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (element is! MixinElement) continue;
 
       for (final constraint in element.superclassConstraints) {
-        if (_consumerStateChecker.isAssignableFromType(constraint)) return true;
+        if (consumerStateChecker.isAssignableFromType(constraint)) return true;
       }
     }
 

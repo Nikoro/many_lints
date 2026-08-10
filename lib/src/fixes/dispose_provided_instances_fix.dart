@@ -4,6 +4,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
+import '../ast_node_analysis.dart';
 import '../disposal_utils.dart';
 
 /// Fix that adds `ref.onDispose(instance.dispose)` after the variable
@@ -31,7 +32,7 @@ class DisposeProvidedInstancesFix extends ResolvedCorrectionProducer {
     final targetNode = node;
 
     // Walk up to find the VariableDeclaration
-    final varDecl = _findVariableDeclaration(targetNode);
+    final varDecl = enclosingOfType<VariableDeclaration>(targetNode);
     if (varDecl == null) return;
 
     final fieldName = varDecl.name.lexeme;
@@ -42,44 +43,16 @@ class DisposeProvidedInstancesFix extends ResolvedCorrectionProducer {
     if (cleanupMethod == null) return;
 
     // Find the enclosing statement (VariableDeclarationStatement)
-    final statement = _findEnclosingStatement(varDecl);
+    final statement = enclosingOfType<Statement>(varDecl);
     if (statement == null) return;
 
     final onDisposeCall = 'ref.onDispose($fieldName.$cleanupMethod)';
 
     // Determine indentation from the variable declaration statement
-    final content = unitResult.content;
-    final lineStart = _findLineStart(content, statement.offset);
-    final indent = content.substring(lineStart, statement.offset);
+    final indent = indentOf(unitResult.content, statement.offset);
 
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleInsertion(statement.end, '\n$indent$onDisposeCall;');
     });
-  }
-
-  static VariableDeclaration? _findVariableDeclaration(AstNode node) {
-    AstNode? current = node;
-    while (current != null) {
-      if (current is VariableDeclaration) return current;
-      current = current.parent;
-    }
-    return null;
-  }
-
-  static Statement? _findEnclosingStatement(AstNode node) {
-    AstNode? current = node;
-    while (current != null) {
-      if (current is Statement) return current;
-      current = current.parent;
-    }
-    return null;
-  }
-
-  static int _findLineStart(String content, int offset) {
-    var i = offset - 1;
-    while (i >= 0 && content[i] != '\n') {
-      i--;
-    }
-    return i + 1;
   }
 }

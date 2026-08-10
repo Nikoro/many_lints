@@ -5,6 +5,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
 import '../ast_node_analysis.dart';
+import '../dispose_method_editing.dart';
 import '../disposal_utils.dart';
 
 /// Fix that adds the appropriate cleanup call (dispose/close/cancel)
@@ -32,7 +33,7 @@ class DisposeFieldsFix extends ResolvedCorrectionProducer {
     final targetNode = node;
 
     // Walk up to find the VariableDeclaration
-    final varDecl = _findVariableDeclaration(targetNode);
+    final varDecl = enclosingOfType<VariableDeclaration>(targetNode);
     if (varDecl == null) return;
 
     final fieldName = varDecl.name.lexeme;
@@ -51,72 +52,8 @@ class DisposeFieldsFix extends ResolvedCorrectionProducer {
     final body = classDecl.body;
     if (body is! BlockClassBody) return;
 
-    // Find existing dispose method
-    final disposeMethod = body.members
-        .whereType<MethodDeclaration>()
-        .where((m) => m.name.lexeme == 'dispose')
-        .firstOrNull;
-
     await builder.addDartFileEdit(file, (builder) {
-      if (disposeMethod != null) {
-        // Insert cleanup call before super.dispose()
-        final disposeBody = disposeMethod.body;
-        if (disposeBody is BlockFunctionBody) {
-          final block = disposeBody.block;
-          final superDisposeStmt = _findSuperDispose(block);
-
-          if (superDisposeStmt != null) {
-            builder.addSimpleInsertion(
-              superDisposeStmt.offset,
-              '    $disposeCall;\n',
-            );
-          } else {
-            builder.addSimpleInsertion(
-              block.rightBracket.offset,
-              '    $disposeCall;\n  ',
-            );
-          }
-        }
-      } else {
-        // Create a new dispose method
-        const indent = '  ';
-        final disposeMethodSource =
-            '\n'
-            '\n'
-            '$indent@override\n'
-            '${indent}void dispose() {\n'
-            '$indent$indent$disposeCall;\n'
-            '$indent${indent}super.dispose();\n'
-            '$indent}\n';
-
-        builder.addSimpleInsertion(
-          body.rightBracket.offset,
-          disposeMethodSource,
-        );
-      }
+      insertIntoDisposeMethod(builder, body, disposeCall);
     });
-  }
-
-  static VariableDeclaration? _findVariableDeclaration(AstNode node) {
-    AstNode? current = node;
-    while (current != null) {
-      if (current is VariableDeclaration) return current;
-      current = current.parent;
-    }
-    return null;
-  }
-
-  static Statement? _findSuperDispose(Block block) {
-    for (final statement in block.statements) {
-      if (statement is ExpressionStatement) {
-        final expr = statement.expression;
-        if (expr is MethodInvocation &&
-            expr.methodName.name == 'dispose' &&
-            expr.target is SuperExpression) {
-          return statement;
-        }
-      }
-    }
-    return null;
   }
 }

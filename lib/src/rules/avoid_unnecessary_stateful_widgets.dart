@@ -5,9 +5,10 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 import '../state_base_classes.dart';
-import '../type_checker.dart';
+import '../state_class_pairing.dart';
 
 /// Warns when a StatefulWidget can be replaced with a StatelessWidget because
 /// its State class has no mutable state, lifecycle methods, or setState calls.
@@ -43,11 +44,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _statefulWidgetChecker = TypeChecker.fromName(
-    'StatefulWidget',
-    packageName: 'flutter',
-  );
-
   static const _lifecycleMethods = {
     'initState',
     'dispose',
@@ -77,7 +73,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       final element = declaration.declaredFragment?.element;
       if (element == null) continue;
 
-      if (_statefulWidgetChecker.isSuperOf(element)) {
+      if (statefulWidgetChecker.isSuperOf(element)) {
         statefulWidgets.add(declaration);
       } else if (isStateElement(rule, element)) {
         stateClasses.add(declaration);
@@ -89,7 +85,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       final widgetName = widget.namePart.typeName.lexeme;
 
       // Find the companion State class
-      final stateClass = _findStateClass(stateClasses, widgetName);
+      final stateClass = findStateClassFor(stateClasses, widgetName);
       if (stateClass == null) continue;
 
       if (_isUnnecessaryState(stateClass) &&
@@ -97,28 +93,6 @@ class _Visitor extends SimpleAstVisitor<void> {
         rule.reportAtToken(widget.namePart.typeName);
       }
     }
-  }
-
-  /// Finds the State class that corresponds to the given StatefulWidget name.
-  /// Looks for `State<WidgetName>` in the extends clause.
-  static ClassDeclaration? _findStateClass(
-    List<ClassDeclaration> stateClasses,
-    String widgetName,
-  ) {
-    for (final stateClass in stateClasses) {
-      final superclass = stateClass.extendsClause?.superclass;
-      if (superclass == null) continue;
-
-      // Check if extends State<WidgetName>
-      final typeArgs = superclass.typeArguments?.arguments;
-      if (typeArgs != null && typeArgs.length == 1) {
-        final typeArg = typeArgs.first;
-        if (typeArg is NamedType && typeArg.name.lexeme == widgetName) {
-          return stateClass;
-        }
-      }
-    }
-    return null;
   }
 
   /// Whether a mixin applied to the State class carries the state itself.

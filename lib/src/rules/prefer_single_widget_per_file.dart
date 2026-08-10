@@ -4,8 +4,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
 
 /// Warns when a file contains more than one public widget class.
 /// Private widgets (prefixed with underscore) are ignored.
@@ -41,11 +41,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _widgetChecker = TypeChecker.fromName(
-    'Widget',
-    packageName: 'flutter',
-  );
-
   @override
   void visitCompilationUnit(CompilationUnit node) {
     // Defaults reproduce the previous behaviour exactly: private widgets were
@@ -75,7 +70,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       final element = declaration.declaredFragment?.element;
       if (element == null) continue;
 
-      if (_widgetChecker.isSuperOf(element)) {
+      if (widgetChecker.isSuperOf(element)) {
         publicWidgets.add(declaration);
       }
     }

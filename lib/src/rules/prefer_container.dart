@@ -233,12 +233,8 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   /// Gets the child expression from a widget's argument list.
-  static Expression? _getChildExpression(ArgumentList argumentList) {
-    final childArg = argumentList.arguments
-        .whereType<NamedArgument>()
-        .firstWhereOrNull((e) => e.name.lexeme == 'child');
-    return childArg?.argumentExpression;
-  }
+  static Expression? _getChildExpression(ArgumentList argumentList) =>
+      namedArgumentValue(argumentList.arguments, 'child');
 
   /// Checks whether the sequence has conflicting parameters. Two widgets that
   /// map to the same Container parameter would conflict.

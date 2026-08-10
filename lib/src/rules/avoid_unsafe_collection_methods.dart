@@ -4,6 +4,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../ast_node_analysis.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
@@ -109,7 +110,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     // A collection literal with elements is provably non-empty.
     if (_isNonEmptyLiteral(target)) return;
 
-    final enclosingFunction = _enclosingFunctionBody(node);
+    final enclosingFunction = enclosingOfType<FunctionBody>(node);
     if (enclosingFunction == null) return;
 
     // Any emptiness check on this receiver anywhere in the function is
@@ -127,13 +128,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     SetOrMapLiteral(:final elements) => elements.isNotEmpty,
     _ => false,
   };
-
-  AstNode? _enclosingFunctionBody(AstNode node) {
-    for (AstNode? current = node; current != null; current = current.parent) {
-      if (current is FunctionBody) return current;
-    }
-    return null;
-  }
 }
 
 /// Looks for any emptiness or length check mentioning [receiverName].

@@ -4,6 +4,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 import '../state_base_classes.dart';
 import '../type_checker.dart';
@@ -72,11 +73,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _contextChecker = TypeChecker.fromName(
-    'BuildContext',
-    packageName: 'flutter',
-  );
-
   @override
   void visitFieldDeclaration(FieldDeclaration node) {
     if (!node.fields.isLate) return;
@@ -94,7 +90,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       final initializer = variable.initializer;
       if (initializer == null) continue;
 
-      final finder = _ContextFinder(_contextChecker);
+      final finder = _ContextFinder(buildContextChecker);
       initializer.accept(finder);
 
       if (finder.found) rule.reportAtNode(variable);

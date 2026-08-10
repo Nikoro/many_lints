@@ -1,10 +1,11 @@
 import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analysis_server_plugin/edit/dart/dart_fix_kind_priority.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
+
+import '../set_state_collection.dart';
 
 /// Fix that merges multiple `setState` calls into a single invocation.
 class PreferSingleSetstateFix extends ResolvedCorrectionProducer {
@@ -32,7 +33,7 @@ class PreferSingleSetstateFix extends ResolvedCorrectionProducer {
     final method = _findEnclosingMethod(targetNode);
     if (method == null) return;
 
-    final collector = _SetStateCollector();
+    final collector = SetStateCollector();
     method.body.visitChildren(collector);
 
     final calls = collector.calls;
@@ -92,22 +93,4 @@ class PreferSingleSetstateFix extends ResolvedCorrectionProducer {
     }
     return null;
   }
-}
-
-class _SetStateCollector extends RecursiveAstVisitor<void> {
-  final List<MethodInvocation> calls = [];
-
-  @override
-  void visitMethodInvocation(MethodInvocation node) {
-    if (node.methodName.name == 'setState') {
-      calls.add(node);
-    }
-    super.visitMethodInvocation(node);
-  }
-
-  @override
-  void visitFunctionExpression(FunctionExpression node) {}
-
-  @override
-  void visitFunctionDeclaration(FunctionDeclaration node) {}
 }

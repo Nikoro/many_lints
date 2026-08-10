@@ -4,8 +4,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
 
 /// Warns when an `EdgeInsets` constructor can be replaced with a simpler one.
 ///
@@ -47,15 +47,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _edgeInsetsChecker = TypeChecker.fromName(
-    'EdgeInsets',
-    packageName: 'flutter',
-  );
-
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     final staticType = node.staticType;
-    if (staticType == null || !_edgeInsetsChecker.isExactlyType(staticType)) {
+    if (staticType == null || !edgeInsetsChecker.isExactlyType(staticType)) {
       return;
     }
 
@@ -66,7 +61,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitMethodInvocation(MethodInvocation node) {
     final staticType = node.staticType;
-    if (staticType == null || !_edgeInsetsChecker.isExactlyType(staticType)) {
+    if (staticType == null || !edgeInsetsChecker.isExactlyType(staticType)) {
       return;
     }
 

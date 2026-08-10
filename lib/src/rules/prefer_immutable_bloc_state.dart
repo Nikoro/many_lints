@@ -4,9 +4,9 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../bloc_type_checkers.dart';
 import '../many_lints_rule.dart';
 import '../rule_config.dart';
-import '../type_checker.dart';
 
 /// Warns when a Bloc/Cubit state class is not annotated with `@immutable`.
 ///
@@ -52,13 +52,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   /// Reproduces the original `endsWith('State')` heuristic.
   static final _defaultNamePattern = RegExp(r'State$');
 
-  static const _blocChecker = TypeChecker.fromName('Bloc', packageName: 'bloc');
-
-  static const _cubitChecker = TypeChecker.fromName(
-    'Cubit',
-    packageName: 'bloc',
-  );
-
   @override
   void visitCompilationUnit(CompilationUnit node) {
     final stateClassNames = <String>{};
@@ -81,8 +74,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       // Strategy 1: Find classes used as state type parameter of Bloc/Cubit
       final element = declaration.declaredFragment?.element;
       if (element != null) {
-        if (_blocChecker.isSuperOf(element) &&
-            !_blocChecker.isExactly(element)) {
+        if (blocChecker.isSuperOf(element) && !blocChecker.isExactly(element)) {
           final typeArgs =
               declaration.extendsClause?.superclass.typeArguments?.arguments;
           if (typeArgs != null && typeArgs.length == 2) {
@@ -91,8 +83,8 @@ class _Visitor extends SimpleAstVisitor<void> {
               stateClassNames.add(stateType.name.lexeme);
             }
           }
-        } else if (_cubitChecker.isSuperOf(element) &&
-            !_cubitChecker.isExactly(element)) {
+        } else if (cubitChecker.isSuperOf(element) &&
+            !cubitChecker.isExactly(element)) {
           final typeArgs =
               declaration.extendsClause?.superclass.typeArguments?.arguments;
           if (typeArgs != null && typeArgs.length == 1) {

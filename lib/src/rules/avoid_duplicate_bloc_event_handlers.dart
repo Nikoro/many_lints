@@ -6,8 +6,8 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../bloc_type_checkers.dart';
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
 
 /// Warns when the same event type is registered with `on<E>` more than once.
 ///
@@ -51,12 +51,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _blocChecker = TypeChecker.fromName('Bloc', packageName: 'bloc');
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final element = node.declaredFragment?.element;
-    if (element == null || !_blocChecker.isSuperOf(element)) return;
+    if (element == null || !blocChecker.isSuperOf(element)) return;
 
     final body = node.body;
     if (body is! BlockClassBody) return;

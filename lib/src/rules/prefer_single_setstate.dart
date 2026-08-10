@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
+import '../set_state_collection.dart';
 import '../state_base_classes.dart';
 
 /// Warns when a method in a `State` subclass contains multiple `setState` calls
@@ -57,7 +58,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (element == null || !isStateElement(rule, element)) return;
 
     // Collect all setState calls in this method (not inside nested closures)
-    final collector = _SetStateCollector();
+    final collector = SetStateCollector();
     node.body.visitChildren(collector);
 
     final calls = collector.calls;
@@ -68,26 +69,4 @@ class _Visitor extends SimpleAstVisitor<void> {
       rule.reportAtNode(calls[i]);
     }
   }
-}
-
-/// Collects `setState` calls at the current method level,
-/// stopping at function boundaries (closures, local functions).
-class _SetStateCollector extends RecursiveAstVisitor<void> {
-  final List<MethodInvocation> calls = [];
-
-  @override
-  void visitMethodInvocation(MethodInvocation node) {
-    if (node.methodName.name == 'setState') {
-      calls.add(node);
-    }
-    super.visitMethodInvocation(node);
-  }
-
-  // Stop at nested function boundaries — setState inside closures
-  // belongs to a different logical scope.
-  @override
-  void visitFunctionExpression(FunctionExpression node) {}
-
-  @override
-  void visitFunctionDeclaration(FunctionDeclaration node) {}
 }

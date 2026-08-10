@@ -7,6 +7,8 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
+import '../ast_node_analysis.dart';
+
 /// Fix that introduces a class destructuring declaration to replace
 /// multiple property accesses on the same variable.
 class PreferClassDestructuringFix extends ResolvedCorrectionProducer {
@@ -73,9 +75,7 @@ class PreferClassDestructuringFix extends ResolvedCorrectionProducer {
     if (firstStatement == null) return;
 
     // Calculate indentation from the first statement
-    final content = unitResult.content;
-    final lineStart = content.lastIndexOf('\n', firstStatement.offset) + 1;
-    final indent = content.substring(lineStart, firstStatement.offset);
+    final indent = indentOf(unitResult.content, firstStatement.offset);
 
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleInsertion(

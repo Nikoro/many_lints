@@ -6,6 +6,7 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
+import '../flutter_type_checkers.dart';
 import '../type_checker.dart';
 
 /// Warns when multi-child widgets have only a single child.
@@ -42,10 +43,10 @@ class _Visitor extends SimpleAstVisitor<void> {
   _Visitor(this.rule);
 
   static const _complain = [
-    ('children', TypeChecker.fromName('Column', packageName: 'flutter')),
-    ('children', TypeChecker.fromName('Row', packageName: 'flutter')),
-    ('children', TypeChecker.fromName('Wrap', packageName: 'flutter')),
-    ('children', TypeChecker.fromName('Flex', packageName: 'flutter')),
+    ('children', columnChecker),
+    ('children', rowChecker),
+    ('children', wrapChecker),
+    ('children', flexChecker),
     ('children', TypeChecker.fromName('SliverList', packageName: 'flutter')),
     (
       'slivers',

@@ -22,6 +22,38 @@ Concrete fixes generally follow: `ResolvedCorrectionProducer` + `FixKind` + `com
 - **Applicability:** Default to `CorrectionApplicability.singleLocation`
 - **Constructor:** `MyFix({required super.context})`
 
+## Shared helpers — reach for these before hand-rolling
+
+- `resolveWidgetCall(node)` (`../ast_node_analysis.dart`) — resolves a reported
+  node into `({Expression node, ArgumentList argumentList})` for **both** widget
+  call shapes (`ConstructorName`→`InstanceCreationExpression` and
+  `SimpleIdentifier`→`MethodInvocation`). Use it whenever the fix replaces the
+  *whole call*.
+  - ⚠️ **Not** for a fix that replaces only the `ConstructorName` (e.g.
+    `prefer_center_over_align_fix`, `prefer_padding_over_container_fix`): a
+    `MethodInvocation` has no node with that range, so accepting it would widen
+    the replaced range. Those fixes keep their own `ConstructorName`-only guard
+    on purpose — do not "unify" them.
+- `indentOf(content, offset)` and `enclosingOfType<T>(node)`
+  (`../ast_node_analysis.dart`) — for synthesising a line-aligned insertion.
+  `enclosingOfType` starts at `node` itself, unlike `enclosingClassDeclaration`.
+- `namedArgumentNode()` / `namedArgumentValue()` — exact-name argument lookup.
+- `findSuperDisposeCall()` / `insertIntoDisposeMethod()`
+  (`../dispose_method_editing.dart`) — insert a statement into an existing
+  `dispose()` or synthesise the whole override. Shared by `dispose_fields_fix`
+  and `always_remove_listener_fix`.
+- `InsertGuardBeforeStatementFix` (`insert_guard_before_statement_fix.dart`) —
+  base class for the "use X synchronously" fixes; a subclass supplies only
+  `guardSource` and its own `fixKind`.
+- `SetStateCollector` (`../set_state_collection.dart`) — shared with the rule.
+
+**When two fixes differ only in their `FixKind` and one literal, subclass
+instead of copying.** Existing pairs: `AvoidUnnecessaryOverridesInStateFix
+extends AvoidUnnecessaryOverridesFix`, `PreferShorthandsWithConstructorsFix
+extends PreferReturningShorthandsFix`, `PreferShorthandsWithStaticFieldsFix
+extends PreferShorthandsWithEnumsFix`. Each subclass keeps its **own** fix ID —
+those are public surface and must never be merged.
+
 ## Do not assume the shape of `node`
 
 `node` comes from `nodeCovering(offset, length)`, which returns the **deepest**

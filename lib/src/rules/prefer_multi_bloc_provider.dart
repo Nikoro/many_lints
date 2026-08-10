@@ -5,6 +5,8 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../ast_node_analysis.dart';
+import '../bloc_type_checkers.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
@@ -42,21 +44,9 @@ class PreferMultiBlocProvider extends ManyLintsRule {
 
 /// Maps each single-provider type checker to (multiName, singleName).
 const _providerTypes = [
-  (
-    TypeChecker.fromName('BlocProvider', packageName: 'flutter_bloc'),
-    'MultiBlocProvider',
-    'BlocProvider',
-  ),
-  (
-    TypeChecker.fromName('BlocListener', packageName: 'flutter_bloc'),
-    'MultiBlocListener',
-    'BlocListener',
-  ),
-  (
-    TypeChecker.fromName('RepositoryProvider', packageName: 'flutter_bloc'),
-    'MultiRepositoryProvider',
-    'RepositoryProvider',
-  ),
+  (blocProviderChecker, 'MultiBlocProvider', 'BlocProvider'),
+  (blocListenerChecker, 'MultiBlocListener', 'BlocListener'),
+  (repositoryProviderChecker, 'MultiRepositoryProvider', 'RepositoryProvider'),
 ];
 
 /// Finds which provider type matches [staticType], or returns `null`.
@@ -64,16 +54,6 @@ const _providerTypes = [
   if (staticType == null) return null;
   for (final entry in _providerTypes) {
     if (entry.$1.isExactlyType(staticType)) return entry;
-  }
-  return null;
-}
-
-/// Extracts the `child:` named argument expression from an argument list.
-Expression? _findChildExpression(ArgumentList argumentList) {
-  for (final arg in argumentList.arguments) {
-    if (arg is NamedArgument && arg.name.lexeme == 'child') {
-      return arg.argumentExpression;
-    }
   }
   return null;
 }
@@ -136,7 +116,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final callInfo = _getCallInfo(node);
     if (callInfo == null) return;
 
-    final childExpr = _findChildExpression(callInfo.$1);
+    final childExpr = namedArgumentValue(callInfo.$1.arguments, 'child');
     if (childExpr == null) return;
 
     final childType = childExpr.staticType;

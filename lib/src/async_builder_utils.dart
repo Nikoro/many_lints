@@ -12,16 +12,6 @@ import 'package:analyzer/dart/ast/token.dart';
 
 import 'type_checker.dart';
 
-/// Returns the argument expression for [name] in [arguments], or `null`.
-Expression? namedArgument(NodeList<Argument> arguments, String name) {
-  for (final argument in arguments) {
-    if (argument is NamedArgument && argument.name.lexeme == name) {
-      return argument.argumentExpression;
-    }
-  }
-  return null;
-}
-
 /// Whether [expression] *creates* a new async source rather than referring to
 /// an existing one.
 ///

@@ -5,11 +5,97 @@ import 'package:analyzer/dart/element/nullability_suffix.dart';
 import './type_checker.dart';
 
 /// Walks up the AST to find the nearest enclosing [ClassDeclaration].
+///
+/// Starts at [node]'s *parent*, so a [ClassDeclaration] passed in is not
+/// returned as its own ancestor. That differs from [enclosingOfType], which
+/// starts at [node] itself.
 ClassDeclaration? enclosingClassDeclaration(AstNode node) {
   AstNode? current = node.parent;
   while (current != null) {
     if (current is ClassDeclaration) return current;
     current = current.parent;
+  }
+  return null;
+}
+
+/// Walks up from [node] — including [node] itself — to the nearest ancestor of
+/// type [T].
+///
+/// Mirrors the analyzer's own `thisOrAncestorOfType`, kept here so the several
+/// fixes that hand-rolled this loop share one spelling.
+T? enclosingOfType<T extends AstNode>(AstNode node) {
+  AstNode? current = node;
+  while (current != null) {
+    if (current is T) return current;
+    current = current.parent;
+  }
+  return null;
+}
+
+/// Returns the [NamedArgument] called [name] in [arguments], or `null`.
+///
+/// Fixes generally want the node itself, because deleting or replacing an
+/// argument needs its `name` token; rules more often want only the value, for
+/// which [namedArgumentValue] is the shorter spelling.
+NamedArgument? namedArgumentNode(NodeList<Argument> arguments, String name) {
+  for (final argument in arguments) {
+    if (argument is NamedArgument && argument.name.lexeme == name) {
+      return argument;
+    }
+  }
+  return null;
+}
+
+/// Returns the value passed for the named argument [name], or `null`.
+Expression? namedArgumentValue(NodeList<Argument> arguments, String name) =>
+    namedArgumentNode(arguments, name)?.argumentExpression;
+
+/// Returns the whitespace that indents the line containing [offset].
+///
+/// Used by fixes that synthesise a statement and must line it up with the code
+/// it is inserted beside.
+String indentOf(String content, int offset) {
+  // `offset == 0` is the start of the file: there is no preceding character to
+  // search, and `lastIndexOf` rejects a negative start index outright.
+  if (offset <= 0) return '';
+
+  final lineStart = content.lastIndexOf('\n', offset - 1) + 1;
+  return content.substring(lineStart, offset);
+}
+
+/// Resolves a widget-call diagnostic's reported node into the whole call
+/// expression and its argument list.
+///
+/// A widget constructor reaches a fix as one of two unrelated AST shapes: with
+/// `const`, `new` or explicit type arguments it parses as an
+/// [InstanceCreationExpression] reported at its [ConstructorName]; a bare
+/// `Foo(...)` parses as a [MethodInvocation] reported at its
+/// [SimpleIdentifier]. Fixes that replace the *whole call* treat the two
+/// identically, so they share this lookup.
+///
+/// Returns `null` when [node] is neither shape — the caller should then leave
+/// the source untouched.
+///
+/// Not for fixes that replace only the [ConstructorName] itself: a
+/// [MethodInvocation] has no node with that range, so accepting it here would
+/// silently widen the replaced range.
+({Expression node, ArgumentList argumentList})? resolveWidgetCall(
+  AstNode node,
+) {
+  // For an unnamed constructor, `ConstructorName` and its `NamedType` child
+  // share a source range and the covering node resolves to the deeper one, so
+  // look up before type-testing.
+  final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
+
+  if (targetNode is ConstructorName) {
+    final parent = targetNode.parent;
+    if (parent is! InstanceCreationExpression) return null;
+    return (node: parent, argumentList: parent.argumentList);
+  }
+  if (targetNode is SimpleIdentifier) {
+    final parent = targetNode.parent;
+    if (parent is! MethodInvocation) return null;
+    return (node: parent, argumentList: parent.argumentList);
   }
   return null;
 }

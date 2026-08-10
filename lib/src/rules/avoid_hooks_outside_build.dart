@@ -5,8 +5,8 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../hook_detection.dart';
+import '../hook_type_checkers.dart';
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
 
 /// Warns when a hook is called outside a hook context.
 ///
@@ -50,12 +50,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   final AvoidHooksOutsideBuild rule;
 
   _Visitor(this.rule);
-
-  static const _hookWidgetChecker = TypeChecker.any([
-    TypeChecker.fromName('HookWidget', packageName: 'flutter_hooks'),
-    TypeChecker.fromName('HookConsumerWidget', packageName: 'hooks_riverpod'),
-    TypeChecker.fromName('HookState', packageName: 'flutter_hooks'),
-  ]);
 
   @override
   void visitMethodInvocation(MethodInvocation node) => _check(node);
@@ -138,6 +132,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final element = classDecl.declaredFragment?.element;
     if (element == null) return false;
-    return _hookWidgetChecker.isSuperOf(element);
+    return hookScopeChecker.isSuperOf(element);
   }
 }

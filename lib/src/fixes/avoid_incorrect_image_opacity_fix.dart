@@ -26,27 +26,10 @@ class AvoidIncorrectImageOpacityFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The reported node can be ConstructorName or SimpleIdentifier
-    final Expression opacityCreation;
-    final NodeList<Argument> arguments;
-
-    // An unnamed `Opacity(...)` makes `ConstructorName` and its `NamedType`
-    // child share a source range, and the covering node resolves to the
-    // deeper one — so look up rather than type-testing `node` directly.
-    final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
-    if (targetNode is ConstructorName &&
-        targetNode.parent is InstanceCreationExpression) {
-      final ice = targetNode.parent! as InstanceCreationExpression;
-      opacityCreation = ice;
-      arguments = ice.argumentList.arguments;
-    } else if (targetNode is SimpleIdentifier &&
-        targetNode.parent is MethodInvocation) {
-      final mi = targetNode.parent! as MethodInvocation;
-      opacityCreation = mi;
-      arguments = mi.argumentList.arguments;
-    } else {
-      return;
-    }
+    final call = resolveWidgetCall(node);
+    if (call == null) return;
+    final opacityCreation = call.node;
+    final arguments = call.argumentList.arguments;
 
     // Find the opacity value
     final opacityArg = arguments.whereType<NamedArgument>().firstWhereOrNull(

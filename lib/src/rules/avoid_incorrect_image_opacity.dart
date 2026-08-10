@@ -4,6 +4,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../ast_node_analysis.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
@@ -72,15 +73,12 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _checkChildArgument(ArgumentList argumentList, AstNode reportNode) {
-    for (final arg in argumentList.arguments.whereType<NamedArgument>()) {
-      if (arg.name.lexeme == 'child') {
-        final childType = arg.argumentExpression.staticType;
-        if (childType != null &&
-            _imageChecker.isAssignableFromType(childType)) {
-          rule.reportAtNode(reportNode);
-        }
-        return;
-      }
+    final child = namedArgumentValue(argumentList.arguments, 'child');
+    if (child == null) return;
+
+    final childType = child.staticType;
+    if (childType != null && _imageChecker.isAssignableFromType(childType)) {
+      rule.reportAtNode(reportNode);
     }
   }
 }

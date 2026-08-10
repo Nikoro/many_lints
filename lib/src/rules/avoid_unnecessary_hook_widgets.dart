@@ -7,7 +7,7 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../hook_detection.dart';
-import '../type_checker.dart';
+import '../hook_type_checkers.dart';
 
 /// Warns when a HookWidget does not use any hooks in the build method.
 class AvoidUnnecessaryHookWidgets extends ManyLintsRule {
@@ -42,18 +42,13 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _hookWidgetChecker = TypeChecker.any([
-    TypeChecker.fromName('HookWidget', packageName: 'flutter_hooks'),
-    TypeChecker.fromName('HookConsumerWidget', packageName: 'hooks_riverpod'),
-  ]);
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final superclass = node.extendsClause?.superclass;
     final superclassElement = superclass?.element;
     if (superclass == null || superclassElement == null) return;
 
-    if (!_hookWidgetChecker.isExactly(superclassElement)) return;
+    if (!hookWidgetChecker.isExactly(superclassElement)) return;
 
     final body = node.body;
     if (body is! BlockClassBody) return;

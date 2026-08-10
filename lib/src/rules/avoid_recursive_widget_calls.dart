@@ -6,9 +6,9 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 import '../state_base_classes.dart';
-import '../type_checker.dart';
 
 /// Warns when a widget's `build` method instantiates the widget itself
 /// unconditionally.
@@ -53,11 +53,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _widgetChecker = TypeChecker.fromName(
-    'Widget',
-    packageName: 'flutter',
-  );
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final element = node.declaredFragment?.element;
@@ -66,7 +61,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     // The type whose construction counts as recursion. For a StatelessWidget
     // that is the class itself; for a State it is the widget it belongs to.
     final InterfaceElement target;
-    if (_widgetChecker.isSuperOf(element)) {
+    if (widgetChecker.isSuperOf(element)) {
       target = element;
     } else if (isStateElement(rule, element)) {
       final widget = _stateWidgetType(node);

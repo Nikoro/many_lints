@@ -26,31 +26,11 @@ class PreferTextRichFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // For an unnamed constructor, `ConstructorName` and its `NamedType`
-    // child share a source range and the covering node resolves to the
-    // deeper one, so look up before type-testing.
-    final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
+    final call = resolveWidgetCall(node);
+    if (call == null) return;
+    final replacementNode = call.node;
 
-    final ArgumentList argumentList;
-    final AstNode replacementNode;
-
-    if (targetNode is ConstructorName) {
-      // InstanceCreationExpression case (const RichText(...) or RichText<T>(...))
-      final parent = targetNode.parent;
-      if (parent is! InstanceCreationExpression) return;
-      argumentList = parent.argumentList;
-      replacementNode = parent;
-    } else if (targetNode is SimpleIdentifier) {
-      // MethodInvocation case (RichText(...) without const/new/type args)
-      final parent = targetNode.parent;
-      if (parent is! MethodInvocation) return;
-      argumentList = parent.argumentList;
-      replacementNode = parent;
-    } else {
-      return;
-    }
-
-    final arguments = argumentList.arguments;
+    final arguments = call.argumentList.arguments;
 
     // Find the `text` argument (the TextSpan)
     final textArgument = arguments.whereType<NamedArgument>().firstWhereOrNull(

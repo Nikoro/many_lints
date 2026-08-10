@@ -4,8 +4,9 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../bloc_type_checkers.dart';
+import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
 
 /// Warns when a Bloc/Cubit class accepts a `BuildContext` parameter in its
 /// constructor or methods.
@@ -47,26 +48,16 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _blocBaseChecker = TypeChecker.fromName(
-    'BlocBase',
-    packageName: 'bloc',
-  );
-
-  static const _buildContextChecker = TypeChecker.fromName(
-    'BuildContext',
-    packageName: 'flutter',
-  );
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final element = node.declaredFragment?.element;
     if (element == null) return;
 
     // Only check classes that extend BlocBase (Bloc or Cubit)
-    if (!_blocBaseChecker.isSuperOf(element)) return;
+    if (!blocBaseChecker.isSuperOf(element)) return;
 
     // Skip the BlocBase/Bloc/Cubit classes themselves
-    if (_blocBaseChecker.isExactly(element)) return;
+    if (blocBaseChecker.isExactly(element)) return;
 
     final body = node.body;
     if (body is! BlockClassBody) return;
@@ -89,7 +80,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (paramElement == null) continue;
 
       final paramType = paramElement.type;
-      if (_buildContextChecker.isExactlyType(paramType)) {
+      if (buildContextChecker.isExactlyType(paramType)) {
         final nameToken = param.name;
         if (nameToken != null) {
           rule.reportAtToken(nameToken);

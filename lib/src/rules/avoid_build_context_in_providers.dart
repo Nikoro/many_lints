@@ -7,14 +7,9 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
-import '../type_checker.dart';
-
-const _buildContextChecker = TypeChecker.fromName(
-  'BuildContext',
-  packageName: 'flutter',
-);
 
 /// Warns when a `@riverpod` provider takes a `BuildContext` parameter.
 ///
@@ -94,7 +89,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     for (final parameter in parameters.parameters) {
       final type = parameter.declaredFragment?.element.type;
       if (type == null) continue;
-      if (!_buildContextChecker.isExactlyType(type)) continue;
+      if (!buildContextChecker.isExactlyType(type)) continue;
 
       rule.reportAtNode(parameter);
     }

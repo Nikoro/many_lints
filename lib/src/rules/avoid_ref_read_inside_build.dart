@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
+import '../riverpod_type_checkers.dart';
 
 /// Warns when `ref.read()` is called inside a `build()` method of a
 /// Riverpod consumer widget or consumer state class.
@@ -48,16 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _consumerWidgetChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerWidget', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerWidget', packageName: 'hooks_riverpod'),
-  ]);
-
-  static const _consumerStateChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerState', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerState', packageName: 'hooks_riverpod'),
-  ]);
-
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
     if (node.name.lexeme != 'build') return;
@@ -72,8 +62,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (element == null) return;
 
     // Check if it's a ConsumerWidget, ConsumerState, or Hook variants
-    if (!_consumerWidgetChecker.isSuperOf(element) &&
-        !_consumerStateChecker.isSuperOf(element)) {
+    if (!consumerWidgetChecker.isSuperOf(element) &&
+        !consumerStateChecker.isSuperOf(element)) {
       return;
     }
 

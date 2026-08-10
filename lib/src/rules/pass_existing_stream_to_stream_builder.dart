@@ -4,8 +4,9 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../many_lints_rule.dart';
+import '../ast_node_analysis.dart';
 import '../async_builder_utils.dart';
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a `StreamBuilder` receives a newly created `Stream`.
@@ -73,7 +74,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    final stream = namedArgument(argumentList.arguments, 'stream');
+    final stream = namedArgumentValue(argumentList.arguments, 'stream');
     if (stream == null) return;
 
     if (createsNewAsyncSource(stream, _streamChecker)) {

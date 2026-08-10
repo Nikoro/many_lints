@@ -5,6 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../ast_node_analysis.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
@@ -71,13 +72,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    for (final arg in argumentList.arguments.whereType<NamedArgument>()) {
-      if (arg.name.lexeme == 'shrinkWrap') {
-        if (arg.argumentExpression case BooleanLiteral(value: true)) {
-          rule.reportAtNode(arg);
-          return;
-        }
-      }
+    final arg = namedArgumentNode(argumentList.arguments, 'shrinkWrap');
+    if (arg == null) return;
+
+    if (arg.argumentExpression case BooleanLiteral(value: true)) {
+      rule.reportAtNode(arg);
     }
   }
 }

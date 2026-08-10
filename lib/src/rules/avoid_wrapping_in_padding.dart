@@ -7,7 +7,7 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import '../flutter_type_checkers.dart';
 
 /// Warns when a widget that supports a `padding` parameter is wrapped in a
 /// `Padding` widget. The padding should be passed directly to the child widget
@@ -46,32 +46,23 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _paddingChecker = TypeChecker.fromName(
-    'Padding',
-    packageName: 'flutter',
-  );
-
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    if (!isExpressionExactlyType(node, _paddingChecker)) return;
+    if (!isExpressionExactlyType(node, paddingChecker)) return;
     _check(node.argumentList, node.constructorName);
   }
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
     final type = node.staticType;
-    if (type == null || !_paddingChecker.isExactlyType(type)) return;
+    if (type == null || !paddingChecker.isExactlyType(type)) return;
     _check(node.argumentList, node.methodName);
   }
 
   void _check(ArgumentList argumentList, AstNode reportNode) {
     // Find the child argument
-    final childArg = argumentList.arguments
-        .whereType<NamedArgument>()
-        .firstWhereOrNull((e) => e.name.lexeme == 'child');
-    if (childArg == null) return;
-
-    final childExpr = childArg.argumentExpression;
+    final childExpr = namedArgumentValue(argumentList.arguments, 'child');
+    if (childExpr == null) return;
 
     // Get the child widget's type name and argument list
     final (childTypeName, childArgList) = _getChildInfo(childExpr);

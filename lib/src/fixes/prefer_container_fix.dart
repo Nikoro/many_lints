@@ -62,23 +62,10 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // For an unnamed constructor, `ConstructorName` and its `NamedType`
-    // child share a source range and the covering node resolves to the
-    // deeper one, so look up before type-testing.
-    final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
-
     // Find the outermost widget expression
-    final Expression outerWidget;
-    if (targetNode is ConstructorName) {
-      final parent = targetNode.parent;
-      if (parent is! InstanceCreationExpression) return;
-      outerWidget = parent;
-    } else if (targetNode is SimpleIdentifier &&
-        targetNode.parent is MethodInvocation) {
-      outerWidget = targetNode.parent! as MethodInvocation;
-    } else {
-      return;
-    }
+    final call = resolveWidgetCall(node);
+    if (call == null) return;
+    final outerWidget = call.node;
 
     // Collect the sequence of widgets
     final sequence = _collectSequence(outerWidget);

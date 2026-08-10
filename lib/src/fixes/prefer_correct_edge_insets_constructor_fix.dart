@@ -5,7 +5,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-import '../type_checker.dart';
+import '../flutter_type_checkers.dart';
 
 /// Fix that replaces an EdgeInsets constructor with a simpler alternative.
 class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {
@@ -24,11 +24,6 @@ class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {
   @override
   FixKind get fixKind => _fixKind;
 
-  static const _edgeInsetsChecker = TypeChecker.fromName(
-    'EdgeInsets',
-    packageName: 'flutter',
-  );
-
   @override
   Future<void> compute(ChangeBuilder builder) async {
     final targetNode = node;
@@ -38,14 +33,14 @@ class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {
 
     if (targetNode is InstanceCreationExpression) {
       final staticType = targetNode.staticType;
-      if (staticType == null || !_edgeInsetsChecker.isExactlyType(staticType)) {
+      if (staticType == null || !edgeInsetsChecker.isExactlyType(staticType)) {
         return;
       }
       constructorName = targetNode.constructorName.name?.name;
       argumentList = targetNode.argumentList;
     } else if (targetNode is MethodInvocation) {
       final staticType = targetNode.staticType;
-      if (staticType == null || !_edgeInsetsChecker.isExactlyType(staticType)) {
+      if (staticType == null || !edgeInsetsChecker.isExactlyType(staticType)) {
         return;
       }
       constructorName = targetNode.methodName.name;

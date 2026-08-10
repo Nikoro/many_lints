@@ -6,8 +6,8 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../bloc_type_checkers.dart';
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
 
 /// Warns when a Bloc leaves one of its event subclasses without a handler.
 ///
@@ -66,12 +66,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _blocChecker = TypeChecker.fromName('Bloc', packageName: 'bloc');
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final element = node.declaredFragment?.element;
-    if (element == null || !_blocChecker.isSuperOf(element)) return;
+    if (element == null || !blocChecker.isSuperOf(element)) return;
 
     final eventType = _eventTypeOf(node);
     if (eventType is! InterfaceType) return;

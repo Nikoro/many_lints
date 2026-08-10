@@ -6,6 +6,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
+import '../type_inference.dart';
 
 /// Suggests using `List.of()` / `Set.of()` instead of `List.from()` /
 /// `Set.from()` when the argument type is already assignable to the target
@@ -108,7 +109,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (sourceType is! InterfaceType) return;
 
     // Extract the source element type from Iterable<T>
-    final sourceElementType = _getIterableElementType(sourceType);
+    final sourceElementType = iterableElementType(sourceType);
     if (sourceElementType == null) return;
 
     // If source element type is assignable to target element type,
@@ -116,23 +117,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (_isAssignable(sourceElementType, targetElementType)) {
       rule.reportAtNode(node, arguments: [typeName]);
     }
-  }
-
-  /// Extracts the element type from an Iterable type.
-  /// For `List<int>`, returns `int`. For `Set<String>`, returns `String`.
-  DartType? _getIterableElementType(InterfaceType type) {
-    if (type.typeArguments.isNotEmpty) {
-      return type.typeArguments.first;
-    }
-
-    for (final supertype in type.element.allSupertypes) {
-      if (supertype.element.name == 'Iterable' &&
-          supertype.typeArguments.isNotEmpty) {
-        return supertype.typeArguments.first;
-      }
-    }
-
-    return null;
   }
 
   /// Checks if [source] is assignable to [target].

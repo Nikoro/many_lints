@@ -5,7 +5,8 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-import '../type_checker.dart';
+import '../ast_node_analysis.dart';
+import '../bloc_type_checkers.dart';
 
 /// Fix that converts nested BlocProvider / BlocListener / RepositoryProvider
 /// into MultiBlocProvider / MultiBlocListener / MultiRepositoryProvider.
@@ -26,40 +27,16 @@ class PreferMultiBlocProviderFix extends ResolvedCorrectionProducer {
   FixKind get fixKind => _fixKind;
 
   static const _providerTypes = [
-    (
-      TypeChecker.fromName('BlocProvider', packageName: 'flutter_bloc'),
-      'MultiBlocProvider',
-    ),
-    (
-      TypeChecker.fromName('BlocListener', packageName: 'flutter_bloc'),
-      'MultiBlocListener',
-    ),
-    (
-      TypeChecker.fromName('RepositoryProvider', packageName: 'flutter_bloc'),
-      'MultiRepositoryProvider',
-    ),
+    (blocProviderChecker, 'MultiBlocProvider'),
+    (blocListenerChecker, 'MultiBlocListener'),
+    (repositoryProviderChecker, 'MultiRepositoryProvider'),
   ];
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // For an unnamed constructor, `ConstructorName` and its `NamedType`
-    // child share a source range and the covering node resolves to the
-    // deeper one, so look up before type-testing.
-    final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
-
-    // The reported node is either a ConstructorName or a SimpleIdentifier
-    // depending on whether the AST parsed it as InstanceCreationExpression
-    // or MethodInvocation.
-    final Expression outerCall;
-    if (targetNode is ConstructorName &&
-        targetNode.parent is InstanceCreationExpression) {
-      outerCall = targetNode.parent! as InstanceCreationExpression;
-    } else if (targetNode is SimpleIdentifier &&
-        targetNode.parent is MethodInvocation) {
-      outerCall = targetNode.parent! as MethodInvocation;
-    } else {
-      return;
-    }
+    final call = resolveWidgetCall(node);
+    if (call == null) return;
+    final outerCall = call.node;
 
     final outerType = outerCall.staticType;
     if (outerType == null) return;

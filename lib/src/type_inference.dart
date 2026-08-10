@@ -199,6 +199,28 @@ DartType? resolveReturnType(AstNode node) {
   return null;
 }
 
+/// Returns the element type of an `Iterable`-like [type], or `null`.
+///
+/// `List<int>`, `Set<int>` and `Iterable<int>` all carry the element type as
+/// their first type argument, so that is used directly. A custom subtype such
+/// as `class Ints extends ListBase<int>` has no type arguments of its own, so
+/// the element type has to be recovered from the `Iterable<E>` in its
+/// supertypes.
+DartType? iterableElementType(InterfaceType type) {
+  if (type.typeArguments.isNotEmpty) {
+    return type.typeArguments.first;
+  }
+
+  for (final supertype in type.element.allSupertypes) {
+    if (supertype.element.name == 'Iterable' &&
+        supertype.typeArguments.isNotEmpty) {
+      return supertype.typeArguments.first;
+    }
+  }
+
+  return null;
+}
+
 /// Checks if a context type is compatible with a given interface element.
 ///
 /// Returns `true` if the [contextType] is an interface type whose element

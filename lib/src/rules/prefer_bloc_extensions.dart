@@ -4,6 +4,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../ast_node_analysis.dart';
 import '../many_lints_rule.dart';
 
 /// Warns when `BlocProvider.of(context)` or `RepositoryProvider.of(context)`
@@ -96,13 +97,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   static bool _hasListenTrue(ArgumentList argumentList) {
-    for (final arg in argumentList.arguments.whereType<NamedArgument>()) {
-      if (arg.name.lexeme == 'listen') {
-        if (arg.argumentExpression case BooleanLiteral(value: true)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    final listen = namedArgumentValue(argumentList.arguments, 'listen');
+    return listen is BooleanLiteral && listen.value;
   }
 }

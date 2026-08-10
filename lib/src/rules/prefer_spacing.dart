@@ -7,9 +7,9 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../ast_node_analysis.dart';
+import '../flutter_type_checkers.dart';
 import '../flutter_widget_helpers.dart';
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
 
 /// Warns when SizedBox widgets are used for spacing inside Row, Column, or Flex
 /// children instead of using the `spacing` argument (Flutter 3.27+).
@@ -53,15 +53,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _sizedBoxChecker = TypeChecker.fromName(
-    'SizedBox',
-    packageName: 'flutter',
-  );
-
   static const _flexWidgets = [
-    (TypeChecker.fromName('Column', packageName: 'flutter'), FlexAxis.vertical),
-    (TypeChecker.fromName('Row', packageName: 'flutter'), FlexAxis.horizontal),
-    (TypeChecker.fromName('Flex', packageName: 'flutter'), null),
+    (columnChecker, FlexAxis.vertical),
+    (rowChecker, FlexAxis.horizontal),
+    (flexChecker, null),
   ];
 
   @override
@@ -102,12 +97,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (hasSpacingArg) return;
 
     // Find the children argument
-    final childrenArg = argumentList.arguments
-        .whereType<NamedArgument>()
-        .firstWhereOrNull((arg) => arg.name.lexeme == 'children');
-    if (childrenArg == null) return;
-
-    final childrenExpr = childrenArg.argumentExpression;
+    final childrenExpr = namedArgumentValue(argumentList.arguments, 'children');
+    if (childrenExpr == null) return;
 
     // Pattern 1: Direct list literal with SizedBox spacers
     if (childrenExpr is ListLiteral) {
@@ -249,11 +240,11 @@ class _Visitor extends SimpleAstVisitor<void> {
   /// Returns (paramName, valueSource) or null.
   static (String, String)? _extractSizedBoxSpacingFromExpr(Expression expr) {
     if (expr is InstanceCreationExpression) {
-      if (!isExpressionExactlyType(expr, _sizedBoxChecker)) return null;
+      if (!isExpressionExactlyType(expr, sizedBoxChecker)) return null;
       return _extractSizedBoxSpacing(expr.argumentList.arguments);
     }
     if (expr is MethodInvocation) {
-      if (!isExpressionExactlyType(expr, _sizedBoxChecker)) return null;
+      if (!isExpressionExactlyType(expr, sizedBoxChecker)) return null;
       return _extractSizedBoxSpacing(expr.argumentList.arguments);
     }
     return null;

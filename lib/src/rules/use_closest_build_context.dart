@@ -4,8 +4,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
 
 /// Warns when an outer BuildContext is used inside a nested builder callback
 /// that has its own BuildContext parameter available.
@@ -43,11 +43,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _buildContextChecker = TypeChecker.fromName(
-    'BuildContext',
-    packageName: 'flutter',
-  );
-
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
     final parameters = node.parameters?.parameters;
@@ -77,12 +72,12 @@ class _Visitor extends SimpleAstVisitor<void> {
   static bool _isBuildContextType(FormalParameter param) {
     // First try the explicit type annotation
     final type = param.type?.type;
-    if (type != null) return _buildContextChecker.isExactlyType(type);
+    if (type != null) return buildContextChecker.isExactlyType(type);
 
     // Fall back to the resolved element type (for untyped params like `_`)
     final element = param.declaredFragment?.element;
     if (element != null) {
-      return _buildContextChecker.isExactlyType(element.type);
+      return buildContextChecker.isExactlyType(element.type);
     }
     return false;
   }

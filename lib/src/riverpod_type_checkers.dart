@@ -24,6 +24,37 @@ bool hasRiverpodAnnotation(AnnotatedNode node) {
   });
 }
 
+/// TypeChecker for the consumer *widgets* — those whose `build` receives a
+/// Riverpod `ref` directly.
+///
+/// The hook variant is included because `hooks_riverpod` composes the two
+/// ecosystems, and every rule reasoning about `ref` in a build method applies
+/// to it identically.
+const consumerWidgetChecker = TypeChecker.any([
+  TypeChecker.fromName('ConsumerWidget', packageName: 'flutter_riverpod'),
+  TypeChecker.fromName('HookConsumerWidget', packageName: 'hooks_riverpod'),
+]);
+
+/// TypeChecker for the consumer *states* — the `State` halves that hold a
+/// Riverpod `ref`.
+const consumerStateChecker = TypeChecker.any([
+  TypeChecker.fromName('ConsumerState', packageName: 'flutter_riverpod'),
+  TypeChecker.fromName('HookConsumerState', packageName: 'hooks_riverpod'),
+]);
+
+/// TypeChecker for the `StatefulWidget` half of a consumer pair.
+const consumerStatefulWidgetChecker = TypeChecker.fromName(
+  'ConsumerStatefulWidget',
+  packageName: 'flutter_riverpod',
+);
+
+/// TypeChecker for anything that owns a Riverpod `ref` — either half of the
+/// widget/state split, hooks included.
+const consumerChecker = TypeChecker.any([
+  consumerWidgetChecker,
+  consumerStateChecker,
+]);
+
 /// TypeChecker for Riverpod Notifier and AsyncNotifier base classes.
 const notifierChecker = TypeChecker.any([
   TypeChecker.fromName('Notifier', packageName: 'riverpod'),

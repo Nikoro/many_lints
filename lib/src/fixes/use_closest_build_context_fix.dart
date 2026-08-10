@@ -5,7 +5,7 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-import '../type_checker.dart';
+import '../flutter_type_checkers.dart';
 
 /// Fix that renames the inner closure's BuildContext parameter to match the
 /// outer context name, so the closest BuildContext is used.
@@ -24,11 +24,6 @@ class UseClosestBuildContextFix extends ResolvedCorrectionProducer {
 
   @override
   FixKind get fixKind => _fixKind;
-
-  static const _buildContextChecker = TypeChecker.fromName(
-    'BuildContext',
-    packageName: 'flutter',
-  );
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
@@ -75,7 +70,7 @@ class UseClosestBuildContextFix extends ResolvedCorrectionProducer {
 
   static bool _isBuildContextType(FormalParameter param) {
     final type = param.type?.type;
-    if (type != null) return _buildContextChecker.isExactlyType(type);
+    if (type != null) return buildContextChecker.isExactlyType(type);
 
     // An untyped closure parameter (`(_) { ... }`) carries no annotation, so
     // fall back to the resolved element — this mirrors the rule, which would
@@ -83,6 +78,6 @@ class UseClosestBuildContextFix extends ResolvedCorrectionProducer {
     final element = param.declaredFragment?.element;
     if (element == null) return false;
 
-    return _buildContextChecker.isExactlyType(element.type);
+    return buildContextChecker.isExactlyType(element.type);
   }
 }

@@ -6,6 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../ast_node_analysis.dart';
+import '../flutter_type_checkers.dart';
 import '../flutter_widget_helpers.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
@@ -43,21 +44,11 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _sizedBoxChecker = TypeChecker.fromName(
-    'SizedBox',
-    packageName: 'flutter',
-  );
-
-  static const _paddingChecker = TypeChecker.fromName(
-    'Padding',
-    packageName: 'flutter',
-  );
-
   static const _multiChildWidgets = [
-    (TypeChecker.fromName('Column', packageName: 'flutter'), FlexAxis.vertical),
-    (TypeChecker.fromName('Row', packageName: 'flutter'), FlexAxis.horizontal),
-    (TypeChecker.fromName('Wrap', packageName: 'flutter'), null),
-    (TypeChecker.fromName('Flex', packageName: 'flutter'), null),
+    (columnChecker, FlexAxis.vertical),
+    (rowChecker, FlexAxis.horizontal),
+    (wrapChecker, null),
+    (flexChecker, null),
     (
       TypeChecker.fromName('ListView', packageName: 'flutter'),
       FlexAxis.vertical,
@@ -66,9 +57,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    if (isExpressionExactlyType(node, _sizedBoxChecker)) {
+    if (isExpressionExactlyType(node, sizedBoxChecker)) {
       _checkSizedBox(node);
-    } else if (isExpressionExactlyType(node, _paddingChecker)) {
+    } else if (isExpressionExactlyType(node, paddingChecker)) {
       _checkPadding(node);
     }
   }
@@ -110,13 +101,11 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   void _checkPadding(InstanceCreationExpression node) {
     // Must have padding param with EdgeInsets.only with a single direction
-    final paddingArg = node.argumentList.arguments
-        .whereType<NamedArgument>()
-        .firstWhereOrNull((e) => e.name.lexeme == 'padding');
-
-    if (paddingArg == null) return;
-
-    final paddingExpr = paddingArg.argumentExpression;
+    final paddingExpr = namedArgumentValue(
+      node.argumentList.arguments,
+      'padding',
+    );
+    if (paddingExpr == null) return;
 
     // Check for EdgeInsets.only(...)
     if (paddingExpr is! InstanceCreationExpression) return;

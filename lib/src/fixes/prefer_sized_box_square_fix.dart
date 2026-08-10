@@ -27,32 +27,10 @@ class PreferSizedBoxSquareFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // For an unnamed constructor, `ConstructorName` and its `NamedType`
-    // child share a source range and the covering node resolves to the
-    // deeper one, so look up before type-testing.
-    final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
-
-    // Find the enclosing creation expression
-    final Expression creationExpr;
-    if (targetNode is ConstructorName) {
-      final parent = targetNode.parent;
-      if (parent is! InstanceCreationExpression) return;
-      creationExpr = parent;
-    } else if (targetNode is SimpleIdentifier &&
-        targetNode.parent is MethodInvocation) {
-      creationExpr = targetNode.parent! as MethodInvocation;
-    } else {
-      return;
-    }
-
-    final ArgumentList argumentList;
-    if (creationExpr is InstanceCreationExpression) {
-      argumentList = creationExpr.argumentList;
-    } else if (creationExpr is MethodInvocation) {
-      argumentList = creationExpr.argumentList;
-    } else {
-      return;
-    }
+    final call = resolveWidgetCall(node);
+    if (call == null) return;
+    final creationExpr = call.node;
+    final argumentList = call.argumentList;
 
     final args = argumentList.arguments.whereType<NamedArgument>();
 

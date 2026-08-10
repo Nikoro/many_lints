@@ -4,6 +4,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
@@ -51,12 +52,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     TypeChecker.fromName('Expanded', packageName: 'flutter'),
   ]);
 
-  static const _flexChecker = TypeChecker.any([
-    TypeChecker.fromName('Row', packageName: 'flutter'),
-    TypeChecker.fromName('Column', packageName: 'flutter'),
-    TypeChecker.fromName('Flex', packageName: 'flutter'),
-  ]);
-
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     final constructorType = node.constructorName.type;
@@ -99,7 +94,8 @@ class _Visitor extends SimpleAstVisitor<void> {
         final parent = current.parent;
         if (parent is InstanceCreationExpression) {
           final parentElement = parent.constructorName.type.element;
-          if (parentElement != null && _flexChecker.isSuperOf(parentElement)) {
+          if (parentElement != null &&
+              anyFlexChecker.isSuperOf(parentElement)) {
             return true;
           }
         }

@@ -1,12 +1,14 @@
-import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analysis_server_plugin/edit/dart/dart_fix_kind_priority.dart';
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/source/source_range.dart';
-import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
+import 'avoid_unnecessary_overrides_fix.dart';
+
 /// Fix that removes an unnecessary method override from a State class.
-class AvoidUnnecessaryOverridesInStateFix extends ResolvedCorrectionProducer {
+///
+/// Deleting the override is exactly the edit [AvoidUnnecessaryOverridesFix]
+/// performs, so only the [fixKind] — which is public surface tied to its own
+/// rule — differs.
+class AvoidUnnecessaryOverridesInStateFix extends AvoidUnnecessaryOverridesFix {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidUnnecessaryOverridesInState',
     DartFixKindPriority.standard,
@@ -16,47 +18,5 @@ class AvoidUnnecessaryOverridesInStateFix extends ResolvedCorrectionProducer {
   AvoidUnnecessaryOverridesInStateFix({required super.context});
 
   @override
-  CorrectionApplicability get applicability =>
-      CorrectionApplicability.singleLocation;
-
-  @override
   FixKind get fixKind => _fixKind;
-
-  @override
-  Future<void> compute(ChangeBuilder builder) async {
-    // The rule reports at the member-name token, so the covering node may be
-    // the declaration itself rather than a child of it.
-    final targetNode = node.thisOrAncestorOfType<MethodDeclaration>();
-    if (targetNode == null) return;
-
-    final content = unitResult.content;
-
-    // Include the @override annotation if present
-    final startOffset = targetNode.metadata.isNotEmpty
-        ? targetNode.metadata.first.offset
-        : targetNode.offset;
-
-    // Extend to line boundaries
-    var deleteStart = startOffset;
-    while (deleteStart > 0 && content[deleteStart - 1] != '\n') {
-      deleteStart--;
-    }
-
-    var deleteEnd = targetNode.end;
-    while (deleteEnd < content.length && content[deleteEnd] != '\n') {
-      deleteEnd++;
-    }
-    if (deleteEnd < content.length && content[deleteEnd] == '\n') {
-      deleteEnd++;
-    }
-
-    // Also consume a preceding blank line if present
-    if (deleteStart > 0 && content[deleteStart - 1] == '\n') {
-      deleteStart--;
-    }
-
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addDeletion(SourceRange(deleteStart, deleteEnd - deleteStart));
-    });
-  }
 }

@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
+import '../riverpod_type_checkers.dart';
 
 /// Warns when `ref` is accessed inside the `dispose()` method of a
 /// `ConsumerState` (or similar Riverpod state) class.
@@ -47,11 +47,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _consumerStateChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerState', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerState', packageName: 'hooks_riverpod'),
-  ]);
-
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
     if (node.name.lexeme != 'dispose') return;
@@ -63,7 +58,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (classDecl is! ClassDeclaration) return;
 
     final element = classDecl.declaredFragment?.element;
-    if (element == null || !_consumerStateChecker.isSuperOf(element)) return;
+    if (element == null || !consumerStateChecker.isSuperOf(element)) return;
 
     // Search for any `ref` usage inside dispose body
     final finder = _RefUsageFinder(rule);

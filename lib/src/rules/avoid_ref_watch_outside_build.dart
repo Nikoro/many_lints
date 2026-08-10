@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
+import '../riverpod_type_checkers.dart';
 
 /// Warns when `ref.watch()` is called outside of a `build()` method.
 ///
@@ -48,13 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _consumerChecker = TypeChecker.any([
-    TypeChecker.fromName('ConsumerWidget', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('ConsumerState', packageName: 'flutter_riverpod'),
-    TypeChecker.fromName('HookConsumerWidget', packageName: 'hooks_riverpod'),
-    TypeChecker.fromName('HookConsumerState', packageName: 'hooks_riverpod'),
-  ]);
-
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
     // `build` is exactly where `ref.watch` belongs.
@@ -68,7 +61,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final element = classDecl.declaredFragment?.element;
     if (element == null) return;
 
-    if (!_consumerChecker.isSuperOf(element)) return;
+    if (!consumerChecker.isSuperOf(element)) return;
 
     final finder = _RefWatchFinder(rule);
     node.body.visitChildren(finder);

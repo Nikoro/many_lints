@@ -4,8 +4,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../bloc_type_checkers.dart';
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
 
 /// Warns when `emit` is handed the current state object instead of a new
 /// instance.
@@ -67,15 +67,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _blocBaseChecker = TypeChecker.any([
-    TypeChecker.fromName('Bloc', packageName: 'bloc'),
-    TypeChecker.fromName('Cubit', packageName: 'bloc'),
-  ]);
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final element = node.declaredFragment?.element;
-    if (element == null || !_blocBaseChecker.isSuperOf(element)) return;
+    if (element == null || !blocOrCubitChecker.isSuperOf(element)) return;
 
     final body = node.body;
     if (body is! BlockClassBody) return;

@@ -6,7 +6,7 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import '../flutter_type_checkers.dart';
 
 /// Suggests using Align widget instead of Container with only alignment.
 class PreferAlignOverContainer extends ManyLintsRule {
@@ -41,14 +41,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _containerChecker = TypeChecker.fromName(
-    'Container',
-    packageName: 'flutter',
-  );
-
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    if (!isExpressionExactlyType(node, _containerChecker)) return;
+    if (!isExpressionExactlyType(node, containerChecker)) return;
 
     if (isInstanceCreationExpressionOnlyUsingParameter(
       node,

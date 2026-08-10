@@ -7,7 +7,7 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import '../flutter_type_checkers.dart';
 
 /// Warns when a `SizedBox` is created with identical `height` and `width`
 /// values. Use `SizedBox.square(dimension: ...)` instead for cleaner code.
@@ -44,11 +44,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _sizedBoxChecker = TypeChecker.fromName(
-    'SizedBox',
-    packageName: 'flutter',
-  );
-
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     // Skip named constructors like SizedBox.square, SizedBox.shrink, etc.
@@ -59,7 +54,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitMethodInvocation(MethodInvocation node) {
     final type = node.staticType;
-    if (type == null || !_sizedBoxChecker.isExactlyType(type)) return;
+    if (type == null || !sizedBoxChecker.isExactlyType(type)) return;
     // MethodInvocation for SizedBox() without type args — skip named
     // constructors (target would be 'SizedBox', methodName would be 'square')
     if (node.target != null) return;
@@ -72,19 +67,19 @@ class _Visitor extends SimpleAstVisitor<void> {
     AstNode reportNode,
   ) {
     if (staticType == null) return;
-    if (!_sizedBoxChecker.isExactlyType(staticType)) return;
+    if (!sizedBoxChecker.isExactlyType(staticType)) return;
 
-    final args = argumentList.arguments.whereType<NamedArgument>();
+    final args = argumentList.arguments;
 
-    final widthArg = args.firstWhereOrNull((a) => a.name.lexeme == 'width');
-    final heightArg = args.firstWhereOrNull((a) => a.name.lexeme == 'height');
+    final widthArg = namedArgumentValue(args, 'width');
+    final heightArg = namedArgumentValue(args, 'height');
 
     // Both width and height must be present
     if (widthArg == null || heightArg == null) return;
 
     // Check if both values are identical by comparing their source text
-    final widthSource = widthArg.argumentExpression.toSource();
-    final heightSource = heightArg.argumentExpression.toSource();
+    final widthSource = widthArg.toSource();
+    final heightSource = heightArg.toSource();
 
     if (widthSource == heightSource) {
       rule.reportAtNode(reportNode);

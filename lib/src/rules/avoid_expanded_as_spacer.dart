@@ -5,8 +5,9 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../ast_node_analysis.dart';
+import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
 
 /// Warns when `Expanded` wraps an empty `SizedBox` or `Container` instead of
 /// using the dedicated `Spacer` widget.
@@ -43,21 +44,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _expandedChecker = TypeChecker.fromName(
-    'Expanded',
-    packageName: 'flutter',
-  );
-
-  static const _sizedBoxChecker = TypeChecker.fromName(
-    'SizedBox',
-    packageName: 'flutter',
-  );
-
-  static const _containerChecker = TypeChecker.fromName(
-    'Container',
-    packageName: 'flutter',
-  );
-
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     _check(node.staticType, node.argumentList, node);
@@ -73,21 +59,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     ArgumentList argumentList,
     Expression node,
   ) {
-    if (staticType == null || !_expandedChecker.isExactlyType(staticType)) {
+    if (staticType == null || !expandedChecker.isExactlyType(staticType)) {
       return;
     }
 
-    final arguments = argumentList.arguments;
-
-    // Find the child argument
-    Expression? childExpr;
-    for (final arg in arguments.whereType<NamedArgument>()) {
-      if (arg.name.lexeme == 'child') {
-        childExpr = arg.argumentExpression;
-        break;
-      }
-    }
-
+    final childExpr = namedArgumentValue(argumentList.arguments, 'child');
     if (childExpr == null) return;
 
     if (_isEmptyWidget(childExpr)) {
@@ -101,8 +77,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     final type = expr.staticType;
     if (type == null) return false;
 
-    final isSizedBox = _sizedBoxChecker.isExactlyType(type);
-    final isContainer = _containerChecker.isExactlyType(type);
+    final isSizedBox = sizedBoxChecker.isExactlyType(type);
+    final isContainer = containerChecker.isExactlyType(type);
     if (!isSizedBox && !isContainer) return false;
 
     final ArgumentList argumentList;

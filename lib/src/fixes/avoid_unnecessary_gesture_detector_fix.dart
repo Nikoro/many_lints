@@ -27,28 +27,10 @@ class AvoidUnnecessaryGestureDetectorFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // For an unnamed constructor, `ConstructorName` and its `NamedType`
-    // child share a source range and the covering node resolves to the
-    // deeper one, so look up before type-testing.
-    final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
-
-    // The reported node can be ConstructorName or SimpleIdentifier
-    final Expression gestureDetectorExpr;
-    final NodeList<Argument> arguments;
-
-    if (targetNode is ConstructorName &&
-        targetNode.parent is InstanceCreationExpression) {
-      final ice = targetNode.parent! as InstanceCreationExpression;
-      gestureDetectorExpr = ice;
-      arguments = ice.argumentList.arguments;
-    } else if (targetNode is SimpleIdentifier &&
-        targetNode.parent is MethodInvocation) {
-      final mi = targetNode.parent! as MethodInvocation;
-      gestureDetectorExpr = mi;
-      arguments = mi.argumentList.arguments;
-    } else {
-      return;
-    }
+    final call = resolveWidgetCall(node);
+    if (call == null) return;
+    final gestureDetectorExpr = call.node;
+    final arguments = call.argumentList.arguments;
 
     // Find the child argument
     final childArg = arguments.whereType<NamedArgument>().firstWhereOrNull(

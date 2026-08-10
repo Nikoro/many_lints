@@ -7,6 +7,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
+import '../type_inference.dart';
 
 /// Warns when collection methods are called with arguments whose types are
 /// unrelated to the collection's type parameter.
@@ -130,7 +131,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
 
     // Check if the target is an Iterable/List/Set type.
-    final elementType = _getIterableElementType(targetType);
+    final elementType = iterableElementType(targetType);
     if (elementType != null && _elementMethods.contains(methodName)) {
       if (_areUnrelatedTypes(argType, elementType)) {
         rule.reportAtNode(
@@ -180,24 +181,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (supertype.element.name == 'Map' &&
           supertype.typeArguments.length == 2) {
         return (supertype.typeArguments[0], supertype.typeArguments[1]);
-      }
-    }
-    return null;
-  }
-
-  /// Returns the element type if [type] implements `Iterable<E>`.
-  ///
-  /// For `List<int>`, `Set<int>`, `Iterable<int>` the first type argument
-  /// is the element type. For custom subtypes we walk `allSupertypes`.
-  static DartType? _getIterableElementType(InterfaceType type) {
-    // List<T>, Set<T>, Iterable<T> all have element type as first arg.
-    if (type.typeArguments.isNotEmpty) {
-      return type.typeArguments.first;
-    }
-    for (final supertype in type.element.allSupertypes) {
-      if (supertype.element.name == 'Iterable' &&
-          supertype.typeArguments.isNotEmpty) {
-        return supertype.typeArguments.first;
       }
     }
     return null;

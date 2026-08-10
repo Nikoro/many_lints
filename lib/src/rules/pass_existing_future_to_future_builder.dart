@@ -4,8 +4,9 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../many_lints_rule.dart';
+import '../ast_node_analysis.dart';
 import '../async_builder_utils.dart';
+import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
 /// Warns when a `FutureBuilder` receives a newly created `Future`.
@@ -74,7 +75,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    final future = namedArgument(argumentList.arguments, 'future');
+    final future = namedArgumentValue(argumentList.arguments, 'future');
     if (future == null) return;
 
     if (createsNewAsyncSource(future, _futureChecker)) {

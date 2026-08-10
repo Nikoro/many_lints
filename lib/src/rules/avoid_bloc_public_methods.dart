@@ -6,7 +6,7 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
-import '../type_checker.dart';
+import '../bloc_type_checkers.dart';
 
 /// Warns when a Bloc class declares public members (methods, getters, setters)
 /// that are not overrides of parent class members.
@@ -48,24 +48,18 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _blocChecker = TypeChecker.fromName('Bloc', packageName: 'bloc');
-  static const _cubitChecker = TypeChecker.fromName(
-    'Cubit',
-    packageName: 'bloc',
-  );
-
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final element = node.declaredFragment?.element;
     if (element == null) return;
 
     // Only check classes that extend Bloc (not Cubit or other subtypes)
-    if (!_blocChecker.isSuperOf(element)) return;
+    if (!blocChecker.isSuperOf(element)) return;
 
     // Exclude the Bloc class itself and Cubit subclasses
-    if (_blocChecker.isExactly(element)) return;
-    if (_cubitChecker.isExactly(element)) return;
-    if (_cubitChecker.isSuperOf(element)) return;
+    if (blocChecker.isExactly(element)) return;
+    if (cubitChecker.isExactly(element)) return;
+    if (cubitChecker.isSuperOf(element)) return;
 
     final body = node.body;
     if (body is! BlockClassBody) return;

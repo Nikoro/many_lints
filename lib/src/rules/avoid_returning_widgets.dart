@@ -6,8 +6,8 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
+import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
-import '../type_checker.dart';
 
 /// Warns when a function, method, or getter returns a Widget or Widget subclass.
 ///
@@ -51,11 +51,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   final AvoidReturningWidgets rule;
 
   _Visitor(this.rule);
-
-  static const _widgetChecker = TypeChecker.fromName(
-    'Widget',
-    packageName: 'flutter',
-  );
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
@@ -102,7 +97,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final effectiveType = type is InterfaceType ? type : null;
     if (effectiveType == null) return;
 
-    if (_widgetChecker.isAssignableFromType(effectiveType)) {
+    if (widgetChecker.isAssignableFromType(effectiveType)) {
       rule.reportAtToken(nameToken);
     }
   }

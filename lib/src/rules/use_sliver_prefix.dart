@@ -6,9 +6,10 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../ast_node_analysis.dart';
+import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 import '../state_base_classes.dart';
-import '../type_checker.dart';
+import '../state_class_pairing.dart';
 
 /// Warns when a widget's build method returns a sliver widget but the class
 /// name does not start with 'Sliver'.
@@ -47,16 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _statelessWidgetChecker = TypeChecker.fromName(
-    'StatelessWidget',
-    packageName: 'flutter',
-  );
-
-  static const _statefulWidgetChecker = TypeChecker.fromName(
-    'StatefulWidget',
-    packageName: 'flutter',
-  );
-
   @override
   void visitCompilationUnit(CompilationUnit node) {
     final statefulWidgets = <ClassDeclaration>[];
@@ -70,13 +61,13 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       final className = declaration.namePart.typeName.lexeme;
 
-      if (_statelessWidgetChecker.isSuperOf(element)) {
+      if (statelessWidgetChecker.isSuperOf(element)) {
         // StatelessWidget: check build() directly
         if (!className.startsWith('Sliver') &&
             _buildReturnsSliverWidget(declaration)) {
           rule.reportAtToken(declaration.namePart.typeName);
         }
-      } else if (_statefulWidgetChecker.isSuperOf(element)) {
+      } else if (statefulWidgetChecker.isSuperOf(element)) {
         statefulWidgets.add(declaration);
       } else if (isStateElement(rule, element)) {
         stateClasses.add(declaration);
@@ -88,7 +79,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       final widgetName = widget.namePart.typeName.lexeme;
       if (widgetName.startsWith('Sliver')) continue;
 
-      final stateClass = _findStateClass(stateClasses, widgetName);
+      final stateClass = findStateClassFor(stateClasses, widgetName);
       if (stateClass == null) continue;
 
       if (_buildReturnsSliverWidget(stateClass)) {
@@ -112,26 +103,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (returnExpr == null) return false;
 
     return _isSliverExpression(returnExpr);
-  }
-
-  /// Finds the State class that corresponds to the given StatefulWidget name.
-  static ClassDeclaration? _findStateClass(
-    List<ClassDeclaration> stateClasses,
-    String widgetName,
-  ) {
-    for (final stateClass in stateClasses) {
-      final superclass = stateClass.extendsClause?.superclass;
-      if (superclass == null) continue;
-
-      final typeArgs = superclass.typeArguments?.arguments;
-      if (typeArgs != null && typeArgs.length == 1) {
-        final typeArg = typeArgs.first;
-        if (typeArg is NamedType && typeArg.name.lexeme == widgetName) {
-          return stateClass;
-        }
-      }
-    }
-    return null;
   }
 
   /// Checks if the expression's static type is a sliver widget from Flutter.
