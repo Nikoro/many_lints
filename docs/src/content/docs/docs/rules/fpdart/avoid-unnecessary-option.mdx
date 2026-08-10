@@ -1,0 +1,101 @@
+---
+title: avoid_unnecessary_option
+description: "An Option that is wrapped and immediately unwrapped earns nothing"
+sidebar:
+  label: avoid_unnecessary_option
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags a local variable holding an `Option` that is never composed — wrapped, then immediately unwrapped with `toNullable` or `getOrElse`.
+
+## Why use this rule
+
+`Option` earns its keep through its combinators: chaining with `flatMap`, promoting absence to a failure with `toEither`, providing a fallback with `alt`. A local that is wrapped and then unwrapped on the next line gets none of that, and pays for it — Dart's nullable types have language support (`?.`, `??`, narrowing after a null check) that `Option` cannot match.
+
+fpdart's own author makes the same point: `Option<T>` and `T?` are not mutually exclusive. Nullable wins on language support, `Option` wins on declarative chaining, and the right move is to convert at the border rather than fight the language.
+
+**See also:** [Option type and null safety in Dart](https://www.sandromaglione.com/articles/option_type_and_null_safety_dart)
+
+## Don't
+
+```dart
+final option = Option.fromNullable(name);
+final value = option.toNullable() ?? 'unknown';
+```
+
+## Do
+
+Either drop the wrapper:
+
+```dart
+final value = name ?? 'unknown';
+```
+
+Or earn it, by actually composing:
+
+```dart
+final value = Option.fromNullable(name)
+    .map(deriveDisplayName)
+    .alt(() => some(defaultName))
+    .getOrElse(() => 'unknown');
+```
+
+## Known limitations
+
+Only **local variables** are reported. A field or a parameter is part of a type's shape, and reporting it would be a claim about the API rather than about one expression.
+
+A local inside a public member is skipped by default, since its `Option` may be feeding a contract. Set `ignore_public_api: false` to report those too.
+
+An `Option` passed to a function, returned, or matched with a pattern counts as composed — the wrapper is doing work in all three.
+
+No quick fix is offered: rewriting to a nullable means adjusting every downstream use, which is a change to read rather than apply.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_unnecessary_option:
+      ignore_public_api: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_unnecessary_option:
+    ignore_public_api: false
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ignore_public_api` | bool | `true` | Skip locals inside public members, whose `Option` may be feeding a contract |
+
+## Configuration
+
+This rule is in **no preset** — a codebase that has standardised on `Option`
+everywhere is making a coherent choice, and this rule disagrees with it. Turn
+it on explicitly:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_unnecessary_option: true
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

@@ -319,14 +319,19 @@ analysis_server_plugin 0.3.18+:
   makes background analysis report to a closed channel.
 
 Note that `analyzer_testing` (0.3.4) still exposes no API for testing quick-fix
-or assist *output* — only `AnalysisRuleTest` for diagnostics. Fixes are covered
-anyway: `PluginServer` answers `edit.getFixes`, and `test/fix_harness.dart`
-wraps that so a fix can be checked by the text it actually produces. Every fix
-has output tests. New batches belong under `test/fix_output/`; a few older
-batches remain in `test/plugin_fix_output_test.dart`. See
-[Testing a Fix](fixes-cookbook.md#testing-a-fix). Assist tests drive
-`CorrectionProducerContext` directly; see
-[assists-cookbook.md](assists-cookbook.md).
+or assist *output* — only `AnalysisRuleTest` for diagnostics. Both are covered
+anyway, because `PluginServer` answers `edit.getFixes` **and**
+`edit.getAssists`, and `test/fix_harness.dart` wraps both.
+
+- **Fixes:** `FixHarness.applyFix`. Every fix has output tests. New batches
+  belong under `test/fix_output/`; a few older batches remain in
+  `test/plugin_fix_output_test.dart`. See
+  [Testing a Fix](fixes-cookbook.md#testing-a-fix).
+- **Assists:** either drive `CorrectionProducerContext` directly (see
+  [assists-cookbook.md](assists-cookbook.md)) or use
+  `FixHarness.applyAssist`, which marks the cursor with `^` and additionally
+  returns the `linkedEditGroups` — the only route that covers registration and
+  linked renames. Batches under `test/assist_output/`.
 
 If Step 5 created a fix, add its output-test group under `test/fix_output/`
 before proceeding.

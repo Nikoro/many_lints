@@ -1,0 +1,97 @@
+---
+title: avoid_removed_fpdart_api
+description: "Names removed in fpdart 1.0.0, with the replacement to use"
+sidebar:
+  label: avoid_removed_fpdart_api
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags fpdart names that were removed in 1.0.0 — `Tuple2`, `Tuple3`, the `Predicate` class, `idFuture`, `concatMap`, `bindWithIndex` and `plus` — in files that import fpdart.
+
+## Why use this rule
+
+None of these compile against a 1.x fpdart, so the rule is aimed at migration rather than correctness: a codebase moving off 0.x, or a snippet copied from one of the many pre-2023 tutorials that still rank well in search results.
+
+The value is the *message*. "Undefined name `Tuple2`" tells you something is wrong; "`Tuple2` was removed in fpdart 1.0.0, use a Dart record" tells you what to do, without a trip to the changelog.
+
+**See also:** [fpdart changelog](https://pub.dev/packages/fpdart/changelog)
+
+## Don't
+
+```dart
+final pair = Tuple2(1, 'a');
+final isOdd = Predicate<int>((n) => n % 2 == 1);
+```
+
+## Do
+
+```dart
+final pair = (1, 'a');           // Dart records replaced Tuple2
+final isOdd = isEven.negate;     // function extensions replaced Predicate
+```
+
+The full 1.0.0 removals: `Tuple2`/`Tuple3` → records, `Predicate` → the function extensions (`negate`, `and`, `or`, `contramap`), `id`/`idFuture` → `identity`, `concatMap`/`bind`/`bindWithIndex` → `flatMap`, `plus` → `concat`, and the old `concat` → `flatten`.
+
+## Known limitations
+
+The rule only runs on files that import `package:fpdart/`. A removed name resolves to nothing, so without that gate the rule would fire on any unresolved identifier sharing the name — a project with its own `Tuple2`, or a plain typo in a file that has never heard of fpdart.
+
+A name the project declares itself is not reported, since it resolves to that declaration.
+
+`bind` and `concat` are **not** reported by default. They still exist in 1.x but mean different things than they did in 0.x, so copied code compiles and quietly does the wrong thing. A rule firing on a valid, current API is worse than the confusion it prevents — but a project mid-migration can add them through `additional_removed`.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_removed_fpdart_api:
+      additional_removed:
+        - bind
+        - concat
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_removed_fpdart_api:
+    additional_removed:
+      - bind
+      - concat
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `additional_removed` | list of strings | `[]` | Extra names to report. Unlike the built-in list these are reported even when they resolve, which is what makes `bind`/`concat` catchable during a migration |
+
+## Configuration
+
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`avoid_removed_fpdart_api: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_removed_fpdart_api: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

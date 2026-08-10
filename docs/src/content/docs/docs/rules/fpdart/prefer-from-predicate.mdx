@@ -1,0 +1,102 @@
+---
+title: prefer_from_predicate
+description: "A conditional guarding an Option is one Option.fromPredicate call"
+sidebar:
+  label: prefer_from_predicate
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags a conditional whose branches are `Option.of(value)` and a `None`, where the condition tests that same value.
+
+## Why use this rule
+
+`Option.fromPredicate(value, test)` is the one-expression form of exactly this shape, and it says what the code means: *this value, if it passes this test*.
+
+The conditional also names the value twice — once in the condition and once inside the `Some`. That duplication is where the bug lives, and unlike a type error it compiles: a conditional that tests `age` but wraps `otherAge` reads as perfectly ordinary.
+
+**See also:** [fpdart: `Option.fromPredicate`](https://pub.dev/documentation/fpdart/latest/fpdart/Option/Option.fromPredicate.html)
+
+## Don't
+
+```dart
+final option = age > 18 ? Option.of(age) : Option<int>.none();
+```
+
+## Do
+
+```dart
+final option = Option.fromPredicate(age, (a) => a > 18);
+```
+
+`Either.fromPredicate` is the equivalent when the rejected case needs to carry a failure:
+
+```dart
+Either.fromPredicate(age, (a) => a > 18, (a) => TooYoungFailure(a));
+```
+
+## Quick fix
+
+A quick fix rewrites the conditional, substituting the lambda's parameter for the value throughout the condition — `age > 18` becomes `(a) => a > 18`, not `(_) => age > 18`. That substitution is the point: `fromPredicate` is worth reaching for because the predicate reads as a test *on the value*, which a closure over the original variable does not.
+
+The parameter name is checked against every identifier in the expression first, so it can never shadow something the condition already reads.
+
+## Known limitations
+
+A null test (`value != null ? ... : none()`) is left to [`prefer_from_nullable`](/many_lints/docs/rules/fpdart/prefer-from-nullable/), whose fix produces better code for that shape.
+
+By default only single-condition guards are reported. A three-clause condition often reads better as a conditional than folded into a lambda — raise `max_condition_complexity` if your project disagrees.
+
+When the condition tests something other than the wrapped value, the conditional is not a predicate at all and is never reported.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_from_predicate:
+      max_condition_complexity: 3
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_from_predicate:
+    max_condition_complexity: 3
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_condition_complexity` | int | `1` | How many boolean operators the condition may contain and still be reported |
+
+## Configuration
+
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`prefer_from_predicate: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_from_predicate: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

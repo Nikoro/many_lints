@@ -1,0 +1,128 @@
+---
+title: prefer_task_either_over_try_catch
+description: "A repository's failures belong in its signature, not in a try/catch"
+sidebar:
+  label: prefer_task_either_over_try_catch
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags an async method on a boundary class — one whose name ends in `Repository`, `Service`, `DataSource` or `Client` — that handles failure with `try`/`catch` instead of returning a `TaskEither`.
+
+## Why use this rule
+
+A repository's failures are part of its contract, not exceptions. Callers have to handle "the network was down" every single time, and a signature that says `Future<User>` promises the opposite.
+
+The `try`/`catch` inside then has nowhere good to go. It either swallows the error and returns a fallback the caller cannot distinguish from success, or rethrows and leaves the caller exactly where it started — needing to know, from documentation alone, which exceptions to expect.
+
+`TaskEither<Failure, T>` puts the failure in the type, so the compiler enforces what the docstring used to ask for.
+
+Only boundary classes are checked. This is a statement about architecture, not about `try`/`catch` in general — inside a widget or a utility, catching an exception is often exactly right.
+
+**See also:** [fpdart: TaskEither](https://pub.dev/documentation/fpdart/latest/fpdart/TaskEither-class.html)
+
+## Don't
+
+```dart
+class UserRepository {
+  Future<User> load(String id) async {
+    try {
+      return await _api.getUser(id);
+    } catch (e) {
+      throw UserLoadException(e);   // the caller still cannot see this coming
+    }
+  }
+}
+```
+
+## Do
+
+```dart
+class UserRepository {
+  TaskEither<Failure, User> load(String id) => TaskEither.tryCatch(
+        () => _api.getUser(id),
+        (error, stackTrace) => Failure.from(error),
+      );
+}
+```
+
+Discriminating known exceptions belongs in the error mapper:
+
+```dart
+TaskEither.tryCatch(
+  () => authClient.signIn(email, password),
+  (error, stackTrace) => switch (error) {
+    AuthException(:final message) => AuthFailure(message),
+    _ => Failure.from(error),
+  },
+);
+```
+
+## Known limitations
+
+Only async methods are reported. A synchronous failable method is `Either`'s job, and suggesting `TaskEither` there would be wrong.
+
+A `try`/`finally` with no `catch` is cleanup, not failure handling, and is never reported.
+
+A `try` inside a closure belongs to that closure's own control flow — often a genuinely best-effort adapter — and is not what the method's signature promises, so it does not count.
+
+Private methods are skipped by default: they are implementation details of the class rather than part of the contract callers see. Set `ignore_private: false` to report them too.
+
+No quick fix is offered. Converting means choosing the failure type, writing the error mapper, and updating every call site — a change to make deliberately.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_task_either_over_try_catch:
+      additional_class_suffixes:
+        - Gateway
+      ignore_private: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_task_either_over_try_catch:
+    additional_class_suffixes:
+      - Gateway
+    ignore_private: false
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `class_suffixes` | list of strings | `Repository`, `Service`, `DataSource`, `Client` | Replace the set of class name suffixes that mark a boundary |
+| `additional_class_suffixes` | list of strings | `[]` | Extend the set instead of replacing it |
+| `ignore_private` | bool | `true` | Skip private methods, which are implementation details rather than contract |
+
+## Configuration
+
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`prefer_task_either_over_try_catch: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_task_either_over_try_catch: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

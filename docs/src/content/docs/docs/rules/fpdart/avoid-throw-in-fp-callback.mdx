@@ -1,0 +1,111 @@
+---
+title: avoid_throw_in_fp_callback
+description: "A throw inside an fpdart callback escapes the error channel the pipeline is built to carry"
+sidebar:
+  label: avoid_throw_in_fp_callback
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags a `throw` inside an fpdart `Do` body or inside a callback passed to one of fpdart's chaining methods (`map`, `flatMap`, `chainEither`, `mapLeft`, `andThen`, `alt`, `orElse`).
+
+## Why use this rule
+
+fpdart's whole premise is that failure travels **in the value** — the `Left` of an `Either`, the `None` of an `Option`. That is what lets a caller handle every failure in one `fold`, and what makes the compiler enforce it.
+
+A `throw` inside `map` or a `Do` body leaves that channel. It escapes the pipeline as an ordinary exception, so a caller that carefully folds every failure still crashes. Worse, the signature keeps promising otherwise: `TaskEither<Failure, T>` says the only failures are `Failure`s.
+
+This is one of four `Do` pitfalls that fpdart documents in its own `do_constructor_pitfalls` example.
+
+**See also:** [fpdart: Do notation](https://pub.dev/packages/fpdart#-do-notation), [fpdart: Either](https://pub.dev/documentation/fpdart/latest/fpdart/Either-class.html)
+
+## Don't
+
+```dart
+Option.Do(($) {
+  if ($(testOption) == 'test') {
+    throw Exception('Error');
+  }
+  return 'success';
+});
+```
+
+## Do
+
+```dart
+Option.Do(($) {
+  final value = $(testOption);
+  return $(value == 'test' ? Option<String>.none() : Option.of('success'));
+});
+```
+
+In a `TaskEither` pipeline, map the thrown error into the left channel once, at the boundary:
+
+```dart
+TaskEither.tryCatch(
+  () => api.load(),
+  (error, stackTrace) => Failure.from(error),
+);
+```
+
+## Known limitations
+
+Throwing `UnimplementedError`, `UnsupportedError`, `StateError` or `AssertionError` is allowed by default. Those mark a branch that should never run — a programmer error, not a domain outcome — so routing them through the error channel would hand callers a `Left` they can neither handle nor meaningfully report. Set `ignore_unimplemented: false` to report them too.
+
+Only fpdart's own combinators are checked. A `throw` inside `Iterable.map` is ordinary Dart and is never reported.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_throw_in_fp_callback:
+      ignore_unimplemented: false
+      additional_methods:
+        - traverse
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_throw_in_fp_callback:
+    ignore_unimplemented: false
+    additional_methods:
+      - traverse
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ignore_unimplemented` | bool | `true` | Allow thrown `UnimplementedError`, `UnsupportedError`, `StateError` and `AssertionError`, which mark unreachable branches |
+| `methods` | list of strings | the seven chaining methods | Replace the set of callback-taking methods that are checked |
+| `additional_methods` | list of strings | `[]` | Extend the set, for projects that wrap fpdart's combinators in their own |
+
+## Configuration
+
+This rule is in the **`core`** preset, so it is on with `preset: core`,
+`preset: recommended` or `preset: all`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_throw_in_fp_callback: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

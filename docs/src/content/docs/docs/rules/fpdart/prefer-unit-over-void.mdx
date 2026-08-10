@@ -1,0 +1,104 @@
+---
+title: prefer_unit_over_void
+description: "void is not a value, so an fpdart type parameterised with it stops composing"
+sidebar:
+  label: prefer_unit_over_void
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags an fpdart type parameterised with `void` — `TaskEither<Failure, void>`, `Option<void>`, and so on.
+
+## Why use this rule
+
+`void` is not a value in Dart. You cannot pass it, store it, or hand it to the next step of a pipeline. A `TaskEither<Failure, void>` therefore stops composing: `flatMap` on it has nothing meaningful to bind, and callers end up unwrapping to `null` and re-deriving "did it succeed" from that — which is exactly the manual result-handling fpdart exists to delete.
+
+`Unit` is fpdart's answer. It is a real type with exactly one value, so it says "succeeded, with nothing to report" while staying a value the pipeline can carry.
+
+**See also:** [fpdart: Unit](https://pub.dev/documentation/fpdart/latest/fpdart/Unit-class.html)
+
+## Don't
+
+```dart
+TaskEither<Failure, void> save(User user) => ...;
+```
+
+## Do
+
+```dart
+TaskEither<Failure, Unit> save(User user) => ...;
+```
+
+The value to return is the `unit` constant:
+
+```dart
+TaskEither<Failure, Unit> save(User user) => TaskEither.tryCatch(
+  () async {
+    await _db.save(user);
+    return unit;
+  },
+  (error, stackTrace) => Failure.from(error),
+);
+```
+
+## Quick fix
+
+A quick fix replaces the `void` type argument with `Unit` and adds the `package:fpdart/fpdart.dart` import if it is missing. It can be applied across a whole file at once.
+
+The fix deliberately stops there. Once the type says `Unit`, a body that returned nothing no longer compiles, and you have to write `return unit;` — the fix will not guess where in an arbitrary body that belongs. A fix that rewrites control flow to satisfy a type annotation is not one anybody should apply without reading it.
+
+## Known limitations
+
+A member marked `@override` is not reported by default: its signature is fixed by the supertype, so the change belongs there instead. Set `ignore_overrides: false` to report those too.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_unit_over_void:
+      ignore_overrides: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_unit_over_void:
+    ignore_overrides: false
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ignore_overrides` | bool | `true` | Skip members marked `@override`, whose signature is fixed by the supertype |
+
+## Configuration
+
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`prefer_unit_over_void: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_unit_over_void: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

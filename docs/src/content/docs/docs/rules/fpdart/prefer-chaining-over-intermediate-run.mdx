@@ -1,0 +1,109 @@
+---
+title: prefer_chaining_over_intermediate_run
+description: "Several .run() calls in one body are a chain that was never joined up"
+sidebar:
+  label: prefer_chaining_over_intermediate_run
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags a function body that calls `.run()` on two or more fpdart pipelines instead of chaining them and running once.
+
+## Why use this rule
+
+`flatMap` carries the error channel through the whole pipeline. Any step that fails short-circuits the rest, and the failure handling is written once, at the fold — the compiler enforces what the manual version leaves to discipline.
+
+Running each step separately throws that away. Every intermediate result has to be unwrapped by hand, every failure branch rebuilt, and the nesting grows one level per step. It is also where failures get quietly lost: one forgotten `if` and the body continues with a value that was never produced, or a rebuilt `Left` swallows the original error.
+
+That imperative shape is the exact thing `TaskEither` exists to delete. A body with several `.run()` calls is usually a chain that was never joined up.
+
+**See also:** [Why chaining beats manual result handling](https://www.sandromaglione.com/articles/how-to-use-task-either-fpdart-functional-programming)
+
+## Don't
+
+```dart
+Future<Either<Failure, Deal>> best() async {
+  final area = await getArea().run();
+
+  if (area case Right(value: final a)) {
+    final restaurant = await getRestaurant(a.id).run();
+
+    return switch (restaurant) {
+      Right(value: final r) => await getDeal(r.id).run(),
+      Left() => Left(const RestaurantFailure()),  // original failure lost
+    };
+  }
+  return Left(const AreaFailure());
+}
+```
+
+## Do
+
+```dart
+TaskEither<Failure, Deal> best() => getArea()
+    .flatMap((area) => getRestaurant(area.id))
+    .flatMap((restaurant) => getDeal(restaurant.id));
+```
+
+Flat regardless of step count, no manual unwrapping, and the original failure propagates untouched. Run it once at the boundary that renders the outcome.
+
+When the chain grows past two or three steps, [`Do` notation](https://pub.dev/packages/fpdart#-do-notation) reads better than nested `flatMap`.
+
+## Known limitations
+
+A `.run()` inside a closure is not counted against the enclosing member. A callback passed to a widget or an event handler legitimately runs its own pipeline, and counting those would report a body that is already correct.
+
+The rule reports the member's name rather than each `.run()`, because the fix is to restructure the body as one chain — a single edit at that level. Reporting every call would suggest each one is separately wrong.
+
+No quick fix is offered: joining the steps means rewriting the body's control flow, including deciding what each unwrapped branch was for. That is a change to read, not to apply blind.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_chaining_over_intermediate_run:
+      min_sequence: 3
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_chaining_over_intermediate_run:
+    min_sequence: 3
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `min_sequence` | int | `2` | How many `.run()` calls a body may contain before it is reported. `1` reports every body that runs a pipeline at all, which suits a codebase that folds exclusively at the notifier boundary |
+
+## Configuration
+
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`prefer_chaining_over_intermediate_run: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_chaining_over_intermediate_run: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

@@ -592,7 +592,16 @@ class ManyLintsPlugin extends Plugin {
 
 ### Testing Assists
 
-Assists are tested using `PubPackageResolutionTest` with `CorrectionProducerContext.createResolved()`. Since `analyzer_testing` has no dedicated assist test base class, tests manually resolve code, create a context at a target offset, run the assist's `compute()`, and verify the produced edits.
+`analyzer_testing` has no dedicated assist test base class, so there are two routes. Pick by what you need to assert.
+
+**1. `CorrectionProducerContext` directly** — `PubPackageResolutionTest` plus `CorrectionProducerContext.createResolved()`: manually resolve the code, create a context at a target offset, run the assist's `compute()`, and verify the produced edits. Fast, and enough for most assists.
+
+**2. `FixHarness.applyAssist(source, assistId)`** (`test/fix_harness.dart`) — drives a real `PluginServer` through `edit.getAssists`, with the cursor marked `^` in the fixture. Slower, but it is the only route that:
+
+- exercises **registration** (route 1 constructs the assist directly, so a missing `registerAssist` still passes), and
+- returns **`linkedEditGroups`**, letting a test assert which names the assist made renameable.
+
+Reach for route 2 when the assist offers linked renames, or when you want the same end-to-end guarantee the fix output tests give. Batches live under `test/assist_output/`; see [assists_test.dart](../../../test/assist_output/assists_test.dart).
 
 **Reference:** [convert_iterable_map_to_collection_for_test.dart](../../../test/convert_iterable_map_to_collection_for_test.dart)
 

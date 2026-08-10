@@ -1128,6 +1128,11 @@ fix can be requested and the returned edit applied to the source.
 
 `test/fix_harness.dart` wraps that. Use it for every new fix.
 
+The same harness also answers `edit.getAssists` through
+`FixHarness.applyAssist` — see
+[assists-cookbook.md](assists-cookbook.md#testing) for when that route is worth
+the extra cost over driving `CorrectionProducerContext` directly.
+
 ### The basic shape
 
 ```dart

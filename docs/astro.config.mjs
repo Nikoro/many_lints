@@ -53,6 +53,10 @@ export default defineConfig({
               items: [{ autogenerate: { directory: 'docs/rules/async-safety' } }],
             },
             {
+              label: 'fpdart',
+              items: [{ autogenerate: { directory: 'docs/rules/fpdart' } }],
+            },
+            {
               label: 'Widget Best Practices',
               items: [{ autogenerate: { directory: 'docs/rules/widget-best-practices' } }],
             },

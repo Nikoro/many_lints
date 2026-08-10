@@ -1,0 +1,101 @@
+---
+title: avoid_get_or_else_swallowing_failure
+description: "getOrElse is handed the failure; ignoring it should be a visible decision"
+sidebar:
+  label: avoid_get_or_else_swallowing_failure
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags `getOrElse` on an `Either`, `TaskEither` or `IOEither` whose callback ignores the failure it is given.
+
+## Why use this rule
+
+`Either.getOrElse` hands its callback the `Left` value. A callback that ignores that parameter throws the failure away: the pipeline carried the reason all the way to the boundary, and the boundary drops it in favour of a default the caller cannot distinguish from a real result.
+
+Sometimes that is exactly right — a cached value, a display fallback, a genuinely optional lookup. But it is a decision, and written as `(_) => 0` it does not look like one. Using the parameter, or folding with `match`, makes the choice visible to the next reader.
+
+`Option.getOrElse` takes no parameter and is never reported: there is no failure there to discard.
+
+**See also:** [fpdart: Either](https://pub.dev/documentation/fpdart/latest/fpdart/Either-class.html)
+
+## Don't
+
+```dart
+final count = result.getOrElse((_) => 0);
+final other = result.getOrElse((failure) => 0);   // named, still discarded
+```
+
+## Do
+
+Use what you were given:
+
+```dart
+final count = result.getOrElse((failure) => failure.fallbackCount);
+```
+
+Or fold explicitly, so the discard is on the page:
+
+```dart
+final count = result.match((failure) {
+  log(failure);
+  return 0;
+}, (value) => value);
+```
+
+## Known limitations
+
+A named parameter that is never read is reported the same as `_`, since naming it and then ignoring it is the same discard.
+
+Files under `test/` are skipped by default — discarding a failure in a fixture is ordinary. Set `ignore_tests: false` to report them too.
+
+No quick fix is offered: what to do with the failure is the decision the rule is asking for.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_get_or_else_swallowing_failure:
+      ignore_tests: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_get_or_else_swallowing_failure:
+    ignore_tests: false
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ignore_tests` | bool | `true` | Skip files under `test/`, where discarding a failure in a fixture is ordinary |
+
+## Configuration
+
+This rule is in **no preset** — it is deliberately opinionated, since a
+fallback that ignores the failure is often the right call. Turn it on
+explicitly:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_get_or_else_swallowing_failure: true
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

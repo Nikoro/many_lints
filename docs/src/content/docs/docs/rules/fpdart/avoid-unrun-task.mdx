@@ -1,0 +1,103 @@
+---
+title: avoid_unrun_task
+description: "Discarding a lazy fpdart value silently skips the work it describes"
+sidebar:
+  label: avoid_unrun_task
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags a `Task`, `TaskEither`, `IO`, `IOEither`, `TaskOption` or `IOOption` that is evaluated as a statement and then discarded, without `.run()` ever being called on it.
+
+## Why use this rule
+
+fpdart's lazy types are *descriptions* of work, not the work itself. `TaskEither.tryCatch(...)` builds a plan; nothing executes until `.run()`. Dropping the value therefore does not merely waste a result — it skips the operation entirely. No request is sent, no row is written, no exception is thrown.
+
+That silence is what makes this worse than a discarded `Future`, which at least ran. Here the program compiles, the types check, the test that mocks the repository still passes, and in production the save simply never happens.
+
+This is the fpdart counterpart to the SDK's `unawaited_futures`, and the one mistake in this family that the type system cannot catch on its own.
+
+`Either` and `Option` are deliberately **not** reported: they are already-computed values, so discarding one wastes a result but never skips an effect.
+
+**See also:** [fpdart: Task](https://pub.dev/documentation/fpdart/latest/fpdart/Task-class.html), [`unawaited_futures`](https://dart.dev/tools/linter-rules/unawaited_futures)
+
+## Don't
+
+```dart
+void save(User user) {
+  repository.save(user); // returns TaskEither — never runs
+}
+```
+
+## Do
+
+```dart
+Future<void> save(User user) async {
+  await repository.save(user).run();
+}
+```
+
+Returning it is equally fine — the caller then owns running it:
+
+```dart
+TaskEither<Failure, Unit> save(User user) => repository.save(user);
+```
+
+## Known limitations
+
+Only a discarded *statement* is reported. A value assigned to a variable is assumed to be run later, since the rule does not track what happens to it afterwards.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_unrun_task:
+      additional_types:
+        - LazyOperation
+      ignore_cascades: true
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_unrun_task:
+    additional_types:
+      - LazyOperation
+    ignore_cascades: true
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `additional_types` | list of strings | `[]` | Extra type names to treat as lazy, for projects that wrap fpdart's types in their own |
+| `ignore_cascades` | bool | `false` | Skip a lazy value discarded as the target of a cascade |
+
+## Configuration
+
+This rule is in the **`core`** preset, so it is on with `preset: core`,
+`preset: recommended` or `preset: all`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_unrun_task: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

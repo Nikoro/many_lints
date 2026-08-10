@@ -108,9 +108,9 @@ rules with `preset:` in `many_lints.yaml` (or the top-level `many_lints:` sectio
 | Preset | Rules | Contents |
 |--------|-------|----------|
 | `none` | 0 | Nothing. The default. |
-| `core` | 31 | Near-certain bugs only. |
-| `recommended` | 79 | `core` plus idiomatic, uncontroversial practice. |
-| `all` | 156 | Every rule, including opinionated ones. |
+| `core` | 37 | Near-certain bugs only. |
+| `recommended` | 96 | `core` plus idiomatic, uncontroversial practice. |
+| `all` | 176 | Every rule, including opinionated ones. |
 
 Presets **cannot** ship as includable YAML the way `package:lints` does: the analyzer
 replaces a plugin's config wholesale across `include:` rather than merging it, and
@@ -154,6 +154,8 @@ disabled rule a null-listener reporter. Resolution order in
 - `lib/src/flutter_type_checkers.dart` - Shared Flutter widget TypeChecker constants (buildContextChecker, containerChecker, sizedBoxChecker, anyFlexChecker, ...)
 - `lib/src/bloc_type_checkers.dart` - Shared Bloc TypeChecker constants. `blocBaseChecker` (the real `BlocBase`) and `blocOrCubitChecker` (`Bloc|Cubit`) are deliberately distinct
 - `lib/src/hook_type_checkers.dart` - `hookWidgetChecker` (is a hook *widget*) vs `hookScopeChecker` (may a hook be called here — adds `HookState`)
+- `lib/src/fpdart_type_checkers.dart` - Shared fpdart TypeChecker constants. Each pins the **declaring** library (`package:fpdart/src/task_either.dart#TaskEither`), never the `fpdart.dart` barrel — `fromUrl` matches where a type is declared, not where it was imported from. `lazyFpdartChecker` (Task/TaskEither/IO/IOEither/TaskOption/IOOption) deliberately excludes `Either`/`Option`: those are already-computed values, so discarding one wastes a result but skips no effect
+- `lib/src/fpdart_do_notation.dart` - `DoInvocation.tryRead()` + `DoBodyVisitor`, shared by the four Do-notation rules. `Do` resolves to an **`InstanceCreationExpression`** (a named constructor), even though it *parses* as a `MethodInvocation`; `$` is an ordinary formal parameter, so rules read its declared name rather than hardcoding `$`, and a `$(...)` call is a `FunctionExpressionInvocation` when resolved. `DoBodyVisitor` stops at a nested `Do` so one mistake is not reported once per enclosing level
 - `lib/src/state_class_pairing.dart` - `findStateClassFor()` matches a StatefulWidget to its State via the `extends State<Widget>` type argument
 - `lib/src/set_state_collection.dart` - `SetStateCollector`, shared by the prefer_single_setstate rule and its fix
 - `lib/src/async_guard_utils.dart` - Async helpers (containsAwait, isMountedGuardWithReturn)

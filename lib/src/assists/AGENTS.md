@@ -4,6 +4,22 @@ This directory contains code assist implementations. Assists are standalone refa
 
 **Full implementation guide:** [assists-cookbook.md](../../../.agents/skills/new-lint/assists-cookbook.md)
 
+**Testing:** two routes, pick by what you are asserting.
+
+- **`CorrectionProducerContext` directly** — `PubPackageResolutionTest` +
+  `CorrectionProducerContext.createResolved(...)`, run `compute()`, apply the
+  edits. Fast, no plugin server. Reference:
+  [convert_iterable_map_to_collection_for_test.dart](../../../test/convert_iterable_map_to_collection_for_test.dart).
+- **`FixHarness.applyAssist(source, assistId)`** (`test/fix_harness.dart`) —
+  drives a real `PluginServer` through `edit.getAssists`, marking the cursor
+  with `^` in the fixture. Slower, but it is the only route that exercises
+  registration and returns `linkedEditGroups`, so it is the one to use when the
+  assist offers linked renames or when you want the same end-to-end guarantee
+  the fix output tests give. Batches live under `test/assist_output/`.
+
+`analyzer_testing` has no assist base class either way — do not conclude from
+that that assists are untestable.
+
 ## Assists vs Fixes
 
 | Aspect | Fixes | Assists |
@@ -41,6 +57,7 @@ builder.addSimpleReplacement(SourceRange(suffixStart, suffixLen), 'suffix');
 | Pattern | Example | Description |
 |---------|---------|-------------|
 | Iterable conversion | [convert_iterable_map_to_collection_for.dart](convert_iterable_map_to_collection_for.dart) | `.map().toList()` → collection-for |
+| Flatten a callback nest + linked renames | [convert_flat_map_to_do_notation.dart](convert_flat_map_to_do_notation.dart) | Walk **up** to the *outermost* matching call so the assist works from anywhere in the nest, then recurse down collecting one step per level. `builder.addLinkedPosition(SourceRange(...), groupName)` makes each generated name renameable by Tab — compute offsets against the replacement text you are about to write, not against the original source. This is the case for choosing an assist over a fix: when generated names need reviewing, the linked-edit gesture belongs with the conversion, and a fix's "apply all" would bypass it |
 
 ## Updating Documentation
 

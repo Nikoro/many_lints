@@ -266,7 +266,7 @@ Both `include` and `message` work on **every** rule, exactly like `exclude`.
 
 ## Per-rule options
 
-Beyond `exclude`, `include` and `message`, **52 rules** accept options that change *what*
+Beyond `exclude`, `include` and `message`, **65 rules** accept options that change *what*
 they report. Those rules carry a <span class="rule-badge rule-badge--config">Configurable</span>
 badge on their page, and every option is documented there with its type and default.
 
@@ -288,17 +288,20 @@ options never changes results until you set one.
 | Rule | Options |
 |------|---------|
 | [`always_remove_listener`](/many_lints/docs/rules/resource-management/always-remove-listener/) | `state_base_classes` |
+| [`avoid_ad_hoc_left_type`](/many_lints/docs/rules/fpdart/avoid-ad-hoc-left-type/) | `error_types`, `allow_subtypes` |
 | [`avoid_banned_annotations`](/many_lints/docs/rules/architecture/avoid-banned-annotations/) | `banned` |
 | [`avoid_banned_exports`](/many_lints/docs/rules/architecture/avoid-banned-exports/) | `banned` |
 | [`avoid_banned_imports`](/many_lints/docs/rules/architecture/avoid-banned-imports/) | `banned` |
 | [`avoid_banned_names`](/many_lints/docs/rules/architecture/avoid-banned-names/) | `banned` |
 | [`avoid_banned_types`](/many_lints/docs/rules/architecture/avoid-banned-types/) | `banned` |
+| [`avoid_throw_in_fp_callback`](/many_lints/docs/rules/fpdart/avoid-throw-in-fp-callback/) | `ignore_unimplemented`, `methods`, `additional_methods` |
 | [`avoid_collection_methods_with_unrelated_types`](/many_lints/docs/rules/collection-type/avoid-collection-methods-with-unrelated-types/) | `strict` |
 | [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) | `min_lines` |
 | [`avoid_default_tostring`](/many_lints/docs/rules/code-quality/avoid-default-tostring/) | `report_enums` |
 | [`avoid_duplicate_bloc_event_handlers`](/many_lints/docs/rules/bloc-riverpod/avoid-duplicate-bloc-event-handlers/) | `additional_methods` |
 | [`avoid_duplicate_collection_elements`](/many_lints/docs/rules/collection-type/avoid-duplicate-collection-elements/) | `ignore_literals` |
 | [`avoid_empty_setstate`](/many_lints/docs/rules/state-management/avoid-empty-setstate/) | `state_base_classes` |
+| [`avoid_get_or_else_swallowing_failure`](/many_lints/docs/rules/fpdart/avoid-get-or-else-swallowing-failure/) | `ignore_tests` |
 | [`avoid_hooks_outside_build`](/many_lints/docs/rules/hook-rules/avoid-hooks-outside-build/) | `additional_methods` |
 | [`avoid_inherited_widget_in_initstate`](/many_lints/docs/rules/state-management/avoid-inherited-widget-in-initstate/) | `state_base_classes` |
 | [`avoid_late_context`](/many_lints/docs/rules/state-management/avoid-late-context/) | `state_base_classes` |
@@ -309,30 +312,40 @@ options never changes results until you set one.
 | [`avoid_only_rethrow`](/many_lints/docs/rules/control-flow/avoid-only-rethrow/) | `ignore_typed_catches` |
 | [`avoid_passing_async_when_sync_expected`](/many_lints/docs/rules/async-safety/avoid-passing-async-when-sync-expected/) | `ignore_widget_callbacks`, `ignored_parameters` |
 | [`avoid_recursive_widget_calls`](/many_lints/docs/rules/widget-best-practices/avoid-recursive-widget-calls/) | `state_base_classes` |
+| [`avoid_removed_fpdart_api`](/many_lints/docs/rules/fpdart/avoid-removed-fpdart-api/) | `additional_removed` |
 | [`avoid_returning_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-returning-widgets/) | `ignored_names`, `ignored_annotations`, `allow_nullable` |
 | [`avoid_state_constructors`](/many_lints/docs/rules/state-management/avoid-state-constructors/) | `state_base_classes` |
 | [`avoid_unassigned_stream_subscriptions`](/many_lints/docs/rules/resource-management/avoid-unassigned-stream-subscriptions/) | `ignored_instances` |
 | [`avoid_unnecessary_overrides_in_state`](/many_lints/docs/rules/state-management/avoid-unnecessary-overrides-in-state/) | `state_base_classes` |
 | [`avoid_unnecessary_setstate`](/many_lints/docs/rules/state-management/avoid-unnecessary-setstate/) | `state_base_classes` |
 | [`avoid_unnecessary_stateful_widgets`](/many_lints/docs/rules/state-management/avoid-unnecessary-stateful-widgets/) | `state_base_classes` |
+| [`avoid_unnecessary_option`](/many_lints/docs/rules/fpdart/avoid-unnecessary-option/) | `ignore_public_api` |
 | [`avoid_unrelated_type_casts`](/many_lints/docs/rules/collection-type/avoid-unrelated-type-casts/) | `report_is_checks` |
 | [`avoid_unremovable_callbacks_in_listeners`](/many_lints/docs/rules/resource-management/avoid-unremovable-callbacks-in-listeners/) | `additional_methods` |
+| [`avoid_unrun_task`](/many_lints/docs/rules/fpdart/avoid-unrun-task/) | `additional_types`, `ignore_cascades` |
 | [`banned_usage`](/many_lints/docs/rules/architecture/banned-usage/) | `banned` |
 | [`check_for_equals_in_render_object_setters`](/many_lints/docs/rules/widget-best-practices/check-for-equals-in-render-object-setters/) | `additional_methods` |
 | [`check_is_not_closed_after_async_gap`](/many_lints/docs/rules/async-safety/check-is-not-closed-after-async-gap/) | `additional_methods` |
 | [`dispose_fields`](/many_lints/docs/rules/resource-management/dispose-fields/) | `cleanup_methods`, `additional_cleanup_methods`, `state_base_classes` |
 | [`dispose_provided_instances`](/many_lints/docs/rules/bloc-riverpod/dispose-provided-instances/) | `cleanup_methods`, `additional_cleanup_methods` |
 | [`emit_new_bloc_state_instances`](/many_lints/docs/rules/bloc-riverpod/emit-new-bloc-state-instances/) | `additional_methods` |
+| [`prefer_chaining_over_intermediate_run`](/many_lints/docs/rules/fpdart/prefer-chaining-over-intermediate-run/) | `min_sequence` |
+| [`prefer_do_notation`](/many_lints/docs/rules/fpdart/prefer-do-notation/) | `max_flatmap_depth` |
 | [`prefer_class_destructuring`](/many_lints/docs/rules/collection-type/prefer-class-destructuring/) | `min_occurrences`, `ignored_types` |
 | [`prefer_container`](/many_lints/docs/rules/widget-replacement/prefer-container/) | `min_sequence` |
+| [`prefer_from_predicate`](/many_lints/docs/rules/fpdart/prefer-from-predicate/) | `max_condition_complexity` |
 | [`prefer_immutable_bloc_state`](/many_lints/docs/rules/bloc-riverpod/prefer-immutable-bloc-state/) | `name_pattern` |
 | [`prefer_private_named_parameters`](/many_lints/docs/rules/code-quality/prefer-private-named-parameters/) | `only_same_name` |
+| [`prefer_safe_collection_access`](/many_lints/docs/rules/fpdart/prefer-safe-collection-access/) | `report_outside_pipelines`, `accessors`, `additional_accessors` |
 | [`prefer_shorthands_with_constructors`](/many_lints/docs/rules/shorthand-patterns/prefer-shorthands-with-constructors/) | `classes`, `additional_classes` |
 | [`prefer_single_setstate`](/many_lints/docs/rules/code-quality/prefer-single-setstate/) | `state_base_classes` |
 | [`prefer_single_widget_per_file`](/many_lints/docs/rules/widget-best-practices/prefer-single-widget-per-file/) | `ignore_private_widgets`, `ignore_visible_for_testing` |
 | [`prefer_spacing`](/many_lints/docs/rules/widget-best-practices/prefer-spacing/) | `min_children` |
+| [`prefer_string_parse_extensions`](/many_lints/docs/rules/fpdart/prefer-string-parse-extensions/) | `additional_parsers` |
 | [`prefer_switch_expression`](/many_lints/docs/rules/control-flow/prefer-switch-expression/) | `allow_fallthrough_cases` |
+| [`prefer_task_either_over_try_catch`](/many_lints/docs/rules/fpdart/prefer-task-either-over-try-catch/) | `class_suffixes`, `additional_class_suffixes`, `ignore_private` |
 | [`prefer_switch_with_enums`](/many_lints/docs/rules/pattern-matching/prefer-switch-with-enums/) | `ignore_contains` |
+| [`prefer_unit_over_void`](/many_lints/docs/rules/fpdart/prefer-unit-over-void/) | `ignore_overrides` |
 | [`proper_super_calls`](/many_lints/docs/rules/control-flow/proper-super-calls/) | `state_base_classes` |
 | [`require_atomic_async_updates`](/many_lints/docs/rules/async-safety/require-atomic-async-updates/) | `include_local_variables` |
 | [`use_class_prefix`](/many_lints/docs/rules/class-naming/use-class-prefix/) | `entries`, `ignore_private` |

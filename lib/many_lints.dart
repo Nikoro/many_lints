@@ -38,7 +38,10 @@ import 'package:many_lints/src/rules/prefer_immutable_bloc_state.dart';
 import 'package:many_lints/src/rules/prefer_multi_bloc_provider.dart';
 import 'package:many_lints/src/rules/avoid_cascade_after_if_null.dart';
 import 'package:many_lints/src/rules/avoid_conditional_hooks.dart';
+import 'package:many_lints/src/rules/avoid_ad_hoc_left_type.dart';
+import 'package:many_lints/src/rules/avoid_bare_await_in_do.dart';
 import 'package:many_lints/src/rules/avoid_border_all.dart';
+import 'package:many_lints/src/rules/avoid_dollar_outside_do_frame.dart';
 import 'package:many_lints/src/rules/avoid_expanded_as_spacer.dart';
 import 'package:many_lints/src/rules/avoid_returning_widgets.dart';
 import 'package:many_lints/src/rules/prefer_async_callback.dart';
@@ -61,16 +64,21 @@ import 'package:many_lints/src/rules/async_value_nullable_pattern.dart';
 import 'package:many_lints/src/rules/no_equal_then_else.dart';
 import 'package:many_lints/src/rules/notifier_build.dart';
 import 'package:many_lints/src/rules/avoid_build_context_in_providers.dart';
+import 'package:many_lints/src/rules/avoid_removed_fpdart_api.dart';
 import 'package:many_lints/src/rules/avoid_ref_inside_state_dispose.dart';
 import 'package:many_lints/src/rules/avoid_ref_read_inside_build.dart';
 import 'package:many_lints/src/rules/avoid_ref_watch_outside_build.dart';
 import 'package:many_lints/src/rules/avoid_collapsible_if.dart';
 import 'package:many_lints/src/rules/avoid_default_tostring.dart';
 import 'package:many_lints/src/rules/avoid_duplicate_collection_elements.dart';
+import 'package:many_lints/src/rules/avoid_nested_do_notation.dart';
 import 'package:many_lints/src/rules/avoid_nested_futures.dart';
 import 'package:many_lints/src/rules/prefer_switch_with_enums.dart';
 import 'package:many_lints/src/rules/prefer_add_all.dart';
+import 'package:many_lints/src/rules/prefer_from_nullable.dart';
+import 'package:many_lints/src/rules/prefer_from_predicate.dart';
 import 'package:many_lints/src/rules/prefer_immediate_return.dart';
+import 'package:many_lints/src/rules/avoid_either_of_future.dart';
 import 'package:many_lints/src/rules/avoid_empty_spread.dart';
 import 'package:many_lints/src/rules/avoid_inverted_boolean_checks.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_negations.dart';
@@ -81,11 +89,14 @@ import 'package:many_lints/src/rules/avoid_redundant_else.dart';
 import 'package:many_lints/src/rules/avoid_missing_enum_constant_in_map.dart';
 import 'package:many_lints/src/rules/avoid_unmodified_loop_condition.dart';
 import 'package:many_lints/src/rules/avoid_unrelated_type_casts.dart';
+import 'package:many_lints/src/rules/avoid_unrun_task.dart';
+import 'package:many_lints/src/rules/avoid_untyped_safe_cast.dart';
 import 'package:many_lints/src/rules/avoid_unused_after_null_check.dart';
 import 'package:many_lints/src/rules/avoid_unsafe_collection_methods.dart';
 import 'package:many_lints/src/rules/avoid_empty_setstate.dart';
 import 'package:many_lints/src/rules/check_for_equals_in_render_object_setters.dart';
 import 'package:many_lints/src/rules/check_is_not_closed_after_async_gap.dart';
+import 'package:many_lints/src/rules/avoid_get_or_else_swallowing_failure.dart';
 import 'package:many_lints/src/rules/avoid_hooks_outside_build.dart';
 import 'package:many_lints/src/rules/avoid_late_context.dart';
 import 'package:many_lints/src/rules/avoid_missing_completer_stack_trace.dart';
@@ -109,6 +120,7 @@ import 'package:many_lints/src/rules/emit_new_bloc_state_instances.dart';
 import 'package:many_lints/src/rules/avoid_incomplete_copy_with.dart';
 import 'package:many_lints/src/rules/avoid_incorrect_image_opacity.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_gesture_detector.dart';
+import 'package:many_lints/src/rules/avoid_unnecessary_option.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_overrides.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_setstate.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_overrides_in_state.dart';
@@ -121,8 +133,10 @@ import 'package:many_lints/src/rules/avoid_map_keys_contains.dart';
 import 'package:many_lints/src/rules/avoid_misused_test_matchers.dart';
 import 'package:many_lints/src/rules/avoid_only_rethrow.dart';
 import 'package:many_lints/src/rules/avoid_throw_in_catch_block.dart';
+import 'package:many_lints/src/rules/avoid_throw_in_fp_callback.dart';
 import 'package:many_lints/src/rules/avoid_unassigned_stream_subscriptions.dart';
 import 'package:many_lints/src/rules/avoid_unremovable_callbacks_in_listeners.dart';
+import 'package:many_lints/src/rules/prefer_task_either_over_try_catch.dart';
 import 'package:many_lints/src/rules/prefer_test_matchers.dart';
 import 'package:many_lints/src/rules/prefer_theme_mode_getters.dart';
 import 'package:many_lints/src/rules/avoid_single_child_in_multi_child_widgets.dart';
@@ -132,6 +146,7 @@ import 'package:many_lints/src/rules/prefer_abstract_final_static_class.dart';
 import 'package:many_lints/src/rules/prefer_align_over_container.dart';
 import 'package:many_lints/src/rules/prefer_any_or_every.dart';
 import 'package:many_lints/src/rules/prefer_center_over_align.dart';
+import 'package:many_lints/src/rules/prefer_do_notation.dart';
 import 'package:many_lints/src/rules/prefer_enums_by_name.dart';
 import 'package:many_lints/src/rules/prefer_expect_later.dart';
 import 'package:many_lints/src/rules/prefer_iterable_of.dart';
@@ -143,14 +158,17 @@ import 'package:many_lints/src/rules/prefer_return_await.dart';
 import 'package:many_lints/src/rules/proper_super_calls.dart';
 import 'package:many_lints/src/rules/require_atomic_async_updates.dart';
 import 'package:many_lints/src/rules/prefer_returning_shorthands.dart';
+import 'package:many_lints/src/rules/prefer_safe_collection_access.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_constructors.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_enums.dart';
 import 'package:many_lints/src/rules/prefer_single_widget_per_file.dart';
 import 'package:many_lints/src/rules/prefer_spacing.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_static_fields.dart';
 import 'package:many_lints/src/rules/prefer_simpler_patterns_null_check.dart';
+import 'package:many_lints/src/rules/prefer_string_parse_extensions.dart';
 import 'package:many_lints/src/rules/prefer_switch_expression.dart';
 import 'package:many_lints/src/rules/prefer_wildcard_pattern.dart';
+import 'package:many_lints/src/rules/prefer_unit_over_void.dart';
 import 'package:many_lints/src/rules/prefer_type_over_var.dart';
 import 'package:many_lints/src/rules/avoid_banned_annotations.dart';
 import 'package:many_lints/src/rules/avoid_banned_exports.dart';
@@ -162,6 +180,8 @@ import 'package:many_lints/src/rules/use_class_prefix.dart';
 import 'package:many_lints/src/rules/use_class_suffix.dart';
 import 'package:many_lints/src/rules/use_dedicated_media_query_methods.dart';
 import 'package:many_lints/src/rules/use_gap.dart';
+import 'package:many_lints/src/rules/prefer_chain_either.dart';
+import 'package:many_lints/src/rules/prefer_chaining_over_intermediate_run.dart';
 import 'package:many_lints/src/rules/prefer_class_destructuring.dart';
 import 'package:many_lints/src/rules/use_closest_build_context.dart';
 import 'package:many_lints/src/rules/use_existing_destructuring.dart';
@@ -253,7 +273,12 @@ import 'package:many_lints/src/fixes/prefer_shorthands_with_static_fields_fix.da
 import 'package:many_lints/src/fixes/prefer_simpler_patterns_null_check_fix.dart';
 import 'package:many_lints/src/fixes/prefer_switch_expression_fix.dart';
 import 'package:many_lints/src/fixes/prefer_wildcard_pattern_fix.dart';
+import 'package:many_lints/src/fixes/prefer_from_nullable_fix.dart';
+import 'package:many_lints/src/fixes/prefer_from_predicate_fix.dart';
+import 'package:many_lints/src/fixes/prefer_safe_collection_access_fix.dart';
+import 'package:many_lints/src/fixes/prefer_string_parse_extensions_fix.dart';
 import 'package:many_lints/src/fixes/prefer_type_over_var_fix.dart';
+import 'package:many_lints/src/fixes/prefer_unit_over_void_fix.dart';
 import 'package:many_lints/src/fixes/use_dedicated_media_query_methods_fix.dart';
 import 'package:many_lints/src/fixes/prefer_class_destructuring_fix.dart';
 import 'package:many_lints/src/fixes/use_closest_build_context_fix.dart';
@@ -276,6 +301,7 @@ import 'package:many_lints/src/fixes/prefer_use_prefix_fix.dart';
 import 'package:many_lints/src/fixes/use_sliver_prefix_fix.dart';
 
 // Assists
+import 'package:many_lints/src/assists/convert_flat_map_to_do_notation.dart';
 import 'package:many_lints/src/assists/convert_iterable_map_to_collection_for.dart';
 
 /// Top-level plugin variable required by analysis_server_plugin.
@@ -316,6 +342,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidMisusedTestMatchers());
     _registerWarningRule(registry, AvoidOnlyRethrow());
     _registerWarningRule(registry, AvoidThrowInCatchBlock());
+    _registerWarningRule(registry, AvoidThrowInFpCallback());
     _registerWarningRule(registry, AvoidUnassignedStreamSubscriptions());
     _registerWarningRule(registry, AvoidFlexibleOutsideFlex());
     _registerWarningRule(registry, AvoidIncompleteCopyWith());
@@ -346,6 +373,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, PreferSwitchExpression());
     _registerWarningRule(registry, PreferWildcardPattern());
     _registerWarningRule(registry, PreferTypeOverVar());
+    _registerWarningRule(registry, PreferUnitOverVoid());
     _registerWarningRule(registry, PreferAnyOrEvery());
     _registerWarningRule(registry, PreferEnumsByName());
     _registerWarningRule(registry, PreferExpectLater());
@@ -392,9 +420,24 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidCollapsibleIf());
     _registerWarningRule(registry, AvoidDefaultTostring());
     _registerWarningRule(registry, AvoidDuplicateCollectionElements());
+    _registerWarningRule(registry, AvoidAdHocLeftType());
+    _registerWarningRule(registry, AvoidBareAwaitInDo());
+    _registerWarningRule(registry, AvoidEitherOfFuture());
+    _registerWarningRule(registry, AvoidGetOrElseSwallowingFailure());
+    _registerWarningRule(registry, AvoidDollarOutsideDoFrame());
+    _registerWarningRule(registry, AvoidNestedDoNotation());
+    _registerWarningRule(registry, AvoidRemovedFpdartApi());
     _registerWarningRule(registry, AvoidNestedFutures());
     _registerWarningRule(registry, PreferSwitchWithEnums());
     _registerWarningRule(registry, PreferAddAll());
+    _registerWarningRule(registry, PreferChainEither());
+    _registerWarningRule(registry, PreferChainingOverIntermediateRun());
+    _registerWarningRule(registry, PreferDoNotation());
+    _registerWarningRule(registry, PreferFromNullable());
+    _registerWarningRule(registry, PreferFromPredicate());
+    _registerWarningRule(registry, PreferSafeCollectionAccess());
+    _registerWarningRule(registry, PreferStringParseExtensions());
+    _registerWarningRule(registry, PreferTaskEitherOverTryCatch());
     _registerWarningRule(registry, PreferImmediateReturn());
     _registerWarningRule(registry, AvoidEmptySpread());
     _registerWarningRule(registry, AvoidInvertedBooleanChecks());
@@ -414,6 +457,9 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidMissingCompleterStackTrace());
     _registerWarningRule(registry, AvoidPassingAsyncWhenSyncExpected());
     _registerWarningRule(registry, AvoidUnrelatedTypeCasts());
+    _registerWarningRule(registry, AvoidUnnecessaryOption());
+    _registerWarningRule(registry, AvoidUnrunTask());
+    _registerWarningRule(registry, AvoidUntypedSafeCast());
     _registerWarningRule(registry, AvoidNotEncodableInToJson());
     _registerWarningRule(registry, FunctionAlwaysReturnsNull());
     _registerWarningRule(registry, AvoidUnmodifiedLoopCondition());
@@ -476,6 +522,26 @@ class ManyLintsPlugin extends Plugin {
       AvoidCascadeAfterIfNullFix.new,
     );
     registry.registerFixForRule(DisposeFields.code, DisposeFieldsFix.new);
+    registry.registerFixForRule(
+      PreferUnitOverVoid.code,
+      PreferUnitOverVoidFix.new,
+    );
+    registry.registerFixForRule(
+      PreferFromNullable.code,
+      PreferFromNullableFix.new,
+    );
+    registry.registerFixForRule(
+      PreferFromPredicate.code,
+      PreferFromPredicateFix.new,
+    );
+    registry.registerFixForRule(
+      PreferSafeCollectionAccess.code,
+      PreferSafeCollectionAccessFix.new,
+    );
+    registry.registerFixForRule(
+      PreferStringParseExtensions.code,
+      PreferStringParseExtensionsFix.new,
+    );
     registry.registerFixForRule(
       MissingProviderScope.code,
       MissingProviderScopeFix.new,
@@ -786,6 +852,7 @@ class ManyLintsPlugin extends Plugin {
     );
 
     // Register assists
+    registry.registerAssist(ConvertFlatMapToDoNotation.new);
     registry.registerAssist(ConvertIterableMapToCollectionFor.new);
   }
 }

@@ -46,6 +46,13 @@ class FixHarness with ResourceProviderMixin {
   /// [packages] maps a package name to the source of its `lib/<name>.dart`,
   /// for rules that only fire on types from another package.
   ///
+  /// [multiFilePackages] maps a package name to several of its files, keyed by
+  /// path relative to the package root (`'lib/src/option.dart'`). Use it when a
+  /// rule's [TypeChecker]s pin *declaring* libraries rather than a barrel:
+  /// `package:fpdart/src/task_either.dart#TaskEither` cannot be satisfied by a
+  /// single `lib/fpdart.dart`, so a one-file stub would leave the rule silent
+  /// and every assertion vacuous.
+  ///
   /// [manyLintsConfig] is written to `many_lints.yaml` at the package root,
   /// for fixes whose behaviour depends on per-rule configuration.
   ///
@@ -57,29 +64,15 @@ class FixHarness with ResourceProviderMixin {
     String content,
     String ruleName, {
     Map<String, String> packages = const {},
+    Map<String, Map<String, String>> multiFilePackages = const {},
     String? manyLintsConfig,
   }) async {
-    newAnalysisOptionsYamlFile(packagePath, '''
-plugins:
-  many_lints:
-    path: /many_lints
-''');
-
-    newFile(
-      join(packagePath, ConfigLoader.fileName),
-      manyLintsConfig ?? 'preset: all\n',
+    _writePackage(
+      content,
+      packages: packages,
+      multiFilePackages: multiFilePackages,
+      manyLintsConfig: manyLintsConfig,
     );
-
-    final config = PackageConfigFileBuilder()
-      ..add(name: 'test', rootFolder: getFolder(packagePath));
-    for (final MapEntry(key: name, value: source) in packages.entries) {
-      final root = convertPath('/packages/$name');
-      newFile(join(root, 'lib', '$name.dart'), source);
-      config.add(name: name, rootFolder: getFolder(root));
-    }
-    newPackageConfigJsonFileFromBuilder(packagePath, config);
-
-    newFile(filePath, content);
 
     final errors = channel.notifications
         .where(
@@ -141,6 +134,120 @@ plugins:
     }
 
     return _applyEdits(content, edits);
+  }
+
+  /// Analyses [content], applies the assist named [assistId] at the offset
+  /// marked by `^` in the source, and returns the resulting text.
+  ///
+  /// Assists are driven by cursor position rather than by a diagnostic, so the
+  /// caret is written into the fixture itself and stripped before analysis.
+  /// That keeps the offset visible next to the code it selects instead of
+  /// living as a magic number in the expectation.
+  ///
+  /// `analyzer_testing` has no assist API any more than it has a fix one, but
+  /// the plugin server answers `edit.getAssists`, so the returned change can be
+  /// applied and compared exactly like a fix.
+  ///
+  /// Returns the new source plus the linked edit groups the assist offered, so
+  /// a test can assert on which names it made renameable.
+  Future<({String source, List<protocol.LinkedEditGroup> linkedGroups})>
+  applyAssist(
+    String content,
+    String assistId, {
+    Map<String, String> packages = const {},
+    Map<String, Map<String, String>> multiFilePackages = const {},
+    String? manyLintsConfig,
+  }) async {
+    final caret = content.indexOf('^');
+    if (caret < 0) {
+      fail('The assist fixture must mark the cursor with "^".');
+    }
+    final source = content.replaceFirst('^', '');
+
+    _writePackage(
+      source,
+      packages: packages,
+      multiFilePackages: multiFilePackages,
+      manyLintsConfig: manyLintsConfig,
+    );
+
+    await channel.sendRequest(
+      protocol.AnalysisSetAnalysisRootsParams([packagePath], []),
+    );
+    await pluginServer.waitForIdle();
+
+    final response = await channel.sendRequest(
+      protocol.EditGetAssistsParams(filePath, caret, 0),
+    );
+    final result = protocol.EditGetAssistsResult.fromResponse(response);
+
+    final change = result.assists
+        .map((assist) => assist.change)
+        .where((change) => change.id == assistId)
+        .firstOrNull;
+
+    if (change == null) {
+      fail(
+        'The $assistId assist was not offered at this offset. '
+        'Got: ${result.assists.map((a) => a.change.id).toList()}',
+      );
+    }
+
+    final edits = [
+      for (final fileEdit in change.edits)
+        if (fileEdit.file == filePath) ...fileEdit.edits,
+    ];
+
+    if (edits.isEmpty) {
+      fail('The $assistId assist produced no edits for this code.');
+    }
+
+    return (
+      source: _applyEdits(source, edits),
+      linkedGroups: change.linkedEditGroups,
+    );
+  }
+
+  /// Writes the analysed package: options, config, dependencies and the file
+  /// under test.
+  ///
+  /// Shared by [applyFix] and [applyAssist] so the two cannot drift on how a
+  /// package is laid out — a difference there would show up as one of them
+  /// mysteriously resolving a dependency the other does not.
+  void _writePackage(
+    String content, {
+    required Map<String, String> packages,
+    required Map<String, Map<String, String>> multiFilePackages,
+    required String? manyLintsConfig,
+  }) {
+    newAnalysisOptionsYamlFile(packagePath, '''
+plugins:
+  many_lints:
+    path: /many_lints
+''');
+
+    newFile(
+      join(packagePath, ConfigLoader.fileName),
+      manyLintsConfig ?? 'preset: all\n',
+    );
+
+    final config = PackageConfigFileBuilder()
+      ..add(name: 'test', rootFolder: getFolder(packagePath));
+    for (final MapEntry(key: name, value: source) in packages.entries) {
+      final root = convertPath('/packages/$name');
+      newFile(join(root, 'lib', '$name.dart'), source);
+      config.add(name: name, rootFolder: getFolder(root));
+    }
+    for (final MapEntry(key: name, value: files) in multiFilePackages.entries) {
+      final root = convertPath('/packages/$name');
+      for (final MapEntry(key: path, value: source) in files.entries) {
+        newFile(join(root, convertPath(path)), source);
+      }
+      config.add(name: name, rootFolder: getFolder(root));
+    }
+    newPackageConfigJsonFileFromBuilder(packagePath, config);
+
+    newFile(filePath, content);
   }
 
   Future<void> setUp() async {

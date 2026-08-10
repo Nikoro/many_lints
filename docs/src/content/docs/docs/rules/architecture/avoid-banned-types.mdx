@@ -117,6 +117,52 @@ Matching is on the type's **declared** name rather than the name as written, so 
 
 Qualify with `package:uri#Name` when a bare name is ambiguous. Banning `Border` outright would also catch a local class of that name; `package:flutter/src/painting/border.dart#Border` bans only Flutter's.
 
+## Recipe: keeping heavy FP machinery out of an fpdart codebase
+
+A common house rule is that a project uses fpdart's `Option` / `Either` /
+`TaskEither` but deliberately not `Reader`, `State` or the `IO*` family —
+dependency injection goes through the DI mechanism the app already has, and
+plain sync code covers the rest. This rule enforces that without needing one of
+its own:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_banned_types:
+      banned:
+        - deny:
+            - 'package:fpdart/src/reader.dart#Reader'
+            - 'package:fpdart/src/state.dart#State'
+            - 'package:fpdart/src/io_option.dart#IOOption'
+          message: 'Use Riverpod for injection and plain Dart for sync code.'
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_banned_types:
+    banned:
+      - deny:
+          - 'package:fpdart/src/reader.dart#Reader'
+          - 'package:fpdart/src/state.dart#State'
+          - 'package:fpdart/src/io_option.dart#IOOption'
+        message: 'Use Riverpod for injection and plain Dart for sync code.'
+```
+
+</TabItem>
+</Tabs>
+
+Qualify these with the `package:uri#Name` form. `State` in particular is a name
+Flutter also uses, and a bare entry would ban every `State` subclass in the app.
+
 ## Related rules
 
 - [`banned_usage`](/many_lints/docs/rules/architecture/banned-usage/) — bans one *member* of a type rather than the whole type
+- The [fpdart rules](/many_lints/docs/rules/fpdart/avoid-unrun-task/) — for the parts of fpdart usage that need more than a name ban

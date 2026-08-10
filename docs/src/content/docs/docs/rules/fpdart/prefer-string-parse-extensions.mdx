@@ -1,0 +1,103 @@
+---
+title: prefer_string_parse_extensions
+description: "Option.fromNullable(int.tryParse(s)) is what toIntOption already is"
+sidebar:
+  label: prefer_string_parse_extensions
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags `Option.fromNullable(...)` wrapping an `int.tryParse`, `double.tryParse`, `num.tryParse` or `bool.tryParse` call.
+
+## Why use this rule
+
+fpdart defines `toIntOption` as literally `Option.fromNullable(int.tryParse(this))`, along with `toDoubleOption`, `toNumOption`, `toBoolOption` and the `...Either` variants that carry a failure. Writing the composition out reimplements something the package ships.
+
+It also separates the parse from its null handling by the width of the line. Inside a pipeline that is where the mismatch hides — `Option.fromNullable(int.tryParse(a))` in a step that meant to parse `b` reads as perfectly correct.
+
+**See also:** [fpdart: string extensions](https://pub.dev/documentation/fpdart/latest/fpdart/FpdartOnString.html)
+
+## Don't
+
+```dart
+final parsed = Option.fromNullable(int.tryParse(input));
+```
+
+## Do
+
+```dart
+final parsed = input.toIntOption;
+```
+
+When the failure has to reach the caller, the `Either` variant takes it:
+
+```dart
+Either<Failure, int> parseRound(String input) =>
+    input.toIntEither(() => const InvalidRoundNumberFailure());
+```
+
+## Quick fix
+
+A quick fix rewrites the whole expression to `value.toIntOption` (and the other three), adding the fpdart import when it is missing. It can be applied across a whole file at once.
+
+Only the four built-in receivers are rewritten. A type added through `additional_parsers` still gets the warning but no fix — the extension to call is that project's own, and its name cannot be derived reliably enough to edit code with.
+
+## Known limitations
+
+A `tryParse` call with a second argument (`radix:`) is left alone — it does something no extension covers.
+
+An unrelated `tryParse` (a user-defined `Version.tryParse`, say) is not reported unless it is named in `additional_parsers`, since no matching extension exists by default.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_string_parse_extensions:
+      additional_parsers:
+        - Version
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_string_parse_extensions:
+    additional_parsers:
+      - Version
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `additional_parsers` | list of strings | `[]` | Extra `Type.tryParse` receivers to recognise, for projects with their own `toXOption` extension. The suggested getter is derived as `to<Type>Option` |
+
+## Configuration
+
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`prefer_string_parse_extensions: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_string_parse_extensions: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

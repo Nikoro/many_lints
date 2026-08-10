@@ -1,0 +1,114 @@
+---
+title: avoid_ad_hoc_left_type
+description: "A pipeline only composes when every step shares one error type"
+sidebar:
+  label: avoid_ad_hoc_left_type
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags an `Either`, `TaskEither` or `IOEither` whose error channel carries a type outside the project's configured failure hierarchy.
+
+**It reports nothing until you configure `error_types`.** What belongs in the error channel is a project decision, so the rule ships with no policy at all.
+
+## Why use this rule
+
+`flatMap` only composes when every step shares one left type. A pipeline that starts `TaskEither<String, T>` and meets a `TaskEither<Failure, T>` does not chain — it has to be bridged with `mapLeft` at every junction.
+
+The usual bridge is `(e) => e.toString()`, and that is where the damage is done: once the left side is a `String`, the fold at the boundary can no longer `switch` on what went wrong. The sealed hierarchy that made failures exhaustive becomes a message, and the UI that wanted to retry on a network error but log out on an auth error has nothing left to branch on.
+
+Naming the hierarchy makes an ad-hoc left type visible where it is introduced, rather than three layers later where someone has to reconcile it.
+
+**See also:** [fpdart: Either](https://pub.dev/documentation/fpdart/latest/fpdart/Either-class.html)
+
+## Don't
+
+```dart
+// with error_types: [Failure]
+TaskEither<String, User> load(String id) => ...;
+```
+
+## Do
+
+```dart
+TaskEither<Failure, User> load(String id) => ...;
+```
+
+Model the hierarchy as a sealed class so the fold can be exhaustive:
+
+```dart
+sealed class Failure {}
+class NetworkFailure extends Failure {}
+class AuthFailure extends Failure {}
+
+result.match(
+  (failure) => switch (failure) {
+    NetworkFailure() => retry(),
+    AuthFailure() => signOut(),
+  },
+  (user) => show(user),
+);
+```
+
+## Known limitations
+
+`Option` and `Task` have no error channel and are never reported.
+
+By default a subtype of a named type is accepted, so a sealed hierarchy works by naming only its root. Set `allow_subtypes: false` to require the exact type — useful when the point is that every signature spells the same name.
+
+No quick fix is offered: replacing the type means deciding which failure this step produces, which is the design work the rule is asking for.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_ad_hoc_left_type:
+      error_types:
+        - Failure
+      allow_subtypes: true
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_ad_hoc_left_type:
+    error_types:
+      - Failure
+    allow_subtypes: true
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `error_types` | list of strings | *(none)* | The type names allowed in the error channel. **Required** — the rule is silent without it |
+| `allow_subtypes` | bool | `true` | Accept a subtype of a named type, so a sealed hierarchy works by naming only its root |
+
+## Configuration
+
+This rule is in **no preset**, since it does nothing without configuration.
+Turn it on by giving it one:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_ad_hoc_left_type:
+    error_types:
+      - Failure
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

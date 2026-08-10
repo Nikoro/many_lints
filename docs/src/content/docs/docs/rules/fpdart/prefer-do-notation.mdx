@@ -1,0 +1,112 @@
+---
+title: prefer_do_notation
+description: "Deeply nested flatMap callbacks read flatter as a Do block"
+sidebar:
+  label: prefer_do_notation
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags `flatMap` callbacks nested three or more levels deep on an fpdart type.
+
+## Why use this rule
+
+`Do` is sugar over `flatMap` with identical semantics — same short-circuit on the first `None`/`Left`, same order of effects. The difference is entirely shape.
+
+Nested callbacks indent one level per step and push each step's value into a closure, so by the third the reader is tracking which `)` closes what, and the trailing `)))` has to be counted rather than read. A `Do` block is flat regardless of step count, and every extracted value is an ordinary local that later steps just refer to by name.
+
+**See also:** [fpdart: Do notation](https://pub.dev/packages/fpdart#-do-notation)
+
+## Don't
+
+```dart
+market.buyBanana().flatMap(
+      (banana) => market.buyApple().flatMap(
+            (apple) => market.buyPear().flatMap(
+                  (pear) => Option.of('$banana, $apple, $pear'),
+                ),
+          ),
+    );
+```
+
+## Do
+
+```dart
+Option.Do(($) {
+  final banana = $(market.buyBanana());
+  final apple = $(market.buyApple());
+  final pear = $(market.buyPear());
+  return '$banana, $apple, $pear';
+});
+```
+
+An async pipeline reads the same way, awaiting each extraction:
+
+```dart
+TaskEither.Do(($) async {
+  final file = await $(fileAt(path));
+  final content = await $(readAsString(file));
+  return content;
+});
+```
+
+## Known limitations
+
+Only *nesting* is counted, not chaining. `a.flatMap(f).flatMap(g).flatMap(h)` is already flat and reads fine — it is `a.flatMap((x) => b.flatMap((y) => ...))` that grows sideways.
+
+Exactly one diagnostic is reported per nest, on the outermost call, because the whole nest is one shape with one fix. Reporting each level would produce a diagnostic per step.
+
+There is no quick fix, but there **is** an assist: put the cursor on any `flatMap` in the nest and pick **"Convert to `Do` notation"**. It generates the block, takes each step's name from that callback's own parameter, and offers every generated name as a linked edit position — so accepting the assist drops the cursor on the first name with the rest reachable by Tab.
+
+It is an assist rather than a fix on purpose. The generated names are only as good as the original parameter names, so the rename belongs in the same gesture as the conversion; as a fix hanging off this warning, "apply all" would be one keystroke away from a file full of `final a = ...`.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_do_notation:
+      max_flatmap_depth: 2
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_do_notation:
+    max_flatmap_depth: 2
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_flatmap_depth` | int | `3` | How deeply `flatMap` callbacks may nest before the outermost is reported. `2` pushes a team toward `Do` almost immediately; `4` reserves it for genuinely long pipelines |
+
+## Configuration
+
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`prefer_do_notation: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_do_notation: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

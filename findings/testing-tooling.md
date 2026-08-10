@@ -5,7 +5,7 @@
 **Tags:** `#testing` `#tooling`
 **Verified:** 2026-08-08
 
-Unlike fixes and assists — which have no `analyzer_testing` API as of 0.3.4 — per-rule configuration is fully testable end-to-end by driving a real `PluginServer`. Reuse the `_PluginAnalysisHarness` pattern from `test/plugin_diagnostics_config_test.dart`: `ResourceProviderMixin` + `createMockSdk` + `AnalysisSetAnalysisRootsParams`, then assert on the emitted `AnalysisError` codes. Remember `await pluginServer.waitForIdle()` in teardown, since 0.3.18+ analyzes asynchronously.
+Per-rule configuration is fully testable end-to-end by driving a real `PluginServer`. So are fixes and assists, for the same reason: `analyzer_testing` exposes no API for any of the three (as of 0.3.4), but the plugin protocol answers `edit.getFixes` and `edit.getAssists`, which `test/fix_harness.dart` wraps. "No `analyzer_testing` API" never meant "untestable". Reuse the `_PluginAnalysisHarness` pattern from `test/plugin_diagnostics_config_test.dart`: `ResourceProviderMixin` + `createMockSdk` + `AnalysisSetAnalysisRootsParams`, then assert on the emitted `AnalysisError` codes. Remember `await pluginServer.waitForIdle()` in teardown, since 0.3.18+ analyzes asynchronously.
 
 **Test-design caveat learned the hard way:** exclusion tests pass trivially if the fixture never triggers the rule in the first place. An initial attempt used `avoid_border_all`, whose `TypeChecker` requires real Flutter types that do not resolve under `createMockSdk` — so the rule reported nothing and every "excluded" assertion passed vacuously. Pick a pure-Dart rule for config fixtures, and always pair each negative test with an asymmetric positive one (e.g. `exclude: test/**` on a file in `lib/` must still report).
 

@@ -1,0 +1,108 @@
+---
+title: prefer_safe_collection_access
+description: "list.first throws where list.head returns None"
+sidebar:
+  label: prefer_safe_collection_access
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags `.first`, `.last` and `.single` on an `Iterable` inside an fpdart pipeline, where fpdart offers `head`, `lastOption` and `singleOption` instead.
+
+## Why use this rule
+
+`list.first` throws `StateError` on an empty list. `list.head` returns `None`.
+
+Inside a pipeline that difference matters twice over. The throw escapes the error channel the pipeline exists to carry, so the `StateError` surfaces past every `fold` and `match` the caller wrote — the one place the code promised every failure was handled. And the empty case, which the type system was about to make explicit, silently becomes a runtime crash instead.
+
+By default only expressions inside an fpdart pipeline are reported, since that is where the total accessor composes. Set `report_outside_pipelines: true` to apply the same rule to the whole file.
+
+**See also:** [fpdart: iterable extensions](https://pub.dev/documentation/fpdart/latest/fpdart/FpdartOnIterable.html)
+
+## Don't
+
+```dart
+TaskEither<Failure, Player> firstPlayer(List<Player> players) =>
+    TaskEither.of(players.first);
+```
+
+## Do
+
+```dart
+TaskEither<Failure, Player> firstPlayer(List<Player> players) =>
+    players.head.toEither(() => const NoPlayersFailure()).toTaskEither();
+```
+
+Since 1.2.0 the total accessors go further than `head`: `singleOption`, `elementAtOption(i)`, `singleWhereOption` and `lastWhereOption` cover the rest of the throwing family, and `map.lookup(key)` replaces `map[key]!`.
+
+## Quick fix
+
+A quick fix swaps the accessor and adds the fpdart import when it is missing.
+
+Unlike the other fixes in this family it is **one at a time, not file-wide**, because it changes the expression's type: `first` yields `T`, `head` yields `Option<T>`. Every use site needs a follow-up — usually `getOrElse`, `toEither` or a `match` — and applying the swap in bulk would leave a file of type errors to untangle. That type change is the point of the rule, not a side effect: it is what forces the empty case to be handled.
+
+An accessor added through `accessors:` has no known counterpart, so it warns without offering a fix.
+
+## Known limitations
+
+The receiver must resolve to an `Iterable`, so a user-defined `first` on an unrelated class is never flagged.
+
+The "inside a pipeline" test is deliberately generous — anywhere an enclosing expression or the enclosing member's return type is an fpdart type counts. A narrower test would miss a helper whose result feeds a pipeline one call away.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_safe_collection_access:
+      report_outside_pipelines: true
+      additional_accessors:
+        - firstOrThrow
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_safe_collection_access:
+    report_outside_pipelines: true
+    additional_accessors:
+      - firstOrThrow
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `report_outside_pipelines` | bool | `false` | Report every throwing accessor in the file, not only those inside an fpdart pipeline |
+| `accessors` | list of strings | `first`, `last`, `single` | Replace the set of accessor names that are checked |
+| `additional_accessors` | list of strings | `[]` | Extend the set instead of replacing it |
+
+## Configuration
+
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`prefer_safe_collection_access: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_safe_collection_access: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
