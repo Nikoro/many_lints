@@ -185,3 +185,65 @@ Option<User> tryParse(String json) {
 Because `try` is a *statement*, the assist is offered only when the `tryCatch` makes up a whole function body (either `=> ...` or `{ return ...; }`). Mid-pipeline — `Either.tryCatch(...).flatMap(f)` — there is nowhere to put a statement, and the only expression-level equivalent is an immediately-invoked closure, which is worse than what it replaces. A tear-off `onError` such as `Failure.from` is declined too, since it has no parameter names or body to move into the `catch`.
 
 A stack-trace parameter that `onError` declares but never reads is dropped from the generated clause: `onError` may carry an unused parameter, but `catch` may not, and keeping it would hand back code with a fresh `unused_catch_stack` warning the original could not have had.
+
+## Convert null check to pattern
+
+Put the cursor on an `if (x != null)` guard. Related rule: [`avoid_non_null_assertion`](/many_lints/docs/rules/code-quality/avoid-non-null-assertion/).
+
+```dart
+// Before
+class Test {
+  String? field;
+
+  void method() {
+    if (field != null) {
+      field!.contains('other');
+    }
+  }
+}
+
+// After
+class Test {
+  String? field;
+
+  void method() {
+    if (field case final field_?) {
+      field_.contains('other');
+    }
+  }
+}
+```
+
+The point is **fields**. Dart promotes a local or a parameter after `x != null`, so a `!` there is already redundant and the SDK's own `unnecessary_null_checks` flags it. A field is never promoted — another method could reassign it between the check and the use — so every access inside the branch needs a `!` just to compile. Binding the value to a pattern variable makes it a fresh local, which *is* promotable, and the bangs go away.
+
+The conversion preserves semantics exactly: the branch is entered on the same values as before, and an `else` still runs when the value is null. Bare reads of the field inside the branch are rewritten along with the bangs, so the branch never mixes the nullable original with the bound variable.
+
+The generated name is offered as a linked edit, so <kbd>Tab</kbd> lands on it for renaming as part of applying the assist.
+
+Two shapes are declined. `if (x == null)` guards its *else* branch, and the early-return form (`if (x == null) return;`) promotes the code *after* the `if` — neither is expressible as one `case` pattern. A method call as the checked expression is declined too, because the pattern re-evaluates its subject and a call could have side effects or return a different value the second time.
+
+## Convert null check to destructuring pattern
+
+Put the cursor on an `if (x != null)` guard whose branch asserts an inner field with `x!.field!`.
+
+```dart
+// Before
+if (userData != null) {
+  sendEvent(userData!.name!);
+}
+
+// After
+if (userData case UserData(:final name?)) {
+  sendEvent(name);
+}
+```
+
+:::caution[This one changes behaviour]
+The object pattern adds a second condition. When `userData != null` but `userData.name == null`, the original enters the branch and the rewritten form skips it.
+:::
+
+That is the whole point of the refactor, but it is why this is a separate assist from the one above rather than a smarter version of it. It is offered **only** when the branch contains `x!.field!`: asserting the field non-null is the author stating that a null there was never a case they meant to handle, so turning that assertion into a condition matches the intent already written down. Without the inner bang the assist declines, and the semantics-preserving conversion is offered instead.
+
+Two more shapes are declined. When the branch asserts two *different* fields, there is no single name to destructure and picking one would be arbitrary — apply the assist again after the first conversion. A generic type is declined because `Box<String>(:final name?)` needs its arguments spelled out, and guessing them produces code that does not compile.
+
+Neither of these ships as a quick fix. Both rewrite the whole `if`, while `avoid_non_null_assertion` reports on the `!` *inside* the branch — a fix that restructures the statement above the reported node is hard to predict. And "apply all in file" must not be able to narrow conditions across a codebase in one keystroke.

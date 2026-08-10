@@ -59,7 +59,7 @@ For local development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
 | `core` | 37 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
 | `recommended` | 98 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
-| `all` | 178 | Every rule, including opinionated ones. |
+| `all` | 179 | Every rule, including opinionated ones. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml` includes `core.yaml`. `core` and `recommended` deliberately exclude anything that imposes an architecture, a naming scheme, or a contested style choice.
 
@@ -140,7 +140,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-178 lints with 96 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
+179 lints with 96 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
@@ -162,7 +162,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 | [Hook Rules](https://nikoro.github.io/many_lints/docs/rules/hook-rules/) | 4 | Flutter Hooks conventions |
 | [Testing Rules](https://nikoro.github.io/many_lints/docs/rules/testing-rules/) | 3 | Testing best practices and matchers |
 | [Resource Management](https://nikoro.github.io/many_lints/docs/rules/resource-management/) | 4 | Resource cleanup and disposal |
-| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/code-quality/) | 9 | General code quality improvements |
+| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/code-quality/) | 10 | General code quality improvements |
 
 ## Available Assists
 
@@ -175,6 +175,8 @@ Assists are refactorings you invoke deliberately from the lightbulb menu (<kbd>C
 | **Convert to `flatMap` chain** | anywhere in a `Do` block | The inverse: unfolds a straight-line `Do` block back into nested `flatMap` callbacks |
 | **Convert to `TaskEither` / `TaskOption`** | a function returning `Future<Either>`, `Either`, `Future<Option>` or `Option` | Converts the signature and moves the body into the lazy fpdart type, so the pipeline can host an `await` |
 | **Expand `tryCatch` into `try`/`catch`** | a `tryCatch` constructor | `Either.tryCatch` / `TaskEither.tryCatch` / `Option.tryCatch` → an explicit `try`/`catch` |
+| **Convert null check to pattern** | an `if (x != null)` guard | `if (x != null)` → `if (x case final y?)`, so a checked *field* is promoted and the `!` inside the branch disappears. Semantics-preserving |
+| **Convert null check to destructuring pattern** | an `if (x != null)` guard whose branch asserts `x!.field!` | `if (x case Type(:final field?))`, folding both null checks into one pattern. **Narrows the condition** — offered only where the branch already asserts the field |
 
 See the [assists documentation](https://nikoro.github.io/many_lints/docs/assists/) for examples and the cases each one declines.
 

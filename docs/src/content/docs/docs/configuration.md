@@ -300,6 +300,7 @@ options never changes results until you set one.
 | [`avoid_default_tostring`](/many_lints/docs/rules/code-quality/avoid-default-tostring/) | `report_enums` |
 | [`avoid_duplicate_bloc_event_handlers`](/many_lints/docs/rules/bloc-riverpod/avoid-duplicate-bloc-event-handlers/) | `additional_methods` |
 | [`avoid_duplicate_collection_elements`](/many_lints/docs/rules/collection-type/avoid-duplicate-collection-elements/) | `ignore_literals` |
+| [`avoid_non_null_assertion`](/many_lints/docs/rules/code-quality/avoid-non-null-assertion/) | `ignore_checked_fields` |
 | [`avoid_empty_setstate`](/many_lints/docs/rules/state-management/avoid-empty-setstate/) | `state_base_classes` |
 | [`avoid_get_or_else_swallowing_failure`](/many_lints/docs/rules/fpdart/avoid-get-or-else-swallowing-failure/) | `ignore_tests` |
 | [`avoid_hooks_outside_build`](/many_lints/docs/rules/hook-rules/avoid-hooks-outside-build/) | `additional_methods` |

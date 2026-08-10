@@ -36,6 +36,7 @@ lib/
     set_state_collection.dart   # SetStateCollector (shared rule + fix visitor)
     async_guard_utils.dart # Async helpers (containsAwait, isMountedGuardWithReturn)
     async_builder_utils.dart # Async builder source-allocation detection
+    null_check_pattern_conversion.dart # Shared `if (x != null)` guard analysis for the two null-check assists
     rules/                # Lint rules (AnalysisRule + SimpleAstVisitor pattern)
     fixes/                # Quick fixes (ResolvedCorrectionProducer pattern)
     assists/              # Code assists (ResolvedCorrectionProducer pattern)
@@ -110,7 +111,7 @@ rules with `preset:` in `many_lints.yaml` (or the top-level `many_lints:` sectio
 | `none` | 0 | Nothing. The default. |
 | `core` | 37 | Near-certain bugs only. |
 | `recommended` | 98 | `core` plus idiomatic, uncontroversial practice. |
-| `all` | 178 | Every rule, including opinionated ones. |
+| `all` | 179 | Every rule, including opinionated ones. |
 
 Presets **cannot** ship as includable YAML the way `package:lints` does: the analyzer
 replaces a plugin's config wholesale across `include:` rather than merging it, and

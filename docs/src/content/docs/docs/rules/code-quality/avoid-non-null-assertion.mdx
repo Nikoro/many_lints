@@ -1,0 +1,127 @@
+---
+title: avoid_non_null_assertion
+description: "Don't assert away null with the ! operator"
+sidebar:
+  label: avoid_non_null_assertion
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule flags every use of the null-assertion operator `!`.
+
+## Why use this rule
+
+`!` is not a check — it is an unchecked assertion. It tells the compiler a value is non-null and throws a `TypeError` at runtime when that turns out to be wrong.
+
+The type system stops helping at exactly the point the value is most likely to be null. Every other tool Dart gives you for nullability — `?.`, `??`, a null check, pattern matching — either handles the null case or makes the compiler prove it cannot happen. `!` alone converts a question the analyser could have answered into a production crash.
+
+**See also:** [Understanding null safety](https://dart.dev/null-safety/understanding-null-safety), [Sound null safety](https://dart.dev/null-safety)
+
+## Don't
+
+```dart
+// Throws if `user` is null — nothing checked it.
+user!.name;
+
+// Chained bangs compound the risk: either one can throw.
+config.timeout!.inSeconds;
+
+fetchAccount()!.close();
+```
+
+## Do
+
+```dart
+// Short-circuit instead of throwing.
+user?.name;
+
+// Supply a fallback.
+final seconds = config.timeout?.inSeconds ?? 0;
+
+// Or narrow with a check, so the compiler proves it.
+if (user != null) {
+  print(user.name);
+}
+```
+
+Reading a known-present entry out of a `Map` is exempt, because `Map`'s index operator is declared nullable no matter what the map holds:
+
+```dart
+// Not reported.
+translations['title']!.toUpperCase();
+```
+
+## Relationship to the official Dart lints
+
+The SDK linter has no equivalent rule — a request for one ([sdk#59476](https://github.com/dart-lang/sdk/issues/59476)) was closed without shipping. Two official rules cover strict subsets of what this rule reports, so enabling both means those cases are reported twice:
+
+| Official rule | Overlap |
+|---|---|
+| [`unnecessary_null_checks`](https://dart.dev/tools/linter-rules/unnecessary_null_checks) | Flags only bangs whose surrounding context already accepts null — the redundant ones |
+| [`null_check_on_nullable_type_parameter`](https://dart.dev/tools/linter-rules/null_check_on_nullable_type_parameter) | Flags only a bang on a potentially nullable generic type parameter |
+
+If the duplicate diagnostics bother you, disable the narrower SDK rules — this rule already reports everything they do.
+
+## Known limitations
+
+There is deliberately **no quick fix**. Rewriting `!` to `?.` changes behaviour: an expression that used to throw would instead silently evaluate to null, which moves the failure somewhere else rather than fixing it. Choosing between `?.`, `??`, a guard, or restructuring the types is a judgement call the author has to make.
+
+For the common case of a `!` on a field inside an `if (field != null)` guard, two [assists](/many_lints/docs/assists/) do the rewrite for you — [Convert null check to pattern](/many_lints/docs/assists/#convert-null-check-to-pattern) (semantics-preserving) and [Convert null check to destructuring pattern](/many_lints/docs/assists/#convert-null-check-to-destructuring-pattern) (narrows the condition). They are assists rather than fixes because both restructure the whole `if`, above the node this rule reports on.
+
+A `!` inside a pattern (`case var x!`) is a `NullAssertPattern`, not the postfix operator, and is not reported.
+
+## Turning this rule off
+
+This rule is in **no preset**, so it is off unless you enable it — with
+`preset: all`, or by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_non_null_assertion: true
+```
+
+To turn it off again:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_non_null_assertion: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_non_null_assertion:
+      ignore_checked_fields: true
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_non_null_assertion:
+    ignore_checked_fields: true
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ignore_checked_fields` | bool | `false` | Don't report a `!` on a field an enclosing `if (field != null)` already checked. Off by default because type promotion does not apply to fields — the bang is genuinely what makes the code compile, and the field can still change between the check and the use |

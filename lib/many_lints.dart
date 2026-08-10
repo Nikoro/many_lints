@@ -73,6 +73,7 @@ import 'package:many_lints/src/rules/avoid_default_tostring.dart';
 import 'package:many_lints/src/rules/avoid_duplicate_collection_elements.dart';
 import 'package:many_lints/src/rules/avoid_nested_do_notation.dart';
 import 'package:many_lints/src/rules/avoid_nested_futures.dart';
+import 'package:many_lints/src/rules/avoid_non_null_assertion.dart';
 import 'package:many_lints/src/rules/prefer_switch_with_enums.dart';
 import 'package:many_lints/src/rules/prefer_add_all.dart';
 import 'package:many_lints/src/rules/prefer_from_nullable.dart';
@@ -306,8 +307,10 @@ import 'package:many_lints/src/fixes/use_sliver_prefix_fix.dart';
 import 'package:many_lints/src/assists/convert_do_notation_to_flat_map.dart';
 import 'package:many_lints/src/assists/convert_flat_map_to_do_notation.dart';
 import 'package:many_lints/src/assists/convert_iterable_map_to_collection_for.dart';
+import 'package:many_lints/src/assists/convert_null_check_to_pattern.dart';
 import 'package:many_lints/src/assists/convert_to_lazy_fpdart_type.dart';
 import 'package:many_lints/src/assists/convert_try_catch_constructor_to_try_statement.dart';
+import 'package:many_lints/src/assists/inline_null_check_into_pattern.dart';
 
 /// Top-level plugin variable required by analysis_server_plugin.
 final plugin = ManyLintsPlugin();
@@ -435,6 +438,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidNestedDoNotation());
     _registerWarningRule(registry, AvoidRemovedFpdartApi());
     _registerWarningRule(registry, AvoidNestedFutures());
+    _registerWarningRule(registry, AvoidNonNullAssertion());
     _registerWarningRule(registry, PreferSwitchWithEnums());
     _registerWarningRule(registry, PreferAddAll());
     _registerWarningRule(registry, PreferChainEither());
@@ -862,6 +866,8 @@ class ManyLintsPlugin extends Plugin {
     registry.registerAssist(ConvertDoNotationToFlatMap.new);
     registry.registerAssist(ConvertFlatMapToDoNotation.new);
     registry.registerAssist(ConvertIterableMapToCollectionFor.new);
+    registry.registerAssist(ConvertNullCheckToPattern.new);
+    registry.registerAssist(InlineNullCheckIntoPattern.new);
     registry.registerAssist(ConvertToLazyFpdartType.new);
     registry.registerAssist(ConvertTryCatchConstructorToTryStatement.new);
   }

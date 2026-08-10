@@ -286,6 +286,7 @@ const CATEGORIES = {
       'avoid_shadowed_extension_methods',
       'function_always_returns_null',
       'avoid_commented_out_code',
+      'avoid_non_null_assertion',
       'avoid_default_tostring',
       'avoid_equal_expressions',
       'prefer_compute_over_isolate_run',

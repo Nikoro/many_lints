@@ -817,6 +817,270 @@ Stream<Either<Failure, User>> ea^ch() async* {
     });
   });
 
+  group('convert_null_check_to_pattern', () {
+    const assistId = 'many_lints.assist.convertNullCheckToPattern';
+
+    Future<String> applyAssist(String content) async {
+      final result = await harness.applyAssist(content, assistId);
+      return result.source;
+    }
+
+    Future<List<String>> idsAt(String content) => harness.assistIds(content);
+
+    test('binds a checked field so the bang disappears', () async {
+      final source = await applyAssist(r'''
+class Test {
+  String? field;
+
+  void method() {
+    if (fi^eld != null) {
+      field!.contains('other');
+    }
+  }
+}
+''');
+
+      expect(source, contains('if (field case final field_?)'));
+      expect(source, contains("field_.contains('other')"));
+      expect(source, isNot(contains('!')));
+    });
+
+    test('rewrites plain reads alongside the bangs', () async {
+      // Leaving a bare `field` behind would mix the nullable original with the
+      // promoted pattern variable, which reads as two different values.
+      final source = await applyAssist(r'''
+class Test {
+  String? field;
+
+  void method() {
+    if (fi^eld != null) {
+      print(field);
+      print(field!.length);
+    }
+  }
+}
+''');
+
+      expect(source, contains('print(field_)'));
+      expect(source, contains('print(field_.length)'));
+    });
+
+    test('preserves the else branch', () async {
+      final source = await applyAssist(r'''
+class Test {
+  String? field;
+
+  void method() {
+    if (fi^eld != null) {
+      print(field!);
+    } else {
+      print('none');
+    }
+  }
+}
+''');
+
+      expect(source, contains('if (field case final field_?)'));
+      expect(source, contains("} else {"));
+      expect(source, contains("print('none')"));
+    });
+
+    test('offers the bound name as a linked edit position', () async {
+      final result = await harness.applyAssist(r'''
+class Test {
+  String? field;
+
+  void method() {
+    if (fi^eld != null) {
+      field!.contains('other');
+    }
+  }
+}
+''', assistId);
+
+      expect(result.linkedGroups, hasLength(1));
+    });
+
+    // `x == null` guards the *else*, and the early-return form promotes the
+    // code after the `if` — neither is one `case` pattern.
+    test('declines an == null check', () async {
+      final ids = await idsAt(r'''
+class Test {
+  String? field;
+
+  void method() {
+    if (fi^eld == null) {
+      return;
+    }
+    field!.contains('other');
+  }
+}
+''');
+
+      expect(ids, isNot(contains(assistId)));
+    });
+
+    // Re-evaluating a call as the pattern subject could run side effects a
+    // second time, or return a different value.
+    test('declines a method call as the checked expression', () async {
+      final ids = await idsAt(r'''
+class Test {
+  String? compute() => null;
+
+  void method() {
+    if (comp^ute() != null) {
+      compute()!.contains('other');
+    }
+  }
+}
+''');
+
+      expect(ids, isNot(contains(assistId)));
+    });
+
+    test('declines an if that already uses a pattern', () async {
+      final ids = await idsAt(r'''
+class Test {
+  String? field;
+
+  void method() {
+    if (fi^eld case final value?) {
+      value.contains('other');
+    }
+  }
+}
+''');
+
+      expect(ids, isNot(contains(assistId)));
+    });
+  });
+
+  group('inline_null_check_into_pattern', () {
+    const assistId = 'many_lints.assist.inlineNullCheckIntoPattern';
+
+    Future<String> applyAssist(String content) async {
+      final result = await harness.applyAssist(content, assistId);
+      return result.source;
+    }
+
+    Future<List<String>> idsAt(String content) => harness.assistIds(content);
+
+    test('destructures the field the branch asserts non-null', () async {
+      final source = await applyAssist(r'''
+class UserData {
+  String? name;
+}
+
+void sendEvent(String value) {}
+
+class Holder {
+  UserData? userData;
+
+  void method() {
+    if (user^Data != null) {
+      sendEvent(userData!.name!);
+    }
+  }
+}
+''');
+
+      expect(source, contains('if (userData case UserData(:final name?))'));
+      expect(source, contains('sendEvent(name)'));
+      expect(source, isNot(contains('!')));
+    });
+
+    test('offers the destructured name as a linked edit position', () async {
+      final result = await harness.applyAssist(r'''
+class UserData {
+  String? name;
+}
+
+void sendEvent(String value) {}
+
+class Holder {
+  UserData? userData;
+
+  void method() {
+    if (user^Data != null) {
+      sendEvent(userData!.name!);
+    }
+  }
+}
+''', assistId);
+
+      expect(result.linkedGroups, hasLength(1));
+    });
+
+    // Without the inner bang the branch does not assert the field is non-null,
+    // so narrowing the condition would change behaviour the author never asked
+    // for. That case belongs to the semantics-preserving assist instead.
+    test('declines when the inner field is not asserted', () async {
+      final ids = await idsAt(r'''
+class UserData {
+  String? name;
+}
+
+class Holder {
+  UserData? userData;
+
+  void method() {
+    if (user^Data != null) {
+      print(userData!.name);
+    }
+  }
+}
+''');
+
+      expect(ids, isNot(contains(assistId)));
+      // The safe conversion is still available here.
+      expect(ids, contains('many_lints.assist.convertNullCheckToPattern'));
+    });
+
+    test('declines when two different fields are asserted', () async {
+      final ids = await idsAt(r'''
+class UserData {
+  String? name;
+  String? email;
+}
+
+class Holder {
+  UserData? userData;
+
+  void method() {
+    if (user^Data != null) {
+      print(userData!.name!);
+      print(userData!.email!);
+    }
+  }
+}
+''');
+
+      expect(ids, isNot(contains(assistId)));
+    });
+
+    // `UserData<String>(:final name?)` would need the arguments spelled out,
+    // and guessing them produces code that does not compile.
+    test('declines a generic type', () async {
+      final ids = await idsAt(r'''
+class Box<T> {
+  String? name;
+}
+
+class Holder {
+  Box<String>? box;
+
+  void method() {
+    if (b^ox != null) {
+      print(box!.name!);
+    }
+  }
+}
+''');
+
+      expect(ids, isNot(contains(assistId)));
+    });
+  });
+
   group('convert_iterable_map_to_collection_for', () {
     // The assist's own transformation logic is covered thoroughly in
     // `test/convert_iterable_map_to_collection_for_test.dart`, which drives

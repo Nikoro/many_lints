@@ -1893,3 +1893,79 @@ class _ConditionalCallFinder extends RecursiveAstVisitor<void> {
 - `RecursiveAstVisitor` does NOT have `visitInvocationExpression` — use `visitMethodInvocation`, `visitFunctionExpressionInvocation`, and `visitInstanceCreationExpression` separately
 
 **Ref:** [avoid_conditional_hooks.dart](../../../lib/src/rules/avoid_conditional_hooks.dart)
+
+### Detect the Null-Assertion (`!`) Operator
+
+`!` is a `PostfixExpression`. Register `addPostfixExpression` and filter on the
+token — the same callback also receives `++` and `--`:
+
+```dart
+@override
+void visitPostfixExpression(PostfixExpression node) {
+  if (node.operator.type != TokenType.BANG) return;
+
+  var operand = node.operand;
+  while (operand is ParenthesizedExpression) {
+    operand = operand.expression;
+  }
+  // `operand` is the expression the bang asserts on.
+}
+```
+
+Import `TokenType` from `package:analyzer/dart/ast/token.dart` (not the
+`_fe_analyzer_shared` implementation path).
+
+**What does *not* reach this callback** — so no extra filtering is needed:
+
+| Spelling | AST node |
+|---|---|
+| `a != b` | `BinaryExpression` (`TokenType.BANG_EQ`) |
+| `!flag` | `PrefixExpression` |
+| `case var x!` | `NullAssertPattern` |
+
+**Chained bangs nest.** `a!.b!` produces two `PostfixExpression` nodes — the
+outer one wrapping a `PropertyAccess` whose target is the inner one. Each is
+visited separately, so a rule reporting on every bang naturally reports both
+without any chain walking.
+
+**Distinguishing the operand shape** (verified by AST dump):
+
+| Source | `node.operand` |
+|---|---|
+| `c.field!` | `PrefixedIdentifier` |
+| `c.a!.b!` (outer) | `PropertyAccess` |
+| `map['k']!` | `IndexExpression` |
+| `n!` | `SimpleIdentifier` |
+
+That last row is how a `Map`-index exemption is expressed — test the operand for
+`IndexExpression` and type-check its `realTarget`:
+
+```dart
+if (operand is IndexExpression) {
+  final targetType = operand.realTarget.staticType;
+  if (targetType != null && _mapChecker.isAssignableFromType(targetType)) return;
+}
+```
+
+`isAssignableFromType` already walks `allSupertypes`, so a `HashMap` or any
+other `Map` subtype is covered by the one check.
+
+**Ref:** [avoid_non_null_assertion.dart](../../../lib/src/rules/avoid_non_null_assertion.dart)
+
+### Gotcha: the mock SDK is not the real SDK
+
+`createMockSdk` (and so `ManyLintsRuleTest`) ships a *trimmed* `dart:` surface.
+`dart:collection` defines `HashMap`, `LinkedHashMap` and friends, but **not**
+`SplayTreeMap`. A test written against a missing type silently gets an
+unresolved `staticType`, which makes any `TypeChecker` check fail — so an
+`assertNoDiagnostics` passes for the wrong reason, and an `assertDiagnostics`
+fails with no obvious cause.
+
+Before concluding a type check is buggy, confirm the type exists:
+
+```bash
+grep -n "class SplayTreeMap" ~/.pub-cache/hosted/pub.dev/analyzer-*/lib/src/test_utilities/mock_sdk.dart
+```
+
+Pick a type the mock SDK actually declares, or mock the package yourself (see
+[config-cookbook.md](config-cookbook.md#testing-a-configurable-rule)).

@@ -56,6 +56,31 @@ void main() {
 }
 ''';
 
+/// A `!` on a field an enclosing `if (field != null)` already checked, which
+/// `avoid_non_null_assertion` reports unless `ignore_checked_fields` is set.
+const _checkedFieldBangCode = '''
+class C {
+  String? field;
+
+  void f() {
+    if (field != null) {
+      print(field!.length);
+    }
+  }
+}
+''';
+
+/// A `!` with no null check guarding it, which no option exempts.
+const _unguardedBangCode = '''
+class C {
+  String? field;
+
+  void f() {
+    print(field!.length);
+  }
+}
+''';
+
 /// The same, but with a typed `on ... catch` clause.
 const _typedRethrowCode = '''
 void doSomething() {}
@@ -554,6 +579,62 @@ rules:
       );
 
       expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
+    });
+
+    group('avoid_non_null_assertion.ignore_checked_fields', () {
+      test('the rule reports a checked field by default', () async {
+        final errors = await harness.analyze(
+          _checkedFieldBangCode,
+          config: 'preset: all',
+        );
+
+        expect(errors.map((e) => e.code), contains('avoid_non_null_assertion'));
+      });
+
+      test('the option exempts a bang guarded by a null check', () async {
+        final errors = await harness.analyze(
+          _checkedFieldBangCode,
+          config: '''
+rules:
+  avoid_non_null_assertion:
+    ignore_checked_fields: true
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_non_null_assertion')),
+        );
+      });
+
+      // Asymmetric counterpart: the option must not silence an unguarded bang,
+      // or "the option worked" is indistinguishable from "the rule never ran".
+      test('the option still reports an unguarded bang', () async {
+        final errors = await harness.analyze(
+          _unguardedBangCode,
+          config: '''
+rules:
+  avoid_non_null_assertion:
+    ignore_checked_fields: true
+''',
+        );
+
+        expect(errors.map((e) => e.code), contains('avoid_non_null_assertion'));
+      });
+
+      test('a wrong-typed option value falls back to the default', () async {
+        final errors = await harness.analyze(
+          _checkedFieldBangCode,
+          config: '''
+preset: all
+rules:
+  avoid_non_null_assertion:
+    ignore_checked_fields: "not a bool"
+''',
+        );
+
+        expect(errors.map((e) => e.code), contains('avoid_non_null_assertion'));
+      });
     });
 
     test('analysis_options section configures the rule', () async {
