@@ -1,0 +1,122 @@
+---
+title: avoid_state_constructors
+description: "Avoid constructors with logic in State classes"
+sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
+  label: avoid_state_constructors
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">State Management</span>
+
+Flags `State` subclasses that have constructors with non-empty bodies or initializer lists. Initialization logic in State classes should live in `initState()`, not in the constructor, to respect the Flutter widget lifecycle.
+
+## Why use this rule
+
+The `State` constructor runs before the framework has fully initialized the state object. At construction time, `widget`, `context`, and other framework-provided properties are not yet available. Placing logic in the constructor can lead to subtle bugs when that logic depends on the widget tree. Using `initState()` ensures all framework wiring is in place.
+
+**See also:** [State class](https://api.flutter.dev/flutter/widgets/State-class.html) | [State.initState](https://api.flutter.dev/flutter/widgets/State/initState.html) | [Dart lint: no_logic_in_create_state](https://dart.dev/tools/linter-rules/no_logic_in_create_state)
+
+## Don't
+
+```dart
+class _BadWidget1State extends State<BadWidget1> {
+  late String _data;
+
+  // Constructor body should be empty — move logic to initState()
+  _BadWidget1State() {
+    _data = 'Hello';
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+
+class _BadWidget2State extends State<BadWidget2> {
+  final String _data;
+
+  // Initializer list in State constructor — move logic to initState()
+  _BadWidget2State() : _data = 'Hello';
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+```
+
+## Do
+
+```dart
+class _GoodWidgetState extends State<GoodWidget> {
+  late String _data;
+
+  @override
+  void initState() {
+    super.initState();
+    _data = 'Hello';
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+
+// Empty constructor is fine
+class _GoodWidget2State extends State<GoodWidget2> {
+  _GoodWidget2State();
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+```
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_state_constructors: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
+
+Projects with a state abstraction that does not extend Flutter's `State` can
+opt that base class into this rule:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_state_constructors:
+      state_base_classes: [AppState]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_state_constructors:
+    state_base_classes: [AppState]
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `state_base_classes` | list of strings | `[]` | Additional non-`State` base classes whose subclasses should be treated as state classes |

@@ -247,6 +247,12 @@ site-search {
   border-color: #4caf50;
 }
 
+.rule-badge--config {
+  background-color: #4a7ec4;
+  color: #f2f6fc;
+  border-color: #5d94dd;
+}
+
 .rule-badge--category {
   background-color: #3a3a3a;
   color: #dcdcdc;
@@ -269,6 +275,12 @@ site-search {
   background-color: #f0f7f0;
   color: #2e7d32;
   border-color: #66bb6a;
+}
+
+:root[data-theme='light'] .rule-badge--config {
+  background-color: #eaf2fd;
+  color: #0d4a94;
+  border-color: #7aa9e4;
 }
 
 :root[data-theme='light'] .rule-badge--category {

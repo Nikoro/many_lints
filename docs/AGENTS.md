@@ -70,19 +70,46 @@ docs/
 Rule documentation pages are **hand-maintained** and committed directly. The generation script (`scripts/generate-rule-pages.mjs`) can bootstrap new pages but does not run in CI. It exits non-zero when a rule is uncategorized, listed in multiple categories, or referenced without a matching rule source.
 
 Each rule page follows this format:
-- **Badges**: `<span class="rule-badge rule-badge--{version,warning,fix,category}">` — version introduced, severity, fix availability, category
+- **Badges**: `<span class="rule-badge rule-badge--{version,warning,fix,config,category}">` — version introduced, severity, fix availability, `Configurable` (only if the rule takes options), category
 - **Description**: Human-friendly 2-3 sentence explanation
 - **Why use this rule**: Real-world context with "See also" links to official docs
 - **Don't / Do**: Separate code blocks showing bad and good patterns
-- **Configuration**: YAML snippet to disable the rule
+- **Turning this rule off**: YAML snippet to disable the rule, plus a link to per-rule `exclude`
+- **Options** (configurable rules only): a sibling `##` heading, not nested under the section above
 
-**Adding a new rule page**: Create a `.md` file in the appropriate category directory under `docs/src/content/docs/docs/rules/`. Use an existing page as a template. Determine the version tag from git history.
+### Configurable rules use `.mdx`
+
+The 52 rules that accept options are `.mdx`, not `.md`, because every options snippet is
+shown in both supported locations via Starlight tabs:
+
+```mdx
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+...a `# analysis_options.yaml` block, nested under a top-level `many_lints:` key...
+</TabItem>
+<TabItem label="many_lints.yaml">
+...the same block at the top level, headed `# many_lints.yaml`...
+</TabItem>
+</Tabs>
+```
+
+The shared `syncKey` makes every tab group on the site switch together, so a reader
+picks their config file once. Never show an options snippet in only one location, and
+always keep the `# <filename>` comment as the snippet's first line — that comment is
+what tells the reader where the YAML goes.
+
+`generate-rule-pages.mjs` checks for both extensions and will not overwrite a `.mdx`
+page, even under `--force`.
+
+**Adding a new rule page**: Create a `.md` file (or `.mdx`, if the rule has options) in the appropriate category directory under `docs/src/content/docs/docs/rules/`. Use an existing page as a template. Determine the version tag from git history. A rule with options must also be added to the table under "Per-rule options" in `configuration.md`.
 
 **Adding a new category**: Add the directory under `rules/` AND add a matching entry in the `sidebar` array in `astro.config.mjs`.
 
 ## Sidebar Configuration
 
-Defined in `astro.config.mjs`. Top-level pages are explicit slugs; rule categories use `autogenerate` to pick up all `.md` files in each category directory. Rules with quick fixes get a blue "Fix" badge via Starlight's `badge` frontmatter.
+Defined in `astro.config.mjs`. Top-level pages are explicit slugs; rule categories use `autogenerate` to pick up all `.md` and `.mdx` files in each category directory. Rules with quick fixes get a blue "Fix" badge via Starlight's `badge` frontmatter. Starlight allows only one sidebar badge per page, so `Configurable` is shown on the rule page itself rather than in the sidebar.
 
 ## Theming & Component Overrides
 
@@ -90,7 +117,7 @@ Custom CSS in `src/assets/custom.css`:
 - Color scheme inspired by Flutter docs (dark blue `#0468D7` accent, same in both themes)
 - Dark and light mode variables
 - Custom badge colors for sidebar "Fix" indicators (`.sl-badge.tip`)
-- Rule page badges (`.rule-badge--version`, `--warning`, `--fix`, `--category`) with dark/light mode
+- Rule page badges (`.rule-badge--version`, `--warning`, `--fix`, `--config`, `--category`) with dark/light mode
 - Vertically + horizontally centered splash hero layout
 - Styled "Get Started" button (rounded rectangle, white text on accent)
 

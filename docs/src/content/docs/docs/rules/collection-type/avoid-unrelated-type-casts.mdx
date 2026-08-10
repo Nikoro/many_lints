@@ -1,0 +1,106 @@
+---
+title: avoid_unrelated_type_casts
+description: "Don't cast or type-test between unrelated types"
+sidebar:
+  label: avoid_unrelated_type_casts
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Collection &amp; Type</span>
+
+This rule flags an `as` cast or `is` check between types with no possible common subtype. The cast can only ever throw, and the check can only ever be `false`.
+
+## Why use this rule
+
+The analyzer accepts `value as int` on a `String` without complaint — the cast is legal Dart, it simply fails at runtime. There is no scenario where it succeeds, so it is always a mistake: the wrong variable, a stale type after a refactor, or a misremembered API.
+
+The `is` form is quieter and worse. A check that is statically always `false` compiles, runs, and silently skips its branch forever. That branch is dead code that looks live.
+
+The SDK's [`unrelated_type_equality_checks`](https://dart.dev/tools/linter-rules/unrelated_type_equality_checks) covers the `==` version of this idea. Casts and type tests are left uncovered, which is the gap this rule fills.
+
+**See also:** [Dart: type test operators](https://dart.dev/language/operators#type-test-operators), [`unrelated_type_equality_checks`](https://dart.dev/tools/linter-rules/unrelated_type_equality_checks)
+
+## Don't
+
+```dart
+void f(String value) {
+  final n = value as int;   // always throws
+  if (value is int) { }     // always false — the branch is dead
+}
+```
+
+## Do
+
+Cast within a hierarchy, or fix the expression being checked:
+
+```dart
+void f(Object value) {
+  if (value is int) {       // `Object` really might be an `int`
+    print(value + 1);
+  }
+}
+```
+
+## Known limitations
+
+The rule is deliberately conservative about what counts as "unrelated". Two ordinary classes are **not** reported, because a third class could implement both, making the cast unusual rather than impossible:
+
+```dart
+class Foo {}
+class Bar {}
+
+class Both implements Foo, Bar {}
+
+Bar f(Foo value) => value as Bar;   // legal: `value` might be a `Both`
+```
+
+Reports are limited to cases where no such subtype can exist: `final` and `sealed` classes, enums, and `dart:core` types like `String` and `int`.
+
+`dynamic`, `Object` and `void` are compatible with everything by design, so a cast from them is the normal way to narrow an untyped value and is never reported. Type parameters are skipped too — the real type argument is unknown, so any conclusion would be guesswork. Nullability alone is not a relation difference: `String?` to `String` is the analyzer's business, not this rule's.
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_unrelated_type_casts: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_unrelated_type_casts:
+      report_is_checks: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_unrelated_type_casts:
+    report_is_checks: false
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `report_is_checks` | bool | `true` | Also report `is` checks. Set to `false` to limit the rule to `as` casts |

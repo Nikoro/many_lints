@@ -1,0 +1,121 @@
+---
+title: prefer_switch_with_enums
+description: "Use a switch instead of an if-else chain over enum constants"
+sidebar:
+  label: prefer_switch_with_enums
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.8.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Pattern Matching</span>
+
+This rule flags an if-else chain of three or more branches that compares the same enum value against different constants.
+
+## Why use this rule
+
+A `switch` over an enum is checked for exhaustiveness. Add a constant to the enum and the compiler points at every switch that must now handle it, turning the change into a guided refactor.
+
+An if-else chain gets no such check. A new constant falls through to the final `else`, or past the chain entirely, and the bug shows up at runtime in whichever branch forgot about it. The chain is also longer to read: the reader has to confirm each branch tests the same subject.
+
+The same blind spot applies to a condition that `||`-chains comparisons, and to a membership test over a literal set of constants: in both cases adding an enum constant changes nothing and the compiler stays silent.
+
+**See also:** [Dart: exhaustiveness checking](https://dart.dev/language/branches#exhaustiveness-checking)
+
+## Don't
+
+```dart
+String describe(Status status) {
+  if (status == Status.active) {
+    return 'Active';
+  } else if (status == Status.inactive) {
+    return 'Inactive';
+  } else if (status == Status.pending) {
+    return 'Pending';
+  }
+  return '';
+}
+
+// Comparisons combined with ||
+if (status == Status.active ||
+    status == Status.inactive ||
+    status == Status.pending) {
+  handle();
+}
+
+// Membership test over a literal set of constants
+if ({Status.active, Status.inactive, Status.pending}.contains(status)) {
+  handle();
+}
+```
+
+## Do
+
+```dart
+String describe(Status status) => switch (status) {
+  Status.active => 'Active',
+  Status.inactive => 'Inactive',
+  Status.pending => 'Pending',
+};
+
+final handled = switch (status) {
+  Status.active || Status.inactive || Status.pending => true,
+};
+```
+
+## Known limitations
+
+The rule requires the whole condition to be replaceable, so it stays silent when:
+
+- Fewer than three enum comparisons are involved — a short chain is not worth restructuring. Comparisons joined by `||` count individually, so `a == E.x || a == E.y` in one branch plus `a == E.z` in the next reaches the threshold.
+- The branches test different subjects, or mix an enum comparison with an unrelated condition.
+- The enum is nullable, since a `null` case needs handling a plain switch over constants does not give.
+
+For `contains`, only a literal receiver is reported. A named collection (`const known = {...}; known.contains(v)`) is a deliberate, reusable set rather than an inlined branch, so it is left alone.
+
+Operand order does not matter: `Status.active == status` is recognised the same as `status == Status.active`.
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_switch_with_enums: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_switch_with_enums:
+      ignore_contains: true
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_switch_with_enums:
+    ignore_contains: true
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ignore_contains` | bool | `false` | Skip `{E.a, E.b}.contains(value)` membership tests, reporting only if-else and `||` chains |

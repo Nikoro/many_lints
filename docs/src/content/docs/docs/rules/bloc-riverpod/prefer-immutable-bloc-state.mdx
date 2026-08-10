@@ -1,0 +1,116 @@
+---
+title: prefer_immutable_bloc_state
+description: "Ensure Bloc and Cubit state classes are annotated with @immutable"
+sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
+  label: prefer_immutable_bloc_state
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.4.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
+
+This rule flags Bloc and Cubit state classes that are missing the `@immutable` annotation. It detects state classes both by type parameter analysis (classes used as the state type in `Bloc<Event, State>` or `Cubit<State>`) and by naming convention (classes ending with `State`), including their subclasses.
+
+## Why use this rule
+
+Mutable state objects are a common source of subtle bugs in the Bloc pattern. If you mutate a state object in place instead of creating a new one, `emit` won't trigger a rebuild because Bloc compares state by reference equality. Marking state classes as `@immutable` signals this intent and enables analyzer warnings when you accidentally add mutable fields.
+
+**See also:** [Bloc state management](https://bloclibrary.dev/bloc-concepts/#state)
+
+## Don't
+
+```dart
+import 'package:bloc/bloc.dart';
+import 'package:meta/meta.dart';
+
+abstract class CounterEvent {}
+
+// Missing @immutable annotation
+sealed class CounterState {}
+
+class CounterInitial extends CounterState {}
+
+class CounterLoaded extends CounterState {
+  final int count;
+  CounterLoaded(this.count);
+}
+
+class CounterBloc extends Bloc<CounterEvent, CounterState> {
+  CounterBloc() : super(CounterInitial());
+}
+```
+
+## Do
+
+```dart
+import 'package:bloc/bloc.dart';
+import 'package:meta/meta.dart';
+
+abstract class CounterEvent {}
+
+@immutable
+sealed class CounterState {}
+
+@immutable
+class CounterInitial extends CounterState {}
+
+@immutable
+class CounterLoaded extends CounterState {
+  final int count;
+  CounterLoaded(this.count);
+}
+
+class CounterBloc extends Bloc<CounterEvent, CounterState> {
+  CounterBloc() : super(CounterInitial());
+}
+```
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_immutable_bloc_state: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_immutable_bloc_state:
+      name_pattern: '(State|Status)$'
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_immutable_bloc_state:
+    name_pattern: '(State|Status)$'
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `name_pattern` | regex | `State$` | Pattern identifying state classes by name. A name matched in its entirety is not reported, so the bare affix itself is never flagged |

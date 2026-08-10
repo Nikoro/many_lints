@@ -183,16 +183,20 @@ Both `include` and `message` work on **every** rule, exactly like `exclude`.
 
 ## Per-rule options
 
-Beyond `exclude`, `include` and `message`, some rules accept options that change *what*
-they report. They go in the same place:
+Beyond `exclude`, `include` and `message`, **52 rules** accept options that change *what*
+they report. Those rules carry a <span class="rule-badge rule-badge--config">Configurable</span>
+badge on their page, and every option is documented there with its type and default.
+
+Options go in the same `rules:` block as `exclude`, in whichever of the two files you chose
+above:
 
 ```yaml
 # many_lints.yaml
 rules:
   prefer_container:
     exclude:
-      - test/**
-    min_sequence: 4        # an option
+      - test/**            # works on every rule
+    min_sequence: 4        # an option, specific to this rule
 ```
 
 Every option defaults to the rule's previous behaviour, so adding this package's
@@ -200,38 +204,65 @@ options never changes results until you set one.
 
 | Rule | Options |
 |------|---------|
+| [`always_remove_listener`](/many_lints/docs/rules/resource-management/always-remove-listener/) | `state_base_classes` |
+| [`avoid_banned_annotations`](/many_lints/docs/rules/architecture/avoid-banned-annotations/) | `banned` |
+| [`avoid_banned_exports`](/many_lints/docs/rules/architecture/avoid-banned-exports/) | `banned` |
+| [`avoid_banned_imports`](/many_lints/docs/rules/architecture/avoid-banned-imports/) | `banned` |
+| [`avoid_banned_names`](/many_lints/docs/rules/architecture/avoid-banned-names/) | `banned` |
+| [`avoid_banned_types`](/many_lints/docs/rules/architecture/avoid-banned-types/) | `banned` |
 | [`avoid_collection_methods_with_unrelated_types`](/many_lints/docs/rules/collection-type/avoid-collection-methods-with-unrelated-types/) | `strict` |
 | [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) | `min_lines` |
 | [`avoid_default_tostring`](/many_lints/docs/rules/code-quality/avoid-default-tostring/) | `report_enums` |
 | [`avoid_duplicate_bloc_event_handlers`](/many_lints/docs/rules/bloc-riverpod/avoid-duplicate-bloc-event-handlers/) | `additional_methods` |
 | [`avoid_duplicate_collection_elements`](/many_lints/docs/rules/collection-type/avoid-duplicate-collection-elements/) | `ignore_literals` |
+| [`avoid_empty_setstate`](/many_lints/docs/rules/state-management/avoid-empty-setstate/) | `state_base_classes` |
 | [`avoid_hooks_outside_build`](/many_lints/docs/rules/hook-rules/avoid-hooks-outside-build/) | `additional_methods` |
+| [`avoid_inherited_widget_in_initstate`](/many_lints/docs/rules/state-management/avoid-inherited-widget-in-initstate/) | `state_base_classes` |
+| [`avoid_late_context`](/many_lints/docs/rules/state-management/avoid-late-context/) | `state_base_classes` |
+| [`avoid_missing_completer_stack_trace`](/many_lints/docs/rules/async-safety/avoid-missing-completer-stack-trace/) | `require_inside_catch` |
 | [`avoid_misused_hooks`](/many_lints/docs/rules/hook-rules/avoid-misused-hooks/) | `ignored_names`, `ignored_widgets` |
+| [`avoid_mounted_in_setstate`](/many_lints/docs/rules/state-management/avoid-mounted-in-setstate/) | `state_base_classes` |
+| [`avoid_not_encodable_in_to_json`](/many_lints/docs/rules/collection-type/avoid-not-encodable-in-to-json/) | `allowed_types` |
 | [`avoid_only_rethrow`](/many_lints/docs/rules/control-flow/avoid-only-rethrow/) | `ignore_typed_catches` |
+| [`avoid_passing_async_when_sync_expected`](/many_lints/docs/rules/async-safety/avoid-passing-async-when-sync-expected/) | `ignore_widget_callbacks`, `ignored_parameters` |
+| [`avoid_recursive_widget_calls`](/many_lints/docs/rules/widget-best-practices/avoid-recursive-widget-calls/) | `state_base_classes` |
 | [`avoid_returning_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-returning-widgets/) | `ignored_names`, `ignored_annotations`, `allow_nullable` |
+| [`avoid_state_constructors`](/many_lints/docs/rules/state-management/avoid-state-constructors/) | `state_base_classes` |
 | [`avoid_unassigned_stream_subscriptions`](/many_lints/docs/rules/resource-management/avoid-unassigned-stream-subscriptions/) | `ignored_instances` |
+| [`avoid_unnecessary_overrides_in_state`](/many_lints/docs/rules/state-management/avoid-unnecessary-overrides-in-state/) | `state_base_classes` |
+| [`avoid_unnecessary_setstate`](/many_lints/docs/rules/state-management/avoid-unnecessary-setstate/) | `state_base_classes` |
+| [`avoid_unnecessary_stateful_widgets`](/many_lints/docs/rules/state-management/avoid-unnecessary-stateful-widgets/) | `state_base_classes` |
+| [`avoid_unrelated_type_casts`](/many_lints/docs/rules/collection-type/avoid-unrelated-type-casts/) | `report_is_checks` |
+| [`avoid_unremovable_callbacks_in_listeners`](/many_lints/docs/rules/resource-management/avoid-unremovable-callbacks-in-listeners/) | `additional_methods` |
+| [`banned_usage`](/many_lints/docs/rules/architecture/banned-usage/) | `banned` |
+| [`check_for_equals_in_render_object_setters`](/many_lints/docs/rules/widget-best-practices/check-for-equals-in-render-object-setters/) | `additional_methods` |
 | [`check_is_not_closed_after_async_gap`](/many_lints/docs/rules/async-safety/check-is-not-closed-after-async-gap/) | `additional_methods` |
 | [`dispose_fields`](/many_lints/docs/rules/resource-management/dispose-fields/) | `cleanup_methods`, `additional_cleanup_methods`, `state_base_classes` |
 | [`dispose_provided_instances`](/many_lints/docs/rules/bloc-riverpod/dispose-provided-instances/) | `cleanup_methods`, `additional_cleanup_methods` |
+| [`emit_new_bloc_state_instances`](/many_lints/docs/rules/bloc-riverpod/emit-new-bloc-state-instances/) | `additional_methods` |
 | [`prefer_class_destructuring`](/many_lints/docs/rules/collection-type/prefer-class-destructuring/) | `min_occurrences`, `ignored_types` |
 | [`prefer_container`](/many_lints/docs/rules/widget-replacement/prefer-container/) | `min_sequence` |
 | [`prefer_immutable_bloc_state`](/many_lints/docs/rules/bloc-riverpod/prefer-immutable-bloc-state/) | `name_pattern` |
 | [`prefer_private_named_parameters`](/many_lints/docs/rules/code-quality/prefer-private-named-parameters/) | `only_same_name` |
 | [`prefer_shorthands_with_constructors`](/many_lints/docs/rules/shorthand-patterns/prefer-shorthands-with-constructors/) | `classes`, `additional_classes` |
+| [`prefer_single_setstate`](/many_lints/docs/rules/code-quality/prefer-single-setstate/) | `state_base_classes` |
 | [`prefer_single_widget_per_file`](/many_lints/docs/rules/widget-best-practices/prefer-single-widget-per-file/) | `ignore_private_widgets`, `ignore_visible_for_testing` |
 | [`prefer_spacing`](/many_lints/docs/rules/widget-best-practices/prefer-spacing/) | `min_children` |
 | [`prefer_switch_expression`](/many_lints/docs/rules/control-flow/prefer-switch-expression/) | `allow_fallthrough_cases` |
 | [`prefer_switch_with_enums`](/many_lints/docs/rules/pattern-matching/prefer-switch-with-enums/) | `ignore_contains` |
+| [`proper_super_calls`](/many_lints/docs/rules/control-flow/proper-super-calls/) | `state_base_classes` |
+| [`require_atomic_async_updates`](/many_lints/docs/rules/async-safety/require-atomic-async-updates/) | `include_local_variables` |
 | [`use_class_prefix`](/many_lints/docs/rules/class-naming/use-class-prefix/) | `entries`, `ignore_private` |
-| [`use_gap`](/many_lints/docs/rules/widget-best-practices/use-gap/) | `min_children` |
 | [`use_class_suffix`](/many_lints/docs/rules/class-naming/use-class-suffix/) | `entries`, `ignore_private` |
+| [`use_gap`](/many_lints/docs/rules/widget-best-practices/use-gap/) | `min_children` |
+| [`use_sliver_prefix`](/many_lints/docs/rules/widget-best-practices/use-sliver-prefix/) | `state_base_classes` |
 
 `state_base_classes` is accepted by every rule that only applies inside a
 `StatefulWidget`'s `State`. Name a base class that does **not** extend Flutter's
 `State` and those rules will treat it as one; an intermediate `BaseState<T>` that
 already extends `State` is recognised without any configuration.
 
-Each option is documented with its type and default in the **Configuration** section
+Each option is documented with its type and default in the **Options** section
 of the rule's own page.
 
 ### Naming conventions

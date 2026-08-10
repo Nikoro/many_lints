@@ -609,10 +609,27 @@ Apply the same logic to modes: assert both that the option suppresses the case i
 
 ## Documenting a Configurable Rule
 
-Extend the standard `## Configuration` section of the rule's docs page (Step 9 of SKILL.md) with the options it supports:
+A configurable rule's docs page (Step 9 of SKILL.md) is **`.mdx`**, carries a
+`Configurable` badge, and shows every options snippet in *both* supported config files
+via synced tabs. `## Options` is a sibling of `## Turning this rule off`, never nested
+inside it.
 
-````markdown
-## Configuration
+````mdx
+---
+title: avoid_only_rethrow
+description: "..."
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Control Flow</span>
+
+...description, Why use this rule, Don't / Do...
+
+## Turning this rule off
 
 To disable this rule:
 
@@ -623,29 +640,53 @@ plugins:
       avoid_only_rethrow: false
 ```
 
-### Options
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
-Configure in `many_lints.yaml` at your package root:
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
 
 ```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_only_rethrow:
+      ignore_typed_catches: true
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
 rules:
   avoid_only_rethrow:
-    exclude:
-      - test/**
     ignore_typed_catches: true
 ```
 
+</TabItem>
+</Tabs>
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `exclude` | list of globs | `[]` | Paths, relative to the package root, where this rule is skipped |
 | `ignore_typed_catches` | bool | `false` | Only report untyped `catch (e)` clauses |
-
-Alternatively, use a top-level `many_lints:` section in `analysis_options.yaml`.
-Note this section does **not** inherit through `include:`; when both sources
-exist, `many_lints.yaml` wins and the section is ignored entirely.
 ````
 
-Always state the default and always mention the `include:` caveat when showing the section form.
+Rules:
+
+- **Always state the default** for every option.
+- **Always show both files.** A snippet in only one location is the single most common
+  complaint about these pages — it reads as "this is the only place it works".
+- **Keep the `# <filename>` comment** as the first line of each snippet; it is what
+  tells the reader where the YAML goes.
+- **Reuse the exact `syncKey`** (`many-lints-config-file`) so all tab groups on the site
+  switch together.
+- **Do not** repeat the `include:`-inheritance caveat on every rule page — it lives once
+  in `configuration.md`. The tabs make the two locations self-evident.
+- **Add the rule to the "Per-rule options" table** in
+  `docs/src/content/docs/docs/configuration.md`; that table is expected to list every
+  configurable rule.
 
 ---
 

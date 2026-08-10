@@ -446,11 +446,27 @@ function main() {
     }
 
     const outDir = join(OUTPUT_DIR, category.slug);
-    const outFile = join(outDir, `${rule.name.replace(/_/g, '-')}.md`);
+    const baseName = rule.name.replace(/_/g, '-');
+    const outFile = join(outDir, `${baseName}.md`);
+    // Configurable rules are hand-maintained as .mdx (they use Starlight <Tabs>
+    // to show both config file locations), so check both extensions before
+    // deciding a page is missing — otherwise we'd emit a duplicate .md.
+    const existing = ['.md', '.mdx']
+      .map((ext) => join(outDir, `${baseName}${ext}`))
+      .find(existsSync);
 
-    if (!FORCE && existsSync(outFile)) {
-      skipped++;
-      continue;
+    if (existing) {
+      if (!FORCE) {
+        skipped++;
+        continue;
+      }
+      if (existing.endsWith('.mdx')) {
+        console.warn(
+          `  WARN: keeping hand-maintained ${baseName}.mdx (not overwritten by --force)`,
+        );
+        skipped++;
+        continue;
+      }
     }
 
     mkdirSync(outDir, { recursive: true });

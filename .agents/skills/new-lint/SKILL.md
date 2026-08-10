@@ -350,7 +350,8 @@ This keeps the cookbooks as **living documents** that improve with each new rule
 
 ## Step 9: Create a documentation page
 
-Create `docs/src/content/docs/docs/rules/<category>/<lint-name>.md` for the new rule.
+Create `docs/src/content/docs/docs/rules/<category>/<lint-name>.md` for the new rule
+— or `.mdx` if the rule is configurable (see the Options guidance at the end of this step).
 
 **Determine the category** by matching the lint's domain to one of the existing sidebar categories:
 - `class-naming` — Suffix/naming rules for classes (Bloc, Cubit, Notifier, etc.)
@@ -416,7 +417,7 @@ sidebar:
 <correct code>
 ```
 
-## Configuration
+## Turning this rule off
 
 To disable this rule:
 
@@ -426,12 +427,26 @@ plugins:
     diagnostics:
       <lint_name>: false
 ```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 ```
 
-If Step 4b made the rule configurable, extend that `## Configuration` section
-with an `### Options` block: a `many_lints.yaml` example plus a table of
-option / type / **default** / description. Always state defaults, and note that
-the `analysis_options.yaml` section form does not inherit through `include:`.
+If Step 4b made the rule configurable, the page needs three more things:
+
+1. Name the file `.mdx`, not `.md`, and import the tabs component directly
+   below the frontmatter:
+   `import { Tabs, TabItem } from '@astrojs/starlight/components';`
+2. Add a `<span class="rule-badge rule-badge--config">Configurable</span>` badge
+   immediately before the category badge.
+3. Add an `## Options` section — a **sibling** of "Turning this rule off", not a
+   subsection of it — holding the YAML example in a `<Tabs syncKey="many-lints-config-file">`
+   group showing both `analysis_options.yaml` and `many_lints.yaml`, followed by a
+   table of option / type / **default** / description. Always state defaults.
+
+Never show an options snippet in only one of the two files, and keep the
+`# analysis_options.yaml` / `# many_lints.yaml` comment as the first line of each
+snippet — that comment is what tells the reader where the YAML goes.
+
 See [config-cookbook.md](config-cookbook.md#documenting-a-configurable-rule) for
 the exact template.
 
