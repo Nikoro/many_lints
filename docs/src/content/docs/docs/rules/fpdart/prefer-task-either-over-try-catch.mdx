@@ -75,6 +75,46 @@ Private methods are skipped by default: they are implementation details of the c
 
 No quick fix is offered. Converting means choosing the failure type, writing the error mapper, and updating every call site — a change to make deliberately.
 
+## Going the other way
+
+There is an assist for the reverse direction: put the cursor on a `tryCatch` constructor and pick **"Expand `tryCatch` into `try`/`catch`"**. It handles `Either.tryCatch`, `TaskEither.tryCatch` and `Option.tryCatch`.
+
+```dart
+// Either.tryCatch
+Either<Failure, User> parseUser(String json) {
+  try {
+    return right(User.fromJson(json));
+  } catch (error, stackTrace) {
+    return left(Failure.parse(error, stackTrace));
+  }
+}
+
+// TaskEither.tryCatch — the try stays inside the lazy constructor, because
+// hoisting it into the enclosing function would run the effect eagerly.
+TaskEither<Failure, User> fetchUser(String id) => TaskEither(() async {
+      try {
+        return right(await api.getUser(id));
+      } catch (error) {
+        return left(Failure.from(error));
+      }
+    });
+
+// Option.tryCatch — no onError, so nothing to carry.
+Option<User> tryParse(String json) {
+  try {
+    return some(User.fromJson(json));
+  } catch (_) {
+    return none();
+  }
+}
+```
+
+This rule's preference still stands: `tryCatch` is shorter, cannot forget to wrap a branch, and composes. The assist is for the cases it cannot express — adding logging, retries, or handling per exception type, where the single `onError` callback is not enough.
+
+Because `try` is a *statement*, the assist is offered only when the `tryCatch` is a whole function body. Mid-pipeline — `Either.tryCatch(...).flatMap(f)` — there is nowhere to put a statement, and the only expression-level equivalent is an immediately-invoked closure, which is worse than what it replaces; those are declined. A tear-off `onError` (`Failure.from`) is declined too, as it has no parameter names or body to move into the `catch`.
+
+A stack-trace parameter that `onError` declares but never reads is dropped from the generated clause. `onError` may carry an unused parameter, but `catch` may not — keeping it would hand back code with a fresh `unused_catch_stack` warning that the original could not have had.
+
 ## Options
 
 <Tabs syncKey="many-lints-config-file">

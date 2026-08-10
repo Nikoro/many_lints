@@ -79,6 +79,8 @@ import 'package:many_lints/src/rules/prefer_from_nullable.dart';
 import 'package:many_lints/src/rules/prefer_from_predicate.dart';
 import 'package:many_lints/src/rules/prefer_immediate_return.dart';
 import 'package:many_lints/src/rules/avoid_either_of_future.dart';
+import 'package:many_lints/src/rules/avoid_future_of_either.dart';
+import 'package:many_lints/src/rules/avoid_future_of_option.dart';
 import 'package:many_lints/src/rules/avoid_empty_spread.dart';
 import 'package:many_lints/src/rules/avoid_inverted_boolean_checks.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_negations.dart';
@@ -301,8 +303,11 @@ import 'package:many_lints/src/fixes/prefer_use_prefix_fix.dart';
 import 'package:many_lints/src/fixes/use_sliver_prefix_fix.dart';
 
 // Assists
+import 'package:many_lints/src/assists/convert_do_notation_to_flat_map.dart';
 import 'package:many_lints/src/assists/convert_flat_map_to_do_notation.dart';
 import 'package:many_lints/src/assists/convert_iterable_map_to_collection_for.dart';
+import 'package:many_lints/src/assists/convert_to_lazy_fpdart_type.dart';
+import 'package:many_lints/src/assists/convert_try_catch_constructor_to_try_statement.dart';
 
 /// Top-level plugin variable required by analysis_server_plugin.
 final plugin = ManyLintsPlugin();
@@ -423,6 +428,8 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidAdHocLeftType());
     _registerWarningRule(registry, AvoidBareAwaitInDo());
     _registerWarningRule(registry, AvoidEitherOfFuture());
+    _registerWarningRule(registry, AvoidFutureOfEither());
+    _registerWarningRule(registry, AvoidFutureOfOption());
     _registerWarningRule(registry, AvoidGetOrElseSwallowingFailure());
     _registerWarningRule(registry, AvoidDollarOutsideDoFrame());
     _registerWarningRule(registry, AvoidNestedDoNotation());
@@ -852,8 +859,11 @@ class ManyLintsPlugin extends Plugin {
     );
 
     // Register assists
+    registry.registerAssist(ConvertDoNotationToFlatMap.new);
     registry.registerAssist(ConvertFlatMapToDoNotation.new);
     registry.registerAssist(ConvertIterableMapToCollectionFor.new);
+    registry.registerAssist(ConvertToLazyFpdartType.new);
+    registry.registerAssist(ConvertTryCatchConstructorToTryStatement.new);
   }
 }
 

@@ -6,6 +6,7 @@ import 'package:analyzer/analysis_rule/analysis_rule.dart';
 import 'package:many_lints/many_lints.dart' as many_lints;
 import 'package:many_lints/many_lints.dart';
 import 'package:many_lints/src/many_lints_rule.dart';
+import 'package:many_lints/src/presets.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -53,7 +54,7 @@ void main() {
   test('expected number of active and removed rules are registered', () {
     plugin.register(registry);
     final totalRules = registry.warningRules.length + registry.lintRules.length;
-    expect(totalRules, equals(177));
+    expect(totalRules, equals(179));
     expect(
       registry.warningRules.values.whereType<RemovedAnalysisRule>().map(
         (rule) => rule.name,
@@ -105,6 +106,120 @@ void main() {
           'Every rule needs a same-name test file or an explicit shared-test '
           'entry.',
     );
+  });
+
+  // The prose in README.md and CLAUDE.md restates numbers that live in the
+  // code: preset sizes, the rule and fix totals, the per-category breakdown,
+  // and the list of assists. Nothing recomputes them, so they drift silently —
+  // the README's category table went 22 rules stale (it had no fpdart row at
+  // all) and its preset counts predated an entire rule family before this test
+  // existed. Every claim below is parsed back out of the file and compared to
+  // the registry.
+  group('documentation counts match the registry', () {
+    late int totalRules;
+    late int totalFixes;
+    late String readme;
+    late String claudeMd;
+
+    setUp(() {
+      plugin.register(registry);
+      totalRules =
+          registry.warningRules.length +
+          registry.lintRules.length -
+          removedRules.length;
+      totalFixes = registry.fixKinds.values.fold<int>(
+        0,
+        (sum, codes) => sum + codes.length,
+      );
+      readme = File('README.md').readAsStringSync();
+      claudeMd = File('CLAUDE.md').readAsStringSync();
+    });
+
+    test('preset tables list the real preset sizes', () {
+      // `none` is not derived from anything, so it is asserted as the literal
+      // it is rather than looked up.
+      final expected = {
+        'none': 0,
+        'core': coreRules.length,
+        'recommended': recommendedRules.length,
+        'all': totalRules,
+      };
+
+      for (final (file, content) in [
+        ('README.md', readme),
+        ('CLAUDE.md', claudeMd),
+      ]) {
+        expect(
+          _presetCounts(content),
+          expected,
+          reason: 'The preset table in $file is stale.',
+        );
+      }
+    });
+
+    test('README states the real rule and fix totals', () {
+      final match = RegExp(
+        r'(\d+) lints with (\d+) quick fixes',
+      ).firstMatch(readme);
+
+      expect(match, isNotNull, reason: 'The README lint summary is missing.');
+      expect(
+        (int.parse(match!.group(1)!), int.parse(match.group(2)!)),
+        (totalRules, totalFixes),
+        reason: 'The README lint summary is stale.',
+      );
+    });
+
+    test('README category table covers every rule exactly once', () {
+      // Each row links to a category directory, so the row set and the
+      // directory set must match — a new category with no row would otherwise
+      // only show up as a wrong total.
+      final rows = <String, int>{
+        for (final match in RegExp(
+          r'\| \[[^\]]+\]\(https://nikoro\.github\.io/many_lints/docs/rules/'
+          r'([a-z-]+)/\) \| *(\d+) \|',
+        ).allMatches(readme))
+          match.group(1)!: int.parse(match.group(2)!),
+      };
+
+      final directories = {
+        for (final directory in Directory(
+          'docs/src/content/docs/docs/rules',
+        ).listSync().whereType<Directory>())
+          directory.path.split(Platform.pathSeparator).last: directory
+              .listSync()
+              .whereType<File>()
+              .length,
+      };
+
+      expect(
+        rows,
+        directories,
+        reason: 'The README category table drifted from the rule pages.',
+      );
+      expect(
+        rows.values.fold<int>(0, (sum, count) => sum + count),
+        totalRules,
+        reason: 'The README category counts do not add up to the rule total.',
+      );
+    });
+
+    test('README lists every registered assist', () {
+      // Assists are named in prose rather than by id, so this counts rows and
+      // leaves the wording free. A count is enough: the failure it guards
+      // against is adding an assist and forgetting the README, which is
+      // exactly what happened to the "Do notation" one.
+      final rows = RegExp(
+        r'^\| \*\*[^|]+\*\* \| [^|]+ \| [^|]+ \|$',
+        multiLine: true,
+      ).allMatches(readme).length;
+
+      expect(
+        rows,
+        registry.assistKinds.length,
+        reason: 'The README assist table is missing a registered assist.',
+      );
+    });
   });
 
   test('documentation fix badges match registered quick fixes', () {
@@ -171,7 +286,20 @@ void main() {
 
   test('assists are registered', () {
     plugin.register(registry);
-    expect(registry.assistKinds.length, equals(2));
+
+    // Assert the ids rather than the count: a missing `registerAssist` is
+    // invisible to an assist's own tests when they construct it directly, and
+    // a bare count says only that the number changed, not which one is gone.
+    expect(
+      registry.assistKinds.map((kind) => kind.id),
+      unorderedEquals([
+        'many_lints.assist.convertDoNotationToFlatMap',
+        'many_lints.assist.convertFlatMapToDoNotation',
+        'many_lints.assist.convertIterableMapToCollectionFor',
+        'many_lints.assist.convertToLazyFpdartType',
+        'many_lints.assist.convertTryCatchConstructorToTryStatement',
+      ]),
+    );
   });
 
   // Per-rule `exclude` is applied by `ManyLintsRule`, so a rule that extends
@@ -198,6 +326,18 @@ void main() {
     );
   });
 }
+
+/// The preset sizes claimed by a Markdown preset table, keyed by preset name.
+///
+/// Both README.md and CLAUDE.md carry the same table with different prose in
+/// the last column, so only the first two columns are matched.
+Map<String, int> _presetCounts(String content) => {
+  for (final match in RegExp(
+    r'^\| `(none|core|recommended|all)` \| *(\d+) \|',
+    multiLine: true,
+  ).allMatches(content))
+    match.group(1)!: int.parse(match.group(2)!),
+};
 
 /// The base names of every file in [directory] ending in one of [suffixes].
 ///

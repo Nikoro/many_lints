@@ -90,6 +90,8 @@ const _recommendedOnlyRules = <String>{
   'avoid_either_of_future',
   'avoid_empty_spread',
   'avoid_expanded_as_spacer',
+  'avoid_future_of_either',
+  'avoid_future_of_option',
   'avoid_generics_shadowing',
   'avoid_hooks_outside_build',
   'avoid_incorrect_image_opacity',

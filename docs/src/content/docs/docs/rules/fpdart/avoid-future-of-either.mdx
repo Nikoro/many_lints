@@ -1,0 +1,120 @@
+---
+title: avoid_future_of_either
+description: "Future<Either> throws away the composition TaskEither already gives you"
+sidebar:
+  label: avoid_future_of_either
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.1.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags a function or method returning `Future<Either<L, R>>`, which `TaskEither<L, R>` already expresses.
+
+## Why use this rule
+
+`Future<Either<L, R>>` is not a bug — unlike `Either<L, Future<R>>`, which [`avoid_either_of_future`](/many_lints/docs/rules/fpdart/avoid-either-of-future/) reports. It is simply the same thing `TaskEither` is, with the composition thrown away.
+
+A caller cannot `flatMap` a `Future<Either>` without awaiting first, so every chain has to leave the fpdart world and come back:
+
+```dart
+final either = await repo.getUser(id);
+final result = await either.match(
+  (failure) async => left(failure),
+  (user) => repo.loadOrders(user.id),
+);
+```
+
+In `TaskEither` the same pipeline is one expression, because the type carries both the asynchrony and the failure channel:
+
+```dart
+final result = await repo.getUser(id).flatMap(
+      (user) => repo.loadOrders(user.id),
+    ).run();
+```
+
+The eagerness matters too. A `Future` starts running the moment it is created, so a `Future<Either>` cannot be retried, delayed, or built up now and run later. A `TaskEither` describes the work instead of performing it.
+
+## Don't
+
+```dart
+Future<Either<Failure, User>> getUser(String id) async {
+  return right(await api.get(id));
+}
+```
+
+## Do
+
+```dart
+TaskEither<Failure, User> getUser(String id) => TaskEither.tryCatch(
+      () => api.get(id),
+      (error, stackTrace) => Failure.from(error),
+    );
+```
+
+## Known limitations
+
+`FutureOr<Either<L, R>>` is not reported: it may complete synchronously, so it is a different shape with a different answer.
+
+A generator (`Stream<Either<L, R>>` with `async*`) is never reported — one `TaskEither` cannot stand in for a stream of values.
+
+The reverse nesting, `Either<L, Future<R>>`, belongs to [`avoid_either_of_future`](/many_lints/docs/rules/fpdart/avoid-either-of-future/); the two rules never report the same line.
+
+`Future<Option<T>>` is the same argument for the other wrapper and has its own rule, [`avoid_future_of_option`](/many_lints/docs/rules/fpdart/avoid-future-of-option/), so a project can enable either half alone.
+
+## Related assist
+
+No quick fix is offered: the conversion changes a public signature, so every call site needs updating and a "apply all" would leave the project uncompilable.
+
+There **is** an assist. Put the cursor on the function and pick **"Convert to `TaskEither`"** — it rewrites the signature and moves the body into a `TaskEither`. See [Assists](/many_lints/docs/assists/#convert-to-taskeither--taskoption) for what it does with call sites.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_future_of_either:
+      ignore_private: true
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_future_of_either:
+    ignore_private: true
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ignore_private` | bool | `false` | Skip private functions and methods |
+
+The default is `false` because a `Future<Either>` is awkward to consume wherever it appears — unlike a `try`/`catch`, which really is an implementation detail.
+
+## Configuration
+
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`avoid_future_of_either: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_future_of_either: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

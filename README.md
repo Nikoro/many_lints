@@ -57,9 +57,9 @@ For local development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 | Preset | Rules | Contents |
 |--------|-------|----------|
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
-| `core` | 31 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
-| `recommended` | 79 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
-| `all` | 156 | Every rule, including opinionated ones. |
+| `core` | 37 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
+| `recommended` | 98 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
+| `all` | 178 | Every rule, including opinionated ones. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml` includes `core.yaml`. `core` and `recommended` deliberately exclude anything that imposes an architecture, a naming scheme, or a contested style choice.
 
@@ -140,7 +140,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-156 lints with 91 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
+178 lints with 96 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
@@ -148,8 +148,9 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 | [Architecture](https://nikoro.github.io/many_lints/docs/rules/architecture/) | 6 | Configurable bans on imports, types, names and members |
 | [Bloc / Riverpod](https://nikoro.github.io/many_lints/docs/rules/bloc-riverpod/) | 12 | BLoC and Riverpod state management patterns |
 | [Riverpod State](https://nikoro.github.io/many_lints/docs/rules/riverpod-state/) | 9 | Riverpod-specific state rules |
-| [Async Safety](https://nikoro.github.io/many_lints/docs/rules/async-safety/) | 7 | Async/await and state mutation safety |
-| [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/widget-best-practices/) | 20 | General widget best practices |
+| [Async Safety](https://nikoro.github.io/many_lints/docs/rules/async-safety/) | 8 | Async/await and state mutation safety |
+| [fpdart](https://nikoro.github.io/many_lints/docs/rules/fpdart/) | 22 | Functional error handling with Either, Option and TaskEither |
+| [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/widget-best-practices/) | 21 | General widget best practices |
 | [Widget Replacement](https://nikoro.github.io/many_lints/docs/rules/widget-replacement/) | 13 | Simpler widget alternatives |
 | [State Management](https://nikoro.github.io/many_lints/docs/rules/state-management/) | 9 | StatefulWidget and state patterns |
 | [Control Flow](https://nikoro.github.io/many_lints/docs/rules/control-flow/) | 18 | Control flow statements and patterns |
@@ -165,7 +166,17 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Assists
 
-- **Convert to collection-for**: Converts `.map().toList()` or `.map().toSet()` to collection-for syntax.
+Assists are refactorings you invoke deliberately from the lightbulb menu (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>.</kbd> in VS Code). Unlike quick fixes they are not attached to a diagnostic, so they are always available — including where no rule is enabled at all.
+
+| Assist | Where the cursor goes | What it does |
+|--------|-----------------------|--------------|
+| **Convert to collection-for** | a `.map()` call | `.map().toList()` / `.map().toSet()` → collection-for syntax |
+| **Convert to `Do` notation** | any `flatMap` in a nest | Flattens nested `flatMap` callbacks into an fpdart `Do` block, offering every generated name as a linked rename |
+| **Convert to `flatMap` chain** | anywhere in a `Do` block | The inverse: unfolds a straight-line `Do` block back into nested `flatMap` callbacks |
+| **Convert to `TaskEither` / `TaskOption`** | a function returning `Future<Either>`, `Either`, `Future<Option>` or `Option` | Converts the signature and moves the body into the lazy fpdart type, so the pipeline can host an `await` |
+| **Expand `tryCatch` into `try`/`catch`** | a `tryCatch` constructor | `Either.tryCatch` / `TaskEither.tryCatch` / `Option.tryCatch` → an explicit `try`/`catch` |
+
+See the [assists documentation](https://nikoro.github.io/many_lints/docs/assists/) for examples and the cases each one declines.
 
 ## Suppressing Diagnostics
 

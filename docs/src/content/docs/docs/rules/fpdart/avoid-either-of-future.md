@@ -50,6 +50,8 @@ TaskEither<Failure, League> save(LeagueDraft draft) =>
 
 An `Iterable.map` returning futures is ordinary Dart and is never reported; only fpdart's synchronous wrappers are.
 
+This rule is about a `Future` nested *inside* `Either`. The reverse nesting, `Future<Either<L, R>>`, is a different matter — it is correct, merely not idiomatic — and is covered by [`avoid_future_of_either`](/many_lints/docs/rules/fpdart/avoid-future-of-either/).
+
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with

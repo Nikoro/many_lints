@@ -29,6 +29,7 @@ export default defineConfig({
       sidebar: [
         { label: 'Getting Started', slug: 'docs/getting-started' },
         { label: 'Configuration', slug: 'docs/configuration' },
+        { label: 'Assists', slug: 'docs/assists' },
         {
           label: 'Rules',
           items: [

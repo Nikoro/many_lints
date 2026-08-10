@@ -208,6 +208,44 @@ class FixHarness with ResourceProviderMixin {
     );
   }
 
+  /// The ids of every assist offered at the `^` cursor in [content].
+  ///
+  /// [applyAssist] fails the test when the assist it names is not offered,
+  /// which is right for the positive cases but makes "this must *not* be
+  /// offered here" awkward to state. An assist that declines a shape it cannot
+  /// safely transform is part of its contract, so that case deserves a
+  /// first-class assertion rather than a caught failure.
+  Future<List<String>> assistIds(
+    String content, {
+    Map<String, String> packages = const {},
+    Map<String, Map<String, String>> multiFilePackages = const {},
+    String? manyLintsConfig,
+  }) async {
+    final caret = content.indexOf('^');
+    if (caret < 0) {
+      fail('The assist fixture must mark the cursor with "^".');
+    }
+
+    _writePackage(
+      content.replaceFirst('^', ''),
+      packages: packages,
+      multiFilePackages: multiFilePackages,
+      manyLintsConfig: manyLintsConfig,
+    );
+
+    await channel.sendRequest(
+      protocol.AnalysisSetAnalysisRootsParams([packagePath], []),
+    );
+    await pluginServer.waitForIdle();
+
+    final response = await channel.sendRequest(
+      protocol.EditGetAssistsParams(filePath, caret, 0),
+    );
+    final result = protocol.EditGetAssistsResult.fromResponse(response);
+
+    return [for (final assist in result.assists) ?assist.change.id];
+  }
+
   /// Writes the analysed package: options, config, dependencies and the file
   /// under test.
   ///

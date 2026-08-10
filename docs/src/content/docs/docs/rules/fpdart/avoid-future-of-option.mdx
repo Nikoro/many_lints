@@ -1,0 +1,98 @@
+---
+title: avoid_future_of_option
+description: "Future<Option> throws away the composition TaskOption already gives you"
+sidebar:
+  label: avoid_future_of_option
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.1.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags a function or method returning `Future<Option<T>>`, which `TaskOption<T>` already expresses.
+
+## Why use this rule
+
+The `Option` counterpart of [`avoid_future_of_either`](/many_lints/docs/rules/fpdart/avoid-future-of-either/), and the same argument.
+
+`Future<Option<T>>` is correct but throws away composition: a caller has to await before it can `flatMap`, so every chain leaves the fpdart world and comes back. And because a `Future` starts running the moment it is created, the work is already under way by the time anyone holds it — it cannot be retried, delayed, or built up now and run later.
+
+`TaskOption<T>` is the type that already means "async computation that may find nothing", and it stays lazy until `.run()`.
+
+## Don't
+
+```dart
+Future<Option<User>> findUser(String id) async {
+  return Option.fromNullable(await cache.get(id));
+}
+```
+
+## Do
+
+```dart
+TaskOption<User> findUser(String id) =>
+    TaskOption(() async => Option.fromNullable(await cache.get(id)));
+```
+
+## Known limitations
+
+`FutureOr<Option<T>>` is not reported: it may complete synchronously, so it is a different shape with a different answer.
+
+A generator (`Stream<Option<T>>` with `async*`) is never reported — one `TaskOption` cannot stand in for a stream of values.
+
+The reverse nesting, `Option<Future<T>>`, belongs to [`avoid_either_of_future`](/many_lints/docs/rules/fpdart/avoid-either-of-future/), which covers both synchronous wrappers.
+
+## Related assist
+
+No quick fix is offered: the conversion changes a public signature, so every call site needs updating and an "apply all" would leave the project uncompilable.
+
+There **is** an assist. Put the cursor on the function and pick **"Convert to `TaskOption`"** — it rewrites the signature and moves the body into a `TaskOption`. See [Assists](/many_lints/docs/assists/#convert-to-taskeither--taskoption).
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_future_of_option:
+      ignore_private: true
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_future_of_option:
+    ignore_private: true
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ignore_private` | bool | `false` | Skip private functions and methods |
+
+## Configuration
+
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`avoid_future_of_option: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_future_of_option: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

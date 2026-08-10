@@ -109,8 +109,8 @@ rules with `preset:` in `many_lints.yaml` (or the top-level `many_lints:` sectio
 |--------|-------|----------|
 | `none` | 0 | Nothing. The default. |
 | `core` | 37 | Near-certain bugs only. |
-| `recommended` | 96 | `core` plus idiomatic, uncontroversial practice. |
-| `all` | 176 | Every rule, including opinionated ones. |
+| `recommended` | 98 | `core` plus idiomatic, uncontroversial practice. |
+| `all` | 178 | Every rule, including opinionated ones. |
 
 Presets **cannot** ship as includable YAML the way `package:lints` does: the analyzer
 replaces a plugin's config wholesale across `include:` rather than merging it, and
