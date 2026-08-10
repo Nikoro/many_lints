@@ -13,7 +13,7 @@ Warns when a logical AND (`&&`) expression contains contradictory comparisons on
 
 ## Why use this rule
 
-Contradictory conditions create unreachable code that silently does nothing. These are almost always bugs -- typically from copy-paste errors where one operand was not updated, or from refactoring that accidentally introduced conflicting constraints. Catching them at analysis time prevents hard-to-debug logic errors.
+Contradictory conditions create unreachable code that silently does nothing. These are almost always bugs — typically from copy-paste errors where one operand was not updated, or from refactoring that accidentally introduced conflicting constraints. Catching them at analysis time prevents hard-to-debug logic errors.
 
 **See also:** [Effective Dart: Usage](https://dart.dev/effective-dart/usage)
 

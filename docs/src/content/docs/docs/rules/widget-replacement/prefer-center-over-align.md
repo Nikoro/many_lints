@@ -17,7 +17,7 @@ Flags `Align` widgets that use `Alignment.center` (or omit the alignment paramet
 
 ## Why use this rule
 
-`Center` is a specialized subclass of `Align` that always aligns to center. Using `Center` makes the intent immediately obvious and removes the redundant `alignment: Alignment.center` argument. If you omit `alignment` on `Align`, Flutter defaults to center anyway -- so you should just use `Center`.
+`Center` is a specialized subclass of `Align` that always aligns to center. Using `Center` makes the intent immediately obvious and removes the redundant `alignment: Alignment.center` argument. If you omit `alignment` on `Align`, Flutter defaults to center anyway — so you should just use `Center`.
 
 **See also:** [Center](https://api.flutter.dev/flutter/widgets/Center-class.html) | [Align](https://api.flutter.dev/flutter/widgets/Align-class.html)
 

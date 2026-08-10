@@ -17,7 +17,7 @@ This rule flags calls like `MediaQuery.of(context).size` and suggests using the 
 
 ## Why use this rule
 
-`MediaQuery.of(context)` subscribes to the entire `MediaQueryData`. That means your widget rebuilds whenever any media property changes -- orientation, padding, text scale, view insets, and more. If you only need `size`, using `MediaQuery.sizeOf(context)` ensures rebuilds happen only when the size actually changes. This is a significant performance win for widgets that appear in frequently-rebuilt subtrees.
+`MediaQuery.of(context)` subscribes to the entire `MediaQueryData`. That means your widget rebuilds whenever any media property changes — orientation, padding, text scale, view insets, and more. If you only need `size`, using `MediaQuery.sizeOf(context)` ensures rebuilds happen only when the size actually changes. This is a significant performance win for widgets that appear in frequently-rebuilt subtrees.
 
 **See also:** [MediaQuery](https://api.flutter.dev/flutter/widgets/MediaQuery-class.html)
 

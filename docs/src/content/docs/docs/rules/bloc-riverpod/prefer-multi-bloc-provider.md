@@ -17,7 +17,7 @@ This rule flags nested `BlocProvider`, `BlocListener`, or `RepositoryProvider` w
 
 ## Why use this rule
 
-Deeply nested providers create a "pyramid of doom" that hurts readability and makes diffs harder to review. `MultiBlocProvider`, `MultiBlocListener`, and `MultiRepositoryProvider` flatten the nesting into a clean list, keeping the widget tree shallow and easy to scan. The behavior is identical -- it's purely a readability improvement.
+Deeply nested providers create a "pyramid of doom" that hurts readability and makes diffs harder to review. `MultiBlocProvider`, `MultiBlocListener`, and `MultiRepositoryProvider` flatten the nesting into a clean list, keeping the widget tree shallow and easy to scan. The behavior is identical — it's purely a readability improvement.
 
 **See also:** [MultiBlocProvider](https://bloclibrary.dev/flutter-bloc-concepts/#multiblocprovider) | [MultiBlocListener](https://bloclibrary.dev/flutter-bloc-concepts/#multibloclistener) | [MultiRepositoryProvider](https://bloclibrary.dev/flutter-bloc-concepts/#multirepositoryprovider)
 

@@ -13,7 +13,7 @@ This rule flags `Flexible` and `Expanded` widgets that are not direct children o
 
 ## Why use this rule
 
-When `Expanded` or `Flexible` is nested inside a non-flex parent, Flutter does not throw an error at build time -- the widget simply has no effect. This leads to confusing layouts where you think you are distributing space but nothing happens. Catching this at lint time saves you from staring at the widget tree wondering why your layout is broken.
+When `Expanded` or `Flexible` is nested inside a non-flex parent, Flutter does not throw an error at build time — the widget simply has no effect. This leads to confusing layouts where you think you are distributing space but nothing happens. Catching this at lint time saves you from staring at the widget tree wondering why your layout is broken.
 
 **See also:** [Flexible](https://api.flutter.dev/flutter/widgets/Flexible-class.html) | [Row](https://api.flutter.dev/flutter/widgets/Row-class.html) | [Column](https://api.flutter.dev/flutter/widgets/Column-class.html)
 

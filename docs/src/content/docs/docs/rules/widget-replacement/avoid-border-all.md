@@ -17,7 +17,7 @@ Flags usages of `Border.all()` which should be replaced with `Border.fromBorderS
 
 ## Why use this rule
 
-`Border.all()` calls `Border.fromBorderSide()` under the hood, so using `Border.fromBorderSide(BorderSide(...))` directly allows the entire expression to be `const`. Const objects are canonicalized at compile time, which reduces allocations and improves performance -- especially in build methods that run frequently.
+`Border.all()` calls `Border.fromBorderSide()` under the hood, so using `Border.fromBorderSide(BorderSide(...))` directly allows the entire expression to be `const`. Const objects are canonicalized at compile time, which reduces allocations and improves performance — especially in build methods that run frequently.
 
 **See also:** [Border](https://api.flutter.dev/flutter/painting/Border-class.html) | [Dart lint: prefer_const_constructors](https://dart.dev/tools/linter-rules/prefer_const_constructors)
 

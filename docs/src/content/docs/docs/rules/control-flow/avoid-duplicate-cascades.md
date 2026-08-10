@@ -13,7 +13,7 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-Warns when a cascade expression contains duplicate sections -- identical property assignments, method calls, or index operations repeated with the same arguments. Duplicate cascades are usually the result of a copy-paste error.
+Warns when a cascade expression contains duplicate sections — identical property assignments, method calls, or index operations repeated with the same arguments. Duplicate cascades are usually the result of a copy-paste error.
 
 ## Why use this rule
 

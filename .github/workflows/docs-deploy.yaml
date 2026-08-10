@@ -6,6 +6,12 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+  # Build (but do not deploy) on PRs, so a broken docs build is caught in
+  # review instead of on main, where the next push goes straight to Pages.
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
 
 permissions:
   contents: read
@@ -13,7 +19,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  # PRs get their own group so a PR build never cancels a production deploy.
+  group: pages-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
   cancel-in-progress: true
 
 jobs:
@@ -37,11 +44,13 @@ jobs:
         run: bun run build
 
       - uses: actions/upload-pages-artifact@v5
+        if: github.event_name != 'pull_request'
         with:
           path: docs/dist
 
   deploy:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

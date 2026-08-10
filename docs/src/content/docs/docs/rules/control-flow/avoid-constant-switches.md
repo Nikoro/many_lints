@@ -13,7 +13,7 @@ Warns when a switch statement or switch expression evaluates a constant expressi
 
 ## Why use this rule
 
-Switching on a constant means only one branch can ever execute, turning the switch into expensive dead code. This is typically a mistake -- the developer likely intended to switch on a variable or parameter instead of a compile-time constant. Catching this early prevents unreachable code from accumulating.
+Switching on a constant means only one branch can ever execute, turning the switch into expensive dead code. This is typically a mistake — the developer likely intended to switch on a variable or parameter instead of a compile-time constant. Catching this early prevents unreachable code from accumulating.
 
 **See also:** [Effective Dart: Usage](https://dart.dev/effective-dart/usage)
 

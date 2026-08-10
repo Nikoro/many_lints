@@ -17,7 +17,7 @@ Flags usages of `RichText` which should be replaced with `Text.rich`. `RichText`
 
 ## Why use this rule
 
-`Text.rich` inherits the default `TextStyle` from the nearest `DefaultTextStyle` ancestor and automatically applies text scaling from `MediaQuery`. `RichText` does neither -- it requires you to pass these explicitly. Using `Text.rich` gives you correct accessibility behavior out of the box and is the recommended approach for rich text in Flutter.
+`Text.rich` inherits the default `TextStyle` from the nearest `DefaultTextStyle` ancestor and automatically applies text scaling from `MediaQuery`. `RichText` does neither — it requires you to pass these explicitly. Using `Text.rich` gives you correct accessibility behavior out of the box and is the recommended approach for rich text in Flutter.
 
 **See also:** [Text.rich](https://api.flutter.dev/flutter/widgets/Text/Text.rich.html) | [RichText](https://api.flutter.dev/flutter/widgets/RichText-class.html)
 
