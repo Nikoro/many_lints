@@ -6,6 +6,8 @@ export default defineConfig({
   base: '/many_lints/',
   redirects: {
     '/docs/': '/many_lints/docs/getting-started/',
+    '/docs/rules/collection-type/prefer-contains/':
+      'https://dart.dev/tools/linter-rules/prefer_contains',
   },
   integrations: [
     starlight({

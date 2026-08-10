@@ -11,17 +11,10 @@ sidebar:
 
 Calling collection methods like `contains()`, `remove()`, or `containsKey()` with an argument whose type is unrelated to the collection's type parameter will always return `null`, `false`, or `-1`. This indicates a logical error since Dart's type system allows it due to these methods accepting `Object?`.
 
-:::caution[The Dart SDK already covers this]
-The SDK rule [`collection_methods_unrelated_type`](https://dart.dev/tools/linter-rules/collection_methods_unrelated_type) covers everything this rule does and more — it also handles `Queue.remove()` and reasons about type parameters. It is part of `package:lints/core.yaml`, so it is almost certainly already enabled in your project.
+:::note[Related Dart SDK rule]
+The SDK rule [`collection_methods_unrelated_type`](https://dart.dev/tools/linter-rules/collection_methods_unrelated_type) has broader default coverage, including `Queue.remove()` and additional type-parameter reasoning. This rule adds two things the SDK rule does not provide: a diagnostic that names both involved types and the optional `strict: true` mode, which reports a `dynamic` argument passed to a collection with a known element type.
 
-Prefer the SDK rule and disable this one:
-
-```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      avoid_collection_methods_with_unrelated_types: false
-```
+Use the SDK rule for the broadest conservative check. Keep this rule when the type-rich diagnostic or strict handling of `dynamic` is valuable. Enabling both can produce duplicate diagnostics for their shared cases.
 
 If you are migrating from the older `iterable_contains_unrelated_type` or `list_remove_unrelated_type` lints, note that both were **removed in Dart 3.3** and replaced by `collection_methods_unrelated_type`.
 :::
@@ -84,7 +77,8 @@ void example() {
   final numList = <num>[1, 2, 3];
   numList.contains(42); // int is subtype of num
 
-  // Dynamic is allowed (type not statically known)
+  // Dynamic is allowed with the default configuration.
+  // It is reported when strict: true is enabled.
   dynamic unknown = 42;
   list.contains(unknown);
 }

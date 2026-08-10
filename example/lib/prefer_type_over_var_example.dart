@@ -1,4 +1,5 @@
 // ignore_for_file: unused_element, unused_local_variable
+// ignore_for_file: many_lints/function_always_returns_null
 
 /// Examples of the `prefer_type_over_var` lint rule.
 

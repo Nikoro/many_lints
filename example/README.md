@@ -29,7 +29,7 @@ run `dart analyze` again to see the two diagnostics come back.
 
 Note that `avoid_commented_out_code` *does* still report in that file. Each `exclude`
 sits under one rule and affects only that rule — excluding a path from
-`avoid_only_rethrow` says nothing about the other 137 rules. To skip a path for several
+`avoid_only_rethrow` says nothing about the other 153 rules. To skip a path for several
 rules, give each of them its own `exclude`.
 
 Paths are globs, but a plain path works too — `lib/generated/foo.dart` is a valid
@@ -157,7 +157,6 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `prefer_correct_json_casts` | JSON value cast to a non-nullable type throws on a missing key | — | `BorderRadius.all(Radius.circular())` over `BorderRadius.circular()` | Yes |
 | `prefer_constrained_box_over_container` | `ConstrainedBox` over `Container` with only constraints | Yes |
 | `prefer_container` | Nested widgets → single `Container` | Yes |
-| `prefer_contains` | `.contains()` instead of `.indexOf()` compared to `-1` | Yes |
 | `prefer_correct_edge_insets_constructor` | Use a simpler `EdgeInsets` constructor | Yes |
 | `prefer_enums_by_name` | `.byName()` instead of `.firstWhere()` for enum values | Yes |
 | `prefer_equatable_mixin` | `EquatableMixin` instead of extending `Equatable` | Yes |

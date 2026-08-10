@@ -76,39 +76,6 @@ Widget f() {
     });
   });
 
-  group('prefer_contains', () {
-    test('rewrites `indexOf(x) == -1` to a negated contains', () async {
-      final fixed = await harness.applyFix(r'''
-void f(List<int> list) {
-  list.indexOf(1) == -1;
-}
-''', 'prefer_contains');
-
-      expect(fixed, contains('!list.contains(1);'));
-    });
-
-    test('rewrites `indexOf(x) != -1` to a plain contains', () async {
-      final fixed = await harness.applyFix(r'''
-void f(List<int> list) {
-  list.indexOf(1) != -1;
-}
-''', 'prefer_contains');
-
-      expect(fixed, contains('list.contains(1);'));
-      expect(fixed, isNot(contains('!list.contains')));
-    });
-
-    test('rewrites the reversed `-1 == indexOf(x)` form', () async {
-      final fixed = await harness.applyFix(r'''
-void f(List<int> list) {
-  -1 == list.indexOf(1);
-}
-''', 'prefer_contains');
-
-      expect(fixed, contains('!list.contains(1);'));
-    });
-  });
-
   group('prefer_correct_edge_insets_constructor', () {
     const painting = r'''
 class EdgeInsets {

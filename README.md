@@ -109,7 +109,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-155 lints with 91 quick fixes, all enabled by default as warnings. Each rule links to its full documentation with examples and fix details.
+154 lints with 90 quick fixes, all enabled by default as warnings. Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
@@ -122,7 +122,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 | [Widget Replacement](https://nikoro.github.io/many_lints/docs/rules/widget-replacement/) | 13 | Simpler widget alternatives |
 | [State Management](https://nikoro.github.io/many_lints/docs/rules/state-management/) | 9 | StatefulWidget and state patterns |
 | [Control Flow](https://nikoro.github.io/many_lints/docs/rules/control-flow/) | 18 | Control flow statements and patterns |
-| [Collection & Type](https://nikoro.github.io/many_lints/docs/rules/collection-type/) | 21 | Collection and type-related checks |
+| [Collection & Type](https://nikoro.github.io/many_lints/docs/rules/collection-type/) | 20 | Collection and type-related checks |
 | [Pattern Matching](https://nikoro.github.io/many_lints/docs/rules/pattern-matching/) | 6 | Dart pattern matching best practices |
 | [Type Annotations](https://nikoro.github.io/many_lints/docs/rules/type-annotations/) | 5 | Type annotation conventions |
 | [Code Organization](https://nikoro.github.io/many_lints/docs/rules/code-organization/) | 3 | Code structure and organization |

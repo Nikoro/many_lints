@@ -132,7 +132,6 @@ import 'package:many_lints/src/rules/prefer_abstract_final_static_class.dart';
 import 'package:many_lints/src/rules/prefer_align_over_container.dart';
 import 'package:many_lints/src/rules/prefer_any_or_every.dart';
 import 'package:many_lints/src/rules/prefer_center_over_align.dart';
-import 'package:many_lints/src/rules/prefer_contains.dart';
 import 'package:many_lints/src/rules/prefer_enums_by_name.dart';
 import 'package:many_lints/src/rules/prefer_expect_later.dart';
 import 'package:many_lints/src/rules/prefer_iterable_of.dart';
@@ -229,7 +228,6 @@ import 'package:many_lints/src/fixes/avoid_unnecessary_hook_widgets_fix.dart';
 import 'package:many_lints/src/fixes/change_widget_name_fix.dart';
 import 'package:many_lints/src/fixes/prefer_any_or_every_fix.dart';
 import 'package:many_lints/src/fixes/prefer_center_over_align_fix.dart';
-import 'package:many_lints/src/fixes/prefer_contains_fix.dart';
 import 'package:many_lints/src/fixes/prefer_enums_by_name_fix.dart';
 import 'package:many_lints/src/fixes/prefer_expect_later_fix.dart';
 import 'package:many_lints/src/fixes/prefer_iterable_of_fix.dart';
@@ -338,7 +336,6 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, PreferWildcardPattern());
     _registerWarningRule(registry, PreferTypeOverVar());
     _registerWarningRule(registry, PreferAnyOrEvery());
-    _registerWarningRule(registry, PreferContains());
     _registerWarningRule(registry, PreferEnumsByName());
     _registerWarningRule(registry, PreferExpectLater());
     _registerWarningRule(registry, PreferIterableOf());
@@ -444,6 +441,18 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, PreferUsePrefix());
     _registerWarningRule(registry, UseSliverPrefix());
 
+    // Keep removed names registered so existing configurations receive the
+    // analyzer's replacement guidance instead of an unknown-rule warning.
+    _registerWarningRule(
+      registry,
+      RemovedAnalysisRule(
+        name: 'prefer_contains',
+        description:
+            'Removed in many_lints 1.0.0. Use the Dart SDK rule instead.',
+        replacedBy: 'prefer_contains',
+      ),
+    );
+
     // Register fixes for rules
     registry.registerFixForRule(
       AlwaysRemoveListener.code,
@@ -508,7 +517,6 @@ class ManyLintsPlugin extends Plugin {
       PreferPrivateNamedParametersFix.new,
     );
     registry.registerFixForRule(PreferAnyOrEvery.code, PreferAnyOrEveryFix.new);
-    registry.registerFixForRule(PreferContains.code, PreferContainsFix.new);
     registry.registerFixForRule(
       PreferEnumsByName.code,
       PreferEnumsByNameFix.new,

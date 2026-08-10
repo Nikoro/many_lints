@@ -65,3 +65,18 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+### Options
+
+Projects with a state abstraction that does not extend Flutter's `State` can
+opt that base class into this rule:
+
+```yaml
+rules:
+  avoid_inherited_widget_in_initstate:
+    state_base_classes: [AppState]
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `state_base_classes` | list of strings | `[]` | Additional non-`State` base classes whose subclasses should be treated as state classes |

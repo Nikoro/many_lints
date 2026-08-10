@@ -4,6 +4,11 @@
 
 ### Breaking
 
+- Removed `prefer_contains`. The Dart SDK rule with the same name covers the
+  same cases plus additional `indexOf` comparisons and provides its own quick
+  fix. A removed-rule tombstone remains registered so existing configurations
+  point users to the SDK rule instead of producing an unknown-rule warning.
+
 - `use_bloc_suffix`, `use_cubit_suffix` and `use_notifier_suffix` are replaced by two general rules, `use_class_suffix` and `use_class_prefix`. The old rules enforced naming for exactly three hardcoded base types; the new ones work for any type, including one declared in your own package, so a project using `...Store`, `...Repository` or `...UseCase` can adopt them instead of forking.
 
   Both are entirely config-driven and report nothing until configured. To restore the previous behaviour:
@@ -34,6 +39,14 @@
 ### Fixed
 
 - The suffix quick fix no longer eats a character when repairing a near-miss. It scanned candidate lengths longest-first and took the first match within two edits, so `CounterBlok` became `CounterBloc` by way of stripping `rBlok` — producing `CounteBloc`. It now ranks candidates by edit distance and prefers the length closest to the affix.
+- `cleanup_methods: []` now genuinely replaces the built-in cleanup methods with an empty list for `dispose_fields` and `dispose_provided_instances`. It previously fell back to `[dispose, close, cancel]`, contradicting the documented replacement semantics.
+- Added end-to-end `PluginServer` coverage for every previously untested
+  rule-specific option, including Bloc wrappers, hook/widget exemptions,
+  constructor class lists, collection strictness and widget thresholds.
+
+### Documentation
+
+- Documented the shared `state_base_classes` option on every rule that supports it, and corrected the example inventory so each rule page, example and quick-fix badge matches the plugin registry.
 
 ## [0.9.0] - 2026-08-08
 

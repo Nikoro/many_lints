@@ -9,7 +9,7 @@ const stateChecker = TypeChecker.fromName('State', packageName: 'flutter');
 /// Whether [element] is a `State` subclass, honouring the rule's
 /// `state_base_classes` option.
 ///
-/// Thirteen rules in this package only apply inside a `State` subclass, and
+/// Fourteen rules in this package only apply inside a `State` subclass, and
 /// each one used to pin Flutter's `State` directly. A project with a
 /// `BaseState<T>` intermediate still satisfies that check — `isSuperOf` walks
 /// the hierarchy — so the option is not about reaching those. It is about the

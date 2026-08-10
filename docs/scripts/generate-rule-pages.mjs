@@ -182,7 +182,6 @@ const CATEGORIES = {
       'list_all_equatable_fields',
       'prefer_add_all',
       'prefer_any_or_every',
-      'prefer_contains',
       'prefer_enums_by_name',
       'prefer_iterable_of',
       'prefer_correct_edge_insets_constructor',

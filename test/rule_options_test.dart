@@ -220,6 +220,181 @@ const _dynamicContainsCode = '''
 bool check(List<int> values, dynamic candidate) => values.contains(candidate);
 ''';
 
+const _completerOutsideCatchCode = '''
+import 'dart:async';
+
+void fail(Completer<void> completer, Object error) {
+  completer.completeError(error);
+}
+''';
+
+const _renamedPrivateParameterCode = '''
+class Bird {
+  final String _petName;
+  Bird({required String name}) : _petName = name;
+}
+''';
+
+const _customStateNameCode = '''
+class LoadingStatus {}
+''';
+
+const _ignoredStreamCode = '''
+void subscribe(Stream<int> serviceStream) {
+  serviceStream.listen(print);
+}
+''';
+
+const _customListenerCode = '''
+class Source {
+  void watch(void Function() callback) {}
+}
+
+void subscribe(Source source) {
+  source.watch(() {});
+}
+''';
+
+const _customShorthandCode = '''
+class Insets {
+  const Insets.named();
+}
+
+void consume(Insets value) {}
+void use() => consume(Insets.named());
+''';
+
+const _defaultShorthandCode = '''
+class EdgeInsets {
+  const EdgeInsets.all(double value);
+}
+
+void consume(EdgeInsets value) {}
+void use() => consume(EdgeInsets.all(8));
+''';
+
+const _enumContainsCode = '''
+enum Status { loading, ready, failed }
+
+bool isBusy(Status status) =>
+    {Status.loading, Status.ready, Status.failed}.contains(status);
+''';
+
+const _safeEmitAfterAwaitCode = '''
+import 'package:bloc/bloc.dart';
+
+class CounterCubit extends Cubit<int> {
+  Future<void> load() async {
+    await Future<void>.delayed(Duration.zero);
+    safeEmit(1);
+  }
+}
+''';
+
+const _duplicateCustomHandlerCode = '''
+import 'package:bloc/bloc.dart';
+
+class Event {}
+
+class CounterBloc extends Bloc<Event, int> {
+  CounterBloc() {
+    handle<Event>((event, emit) {});
+    handle<Event>((event, emit) {});
+  }
+}
+''';
+
+const _hookInCustomBuildMethodCode = '''
+import 'package:flutter_hooks/flutter_hooks.dart';
+
+class MyWidget extends HookWidget {
+  Widget buildBody() {
+    useState(0);
+    return const Widget();
+  }
+}
+''';
+
+const _misusedHookCode = '''
+import 'package:flutter_hooks/flutter_hooks.dart';
+
+class MyWidget extends HookWidget {
+  Widget build(BuildContext context) {
+    for (var i = 0; i < 2; i++) {
+      useState(i);
+    }
+    return const Widget();
+  }
+}
+''';
+
+const _widgetReturningHelpersCode = '''
+import 'package:flutter/widgets.dart';
+
+const generated = Object();
+
+Widget buildHelper() => const Widget();
+
+@generated
+Widget generatedHelper() => const Widget();
+
+Widget? maybeBuild() => null;
+''';
+
+const _customRenderDirtyCode = '''
+import 'package:flutter/widgets.dart';
+
+class MyRenderObject extends RenderObject {
+  int _value = 0;
+  void invalidate() {}
+
+  set value(int value) {
+    _value = value;
+    invalidate();
+  }
+}
+''';
+
+const _privateSecondWidgetCode = '''
+import 'package:flutter/widgets.dart';
+
+class PublicWidget extends Widget {}
+class _PrivateWidget extends Widget {}
+''';
+
+const _visibleForTestingWidgetCode = '''
+import 'package:flutter/widgets.dart';
+
+class PublicWidget extends Widget {}
+@visibleForTesting
+class TestWidget extends Widget {}
+''';
+
+const _spacingChildrenCode = '''
+import 'package:flutter/widgets.dart';
+
+Widget build() => Column(children: const [
+  Widget(),
+  SizedBox(height: 8),
+  Widget(),
+]);
+''';
+
+const _gapChildrenCode = '''
+import 'package:flutter/widgets.dart';
+
+Widget build() => Column(children: const [
+  SizedBox(height: 8),
+  Widget(),
+]);
+''';
+
+const _twoContainerWidgetsCode = '''
+import 'package:flutter/widgets.dart';
+
+Widget build() => Padding(child: Align(child: const Widget()));
+''';
+
 /// A state-like class that does **not** extend Flutter's `State`, holding a
 /// disposable field that is never disposed.
 ///
@@ -603,6 +778,412 @@ rules:
             contains('avoid_collection_methods_with_unrelated_types'),
           );
         });
+      });
+
+      group('avoid_missing_completer_stack_trace require_inside_catch', () {
+        test('false reports calls outside catch blocks', () async {
+          final errors = await harness.analyze(
+            _completerOutsideCatchCode,
+            config: '''
+rules:
+  avoid_missing_completer_stack_trace:
+    require_inside_catch: false
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            contains('avoid_missing_completer_stack_trace'),
+          );
+        });
+      });
+
+      group('check_is_not_closed_after_async_gap additional_methods', () {
+        test('reports a configured emit wrapper', () async {
+          final errors = await harness.analyze(
+            _safeEmitAfterAwaitCode,
+            withBloc: true,
+            config: '''
+rules:
+  check_is_not_closed_after_async_gap:
+    additional_methods: [safeEmit]
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            contains('check_is_not_closed_after_async_gap'),
+          );
+        });
+      });
+
+      group('avoid_duplicate_bloc_event_handlers additional_methods', () {
+        test('reports duplicate registrations through a wrapper', () async {
+          final errors = await harness.analyze(
+            _duplicateCustomHandlerCode,
+            withBloc: true,
+            config: '''
+rules:
+  avoid_duplicate_bloc_event_handlers:
+    additional_methods: [handle]
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            contains('avoid_duplicate_bloc_event_handlers'),
+          );
+        });
+      });
+
+      group('prefer_immutable_bloc_state name_pattern', () {
+        test('reports a class matching the configured pattern', () async {
+          final errors = await harness.analyze(
+            _customStateNameCode,
+            config: '''
+rules:
+  prefer_immutable_bloc_state:
+    name_pattern: 'Status\$'
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            contains('prefer_immutable_bloc_state'),
+          );
+        });
+      });
+
+      group('prefer_private_named_parameters only_same_name', () {
+        test('false reports renamed constructor parameters', () async {
+          final errors = await harness.analyze(
+            _renamedPrivateParameterCode,
+            config: '''
+rules:
+  prefer_private_named_parameters:
+    only_same_name: false
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            contains('prefer_private_named_parameters'),
+          );
+        });
+      });
+    });
+
+    group('prefer_switch_with_enums ignore_contains', () {
+      test('silences enum membership tests', () async {
+        final errors = await harness.analyze(
+          _enumContainsCode,
+          config: '''
+rules:
+  prefer_switch_with_enums:
+    ignore_contains: true
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('prefer_switch_with_enums')),
+        );
+      });
+    });
+
+    group('avoid_unassigned_stream_subscriptions ignored_instances', () {
+      test('silences a configured receiver', () async {
+        final errors = await harness.analyze(
+          _ignoredStreamCode,
+          config: '''
+rules:
+  avoid_unassigned_stream_subscriptions:
+    ignored_instances: [serviceStream]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_unassigned_stream_subscriptions')),
+        );
+      });
+    });
+
+    group('avoid_unremovable_callbacks_in_listeners additional_methods', () {
+      test(
+        'reports an inline callback passed to a configured method',
+        () async {
+          final errors = await harness.analyze(
+            _customListenerCode,
+            config: '''
+rules:
+  avoid_unremovable_callbacks_in_listeners:
+    additional_methods: [watch]
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            contains('avoid_unremovable_callbacks_in_listeners'),
+          );
+        },
+      );
+    });
+
+    group('prefer_shorthands_with_constructors class lists', () {
+      test('classes replaces the defaults', () async {
+        final errors = await harness.analyze(
+          _customShorthandCode,
+          config: '''
+rules:
+  prefer_shorthands_with_constructors:
+    classes: [Insets]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('prefer_shorthands_with_constructors'),
+        );
+      });
+
+      test('an empty classes list disables the defaults', () async {
+        final errors = await harness.analyze(
+          _defaultShorthandCode,
+          config: '''
+rules:
+  prefer_shorthands_with_constructors:
+    classes: []
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('prefer_shorthands_with_constructors')),
+        );
+      });
+
+      test('additional_classes extends the defaults', () async {
+        final errors = await harness.analyze(
+          _customShorthandCode,
+          config: '''
+rules:
+  prefer_shorthands_with_constructors:
+    additional_classes: [Insets]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('prefer_shorthands_with_constructors'),
+        );
+      });
+    });
+
+    group('avoid_hooks_outside_build additional_methods', () {
+      test('allows hooks in a configured HookWidget method', () async {
+        final errors = await harness.analyze(
+          _hookInCustomBuildMethodCode,
+          withHooks: true,
+          config: '''
+rules:
+  avoid_hooks_outside_build:
+    additional_methods: [buildBody]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_hooks_outside_build')),
+        );
+      });
+    });
+
+    group('avoid_misused_hooks exemptions', () {
+      test('ignored_names exempts a configured hook', () async {
+        final errors = await harness.analyze(
+          _misusedHookCode,
+          withHooks: true,
+          config: '''
+rules:
+  avoid_misused_hooks:
+    ignored_names: [useState]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_misused_hooks')),
+        );
+      });
+
+      test('ignored_widgets exempts a configured widget', () async {
+        final errors = await harness.analyze(
+          _misusedHookCode,
+          withHooks: true,
+          config: '''
+rules:
+  avoid_misused_hooks:
+    ignored_widgets: [MyWidget]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_misused_hooks')),
+        );
+      });
+    });
+
+    group('avoid_returning_widgets exemptions', () {
+      test('ignored_names exempts a configured helper', () async {
+        final errors = await harness.analyze(
+          _widgetReturningHelpersCode,
+          withFlutter: true,
+          config: '''
+rules:
+  avoid_returning_widgets:
+    ignored_names: [buildHelper]
+''',
+        );
+
+        final diagnostics = errors
+            .where((e) => e.code == 'avoid_returning_widgets')
+            .toList();
+        expect(diagnostics, hasLength(2));
+      });
+
+      test('ignored_annotations exempts an annotated helper', () async {
+        final errors = await harness.analyze(
+          _widgetReturningHelpersCode,
+          withFlutter: true,
+          config: '''
+rules:
+  avoid_returning_widgets:
+    ignored_annotations: [generated]
+''',
+        );
+
+        final diagnostics = errors
+            .where((e) => e.code == 'avoid_returning_widgets')
+            .toList();
+        expect(diagnostics, hasLength(2));
+      });
+
+      test('allow_nullable exempts nullable widget returns', () async {
+        final errors = await harness.analyze(
+          _widgetReturningHelpersCode,
+          withFlutter: true,
+          config: '''
+rules:
+  avoid_returning_widgets:
+    allow_nullable: true
+''',
+        );
+
+        final diagnostics = errors
+            .where((e) => e.code == 'avoid_returning_widgets')
+            .toList();
+        expect(diagnostics, hasLength(2));
+      });
+    });
+
+    group('check_for_equals_in_render_object_setters additional_methods', () {
+      test('recognizes a configured dirty-marking method', () async {
+        final errors = await harness.analyze(
+          _customRenderDirtyCode,
+          withFlutter: true,
+          config: '''
+rules:
+  check_for_equals_in_render_object_setters:
+    additional_methods: [invalidate]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('check_for_equals_in_render_object_setters'),
+        );
+      });
+    });
+
+    group('prefer_single_widget_per_file exemptions', () {
+      test('ignore_private_widgets false includes private widgets', () async {
+        final errors = await harness.analyze(
+          _privateSecondWidgetCode,
+          withFlutter: true,
+          config: '''
+rules:
+  prefer_single_widget_per_file:
+    ignore_private_widgets: false
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('prefer_single_widget_per_file'),
+        );
+      });
+
+      test('ignore_visible_for_testing exempts annotated widgets', () async {
+        final errors = await harness.analyze(
+          _visibleForTestingWidgetCode,
+          withFlutter: true,
+          config: '''
+rules:
+  prefer_single_widget_per_file:
+    ignore_visible_for_testing: true
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('prefer_single_widget_per_file')),
+        );
+      });
+    });
+
+    group('widget sequence thresholds', () {
+      test('prefer_spacing min_children raises the threshold', () async {
+        final errors = await harness.analyze(
+          _spacingChildrenCode,
+          withFlutter: true,
+          config: '''
+rules:
+  prefer_spacing:
+    min_children: 4
+''',
+        );
+
+        expect(errors.map((e) => e.code), isNot(contains('prefer_spacing')));
+      });
+
+      test('use_gap min_children raises the threshold', () async {
+        final errors = await harness.analyze(
+          _gapChildrenCode,
+          withFlutter: true,
+          config: '''
+rules:
+  use_gap:
+    min_children: 3
+''',
+        );
+
+        expect(errors.map((e) => e.code), isNot(contains('use_gap')));
+      });
+
+      test('prefer_container min_sequence lowers the threshold', () async {
+        final errors = await harness.analyze(
+          _twoContainerWidgetsCode,
+          withFlutter: true,
+          config: '''
+rules:
+  prefer_container:
+    min_sequence: 2
+''',
+        );
+
+        expect(errors.map((e) => e.code), contains('prefer_container'));
       });
     });
 
@@ -1415,6 +1996,7 @@ class Bloc<Event, State> {
   late State state;
   void emit(State state) {}
   void safeEmit(State state) {}
+  void handle<T extends Event>(void Function(T, void Function(State)) handler) {}
 }
 class Cubit<State> {
   late State state;
@@ -1444,16 +2026,121 @@ mixin Trackable {}
 ''');
   }
 
+  void _addFlutterPackages({required bool withHooks}) {
+    final flutterRoot = convertPath('/pkg/flutter');
+    final hooksRoot = convertPath('/pkg/flutter_hooks');
+
+    newFile(join(flutterRoot, 'lib', 'widgets.dart'), r'''
+const visibleForTesting = Object();
+
+class Widget {
+  const Widget();
+}
+class BuildContext {}
+class StatelessWidget extends Widget {
+  const StatelessWidget();
+  Widget build(BuildContext context) => const Widget();
+}
+class StatefulWidget extends Widget {
+  const StatefulWidget();
+}
+class State<T extends StatefulWidget> {
+  Widget build(BuildContext context) => const Widget();
+}
+class RenderObject {}
+class SizedBox extends Widget {
+  const SizedBox({this.width, this.height, this.child});
+  final double? width;
+  final double? height;
+  final Widget? child;
+}
+class Column extends Widget {
+  const Column({this.children = const [], this.spacing = 0});
+  final List<Widget> children;
+  final double spacing;
+}
+class Row extends Widget {
+  const Row({this.children = const [], this.spacing = 0});
+  final List<Widget> children;
+  final double spacing;
+}
+class Flex extends Widget {
+  const Flex({this.children = const [], this.spacing = 0});
+  final List<Widget> children;
+  final double spacing;
+}
+class Wrap extends Widget {
+  const Wrap({this.children = const []});
+  final List<Widget> children;
+}
+class ListView extends Widget {
+  const ListView({this.children = const []});
+  final List<Widget> children;
+}
+class Padding extends Widget {
+  const Padding({this.padding, this.child});
+  final Object? padding;
+  final Widget? child;
+}
+class Align extends Widget {
+  const Align({this.child});
+  final Widget? child;
+}
+''');
+
+    if (withHooks) {
+      newFile(join(hooksRoot, 'lib', 'flutter_hooks.dart'), r'''
+import 'package:flutter/widgets.dart';
+export 'package:flutter/widgets.dart';
+
+class HookWidget extends Widget {
+  const HookWidget();
+  Widget build(BuildContext context) => const Widget();
+}
+
+T useState<T>(T value) => value;
+''');
+    }
+
+    newFile(join(packagePath, '.dart_tool', 'package_config.json'), '''
+{
+  "configVersion": 2,
+  "packages": [
+    {
+      "name": "package",
+      "rootUri": "${toUri(packagePath)}",
+      "packageUri": "lib/"
+    },
+    {
+      "name": "flutter",
+      "rootUri": "${toUri(flutterRoot)}",
+      "packageUri": "lib/"
+    }${withHooks ? ''',
+    {
+      "name": "flutter_hooks",
+      "rootUri": "${toUri(hooksRoot)}",
+      "packageUri": "lib/"
+    }''' : ''}
+  ]
+}
+''');
+  }
+
   Future<List<protocol.AnalysisError>> analyze(
     String content, {
     String? config,
     String? optionsSection,
     String fileName = 'test.dart',
     bool withBloc = false,
+    bool withFlutter = false,
+    bool withHooks = false,
   }) async {
     final filePath = join(packagePath, 'lib', fileName);
 
     if (withBloc) _addBlocPackage();
+    if (withFlutter || withHooks) {
+      _addFlutterPackages(withHooks: withHooks);
+    }
 
     newAnalysisOptionsYamlFile(packagePath, '''
 plugins:
