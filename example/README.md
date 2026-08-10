@@ -64,6 +64,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_border_all` | Prefer `Border.fromBorderSide` over `Border.all` | Yes |
 | `avoid_build_context_in_providers` | Providers outlive widgets, so they should not receive a `BuildContext` | — |
 | `avoid_cascade_after_if_null` | Cascade after if-null operator can produce unexpected results | Yes |
+| `avoid_catch_error` | Use `try`/`catch` instead of `Future.catchError`, whose handler is unchecked | — |
 | `avoid_collapsible_if` | Merge nested if statements with `&&` | Yes |
 | `avoid_conditional_hooks` | Hooks called inside conditionals or loops | — |
 | `avoid_collection_equality_checks` | Comparing collections with `==`/`!=` checks reference equality | — |
@@ -142,6 +143,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `missing_provider_scope` | Riverpod applications must have a `ProviderScope` at the root | Yes |
 | `no_equal_then_else` | Both branches of a condition are identical | — |
 | `notifier_build` | Classes annotated with `@riverpod` must define a `build` method | Yes |
+| `never_discard_build_context` | Don't discard a `BuildContext` parameter with a wildcard | Yes |
 | `pass_existing_future_to_future_builder` | Don't create a new `Future` inline inside `FutureBuilder` | — |
 | `pass_existing_stream_to_stream_builder` | Don't create a new `Stream` inline inside `StreamBuilder` | — |
 | `prefer_abstract_final_static_class` | Classes with only static members → `abstract final` | Yes |

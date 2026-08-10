@@ -75,6 +75,7 @@ const CATEGORIES = {
   'async-safety': {
     label: 'Async Safety',
     rules: [
+      'avoid_catch_error',
       'avoid_missing_completer_stack_trace',
       'avoid_nested_futures',
       'avoid_passing_async_when_sync_expected',
@@ -100,6 +101,7 @@ const CATEGORIES = {
       'avoid_conditional_hooks',
       'pass_existing_future_to_future_builder',
       'pass_existing_stream_to_stream_builder',
+      'never_discard_build_context',
       'prefer_single_widget_per_file',
       'use_closest_build_context',
       'use_gap',

@@ -38,8 +38,31 @@ class MixedClass {
 // ✅ Good: Empty class — no members to check
 class EmptyClass {}
 
-// ✅ Good: Class with a constructor — not purely static
+// ❌ Bad: a private empty constructor is the older way of blocking
+// instantiation — `abstract final` says the same thing and also blocks
+// subclassing, so the constructor becomes dead code
+// LINT
+class BadPrivateConstructorGuard {
+  BadPrivateConstructorGuard._();
+
+  static const value = 42;
+}
+
+// ✅ Good: the modifiers replace the guard entirely
+abstract final class GoodNoGuardNeeded {
+  static const value = 42;
+}
+
+// ✅ Good: a private constructor that takes arguments is a real constructor
+class WithMeaningfulPrivateConstructor {
+  final int value;
+  WithMeaningfulPrivateConstructor._(this.value);
+
+  static const defaultValue = 42;
+}
+
+// ✅ Good: Class with a public constructor — not purely static
 class WithConstructor {
-  WithConstructor._();
+  WithConstructor();
   static const value = 42;
 }

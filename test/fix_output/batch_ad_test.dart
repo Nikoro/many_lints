@@ -99,6 +99,38 @@ final class Static {
 
       expect(fixed, contains('abstract final class Static {'));
     });
+
+    test('removes the now-redundant private constructor', () async {
+      final fixed = await harness.applyFix(r'''
+class MyConstants {
+  MyConstants._();
+
+  static const foo = 1;
+}
+''', 'prefer_abstract_final_static_class');
+
+      expect(fixed, contains('abstract final class MyConstants {'));
+      expect(fixed, isNot(contains('MyConstants._()')));
+      // The class body should start straight at the static member, with no
+      // blank line left where the constructor used to be.
+      expect(fixed, contains('class MyConstants {\n  static const foo = 1;'));
+    });
+
+    test(
+      'removes a private constructor written with an empty block body',
+      () async {
+        final fixed = await harness.applyFix(r'''
+class MyConstants {
+  MyConstants._() {}
+
+  static const foo = 1;
+}
+''', 'prefer_abstract_final_static_class');
+
+        expect(fixed, contains('abstract final class MyConstants {'));
+        expect(fixed, isNot(contains('MyConstants._()')));
+      },
+    );
   });
 
   group('prefer_align_over_container', () {

@@ -33,6 +33,8 @@
 
 ### Added
 
+- `avoid_catch_error` warns on `Future.catchError`. Its handler is an untyped `Function`, so a wrong signature compiles cleanly and throws only on the error path, and a `test` callback returning `false` leaves the error unhandled while reading as though it was caught. `try`/`catch` gets both checked at compile time.
+- `never_discard_build_context` warns when a `BuildContext` parameter is named with a wildcard (`_`, `__`). Discarding it does not remove the need for a context — the body falls back to an outer one, which sits higher in the tree, so `Theme.of`/`MediaQuery.of`/`Navigator.of` resolve against a different subtree. Ships a quick fix that names the parameter `context`, withheld when that name is already in scope and renaming would shadow it.
 - `use_class_suffix` and `use_class_prefix`, each taking an `entries:` list of `{type, suffix|prefix, package?, ignore_private?}`. A base type matches whether it is reached by `extends`, `implements`, `with`, or an indirect ancestor, and `package:` is optional — omit it to match a type of that name from any library. Both ship a quick fix that renames the class and any same-named unnamed constructor.
 - A rule-wide `ignore_private` option on both rules, overridable per entry.
 

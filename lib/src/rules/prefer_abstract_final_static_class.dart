@@ -63,22 +63,54 @@ class _Visitor extends SimpleAstVisitor<void> {
     // Skip empty classes
     if (members.isEmpty) return;
 
+    var hasStaticMember = false;
+
     // Check that all members are static
     for (final member in members) {
       switch (member) {
         case ConstructorDeclaration():
-          // Any constructor means this isn't a purely static class
-          return;
+          // A trivial private constructor is the older idiom for the very
+          // thing this rule suggests — guarding against instantiation. It is
+          // made redundant by `abstract final`, so allow it (and let the fix
+          // delete it). Any other constructor means the class is meant to be
+          // instantiated.
+          if (!_isInstantiationGuard(member)) return;
         case MethodDeclaration(:final isStatic):
           if (!isStatic) return;
+          hasStaticMember = true;
         case FieldDeclaration(:final isStatic):
           if (!isStatic) return;
+          hasStaticMember = true;
         default:
           // Unknown member type — be conservative
           return;
       }
     }
 
+    // A class holding nothing but a private constructor is not a static
+    // holder; leave it alone.
+    if (!hasStaticMember) return;
+
     rule.reportAtNode(node);
+  }
+
+  /// Whether [node] is an empty, parameterless private constructor whose only
+  /// purpose is to prevent instantiation, e.g. `MyConstants._();`.
+  ///
+  /// Anything richer — parameters, initializers, a redirection or a body — is
+  /// doing real work that `abstract final` would not preserve.
+  static bool _isInstantiationGuard(ConstructorDeclaration node) {
+    if (node.name?.lexeme.startsWith('_') != true) return false;
+    if (node.factoryKeyword != null) return false;
+    if (node.constKeyword != null) return false;
+    if (node.parameters.parameters.isNotEmpty) return false;
+    if (node.initializers.isNotEmpty) return false;
+    if (node.redirectedConstructor != null) return false;
+
+    return switch (node.body) {
+      EmptyFunctionBody() => true,
+      BlockFunctionBody(:final block) => block.statements.isEmpty,
+      _ => false,
+    };
   }
 }

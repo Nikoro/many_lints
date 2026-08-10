@@ -704,4 +704,66 @@ class _MyListState extends State<MyList> {
       },
     );
   });
+
+  group('never_discard_build_context', () {
+    const builderPackage = {
+      'flutter': r'''
+class Widget {}
+class BuildContext {}
+class Text extends Widget {
+  Text(String data);
+}
+class Builder extends Widget {
+  Builder({required Widget Function(BuildContext context) builder});
+}
+''',
+    };
+
+    test('names a discarded context parameter', () async {
+      final fixed = await harness.applyFix(
+        r'''
+import 'package:flutter/flutter.dart';
+
+Widget f() => Builder(builder: (_) => Text('hi'));
+''',
+        'never_discard_build_context',
+        packages: builderPackage,
+      );
+
+      expect(fixed, contains('Builder(builder: (context) => '));
+    });
+
+    test('keeps an explicit type annotation', () async {
+      final fixed = await harness.applyFix(
+        r'''
+import 'package:flutter/flutter.dart';
+
+Widget f() => Builder(builder: (BuildContext _) => Text('hi'));
+''',
+        'never_discard_build_context',
+        packages: builderPackage,
+      );
+
+      expect(fixed, contains('(BuildContext context) => '));
+    });
+
+    test('offers no fix when the name would shadow an outer context', () async {
+      // Renaming here would rebind `context` for the closure body, changing
+      // which element the existing lookups resolve against. The rule still
+      // reports — only the automatic edit is withheld, so `applyFix` finds
+      // nothing to apply.
+      await expectLater(
+        harness.applyFix(
+          r'''
+import 'package:flutter/flutter.dart';
+
+Widget build(BuildContext context) => Builder(builder: (_) => Text('hi'));
+''',
+          'never_discard_build_context',
+          packages: builderPackage,
+        ),
+        throwsA(isA<TestFailure>()),
+      );
+    });
+  });
 }

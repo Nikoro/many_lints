@@ -109,7 +109,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-154 lints with 90 quick fixes, all enabled by default as warnings. Each rule links to its full documentation with examples and fix details.
+156 lints with 91 quick fixes, all enabled by default as warnings. Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|

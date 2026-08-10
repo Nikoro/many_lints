@@ -18,7 +18,7 @@ dependencies:
   riverpod_annotation: ^4.0.6
   collection: ^1.19.1
   equatable: ^2.1.0
-  meta: ^1.18.0
+  meta: ^1.19.0
 
 # flutter_test pulls in `test`, which pins an old analyzer (10.x) and the
 # Flutter SDK pins meta to 1.18.0. Neither matches what many_lints itself

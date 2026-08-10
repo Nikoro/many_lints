@@ -181,6 +181,8 @@ import 'package:many_lints/src/rules/prefer_equatable_mixin.dart';
 import 'package:many_lints/src/rules/prefer_use_callback.dart';
 import 'package:many_lints/src/rules/prefer_use_prefix.dart';
 import 'package:many_lints/src/rules/use_sliver_prefix.dart';
+import 'package:many_lints/src/rules/avoid_catch_error.dart';
+import 'package:many_lints/src/rules/never_discard_build_context.dart';
 
 // Fixes
 import 'package:many_lints/src/fixes/always_remove_listener_fix.dart';
@@ -223,6 +225,7 @@ import 'package:many_lints/src/fixes/avoid_map_keys_contains_fix.dart';
 import 'package:many_lints/src/fixes/avoid_only_rethrow_fix.dart';
 import 'package:many_lints/src/fixes/avoid_throw_in_catch_block_fix.dart';
 import 'package:many_lints/src/fixes/prefer_abstract_final_static_class_fix.dart';
+import 'package:many_lints/src/fixes/never_discard_build_context_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_hook_widgets_fix.dart';
 import 'package:many_lints/src/fixes/change_widget_name_fix.dart';
@@ -398,6 +401,8 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, CheckIsNotClosedAfterAsyncGap());
     _registerWarningRule(registry, RequireAtomicAsyncUpdates());
     _registerWarningRule(registry, EmitNewBlocStateInstances());
+    _registerWarningRule(registry, AvoidCatchError());
+    _registerWarningRule(registry, NeverDiscardBuildContext());
     _registerWarningRule(registry, AvoidMissingCompleterStackTrace());
     _registerWarningRule(registry, AvoidPassingAsyncWhenSyncExpected());
     _registerWarningRule(registry, AvoidUnrelatedTypeCasts());
@@ -495,6 +500,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       PreferAbstractFinalStaticClass.code,
       PreferAbstractFinalStaticClassFix.new,
+    );
+    registry.registerFixForRule(
+      NeverDiscardBuildContext.code,
+      NeverDiscardBuildContextFix.new,
     );
     registry.registerFixForRule(
       PreferCenterOverAlign.code,

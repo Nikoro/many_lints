@@ -51,7 +51,7 @@ plugins:
 
 ## Configuring diagnostics
 
-All 154 active rules are registered as warnings and enabled by default. You can enable or disable individual rules under the `diagnostics` key:
+All 156 active rules are registered as warnings and enabled by default. You can enable or disable individual rules under the `diagnostics` key:
 
 ```yaml
 plugins:

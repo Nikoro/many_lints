@@ -120,6 +120,99 @@ class Empty {}
 ''');
   }
 
+  // --- Private instantiation-guard constructor (the older idiom) ---
+
+  Future<void> test_privateGuardConstructor() async {
+    await assertDiagnostics(
+      r'''
+class MyConstants {
+  MyConstants._();
+
+  static const foo = 1;
+}
+''',
+      [lint(0, 65)],
+    );
+  }
+
+  Future<void> test_privateGuardConstructorWithEmptyBlockBody() async {
+    await assertDiagnostics(
+      r'''
+class MyConstants {
+  MyConstants._() {}
+
+  static const foo = 1;
+}
+''',
+      [lint(0, 67)],
+    );
+  }
+
+  Future<void> test_privateConstructorWithParameters() async {
+    // Takes arguments, so it is a real constructor, not a guard.
+    await assertNoDiagnostics(r'''
+class MyClass {
+  MyClass._(int value);
+
+  static const foo = 1;
+}
+''');
+  }
+
+  Future<void> test_privateConstructorWithBody() async {
+    await assertNoDiagnostics(r'''
+class MyClass {
+  MyClass._() {
+    print('side effect');
+  }
+
+  static const foo = 1;
+}
+''');
+  }
+
+  Future<void> test_privateConstructorWithInitializer() async {
+    await assertNoDiagnostics(r'''
+class MyClass {
+  final int value;
+  MyClass._() : value = 1;
+
+  static const foo = 1;
+}
+''');
+  }
+
+  Future<void> test_privateFactoryConstructor() async {
+    await assertNoDiagnostics(r'''
+class MyClass {
+  MyClass.__();
+  factory MyClass._() => MyClass.__();
+
+  static const foo = 1;
+}
+''');
+  }
+
+  Future<void> test_privateGuardWithNoStaticMembers() async {
+    // Nothing static to hold, so this is not a static-only holder.
+    await assertNoDiagnostics(r'''
+class MyClass {
+  MyClass._();
+}
+''');
+  }
+
+  Future<void> test_privateGuardAlongsideAnotherConstructor() async {
+    await assertNoDiagnostics(r'''
+class MyClass {
+  MyClass._();
+  MyClass.named();
+
+  static const foo = 1;
+}
+''');
+  }
+
   Future<void> test_sealedClass() async {
     await assertNoDiagnostics(r'''
 sealed class MySealedClass {
