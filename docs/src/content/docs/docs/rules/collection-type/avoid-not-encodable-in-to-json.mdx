@@ -59,7 +59,7 @@ Map<String, dynamic> toJson() => {'address': address};   // accepted
 
 ## Known limitations
 
-Collections are checked through their type arguments, so `List<DateTime>` is reported while `List<String>` is not. A `Map`'s values are checked; its keys are not, since `jsonEncode` stringifies them.
+Collections are checked through their type arguments, so `List<DateTime>` is reported while `List<String>` is not. A `Map`'s values are checked; its keys are **not** — that is a blind spot in this rule, not a safe case. `jsonEncode` does not stringify non-`String` keys, it throws: both `jsonEncode({1: 'x'})` and `jsonEncode({DateTime(2020): 'x'})` raise `JsonUnsupportedObjectError`. Only `Map<String, …>` encodes.
 
 `dynamic` and `Object` values are never reported — the runtime value may well be encodable, so any report would be guesswork. Type parameters are skipped for the same reason.
 

@@ -9,12 +9,13 @@ import '../type_checker.dart';
 
 /// Warns about a `Future<Future<T>>` type annotation.
 ///
-/// Dart flattens futures automatically: `await` on a nested future yields
-/// the inner value in one step, and an `async` function returning
-/// `Future<T>` produces `Future<T>`, never `Future<Future<T>>`. Writing the
-/// nested type means the annotation does not describe what the code
-/// actually produces, and callers get a type they cannot usefully await
-/// twice.
+/// Dart flattens futures where it *infers* them — an `async` function
+/// returning `Future<T>` produces `Future<T>` even when its body returns a
+/// future — but it does not rewrite an explicit `Future<Future<T>>`
+/// annotation, and `await` unwraps exactly one level. Such a value is real:
+/// `await declared()` yields a `Future<T>` that needs a second `await`. The
+/// annotation therefore produces a future that behaves unlike every
+/// neighbouring one, which is the trap this rule removes.
 class AvoidNestedFutures extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_nested_futures',

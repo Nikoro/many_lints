@@ -13,9 +13,18 @@ This rule flags a type annotation that nests one future inside another — `Futu
 
 ## Why use this rule
 
-Dart flattens futures. An `async` function declared to return `Future<T>` produces `Future<T>` even when its body returns a future, and a single `await` unwraps all the way down. There is no value in the language that is genuinely a future of a future.
+Dart flattens futures in the two places people rely on: an `async` function declared to return `Future<T>` produces `Future<T>` even when its body returns a future, and `Future.value` infers a flattened type.
 
-So the annotation is always wrong about what the code produces. It misleads readers into writing a second `await` that does nothing, and it makes the signature harder to read for no gain.
+Flattening does **not** rewrite an explicitly written nested annotation, and `await` unwraps exactly one level:
+
+```dart
+Future<Future<String>> declared() async => fetchName();
+
+final a = await declared();          // a is a Future<String>, not a String
+final b = await (await declared());  // 'nick' — two awaits needed
+```
+
+So the annotation produces a value that behaves unlike every neighbouring future: a caller who awaits it once, as they would anything else, silently holds a `Future<String>` where a `String` was expected. Declaring the inner type directly removes the trap and makes the signature honest.
 
 **See also:** [Dart: asynchronous programming](https://dart.dev/language/async)
 

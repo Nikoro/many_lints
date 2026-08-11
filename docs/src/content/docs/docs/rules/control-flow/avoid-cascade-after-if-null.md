@@ -13,11 +13,24 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-Warns when a cascade expression (`..`) follows an if-null (`??`) operator without parentheses. Due to operator precedence, it is ambiguous whether the cascade applies to the right-hand side of `??` or to the entire expression, which can produce unexpected results.
+Warns when a cascade expression (`..`) follows an if-null (`??`) operator without parentheses. The precedence is not what it looks like: the cascade applies to the *entire* if-null expression, not to the right-hand side of `??`.
 
 ## Why use this rule
 
-Dart's cascade operator and if-null operator have surprising precedence interactions. Without parentheses, `a ?? B()..method()` is parsed as `a ?? (B()..method())`, which may not be what the developer intended. Adding explicit parentheses makes the intent clear and prevents subtle bugs.
+The cascade operator binds *looser* than `??`, so `a ?? B()..method()` parses as `(a ?? B())..method()`. The cascade takes the whole if-null expression as its target.
+
+That is the opposite of how the line reads. The natural reading is "if `a` is null, build a `B` and configure it" — but when `a` is non-null, the cascade runs against `a` itself:
+
+```dart
+final sb = StringBuffer('LHS');
+StringBuffer? maybe = sb;
+final out = maybe ?? StringBuffer('RHS')..write('-MUTATED');
+// sb is now "LHS-MUTATED": the pre-existing buffer was mutated,
+// the fresh StringBuffer('RHS') was discarded untouched,
+// and `out` is identical to `sb`.
+```
+
+Adding explicit parentheses makes the intent clear and prevents subtle bugs.
 
 **See also:** [Cascade notation](https://dart.dev/language/operators#cascade-notation)
 

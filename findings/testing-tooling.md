@@ -11,12 +11,19 @@ Per-rule configuration is fully testable end-to-end by driving a real `PluginSer
 
 ## Tooling
 
-### [NOTE] [NOTE] `dart analyze <file>.yaml` does not validate analysis options
+### [NOTE] `dart analyze <file>.yaml` validates analysis options — but only inside known sections
 **Area:** `analysis_options.yaml`
 **Tags:** `#tooling`
-**Verified:** 2026-08-08
+**Verified:** 2026-08-11 (Dart 3.12.2) — supersedes a 2026-08-08 note claiming no validation happens
 
-Running `dart analyze analysis_options.yaml` reports "No issues found" even for genuinely invalid options. Options validation only runs when the file is picked up as the options for an analyzed context root — i.e. `dart analyze .` on the containing project. When verifying options-file behavior, always analyze the project, and include a known-bad key as a control to confirm the validator actually ran.
+Options validation does run when the file is named directly. `dart analyze analysis_options.yaml` and `dart analyze .` produce byte-identical output on the same bad config:
+
+```
+warning - analysis_options.yaml:2:3 - The option 'bogus_analyzer_key' isn't supported by 'analyzer'... - unsupported_option
+warning - analysis_options.yaml:5:7 - 'not_a_real_lint_name' isn't a recognized lint rule... - undefined_lint
+```
+
+The real limit is *where* it looks: the validator only checks the interior of sections it recognizes. An unknown **top-level** key (`totally_unknown_top_level_key:`, or a typo like `analzyer:`) is accepted in silence — verified in the same run. So a misspelled section name disables that entire block of configuration with no diagnostic at all, which is the failure worth guarding against. Keep pairing config fixtures with a known-bad key *inside* a real section as a control.
 
 ---
 
