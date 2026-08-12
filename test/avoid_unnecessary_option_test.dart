@@ -68,7 +68,6 @@ String f(String? name) {
 
   Future<void> test_publicApiReportedWhenConfigured() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   avoid_unnecessary_option:
     ignore_public_api: false

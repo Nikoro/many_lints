@@ -84,7 +84,6 @@ Option<String> f(
 
   Future<void> test_maxDepthNarrows() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   prefer_do_notation:
     max_flatmap_depth: 4
@@ -100,7 +99,6 @@ Option<String> f(Option<String> a, Option<String> b, Option<String> c) =>
 
   Future<void> test_maxDepthWidens() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   prefer_do_notation:
     max_flatmap_depth: 2

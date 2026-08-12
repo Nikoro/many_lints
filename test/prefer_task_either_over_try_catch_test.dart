@@ -91,7 +91,6 @@ class UserRepository {
 
   Future<void> test_privateMethodReportedWhenConfigured() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   prefer_task_either_over_try_catch:
     ignore_private: false
@@ -115,7 +114,6 @@ class UserRepository {
 
   Future<void> test_additionalSuffixReported() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   prefer_task_either_over_try_catch:
     additional_class_suffixes:

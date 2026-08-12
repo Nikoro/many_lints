@@ -79,7 +79,7 @@ class GoodCubit extends Cubit<int> {
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
 `avoid_passing_build_context_to_blocs: true`.
 
 To turn it off:

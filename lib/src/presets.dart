@@ -150,6 +150,122 @@ const _recommendedOnlyRules = <String>{
 /// `core.yaml`, so moving up a tier only ever adds rules.
 final recommendedRules = <String>{...coreRules, ..._recommendedOnlyRules};
 
+/// Rules that [opinionatedRules] adds on top of [recommendedRules].
+///
+/// These express a stylistic preference rather than a defect: reasonable
+/// codebases disagree about them. Every rule here is one this package takes a
+/// side on.
+///
+/// Three kinds of rule are deliberately **excluded**, and stay opt-in by name:
+///
+/// 1. **Rules that contradict one in this set.** A preset must never enable
+///    both halves of a disagreement, because each would undo the other's fix.
+///    See [conflictingWithOpinionated].
+/// 2. **Rules that do nothing until configured** — the `banned_*` family,
+///    `use_class_prefix`-style affix rules and `prefer_use_prefix`. They enforce
+///    *your* project's vocabulary, which this package cannot guess, and report
+///    nothing at all until told what to look for.
+/// 3. **Rules that assume a package this project may not depend on**, such as
+///    `use_gap` (the `gap` package) or the `equatable` rules.
+///
+/// The same reasoning keeps three fpdart rules out: `avoid_ad_hoc_left_type`
+/// reports nothing until given `error_types`, while
+/// `avoid_unnecessary_option` and `avoid_get_or_else_swallowing_failure` each
+/// disagree with a coherent choice a codebase may have made deliberately.
+const _opinionatedOnlyRules = <String>{
+  'avoid_bloc_public_methods',
+  'avoid_border_all',
+  'avoid_commented_out_code',
+  'avoid_default_tostring',
+  'avoid_empty_setstate',
+  'avoid_incomplete_copy_with',
+  'avoid_missing_enum_constant_in_map',
+  'avoid_non_null_assertion',
+  'avoid_passing_async_when_sync_expected',
+  'avoid_passing_bloc_to_bloc',
+  'avoid_public_notifier_properties',
+  'avoid_redundant_else',
+  'avoid_returning_widgets',
+  'avoid_shrink_wrap_in_lists',
+  'avoid_single_child_in_multi_child_widgets',
+  'avoid_single_field_destructuring',
+  'avoid_unnecessary_consumer_widgets',
+  'avoid_unnecessary_hook_widgets',
+  'avoid_unnecessary_overrides',
+  'avoid_unnecessary_overrides_in_state',
+  'avoid_unnecessary_stateful_widgets',
+  'avoid_unsafe_collection_methods',
+  'avoid_wrapping_in_padding',
+  'check_is_not_closed_after_async_gap',
+  'never_discard_build_context',
+  'prefer_abstract_final_static_class',
+  'prefer_align_over_container',
+  'prefer_async_callback',
+  'prefer_bloc_extensions',
+  'prefer_center_over_align',
+  'prefer_class_destructuring',
+  'prefer_compute_over_isolate_run',
+  'prefer_const_border_radius',
+  'prefer_constrained_box_over_container',
+  'prefer_correct_edge_insets_constructor',
+  'prefer_for_loop_in_children',
+  'prefer_immediate_return',
+  'prefer_immutable_bloc_state',
+  'prefer_multi_bloc_provider',
+  'prefer_overriding_parent_equality',
+  'prefer_padding_over_container',
+  'prefer_private_named_parameters',
+  'prefer_returning_shorthands',
+  'prefer_shorthands_with_constructors',
+  'prefer_shorthands_with_enums',
+  'prefer_shorthands_with_static_fields',
+  'prefer_single_setstate',
+  'prefer_single_widget_per_file',
+  'prefer_sized_box_square',
+  'prefer_spacing',
+  'prefer_switch_expression',
+  'prefer_switch_with_enums',
+  'prefer_test_matchers',
+  'prefer_theme_mode_getters',
+  'prefer_transform_over_container',
+  'prefer_type_over_var',
+  'prefer_use_callback',
+  'prefer_void_callback',
+  'protected_notifier_properties',
+  'require_atomic_async_updates',
+  'use_existing_destructuring',
+  'use_existing_variable',
+  'use_ref_and_state_synchronously',
+  'use_ref_read_synchronously',
+};
+
+/// Rules deliberately kept out of [opinionatedRules] because each contradicts
+/// a rule that is in it.
+///
+/// Enabling both halves would leave a project with two diagnostics on one line
+/// whose fixes undo one another, so the preset takes a side and the other half
+/// stays available by name.
+///
+/// - `prefer_container` merges nested single-purpose widgets *into* a
+///   `Container`, which is the exact inverse of `prefer_padding_over_container`
+///   and its `prefer_*_over_container` siblings.
+/// - `use_gap` replaces a spacing `SizedBox` with the `gap` package's `Gap`,
+///   while `prefer_spacing` replaces the same `SizedBox` with the built-in
+///   `spacing:` argument. Both match on `sizedBoxChecker` inside a flex.
+/// - `list_all_equatable_fields` and `prefer_equatable_mixin` presume a
+///   dependency on `equatable`, so they are opt-in rather than contradictory.
+/// Public so a test can assert the preset never enables one of these, keeping
+/// the exclusions a checked invariant rather than a comment that drifts.
+const conflictingWithOpinionated = <String>{'prefer_container', 'use_gap'};
+
+/// [recommendedRules] plus [_opinionatedOnlyRules].
+///
+/// Layered like the tiers below it, so moving up a preset only ever adds rules.
+final opinionatedRules = <String>{
+  ...recommendedRules,
+  ..._opinionatedOnlyRules,
+};
+
 /// A named rule set that a project can select with `preset:`.
 enum Preset {
   /// Enables nothing. The default, and the explicit way to opt out.
@@ -161,11 +277,8 @@ enum Preset {
   /// [core] plus idiomatic, uncontroversial Dart and Flutter practice.
   recommended('recommended'),
 
-  /// Every rule in the package, including opinionated ones.
-  ///
-  /// Offered so that a project can deliberately choose the whole catalogue in
-  /// one line, rather than having to restate 156 rule names.
-  all('all');
+  /// [recommended] plus the opinionated style rules this package prefers.
+  opinionated('opinionated');
 
   const Preset(this.name);
 
@@ -196,6 +309,6 @@ enum Preset {
     Preset.none => false,
     Preset.core => coreRules.contains(ruleName),
     Preset.recommended => recommendedRules.contains(ruleName),
-    Preset.all => true,
+    Preset.opinionated => opinionatedRules.contains(ruleName),
   };
 }

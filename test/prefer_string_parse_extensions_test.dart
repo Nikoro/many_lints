@@ -87,7 +87,6 @@ Option<Version> f(String input) =>
 
   Future<void> test_additionalParserReported() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   prefer_string_parse_extensions:
     additional_parsers:

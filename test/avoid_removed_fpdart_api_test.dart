@@ -86,7 +86,6 @@ Option<int> f() {
 
   Future<void> test_additionalRemovedReported() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   avoid_removed_fpdart_api:
     additional_removed:

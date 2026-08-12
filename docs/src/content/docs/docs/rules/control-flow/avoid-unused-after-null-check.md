@@ -56,7 +56,7 @@ For `x == null`, only the `else` branch is examined, since that is the branch wh
 ## Configuration
 
 This rule is in the **`core`** preset, so it is on with `preset: core`,
-`preset: recommended` or `preset: all`.
+`preset: recommended` or `preset: opinionated`.
 
 To turn it off:
 

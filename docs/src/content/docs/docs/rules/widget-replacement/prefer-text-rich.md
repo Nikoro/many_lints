@@ -65,7 +65,7 @@ Text.rich(TextSpan(text: 'Simple text'));
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
 `prefer_text_rich: true`.
 
 To turn it off:

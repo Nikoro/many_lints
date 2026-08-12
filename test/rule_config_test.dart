@@ -369,11 +369,11 @@ class StillLinted {
   void another() {}
 }
 ''',
-        // `preset: all` so that the rule which must *keep* reporting is on
+        // `preset: opinionated` so that the rule which must *keep* reporting is on
         // without needing a config block of its own — a block would itself
         // opt the rule in and blunt what this test checks.
         config: '''
-preset: all
+preset: opinionated
 rules:
   avoid_only_rethrow:
     exclude:
@@ -448,7 +448,7 @@ class Child extends Base {
 }
 ''',
         config: '''
-preset: all
+preset: opinionated
 rules:
   avoid_only_rethrow:
     exclude:
@@ -487,7 +487,10 @@ rules:
     test(
       'a multi-registration rule reports from each of its callbacks',
       () async {
-        final errors = await harness.analyze(_varCode, config: 'preset: all');
+        final errors = await harness.analyze(
+          _varCode,
+          config: 'preset: opinionated',
+        );
 
         // Asymmetric positive: without the exclusion the same source reports
         // three times, so the test above cannot pass by reporting nothing.
@@ -519,7 +522,7 @@ rules:
     test('a compilation-unit rule reports without the exclusion', () async {
       final errors = await harness.analyze(
         _commentedOutCode,
-        config: 'preset: all',
+        config: 'preset: opinionated',
       );
 
       expect(errors.map((e) => e.code), contains('avoid_commented_out_code'));
@@ -562,7 +565,7 @@ rules:
     test('mode option leaves the default behaviour untouched', () async {
       final errors = await harness.analyze(
         _typedRethrowCode,
-        config: 'preset: all',
+        config: 'preset: opinionated',
       );
 
       expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
@@ -585,7 +588,7 @@ rules:
       test('the rule reports a checked field by default', () async {
         final errors = await harness.analyze(
           _checkedFieldBangCode,
-          config: 'preset: all',
+          config: 'preset: opinionated',
         );
 
         expect(errors.map((e) => e.code), contains('avoid_non_null_assertion'));
@@ -626,7 +629,7 @@ rules:
         final errors = await harness.analyze(
           _checkedFieldBangCode,
           config: '''
-preset: all
+preset: opinionated
 rules:
   avoid_non_null_assertion:
     ignore_checked_fields: "not a bool"
@@ -724,7 +727,7 @@ rules:
         final errors = await harness.analyze(
           _rethrowCode,
           config: '''
-preset: all
+preset: opinionated
 rules:
   avoid_only_rethrow:
     include: []
@@ -772,7 +775,7 @@ rules:
         final errors = await harness.analyze(
           _rethrowCode,
           config: '''
-preset: all
+preset: opinionated
 rules:
   avoid_only_rethrow:
     include: 42
@@ -803,7 +806,7 @@ rules:
       test('leaves the message alone when unset', () async {
         final errors = await harness.analyze(
           _rethrowCode,
-          config: 'preset: all',
+          config: 'preset: opinionated',
         );
 
         final error = errors.firstWhere((e) => e.code == 'avoid_only_rethrow');
@@ -830,7 +833,7 @@ rules:
         final errors = await harness.analyze(
           _rethrowCode,
           config: '''
-preset: all
+preset: opinionated
 rules:
   avoid_only_rethrow:
     message: "   "

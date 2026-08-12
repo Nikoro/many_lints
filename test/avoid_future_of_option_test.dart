@@ -118,7 +118,6 @@ Future<Option<int>> _f() async => throw '';
 
   Future<void> test_ignorePrivateOption() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   avoid_future_of_option:
     ignore_private: true

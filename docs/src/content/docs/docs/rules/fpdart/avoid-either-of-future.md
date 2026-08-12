@@ -55,7 +55,7 @@ This rule is about a `Future` nested *inside* `Either`. The reverse nesting, `Fu
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
 `avoid_either_of_future: true`.
 
 To turn it off:

@@ -47,7 +47,7 @@ Equality (`!(a == b)`) is out of scope here; see [`avoid_unnecessary_negations`]
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
 `avoid_inverted_boolean_checks: true`.
 
 To turn it off:

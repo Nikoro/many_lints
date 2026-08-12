@@ -71,7 +71,6 @@ int f(List<int> values) => values.first;
 
   Future<void> test_outsidePipelineReportedWhenConfigured() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   prefer_safe_collection_access:
     report_outside_pipelines: true
@@ -87,7 +86,6 @@ int f(List<int> values) => values.first;
 
   Future<void> test_accessorsOptionNarrows() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   prefer_safe_collection_access:
     accessors:

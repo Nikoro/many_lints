@@ -73,9 +73,9 @@ the analysis server.
 | Preset | Rules | What it contains |
 |--------|-------|------------------|
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
-| `core` | 31 | Near-certain bugs only. |
-| `recommended` | 79 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
-| `all` | 156 | Every rule, including opinionated ones. |
+| `core` | 37 | Near-certain bugs only. |
+| `recommended` | 98 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
+| `opinionated` | 162 | `recommended` plus this package's own style preferences. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml`
 includes `core.yaml` — moving up a tier only ever adds rules.
@@ -90,13 +90,35 @@ a large legacy codebase.
 keeping enum switches exhaustive. It deliberately excludes anything that imposes an
 architecture, a naming scheme, or a contested style choice.
 
-**`all`** turns on the entire catalogue, including rules that enforce a particular taste
-(widget-swapping rules, naming conventions, shorthand preferences). This is also the
-setting that reproduces the pre-1.0.0 behaviour, when every rule was on by default.
+**`opinionated`** adds the rules that enforce a particular taste (widget-swapping rules,
+shorthand preferences, `prefer_type_over_var`). Where reasonable codebases disagree, this
+tier takes a side — so expect to switch a few rules back off rather than to agree with all
+of it.
 
-Rules that do nothing until you configure them — `avoid_banned_imports`,
-`use_class_suffix` and the rest of the `banned_*` family — are in no preset, since an
-unconfigured banned-list has nothing to report.
+:::note[There is no preset that turns on every rule]
+Some rules deliberately contradict one another, so a catch-all preset would report two
+diagnostics on one line whose fixes undo each other. `prefer_container` merges nested
+widgets *into* a `Container`, while `prefer_padding_over_container` and its siblings
+unwrap one; `use_gap` and `prefer_spacing` both rewrite a spacing `SizedBox`, to different
+things. `opinionated` picks one side of each pair and leaves the other available by name.
+
+If you prefer the other side, enable it explicitly and turn off the one you don't want:
+
+```yaml
+# many_lints.yaml
+preset: opinionated
+rules:
+  use_gap:
+    enabled: true
+  prefer_spacing:
+    enabled: false
+```
+:::
+
+Two other groups sit outside every preset. Rules that do nothing until you configure them —
+`avoid_banned_imports`, `use_class_suffix` and the rest of the `banned_*` family — because
+an unconfigured banned-list has nothing to report. And rules that assume a package you may
+not depend on, such as `use_gap` (the `gap` package) and the `equatable` rules.
 
 ### Adjusting a preset
 

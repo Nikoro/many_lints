@@ -52,7 +52,7 @@ The quick fix parenthesises an operand when needed, so merging a condition conta
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
 `avoid_collapsible_if: true`.
 
 To turn it off:

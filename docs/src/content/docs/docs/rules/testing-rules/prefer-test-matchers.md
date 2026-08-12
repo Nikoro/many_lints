@@ -42,8 +42,8 @@ expectLater(scores, hasLength(3));
 
 ## Configuration
 
-This rule is in **no preset**, so it is off unless you enable it — with
-`preset: all`, or by name:
+This rule is in the **`opinionated`** preset, so it is on with
+`preset: opinionated`, or by name:
 
 ```yaml
 # many_lints.yaml

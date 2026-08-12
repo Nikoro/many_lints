@@ -138,16 +138,26 @@ void main() {
     test('preset tables list the real preset sizes', () {
       // `none` is not derived from anything, so it is asserted as the literal
       // it is rather than looked up.
+      // `opinionated` is deliberately smaller than the registry: rules that
+      // contradict one already in it, and rules that do nothing unconfigured,
+      // stay out of every preset. See `conflictingWithOpinionated`.
       final expected = {
         'none': 0,
         'core': coreRules.length,
         'recommended': recommendedRules.length,
-        'all': totalRules,
+        'opinionated': opinionatedRules.length,
       };
+
+      // The docs site carries the same table, and its counts drifted silently
+      // once already (31/79/156 against presets holding 37/98/162).
+      final configurationPage = File(
+        'docs/src/content/docs/docs/configuration.md',
+      ).readAsStringSync();
 
       for (final (file, content) in [
         ('README.md', readme),
         ('CLAUDE.md', claudeMd),
+        ('configuration.md', configurationPage),
       ]) {
         expect(
           _presetCounts(content),
@@ -335,7 +345,7 @@ void main() {
 /// the last column, so only the first two columns are matched.
 Map<String, int> _presetCounts(String content) => {
   for (final match in RegExp(
-    r'^\| `(none|core|recommended|all)` \| *(\d+) \|',
+    r'^\| `(none|core|recommended|opinionated)` \| *(\d+) \|',
     multiLine: true,
   ).allMatches(content))
     match.group(1)!: int.parse(match.group(2)!),

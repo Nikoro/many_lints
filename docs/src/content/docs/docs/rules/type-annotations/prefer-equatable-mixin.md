@@ -70,8 +70,7 @@ abstract class GoodBaseEntity with EquatableMixin {
 
 ## Configuration
 
-This rule is in **no preset**, so it is off unless you enable it — with
-`preset: all`, or by name:
+This rule is in **no preset**, so it is off unless you enable it by name:
 
 ```yaml
 # many_lints.yaml

@@ -18,7 +18,6 @@ class AvoidAdHocLeftTypeTest extends FpdartRuleTest {
   /// Writes the config that switches this policy rule on.
   void _configure({String extra = ''}) {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   avoid_ad_hoc_left_type:
     error_types:

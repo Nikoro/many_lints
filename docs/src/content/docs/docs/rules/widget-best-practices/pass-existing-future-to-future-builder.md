@@ -63,7 +63,7 @@ The rule reports only expressions that certainly allocate: constructor calls, me
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
 `pass_existing_future_to_future_builder: true`.
 
 To turn it off:

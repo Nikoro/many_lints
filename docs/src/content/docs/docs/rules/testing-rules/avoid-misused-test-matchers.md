@@ -50,7 +50,7 @@ expect(false, isFalse);
 ## Configuration
 
 This rule is in the **`core`** preset, so it is on with `preset: core`,
-`preset: recommended` or `preset: all`.
+`preset: recommended` or `preset: opinionated`.
 
 To turn it off:
 

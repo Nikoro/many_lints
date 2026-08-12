@@ -77,7 +77,6 @@ Future<void> best() async {
 
   Future<void> test_minSequenceWidens() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   prefer_chaining_over_intermediate_run:
     min_sequence: 1
@@ -99,7 +98,6 @@ Future<void> best() async {
 
   Future<void> test_minSequenceNarrows() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   prefer_chaining_over_intermediate_run:
     min_sequence: 3

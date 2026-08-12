@@ -63,7 +63,7 @@ The rule stays silent in cases where a catch-all is legitimate:
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
 `avoid_wildcard_cases_with_enums: true`.
 
 To turn it off:

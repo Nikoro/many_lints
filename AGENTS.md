@@ -111,7 +111,13 @@ rules with `preset:` in `many_lints.yaml` (or the top-level `many_lints:` sectio
 | `none` | 0 | Nothing. The default. |
 | `core` | 37 | Near-certain bugs only. |
 | `recommended` | 98 | `core` plus idiomatic, uncontroversial practice. |
-| `all` | 179 | Every rule, including opinionated ones. |
+| `opinionated` | 162 | `recommended` plus this package's preferred style. |
+
+There is deliberately **no** preset enabling every rule: some rules contradict each other
+(`prefer_container` vs `prefer_padding_over_container`, `use_gap` vs `prefer_spacing`).
+`opinionated` picks one side; the other stays opt-in by name, as do config-only rules
+(the `banned_*` family, the affix rules) — see `conflictingWithOpinionated` in
+`lib/src/presets.dart`.
 
 Presets **cannot** ship as includable YAML the way `package:lints` does: the analyzer
 replaces a plugin's config wholesale across `include:` rather than merging it, and

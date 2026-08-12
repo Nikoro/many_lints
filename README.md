@@ -59,9 +59,11 @@ For local development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
 | `core` | 37 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
 | `recommended` | 98 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
-| `all` | 179 | Every rule, including opinionated ones. |
+| `opinionated` | 162 | `recommended` plus this package's own style preferences. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml` includes `core.yaml`. `core` and `recommended` deliberately exclude anything that imposes an architecture, a naming scheme, or a contested style choice.
+
+There is deliberately no preset that enables every rule: some rules contradict one another (`prefer_container` vs `prefer_padding_over_container`, `use_gap` vs `prefer_spacing`), so enabling both halves would produce two diagnostics on one line whose fixes undo each other. `opinionated` takes one side of each pair; the other stays available by name. Rules that do nothing until configured, such as the `banned_*` family, are also left out.
 
 Adjust a preset in either direction without restating it:
 

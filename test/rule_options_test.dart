@@ -2160,7 +2160,10 @@ ${optionsSection ?? ''}''');
     if (config != null) {
       newFile(join(packagePath, ConfigLoader.fileName), config);
     } else if (optionsSection == null) {
-      newFile(join(packagePath, ConfigLoader.fileName), 'preset: all\n');
+      newFile(
+        join(packagePath, ConfigLoader.fileName),
+        'preset: opinionated\n',
+      );
     }
     newFile(filePath, content);
 

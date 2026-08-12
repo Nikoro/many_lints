@@ -70,7 +70,6 @@ class Impl implements Base {
 
   Future<void> test_overrideReportedWhenConfigured() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   prefer_unit_over_void:
     ignore_overrides: false

@@ -56,7 +56,7 @@ For consecutive calls, a run is broken by any other statement, so `add(a); log()
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
 `prefer_add_all: true`.
 
 To turn it off:

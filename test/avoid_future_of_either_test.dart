@@ -120,7 +120,6 @@ Future<Either<String, int>> _f() async => throw '';
 
   Future<void> test_ignorePrivateOption() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   avoid_future_of_either:
     ignore_private: true

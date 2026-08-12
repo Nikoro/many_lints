@@ -55,7 +55,7 @@ Opacity(opacity: 0.5, child: Text('Hello'));
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
 `avoid_incorrect_image_opacity: true`.
 
 To turn it off:

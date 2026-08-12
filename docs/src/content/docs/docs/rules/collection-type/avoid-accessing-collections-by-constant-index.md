@@ -79,7 +79,7 @@ void example() {
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
 `avoid_accessing_collections_by_constant_index: true`.
 
 To turn it off:

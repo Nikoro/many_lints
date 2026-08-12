@@ -67,7 +67,6 @@ Option<int> f(int age) =>
 
   Future<void> test_complexConditionReportedWhenConfigured() async {
     newFile('$testPackageRootPath/many_lints.yaml', '''
-preset: all
 rules:
   prefer_from_predicate:
     max_condition_complexity: 3

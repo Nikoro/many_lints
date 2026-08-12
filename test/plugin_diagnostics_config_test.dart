@@ -204,8 +204,9 @@ class _PluginAnalysisHarness with ResourceProviderMixin {
 
     // Rules are opt-in as of 1.0.0. This suite is about the analyzer's own
     // `diagnostics:` key and `// ignore` comments, both of which act on a rule
-    // that is already running, so the preset puts every rule in that state.
-    newFile(join(packagePath, ConfigLoader.fileName), 'preset: all\n');
+    // that is already running, so the broadest preset puts the rules these
+    // tests use into that state.
+    newFile(join(packagePath, ConfigLoader.fileName), 'preset: opinionated\n');
     newFile(filePath, content);
 
     final errors = channel.notifications

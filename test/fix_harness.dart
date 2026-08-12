@@ -56,10 +56,12 @@ class FixHarness with ResourceProviderMixin {
   /// [manyLintsConfig] is written to `many_lints.yaml` at the package root,
   /// for fixes whose behaviour depends on per-rule configuration.
   ///
-  /// When it is omitted, `preset: all` is written instead. Rules are opt-in as
-  /// of 1.0.0, so without a preset the rule under test never reports and there
-  /// is no diagnostic for a fix to attach to. A test that passes its own
-  /// config is responsible for enabling the rule it exercises.
+  /// When it is omitted, an explicit `enabled: true` for [ruleName] is written
+  /// instead. Rules are opt-in as of 1.0.0, so without that the rule under test
+  /// never reports and there is no diagnostic for a fix to attach to. Enabling
+  /// the one rule by name rather than selecting a preset keeps rules that sit
+  /// in no preset testable. A test that passes its own config is responsible
+  /// for enabling the rule it exercises.
   Future<String> applyFix(
     String content,
     String ruleName, {
@@ -72,6 +74,7 @@ class FixHarness with ResourceProviderMixin {
       packages: packages,
       multiFilePackages: multiFilePackages,
       manyLintsConfig: manyLintsConfig,
+      ruleName: ruleName,
     );
 
     final errors = channel.notifications
@@ -257,6 +260,7 @@ class FixHarness with ResourceProviderMixin {
     required Map<String, String> packages,
     required Map<String, Map<String, String>> multiFilePackages,
     required String? manyLintsConfig,
+    String? ruleName,
   }) {
     newAnalysisOptionsYamlFile(packagePath, '''
 plugins:
@@ -266,7 +270,10 @@ plugins:
 
     newFile(
       join(packagePath, ConfigLoader.fileName),
-      manyLintsConfig ?? 'preset: all\n',
+      // Assists are not rules and are never gated, so they need no `rules:`
+      // block at all — only a fix's underlying rule has to be switched on.
+      manyLintsConfig ??
+          (ruleName == null ? 'rules: {}\n' : 'rules:\n  $ruleName: true\n'),
     );
 
     final config = PackageConfigFileBuilder()

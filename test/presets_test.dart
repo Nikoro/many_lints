@@ -38,9 +38,10 @@ void main() {
 }
 ''';
 
-/// Reported by `prefer_type_over_var`, which is in **no** preset — it is
-/// opinionated (it contradicts `omit_local_variable_types` from
-/// `package:lints/recommended.yaml`).
+/// Reported by `prefer_type_over_var`, which is in the **opinionated** preset
+/// only — it contradicts `omit_local_variable_types` from
+/// `package:lints/recommended.yaml`, so neither `core` nor `recommended`
+/// takes a side on it.
 const _opinionatedCode = '''
 var topLevel = 1;
 ''';
@@ -51,7 +52,11 @@ void main() {
       expect(Preset.parse('none'), Preset.none);
       expect(Preset.parse('core'), Preset.core);
       expect(Preset.parse('recommended'), Preset.recommended);
-      expect(Preset.parse('all'), Preset.all);
+      expect(Preset.parse('opinionated'), Preset.opinionated);
+    });
+
+    test('the removed `all` preset no longer resolves', () {
+      expect(Preset.parse('all'), isNull);
     });
 
     test('returns null for an unknown name', () {
@@ -64,10 +69,39 @@ void main() {
       expect(recommendedRules.length, greaterThan(coreRules.length));
     });
 
-    test('none enables nothing, all enables anything', () {
+    test('none enables nothing, opinionated enables its own tier', () {
       expect(Preset.none.enables('avoid_equal_expressions'), isFalse);
-      expect(Preset.all.enables('avoid_equal_expressions'), isTrue);
-      expect(Preset.all.enables('prefer_type_over_var'), isTrue);
+      expect(Preset.opinionated.enables('avoid_equal_expressions'), isTrue);
+      expect(Preset.opinionated.enables('prefer_type_over_var'), isTrue);
+    });
+
+    test('opinionated is a strict superset of recommended', () {
+      expect(opinionatedRules, containsAll(recommendedRules));
+      expect(opinionatedRules.length, greaterThan(recommendedRules.length));
+    });
+
+    // The whole point of dropping `all`: a preset must never turn on two rules
+    // whose fixes undo one another.
+    test('opinionated enables neither half of a contradiction', () {
+      for (final name in conflictingWithOpinionated) {
+        expect(
+          Preset.opinionated.enables(name),
+          isFalse,
+          reason: '$name contradicts a rule already in opinionated',
+        );
+      }
+    });
+
+    test('config-only rules stay out of every preset', () {
+      // These report nothing until a project supplies its own vocabulary, so a
+      // preset that enabled them would be enabling a no-op.
+      for (final name in const [
+        'banned_usage',
+        'avoid_banned_types',
+        'use_class_suffix',
+      ]) {
+        expect(Preset.opinionated.enables(name), isFalse, reason: name);
+      }
     });
 
     test('core enables core rules but not recommended-only ones', () {
@@ -91,7 +125,7 @@ void main() {
       final registered = plugin.registeredRuleNames;
 
       expect(registered, isNotEmpty);
-      for (final name in recommendedRules) {
+      for (final name in {...opinionatedRules, ...conflictingWithOpinionated}) {
         expect(
           registered,
           contains(name),
@@ -258,13 +292,28 @@ rules:
       );
     });
 
-    test('preset: all enables an opinionated rule', () async {
+    test('preset: opinionated enables an opinionated rule', () async {
+      final errors = await harness.analyze(
+        _opinionatedCode,
+        config: 'preset: opinionated',
+      );
+
+      expect(errors.map((e) => e.code), contains('prefer_type_over_var'));
+    });
+
+    test('an unknown preset silently enables nothing', () async {
+      // `all` was removed in 1.0.0. Config problems cannot be reported as
+      // diagnostics, so a stale name degrades to `none` rather than throwing —
+      // which is exactly why the docs have to stop advertising it.
       final errors = await harness.analyze(
         _opinionatedCode,
         config: 'preset: all',
       );
 
-      expect(errors.map((e) => e.code), contains('prefer_type_over_var'));
+      expect(
+        errors.map((e) => e.code),
+        isNot(contains('prefer_type_over_var')),
+      );
     });
 
     test('a rule can be added on top of a preset', () async {

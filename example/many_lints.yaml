@@ -1,9 +1,10 @@
 # Per-rule configuration for many_lints.
 #
 # Every rule is off by default, so a project selects a rule set with `preset:`.
-# This example carries one file per rule, so it uses `all`; a real project
+# This example carries one file per rule, so it takes the broadest preset and
+# then switches on the rules that sit outside every preset. A real project
 # normally wants `core` or `recommended`.
-preset: all
+preset: opinionated
 
 # The rest of this file demonstrates `exclude`: the rule stays enabled
 # everywhere else, but is skipped for the listed paths. See
@@ -16,6 +17,38 @@ rules:
   avoid_only_rethrow:
     exclude:
       - lib/excluded/**
+
+  # These sit outside every preset, so the example enables them by name.
+  #
+  # `prefer_container` and `use_gap` are each the losing half of a
+  # contradiction: `prefer_container` merges nested widgets *into* a Container
+  # while `prefer_padding_over_container` unwraps one, and `use_gap` rewrites a
+  # spacing SizedBox to `Gap` while `prefer_spacing` rewrites it to `spacing:`.
+  # A real project picks one side of each pair — this example carries both only
+  # because it documents every rule.
+  prefer_container: true
+  use_gap: true
+
+  # These assume a package a project may not depend on.
+  list_all_equatable_fields: true
+  prefer_equatable_mixin: true
+
+  # These take a side a coherent codebase may reasonably reject.
+  avoid_unnecessary_option: true
+  avoid_get_or_else_swallowing_failure: true
+
+  # Naming conventions, which are a project's own choice.
+  prefer_use_prefix: true
+  use_sliver_prefix: true
+
+  # Config-driven like the `banned_*` family below: it reports nothing until
+  # `error_types` names the hierarchy that must stay intact. Scoped with
+  # `include:` to its own example, since `Failure` is a common name across the
+  # other fpdart examples and the rule would otherwise report from all of them.
+  avoid_ad_hoc_left_type:
+    error_types: [Failure]
+    include:
+      - lib/avoid_ad_hoc_left_type_example.dart
 
   # `use_class_suffix` and `use_class_prefix` report nothing until configured:
   # they enforce your naming convention, not a built-in one. `package:` is

@@ -53,7 +53,7 @@ A `flatMap` whose step genuinely returns a `TaskEither` is correct as written an
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
 `prefer_chain_either: true`.
 
 To turn it off:

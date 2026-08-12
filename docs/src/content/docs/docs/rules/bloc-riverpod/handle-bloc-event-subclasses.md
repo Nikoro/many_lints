@@ -60,7 +60,7 @@ Handlers are found by scanning the class for `on<E>(...)` calls, so a registrati
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: all`. Add it to `preset: core` with
+`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
 `handle_bloc_event_subclasses: true`.
 
 To turn it off:
