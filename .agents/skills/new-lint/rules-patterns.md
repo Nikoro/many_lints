@@ -977,6 +977,43 @@ FunctionBody? maybeHookBuilderBody(InstanceCreationExpression node)
 
 ## 🔧 Analyzer 14.1.0 Specific APIs
 
+### Dot shorthands: resolution decides the node type
+
+Dart 3.10 dot shorthands (`.new(...)`, `.zero`) come in three node types, all
+exported from `package:analyzer/dart/ast/ast.dart` and all registrable:
+
+| Node | Example | Registry method |
+|------|---------|-----------------|
+| `DotShorthandConstructorInvocation` | `.new(x)`, `.filled(3, 0)`, factory `.of(x)` | `addDotShorthandConstructorInvocation` |
+| `DotShorthandInvocation` | *static method* `.make(x)` | `addDotShorthandInvocation` |
+| `DotShorthandPropertyAccess` | `.zero`, `.red` | `addDotShorthandPropertyAccess` |
+
+**⚠️ The split between the two invocation forms is a property of *resolution*,
+not of syntax.** Before resolution — which is what `parseString` gives you, and
+what an AST dump in a failing test shows — **every** shorthand invocation is a
+`DotShorthandInvocation`, including `.new(...)`. Only after resolution does a
+constructor (or factory) become a `DotShorthandConstructorInvocation`, while a
+static method stays a `DotShorthandInvocation`.
+
+So a rule that registers only the constructor form silently misses every static
+method shorthand, and one written from a parse-time AST dump may register only
+`DotShorthandInvocation` and then never fire on the constructors it targets.
+**Register both invocation forms** unless you deliberately want just one:
+
+```dart
+registry.addDotShorthandConstructorInvocation(this, visitor);
+registry.addDotShorthandInvocation(this, visitor);
+```
+
+Only the two invocation forms carry an `argumentList`; a
+`DotShorthandPropertyAccess` cannot contain anything, so it is only ever a
+nested node.
+
+No `FeatureSet` gate is needed for these rules — the nodes cannot parse at all
+in a pre-3.10 language version, so the visitor simply never runs there.
+
+**Reference:** [avoid_nested_shorthands.dart](../../../lib/src/rules/avoid_nested_shorthands.dart)
+
 ### Gating a rule on a Dart language feature (analyzer 14+)
 
 When a lint suggests syntax that only exists from a certain language version

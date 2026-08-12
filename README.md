@@ -58,8 +58,8 @@ For local development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 |--------|-------|----------|
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
 | `core` | 37 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
-| `recommended` | 98 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
-| `opinionated` | 162 | `recommended` plus this package's own style preferences. |
+| `recommended` | 99 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
+| `opinionated` | 163 | `recommended` plus this package's own style preferences. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml` includes `core.yaml`. `core` and `recommended` deliberately exclude anything that imposes an architecture, a naming scheme, or a contested style choice.
 
@@ -142,7 +142,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-179 lints with 96 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
+180 lints with 96 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
@@ -160,7 +160,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 | [Pattern Matching](https://nikoro.github.io/many_lints/docs/rules/pattern-matching/) | 6 | Dart pattern matching best practices |
 | [Type Annotations](https://nikoro.github.io/many_lints/docs/rules/type-annotations/) | 5 | Type annotation conventions |
 | [Code Organization](https://nikoro.github.io/many_lints/docs/rules/code-organization/) | 3 | Code structure and organization |
-| [Shorthand Patterns](https://nikoro.github.io/many_lints/docs/rules/shorthand-patterns/) | 4 | Dot shorthand syntax patterns |
+| [Shorthand Patterns](https://nikoro.github.io/many_lints/docs/rules/shorthand-patterns/) | 5 | Dot shorthand syntax patterns |
 | [Hook Rules](https://nikoro.github.io/many_lints/docs/rules/hook-rules/) | 4 | Flutter Hooks conventions |
 | [Testing Rules](https://nikoro.github.io/many_lints/docs/rules/testing-rules/) | 3 | Testing best practices and matchers |
 | [Resource Management](https://nikoro.github.io/many_lints/docs/rules/resource-management/) | 4 | Resource cleanup and disposal |

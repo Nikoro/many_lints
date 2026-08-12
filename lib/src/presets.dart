@@ -102,6 +102,7 @@ const _recommendedOnlyRules = <String>{
   'avoid_missing_completer_stack_trace',
   'avoid_misused_hooks',
   'avoid_mounted_in_setstate',
+  'avoid_nested_shorthands',
   'avoid_not_encodable_in_to_json',
   'avoid_notifier_constructors',
   'avoid_only_rethrow',

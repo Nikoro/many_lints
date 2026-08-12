@@ -248,6 +248,7 @@ const CATEGORIES = {
   'shorthand-patterns': {
     label: 'Shorthand Patterns',
     rules: [
+      'avoid_nested_shorthands',
       'prefer_returning_shorthands',
       'prefer_shorthands_with_constructors',
       'prefer_shorthands_with_enums',

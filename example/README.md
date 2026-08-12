@@ -29,7 +29,7 @@ run `dart analyze` again to see the two diagnostics come back.
 
 Note that `avoid_commented_out_code` *does* still report in that file. Each `exclude`
 sits under one rule and affects only that rule — excluding a path from
-`avoid_only_rethrow` says nothing about the other 178 rules. To skip a path for several
+`avoid_only_rethrow` says nothing about the other 179 rules. To skip a path for several
 rules, give each of them its own `exclude`.
 
 Paths are globs, but a plain path works too — `lib/generated/foo.dart` is a valid
@@ -96,6 +96,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_misused_test_matchers` | Incompatible matcher usage with the actual value type | — |
 | `avoid_mounted_in_setstate` | Checking `mounted` inside `setState` is too late | — |
 | `avoid_nested_futures` | Don't declare `Future<Future<T>>` | — |
+| `avoid_nested_shorthands` | A dot shorthand nested inside another leaves no type name | — |
 | `avoid_non_null_assertion` | Don't assert away null with the `!` operator | — |
 | `avoid_not_encodable_in_to_json` | `toJson` map holds a value `jsonEncode` cannot serialize | — |
 | `avoid_notifier_constructors` | Avoid constructors with logic in Notifier classes | Yes |

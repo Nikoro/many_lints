@@ -72,6 +72,7 @@ import 'package:many_lints/src/rules/avoid_collapsible_if.dart';
 import 'package:many_lints/src/rules/avoid_default_tostring.dart';
 import 'package:many_lints/src/rules/avoid_duplicate_collection_elements.dart';
 import 'package:many_lints/src/rules/avoid_nested_do_notation.dart';
+import 'package:many_lints/src/rules/avoid_nested_shorthands.dart';
 import 'package:many_lints/src/rules/avoid_nested_futures.dart';
 import 'package:many_lints/src/rules/avoid_non_null_assertion.dart';
 import 'package:many_lints/src/rules/prefer_switch_with_enums.dart';
@@ -436,6 +437,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidGetOrElseSwallowingFailure());
     _registerWarningRule(registry, AvoidDollarOutsideDoFrame());
     _registerWarningRule(registry, AvoidNestedDoNotation());
+    _registerWarningRule(registry, AvoidNestedShorthands());
     _registerWarningRule(registry, AvoidRemovedFpdartApi());
     _registerWarningRule(registry, AvoidNestedFutures());
     _registerWarningRule(registry, AvoidNonNullAssertion());
