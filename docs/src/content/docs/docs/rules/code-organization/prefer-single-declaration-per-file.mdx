@@ -1,0 +1,207 @@
+---
+title: prefer_single_declaration_per_file
+description: "Keep one top-level declaration per file, with per-type budgets"
+sidebar:
+  label: prefer_single_declaration_per_file
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Organization</span>
+
+This rule warns when a file declares more than one top-level declaration. Classes, mixins, enums, extensions and extension types are counted; the first is fine, and the second and any subsequent ones report. Private declarations are skipped by default.
+
+Through the `groups:` option the same rule also covers the type-specific conventions — one bloc per file, one notifier per file — with each group carrying its own budget, so a file holding one of each satisfies both.
+
+## Why use this rule
+
+A file holding several unrelated declarations is harder to navigate, harder to review, and makes the file system a poor index of the codebase. Splitting them keeps imports honest — a file pulls in exactly the declaration it needs — and makes each type independently testable.
+
+The type-scoped form matters most for state management, where a file holding two blocs or two notifiers usually means two features have quietly grown together.
+
+**See also:** [Effective Dart: libraries](https://dart.dev/effective-dart/usage#libraries), [Flutter architecture recommendations](https://docs.flutter.dev/app-architecture/recommendations)
+
+## Don't
+
+```dart
+// user.dart — three unrelated declarations in one file
+class User {}
+
+// This triggers the lint
+class UserRepository {}
+
+// So does this
+enum UserRole { admin, guest }
+```
+
+## Do
+
+```dart
+// user.dart — one declaration per file
+class User {}
+
+// Private helpers stay put: they are invisible outside the file,
+// so they cannot be what forces a reader to open it.
+class _UserCache {}
+```
+
+```dart
+// user_repository.dart
+class UserRepository {}
+```
+
+## Turning this rule off
+
+This rule is in **no preset** — it imposes a file-organization convention, so it
+only runs when a project asks for it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_single_declaration_per_file: true
+```
+
+To turn it off again:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_single_declaration_per_file: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_single_declaration_per_file:
+      kinds: [class, mixin]
+      ignore_private: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_single_declaration_per_file:
+    kinds: [class, mixin]
+    ignore_private: false
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `kinds` | list | all five kinds | Which declaration kinds count: `class`, `mixin`, `enum`, `extension`, `extension_type` |
+| `types` | list | *(empty)* | Narrow to subtypes of these base types. Empty counts every declaration of the configured kinds |
+| `ignore_private` | bool | `true` | Skip declarations whose name starts with `_` |
+| `ignore_visible_for_testing` | bool | `false` | Skip declarations annotated `@visibleForTesting` |
+| `groups` | list | *(one implicit group)* | Independently counted groups; see below |
+
+### Narrowing to one type
+
+`types:` turns the rule into the type-specific convention. Matching walks the
+whole supertype hierarchy, so an indirect subclass counts too:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_single_declaration_per_file:
+      types: [Notifier, AsyncNotifier]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_single_declaration_per_file:
+    types: [Notifier, AsyncNotifier]
+```
+
+</TabItem>
+</Tabs>
+
+With this, a file may hold as many plain helper classes as it likes, but only
+one notifier.
+
+### Independent budgets with `groups`
+
+Each group in `groups:` is counted separately, so several conventions coexist
+without interfering. A file holding one bloc **and** one notifier satisfies
+both budgets — folding them into a single count would report exactly the layout
+the project asked for.
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_single_declaration_per_file:
+      groups:
+        - types: [Bloc, Cubit]
+          message: 'One bloc per file.'
+        - types: [Notifier, AsyncNotifier]
+          message: 'One notifier per file.'
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_single_declaration_per_file:
+    groups:
+      - types: [Bloc, Cubit]
+        message: 'One bloc per file.'
+      - types: [Notifier, AsyncNotifier]
+        message: 'One notifier per file.'
+```
+
+</TabItem>
+</Tabs>
+
+Each group accepts `kinds`, `types`, `ignore_private`,
+`ignore_visible_for_testing` and its own `message`. Any of those written at the
+top level become the groups' defaults, so a shared setting is stated once
+rather than repeated:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_single_declaration_per_file:
+    ignore_private: false      # applies to both groups below
+    groups:
+      - types: [Bloc]
+      - types: [Notifier]
+        ignore_private: true   # ...unless a group overrides it
+```
+
+A declaration matching several groups is counted by the **first** matching
+group only, so overlapping groups never report the same declaration twice.
+
+:::note
+`types:` matches by base type, and the check is reflexive — a file that declares
+an abstract base *and* a subclass of it holds two members of that group. Declare
+shared base types in their own file, which this rule is asking for anyway.
+:::

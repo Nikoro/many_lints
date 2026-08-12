@@ -354,6 +354,79 @@ Reach into `config.options` directly only for a shape none of these covers — a
 
 **Nested YAML survives parsing.** `RuleConfig._fromYaml` stores `options[name] = value.value`, which preserves nested `YamlMap`/`YamlList` structure (verified empirically). A list-of-maps option therefore requires only a **new typed accessor**, not a parser change. `entriesOption(key)` is that accessor: it returns `List<Map<String, Object?>>`, dropping non-map items and non-string keys so a malformed entry costs the user that entry and nothing else. `class_affix_validator.dart` is the worked example, and it is the same shape the `avoid_banned_*` family needs.
 
+## Recipe: Grouped Entries With Independent Budgets
+
+`prefer_single_declaration_per_file` generalises two related rules —
+`prefer-single-declaration-per-file` and the Riverpod-specific
+`prefer-single-notifier-per-file` — into one rule, because the second is only
+the first narrowed to a base type. `lib/src/declaration_group.dart` holds the
+shared parser.
+
+The shape is worth reusing whenever a rule enforces a *per-category limit*
+rather than a single global one.
+
+### Each group carries its own counter
+
+The reason `groups:` exists rather than a flat `types:` list: a project wanting
+"one bloc per file" *and* "one notifier per file" is stating two separate
+limits. Folding them into one count reports a file holding one of each — which
+is precisely the layout the project asked for.
+
+```dart
+final groups = readDeclarationGroups(rule.config);
+final seen = List.filled(groups.length, 0);   // one counter per group
+```
+
+### Flat keys are the same feature, less verbosely
+
+Accept the group fields at the top level too, and treat them as the groups'
+defaults:
+
+```yaml
+rules:
+  my_rule:
+    ignore_private: false      # applies to every group below
+    groups:
+      - types: [Bloc]
+      - types: [Notifier]
+        ignore_private: true   # ...unless a group overrides it
+```
+
+This buys two things: the simple case (`types: [Notifier]`) never has to learn
+the list syntax, and a setting shared by every group is stated once instead of
+restated per group — the same argument that motivates `additional_<plural>`.
+
+Use `entry.containsKey('types')` rather than a null check when deciding whether
+a group overrides an inherited value, or an explicit empty list (`types: []`,
+meaning "no narrowing") silently inherits instead.
+
+### Count a declaration in the first matching group only
+
+Overlapping groups are easy to configure by accident (`types: [Bloc]` beside
+`types: [BlocBase]`). Counting a declaration in every group it matches reports
+one declaration several times. Break after the first match, and document that
+the *first listed* group wins.
+
+### A typo must not widen a group
+
+`kinds: [nonsense]` yielding an empty set has to mean "drop this group", not
+"fall back to the defaults" — silently counting declarations the project
+excluded is the worse failure. But dropping *every* group must then fall back
+to the default group rather than disabling the rule, since "all groups
+malformed" is indistinguishable from "no groups written". Route both the
+flat and the grouped path through one `defaultGroup()` helper so the two
+fallbacks cannot drift.
+
+### `isSuperOf` reflexivity bites the fixture, not just the rule
+
+The gotcha documented under `use_class_suffix` reappears here in test design: a
+fixture declaring `abstract class Store {}` beside `class CounterStore extends
+Store {}` puts **two** members in the `Store` group, so a test asserting
+silence fails for a reason that has nothing to do with the option. Put shared
+base types in their own library (`harness.addLibrary`, added for exactly this).
+Whether reflexivity is *correct* is per rule — here it is, since a file
+declaring a base plus a subclass really does hold two of them.
+
 ## Recipe: A Policy Rule That Ships With No Policy
 
 Six rules (`avoid_banned_imports` / `_exports` / `_types` / `_names` /

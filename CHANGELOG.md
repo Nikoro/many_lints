@@ -79,6 +79,30 @@
 - `never_discard_build_context` warns when a `BuildContext` parameter is named with a wildcard (`_`, `__`). Discarding it does not remove the need for a context — the body falls back to an outer one, which sits higher in the tree, so `Theme.of`/`MediaQuery.of`/`Navigator.of` resolve against a different subtree. Ships a quick fix that names the parameter `context`, withheld when that name is already in scope and renaming would shadow it.
 - `use_class_suffix` and `use_class_prefix`, each taking an `entries:` list of `{type, suffix|prefix, package?, ignore_private?}`. A base type matches whether it is reached by `extends`, `implements`, `with`, or an indirect ancestor, and `package:` is optional — omit it to match a type of that name from any library. Both ship a quick fix that renames the class and any same-named unnamed constructor.
 - A rule-wide `ignore_private` option on both rules, overridable per entry.
+- `prefer_single_declaration_per_file` warns when a file declares more than one top-level declaration. Classes, mixins, enums, extensions and extension types count; private declarations are skipped by default. In no preset — it imposes a file-organization convention, so it runs only when enabled by name.
+
+  Configurable along two axes. `kinds:` picks which declaration kinds count, and `types:` narrows to subtypes of named base types, which turns the rule into the type-specific convention:
+
+  ```yaml
+  # many_lints.yaml
+  rules:
+    prefer_single_declaration_per_file:
+      types: [Notifier, AsyncNotifier]
+  ```
+
+  `groups:` goes further and gives each group its own one-per-file budget, so several conventions coexist without interfering — a file holding one bloc *and* one notifier satisfies both:
+
+  ```yaml
+  rules:
+    prefer_single_declaration_per_file:
+      groups:
+        - types: [Bloc, Cubit]
+          message: 'One bloc per file.'
+        - types: [Notifier]
+          message: 'One notifier per file.'
+  ```
+
+  Each group also accepts `kinds`, `ignore_private`, `ignore_visible_for_testing` and its own `message`; any written at the top level become the groups' defaults. A declaration matching several groups is counted by the first one only.
 
 ### Fixed
 

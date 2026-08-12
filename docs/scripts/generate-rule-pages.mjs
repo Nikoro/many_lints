@@ -243,6 +243,7 @@ const CATEGORIES = {
       'prefer_abstract_final_static_class',
       'avoid_generics_shadowing',
       'prefer_for_loop_in_children',
+      'prefer_single_declaration_per_file',
     ],
   },
   'shorthand-patterns': {

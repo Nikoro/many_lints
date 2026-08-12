@@ -181,6 +181,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `prefer_shorthands_with_static_fields` | Dot shorthands instead of explicit class prefixes | Yes |
 | `prefer_simpler_patterns_null_check` | Simpler null-check patterns | Yes |
 | `prefer_single_setstate` | Merge multiple `setState` calls | Yes |
+| `prefer_single_declaration_per_file` | One top-level declaration per file, with per-type budgets | — |
 | `prefer_single_widget_per_file` | One public widget per file | — |
 | `prefer_sized_box_square` | `SizedBox.square` instead of equal width/height | Yes |
 | `prefer_spacing` | `spacing` argument instead of `SizedBox` | — |

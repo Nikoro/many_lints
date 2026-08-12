@@ -370,6 +370,34 @@ class PublicWidget extends Widget {}
 class TestWidget extends Widget {}
 ''';
 
+/// Two public classes and an enum — pure Dart, so the default group of
+/// `prefer_single_declaration_per_file` fires without any package mocking.
+const _twoDeclarationsCode = '''
+class First {}
+class Second {}
+enum Third { one }
+''';
+
+/// One class per "group" once `groups:` narrows by base type: a file holding
+/// one of each is the layout a grouped configuration asks for.
+///
+/// The base types are declared in a separate part-free library on purpose.
+/// `TypeChecker.isSuperOf` is reflexive, so declaring `Store` beside
+/// `CounterStore` would put two members in the `Store` group and report — the
+/// same gotcha the config cookbook documents for `use_class_suffix`.
+const _oneOfEachBaseCode = '''
+import 'bases.dart';
+
+class CounterStore extends Store {}
+class CounterController extends Controller {}
+''';
+
+/// The base types [_oneOfEachBaseCode] extends, kept in their own library.
+const _baseTypesCode = '''
+abstract class Store {}
+abstract class Controller {}
+''';
+
 const _spacingChildrenCode = '''
 import 'package:flutter/widgets.dart';
 
@@ -1104,6 +1132,122 @@ rules:
           errors.map((e) => e.code),
           contains('check_for_equals_in_render_object_setters'),
         );
+      });
+    });
+
+    group('prefer_single_declaration_per_file groups', () {
+      // Control: without this, every "silenced" assertion below could pass
+      // because the rule never ran at all.
+      test('reports the second declaration when merely enabled', () async {
+        final errors = await harness.analyze(
+          _twoDeclarationsCode,
+          config: '''
+rules:
+  prefer_single_declaration_per_file: true
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('prefer_single_declaration_per_file'),
+        );
+      });
+
+      test('kinds narrows which declarations count', () async {
+        final errors = await harness.analyze(
+          '''
+class First {}
+enum Second { one }
+''',
+          config: '''
+rules:
+  prefer_single_declaration_per_file:
+    kinds: [class]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('prefer_single_declaration_per_file')),
+        );
+      });
+
+      // Asymmetric partner to the test above: the same option still reports
+      // when the file holds two declarations of the configured kind.
+      test('kinds still reports two of the configured kind', () async {
+        final errors = await harness.analyze(
+          _twoDeclarationsCode,
+          config: '''
+rules:
+  prefer_single_declaration_per_file:
+    kinds: [class]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('prefer_single_declaration_per_file'),
+        );
+      });
+
+      test('groups give each type its own budget', () async {
+        harness.addLibrary('bases.dart', _baseTypesCode);
+
+        final errors = await harness.analyze(
+          _oneOfEachBaseCode,
+          config: '''
+rules:
+  prefer_single_declaration_per_file:
+    groups:
+      - types: [Store]
+      - types: [Controller]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('prefer_single_declaration_per_file')),
+        );
+      });
+
+      // Asymmetric partner: one group covering both base types collapses the
+      // budgets, so the same file now reports.
+      test('a single group covering both types reports', () async {
+        harness.addLibrary('bases.dart', _baseTypesCode);
+
+        final errors = await harness.analyze(
+          _oneOfEachBaseCode,
+          config: '''
+rules:
+  prefer_single_declaration_per_file:
+    groups:
+      - types: [Store, Controller]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('prefer_single_declaration_per_file'),
+        );
+      });
+
+      test("a group's message is appended to its diagnostics", () async {
+        final errors = await harness.analyze(
+          _twoDeclarationsCode,
+          config: '''
+rules:
+  prefer_single_declaration_per_file:
+    groups:
+      - kinds: [class]
+        message: 'One class per file, please.'
+''',
+        );
+
+        final message = errors
+            .firstWhere((e) => e.code == 'prefer_single_declaration_per_file')
+            .message;
+
+        expect(message, contains('One class per file, please.'));
       });
     });
 
@@ -2125,6 +2269,14 @@ T useState<T>(T value) => value;
 }
 ''');
   }
+
+  /// Writes an extra library beside the file under analysis.
+  ///
+  /// Needed when a rule's option refers to a base type that must *not* be
+  /// declared in the analyzed file — `TypeChecker.isSuperOf` is reflexive, so
+  /// a locally declared base counts as its own subtype.
+  void addLibrary(String fileName, String content) =>
+      newFile(join(packagePath, 'lib', fileName), content);
 
   Future<List<protocol.AnalysisError>> analyze(
     String content, {

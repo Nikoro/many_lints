@@ -361,6 +361,7 @@ options never changes results until you set one.
 | [`prefer_private_named_parameters`](/many_lints/docs/rules/code-quality/prefer-private-named-parameters/) | `only_same_name` |
 | [`prefer_safe_collection_access`](/many_lints/docs/rules/fpdart/prefer-safe-collection-access/) | `report_outside_pipelines`, `accessors`, `additional_accessors` |
 | [`prefer_shorthands_with_constructors`](/many_lints/docs/rules/shorthand-patterns/prefer-shorthands-with-constructors/) | `classes`, `additional_classes` |
+| [`prefer_single_declaration_per_file`](/many_lints/docs/rules/code-organization/prefer-single-declaration-per-file/) | `kinds`, `types`, `ignore_private`, `ignore_visible_for_testing`, `groups` |
 | [`prefer_single_setstate`](/many_lints/docs/rules/code-quality/prefer-single-setstate/) | `state_base_classes` |
 | [`prefer_single_widget_per_file`](/many_lints/docs/rules/widget-best-practices/prefer-single-widget-per-file/) | `ignore_private_widgets`, `ignore_visible_for_testing` |
 | [`prefer_spacing`](/many_lints/docs/rules/widget-best-practices/prefer-spacing/) | `min_children` |

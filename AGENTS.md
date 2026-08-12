@@ -32,6 +32,7 @@ lib/
     flutter_type_checkers.dart  # Shared Flutter widget TypeChecker constants
     bloc_type_checkers.dart     # Shared Bloc/Cubit TypeChecker constants
     hook_type_checkers.dart     # Shared flutter_hooks TypeChecker constants
+    declaration_group.dart      # Per-category file budgets (kinds/types/groups config)
     state_class_pairing.dart    # Match a StatefulWidget to its State class
     set_state_collection.dart   # SetStateCollector (shared rule + fix visitor)
     async_guard_utils.dart # Async helpers (containsAwait, isMountedGuardWithReturn)
@@ -163,6 +164,7 @@ disabled rule a null-listener reporter. Resolution order in
 - `lib/src/hook_type_checkers.dart` - `hookWidgetChecker` (is a hook *widget*) vs `hookScopeChecker` (may a hook be called here — adds `HookState`)
 - `lib/src/fpdart_type_checkers.dart` - Shared fpdart TypeChecker constants. Each pins the **declaring** library (`package:fpdart/src/task_either.dart#TaskEither`), never the `fpdart.dart` barrel — `fromUrl` matches where a type is declared, not where it was imported from. `lazyFpdartChecker` (Task/TaskEither/IO/IOEither/TaskOption/IOOption) deliberately excludes `Either`/`Option`: those are already-computed values, so discarding one wastes a result but skips no effect
 - `lib/src/fpdart_do_notation.dart` - `DoInvocation.tryRead()` + `DoBodyVisitor`, shared by the four Do-notation rules. `Do` resolves to an **`InstanceCreationExpression`** (a named constructor), even though it *parses* as a `MethodInvocation`; `$` is an ordinary formal parameter, so rules read its declared name rather than hardcoding `$`, and a `$(...)` call is a `FunctionExpressionInvocation` when resolved. `DoBodyVisitor` stops at a nested `Do` so one mistake is not reported once per enclosing level
+- `lib/src/declaration_group.dart` - `readDeclarationGroups()` + `DeclarationKind`/`DeclarationGroup`. Backs `prefer_single_declaration_per_file`, which subsumes the general *and* Riverpod-specific \"single X per file\" cases: each configured group holds its own one-per-file budget, so one bloc plus one notifier passes. Flat `kinds:`/`types:` are read as the groups' defaults; a declaration counts in the **first** matching group only
 - `lib/src/state_class_pairing.dart` - `findStateClassFor()` matches a StatefulWidget to its State via the `extends State<Widget>` type argument
 - `lib/src/set_state_collection.dart` - `SetStateCollector`, shared by the prefer_single_setstate rule and its fix
 - `lib/src/async_guard_utils.dart` - Async helpers (containsAwait, isMountedGuardWithReturn)

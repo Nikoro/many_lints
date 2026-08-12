@@ -50,6 +50,25 @@ rules:
     include:
       - lib/avoid_ad_hoc_left_type_example.dart
 
+  # A file-organization convention, so it sits outside every preset. Scoped
+  # with `include:` to its own example: this example package deliberately keeps
+  # several declarations per file to document each rule in one place, so the
+  # rule would otherwise report from nearly every file here.
+  #
+  # `groups:` is what lets one rule cover the type-specific conventions too —
+  # each group carries its own budget, so the example file's one bloc and one
+  # notifier do not count against each other.
+  prefer_single_declaration_per_file:
+    include:
+      - lib/prefer_single_declaration_per_file_example.dart
+    groups:
+      - kinds: [class]
+        types: [Bloc, Cubit]
+        message: 'One bloc per file.'
+      - kinds: [class]
+        types: [Notifier]
+        message: 'One notifier per file.'
+
   # `use_class_suffix` and `use_class_prefix` report nothing until configured:
   # they enforce your naming convention, not a built-in one. `package:` is
   # optional — omit it to match a type of that name from any library,

@@ -165,6 +165,7 @@ import 'package:many_lints/src/rules/prefer_returning_shorthands.dart';
 import 'package:many_lints/src/rules/prefer_safe_collection_access.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_constructors.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_enums.dart';
+import 'package:many_lints/src/rules/prefer_single_declaration_per_file.dart';
 import 'package:many_lints/src/rules/prefer_single_widget_per_file.dart';
 import 'package:many_lints/src/rules/prefer_spacing.dart';
 import 'package:many_lints/src/rules/prefer_shorthands_with_static_fields.dart';
@@ -401,6 +402,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, BannedUsage());
     _registerWarningRule(registry, UseDedicatedMediaQueryMethods());
     _registerWarningRule(registry, UseGap());
+    _registerWarningRule(registry, PreferSingleDeclarationPerFile());
     _registerWarningRule(registry, PreferSingleWidgetPerFile());
     _registerWarningRule(registry, PreferSpacing());
     _registerWarningRule(registry, PreferTestMatchers());
