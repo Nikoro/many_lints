@@ -27,8 +27,10 @@ DartType? inferContextType(Expression node) {
     AssignmentExpression(:final leftHandSide) => leftHandSide.staticType,
 
     // Named argument: `argument: value`
-    NamedArgument(:final correspondingParameter) =>
-      correspondingParameter?.type,
+    NamedArgument(:final correspondingParameter) => resolveParameterContextType(
+      correspondingParameter,
+      parent,
+    ),
 
     // Default value clause: `{Type value = defaultValue}`
     FormalParameterDefaultClause(parent: FormalParameter(:final type?)) =>
@@ -67,6 +69,67 @@ DartType? inferContextType(Expression node) {
 
     _ => null,
   };
+}
+
+/// Resolves the context type contributed by a formal parameter.
+///
+/// Returns `null` when the parameter's *declared* type mentions a type
+/// variable, because then the type the analyzer reports has been inferred
+/// upward from this very argument rather than imposed on it.
+/// `Box<T>({List<T> items})` invoked as `Box(items: [MyEnum.first])` reports
+/// `List<MyEnum>` only because `T` was solved from the element, so a dot
+/// shorthand there would have no context type to resolve against and would
+/// not compile.
+DartType? resolveParameterContextType(
+  FormalParameterElement? parameter,
+  AstNode argument,
+) {
+  if (parameter == null) return null;
+
+  // A type variable that the *user* pinned with an explicit type argument is a
+  // real context: `Box<MyEnum>(items: [.first])` compiles. Only an inferred
+  // one is circular.
+  if (_mentionsTypeParameter(parameter.baseElement.type) &&
+      !_hasExplicitTypeArguments(argument)) {
+    return null;
+  }
+
+  return parameter.type;
+}
+
+/// Whether the invocation enclosing [argument] pins its type arguments
+/// explicitly rather than leaving them to inference.
+bool _hasExplicitTypeArguments(AstNode argument) {
+  final invocation = argument.parent?.parent;
+
+  return switch (invocation) {
+    MethodInvocation(:final typeArguments) => typeArguments != null,
+    FunctionExpressionInvocation(:final typeArguments) => typeArguments != null,
+    InstanceCreationExpression(:final constructorName) =>
+      constructorName.type.typeArguments != null,
+    _ => false,
+  };
+}
+
+/// Whether [type] mentions a type variable anywhere in its structure.
+bool _mentionsTypeParameter(DartType type) {
+  if (type is TypeParameterType) return true;
+
+  if (type is InterfaceType) {
+    return type.typeArguments.any(_mentionsTypeParameter);
+  }
+
+  if (type is FunctionType) {
+    return _mentionsTypeParameter(type.returnType) ||
+        type.formalParameters.any((p) => _mentionsTypeParameter(p.type));
+  }
+
+  if (type is RecordType) {
+    return type.positionalFields.any((f) => _mentionsTypeParameter(f.type)) ||
+        type.namedFields.any((f) => _mentionsTypeParameter(f.type));
+  }
+
+  return false;
 }
 
 /// Resolves the element type from a collection literal.

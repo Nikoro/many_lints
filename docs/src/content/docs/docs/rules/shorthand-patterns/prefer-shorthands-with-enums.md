@@ -93,7 +93,7 @@ the elements themselves:
 // Not reported: `equals(Object? expected)` gives the list no context type.
 expect(rankings, equals([LogLevel.debug]));
 
-// Writing `.ligex` here would fail to compile:
+// Writing `.debug` here would fail to compile:
 //   error: A dot shorthand can't be used where there is no context type.
 //          (dot_shorthand_missing_context)
 ```
@@ -108,6 +108,24 @@ takes(items: [.debug]);                  // reported (typed named argument)
 takes(<LogLevel>[.debug]);                 // reported (explicit type argument)
 
 final Map<LogLevel, String> m = {.debug: 'a'};  // key half has context
+```
+
+The same applies to a generic parameter whose type argument is solved *from* the
+argument. The analyzer reports `List<LogLevel>` there, but only because it
+inferred `T` from the element itself — so there is no downward context and the
+shorthand would not compile:
+
+```dart
+class Box<T> {
+  const Box({required this.items});
+  final List<T> items;
+}
+
+// Not reported: `T` is inferred from the element, so there is no context type.
+Box(items: const [LogLevel.debug]);
+
+// Reported: the type argument is pinned, so the parameter imposes a context.
+Box<LogLevel>(items: const [.debug]);
 ```
 
 ## Configuration

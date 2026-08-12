@@ -396,6 +396,55 @@ void fn() {
     );
   }
 
+  Future<void> test_genericParameter_inferredFromArgument_notReported() async {
+    // `T` is solved *from* the element, so `List<MyEnum>` is an upward
+    // inference, not a context type. `Box(items: const [.first])` does not
+    // compile.
+    await assertNoDiagnostics(r'''
+enum MyEnum { first, second }
+
+class Box<T> {
+  const Box({required this.items});
+  final List<T> items;
+}
+
+void fn() {
+  Box(items: const [MyEnum.first]);
+}
+''');
+  }
+
+  Future<void> test_genericParameter_bareTypeVariable_notReported() async {
+    await assertNoDiagnostics(r'''
+enum MyEnum { first, second }
+
+void takes<T>({required T value}) {}
+
+void fn() {
+  takes(value: MyEnum.first);
+}
+''');
+  }
+
+  Future<void> test_genericParameter_explicitTypeArgument() async {
+    // The user pinned `T`, so the parameter really does impose a context type.
+    await assertDiagnostics(
+      r'''
+enum MyEnum { first, second }
+
+class Box<T> {
+  const Box({required this.items});
+  final List<T> items;
+}
+
+void fn() {
+  Box<MyEnum>(items: const [MyEnum.first]);
+}
+''',
+      [lint(148, 12)],
+    );
+  }
+
   Future<void> test_mapLiteral_keyPosition() async {
     await assertDiagnostics(
       r'''
