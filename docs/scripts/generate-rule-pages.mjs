@@ -293,6 +293,7 @@ const CATEGORIES = {
       'avoid_equal_expressions',
       'prefer_compute_over_isolate_run',
       'prefer_immediate_return',
+      'prefer_primary_constructors',
       'prefer_private_named_parameters',
       'prefer_single_setstate',
     ],

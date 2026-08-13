@@ -215,6 +215,7 @@ const _opinionatedOnlyRules = <String>{
   'prefer_multi_bloc_provider',
   'prefer_overriding_parent_equality',
   'prefer_padding_over_container',
+  'prefer_primary_constructors',
   'prefer_private_named_parameters',
   'prefer_returning_shorthands',
   'prefer_shorthands_with_constructors',

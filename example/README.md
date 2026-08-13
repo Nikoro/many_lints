@@ -173,6 +173,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `prefer_multi_bloc_provider` | `MultiBlocProvider` instead of nested `BlocProvider`s | Yes |
 | `prefer_overriding_parent_equality` | Parent overrides `==`/`hashCode` but subclass does not | Yes |
 | `prefer_padding_over_container` | `Padding` over `Container` with only margin | Yes |
+| `prefer_primary_constructors` | Final fields plus a field-assigning constructor could be a primary constructor | Yes |
 | `prefer_private_named_parameters` | Prefer private named parameters over initializer-list boilerplate | Yes |
 | `prefer_return_await` | Missing `await` on returned `Future` in `try-catch` | Yes |
 | `prefer_returning_shorthands` | Dot shorthands when instance type matches return type | Yes |

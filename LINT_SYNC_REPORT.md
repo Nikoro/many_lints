@@ -99,11 +99,21 @@ collections of the same type having no deep equality), `prefer_type_over_var`
 whitespace → `SizedBox`, and empty-`Container` cases; the four parameters ours
 covers are untouched by any SDK rule).
 
+### Resolved 2026-08-13 (Dart 3.13)
+
+- **`prefer_primary_constructors`** vs the six lints Dart 3.13 added. Checked
+  empirically, not from the docs: the SDK's `use_declaring_parameters` visits
+  `PrimaryConstructorDeclaration` nodes **only**, so it never fires on a class
+  that has yet to adopt one — it polishes already-migrated classes, while ours
+  suggests migrating. No overlap.
+
+  `unnecessary_type_name_in_constructor` *does* fire on the same legacy
+  classes, but suggests the weaker `new(this.x)` form rather than collapsing
+  the class; our docs page tells users adopting our rule to turn that one off.
+  `prefer_private_named_parameters` remains without a direct SDK counterpart.
+
 ## Watch (SDK rule still experimental — no action this cycle)
 
-- **`prefer_private_named_parameters`** — no direct SDK counterpart, but
-  `use_primary_constructors` (`experimental`) moves into adjacent territory.
-  Already tracked in `TODO/prefer-primary-constructors-lint.md`.
 - **`prefer_type_over_var`** — SDK `var_with_no_type_annotation`
   (`experimental`) is the closest thing to a direct replacement. Re-check when
   it stabilises.

@@ -157,6 +157,7 @@ import 'package:many_lints/src/rules/prefer_iterable_of.dart';
 import 'package:many_lints/src/rules/prefer_explicit_function_type.dart';
 import 'package:many_lints/src/rules/prefer_overriding_parent_equality.dart';
 import 'package:many_lints/src/rules/prefer_padding_over_container.dart';
+import 'package:many_lints/src/rules/prefer_primary_constructors.dart';
 import 'package:many_lints/src/rules/prefer_private_named_parameters.dart';
 import 'package:many_lints/src/rules/prefer_return_await.dart';
 import 'package:many_lints/src/rules/proper_super_calls.dart';
@@ -267,6 +268,7 @@ import 'package:many_lints/src/fixes/prefer_constrained_box_over_container_fix.d
 import 'package:many_lints/src/fixes/prefer_explicit_function_type_fix.dart';
 import 'package:many_lints/src/fixes/prefer_overriding_parent_equality_fix.dart';
 import 'package:many_lints/src/fixes/prefer_padding_over_container_fix.dart';
+import 'package:many_lints/src/fixes/prefer_primary_constructors_fix.dart';
 import 'package:many_lints/src/fixes/prefer_private_named_parameters_fix.dart';
 import 'package:many_lints/src/fixes/prefer_return_await_fix.dart';
 import 'package:many_lints/src/fixes/prefer_theme_mode_getters_fix.dart';
@@ -373,6 +375,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, PreferExplicitFunctionType());
     _registerWarningRule(registry, PreferOverridingParentEquality());
     _registerWarningRule(registry, PreferPaddingOverContainer());
+    _registerWarningRule(registry, PreferPrimaryConstructors());
     _registerWarningRule(registry, PreferPrivateNamedParameters());
     _registerWarningRule(registry, PreferReturnAwait());
     _registerWarningRule(registry, PreferReturningShorthands());
@@ -609,6 +612,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       PreferPaddingOverContainer.code,
       PreferPaddingOverContainerFix.new,
+    );
+    registry.registerFixForRule(
+      PreferPrimaryConstructors.code,
+      PreferPrimaryConstructorsFix.new,
     );
     registry.registerFixForRule(
       PreferPrivateNamedParameters.code,

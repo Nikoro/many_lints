@@ -1039,6 +1039,51 @@ Tests can exercise the gate with a `// @dart=3.11` header line.
 
 **Reference:** [prefer_private_named_parameters.dart](../../../lib/src/rules/prefer_private_named_parameters.dart)
 
+### Primary constructors: the class-header AST (Dart 3.13+)
+
+`ClassDeclaration` has **no** `name` field. The name lives in `namePart`, a
+sealed `ClassNamePart` that is *either* the plain name *or* a
+`PrimaryConstructorDeclaration`:
+
+```dart
+// `class Point { ... }`             -> namePart is the plain name part
+// `class Point(final int x);`       -> namePart IS a PrimaryConstructorDeclaration
+if (node.namePart is PrimaryConstructorDeclaration) return; // already migrated
+```
+
+`PrimaryConstructorDeclaration` carries `constKeyword`, `constructorName`,
+`typeName`, `typeParameters` and **`formalParameters`** — note it is *not*
+`name`/`parameters`, which is the first guess and does not compile.
+
+The body is a sealed `ClassBody`: `EmptyClassBody` (`;`) or `BlockClassBody`
+(`{ ... }`, the only one carrying `.members`).
+
+**⚠️ `this.x` is a `FieldFormalParameter`, its own node type.** There is no
+`thisKeyword` getter on `RegularFormalParameter`. So "every parameter is an
+initializing formal" is a type test, which conveniently rejects a plain `int x`
+*and* a `super.x` at once:
+
+```dart
+for (final parameter in constructor.parameters.parameters) {
+  if (parameter is! FieldFormalParameter) return;    // rejects int x / super.x
+  if (parameter.functionTypedSuffix != null) return; // this.cb(int) has no spelling
+  final name = parameter.name.lexeme;                // non-nullable here
+}
+```
+
+Gate on `Feature.primary_constructors`. It is **stable in Dart 3.13** — the
+analyzer's own `src/dart/analysis/experiments.g.dart` records
+`experimentalReleaseVersion: 3.12.0` and `releaseVersion: 3.13.0`. That table is
+the authoritative check whenever release notes are ambiguous about a feature's
+status; prefer it over prose.
+
+**Const spelling:** `class const Point(final int x);` — `const` sits *after*
+`class`, on the header, not on a constructor. A plain primary constructor is
+**not** const, and the other plausible spellings (`const class C(...)`,
+`class C.const(...)`, `class C(...) const`) do not compile.
+
+**Reference:** [prefer_primary_constructors.dart](../../../lib/src/rules/prefer_primary_constructors.dart)
+
 ### Gating a rule on API existence (SDK-version-independent)
 
 When a lint suggests a member added in a newer Flutter/package version, check
