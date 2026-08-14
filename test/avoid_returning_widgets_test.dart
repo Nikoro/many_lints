@@ -186,4 +186,104 @@ class _MyWidgetState extends State<MyWidget> {
 String greet() => 'Hello';
 ''');
   }
+
+  // --- Tear-off exemption ---
+
+  Future<void> test_methodPassedAsBuilderCallback_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class Builder extends Widget {
+  const Builder({super.key, required this.builder});
+  final Widget Function(BuildContext) builder;
+}
+
+class MyWidget extends StatelessWidget {
+  const MyWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) => Builder(builder: _row);
+
+  Widget _row(BuildContext context) => Container();
+}
+''');
+  }
+
+  Future<void> test_topLevelFunctionPassedAsCallback_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+Widget row(BuildContext context) => Container();
+
+void use() {
+  final callback = row;
+}
+''');
+  }
+
+  /// A getter cannot be torn off, so a bare reference to one is the inline
+  /// build the rule targets rather than a callback handed to a builder.
+  Future<void> test_getterReferencedBare_stillLint() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+class MyWidget extends StatelessWidget {
+  const MyWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) => Container(child: _body);
+
+  Widget get _body => Container();
+}
+''',
+      [lint(204, 5)],
+    );
+  }
+
+  /// A method that is only ever called stays reported — the exemption is for
+  /// declarations handed off as values, not for every private method.
+  Future<void> test_methodCalledInline_lint() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+class MyWidget extends StatelessWidget {
+  const MyWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) => _row();
+
+  Widget _row() => Container();
+}
+''',
+      [lint(183, 4)],
+    );
+  }
+
+  // --- ignored_annotations defaults ---
+
+  Future<void> test_functionalWidgetAnnotation_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class FunctionalWidget {
+  const FunctionalWidget();
+}
+
+@FunctionalWidget()
+Widget myRow(BuildContext context) => Container();
+''');
+  }
+
+  Future<void> test_swidgetAnnotation_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+const swidget = Object();
+
+@swidget
+Widget myRow(BuildContext context) => Container();
+''');
+  }
 }

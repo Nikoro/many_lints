@@ -20,6 +20,25 @@ When you extract UI into a `_buildHeader()` method instead of a `_Header` widget
 
 **See also:** [Flutter performance best practices](https://docs.flutter.dev/perf/best-practices)
 
+## What is not reported
+
+Three shapes are exempt, because none of them collapses a subtree into the
+caller's rebuild:
+
+- **`build()` overrides** — the standard way to build a widget.
+- **A declaration passed as a callback** rather than called, such as
+  `Builder(builder: _row)`. The framework invokes it at its own point in the
+  tree, so it behaves like a widget class rather than an inlined helper. A
+  declaration that is *called* to build inline is still reported.
+- **Functions annotated for a functional-widget generator** — `@FunctionalWidget`,
+  `@swidget`, `@hwidget`, `@hcwidget` — which generate a real widget class, so
+  the rewrite this rule asks for has already happened. Configurable through
+  `ignored_annotations`.
+
+A getter is never treated as a callback: `=> _body` reads it rather than tearing
+it off, so a bare reference to a `Widget`-returning getter is the inline build
+this rule targets.
+
 ## Don't
 
 ```dart
@@ -64,8 +83,8 @@ class _Body extends StatelessWidget {
 
 ## Turning this rule off
 
-This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` (and with `opinionated`, which builds on it), or by name:
 
 ```yaml
 # many_lints.yaml
@@ -94,7 +113,7 @@ many_lints:
   rules:
     avoid_returning_widgets:
       ignored_names: [buildLeading]
-      ignored_annotations: [widgetFactory]
+      additional_ignored_annotations: [widgetFactory]
       allow_nullable: true
 ```
 
@@ -106,7 +125,7 @@ many_lints:
 rules:
   avoid_returning_widgets:
     ignored_names: [buildLeading]
-    ignored_annotations: [widgetFactory]
+    additional_ignored_annotations: [widgetFactory]
     allow_nullable: true
 ```
 
@@ -116,5 +135,6 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `ignored_names` | list of strings | `[]` | Method and function names never reported |
-| `ignored_annotations` | list of strings | `[]` | Annotation names that exempt a member (written without `@`) |
+| `ignored_annotations` | list of strings | `[FunctionalWidget, swidget, hwidget, hcwidget]` | Annotation names that exempt a member (written without `@`). **Replaces** the defaults; use `additional_ignored_annotations` to extend them |
+| `additional_ignored_annotations` | list of strings | `[]` | Annotation names to exempt **in addition** to the defaults |
 | `allow_nullable` | bool | `false` | Exempt nullable returns (`Widget?`), where null usually means "render nothing" |
