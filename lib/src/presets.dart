@@ -212,6 +212,7 @@ const _opinionatedOnlyRules = <String>{
   'prefer_for_loop_in_children',
   'prefer_immediate_return',
   'prefer_immutable_bloc_state',
+  'prefer_moving_to_variable',
   'prefer_multi_bloc_provider',
   'prefer_overriding_parent_equality',
   'prefer_padding_over_container',

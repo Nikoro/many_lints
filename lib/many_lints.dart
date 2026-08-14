@@ -189,6 +189,7 @@ import 'package:many_lints/src/rules/use_gap.dart';
 import 'package:many_lints/src/rules/prefer_chain_either.dart';
 import 'package:many_lints/src/rules/prefer_chaining_over_intermediate_run.dart';
 import 'package:many_lints/src/rules/prefer_class_destructuring.dart';
+import 'package:many_lints/src/rules/prefer_moving_to_variable.dart';
 import 'package:many_lints/src/rules/use_closest_build_context.dart';
 import 'package:many_lints/src/rules/use_existing_destructuring.dart';
 import 'package:many_lints/src/rules/use_existing_variable.dart';
@@ -412,6 +413,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, PreferThemeModeGetters());
     _registerWarningRule(registry, ProperSuperCalls());
     _registerWarningRule(registry, PreferClassDestructuring());
+    _registerWarningRule(registry, PreferMovingToVariable());
     _registerWarningRule(registry, UseClosestBuildContext());
     _registerWarningRule(registry, UseExistingDestructuring());
     _registerWarningRule(registry, UseExistingVariable());

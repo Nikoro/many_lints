@@ -74,8 +74,8 @@ the analysis server.
 |--------|-------|------------------|
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
 | `core` | 37 | Near-certain bugs only. |
-| `recommended` | 99 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
-| `opinionated` | 164 | `recommended` plus this package's own style preferences. |
+| `recommended` | 100 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
+| `opinionated` | 165 | `recommended` plus this package's own style preferences. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml`
 includes `core.yaml` — moving up a tier only ever adds rules.
@@ -288,7 +288,7 @@ Both `include` and `message` work on **every** rule, exactly like `exclude`.
 
 ## Per-rule options
 
-Beyond `exclude`, `include` and `message`, **65 rules** accept options that change *what*
+Beyond `exclude`, `include` and `message`, **66 rules** accept options that change *what*
 they report. Those rules carry a <span class="rule-badge rule-badge--config">Configurable</span>
 badge on their page, and every option is documented there with its type and default.
 
@@ -336,7 +336,7 @@ options never changes results until you set one.
 | [`avoid_passing_async_when_sync_expected`](/many_lints/docs/rules/async-safety/avoid-passing-async-when-sync-expected/) | `ignore_widget_callbacks`, `ignored_parameters` |
 | [`avoid_recursive_widget_calls`](/many_lints/docs/rules/widget-best-practices/avoid-recursive-widget-calls/) | `state_base_classes` |
 | [`avoid_removed_fpdart_api`](/many_lints/docs/rules/fpdart/avoid-removed-fpdart-api/) | `additional_removed` |
-| [`avoid_returning_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-returning-widgets/) | `ignored_names`, `ignored_annotations`, `allow_nullable` |
+| [`avoid_returning_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-returning-widgets/) | `ignored_names`, `ignored_annotations`, `additional_ignored_annotations`, `allow_nullable` |
 | [`avoid_state_constructors`](/many_lints/docs/rules/state-management/avoid-state-constructors/) | `state_base_classes` |
 | [`avoid_unassigned_stream_subscriptions`](/many_lints/docs/rules/resource-management/avoid-unassigned-stream-subscriptions/) | `ignored_instances` |
 | [`avoid_unnecessary_overrides_in_state`](/many_lints/docs/rules/state-management/avoid-unnecessary-overrides-in-state/) | `state_base_classes` |
@@ -358,6 +358,7 @@ options never changes results until you set one.
 | [`prefer_container`](/many_lints/docs/rules/widget-replacement/prefer-container/) | `min_sequence` |
 | [`prefer_from_predicate`](/many_lints/docs/rules/fpdart/prefer-from-predicate/) | `max_condition_complexity` |
 | [`prefer_immutable_bloc_state`](/many_lints/docs/rules/bloc-riverpod/prefer-immutable-bloc-state/) | `name_pattern` |
+| [`prefer_moving_to_variable`](/many_lints/docs/rules/code-quality/prefer-moving-to-variable/) | `allowed_duplicated_chains`, `min_chain_length`, `ignored_invocations`, `ignored_targets` |
 | [`prefer_private_named_parameters`](/many_lints/docs/rules/code-quality/prefer-private-named-parameters/) | `only_same_name` |
 | [`prefer_safe_collection_access`](/many_lints/docs/rules/fpdart/prefer-safe-collection-access/) | `report_outside_pipelines`, `accessors`, `additional_accessors` |
 | [`prefer_shorthands_with_constructors`](/many_lints/docs/rules/shorthand-patterns/prefer-shorthands-with-constructors/) | `classes`, `additional_classes` |

@@ -170,6 +170,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `prefer_immediate_return` | Return an expression directly instead of via a throwaway variable | Yes |
 | `prefer_immutable_bloc_state` | Bloc state classes → `@immutable` | Yes |
 | `prefer_iterable_of` | `.of()` instead of `.from()` for type safety | Yes |
+| `prefer_moving_to_variable` | Compute a repeated property or invocation chain once into a variable | No |
 | `prefer_multi_bloc_provider` | `MultiBlocProvider` instead of nested `BlocProvider`s | Yes |
 | `prefer_overriding_parent_equality` | Parent overrides `==`/`hashCode` but subclass does not | Yes |
 | `prefer_padding_over_container` | `Padding` over `Container` with only margin | Yes |

@@ -2111,8 +2111,174 @@ rules:
         expect(errors.map((e) => e.code), isNot(contains('use_class_prefix')));
       });
     });
+
+    group('prefer_moving_to_variable', () {
+      test('reports a repeated invocation chain with no config', () async {
+        final errors = await harness.analyze(_repeatedChainCode);
+
+        expect(
+          errors.map((e) => e.code),
+          contains('prefer_moving_to_variable'),
+        );
+      });
+
+      test('allowed_duplicated_chains tolerates the second use', () async {
+        final errors = await harness.analyze(
+          _repeatedChainCode,
+          config: '''
+rules:
+  prefer_moving_to_variable:
+    allowed_duplicated_chains: 1
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('prefer_moving_to_variable')),
+        );
+      });
+
+      test('a third use reports again at the same threshold', () async {
+        // The asymmetric half: proves the option raised the bar rather than
+        // switching the rule off.
+        final errors = await harness.analyze(
+          _thriceRepeatedChainCode,
+          config: '''
+rules:
+  prefer_moving_to_variable:
+    allowed_duplicated_chains: 1
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('prefer_moving_to_variable'),
+        );
+      });
+
+      test('ignored_invocations exempts the named method', () async {
+        final errors = await harness.analyze(
+          _repeatedChainCode,
+          config: '''
+rules:
+  prefer_moving_to_variable:
+    ignored_invocations: [of]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('prefer_moving_to_variable')),
+        );
+      });
+
+      test('ignored_invocations leaves other methods reporting', () async {
+        final errors = await harness.analyze(
+          _repeatedChainCode,
+          config: '''
+rules:
+  prefer_moving_to_variable:
+    ignored_invocations: [somethingElse]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('prefer_moving_to_variable'),
+        );
+      });
+
+      test('ignored_targets exempts the named type', () async {
+        final errors = await harness.analyze(
+          _repeatedChainCode,
+          config: '''
+rules:
+  prefer_moving_to_variable:
+    ignored_targets: [Themer]
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('prefer_moving_to_variable')),
+        );
+      });
+
+      test('min_chain_length governs pure property chains', () async {
+        final errors = await harness.analyze(
+          _repeatedPropertyChainCode,
+          config: '''
+rules:
+  prefer_moving_to_variable:
+    min_chain_length: 3
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('prefer_moving_to_variable')),
+        );
+      });
+
+      test('a property chain reports at the default length', () async {
+        final errors = await harness.analyze(_repeatedPropertyChainCode);
+
+        expect(
+          errors.map((e) => e.code),
+          contains('prefer_moving_to_variable'),
+        );
+      });
+    });
   });
 }
+
+/// `Themer.of(context)` twice — one invocation chain, repeated.
+const _repeatedChainCode = '''
+class Themer {
+  static Themer of(Object context) => Themer();
+  int get primary => 0;
+  int get secondary => 1;
+}
+
+int fn(Object context) {
+  final a = Themer.of(context).primary;
+  final b = Themer.of(context).secondary;
+  return a + b;
+}
+''';
+
+/// The same chain three times, so a threshold of one extra still reports.
+const _thriceRepeatedChainCode = '''
+class Themer {
+  static Themer of(Object context) => Themer();
+  int get primary => 0;
+  int get secondary => 1;
+}
+
+int fn(Object context) {
+  final a = Themer.of(context).primary;
+  final b = Themer.of(context).secondary;
+  final c = Themer.of(context).primary;
+  return a + b + c;
+}
+''';
+
+/// A pure property chain of two links, which `min_chain_length` governs.
+const _repeatedPropertyChainCode = '''
+class Inner {
+  int get value => 0;
+}
+
+class Outer {
+  Inner get inner => Inner();
+}
+
+int fn(Outer outer) {
+  final a = outer.inner.value;
+  final b = outer.inner.value;
+  return a + b;
+}
+''';
 
 class _OptionsHarness with ResourceProviderMixin {
   final channel = _FakeChannel();

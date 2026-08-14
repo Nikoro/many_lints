@@ -1,0 +1,124 @@
+---
+title: prefer_moving_to_variable
+description: "Compute a repeated property or invocation chain once into a variable"
+sidebar:
+  label: prefer_moving_to_variable
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.0.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule warns when the same property-access or invocation chain is repeated inside one block, and could be computed once into a variable. It reports at the first occurrence, which is where the variable belongs.
+
+## Why use this rule
+
+A chain like `Theme.of(context)` written three times is three lookups and three chances to edit one of them and miss the others. Naming it states once what the code is talking about, and every later line reads as an operation on that thing rather than a repeated derivation.
+
+The win grows with the length of the chain: `context.dependOnInheritedWidgetOfExactType<Foo>()!.bar.baz` is noise at every call site, and a name is the only thing that makes the surrounding line legible.
+
+**See also:** [Effective Dart: usage](https://dart.dev/effective-dart/usage)
+
+## Don't
+
+```dart
+return Container(
+  // LINT: 'Theme.of(context)' is repeated 2 times in this block.
+  color: Theme.of(context).colorScheme.secondary,
+  child: Text(
+    'Text with a background color',
+    style: Theme.of(context).textTheme.bodyMedium,
+  ),
+);
+```
+
+## Do
+
+```dart
+final theme = Theme.of(context);
+
+return Container(
+  color: theme.colorScheme.secondary,
+  child: Text(
+    'Text with a background color',
+    style: theme.textTheme.bodyMedium,
+  ),
+);
+```
+
+## What is not reported
+
+A chain is only worth naming when re-evaluating it is redundant, so several shapes are left alone:
+
+- **A call made for its effect.** `print(x)` twice is two prints; hoisting it would change what the code does.
+- **Anything that allocates or awaits** — `Thing()`, `await f()`, a cascade. Re-evaluating those is usually the point, so reusing one result is observably different.
+- **A chain inside a closure.** The closure may run a different number of times, so lifting the chain out of it changes when the work happens.
+- **An assignment target.** `a.b.c = 1` writes; naming the target does not apply.
+- **A short property chain**, by default `a.b`, which reads no worse than the variable would. See `min_chain_length`.
+
+An invocation is always long enough to name, whatever `min_chain_length` says: repeating `Theme.of(context)` repeats the work, where repeating a field read only repeats the text.
+
+When a chain and its own prefix both repeat the same number of times, only the longest is reported — naming it subsumes the shorter one, so two diagnostics would ask for the same edit twice.
+
+## Turning this rule off
+
+This rule is in the **`opinionated`** preset, so it is on with
+`preset: opinionated`, or by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_moving_to_variable: true
+```
+
+To turn it off again:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_moving_to_variable: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_moving_to_variable:
+      allowed_duplicated_chains: 1
+      min_chain_length: 3
+      ignored_invocations: [of, watch]
+      ignored_targets: [Theme, MediaQuery]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_moving_to_variable:
+    allowed_duplicated_chains: 1
+    min_chain_length: 3
+    ignored_invocations: [of, watch]
+    ignored_targets: [Theme, MediaQuery]
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `allowed_duplicated_chains` | int | `0` | How many **extra** repetitions to tolerate. `0` reports the second occurrence; `1` waits for the third |
+| `min_chain_length` | int | `2` | The shortest pure-property chain worth naming, in links. `a.b` is 1, `a.b.c` is 2. Chains containing an invocation ignore this |
+| `ignored_invocations` | list of strings | `[]` | Method names that exempt any chain containing them |
+| `ignored_targets` | list of strings | `[]` | Class, enum or variable names that exempt any chain reaching them |

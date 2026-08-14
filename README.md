@@ -58,8 +58,8 @@ For local development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 |--------|-------|----------|
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
 | `core` | 37 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
-| `recommended` | 99 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
-| `opinionated` | 164 | `recommended` plus this package's own style preferences. |
+| `recommended` | 100 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
+| `opinionated` | 165 | `recommended` plus this package's own style preferences. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml` includes `core.yaml`. `core` and `recommended` deliberately exclude anything that imposes an architecture, a naming scheme, or a contested style choice.
 
@@ -142,7 +142,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-182 lints with 97 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
+183 lints with 97 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
@@ -164,7 +164,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 | [Hook Rules](https://nikoro.github.io/many_lints/docs/rules/hook-rules/) | 4 | Flutter Hooks conventions |
 | [Testing Rules](https://nikoro.github.io/many_lints/docs/rules/testing-rules/) | 3 | Testing best practices and matchers |
 | [Resource Management](https://nikoro.github.io/many_lints/docs/rules/resource-management/) | 4 | Resource cleanup and disposal |
-| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/code-quality/) | 11 | General code quality improvements |
+| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/code-quality/) | 12 | General code quality improvements |
 
 ## Available Assists
 
