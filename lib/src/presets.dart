@@ -158,6 +158,14 @@ final recommendedRules = <String>{...coreRules, ..._recommendedOnlyRules};
 /// codebases disagree about them. Every rule here is one this package takes a
 /// side on.
 ///
+/// The side it takes is a concrete one: this tier is a coherent house style, so
+/// adopting it should make a codebase look a particular way rather than hand it
+/// an assortment of unrelated opinions. The test for adding a rule here is
+/// empirical — run it against real production codebases and keep it only if
+/// what it reports is code they would actually change. A rule that fights an
+/// established style belongs in no preset and stays opt-in by name, which is
+/// also the honest default whenever the answer is unclear.
+///
 /// Three kinds of rule are deliberately **excluded**, and stay opt-in by name:
 ///
 /// 1. **Rules that contradict one in this set.** A preset must never enable

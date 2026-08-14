@@ -75,6 +75,12 @@
 
 ### Added
 
+- `prefer_moving_to_variable` warns when the same property-access or invocation chain is repeated inside one block, and could be computed once into a variable. Reported at the first occurrence, which is where the variable belongs. In the `opinionated` preset.
+
+  Four options, two of them beyond the usual scope of this rule: `allowed_duplicated_chains` (how many extra repetitions to tolerate, default `0`), `min_chain_length` (the shortest pure-property chain worth naming, default `2`, so `a.b` twice is left alone), `ignored_invocations` and `ignored_targets`.
+
+  A chain containing an invocation ignores `min_chain_length`: repeating `Theme.of(context)` repeats the work, where repeating a field read only repeats the text. Calls made for their effect (`print(x)`), anything that allocates or awaits, chains inside a closure, and assignment targets are all left alone, since re-evaluating those is either the point or not a value at all. When a chain and its own prefix repeat equally often, only the longest is reported.
+
 - `avoid_catch_error` warns on `Future.catchError`. Its handler is an untyped `Function`, so a wrong signature compiles cleanly and throws only on the error path, and a `test` callback returning `false` leaves the error unhandled while reading as though it was caught. `try`/`catch` gets both checked at compile time.
 - `never_discard_build_context` warns when a `BuildContext` parameter is named with a wildcard (`_`, `__`). Discarding it does not remove the need for a context — the body falls back to an outer one, which sits higher in the tree, so `Theme.of`/`MediaQuery.of`/`Navigator.of` resolve against a different subtree. Ships a quick fix that names the parameter `context`, withheld when that name is already in scope and renaming would shadow it.
 - `use_class_suffix` and `use_class_prefix`, each taking an `entries:` list of `{type, suffix|prefix, package?, ignore_private?}`. A base type matches whether it is reached by `extends`, `implements`, `with`, or an indirect ancestor, and `package:` is optional — omit it to match a type of that name from any library. Both ship a quick fix that renames the class and any same-named unnamed constructor.
@@ -103,6 +109,15 @@
   ```
 
   Each group also accepts `kinds`, `ignore_private`, `ignore_visible_for_testing` and its own `message`; any written at the top level become the groups' defaults. A declaration matching several groups is counted by the first one only.
+
+### Changed
+
+- `avoid_returning_widgets` moves from `opinionated` to `recommended`, and gains the two exemptions that kept it out. Returning a widget from a helper is a performance defect with a mechanism — the helper denies Flutter the element identity it needs to skip the subtree, so the parent rebuilds wholesale — rather than the style preference `opinionated` is for, and it is [documented by Flutter](https://docs.flutter.dev/perf/best-practices). `recommended` goes from 99 rules to 100.
+
+  Two shapes are no longer reported:
+
+  - **A declaration passed as a callback** rather than called, such as `Builder(builder: _row)`. The framework invokes it at its own point in the tree, so it does not collapse a subtree into the caller's rebuild, which is the cost the rule exists to prevent. A declaration that is *called* to build inline is still reported. Getters are excluded from this exemption — `=> _body` reads the getter rather than tearing it off, so a bare reference to one is the inline build the rule targets.
+  - **Functions annotated for a functional-widget generator.** `ignored_annotations` now defaults to `[FunctionalWidget, swidget, hwidget, hcwidget]` instead of an empty list, so a `functional_widget` user no longer gets a diagnostic on every generated widget. The option keeps its replace semantics; the new `additional_ignored_annotations` extends the defaults instead of restating them.
 
 ### Fixed
 
