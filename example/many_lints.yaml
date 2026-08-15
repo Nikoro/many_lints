@@ -136,3 +136,8 @@ rules:
   # reports only where a project declares one. Enabled here to demonstrate it.
   member_ordering:
     enabled: true
+
+  # In no preset — naming is where codebases disagree most, and a predicate
+  # like `screen.atLeast(...)` reads fine without a question verb.
+  prefer_boolean_prefixes:
+    enabled: true

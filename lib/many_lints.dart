@@ -34,6 +34,7 @@ import 'package:many_lints/src/rules/avoid_passing_async_when_sync_expected.dart
 import 'package:many_lints/src/rules/avoid_passing_bloc_to_bloc.dart';
 import 'package:many_lints/src/rules/avoid_passing_build_context_to_blocs.dart';
 import 'package:many_lints/src/rules/prefer_bloc_extensions.dart';
+import 'package:many_lints/src/rules/prefer_boolean_prefixes.dart';
 import 'package:many_lints/src/rules/prefer_immutable_bloc_state.dart';
 import 'package:many_lints/src/rules/prefer_immutable_state.dart';
 import 'package:many_lints/src/rules/prefer_multi_bloc_provider.dart';
@@ -353,6 +354,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidPassingBlocToBloc());
     _registerWarningRule(registry, AvoidPassingBuildContextToBlocs());
     _registerWarningRule(registry, PreferBlocExtensions());
+    _registerWarningRule(registry, PreferBooleanPrefixes());
     _registerWarningRule(registry, PreferImmutableBlocState());
     _registerWarningRule(registry, PreferImmutableState());
     _registerWarningRule(registry, PreferMultiBlocProvider());

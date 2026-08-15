@@ -28,7 +28,12 @@ const FORCE = process.argv.includes('--force');
 const CATEGORIES = {
   'class-naming': {
     label: 'Class Naming',
-    rules: ['use_class_suffix', 'use_class_prefix', 'avoid_unnecessary_enum_prefix'],
+    rules: [
+      'use_class_suffix',
+      'use_class_prefix',
+      'avoid_unnecessary_enum_prefix',
+      'prefer_boolean_prefixes',
+    ],
   },
   architecture: {
     label: 'Architecture',

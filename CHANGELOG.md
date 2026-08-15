@@ -81,6 +81,8 @@
 
 ### Added
 
+- `prefer_boolean_prefixes` warns when a boolean field, getter or method is not named as a yes-or-no question. The verb does not have to lead — `localeIsDefault` asks the same question as `isDefaultLocale` — and a bare third-person verb (`involves`, `matches`) is already one. Overrides, setters, and a private field backing an accessor are never reported, since none of them can be renamed independently. **In no preset:** naming is where codebases disagree most, and a predicate like `screen.atLeast(Breakpoint.tablet)` reads fine without a question verb.
+
 - `member_ordering` warns when a class member is declared before one the configured order puts earlier. The order is declared through `order:`, and the default puts the constructor first, then fields, then behaviour — the shape modern Dart and Flutter code already has. `==` / `hashCode` / `toString`, operators, and a Riverpod `Notifier.build` are never reported, because each is a member whose position is fixed by something other than taste. **In no preset:** against a production Flutter app already following a consistent style it still reported 227 members, every one a real deviation and none of them a bug, so it stays opt-in by name.
 
 - `prefer_immutable_state` warns when a class whose name marks it as state lacks `@immutable`. It owns the name-based half that `prefer_immutable_bloc_state` used to carry, including the `name_pattern` option, and is deliberately state-management-agnostic: it covers Riverpod notifier state, a hand-rolled store, or any plain `...State` value object. Flutter `State<T>` subclasses are excluded by type, since holding mutable fields is their entire job. In the `opinionated` preset.
