@@ -85,6 +85,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_unnecessary_constructor` | An empty constructor identical to the default one | — |
 | `member_ordering` | Class members declared out of the configured order | — |
 | `prefer_boolean_prefixes` | Booleans should be named as questions | — |
+| `prefer_correct_callback_field_name` | Callbacks should be named `on...` | — |
 | `avoid_unnecessary_extends` | An explicit `extends Object` states the default | — |
 | `avoid_unnecessary_enum_prefix` | An enum constant repeating its own enum name | — |
 | `avoid_late_final_reassignment` | A `late final` field assigned twice on one path | — |

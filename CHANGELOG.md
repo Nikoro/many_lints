@@ -81,6 +81,8 @@
 
 ### Added
 
+- `prefer_correct_callback_field_name` warns when a callback field or parameter is named `somethingCallback` or `somethingHandler` rather than `onSomething`, the spelling Flutter uses throughout its API. A function named for what it computes (`builder`, `comparator`) is never reported, nor is a bare framework noun: a parameter named exactly `handler` is the request handler in dart_frog, not a callback for an event. **In no preset**, like the other naming rules.
+
 - `prefer_boolean_prefixes` warns when a boolean field, getter or method is not named as a yes-or-no question. The verb does not have to lead — `localeIsDefault` asks the same question as `isDefaultLocale` — and a bare third-person verb (`involves`, `matches`) is already one. Overrides, setters, and a private field backing an accessor are never reported, since none of them can be renamed independently. **In no preset:** naming is where codebases disagree most, and a predicate like `screen.atLeast(Breakpoint.tablet)` reads fine without a question verb.
 
 - `member_ordering` warns when a class member is declared before one the configured order puts earlier. The order is declared through `order:`, and the default puts the constructor first, then fields, then behaviour — the shape modern Dart and Flutter code already has. `==` / `hashCode` / `toString`, operators, and a Riverpod `Notifier.build` are never reported, because each is a member whose position is fixed by something other than taste. **In no preset:** against a production Flutter app already following a consistent style it still reported 227 members, every one a real deviation and none of them a bug, so it stays opt-in by name.

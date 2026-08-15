@@ -141,3 +141,7 @@ rules:
   # like `screen.atLeast(...)` reads fine without a question verb.
   prefer_boolean_prefixes:
     enabled: true
+
+  # In no preset — a naming convention rather than a correctness question.
+  prefer_correct_callback_field_name:
+    enabled: true

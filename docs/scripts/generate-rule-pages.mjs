@@ -33,6 +33,7 @@ const CATEGORIES = {
       'use_class_prefix',
       'avoid_unnecessary_enum_prefix',
       'prefer_boolean_prefixes',
+      'prefer_correct_callback_field_name',
     ],
   },
   architecture: {
