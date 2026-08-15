@@ -145,3 +145,8 @@ rules:
   # In no preset — a naming convention rather than a correctness question.
   prefer_correct_callback_field_name:
     enabled: true
+
+  # In no preset — a line budget is a house style, and the default of 50 is
+  # stricter than many codebases run. Enabled here to demonstrate it.
+  avoid_long_functions:
+    enabled: true

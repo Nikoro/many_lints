@@ -135,6 +135,11 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_unnecessary_continue` | A `continue` that ends a loop body changes nothing | Yes |
 | `avoid_unnecessary_return` | A bare `return;` that ends a void function changes nothing | — |
 | `no_equal_switch_case` | Two switch branches with identical bodies should share patterns | — |
+| `no_equal_conditions` | An if/else-if chain repeating a condition | — |
+| `function_always_returns_same_value` | Every return yields the same constant | — |
+| `avoid_redundant_async` | `async` without any `await` | — |
+| `avoid_unnecessary_call` | An explicit `.call()` on a function | — |
+| `avoid_long_functions` | A function body over the configured line budget | — |
 | `avoid_unnecessary_overrides` | Override only calls `super` without additional logic | Yes |
 | `avoid_unnecessary_overrides_in_state` | State method override only calls `super` | Yes |
 | `avoid_unnecessary_setstate` | Unnecessary call to `setState` | Yes |

@@ -1,0 +1,107 @@
+---
+title: avoid_long_functions
+description: "Keep function bodies within a line budget"
+sidebar:
+  label: avoid_long_functions
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule flags a function body longer than the configured line budget.
+
+## Why use this rule
+
+A long function is not wrong, but it is where several responsibilities usually end up sharing one scope and one set of locals. Enforcing a budget in the analyzer puts the signal at the point of writing, where splitting is cheap, rather than in a CI script that reports it after the fact — which is what makes it a genuine replacement for a `check_file_length.sh`-style gate.
+
+Lines are counted from the body's braces, so the signature and any doc comment do not count against it.
+
+This rule is in **no preset**. A budget is a house style, and the default of 50 is stricter than many codebases run: measured against a production Flutter app it reported 187 functions, median 98 lines — all genuinely long, none of them a bug. Pick your own number and enable it by name.
+
+## Test files usually want an exclusion
+
+A test `main()` legitimately runs to hundreds of lines, since every `test(...)` is one more statement in the same body. Scope the rule rather than raising the budget for everything:
+
+```yaml
+rules:
+  avoid_long_functions:
+    exclude:
+      - test/**
+```
+
+## Don't
+
+```dart
+void handleOrder(Order order) {
+  // ... 80 lines validating, pricing, persisting and notifying
+}
+```
+
+## Do
+
+```dart
+void handleOrder(Order order) {
+  _validate(order);
+  _price(order);
+  _persist(order);
+  _notify(order);
+}
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_long_functions:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_long_functions:
+      max_lines: 80
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_long_functions:
+    max_lines: 80
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_lines` | int | `50` | The longest body allowed, counted between the braces |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_long_functions: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

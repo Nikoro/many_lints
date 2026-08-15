@@ -235,6 +235,17 @@ class Bird {
 }
 ''';
 
+const _longFunctionCode = '''
+void f() {
+  final v1 = 1;
+  final v2 = 2;
+  final v3 = 3;
+  final v4 = 4;
+  final v5 = 5;
+  final v6 = 6;
+}
+''';
+
 const _customStateNameCode = '''
 class LoadingStatus {}
 ''';
@@ -875,6 +886,39 @@ rules:
 
       // `name_pattern` moved to `prefer_immutable_state` in 0.10.0, when the
       // name-based half was split out of the Bloc rule.
+      group('avoid_long_functions max_lines', () {
+        test('reports a body over the configured budget', () async {
+          final errors = await harness.analyze(
+            _longFunctionCode,
+            config: '''
+rules:
+  avoid_long_functions:
+    max_lines: 3
+''',
+          );
+
+          expect(errors.map((e) => e.code), contains('avoid_long_functions'));
+        });
+
+        test('a higher budget leaves the same body alone', () async {
+          // The asymmetric counterpart: silence alone cannot distinguish
+          // "the option was read" from "the rule never fired".
+          final errors = await harness.analyze(
+            _longFunctionCode,
+            config: '''
+rules:
+  avoid_long_functions:
+    max_lines: 40
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            isNot(contains('avoid_long_functions')),
+          );
+        });
+      });
+
       group('member_ordering order', () {
         test('reports a member out of the configured order', () async {
           final errors = await harness.analyze(

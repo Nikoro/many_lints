@@ -57,9 +57,9 @@ For local development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 | Preset | Rules | Contents |
 |--------|-------|----------|
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
-| `core` | 40 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
-| `recommended` | 107 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
-| `opinionated` | 174 | `recommended` plus this package's own style preferences. |
+| `core` | 42 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
+| `recommended` | 111 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
+| `opinionated` | 178 | `recommended` plus this package's own style preferences. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml` includes `core.yaml`. `core` and `recommended` deliberately exclude anything that imposes an architecture, a naming scheme, or a contested style choice.
 
@@ -142,7 +142,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-196 lints with 99 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
+201 lints with 99 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
@@ -150,12 +150,12 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 | [Architecture](https://nikoro.github.io/many_lints/docs/rules/architecture/) | 6 | Configurable bans on imports, types, names and members |
 | [Bloc / Riverpod](https://nikoro.github.io/many_lints/docs/rules/bloc-riverpod/) | 12 | BLoC and Riverpod state management patterns |
 | [Riverpod State](https://nikoro.github.io/many_lints/docs/rules/riverpod-state/) | 9 | Riverpod-specific state rules |
-| [Async Safety](https://nikoro.github.io/many_lints/docs/rules/async-safety/) | 8 | Async/await and state mutation safety |
+| [Async Safety](https://nikoro.github.io/many_lints/docs/rules/async-safety/) | 9 | Async/await and state mutation safety |
 | [fpdart](https://nikoro.github.io/many_lints/docs/rules/fpdart/) | 22 | Functional error handling with Either, Option and TaskEither |
 | [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/widget-best-practices/) | 21 | General widget best practices |
 | [Widget Replacement](https://nikoro.github.io/many_lints/docs/rules/widget-replacement/) | 13 | Simpler widget alternatives |
 | [State Management](https://nikoro.github.io/many_lints/docs/rules/state-management/) | 10 | StatefulWidget and state patterns |
-| [Control Flow](https://nikoro.github.io/many_lints/docs/rules/control-flow/) | 21 | Control flow statements and patterns |
+| [Control Flow](https://nikoro.github.io/many_lints/docs/rules/control-flow/) | 22 | Control flow statements and patterns |
 | [Collection & Type](https://nikoro.github.io/many_lints/docs/rules/collection-type/) | 20 | Collection and type-related checks |
 | [Pattern Matching](https://nikoro.github.io/many_lints/docs/rules/pattern-matching/) | 6 | Dart pattern matching best practices |
 | [Type Annotations](https://nikoro.github.io/many_lints/docs/rules/type-annotations/) | 5 | Type annotation conventions |
@@ -164,7 +164,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 | [Hook Rules](https://nikoro.github.io/many_lints/docs/rules/hook-rules/) | 4 | Flutter Hooks conventions |
 | [Testing Rules](https://nikoro.github.io/many_lints/docs/rules/testing-rules/) | 3 | Testing best practices and matchers |
 | [Resource Management](https://nikoro.github.io/many_lints/docs/rules/resource-management/) | 5 | Resource cleanup and disposal |
-| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/code-quality/) | 13 | General code quality improvements |
+| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/code-quality/) | 16 | General code quality improvements |
 
 ## Available Assists
 

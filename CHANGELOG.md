@@ -81,6 +81,16 @@
 
 ### Added
 
+- `no_equal_conditions` warns when an `if`/`else if` chain tests the same condition twice, making the later branch unreachable and letting the case it was meant to handle fall through to `else`. Two independent `if`s are not compared, since the first may have changed the state the second reads. In the `core` preset.
+
+- `function_always_returns_same_value` warns when every `return` in a function yields the same constant, so the branching around them decides nothing. Protocol callbacks are excluded both by name (`onNotification`, `shouldRepaint`, any `on...`) and by shape — a parameter typed `...Notification` marks a listener whose `bool` is a "handled" signal rather than an answer. In the `core` preset.
+
+- `avoid_redundant_async` warns when a function is marked `async` but never awaits, which wraps the result in an extra `Future`, defers the body, and turns a synchronous throw into a rejected future. `async*`, an `@override`, and a body with nothing to return are left alone. In the `recommended` preset.
+
+- `avoid_unnecessary_call` warns when a function is invoked through an explicit `.call()`. A null-aware invocation is left alone (`callback?()` does not parse), as is a class defining `call` as a real method — the receiver's type tells the two apart. In the `recommended` preset.
+
+- `avoid_long_functions` warns when a function body exceeds `max_lines` (default 50), counted between the braces so the signature and doc comment do not count. **In no preset:** a budget is a house style, and measured against a production Flutter app the default reported 187 functions with a median of 98 lines, all genuinely long and none of them a bug. Test files usually want `exclude: [test/**]` rather than a higher budget.
+
 - `prefer_correct_callback_field_name` warns when a callback field or parameter is named `somethingCallback` or `somethingHandler` rather than `onSomething`, the spelling Flutter uses throughout its API. A function named for what it computes (`builder`, `comparator`) is never reported, nor is a bare framework noun: a parameter named exactly `handler` is the request handler in dart_frog, not a callback for an event. **In no preset**, like the other naming rules.
 
 - `prefer_boolean_prefixes` warns when a boolean field, getter or method is not named as a yes-or-no question. The verb does not have to lead — `localeIsDefault` asks the same question as `isDefaultLocale` — and a bare third-person verb (`involves`, `matches`) is already one. Overrides, setters, and a private field backing an accessor are never reported, since none of them can be renamed independently. **In no preset:** naming is where codebases disagree most, and a predicate like `screen.atLeast(Breakpoint.tablet)` reads fine without a question verb.
