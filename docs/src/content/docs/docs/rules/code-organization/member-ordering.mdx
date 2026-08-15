@@ -1,0 +1,127 @@
+---
+title: member_ordering
+description: "Keep class members in a configured order"
+sidebar:
+  label: member_ordering
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Organization</span>
+
+This rule flags a class member declared before one that the configured order puts earlier — a field after a method, a constructor after a getter.
+
+## Why use this rule
+
+A class read top to bottom should answer the same questions in the same sequence every time: how is it built, what does it hold, what can it do. When the order varies between files, finding a field means scanning the whole class rather than glancing at the top of it, and a diff that adds a method lands in whichever spot happened to be free.
+
+This rule is in **no preset**, and deliberately so. Measured against a production Flutter app that already follows a consistent house style, it still reported 227 members — every one a real deviation, none of them a bug. That is taste, not correctness, so it stays opt-in by name and the order is yours to declare.
+
+## The default order puts the constructor first
+
+```
+public_static_fields, private_static_fields,
+constructors, named_constructors, factory_constructors,
+public_fields, private_fields,
+public_getters, private_getters, public_setters, private_setters,
+public_methods, private_methods,
+build_method
+```
+
+The constructor leads because that is how modern Dart and Flutter code is written: `flutter create`, the framework's own widgets, and the samples in the Flutter docs all put the constructor directly under the class header with the `final` fields it initialises below. Ordering fields first is the older Java-influenced convention; shipping it as the default reported 615 extra members on the same app, all of them idiomatic.
+
+## What is never reported
+
+- **`==`, `hashCode` and `toString`** — a conventional trio written as one block. Dart forces `hashCode` to be a getter and `==` to be an operator, so any getters-before-methods order would split them.
+- **Operators**, for the same reason.
+- **A Riverpod `Notifier.build`** — that is the state initialiser and idiomatically comes first. Only a widget's `build` renders, so only a `Widget` subclass has its `build` ordered last.
+- **Any category you leave out of `order:`** — a member the project does not order is skipped rather than forced somewhere.
+
+## Don't
+
+```dart
+class Order {
+  void submit() {}
+
+  final int id; // a field, below a method
+}
+```
+
+## Do
+
+```dart
+class Order {
+  Order(this.id);
+
+  final int id;
+
+  void submit() {}
+}
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  member_ordering:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    member_ordering:
+      order:
+        - public_fields
+        - private_fields
+        - constructors
+        - public_methods
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  member_ordering:
+    order:
+      - public_fields
+      - private_fields
+      - constructors
+      - public_methods
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `order` | list of strings | constructor-first order shown above | The member categories, earliest first. A category left out is not ordered at all, and an unrecognised name is ignored rather than silently matching nothing |
+
+Recognised categories: `public_static_fields`, `private_static_fields`, `public_fields`, `private_fields`, `constructors`, `named_constructors`, `factory_constructors`, `public_getters`, `private_getters`, `public_setters`, `private_setters`, `public_methods`, `private_methods`, `static_methods`, `overridden_methods`, `build_method`.
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      member_ordering: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

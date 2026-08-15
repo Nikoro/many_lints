@@ -239,6 +239,15 @@ const _customStateNameCode = '''
 class LoadingStatus {}
 ''';
 
+/// A field below a method: reported by the default order, and by any order
+/// listing fields before methods.
+const _memberOrderCode = '''
+class Order {
+  void submit() {}
+  final int id = 0;
+}
+''';
+
 const _ignoredStreamCode = '''
 void subscribe(Stream<int> serviceStream) {
   serviceStream.listen(print);
@@ -866,6 +875,41 @@ rules:
 
       // `name_pattern` moved to `prefer_immutable_state` in 0.10.0, when the
       // name-based half was split out of the Bloc rule.
+      group('member_ordering order', () {
+        test('reports a member out of the configured order', () async {
+          final errors = await harness.analyze(
+            _memberOrderCode,
+            config: '''
+rules:
+  member_ordering:
+    order:
+      - public_fields
+      - public_methods
+''',
+          );
+
+          expect(errors.map((e) => e.code), contains('member_ordering'));
+        });
+
+        test('an order that omits fields does not rank them', () async {
+          // The asymmetric counterpart: with fields left out of the order,
+          // the same file must be silent — proving the option is read rather
+          // than the rule simply never firing.
+          final errors = await harness.analyze(
+            _memberOrderCode,
+            config: '''
+rules:
+  member_ordering:
+    order:
+      - public_methods
+      - private_methods
+''',
+          );
+
+          expect(errors.map((e) => e.code), isNot(contains('member_ordering')));
+        });
+      });
+
       group('prefer_immutable_state name_pattern', () {
         test('reports a class matching the configured pattern', () async {
           final errors = await harness.analyze(

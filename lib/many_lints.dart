@@ -58,6 +58,7 @@ import 'package:many_lints/src/rules/avoid_notifier_constructors.dart';
 import 'package:many_lints/src/rules/avoid_public_notifier_properties.dart';
 import 'package:many_lints/src/rules/function_always_returns_null.dart';
 import 'package:many_lints/src/rules/handle_bloc_event_subclasses.dart';
+import 'package:many_lints/src/rules/member_ordering.dart';
 import 'package:many_lints/src/rules/missing_provider_scope.dart';
 import 'package:many_lints/src/rules/protected_notifier_properties.dart';
 import 'package:many_lints/src/rules/provider_parameters.dart';
@@ -436,6 +437,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidShrinkWrapInLists());
     _registerWarningRule(registry, AvoidNotifierConstructors());
     _registerWarningRule(registry, AvoidPublicNotifierProperties());
+    _registerWarningRule(registry, MemberOrdering());
     _registerWarningRule(registry, MissingProviderScope());
     _registerWarningRule(registry, ProtectedNotifierProperties());
     _registerWarningRule(registry, ProviderParameters());

@@ -142,7 +142,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-193 lints with 99 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
+194 lints with 99 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
@@ -159,7 +159,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 | [Collection & Type](https://nikoro.github.io/many_lints/docs/rules/collection-type/) | 20 | Collection and type-related checks |
 | [Pattern Matching](https://nikoro.github.io/many_lints/docs/rules/pattern-matching/) | 6 | Dart pattern matching best practices |
 | [Type Annotations](https://nikoro.github.io/many_lints/docs/rules/type-annotations/) | 5 | Type annotation conventions |
-| [Code Organization](https://nikoro.github.io/many_lints/docs/rules/code-organization/) | 7 | Code structure and organization |
+| [Code Organization](https://nikoro.github.io/many_lints/docs/rules/code-organization/) | 8 | Code structure and organization |
 | [Shorthand Patterns](https://nikoro.github.io/many_lints/docs/rules/shorthand-patterns/) | 5 | Dot shorthand syntax patterns |
 | [Hook Rules](https://nikoro.github.io/many_lints/docs/rules/hook-rules/) | 4 | Flutter Hooks conventions |
 | [Testing Rules](https://nikoro.github.io/many_lints/docs/rules/testing-rules/) | 3 | Testing best practices and matchers |

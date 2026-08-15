@@ -54,7 +54,7 @@ void main() {
   test('expected number of active and removed rules are registered', () {
     plugin.register(registry);
     final totalRules = registry.warningRules.length + registry.lintRules.length;
-    expect(totalRules, equals(194));
+    expect(totalRules, equals(195));
     expect(
       registry.warningRules.values.whereType<RemovedAnalysisRule>().map(
         (rule) => rule.name,

@@ -131,3 +131,8 @@ rules:
   # so the rule is enabled here only to demonstrate it.
   no_equal_switch_case:
     enabled: true
+
+  # In no preset — the right member order is a house style, so the rule
+  # reports only where a project declares one. Enabled here to demonstrate it.
+  member_ordering:
+    enabled: true

@@ -81,6 +81,8 @@
 
 ### Added
 
+- `member_ordering` warns when a class member is declared before one the configured order puts earlier. The order is declared through `order:`, and the default puts the constructor first, then fields, then behaviour — the shape modern Dart and Flutter code already has. `==` / `hashCode` / `toString`, operators, and a Riverpod `Notifier.build` are never reported, because each is a member whose position is fixed by something other than taste. **In no preset:** against a production Flutter app already following a consistent style it still reported 227 members, every one a real deviation and none of them a bug, so it stays opt-in by name.
+
 - `prefer_immutable_state` warns when a class whose name marks it as state lacks `@immutable`. It owns the name-based half that `prefer_immutable_bloc_state` used to carry, including the `name_pattern` option, and is deliberately state-management-agnostic: it covers Riverpod notifier state, a hand-rolled store, or any plain `...State` value object. Flutter `State<T>` subclasses are excluded by type, since holding mutable fields is their entire job. In the `opinionated` preset.
 
 - `avoid_late_final_reassignment` warns when a `late final` field is assigned twice on one straight-line path. `late final` promises one assignment and Dart enforces it, but at run time by throwing `LateInitializationError` — so a second write the analyzer can see is a guaranteed crash rather than a possibility. Branches are not followed: two writes in opposite arms of an `if` are how a `late final` is meant to be initialised. In the `core` preset.

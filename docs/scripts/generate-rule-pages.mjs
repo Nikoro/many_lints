@@ -250,6 +250,7 @@ const CATEGORIES = {
       'prefer_single_declaration_per_file',
       'avoid_duplicate_mixins',
       'avoid_unnecessary_constructor',
+      'member_ordering',
       'avoid_unnecessary_extends',
     ],
   },
