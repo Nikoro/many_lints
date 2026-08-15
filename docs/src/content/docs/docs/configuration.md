@@ -73,9 +73,9 @@ the analysis server.
 | Preset | Rules | What it contains |
 |--------|-------|------------------|
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
-| `core` | 37 | Near-certain bugs only. |
-| `recommended` | 100 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
-| `opinionated` | 165 | `recommended` plus this package's own style preferences. |
+| `core` | 40 | Near-certain bugs only. |
+| `recommended` | 107 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
+| `opinionated` | 173 | `recommended` plus this package's own style preferences. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml`
 includes `core.yaml` — moving up a tier only ever adds rules.

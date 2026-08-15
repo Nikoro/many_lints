@@ -28,7 +28,7 @@ const FORCE = process.argv.includes('--force');
 const CATEGORIES = {
   'class-naming': {
     label: 'Class Naming',
-    rules: ['use_class_suffix', 'use_class_prefix'],
+    rules: ['use_class_suffix', 'use_class_prefix', 'avoid_unnecessary_enum_prefix'],
   },
   architecture: {
     label: 'Architecture',
@@ -183,6 +183,9 @@ const CATEGORIES = {
       'no_equal_then_else',
       'avoid_throw_in_catch_block',
       'avoid_unnecessary_negations',
+      'avoid_unnecessary_continue',
+      'avoid_unnecessary_return',
+      'no_equal_switch_case',
       'avoid_unmodified_loop_condition',
       'avoid_unused_after_null_check',
       'prefer_switch_expression',
@@ -244,6 +247,9 @@ const CATEGORIES = {
       'avoid_generics_shadowing',
       'prefer_for_loop_in_children',
       'prefer_single_declaration_per_file',
+      'avoid_duplicate_mixins',
+      'avoid_unnecessary_constructor',
+      'avoid_unnecessary_extends',
     ],
   },
   'shorthand-patterns': {
@@ -279,6 +285,7 @@ const CATEGORIES = {
       'always_remove_listener',
       'avoid_unassigned_stream_subscriptions',
       'avoid_unremovable_callbacks_in_listeners',
+      'avoid_late_final_reassignment',
       'dispose_fields',
     ],
   },
@@ -291,6 +298,7 @@ const CATEGORIES = {
       'avoid_non_null_assertion',
       'avoid_default_tostring',
       'avoid_equal_expressions',
+      'avoid_self_compare',
       'prefer_compute_over_isolate_run',
       'prefer_immediate_return',
       'prefer_moving_to_variable',

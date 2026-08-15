@@ -75,6 +75,24 @@
 
 ### Added
 
+- `avoid_late_final_reassignment` warns when a `late final` field is assigned twice on one straight-line path. `late final` promises one assignment and Dart enforces it, but at run time by throwing `LateInitializationError` — so a second write the analyzer can see is a guaranteed crash rather than a possibility. Branches are not followed: two writes in opposite arms of an `if` are how a `late final` is meant to be initialised. In the `core` preset.
+
+- `avoid_unnecessary_constructor` warns when a class declares an empty unnamed constructor identical to the one Dart provides when none is written. A `const`, named, documented or annotated constructor each does something the implicit one cannot and is left alone — as is any class with a second constructor, where declaring the unnamed one is what keeps it available. In the `recommended` preset.
+
+- `avoid_unnecessary_extends` warns when a class explicitly extends `Object`, which every class does anyway. A user-declared `Object` shadowing `dart:core`'s is a real choice and is left alone. In the `recommended` preset.
+
+- `avoid_unnecessary_return` warns when a bare `return;` is the last statement of a function returning `void` or `Future<void>`, where control leaves the function without it. An early `return;` that skips later statements is left alone, as is an omitted return type, which means `dynamic` rather than `void`. In the `recommended` preset.
+
+- `avoid_unnecessary_enum_prefix` warns when an enum constant repeats its own enum's name, which every call site already carries — `Status.statusActive` rather than `Status.active`. The prefix has to end at a word boundary, so `statusable` is not a match, and a constant named exactly like its enum is the whole word rather than a prefix. In the `opinionated` preset.
+
+- `no_equal_switch_case` warns when two branches of a `switch` produce identical bodies, where sharing the patterns with `||` would say it once. Three shapes are excluded because none can be merged: a guarded case (each `when` belongs to its own pattern), the catch-all (it has to stay last), and an empty body (that is a fallthrough). **In no preset** — whether two independent enum branches that agree today should be merged is a genuine judgement call, so it stays opt-in by name.
+
+- `avoid_duplicate_mixins` warns when a `with` clause applies the same mixin more than once. Every application after the first contributes nothing, but a reader counting the behaviours mixed in sees one more than exists. Resolved types are compared rather than source text, so an aliased import counts as one mixin while a different generic instantiation does not. Re-applying a mixin a superclass already has is left alone, since that does change the linearization order. In the `core` preset.
+
+- `avoid_self_compare` warns when a value is passed to its own `compareTo`, which always answers `0` — so a sort built on it leaves the list untouched, and a conditional guarded by it always takes the same branch. Only receivers and arguments that are safe to evaluate twice are compared: a repeated call, and a hand-written getter that can report a moving value, are both left alone. The operator form (`a == a`) stays with `avoid_equal_expressions`, so the two never report the same line. In the `core` preset.
+
+- `avoid_unnecessary_continue` warns when a `continue` is the last statement of a loop body, where control reaches the next iteration without it. It is usually a leftover from a change that moved or deleted the statements it once guarded, and it reads as though something below is being skipped. A labelled `continue`, and one ending a `then` branch to skip an `else`, are both doing real work and are left alone. Ships with a quick fix. In the `recommended` preset.
+
 - `prefer_moving_to_variable` warns when the same property-access or invocation chain is repeated inside one block, and could be computed once into a variable. Reported at the first occurrence, which is where the variable belongs. In the `opinionated` preset.
 
   Four options, two of them beyond the usual scope of this rule: `allowed_duplicated_chains` (how many extra repetitions to tolerate, default `0`), `min_chain_length` (the shortest pure-property chain worth naming, default `2`, so `a.b` twice is left alone), `ignored_invocations` and `ignored_targets`.

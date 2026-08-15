@@ -80,6 +80,12 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_empty_setstate` | Don't call `setState` with an empty callback | — |
 | `avoid_empty_spread` | Remove spreads of empty collection literals | Yes |
 | `avoid_equal_expressions` | Both operands of a binary expression should not be identical | — |
+| `avoid_self_compare` | A value compared against itself with `compareTo` is always 0 | — |
+| `avoid_duplicate_mixins` | The same mixin applied twice in one `with` clause | — |
+| `avoid_unnecessary_constructor` | An empty constructor identical to the default one | — |
+| `avoid_unnecessary_extends` | An explicit `extends Object` states the default | — |
+| `avoid_unnecessary_enum_prefix` | An enum constant repeating its own enum name | — |
+| `avoid_late_final_reassignment` | A `late final` field assigned twice on one path | — |
 | `avoid_expanded_as_spacer` | Prefer `Spacer` over `Expanded` with empty child | Yes |
 | `avoid_flexible_outside_flex` | `Flexible`/`Expanded` should only be inside `Row`/`Column`/`Flex` | — |
 | `avoid_generics_shadowing` | Generic type parameter shadows a top-level declaration | Yes |
@@ -123,6 +129,9 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_unnecessary_gesture_detector` | `GestureDetector` with no event handlers | Yes |
 | `avoid_unnecessary_hook_widgets` | `HookWidget` does not use hooks | Yes |
 | `avoid_unnecessary_negations` | Collapse unnecessary boolean negations | Yes |
+| `avoid_unnecessary_continue` | A `continue` that ends a loop body changes nothing | Yes |
+| `avoid_unnecessary_return` | A bare `return;` that ends a void function changes nothing | — |
+| `no_equal_switch_case` | Two switch branches with identical bodies should share patterns | — |
 | `avoid_unnecessary_overrides` | Override only calls `super` without additional logic | Yes |
 | `avoid_unnecessary_overrides_in_state` | State method override only calls `super` | Yes |
 | `avoid_unnecessary_setstate` | Unnecessary call to `setState` | Yes |

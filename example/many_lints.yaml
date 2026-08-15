@@ -126,3 +126,8 @@ rules:
       - deny: ['DateTime.now']
         in: ['lib/banned_usage_example.dart']
         message: 'Inject a clock so this stays testable.'
+
+  # In no preset — merging two independent enum branches is a judgement call,
+  # so the rule is enabled here only to demonstrate it.
+  no_equal_switch_case:
+    enabled: true

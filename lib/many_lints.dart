@@ -71,6 +71,15 @@ import 'package:many_lints/src/rules/avoid_ref_watch_outside_build.dart';
 import 'package:many_lints/src/rules/avoid_collapsible_if.dart';
 import 'package:many_lints/src/rules/avoid_default_tostring.dart';
 import 'package:many_lints/src/rules/avoid_duplicate_collection_elements.dart';
+import 'package:many_lints/src/rules/avoid_duplicate_mixins.dart';
+import 'package:many_lints/src/rules/avoid_unnecessary_constructor.dart';
+import 'package:many_lints/src/rules/avoid_unnecessary_enum_prefix.dart';
+import 'package:many_lints/src/rules/avoid_unnecessary_extends.dart';
+import 'package:many_lints/src/rules/avoid_unnecessary_return.dart';
+import 'package:many_lints/src/rules/avoid_late_final_reassignment.dart';
+import 'package:many_lints/src/rules/no_equal_switch_case.dart';
+import 'package:many_lints/src/rules/avoid_self_compare.dart';
+import 'package:many_lints/src/rules/avoid_unnecessary_continue.dart';
 import 'package:many_lints/src/rules/avoid_nested_do_notation.dart';
 import 'package:many_lints/src/rules/avoid_nested_shorthands.dart';
 import 'package:many_lints/src/rules/avoid_nested_futures.dart';
@@ -245,6 +254,7 @@ import 'package:many_lints/src/fixes/avoid_unnecessary_overrides_in_state_fix.da
 import 'package:many_lints/src/fixes/avoid_unnecessary_stateful_widgets_fix.dart';
 import 'package:many_lints/src/fixes/avoid_duplicate_cascades_fix.dart';
 import 'package:many_lints/src/fixes/avoid_duplicate_collection_elements_fix.dart';
+import 'package:many_lints/src/fixes/avoid_unnecessary_continue_fix.dart';
 import 'package:many_lints/src/fixes/avoid_shrink_wrap_in_lists_fix.dart';
 import 'package:many_lints/src/fixes/add_affix_fix.dart';
 import 'package:many_lints/src/fixes/avoid_generics_shadowing_fix.dart';
@@ -436,6 +446,15 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidCollapsibleIf());
     _registerWarningRule(registry, AvoidDefaultTostring());
     _registerWarningRule(registry, AvoidDuplicateCollectionElements());
+    _registerWarningRule(registry, AvoidDuplicateMixins());
+    _registerWarningRule(registry, AvoidUnnecessaryConstructor());
+    _registerWarningRule(registry, AvoidUnnecessaryEnumPrefix());
+    _registerWarningRule(registry, AvoidUnnecessaryExtends());
+    _registerWarningRule(registry, AvoidUnnecessaryReturn());
+    _registerWarningRule(registry, AvoidLateFinalReassignment());
+    _registerWarningRule(registry, NoEqualSwitchCase());
+    _registerWarningRule(registry, AvoidSelfCompare());
+    _registerWarningRule(registry, AvoidUnnecessaryContinue());
     _registerWarningRule(registry, AvoidAdHocLeftType());
     _registerWarningRule(registry, AvoidBareAwaitInDo());
     _registerWarningRule(registry, AvoidEitherOfFuture());
@@ -586,6 +605,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidDuplicateCollectionElements.code,
       AvoidDuplicateCollectionElementsFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidUnnecessaryContinue.code,
+      AvoidUnnecessaryContinueFix.new,
     );
     registry.registerFixForRule(
       AvoidShrinkWrapInLists.code,
