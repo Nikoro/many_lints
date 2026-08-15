@@ -1,0 +1,98 @@
+---
+title: avoid_complex_conditions
+description: "Keep boolean conditions within an operand budget"
+sidebar:
+  label: avoid_complex_conditions
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule flags a condition combining more `&&`/`||` operands than the configured budget.
+
+## Why use this rule
+
+`a && b && !c || d` forces the reader to hold four facts and two precedence rules at once, and it is where an `&&` that should have been `||` hides longest. Naming the parts turns the condition into something readable at a glance and debuggable one piece at a time.
+
+The root of a chain carries the diagnostic, so `a && b && c && d` counts once rather than three times. Parentheses do not break a chain: `(a && b) && c` is still one condition.
+
+A hand-written `operator ==` is never reported. It is one `&&` per field by construction, and splitting it would scatter an equality check that reads as a unit — this accounted for most of the hits when the rule was first run against a production codebase.
+
+This rule is in **no preset**: an operand budget is a house style.
+
+## Don't
+
+```dart
+if (user.isActive && user.hasPaid && !user.isBanned && user.age > 18) {
+  grantAccess();
+}
+```
+
+## Do
+
+```dart
+final isEligible = user.isActive && user.hasPaid;
+final isPermitted = !user.isBanned && user.age > 18;
+
+if (isEligible && isPermitted) {
+  grantAccess();
+}
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_complex_conditions:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_complex_conditions:
+      max_operands: 4
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_complex_conditions:
+    max_operands: 4
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_operands` | int | `3` | How many `&&`/`||` operands a condition may combine |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_complex_conditions: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

@@ -150,3 +150,12 @@ rules:
   # stricter than many codebases run. Enabled here to demonstrate it.
   avoid_long_functions:
     enabled: true
+
+  # In no preset — each is a budget or an API-shape judgement rather than a
+  # correctness question. Enabled here to demonstrate them.
+  avoid_complex_conditions:
+    enabled: true
+  avoid_long_parameter_list:
+    enabled: true
+  prefer_getter_over_method:
+    enabled: true

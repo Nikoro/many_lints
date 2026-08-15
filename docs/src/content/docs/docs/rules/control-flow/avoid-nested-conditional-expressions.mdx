@@ -1,0 +1,81 @@
+---
+title: avoid_nested_conditional_expressions
+description: "Flag a conditional nested inside another"
+sidebar:
+  label: avoid_nested_conditional_expressions
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Control Flow</span>
+
+This rule flags a conditional expression nested inside another one.
+
+## Why use this rule
+
+`a ? b : (c ? d : e)` packs a decision tree onto one line, and the reader has to track which `?` each `:` belongs to. A `switch` expression lines the branches up, and an early return removes the nesting entirely.
+
+The outermost conditional carries the diagnostic, so one nested chain produces one report rather than one per level.
+
+## Don't
+
+```dart
+String label(int score) =>
+    score > 100 ? 'high' : (score > 50 ? 'medium' : 'low');
+```
+
+## Do
+
+```dart
+String label(int score) => switch (score) {
+  > 100 => 'high',
+  > 50 => 'medium',
+  _ => 'low',
+};
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_nested_conditional_expressions:
+      : 2
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_nested_conditional_expressions:
+    : 2
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `` | max_depth | int | `1` |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_nested_conditional_expressions: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

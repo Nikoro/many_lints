@@ -246,6 +246,10 @@ void f() {
 }
 ''';
 
+const _complexConditionCode = '''
+bool f(bool a, bool b, bool c, bool d) => a && b && c && d;
+''';
+
 const _customStateNameCode = '''
 class LoadingStatus {}
 ''';
@@ -886,6 +890,40 @@ rules:
 
       // `name_pattern` moved to `prefer_immutable_state` in 0.10.0, when the
       // name-based half was split out of the Bloc rule.
+      group('avoid_complex_conditions max_operands', () {
+        test('reports a condition over the configured budget', () async {
+          final errors = await harness.analyze(
+            _complexConditionCode,
+            config: '''
+rules:
+  avoid_complex_conditions:
+    max_operands: 3
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            contains('avoid_complex_conditions'),
+          );
+        });
+
+        test('a higher budget leaves the same condition alone', () async {
+          final errors = await harness.analyze(
+            _complexConditionCode,
+            config: '''
+rules:
+  avoid_complex_conditions:
+    max_operands: 6
+''',
+          );
+
+          expect(
+            errors.map((e) => e.code),
+            isNot(contains('avoid_complex_conditions')),
+          );
+        });
+      });
+
       group('avoid_long_functions max_lines', () {
         test('reports a body over the configured budget', () async {
           final errors = await harness.analyze(

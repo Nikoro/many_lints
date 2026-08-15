@@ -81,6 +81,16 @@
 
 ### Added
 
+- `prefer_returning_condition` warns when an `if` returns `true` with a following `return false` — the condition itself, spelled out in three lines. In the `recommended` preset.
+
+- `avoid_nested_conditional_expressions` warns when a conditional is nested inside another, packing a decision tree onto one line. The outermost carries the diagnostic, so one chain reports once. Configurable through `max_depth` (default `1`). In the `opinionated` preset.
+
+- `avoid_complex_conditions` warns when a condition combines more `&&`/`||` operands than `max_operands` (default 3). A hand-written `operator ==` is never reported: it is one `&&` per field by construction, and splitting it would scatter a check that reads as a unit. **In no preset.**
+
+- `avoid_long_parameter_list` warns when a function takes more parameters than the budget. Positional and named are counted separately (defaults 4 and 10), since named parameters are labelled at the call site and do not depend on order. **In no preset.**
+
+- `prefer_getter_over_method` warns when a no-argument method only reads a value. Three exclusions keep it off members whose parentheses are fixed: a body that calls anything (`Clock.now()` answers differently each time), a conventional name (`toJson`, `call`, `copyWith`), and a `Stream`/`Future` return. **In no preset.**
+
 - `no_equal_conditions` warns when an `if`/`else if` chain tests the same condition twice, making the later branch unreachable and letting the case it was meant to handle fall through to `else`. Two independent `if`s are not compared, since the first may have changed the state the second reads. In the `core` preset.
 
 - `function_always_returns_same_value` warns when every `return` in a function yields the same constant, so the branching around them decides nothing. Protocol callbacks are excluded both by name (`onNotification`, `shouldRepaint`, any `on...`) and by shape — a parameter typed `...Notification` marks a listener whose `bool` is a "handled" signal rather than an answer. In the `core` preset.

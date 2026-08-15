@@ -1,0 +1,100 @@
+---
+title: avoid_long_parameter_list
+description: "Keep parameter lists within a budget"
+sidebar:
+  label: avoid_long_parameter_list
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule flags a function taking more parameters than the configured budget.
+
+## Why use this rule
+
+A long parameter list is usually several values that belong together travelling separately, and every caller has to assemble them in the right order. Grouping them into a record or a small class names the thing they form and makes the call sites read.
+
+**Positional and named parameters are counted separately**, with a larger budget for named. Named parameters are labelled at the call site and do not depend on order, so a widget constructor with eight of them is not the problem this rule exists for — the default budgets are 4 positional and 10 named.
+
+An `@override` is never reported, since it cannot change its signature.
+
+This rule is in **no preset**: a parameter budget is a house style.
+
+## Don't
+
+```dart
+void schedule(
+  String title,
+  DateTime start,
+  DateTime end,
+  String venue,
+  int courtNumber,
+) {}
+```
+
+## Do
+
+```dart
+void schedule(String title, DateRange when, Court court) {}
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_long_parameter_list:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_long_parameter_list:
+      max_positional: 3
+      max_named: 12
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_long_parameter_list:
+    max_positional: 3
+    max_named: 12
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_positional` | int | `4` | How many positional parameters are allowed |
+| `max_named` | int | `10` | How many named parameters are allowed |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_long_parameter_list: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

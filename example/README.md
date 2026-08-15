@@ -140,6 +140,11 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_redundant_async` | `async` without any `await` | — |
 | `avoid_unnecessary_call` | An explicit `.call()` on a function | — |
 | `avoid_long_functions` | A function body over the configured line budget | — |
+| `avoid_long_parameter_list` | More parameters than the configured budget | — |
+| `avoid_complex_conditions` | A condition combining too many operands | — |
+| `avoid_nested_conditional_expressions` | A conditional nested inside another | — |
+| `prefer_returning_condition` | An if/return pair that is just the condition | — |
+| `prefer_getter_over_method` | A no-argument value read should be a getter | — |
 | `avoid_unnecessary_overrides` | Override only calls `super` without additional logic | Yes |
 | `avoid_unnecessary_overrides_in_state` | State method override only calls `super` | Yes |
 | `avoid_unnecessary_setstate` | Unnecessary call to `setState` | Yes |
