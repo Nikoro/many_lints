@@ -1,0 +1,101 @@
+---
+title: prefer_immutable_state
+description: "Ensure classes named as state are annotated with @immutable"
+sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
+  label: prefer_immutable_state
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">State Management</span>
+
+This rule flags a class whose name marks it as state and which is missing the `@immutable` annotation. Which names count is decided by `name_pattern` — `State$` by default — and the check is then widened to every subclass and implementor.
+
+## Why use this rule
+
+State that can be mutated in place changes without anything observing the change. A Riverpod notifier that assigns to a field of its own state, rather than replacing the state object, updates nothing: the reference is the same, so no listener rebuilds and no widget redraws.
+
+`@immutable` moves that failure to analysis time. The analyzer reports a non-final field where it is declared, instead of leaving the bug to surface as a screen that will not refresh.
+
+This rule is deliberately state-management-agnostic: it covers Riverpod, a hand-rolled store, and any plain `...State` value object equally. For Bloc and Cubit, [`prefer_immutable_bloc_state`](/many_lints/docs/rules/bloc-riverpod/prefer-immutable-bloc-state/) recognises the state class through the `Bloc<E, S>` type argument instead, which is exact rather than a name match.
+
+**See also:** [`@immutable`](https://api.flutter.dev/flutter/meta/immutable-constant.html)
+
+## Flutter `State` classes are never reported
+
+Every Flutter `State<T>` subclass is named `...State`, and every one of them is *meant* to hold mutable fields — controllers, `setState` values, subscriptions. Annotating one `@immutable` would be wrong, so they are excluded by type, not by name.
+
+Which base classes count as a Flutter `State` follows the shared [`state_base_classes`](/many_lints/docs/configuration/) option, so a project with its own state-like base can point the exclusion at it.
+
+## Don't
+
+```dart
+class LoginEmailState {
+  LoginEmailState({this.isSubmitting = false});
+
+  bool isSubmitting;
+}
+```
+
+## Do
+
+```dart
+import 'package:meta/meta.dart';
+
+@immutable
+class LoginEmailState {
+  const LoginEmailState({this.isSubmitting = false});
+
+  final bool isSubmitting;
+}
+```
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_immutable_state: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_immutable_state:
+      name_pattern: '(State|Status)$'
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_immutable_state:
+    name_pattern: '(State|Status)$'
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `name_pattern` | regex | `State$` | Pattern identifying state classes by name. A name matched in its entirety is not reported, so the bare affix itself is never flagged |

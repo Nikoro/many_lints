@@ -381,13 +381,44 @@ String describe(int a) {
   ''',
     };
 
-    test('adds @immutable and imports package:meta to a state class', () async {
+    test('adds @immutable and imports package:meta to a Cubit state', () async {
+      // The state class is found through the `Cubit<State>` type argument;
+      // this rule no longer matches on the name alone.
+      final fixed = await harness.applyFix(
+        r'''
+  import 'package:bloc/bloc.dart';
+
+  class MyFeatureState {}
+
+  class MyFeatureCubit extends Cubit<MyFeatureState> {}
+  ''',
+        'prefer_immutable_bloc_state',
+        packages: blocMetaPackages,
+      );
+
+      expect(fixed, contains("import 'package:meta/meta.dart';"));
+      expect(fixed, contains('@immutable\nclass MyFeatureState {}'));
+    });
+  });
+
+  group('prefer_immutable_state', () {
+    const metaPackage = {
+      'meta': r'''
+  class Immutable {
+    const Immutable();
+  }
+
+  const Immutable immutable = Immutable();
+  ''',
+    };
+
+    test('adds @immutable to a class matched by name', () async {
       final fixed = await harness.applyFix(
         r'''
   class MyFeatureState {}
   ''',
-        'prefer_immutable_bloc_state',
-        packages: blocMetaPackages,
+        'prefer_immutable_state',
+        packages: metaPackage,
       );
 
       expect(fixed, contains("import 'package:meta/meta.dart';"));

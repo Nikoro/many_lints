@@ -1,7 +1,7 @@
 # `prefer_immutable_bloc_state` fires on projects that have no Bloc
 
 **Reported:** 2026-08-14 (found while adopting the plugin in a Riverpod-only app)
-**Status:** open
+**Status:** RESOLVED in v0.10.0 — option 2 implemented
 **Affects:** `lib/src/rules/prefer_immutable_bloc_state.dart`
 
 ## What happens
@@ -40,7 +40,30 @@ finds it cannot tell whether it is reporting real Bloc state or a name match.
 It also lands in the `opinionated` preset, so a project that selects that tier
 gets Bloc diagnostics without opting into anything Bloc-shaped.
 
-## Options
+## Resolution
+
+**Option 2 was implemented.** `prefer_immutable_bloc_state` is now type-based
+only; the name-based strategy and its `name_pattern` option moved to a new
+`prefer_immutable_state`. Both share `lib/src/immutable_state_rule.dart`, so
+the two cannot drift, and both register the (renamed) `AddImmutableAnnotationFix`.
+
+Two things the split turned up that were not in the analysis below:
+
+1. **Flutter `State<T>` subclasses had to be excluded by type.** Every one of
+   them is named `...State` and every one is *meant* to be mutable, so the
+   name-based rule reported every `StatefulWidget` in the codebase — 27 hits in
+   ligex, of which 19 were `_FooPageState`. The exclusion goes through the
+   shared `isStateElement`, so `state_base_classes` tunes it.
+2. **A latent Cubit bug.** `Cubit` is itself a `Bloc`, and the Bloc branch was
+   tested first, so a `Cubit<State>` matched as a Bloc and was then searched for
+   a second type argument it does not have. Cubit state was only ever reported
+   through the name heuristic; removing that made the gap visible.
+
+Verified on ligex: the Bloc rule now reports **0**, and the name-based rule
+reports **8**, all genuine Riverpod notifier state in `application/`. The
+downstream `include:` workaround below has been deleted from ligex.
+
+## Options considered
 
 1. **Gate strategy 2 behind an actual Bloc dependency.** Closest to what the name
    promises. Silently drops the rule for anyone relying on the name heuristic today.

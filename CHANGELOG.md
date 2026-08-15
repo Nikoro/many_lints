@@ -4,6 +4,12 @@
 
 ### Breaking
 
+- **`prefer_immutable_bloc_state` no longer matches on class name.** It recognised state classes two ways: through the `Bloc<E, S>` / `Cubit<S>` type argument, and through a bare `RegExp(r'State$')` over class names. In a project without the `bloc` package only the second ever matched, so the rule degenerated into "every class named `...State` must be `@immutable`" — reported under a message naming a package the project does not use. One Riverpod-only app saw 27 classes flagged, none of them Bloc state.
+
+  The name-based half moved to the new `prefer_immutable_state`, which says what it checks and carries the `name_pattern` option. To keep the old behaviour, enable both rules; a project that never used Bloc wants only the new one.
+
+  This also fixes a latent bug the split exposed: `Cubit` is itself a `Bloc`, and the Bloc branch was tested first, so a `Cubit<State>` was matched as a Bloc and then searched for a second type argument it does not have. Cubit state was only ever reported by the name heuristic, and went unreported once that was removed.
+
 - **Every rule is now off by default, and rules are selected with a preset.** Previously all 156 rules were enabled the moment the plugin was installed, which meant adopting the package on an existing codebase produced thousands of warnings before any of them could be judged useful.
 
   Installing the plugin now reports nothing until a preset is chosen:
@@ -74,6 +80,8 @@
   Any `// ignore: many_lints/use_bloc_suffix` comment (or the `_cubit_`/`_notifier_` variants) must be renamed to the new rule, and `diagnostics:` entries likewise.
 
 ### Added
+
+- `prefer_immutable_state` warns when a class whose name marks it as state lacks `@immutable`. It owns the name-based half that `prefer_immutable_bloc_state` used to carry, including the `name_pattern` option, and is deliberately state-management-agnostic: it covers Riverpod notifier state, a hand-rolled store, or any plain `...State` value object. Flutter `State<T>` subclasses are excluded by type, since holding mutable fields is their entire job. In the `opinionated` preset.
 
 - `avoid_late_final_reassignment` warns when a `late final` field is assigned twice on one straight-line path. `late final` promises one assignment and Dart enforces it, but at run time by throwing `LateInitializationError` — so a second write the analyzer can see is a guaranteed crash rather than a possibility. Branches are not followed: two writes in opposite arms of an `if` are how a `late final` is meant to be initialised. In the `core` preset.
 

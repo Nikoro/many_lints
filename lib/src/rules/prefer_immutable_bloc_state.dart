@@ -1,23 +1,21 @@
-import 'package:analyzer/analysis_rule/rule_context.dart';
-import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-import '../bloc_type_checkers.dart';
-import '../many_lints_rule.dart';
-import '../rule_config.dart';
+import '../immutable_state_rule.dart';
 
-/// Warns when a Bloc/Cubit state class is not annotated with `@immutable`.
+/// Warns when a Bloc or Cubit state class is not annotated with `@immutable`.
 ///
-/// Immutable state objects ensure that `emit` always receives a newly created
-/// object, preventing stale state bugs where the state reference hasn't changed.
+/// `emit` compares the new state against the current one and does nothing when
+/// they are equal. Mutating a state object in place therefore produces a state
+/// change no listener ever sees — the reference did not change, so `emit`
+/// discards it. `@immutable` makes the analyzer say so where the field is
+/// declared, rather than leaving it to be found as a UI that will not update.
 ///
-/// Detection uses two strategies:
-/// 1. Classes whose name ends with `State` that extend/implement other state
-///    classes in the Bloc pattern.
-/// 2. Classes used as the state type parameter of a `Bloc` or `Cubit`.
-class PreferImmutableBlocState extends ManyLintsRule {
+/// The state class is recognised through the type argument of `Bloc<E, S>` or
+/// `Cubit<S>`, and then widened to every subclass and implementor. That makes
+/// the rule inert in a project without the `bloc` package, which is the point:
+/// `prefer_immutable_state` is the state-management-agnostic version that
+/// matches on the class name instead.
+class PreferImmutableBlocState extends ImmutableStateRule {
   static const LintCode code = LintCode(
     'prefer_immutable_bloc_state',
     'Bloc state classes should be annotated with @immutable.',
@@ -28,126 +26,11 @@ class PreferImmutableBlocState extends ManyLintsRule {
     : super(
         name: 'prefer_immutable_bloc_state',
         description:
-            'Warns when a Bloc/Cubit state class lacks the @immutable annotation.',
+            'Warns when a class used as the state of a Bloc or Cubit lacks '
+            'the @immutable annotation.',
+        detection: StateDetection.blocTypeArgument,
       );
 
   @override
   LintCode get diagnosticCode => code;
-
-  @override
-  void registerManyLintsProcessors(
-    RuleVisitorRegistry registry,
-    RuleContext context,
-  ) {
-    final visitor = _Visitor(this);
-    registry.addCompilationUnit(this, visitor);
-  }
-}
-
-class _Visitor extends SimpleAstVisitor<void> {
-  final PreferImmutableBlocState rule;
-
-  _Visitor(this.rule);
-
-  /// Reproduces the original `endsWith('State')` heuristic.
-  static final _defaultNamePattern = RegExp(r'State$');
-
-  @override
-  void visitCompilationUnit(CompilationUnit node) {
-    final stateClassNames = <String>{};
-    final childrenOf = <String, List<String>>{};
-
-    // Strategy 2 below recognises state classes by name. The default `State$`
-    // reproduces the previous hardcoded `endsWith('State')` heuristic; a
-    // project naming them `FooUiState` or `FooStatus` can say so.
-    final namePattern = rule.config.patternOption(
-      'name_pattern',
-      defaultValue: _defaultNamePattern,
-    )!;
-
-    // Single pass: collect state type names, *State classes, and hierarchy.
-    for (final declaration in node.declarations) {
-      if (declaration is! ClassDeclaration) continue;
-
-      final className = declaration.namePart.typeName.lexeme;
-
-      // Strategy 1: Find classes used as state type parameter of Bloc/Cubit
-      final element = declaration.declaredFragment?.element;
-      if (element != null) {
-        if (blocChecker.isSuperOf(element) && !blocChecker.isExactly(element)) {
-          final typeArgs =
-              declaration.extendsClause?.superclass.typeArguments?.arguments;
-          if (typeArgs != null && typeArgs.length == 2) {
-            final stateType = typeArgs[1];
-            if (stateType is NamedType) {
-              stateClassNames.add(stateType.name.lexeme);
-            }
-          }
-        } else if (cubitChecker.isSuperOf(element) &&
-            !cubitChecker.isExactly(element)) {
-          final typeArgs =
-              declaration.extendsClause?.superclass.typeArguments?.arguments;
-          if (typeArgs != null && typeArgs.length == 1) {
-            final stateType = typeArgs.first;
-            if (stateType is NamedType) {
-              stateClassNames.add(stateType.name.lexeme);
-            }
-          }
-        }
-      }
-
-      // Strategy 2: Classes whose name matches the configured pattern.
-      // The bare affix itself (`State`) is not a state class, so a match
-      // covering the whole name is rejected the way `length > 5` did.
-      if (namePattern.hasMatch(className) &&
-          !namePattern.matchesWholeValue(className)) {
-        stateClassNames.add(className);
-      }
-
-      // Build parent→children adjacency map for BFS
-      final superclass = declaration.extendsClause?.superclass;
-      if (superclass != null) {
-        (childrenOf[superclass.name.lexeme] ??= []).add(className);
-      }
-
-      final implementsClause = declaration.implementsClause;
-      if (implementsClause != null) {
-        for (final implemented in implementsClause.interfaces) {
-          (childrenOf[implemented.name.lexeme] ??= []).add(className);
-        }
-      }
-    }
-
-    // BFS from known state class names
-    final queue = [...stateClassNames];
-    while (queue.isNotEmpty) {
-      final current = queue.removeLast();
-      final children = childrenOf[current];
-      if (children == null) continue;
-      for (final child in children) {
-        if (stateClassNames.add(child)) {
-          queue.add(child);
-        }
-      }
-    }
-
-    // Now check each state class for @immutable annotation
-    for (final declaration in node.declarations) {
-      if (declaration is! ClassDeclaration) continue;
-
-      final className = declaration.namePart.typeName.lexeme;
-      if (!stateClassNames.contains(className)) continue;
-
-      if (!_hasImmutableAnnotation(declaration)) {
-        rule.reportAtToken(declaration.namePart.typeName);
-      }
-    }
-  }
-
-  static bool _hasImmutableAnnotation(ClassDeclaration node) {
-    for (final annotation in node.metadata) {
-      if (annotation.name.name == 'immutable') return true;
-    }
-    return false;
-  }
 }

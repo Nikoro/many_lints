@@ -4,15 +4,18 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Fix that adds the `@immutable` annotation to a Bloc state class.
-class PreferImmutableBlocStateFix extends ResolvedCorrectionProducer {
+/// Fix that adds the `@immutable` annotation to a state class.
+///
+/// Shared by `prefer_immutable_bloc_state` and `prefer_immutable_state`: the
+/// edit is the same whichever rule decided the class holds state.
+class AddImmutableAnnotationFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
-    'many_lints.fix.preferImmutableBlocState',
+    'many_lints.fix.addImmutableAnnotation',
     DartFixKindPriority.standard,
     "Add '@immutable' annotation",
   );
 
-  PreferImmutableBlocStateFix({required super.context});
+  AddImmutableAnnotationFix({required super.context});
 
   @override
   CorrectionApplicability get applicability =>

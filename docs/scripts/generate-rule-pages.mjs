@@ -165,6 +165,7 @@ const CATEGORIES = {
       'avoid_unnecessary_overrides',
       'avoid_unnecessary_overrides_in_state',
       'avoid_unnecessary_setstate',
+      'prefer_immutable_state',
       'avoid_mounted_in_setstate',
     ],
   },

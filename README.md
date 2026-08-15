@@ -59,7 +59,7 @@ For local development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
 | `core` | 40 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
 | `recommended` | 107 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
-| `opinionated` | 173 | `recommended` plus this package's own style preferences. |
+| `opinionated` | 174 | `recommended` plus this package's own style preferences. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml` includes `core.yaml`. `core` and `recommended` deliberately exclude anything that imposes an architecture, a naming scheme, or a contested style choice.
 
@@ -142,7 +142,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-192 lints with 98 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
+193 lints with 99 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
@@ -154,7 +154,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 | [fpdart](https://nikoro.github.io/many_lints/docs/rules/fpdart/) | 22 | Functional error handling with Either, Option and TaskEither |
 | [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/widget-best-practices/) | 21 | General widget best practices |
 | [Widget Replacement](https://nikoro.github.io/many_lints/docs/rules/widget-replacement/) | 13 | Simpler widget alternatives |
-| [State Management](https://nikoro.github.io/many_lints/docs/rules/state-management/) | 9 | StatefulWidget and state patterns |
+| [State Management](https://nikoro.github.io/many_lints/docs/rules/state-management/) | 10 | StatefulWidget and state patterns |
 | [Control Flow](https://nikoro.github.io/many_lints/docs/rules/control-flow/) | 21 | Control flow statements and patterns |
 | [Collection & Type](https://nikoro.github.io/many_lints/docs/rules/collection-type/) | 20 | Collection and type-related checks |
 | [Pattern Matching](https://nikoro.github.io/many_lints/docs/rules/pattern-matching/) | 6 | Dart pattern matching best practices |

@@ -178,6 +178,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `prefer_for_loop_in_children` | For-loop instead of functional list building | Yes |
 | `prefer_immediate_return` | Return an expression directly instead of via a throwaway variable | Yes |
 | `prefer_immutable_bloc_state` | Bloc state classes → `@immutable` | Yes |
+| `prefer_immutable_state` | Classes named as state → `@immutable` | Yes |
 | `prefer_iterable_of` | `.of()` instead of `.from()` for type safety | Yes |
 | `prefer_moving_to_variable` | Compute a repeated property or invocation chain once into a variable | No |
 | `prefer_multi_bloc_provider` | `MultiBlocProvider` instead of nested `BlocProvider`s | Yes |

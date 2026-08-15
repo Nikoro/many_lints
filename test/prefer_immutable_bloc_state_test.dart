@@ -76,13 +76,13 @@ class CounterCubit extends Cubit<CounterState> {
     );
   }
 
-  Future<void> test_stateNamePattern_noBloc() async {
-    await assertDiagnostics(
-      r'''
+  Future<void> test_stateNameAloneIsNotBlocState() async {
+    // The name-based strategy moved to `prefer_immutable_state`. Without a
+    // Bloc or Cubit in sight this rule must stay silent, which is the whole
+    // point of the split.
+    await assertNoDiagnostics(r'''
 class MyFeatureState {}
-''',
-      [lint(6, 14)],
-    );
+''');
   }
 
   Future<void> test_stateWithImmutable_noDiagnostic() async {

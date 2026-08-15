@@ -864,20 +864,37 @@ rules:
         });
       });
 
-      group('prefer_immutable_bloc_state name_pattern', () {
+      // `name_pattern` moved to `prefer_immutable_state` in 0.10.0, when the
+      // name-based half was split out of the Bloc rule.
+      group('prefer_immutable_state name_pattern', () {
         test('reports a class matching the configured pattern', () async {
           final errors = await harness.analyze(
             _customStateNameCode,
             config: '''
 rules:
-  prefer_immutable_bloc_state:
+  prefer_immutable_state:
     name_pattern: 'Status\$'
+''',
+          );
+
+          expect(errors.map((e) => e.code), contains('prefer_immutable_state'));
+        });
+
+        test('leaves the class alone under the default pattern', () async {
+          // The asymmetric counterpart: silence alone cannot distinguish "the
+          // option worked" from "the rule never fired".
+          final errors = await harness.analyze(
+            _customStateNameCode,
+            config: '''
+rules:
+  prefer_immutable_state:
+    enabled: true
 ''',
           );
 
           expect(
             errors.map((e) => e.code),
-            contains('prefer_immutable_bloc_state'),
+            isNot(contains('prefer_immutable_state')),
           );
         });
       });

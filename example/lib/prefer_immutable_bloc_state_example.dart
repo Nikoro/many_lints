@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable
+// ignore_for_file: many_lints/prefer_immutable_state
 
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
