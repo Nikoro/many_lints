@@ -346,6 +346,10 @@ options never changes results until you set one.
 | [`avoid_unrelated_type_casts`](/many_lints/docs/rules/collection-type/avoid-unrelated-type-casts/) | `report_is_checks` |
 | [`avoid_unremovable_callbacks_in_listeners`](/many_lints/docs/rules/resource-management/avoid-unremovable-callbacks-in-listeners/) | `additional_methods` |
 | [`avoid_unrun_task`](/many_lints/docs/rules/fpdart/avoid-unrun-task/) | `additional_types`, `ignore_cascades` |
+| [`avoid_complex_conditions`](/many_lints/docs/rules/code-quality/avoid-complex-conditions/) | `max_operands` |
+| [`avoid_long_functions`](/many_lints/docs/rules/code-quality/avoid-long-functions/) | `max_lines` |
+| [`avoid_long_parameter_list`](/many_lints/docs/rules/code-quality/avoid-long-parameter-list/) | `max_positional`, `max_named` |
+| [`avoid_nested_conditional_expressions`](/many_lints/docs/rules/control-flow/avoid-nested-conditional-expressions/) | `max_depth` |
 | [`banned_usage`](/many_lints/docs/rules/architecture/banned-usage/) | `banned` |
 | [`check_for_equals_in_render_object_setters`](/many_lints/docs/rules/widget-best-practices/check-for-equals-in-render-object-setters/) | `additional_methods` |
 | [`check_is_not_closed_after_async_gap`](/many_lints/docs/rules/async-safety/check-is-not-closed-after-async-gap/) | `additional_methods` |
@@ -357,7 +361,8 @@ options never changes results until you set one.
 | [`prefer_class_destructuring`](/many_lints/docs/rules/collection-type/prefer-class-destructuring/) | `min_occurrences`, `ignored_types` |
 | [`prefer_container`](/many_lints/docs/rules/widget-replacement/prefer-container/) | `min_sequence` |
 | [`prefer_from_predicate`](/many_lints/docs/rules/fpdart/prefer-from-predicate/) | `max_condition_complexity` |
-| [`prefer_immutable_bloc_state`](/many_lints/docs/rules/bloc-riverpod/prefer-immutable-bloc-state/) | `name_pattern` |
+| [`prefer_immutable_state`](/many_lints/docs/rules/state-management/prefer-immutable-state/) | `name_pattern` |
+| [`member_ordering`](/many_lints/docs/rules/code-organization/member-ordering/) | `order` |
 | [`prefer_moving_to_variable`](/many_lints/docs/rules/code-quality/prefer-moving-to-variable/) | `allowed_duplicated_chains`, `min_chain_length`, `ignored_invocations`, `ignored_targets` |
 | [`prefer_private_named_parameters`](/many_lints/docs/rules/code-quality/prefer-private-named-parameters/) | `only_same_name` |
 | [`prefer_safe_collection_access`](/many_lints/docs/rules/fpdart/prefer-safe-collection-access/) | `report_outside_pipelines`, `accessors`, `additional_accessors` |
