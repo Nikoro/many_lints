@@ -977,6 +977,49 @@ FunctionBody? maybeHookBuilderBody(InstanceCreationExpression node)
 
 ## 🔧 Analyzer 14.1.0 Specific APIs
 
+### Renamed AST nodes: `NamedArgument`, `FormalParameterDefaultClause`
+
+Two node names that most training data and every pre-14 example still uses **do
+not exist** in analyzer 14.1.0. They fail as `type_test_with_undefined_name`,
+which reads like a missing import and is not:
+
+| Pre-14 name | analyzer 14.1.0 | Where it appears |
+|---|---|---|
+| `NamedExpression` | **`NamedArgument`** | the wrapper around a named argument, `f(a: 8)` |
+| `DefaultFormalParameter` | **`FormalParameterDefaultClause`** | a parameter's default, `{int a = 7}` |
+
+Note the second is not a renamed parameter node but a *clause*: the literal's
+parent is the default clause, whose parent is the `RegularFormalParameter`.
+
+**Do not guess a node's parent chain — ask the analyzer.** A throwaway script
+under the package (so `package:analyzer` resolves) settles it in one run, and
+is faster than grepping a generated AST barrel:
+
+```dart
+// dart run tool/tmp/probe_ast.dart
+import 'package:analyzer/dart/analysis/utilities.dart';
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
+
+class V extends RecursiveAstVisitor<void> {
+  @override
+  void visitIntegerLiteral(IntegerLiteral node) => print(
+    '${node.value} -> ${node.parent.runtimeType} / ${node.parent?.parent.runtimeType}',
+  );
+}
+
+void main() => parseString(content: 'void f({int a = 7}) {}').unit.accept(V());
+// 7 -> FormalParameterDefaultClauseImpl / RegularFormalParameterImpl
+```
+
+The `Impl` suffix in the output is the implementation class; test against the
+public interface (`FormalParameterDefaultClause`), not the `Impl`.
+
+Grepping `lib/dart/ast/ast.dart` for these names is **not** a reliable check —
+in 14.1.0 that file is largely a barrel, so a name can be absent from it and
+still exist. `lib/dart/ast/visitor.g.dart` lists the real `visitX` methods and
+is the better index.
+
 ### Dot shorthands: resolution decides the node type
 
 Dart 3.10 dot shorthands (`.new(...)`, `.zero`) come in three node types, all

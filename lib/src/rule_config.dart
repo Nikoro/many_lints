@@ -101,6 +101,25 @@ class RuleConfig {
     return value.trim();
   }
 
+  /// Reads option [key] as a set of numbers, following the replace/append pair
+  /// of [nameSetOption]: `<key>` replaces the default set outright, and
+  /// `additional_<key>` extends whichever set won.
+  ///
+  /// Ints and doubles are both normalised to `double`, so a user writing `180`
+  /// where the code sees `180.0` still matches — YAML's distinction between
+  /// the two is not one a reader of a config file expects to matter.
+  Set<double> numberSetOption(String key, {required Set<double> defaultValue}) {
+    final replacement = options[key];
+    final base = replacement is List
+        ? replacement.whereType<num>().map((n) => n.toDouble()).toSet()
+        : defaultValue;
+
+    final additional = options['additional_$key'];
+    if (additional is! List) return base;
+
+    return {...base, ...additional.whereType<num>().map((n) => n.toDouble())};
+  }
+
   /// Reads option [key] as a list of strings, returning [defaultValue] when
   /// absent or when the YAML value is not a list.
   List<String> stringListOption(

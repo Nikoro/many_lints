@@ -329,6 +329,8 @@ const CATEGORIES = {
   'code-quality': {
     label: 'Code Quality',
     rules: [
+      'no_magic_number',
+      'no_magic_string',
       'prefer_named_boolean_parameters',
       'prefer_declaring_const_constructor',
       'avoid_deep_nesting',

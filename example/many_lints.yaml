@@ -277,3 +277,15 @@ rules:
   # comments with a rule name (`avoid_only_rethrow`, lowercase by definition).
   format_comment:
     include: ["lib/format_comment_example.dart"]
+
+  # What counts as "magic" is a house style, so both sit outside every preset.
+  # Scoped to their own examples: this package is full of deliberately literal
+  # fixtures, which is exactly what these rules report.
+  no_magic_number:
+    include: ["lib/no_magic_number_example.dart"]
+    # `Insets` stands in for EdgeInsets, which this package cannot depend on:
+    # the point is that a measurement constructor takes numbers that are not a
+    # policy. The real defaults already carry EdgeInsets, Gap and friends.
+    additional_ignored_invocations: [Insets]
+  no_magic_string:
+    include: ["lib/no_magic_string_example.dart"]

@@ -1,0 +1,95 @@
+---
+title: no_magic_string
+description: "Name a string once it is repeated"
+sidebar:
+  label: no_magic_string
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule flags the same string literal repeated without a name.
+
+This rule is in **no preset**: the threshold is a house style.
+
+## Why use this rule
+
+Unlike its [numeric sibling](/many_lints/docs/rules/code-quality/no-magic-number/), this rule reports only **repetition** — the case where a string is genuinely dangerous. A route path, a storage key or a header name written out at three call sites will eventually be changed at two of them, and the third failure is silent.
+
+A single occurrence is left alone. It is usually a message or a label, and naming it moves the text away from the code that uses it for no gain.
+
+The diagnostic appears at **every** occurrence rather than only the first: each one is separately editable, and showing one would hide the duplication the rule is about.
+
+Exempt by default: a literal that initialises a declaration, anything inside a `const` declaration, an enum or an annotation, strings shorter than `min_length` (separators and punctuation rather than identifiers), and tests, where a repeated fixture string is the test data.
+
+## Don't
+
+```dart
+void get_() => send('x-request-id');
+void post() => send('x-request-id');
+void put() => send('x-request-id');
+```
+
+## Do
+
+```dart
+const requestIdHeader = 'x-request-id';
+
+void get_() => send(requestIdHeader);
+void post() => send(requestIdHeader);
+void put() => send(requestIdHeader);
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    no_magic_string:
+      min_occurrences: 3
+      min_length: 3
+      ignore_tests: true
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  no_magic_string:
+    min_occurrences: 3
+    min_length: 3
+    ignore_tests: true
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `min_occurrences` | int | `3` | How many times a string must repeat before it reports |
+| `min_length` | int | `3` | Shortest string considered; below this it is punctuation |
+| `ignored_invocations` | list of strings | `[]` | Constructors and methods whose string arguments never report |
+| `ignore_tests` | bool | `true` | Skip files under `test/` |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      no_magic_string: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
