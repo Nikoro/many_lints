@@ -1,0 +1,95 @@
+---
+title: use_setstate_synchronously
+description: "Guard setState after an await with a mounted check"
+sidebar:
+  label: use_setstate_synchronously
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Async Safety</span>
+
+This rule flags `setState` called after an `await` with no `mounted` guard in between.
+
+This is a real crash, not a style preference. Between the `await` and the line after it the widget can be disposed — the user navigated back, a parent rebuilt without this child, a list item scrolled out of a `ListView`. Calling `setState` on a disposed `State` throws `setState() called after dispose()`, and it does so only under the timing that makes it hard to reproduce and easy to ship.
+
+This is the `State` counterpart to [`use_ref_read_synchronously`](/many_lints/docs/rules/async-safety/use-ref-read-synchronously/), and it shares that rule's async-gap machinery. It applies inside any `State` subclass, including additional bases named through `state_base_classes`.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+Future<void> load() async {
+  final data = await repository.fetch();
+  setState(() => _data = data);   // the widget may be gone
+}
+```
+
+## Do
+
+```dart
+Future<void> load() async {
+  final data = await repository.fetch();
+  if (!mounted) return;
+
+  setState(() => _data = data);
+}
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  use_setstate_synchronously:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    use_setstate_synchronously:
+      state_base_classes: []
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  use_setstate_synchronously:
+    state_base_classes: []
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `state_base_classes` | list | `[]` | Additional base classes to treat as a `State` |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      use_setstate_synchronously: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

@@ -1,0 +1,110 @@
+---
+title: prefer_early_return
+description: "Replace a body-wrapping if with an early-return guard"
+sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
+  label: prefer_early_return
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Control Flow</span>
+
+This rule flags a function body that consists of a single `if` wrapping everything the function does, where inverting the condition and returning early would remove a level of indentation.
+
+## Why use this rule
+
+The reader has to hold "we are inside the valid case" for the entire body, and every further condition nests one level deeper. A guard states the precondition once and lets the rest of the function be the happy path.
+
+The rule is deliberately narrow, and each exclusion below came from running it against real code:
+
+- **Only when the `if` is the whole body.** A statement before it is setup the guard would have to move or duplicate.
+- **Never with an `else`.** Inverting would swap the branches rather than flatten anything — that case belongs to [`avoid_negated_conditions`](/many_lints/docs/rules/control-flow/avoid-negated-conditions/).
+- **Never when the condition is already negated.** `if (!map.containsKey(k))` inverts into a *longer* positive guard, and the negation is what made the precondition obvious. This was the rule's only hit on a production codebase, and the rewrite would have read worse than the original.
+- **Never for a pattern `if`.** `if (x case final int n)` binds variables the inverted branch cannot see.
+
+This rule is in **no preset**: where to draw the line between a guard and a wrapped body is a house style.
+
+## Don't
+
+```dart
+void save(User user) {
+  if (user.isValid) {
+    normalize(user);
+    persist(user);
+    notify(user);
+  }
+}
+```
+
+## Do
+
+```dart
+void save(User user) {
+  if (!user.isValid) return;
+
+  normalize(user);
+  persist(user);
+  notify(user);
+}
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_early_return:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_early_return:
+      min_statements: 4
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_early_return:
+    min_statements: 4
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `min_statements` | int | `3` | How many statements the wrapped block must hold before the guard is worth it |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_early_return: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

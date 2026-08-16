@@ -1,0 +1,109 @@
+---
+title: parameters_ordering
+description: "Keep named parameters in a configured order"
+sidebar:
+  label: parameters_ordering
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Organization</span>
+
+This rule flags a function whose **named** parameters are not in the configured order.
+
+A long named-parameter list has the same problem as a long map literal: without an order, checking whether a parameter already exists means reading all of them, and a new one gets appended at the end beside the near-duplicate nobody saw.
+
+**Positional parameters are never ordered.** They are ordered by meaning and by every call site that depends on them — sorting those would break the code.
+
+**This rule reports nothing until configured**, since a widget constructor deliberately leads with its most important parameters.
+
+By default `required` parameters are sorted as one group before the optional ones, matching the SDK's `always_put_required_named_parameters_first`, so both conventions can hold at once.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+void configure({
+  String? theme,
+  required String name,
+  int? timeout,
+  required String id,
+  bool? verbose,
+})
+```
+
+## Do
+
+```dart
+void configure({
+  required String id,
+  required String name,
+  String? theme,
+  int? timeout,
+  bool? verbose,
+})
+```
+
+## Enabling this rule
+
+This rule reports **nothing until you choose an order**, so enabling it by name is not enough — set `order:`:
+
+```yaml
+# many_lints.yaml
+rules:
+  parameters_ordering:
+    order: alphabetical
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    parameters_ordering:
+      order: —
+      group_required: true
+      min_parameters: 5
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  parameters_ordering:
+    order: —
+    group_required: true
+    min_parameters: 5
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `order` | string | `—` | `alphabetical`, `alphabetical_case_sensitive` or `by_length`. Unset means the rule is silent |
+| `group_required` | bool | `true` | Sort required and optional parameters as separate groups |
+| `min_parameters` | int | `5` | How many named parameters a signature needs before order is checked |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      parameters_ordering: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

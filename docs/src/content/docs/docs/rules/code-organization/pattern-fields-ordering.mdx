@@ -1,0 +1,87 @@
+---
+title: pattern_fields_ordering
+description: "Keep pattern fields in a configured order"
+sidebar:
+  label: pattern_fields_ordering
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Organization</span>
+
+This rule flags an object or record pattern whose named fields are not in the configured order.
+
+A destructuring pattern reads as a small table of what is being pulled out, and the same object is often destructured in several places. When each spelling picks its own order, the reader cannot compare two of them at a glance to see which fields one takes and the other does not.
+
+A positional field in a record pattern is identified by position and is left alone; one unnamed field makes the whole list unorderable rather than partially ordered.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+if (user case User(name: final n, age: final a)) { ... }
+```
+
+## Do
+
+```dart
+if (user case User(age: final a, name: final n)) { ... }
+```
+
+## Enabling this rule
+
+This rule reports **nothing until you choose an order**:
+
+```yaml
+# many_lints.yaml
+rules:
+  pattern_fields_ordering:
+    order: alphabetical
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    pattern_fields_ordering:
+      order: —
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  pattern_fields_ordering:
+    order: —
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `order` | string | `—` | `alphabetical`, `alphabetical_case_sensitive` or `by_length`. Unset means the rule is silent |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      pattern_fields_ordering: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

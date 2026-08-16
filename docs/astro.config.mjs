@@ -109,6 +109,10 @@ export default defineConfig({
               label: 'Code Quality',
               items: [{ autogenerate: { directory: 'docs/rules/code-quality' } }],
             },
+            {
+              label: 'Formatting',
+              items: [{ autogenerate: { directory: 'docs/rules/formatting' } }],
+            },
           ],
         },
       ],

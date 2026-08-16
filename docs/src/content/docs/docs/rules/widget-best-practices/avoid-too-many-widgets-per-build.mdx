@@ -1,0 +1,108 @@
+---
+title: avoid_too_many_widgets_per_build
+description: "Keep one build method within a widget budget"
+sidebar:
+  label: avoid_too_many_widgets_per_build
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Widget Best Practices</span>
+
+This rule flags a `build` method that creates more widgets than the configured budget.
+
+## Why use this rule
+
+This is the breadth counterpart to [`avoid_deep_widget_nesting`](/many_lints/docs/rules/widget-best-practices/avoid-deep-widget-nesting/). A tree can be shallow and still be too much for one method: thirty widgets in one `build` is a screen, a card, a header and a footer sharing a single scope, where nothing has a name and nothing can be reused or tested on its own.
+
+The two metrics catch different problems, and a build can fail either without the other. Depth is about how far right the code runs; this is about how much of the screen one method owns.
+
+Build methods are matched on their **return type**, not their name, so `build`, `buildHeader` and a `Widget _row()` helper are all measured — an extracted helper does not escape the budget just by being called something else. A `build` that returns something other than a widget is never measured.
+
+Widgets built inside a `builder:` closure are counted separately, since that closure is its own build function.
+
+This rule is in **no preset**: a widget budget is a house style.
+
+## Don't
+
+```dart
+@override
+Widget build(BuildContext context) => Column(
+      children: [
+        // the header: 6 widgets
+        // the form: 12 widgets
+        // the footer: 8 widgets
+        // ... 30 in one method, none of them named
+      ],
+    );
+```
+
+## Do
+
+```dart
+@override
+Widget build(BuildContext context) => const Column(
+      children: [
+        _SettingsHeader(),
+        _SettingsForm(),
+        _SettingsFooter(),
+      ],
+    );
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_too_many_widgets_per_build:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_too_many_widgets_per_build:
+      max_widgets: 25
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_too_many_widgets_per_build:
+    max_widgets: 25
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_widgets` | int | `20` | How many widgets one build method may create |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_too_many_widgets_per_build: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

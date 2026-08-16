@@ -1,0 +1,116 @@
+---
+title: avoid_deep_nesting
+description: "Keep control flow within a nesting budget"
+sidebar:
+  label: avoid_deep_nesting
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule flags control flow nested more deeply than the configured budget.
+
+Each level of `if`, `for`, `while`, `try` or `switch` is another condition the reader has to hold to know why a line runs at all. The innermost statement of a five-level nest is reachable only through a path nobody can state out loud.
+
+Depth is usually more actionable than complexity: an early return, a guard clause or an extracted method removes a whole level, where a high complexity count says only that something is wrong.
+
+An `else if` is a **sibling branch, not another level** — it is written flat and reads flat, so a long dispatch chain is never reported. A nested function starts its own count, since its body is not reached through the enclosing nest.
+
+One diagnostic per function, anchored at the statement that first crosses the limit.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+void process(List<List<int>> rows, bool enabled) {
+  if (enabled) {
+    for (final row in rows) {
+      for (final cell in row) {
+        if (cell > 0) {
+          while (cell > 1) {     // 5 levels in
+            handle(cell);
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## Do
+
+```dart
+void process(List<List<int>> rows, bool enabled) {
+  if (!enabled) return;
+
+  for (final row in rows) {
+    _processRow(row);
+  }
+}
+
+void _processRow(List<int> row) {
+  for (final cell in row) {
+    if (cell <= 0) continue;
+    _handleRepeatedly(cell);
+  }
+}
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_deep_nesting:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_deep_nesting:
+      max_depth: 4
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_deep_nesting:
+    max_depth: 4
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_depth` | int | `4` | How many levels of control flow may nest |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_deep_nesting: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

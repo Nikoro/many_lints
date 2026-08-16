@@ -229,7 +229,7 @@ void f() {
 }
 ''', 'prefer_any_or_every');
 
-        expect(fixed, contains('list.every((e) => !(e > 1));'));
+        expect(fixed, contains('list.every((e) => e <= 1);'));
         expect(fixed, isNot(contains('.where(')));
       },
     );
@@ -242,7 +242,7 @@ void f() {
 }
 ''', 'prefer_any_or_every');
 
-      expect(fixed, contains('list.every((e) => !(e > 1));'));
+      expect(fixed, contains('list.every((e) => e <= 1);'));
     });
   });
 

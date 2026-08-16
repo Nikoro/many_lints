@@ -1,0 +1,94 @@
+---
+title: max_imports
+description: "Keep a file within an import budget"
+sidebar:
+  label: max_imports
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule flags a file that imports more libraries than the configured budget.
+
+## Why use this rule
+
+The import list is the cheapest available measure of how much a file depends on. A file reaching for twenty libraries is coupled to twenty things that can change under it, and it is usually one that has taken on several jobs.
+
+`export` directives are not counted by default: a barrel file is exports by definition, and counting them would report every barrel in the project.
+
+This rule is in **no preset**: a budget is a house style, and the right number differs per codebase.
+
+## Don't
+
+```dart
+// One file importing the router, the theme, four repositories,
+// three notifiers, and the whole widget catalogue.
+```
+
+## Do
+
+```dart
+// Split along the seams the imports already reveal: the widget file
+// imports widgets, the repository file imports the client.
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  max_imports:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    max_imports:
+      max_imports: 15
+      count_exports: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  max_imports:
+    max_imports: 15
+    count_exports: false
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_imports` | int | `15` | How many libraries a file may import |
+| `count_exports` | bool | `false` | Whether `export` directives count toward the budget |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      max_imports: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

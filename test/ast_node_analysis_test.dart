@@ -102,6 +102,22 @@ class MyClass {
       final expr = _parseExpression('(a).b');
       expect(negateExpression(expr), '!(a).b');
     });
+
+    test('a comparison inverts into its opposite operator', () {
+      expect(negateExpression(_parseExpression('x > 0')), 'x <= 0');
+      expect(negateExpression(_parseExpression('x <= 0')), 'x > 0');
+      expect(negateExpression(_parseExpression('x < 0')), 'x >= 0');
+      expect(negateExpression(_parseExpression('x >= 0')), 'x < 0');
+    });
+
+    test('equality inverts rather than being wrapped', () {
+      expect(negateExpression(_parseExpression('a == b')), 'a != b');
+      expect(negateExpression(_parseExpression('a != b')), 'a == b');
+    });
+
+    test('an is-check is wrapped, so type promotion is not disturbed', () {
+      expect(negateExpression(_parseExpression('a is B')), '!(a is B)');
+    });
   });
 
   group('buildEveryReplacement', () {
@@ -120,13 +136,13 @@ class MyClass {
     test('builds replacement with arrow body', () {
       final expr = _parseExpression('(e) => e > 0');
       final result = buildEveryReplacement('list', expr);
-      expect(result, 'list.every((e) => !(e > 0))');
+      expect(result, 'list.every((e) => e <= 0)');
     });
 
     test('builds replacement with block return body', () {
       final expr = _parseExpression('(e) { return e > 0; }');
       final result = buildEveryReplacement('list', expr);
-      expect(result, 'list.every((e) => !(e > 0))');
+      expect(result, 'list.every((e) => e <= 0)');
     });
   });
 

@@ -1,0 +1,60 @@
+---
+title: prefer_conditional_expressions
+description: "Collapse a two-way if/else into a conditional expression"
+sidebar:
+  label: prefer_conditional_expressions
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Control Flow</span>
+
+This rule flags an `if`/`else` that does nothing but assign or return two values.
+
+Six lines to choose between two strings buries the one thing that varies. A conditional expression puts the choice and both outcomes on one line, and makes it obvious that every path assigns exactly once — which the block form only implies.
+
+Only the two shapes where the rewrite is **exact** are reported: both branches return, or both assign to the same target with the same operator. A branch with two statements, different targets, different operators, a missing `else` or an `else if` chain is left alone, since collapsing it would change what the code does.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+if (isActive) {
+  label = 'On';
+} else {
+  label = 'Off';
+}
+```
+
+## Do
+
+```dart
+label = isActive ? 'On' : 'Off';
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_conditional_expressions:
+    enabled: true
+```
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_conditional_expressions: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

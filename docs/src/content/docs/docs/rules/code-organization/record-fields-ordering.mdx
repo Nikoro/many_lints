@@ -1,0 +1,87 @@
+---
+title: record_fields_ordering
+description: "Keep record named fields in a configured order"
+sidebar:
+  label: record_fields_ordering
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Organization</span>
+
+This rule flags a record type whose **named** fields are not in the configured order.
+
+A record is structurally typed, so its named fields are a set rather than a sequence — `({int a, int b})` and `({int b, int a})` are the same type. That makes their written order pure presentation, and an inconsistent one means the same type reads differently in every place it is spelled out.
+
+**Positional fields are never ordered**: their position *is* their identity, and reordering them makes a different type.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+typedef Result = ({String message, int code});
+```
+
+## Do
+
+```dart
+typedef Result = ({int code, String message});
+```
+
+## Enabling this rule
+
+This rule reports **nothing until you choose an order**:
+
+```yaml
+# many_lints.yaml
+rules:
+  record_fields_ordering:
+    order: alphabetical
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    record_fields_ordering:
+      order: —
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  record_fields_ordering:
+    order: —
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `order` | string | `—` | `alphabetical`, `alphabetical_case_sensitive` or `by_length`. Unset means the rule is silent |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      record_fields_ordering: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

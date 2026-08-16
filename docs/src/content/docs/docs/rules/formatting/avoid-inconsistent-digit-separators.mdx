@@ -1,0 +1,112 @@
+---
+title: avoid_inconsistent_digit_separators
+description: "Group digit separators at a regular interval"
+sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
+  label: avoid_inconsistent_digit_separators
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Formatting</span>
+
+This rule flags a numeric literal whose `_` separators split it into irregularly sized groups.
+
+## Why use this rule
+
+`1_000_000` is readable because every group is the same size, which is the entire point of the separator: the eye counts groups instead of digits.
+
+`10_00_000` defeats that. It looks like a number written in a different convention, and it is exactly how a literal with a wrong digit count survives review — the separator that was supposed to make the magnitude obvious is what hides it.
+
+A literal with no separators at all is never reported. Whether to use them in the first place is a different question, and this rule does not answer it.
+
+The leading group may be shorter than the rest, since that is what is left over: `12_345_678` is correct, `1000_000` is not.
+
+Hexadecimal literals are grouped by `hex_group_size` (default `4`) rather than by thousands, because hex groups by byte or half-word.
+
+This rule is in **no preset**: separator style is a house style.
+
+**See also:** [Dart 3.6 digit separators](https://dart.dev/language/built-in-types#numbers)
+
+## Don't
+
+```dart
+const population = 10_00_000;   // groups of 2-2-3
+const bytes = 1000_000;         // leading group longer than the rest
+const mask = 0xFF_FFF_FFF;      // hex grouped by threes
+```
+
+## Do
+
+```dart
+const population = 1_000_000;
+const bytes = 1_000_000;
+const mask = 0xFFFF_FFFF;
+
+const small = 12_345_678;       // a short leading group is correct
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_inconsistent_digit_separators:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_inconsistent_digit_separators:
+      group_size: 3
+      hex_group_size: 4
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_inconsistent_digit_separators:
+    group_size: 3
+    hex_group_size: 4
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `group_size` | int | `3` | Digits per group in a decimal or binary literal |
+| `hex_group_size` | int | `4` | Digits per group in a hexadecimal literal |
+
+Set either option to `0` to accept any group size, as long as it is used consistently within the literal.
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_inconsistent_digit_separators: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

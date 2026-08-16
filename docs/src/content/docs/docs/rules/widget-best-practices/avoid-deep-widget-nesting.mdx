@@ -1,0 +1,131 @@
+---
+title: avoid_deep_widget_nesting
+description: "Keep a widget tree within a nesting budget"
+sidebar:
+  label: avoid_deep_widget_nesting
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Widget Best Practices</span>
+
+This rule flags a widget tree nested more deeply than the configured budget.
+
+## Why use this rule
+
+Nesting depth matches how a widget tree actually goes wrong. A `build` can be short and still be unreadable: eight levels of `Padding` inside `Column` inside `Expanded` push the widget that matters off the right edge, and every edit has to count brackets to find its place.
+
+Extracting a subtree into a named widget removes a whole level and gives the part a name at the same time — which is why this rule pairs naturally with [`prefer_single_widget_per_file`](/many_lints/docs/rules/code-organization/prefer-single-widget-per-file/).
+
+Only widget instantiations are counted, so the lists, closures and conditionals between them do not inflate the number.
+
+**One diagnostic per tree.** It is anchored at the root of the over-nested tree — the widget whose subtree has to be split — and the number says how far that subtree goes. Reporting each node that is itself too deep would flag a ten-deep chain at every level past the budget, and would flag two sibling leaves at the same depth twice for what is a single fix. Both showed up when the rule was run against a production codebase.
+
+A `builder:` closure starts a tree of its own, so its depth is counted separately rather than added to the caller's.
+
+This rule is in **no preset**: a nesting budget is a house style.
+
+**See also:** [Flutter — performance best practices](https://docs.flutter.dev/perf/best-practices)
+
+## Don't
+
+```dart
+Widget build(BuildContext context) => Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Text('Finally'),   // 9 levels in
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+```
+
+## Do
+
+```dart
+Widget build(BuildContext context) => Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: const _Content(),
+        ),
+      ),
+    );
+
+class _Content extends StatelessWidget {
+  const _Content();
+
+  @override
+  Widget build(BuildContext context) => Column(
+        children: [Expanded(child: Center(child: Text('Finally')))],
+      );
+}
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_deep_widget_nesting:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_deep_widget_nesting:
+      max_depth: 10
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_deep_widget_nesting:
+    max_depth: 10
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_depth` | int | `8` | How many widget levels a tree may nest |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_deep_widget_nesting: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

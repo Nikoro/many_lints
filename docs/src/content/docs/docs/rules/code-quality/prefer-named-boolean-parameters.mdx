@@ -1,0 +1,91 @@
+---
+title: prefer_named_boolean_parameters
+description: "Make boolean parameters named, not positional"
+sidebar:
+  label: prefer_named_boolean_parameters
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule flags a boolean declared as a positional parameter.
+
+A positional boolean is invisible at the call site: `save(true)` says nothing about what is true, and `setVisible(false, true)` is a puzzle every reader has to solve by opening the declaration. It is also the parameter most likely to be passed in the wrong order, since swapping two booleans still type-checks.
+
+An **override is never reported** — the signature belongs to whoever declared it, and a subclass cannot change it. A single positional boolean is allowed by default, since `setEnabled(true)` reads acceptably.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+void setVisible(bool visible, bool animate) {}
+
+setVisible(false, true);   // which is which?
+```
+
+## Do
+
+```dart
+void setVisible({required bool visible, required bool animate}) {}
+
+setVisible(visible: false, animate: true);
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_named_boolean_parameters:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_named_boolean_parameters:
+      allow_single: true
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_named_boolean_parameters:
+    allow_single: true
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `allow_single` | bool | `true` | Allow a lone positional boolean, as in `setEnabled(true)` |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_named_boolean_parameters: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

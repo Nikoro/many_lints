@@ -1,0 +1,104 @@
+---
+title: avoid_long_files
+description: "Keep a file within a line budget"
+sidebar:
+  label: avoid_long_files
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule flags a file longer than the configured line budget.
+
+## Why use this rule
+
+A long file is where a module stops having a single subject: the name at the top no longer describes everything below it, and finding the right place to add something becomes a scroll rather than a decision.
+
+Blank lines and comments are not counted by default — a file is not hard to navigate because it is well documented. Lines are counted from the token stream, so a `//` inside a string literal is never mistaken for a comment.
+
+Generated files are the obvious exception, and per-rule `exclude` handles them:
+
+```yaml
+rules:
+  avoid_long_files:
+    exclude: ["**/*.g.dart", "**/*.freezed.dart"]
+```
+
+This rule is in **no preset**: a budget is a house style, and the right number differs per codebase.
+
+## Don't
+
+```dart
+// user_page.dart — 800 lines holding the page, its three dialogs,
+// a formatter, and the API client it calls.
+```
+
+## Do
+
+```dart
+// user_page.dart          — the page
+// user_page_dialogs.dart   — its dialogs
+// user_formatting.dart     — the formatter
+// user_api.dart            — the client
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_long_files:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_long_files:
+      max_lines: 300
+      count_comments: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_long_files:
+    max_lines: 300
+    count_comments: false
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_lines` | int | `300` | How many code lines a file may hold |
+| `count_comments` | bool | `false` | Whether blank lines and comments count toward the budget |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_long_files: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

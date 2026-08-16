@@ -1,0 +1,95 @@
+---
+title: prefer_correct_error_name
+description: "Name exception and error classes with the matching suffix"
+sidebar:
+  label: prefer_correct_error_name
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Class Naming</span>
+
+This rule flags a class implementing `Exception` or extending `Error` that is not named with the matching suffix.
+
+Dart draws a real line between the two: an `Exception` is a condition the caller is expected to handle, an `Error` is a bug the caller should not catch. The name is where that distinction is visible at the call site — a reader deciding whether to write a `catch` should not have to open the declaration to find out which kind it is.
+
+A class that is neither is never reported. When a class is both, `Error` wins: the stricter reading of "do not catch this" is the one worth naming for.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+class NotFound implements Exception {}
+class BadState extends Error {}
+```
+
+## Do
+
+```dart
+class NotFoundException implements Exception {}
+class BadStateError extends Error {}
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_correct_error_name:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_correct_error_name:
+      exception_suffix: Exception
+      error_suffix: Error
+      allow_suffixes: []
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_correct_error_name:
+    exception_suffix: Exception
+    error_suffix: Error
+    allow_suffixes: []
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `exception_suffix` | string | `Exception` | Required ending for an `Exception` class |
+| `error_suffix` | string | `Error` | Required ending for an `Error` class |
+| `allow_suffixes` | list | `[]` | Additional endings accepted alongside the default (`Failure` is the common one) |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_correct_error_name: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

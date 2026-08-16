@@ -1,0 +1,104 @@
+---
+title: map_keys_ordering
+description: "Keep map literal keys in a configured order"
+sidebar:
+  label: map_keys_ordering
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Organization</span>
+
+This rule flags a map literal whose keys are not in the configured order.
+
+A long map literal is a lookup table, and an unordered one has to be read end to end to answer "is this key here?". Ordering keeps a diff honest too: a new key lands in the middle where it can be seen, rather than appended at the end beside a duplicate nobody noticed.
+
+**This rule reports nothing until configured.** Many map literals are deliberately ordered by meaning — a config map mirroring a form's field order, a theme map going from lightest to darkest.
+
+A literal containing a **computed key**, a spread, an `if` or a `for` is skipped entirely rather than partially ordered: ordering the rest around an unsortable entry would produce an arrangement the user cannot reach.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+const labels = {
+  'banana': 'Banana',
+  'apple': 'Apple',
+  'cherry': 'Cherry',
+  'date': 'Date',
+  'elder': 'Elderberry',
+};
+```
+
+## Do
+
+```dart
+const labels = {
+  'apple': 'Apple',
+  'banana': 'Banana',
+  'cherry': 'Cherry',
+  'date': 'Date',
+  'elder': 'Elderberry',
+};
+```
+
+## Enabling this rule
+
+This rule reports **nothing until you choose an order**, so enabling it by name is not enough — set `order:`:
+
+```yaml
+# many_lints.yaml
+rules:
+  map_keys_ordering:
+    order: alphabetical
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    map_keys_ordering:
+      order: —
+      min_entries: 5
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  map_keys_ordering:
+    order: —
+    min_entries: 5
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `order` | string | `—` | `alphabetical`, `alphabetical_case_sensitive` or `by_length`. Unset means the rule is silent |
+| `min_entries` | int | `5` | How many entries a literal needs before order is checked |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      map_keys_ordering: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

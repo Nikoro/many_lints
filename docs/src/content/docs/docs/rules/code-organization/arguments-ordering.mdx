@@ -1,0 +1,102 @@
+---
+title: arguments_ordering
+description: "Keep named arguments in a configured order"
+sidebar:
+  label: arguments_ordering
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Organization</span>
+
+This rule flags a call whose **named** arguments are not in the configured order.
+
+A call site with a dozen named arguments is a lookup table, and an unordered one has to be read end to end to answer "is this already set?". Ordering keeps a diff honest too: a new argument lands in the middle where it can be seen, rather than appended beside a near-duplicate nobody noticed.
+
+**Positional arguments are never ordered**, since their order is the call's meaning and reordering them changes what it does.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+buildCard(
+  elevation: 2,
+  color: Colors.white,
+  padding: EdgeInsets.zero,
+  margin: EdgeInsets.zero,
+  borderRadius: BorderRadius.zero,
+)
+```
+
+## Do
+
+```dart
+buildCard(
+  borderRadius: BorderRadius.zero,
+  color: Colors.white,
+  elevation: 2,
+  margin: EdgeInsets.zero,
+  padding: EdgeInsets.zero,
+)
+```
+
+## Enabling this rule
+
+This rule reports **nothing until you choose an order**:
+
+```yaml
+# many_lints.yaml
+rules:
+  arguments_ordering:
+    order: alphabetical
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    arguments_ordering:
+      order: —
+      min_arguments: 5
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  arguments_ordering:
+    order: —
+    min_arguments: 5
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `order` | string | `—` | `alphabetical`, `alphabetical_case_sensitive` or `by_length`. Unset means the rule is silent |
+| `min_arguments` | int | `5` | How many named arguments a call needs before order is checked |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      arguments_ordering: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

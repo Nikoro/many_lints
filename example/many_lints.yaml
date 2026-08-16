@@ -159,3 +159,95 @@ rules:
     enabled: true
   prefer_getter_over_method:
     enabled: true
+
+  # In no preset — literal spelling, branch ordering and guard shape are all
+  # house styles. Enabled here to demonstrate them.
+  double_literal_format:
+    enabled: true
+  avoid_inconsistent_digit_separators:
+    enabled: true
+  prefer_early_return:
+    enabled: true
+  avoid_negated_conditions:
+    enabled: true
+
+  # Budget rules. The defaults are sized for real code, so each example file
+  # lowers its own budget far enough to demonstrate the rule in a file short
+  # enough to read.
+  avoid_long_files:
+    max_lines: 20
+    include: ["lib/avoid_long_files_example.dart"]
+  max_imports:
+    max_imports: 5
+    include: ["lib/max_imports_example.dart"]
+  max_statements:
+    max_statements: 8
+    include: ["lib/max_statements_example.dart"]
+  avoid_high_cyclomatic_complexity:
+    enabled: true
+
+  # Widget metrics. The nesting default is 8; the widget-count example lowers
+  # its budget so the file stays short enough to read.
+  avoid_deep_widget_nesting:
+    enabled: true
+  avoid_too_many_widgets_per_build:
+    max_widgets: 10
+    include: ["lib/avoid_too_many_widgets_per_build_example.dart"]
+
+  # Code metrics and naming. The ordering rules report nothing without an
+  # `order:`, so each example file configures the one it demonstrates.
+  avoid_deep_nesting:
+    enabled: true
+  avoid_too_many_methods:
+    max_methods: 5
+    include: ["lib/avoid_too_many_methods_example.dart"]
+  match_getter_setter_field_names:
+    enabled: true
+  prefer_correct_error_name:
+    enabled: true
+  prefer_correct_handler_name:
+    enabled: true
+  use_setstate_synchronously:
+    enabled: true
+  enum_constants_ordering:
+    order: alphabetical
+    include: ["lib/enum_constants_ordering_example.dart"]
+  map_keys_ordering:
+    order: alphabetical
+    include: ["lib/map_keys_ordering_example.dart"]
+  parameters_ordering:
+    order: alphabetical
+    include: ["lib/parameters_ordering_example.dart"]
+
+  # Ordering siblings and the style/naming batch. The ordering rules and the
+  # two pattern-driven naming rules report nothing without their option, so
+  # each is scoped to the file that demonstrates it.
+  arguments_ordering:
+    order: alphabetical
+    include: ["lib/arguments_ordering_example.dart"]
+  initializers_ordering:
+    enabled: true
+  record_fields_ordering:
+    order: alphabetical
+    include: ["lib/record_fields_ordering_example.dart"]
+  pattern_fields_ordering:
+    order: alphabetical
+    include: ["lib/pattern_fields_ordering_example.dart"]
+  prefer_conditional_expressions:
+    enabled: true
+  prefer_named_boolean_parameters:
+    enabled: true
+  prefer_typedefs_for_callbacks:
+    enabled: true
+  prefer_declaring_const_constructor:
+    enabled: true
+  prefer_correct_setter_parameter_name:
+    enabled: true
+  prefer_correct_identifier_length:
+    include: ["lib/prefer_correct_identifier_length_example.dart"]
+  prefer_prefixed_global_constants:
+    prefix: k
+    include: ["lib/prefer_prefixed_global_constants_example.dart"]
+  match_class_name_pattern:
+    pattern: '[A-Z][A-Za-z0-9]*Page'
+    include: ["lib/match_class_name_pattern_example.dart"]

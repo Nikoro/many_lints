@@ -89,6 +89,18 @@ class RuleConfig {
     return value is int ? value : defaultValue;
   }
 
+  /// Reads option [key] as a string, returning [defaultValue] when absent,
+  /// when the YAML value is not a string, or when it is blank.
+  ///
+  /// A blank value falls back rather than being honoured: an empty suffix or
+  /// prefix would match every name, silently disabling the rule it configures.
+  String stringOption(String key, {required String defaultValue}) {
+    final value = options[key];
+    if (value is! String || value.trim().isEmpty) return defaultValue;
+
+    return value.trim();
+  }
+
   /// Reads option [key] as a list of strings, returning [defaultValue] when
   /// absent or when the YAML value is not a list.
   List<String> stringListOption(

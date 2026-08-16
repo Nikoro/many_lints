@@ -1,0 +1,122 @@
+---
+title: avoid_negated_conditions
+description: "State the positive case first in an if/else"
+sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
+  label: avoid_negated_conditions
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Control Flow</span>
+
+This rule flags an `if`/`else` or a conditional expression whose condition is negated, so the `else` branch is the positive case.
+
+## Why use this rule
+
+When the condition is negated and there is an `else`, the reader has to hold a negation just to know what the second branch is *for*. Swapping the branches lets each one state its case directly.
+
+The rule only fires where the swap is a genuine improvement:
+
+- **Only with an `else`.** A bare `if (!x) return;` is a guard, the clearest form there is — and [`prefer_early_return`](/many_lints/docs/rules/control-flow/prefer-early-return/) actively asks for it, so reporting it here would set the two rules fighting.
+- **Never on an `else if` chain.** That encodes an ordered sequence of tests; swapping the first pair would reorder the whole chain.
+- **Never on `!= null` or `!= 0`.** `x != null` is the null check the language is built around, and `byPoints != 0 ? byPoints : ...` is the comparator tie-break idiom. Both state a positive fact, and both turned up as false positives on a production codebase.
+- **Never for a pattern `if`.** The swapped branch could not see the bound variables.
+
+This rule is in **no preset**: branch ordering is a house style.
+
+## Don't
+
+```dart
+if (!user.isActive) {
+  showInactiveBanner();
+} else {
+  showDashboard();
+}
+
+final label = !isReady ? 'Waiting' : 'Ready';
+```
+
+## Do
+
+```dart
+if (user.isActive) {
+  showDashboard();
+} else {
+  showInactiveBanner();
+}
+
+final label = isReady ? 'Ready' : 'Waiting';
+```
+
+```dart
+// Still fine: a guard has no else to swap with.
+if (!user.isActive) return;
+
+// Still fine: `!= null` states a positive fact.
+if (token != null) {
+  use(token);
+} else {
+  requestToken();
+}
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_negated_conditions:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_negated_conditions:
+      report_not_equal: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_negated_conditions:
+    report_not_equal: false
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `report_not_equal` | bool | `true` | Whether `!=` counts as a negation. `!= null` and `!= 0` are never reported either way |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_negated_conditions: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

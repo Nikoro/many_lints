@@ -162,11 +162,38 @@ Expression? maybeGetSingleReturnExpression(FunctionBody body) {
   };
 }
 
+/// The operator that means the opposite of [lexeme], for the comparisons whose
+/// negation is another comparison rather than a `!`.
+///
+/// Only `==`/`!=` and the four relational operators are listed. They are the
+/// ones where inverting is unconditionally sound: each is declared to return
+/// `bool`, and for `<`/`>=` on `num` and `String` the pair is total, so no
+/// third outcome can slip between them. `is`/`is!` are deliberately absent —
+/// they invert too, but the analyzer's flow analysis promotes types across
+/// them, and rewriting one can change what is promoted in the branch.
+const _invertedComparisons = <String, String>{
+  '==': '!=',
+  '!=': '==',
+  '<': '>=',
+  '>=': '<',
+  '>': '<=',
+  '<=': '>',
+};
+
 /// Negates an expression, handling double negation and parenthesization.
 String negateExpression(Expression expr) {
   // Double negation removal: !x -> x
   if (expr is PrefixExpression && expr.operator.type == TokenType.BANG) {
     return expr.operand.toSource();
+  }
+  // A comparison negates into its opposite, which reads far better than
+  // wrapping it: `x <= 0` rather than `!(x > 0)`.
+  if (expr is BinaryExpression) {
+    final inverted = _invertedComparisons[expr.operator.lexeme];
+    if (inverted != null) {
+      return '${expr.leftOperand.toSource()} $inverted '
+          '${expr.rightOperand.toSource()}';
+    }
   }
   // Simple expressions don't need parentheses
   if (expr is SimpleIdentifier ||

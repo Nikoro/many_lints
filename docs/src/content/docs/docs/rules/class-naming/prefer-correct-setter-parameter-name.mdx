@@ -1,0 +1,90 @@
+---
+title: prefer_correct_setter_parameter_name
+description: "Use one parameter name in every setter"
+sidebar:
+  label: prefer_correct_setter_parameter_name
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Class Naming</span>
+
+This rule flags a setter whose parameter does not use the configured name.
+
+A setter has exactly one parameter and its name appears nowhere but the body, so the only thing it communicates is which convention the file follows. When half the setters say `value` and half say `newValue` or `v`, a reader scanning a class of setters has to look at each one to be sure nothing else is going on.
+
+An override is skipped, since it inherits its parameter name along with the signature.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+set width(int newValue) => _width = newValue;
+```
+
+## Do
+
+```dart
+set width(int value) => _width = value;
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_correct_setter_parameter_name:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_correct_setter_parameter_name:
+      parameter_name: value
+      allow_names: []
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_correct_setter_parameter_name:
+    parameter_name: value
+    allow_names: []
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `parameter_name` | string | `value` | The name every setter parameter should use |
+| `allow_names` | list | `[]` | Additional spellings accepted alongside the default |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_correct_setter_parameter_name: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

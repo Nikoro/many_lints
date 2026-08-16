@@ -1,0 +1,110 @@
+---
+title: double_literal_format
+description: "Write double literals with exactly one leading zero and no redundant trailing zeros"
+sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
+  label: double_literal_format
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Formatting</span>
+
+This rule flags a double literal written with a missing leading zero (`.5`), a redundant leading zero (`00.5`), or a redundant trailing zero (`0.50`).
+
+## Why use this rule
+
+`.5` and `0.50` denote exactly the same numbers as `0.5`, so the spelling carries no information and only costs the reader a moment deciding whether it does.
+
+The bare-dot form is the one that actually misleads: `.5` reads as a member access until the eye reaches the digit, and a single dropped character turns `.5` into an identifier that may still parse.
+
+`dart format` normalizes none of these, so this rule does not fight the formatter.
+
+A single trailing zero is never reported. `1.0` cannot lose it without becoming `1.` (invalid Dart) or the integer `1` (a different type) — and in Flutter code, where `16.0` and `0.0` are everywhere, reporting them would make the rule unusable.
+
+This rule is in **no preset**: literal spelling is a house style.
+
+**See also:** [Dart language tour — numbers](https://dart.dev/language/built-in-types#numbers)
+
+## Don't
+
+```dart
+const opacity = .5;      // reads as a member access until the digit arrives
+const scale = 0.50;      // the trailing zero says nothing
+const ratio = 00.5;      // a typo under any style
+```
+
+## Do
+
+```dart
+const opacity = 0.5;
+const scale = 0.5;
+const ratio = 0.5;
+
+const padding = 16.0;    // a single trailing zero is significant, never reported
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  double_literal_format:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    double_literal_format:
+      leading_zero: true
+      trailing_zero: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  double_literal_format:
+    leading_zero: true
+    trailing_zero: false
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `leading_zero` | bool | `true` | Whether `.5` must be written `0.5` |
+| `trailing_zero` | bool | `true` | Whether `0.50` must be written `0.5` |
+
+A redundant leading zero (`00.5`) is reported even with `leading_zero: false`. That option governs whether `.5` is acceptable, which is a style choice; `00.5` is a typo under either style.
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      double_literal_format: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

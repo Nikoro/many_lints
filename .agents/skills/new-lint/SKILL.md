@@ -543,6 +543,16 @@ Run the following commands from the project root to ensure everything works:
 4. `dart test` - Ensure all tests pass
 5. Analyze `example/` in machine format and verify that the new example emits
    its target rule and no unrelated `many_lints` or SDK diagnostics.
+5b. **Run the rule against a production codebase, with a positive control.**
+   This is the step that catches what tests cannot — every rule shipped so far
+   gained an exclusion from it. Put a file with a *known* violation into the
+   sweep and confirm it appears in the output before trusting a zero: a run
+   that analyzed nothing looks exactly like a clean one. Two ways that has
+   silently happened: `dart analyze <dir>` returned nothing while per-file
+   analysis worked, and BSD `xargs` on macOS has no `-a` flag, so
+   `xargs -a list.txt dart analyze` failed without running anything (use
+   `< list.txt xargs -n 60 dart analyze`). Enable the rule with a temporary
+   `many_lints.yaml` at the target package root, and delete it afterwards.
 6. Run `bun run build` from `docs/` as the final gate.
 
 If any check fails or reports issues, fix it and re-run the affected checks until all are fully clean.

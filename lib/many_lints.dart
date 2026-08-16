@@ -61,6 +61,37 @@ import 'package:many_lints/src/rules/avoid_public_notifier_properties.dart';
 import 'package:many_lints/src/rules/function_always_returns_null.dart';
 import 'package:many_lints/src/rules/handle_bloc_event_subclasses.dart';
 import 'package:many_lints/src/rules/avoid_complex_conditions.dart';
+import 'package:many_lints/src/rules/avoid_inconsistent_digit_separators.dart';
+import 'package:many_lints/src/rules/double_literal_format.dart';
+import 'package:many_lints/src/rules/prefer_early_return.dart';
+import 'package:many_lints/src/rules/avoid_negated_conditions.dart';
+import 'package:many_lints/src/rules/avoid_long_files.dart';
+import 'package:many_lints/src/rules/max_imports.dart';
+import 'package:many_lints/src/rules/max_statements.dart';
+import 'package:many_lints/src/rules/avoid_high_cyclomatic_complexity.dart';
+import 'package:many_lints/src/rules/avoid_deep_widget_nesting.dart';
+import 'package:many_lints/src/rules/avoid_too_many_widgets_per_build.dart';
+import 'package:many_lints/src/rules/avoid_deep_nesting.dart';
+import 'package:many_lints/src/rules/avoid_too_many_methods.dart';
+import 'package:many_lints/src/rules/prefer_correct_error_name.dart';
+import 'package:many_lints/src/rules/prefer_correct_handler_name.dart';
+import 'package:many_lints/src/rules/match_getter_setter_field_names.dart';
+import 'package:many_lints/src/rules/enum_constants_ordering.dart';
+import 'package:many_lints/src/rules/map_keys_ordering.dart';
+import 'package:many_lints/src/rules/parameters_ordering.dart';
+import 'package:many_lints/src/rules/use_setstate_synchronously.dart';
+import 'package:many_lints/src/rules/arguments_ordering.dart';
+import 'package:many_lints/src/rules/initializers_ordering.dart';
+import 'package:many_lints/src/rules/record_fields_ordering.dart';
+import 'package:many_lints/src/rules/pattern_fields_ordering.dart';
+import 'package:many_lints/src/rules/prefer_conditional_expressions.dart';
+import 'package:many_lints/src/rules/prefer_named_boolean_parameters.dart';
+import 'package:many_lints/src/rules/prefer_typedefs_for_callbacks.dart';
+import 'package:many_lints/src/rules/prefer_declaring_const_constructor.dart';
+import 'package:many_lints/src/rules/prefer_correct_setter_parameter_name.dart';
+import 'package:many_lints/src/rules/prefer_correct_identifier_length.dart';
+import 'package:many_lints/src/rules/prefer_prefixed_global_constants.dart';
+import 'package:many_lints/src/rules/match_class_name_pattern.dart';
 import 'package:many_lints/src/rules/avoid_long_parameter_list.dart';
 import 'package:many_lints/src/rules/avoid_nested_conditional_expressions.dart';
 import 'package:many_lints/src/rules/prefer_getter_over_method.dart';
@@ -256,6 +287,10 @@ import 'package:many_lints/src/fixes/avoid_ref_read_inside_build_fix.dart';
 import 'package:many_lints/src/fixes/avoid_state_constructors_fix.dart';
 import 'package:many_lints/src/fixes/avoid_single_field_destructuring_fix.dart';
 import 'package:many_lints/src/fixes/avoid_commented_out_code_fix.dart';
+import 'package:many_lints/src/fixes/avoid_inconsistent_digit_separators_fix.dart';
+import 'package:many_lints/src/fixes/double_literal_format_fix.dart';
+import 'package:many_lints/src/fixes/prefer_early_return_fix.dart';
+import 'package:many_lints/src/fixes/avoid_negated_conditions_fix.dart';
 import 'package:many_lints/src/fixes/avoid_incomplete_copy_with_fix.dart';
 import 'package:many_lints/src/fixes/prefer_bloc_extensions_fix.dart';
 import 'package:many_lints/src/fixes/add_immutable_annotation_fix.dart';
@@ -452,6 +487,37 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidNotifierConstructors());
     _registerWarningRule(registry, AvoidPublicNotifierProperties());
     _registerWarningRule(registry, AvoidComplexConditions());
+    _registerWarningRule(registry, AvoidInconsistentDigitSeparators());
+    _registerWarningRule(registry, DoubleLiteralFormat());
+    _registerWarningRule(registry, PreferEarlyReturn());
+    _registerWarningRule(registry, AvoidNegatedConditions());
+    _registerWarningRule(registry, AvoidLongFiles());
+    _registerWarningRule(registry, MaxImports());
+    _registerWarningRule(registry, MaxStatements());
+    _registerWarningRule(registry, AvoidHighCyclomaticComplexity());
+    _registerWarningRule(registry, AvoidDeepWidgetNesting());
+    _registerWarningRule(registry, AvoidTooManyWidgetsPerBuild());
+    _registerWarningRule(registry, AvoidDeepNesting());
+    _registerWarningRule(registry, AvoidTooManyMethods());
+    _registerWarningRule(registry, PreferCorrectErrorName());
+    _registerWarningRule(registry, PreferCorrectHandlerName());
+    _registerWarningRule(registry, MatchGetterSetterFieldNames());
+    _registerWarningRule(registry, EnumConstantsOrdering());
+    _registerWarningRule(registry, MapKeysOrdering());
+    _registerWarningRule(registry, ParametersOrdering());
+    _registerWarningRule(registry, UseSetstateSynchronously());
+    _registerWarningRule(registry, ArgumentsOrdering());
+    _registerWarningRule(registry, InitializersOrdering());
+    _registerWarningRule(registry, RecordFieldsOrdering());
+    _registerWarningRule(registry, PatternFieldsOrdering());
+    _registerWarningRule(registry, PreferConditionalExpressions());
+    _registerWarningRule(registry, PreferNamedBooleanParameters());
+    _registerWarningRule(registry, PreferTypedefsForCallbacks());
+    _registerWarningRule(registry, PreferDeclaringConstConstructor());
+    _registerWarningRule(registry, PreferCorrectSetterParameterName());
+    _registerWarningRule(registry, PreferCorrectIdentifierLength());
+    _registerWarningRule(registry, PreferPrefixedGlobalConstants());
+    _registerWarningRule(registry, MatchClassNamePattern());
     _registerWarningRule(registry, AvoidLongParameterList());
     _registerWarningRule(registry, AvoidNestedConditionalExpressions());
     _registerWarningRule(registry, PreferGetterOverMethod());
@@ -625,6 +691,22 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidCommentedOutCode.code,
       AvoidCommentedOutCodeFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidInconsistentDigitSeparators.code,
+      AvoidInconsistentDigitSeparatorsFix.new,
+    );
+    registry.registerFixForRule(
+      DoubleLiteralFormat.code,
+      DoubleLiteralFormatFix.new,
+    );
+    registry.registerFixForRule(
+      PreferEarlyReturn.code,
+      PreferEarlyReturnFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidNegatedConditions.code,
+      AvoidNegatedConditionsFix.new,
     );
     registry.registerFixForRule(
       AvoidDuplicateCascades.code,

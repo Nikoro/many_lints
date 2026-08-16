@@ -1,0 +1,99 @@
+---
+title: prefer_correct_identifier_length
+description: "Keep identifier length within bounds"
+sidebar:
+  label: prefer_correct_identifier_length
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Class Naming</span>
+
+This rule flags an identifier shorter or longer than the configured bounds.
+
+A one-letter name outside a tiny scope forces the reader to hold a mapping the code never states, and a forty-character one is usually a sentence that belongs in a doc comment.
+
+Both bounds are house style, which is why this rule ships with generous defaults and an exception list rather than an opinion. The conventional short names are exempt out of the box — loop counters, coordinates, the `e` of a catch clause — through `allow_names`, which **adds** to that built-in set rather than replacing it.
+
+A private name's leading underscore is a modifier, not part of its length, so `_id` counts as two characters.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+final q = compute();
+final theCompletelyUnnecessarilyVerboseResultHolder = compute();
+```
+
+## Do
+
+```dart
+final quota = compute();
+final result = compute();
+
+for (var i = 0; i < 3; i++) {}   // conventional short names are exempt
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_correct_identifier_length:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_correct_identifier_length:
+      min_length: 2
+      max_length: 40
+      allow_names: built-in set
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_correct_identifier_length:
+    min_length: 2
+    max_length: 40
+    allow_names: built-in set
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `min_length` | int | `2` | Shortest allowed identifier |
+| `max_length` | int | `40` | Longest allowed identifier |
+| `allow_names` | list | `built-in set` | Names exempt from both bounds; use `additional_allow_names` to extend rather than replace |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_correct_identifier_length: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

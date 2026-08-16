@@ -1,0 +1,96 @@
+---
+title: match_class_name_pattern
+description: "Match class names against a regular expression"
+sidebar:
+  label: match_class_name_pattern
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Class Naming</span>
+
+This rule flags a class, mixin, enum or extension type whose name does not match the configured pattern.
+
+This is the general form of [`use_class_prefix`](/many_lints/docs/rules/class-naming/use-class-prefix/) and [`use_class_suffix`](/many_lints/docs/rules/class-naming/use-class-suffix/): a project that wants one naming shape, or wants every class in one folder to end in `Page`, states it once as a regular expression rather than as a list of affixes.
+
+The pattern must match the **whole** name, so `[A-Z][A-Za-z0-9]*Page` rejects `HomePageExtra`. An invalid pattern is ignored rather than throwing, like every other malformed option.
+
+Narrow it to a subtree with the per-rule `include`, which is where this rule earns its place:
+
+```yaml
+rules:
+  match_class_name_pattern:
+    pattern: '[A-Z][A-Za-z0-9]*Page'
+    include: ['lib/**/presentation/**']
+```
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+class Home {}          // with pattern '[A-Z][A-Za-z0-9]*Page'
+```
+
+## Do
+
+```dart
+class HomePage {}
+```
+
+## Enabling this rule
+
+This rule reports **nothing until you set a pattern**:
+
+```yaml
+# many_lints.yaml
+rules:
+  match_class_name_pattern:
+    pattern: '[A-Z][A-Za-z0-9]*Page'
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    match_class_name_pattern:
+      pattern: —
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  match_class_name_pattern:
+    pattern: —
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `pattern` | string | `—` | A regular expression the whole name must match. Unset means the rule is silent |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      match_class_name_pattern: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

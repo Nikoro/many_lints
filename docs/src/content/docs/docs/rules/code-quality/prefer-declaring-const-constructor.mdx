@@ -1,0 +1,70 @@
+---
+title: prefer_declaring_const_constructor
+description: "Declare a const constructor where the class allows one"
+sidebar:
+  label: prefer_declaring_const_constructor
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule flags a class that could declare a `const` constructor but does not.
+
+A `const` constructor is what lets a value be built once at compile time and shared, rather than allocated at every call. In Flutter that is the difference between a widget the framework can skip rebuilding and one it cannot — which is why `prefer_const_constructors` is in every lint preset. But that rule only fires where a `const` constructor **already exists**; this one asks for the constructor in the first place.
+
+A class qualifies when every field is `final`, it declares exactly one generative constructor, that constructor's body is empty, its superclass offers a `const` constructor to chain to, and every initializer is itself const-evaluable.
+
+That last check matters more than it looks: `_random = random ?? Random.secure()` is a field initializer whose value is a **call**, so suggesting `const` for it would produce code that does not build. Both of the rule's initial hits on a production codebase were exactly that shape.
+
+Classes marked `@immutable` are skipped, since the SDK's `prefer_const_constructors_in_immutables` already covers them.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+class Point {
+  final int x;
+  final int y;
+
+  Point(this.x, this.y);
+}
+```
+
+## Do
+
+```dart
+class Point {
+  final int x;
+  final int y;
+
+  const Point(this.x, this.y);
+}
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_declaring_const_constructor:
+    enabled: true
+```
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_declaring_const_constructor: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

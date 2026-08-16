@@ -865,6 +865,258 @@ rules:
       });
     });
 
+    group('double_literal_format options', () {
+      const trailingZeroCode = 'const x = 0.50;\n';
+      const missingLeadingZeroCode = 'const x = .5;\n';
+
+      test('both defects are reported with no options set', () async {
+        final trailing = await harness.analyze(
+          trailingZeroCode,
+          config: 'rules:\n  double_literal_format: true\n',
+        );
+        final leading = await harness.analyze(
+          missingLeadingZeroCode,
+          config: 'rules:\n  double_literal_format: true\n',
+          fileName: 'leading.dart',
+        );
+
+        expect(trailing.map((e) => e.code), contains('double_literal_format'));
+        expect(leading.map((e) => e.code), contains('double_literal_format'));
+      });
+
+      test('trailing_zero: false silences the trailing-zero case', () async {
+        final errors = await harness.analyze(
+          trailingZeroCode,
+          config: '''
+rules:
+  double_literal_format:
+    trailing_zero: false
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('double_literal_format')),
+        );
+      });
+
+      // Asymmetric counterpart: turning one defect off must leave the other
+      // reporting, or silence cannot be told from the rule never running.
+      test(
+        'trailing_zero: false still reports a missing leading zero',
+        () async {
+          final errors = await harness.analyze(
+            missingLeadingZeroCode,
+            config: '''
+rules:
+  double_literal_format:
+    trailing_zero: false
+''',
+          );
+
+          expect(errors.map((e) => e.code), contains('double_literal_format'));
+        },
+      );
+
+      test(
+        'leading_zero: false still reports a redundant leading zero',
+        () async {
+          final errors = await harness.analyze(
+            'const x = 00.5;\n',
+            config: '''
+rules:
+  double_literal_format:
+    leading_zero: false
+''',
+          );
+
+          expect(errors.map((e) => e.code), contains('double_literal_format'));
+        },
+      );
+    });
+
+    group('avoid_inconsistent_digit_separators options', () {
+      test('group_size changes which grouping is accepted', () async {
+        final errors = await harness.analyze(
+          'const x = 1_000_000;\n',
+          config: '''
+rules:
+  avoid_inconsistent_digit_separators:
+    group_size: 4
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('avoid_inconsistent_digit_separators'),
+        );
+      });
+
+      test('the same literal passes under the default group size', () async {
+        final errors = await harness.analyze(
+          'const x = 1_000_000;\n',
+          config: 'rules:\n  avoid_inconsistent_digit_separators: true\n',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_inconsistent_digit_separators')),
+        );
+      });
+
+      test('group_size: 0 accepts any consistent grouping', () async {
+        final errors = await harness.analyze(
+          'const x = 12_3456_7890;\n',
+          config: '''
+rules:
+  avoid_inconsistent_digit_separators:
+    group_size: 0
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_inconsistent_digit_separators')),
+        );
+      });
+
+      test('group_size: 0 still reports an inconsistent grouping', () async {
+        final errors = await harness.analyze(
+          'const x = 1_23_456;\n',
+          config: '''
+rules:
+  avoid_inconsistent_digit_separators:
+    group_size: 0
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          contains('avoid_inconsistent_digit_separators'),
+        );
+      });
+    });
+
+    group('prefer_early_return.min_statements', () {
+      const threeStatementCode = '''
+void f(bool ok) {
+  if (ok) {
+    print(1);
+    print(2);
+    print(3);
+  }
+}
+''';
+
+      test('three statements report at the default threshold', () async {
+        final errors = await harness.analyze(
+          threeStatementCode,
+          config: 'rules:\n  prefer_early_return: true\n',
+        );
+
+        expect(errors.map((e) => e.code), contains('prefer_early_return'));
+      });
+
+      test('raising the threshold silences them', () async {
+        final errors = await harness.analyze(
+          threeStatementCode,
+          config: '''
+rules:
+  prefer_early_return:
+    min_statements: 4
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('prefer_early_return')),
+        );
+      });
+
+      // Asymmetric counterpart: the raised threshold must still report a body
+      // that clears it, or silence proves nothing.
+      test('a longer body still reports at the raised threshold', () async {
+        final errors = await harness.analyze(
+          '''
+void f(bool ok) {
+  if (ok) {
+    print(1);
+    print(2);
+    print(3);
+    print(4);
+  }
+}
+''',
+          config: '''
+rules:
+  prefer_early_return:
+    min_statements: 4
+''',
+        );
+
+        expect(errors.map((e) => e.code), contains('prefer_early_return'));
+      });
+    });
+
+    group('avoid_negated_conditions.report_not_equal', () {
+      const notEqualCode = '''
+void f(int a, int b) {
+  if (a != b) {
+    print(1);
+  } else {
+    print(2);
+  }
+}
+''';
+
+      test('a not-equal condition reports by default', () async {
+        final errors = await harness.analyze(
+          notEqualCode,
+          config: 'rules:\n  avoid_negated_conditions: true\n',
+        );
+
+        expect(errors.map((e) => e.code), contains('avoid_negated_conditions'));
+      });
+
+      test('report_not_equal: false silences it', () async {
+        final errors = await harness.analyze(
+          notEqualCode,
+          config: '''
+rules:
+  avoid_negated_conditions:
+    report_not_equal: false
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_negated_conditions')),
+        );
+      });
+
+      // Asymmetric counterpart: a bang is still a negation with the option off.
+      test('report_not_equal: false still reports a bang', () async {
+        final errors = await harness.analyze(
+          '''
+void f(bool ok) {
+  if (!ok) {
+    print(1);
+  } else {
+    print(2);
+  }
+}
+''',
+          config: '''
+rules:
+  avoid_negated_conditions:
+    report_not_equal: false
+''',
+        );
+
+        expect(errors.map((e) => e.code), contains('avoid_negated_conditions'));
+      });
+    });
+
     group('precedence when both sources exist', () {
       test('many_lints.yaml wins over the analysis_options section', () async {
         final errors = await harness.analyze(

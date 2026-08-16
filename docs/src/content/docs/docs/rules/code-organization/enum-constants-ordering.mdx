@@ -1,0 +1,93 @@
+---
+title: enum_constants_ordering
+description: "Keep enum constants in a configured order"
+sidebar:
+  label: enum_constants_ordering
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Organization</span>
+
+This rule flags an enum whose constants are not in the configured order.
+
+An enum is a list a reader scans rather than reads, and finding a constant in an unordered list of twenty means checking all twenty. Ordering also makes an addition show up in a diff as one line in the middle rather than one appended at the end, which is where duplicates hide.
+
+**This rule reports nothing until configured**, because the useful order for an enum is often semantic rather than alphabetical — `small, medium, large` is correctly ordered and alphabetising it would be a regression.
+
+Only the **first** out-of-order constant is reported: one misplaced name makes every later name look wrong too, and reporting them all would turn one edit into a wall of diagnostics.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+enum Fruit { banana, apple, cherry }
+```
+
+## Do
+
+```dart
+enum Fruit { apple, banana, cherry }
+
+// Still correct with no `order:` configured — a semantic order is
+// exactly why this rule is opt-in.
+enum Size { small, medium, large }
+```
+
+## Enabling this rule
+
+This rule reports **nothing until you choose an order**, so enabling it by name is not enough — set `order:`:
+
+```yaml
+# many_lints.yaml
+rules:
+  enum_constants_ordering:
+    order: alphabetical
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    enum_constants_ordering:
+      order: —
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  enum_constants_ordering:
+    order: —
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `order` | string | `—` | `alphabetical`, `alphabetical_case_sensitive` or `by_length`. Unset means the rule is silent |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      enum_constants_ordering: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

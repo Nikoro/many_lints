@@ -1,0 +1,97 @@
+---
+title: max_statements
+description: "Keep a function within a statement budget"
+sidebar:
+  label: max_statements
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule flags a function that executes more statements than the configured budget.
+
+## Why use this rule
+
+This is the counterpart to [`avoid_long_functions`](/many_lints/docs/rules/code-quality/avoid-long-functions/), measuring what a function *does* rather than how much room it takes. The two disagree in exactly the useful cases: a function of twenty short statements is long by both measures, while one holding a single wide widget tree is long by lines only, and splitting it would help nobody.
+
+Statements are counted through nested blocks, so a loop body counts toward the function that owns it. A nested function expression is counted on its own — a callback is separate work, not more of the enclosing function's.
+
+This rule is in **no preset**: a budget is a house style, and the right number differs per codebase.
+
+## Don't
+
+```dart
+void handleSubmit() {
+  // 30 statements: validation, mapping, the request, error handling,
+  // analytics, and navigation, all in one scope.
+}
+```
+
+## Do
+
+```dart
+void handleSubmit() {
+  final input = _validate();
+  if (input == null) return;
+
+  _submit(input);
+}
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  max_statements:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    max_statements:
+      max_statements: 25
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  max_statements:
+    max_statements: 25
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_statements` | int | `25` | How many statements a function may execute |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      max_statements: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

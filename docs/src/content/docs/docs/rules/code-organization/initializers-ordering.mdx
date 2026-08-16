@@ -1,0 +1,97 @@
+---
+title: initializers_ordering
+description: "Keep constructor initializers in field order"
+sidebar:
+  label: initializers_ordering
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Organization</span>
+
+This rule flags a constructor whose field initializers are not in the same order as the fields they assign.
+
+Unlike its ordering siblings this rule has a **useful default**: it matches the initializer list against the class's own field declaration order rather than against an alphabet. That order is already a decision the class made, so following it costs nothing and makes a missing initializer visible as a gap rather than as a name buried in a differently-ordered list.
+
+Initializers that are not plain field assignments — `super()`, `assert()`, a redirect — are skipped, since their position is fixed by the language or by intent.
+
+This rule is in **no preset**.
+
+## Don't
+
+```dart
+class Point {
+  final int x;
+  final int y;
+
+  Point(int a, int b) : y = b, x = a;
+}
+```
+
+## Do
+
+```dart
+class Point {
+  final int x;
+  final int y;
+
+  Point(int a, int b) : x = a, y = b;
+}
+```
+
+## Enabling this rule
+
+This rule is in no preset, so enable it by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  initializers_ordering:
+    enabled: true
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    initializers_ordering:
+      order: —
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  initializers_ordering:
+    order: —
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `order` | string | `—` | Sort by name instead of by field order: `alphabetical`, `alphabetical_case_sensitive` or `by_length` |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      initializers_ordering: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

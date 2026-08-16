@@ -29,6 +29,12 @@ const CATEGORIES = {
   'class-naming': {
     label: 'Class Naming',
     rules: [
+      'prefer_correct_setter_parameter_name',
+      'prefer_correct_identifier_length',
+      'prefer_prefixed_global_constants',
+      'match_class_name_pattern',
+      'prefer_correct_error_name',
+      'prefer_correct_handler_name',
       'use_class_suffix',
       'use_class_prefix',
       'avoid_unnecessary_enum_prefix',
@@ -106,6 +112,7 @@ const CATEGORIES = {
   'async-safety': {
     label: 'Async Safety',
     rules: [
+      'use_setstate_synchronously',
       'avoid_catch_error',
       'avoid_redundant_async',
       'avoid_missing_completer_stack_trace',
@@ -120,6 +127,8 @@ const CATEGORIES = {
   'widget-best-practices': {
     label: 'Widget Best Practices',
     rules: [
+      'avoid_deep_widget_nesting',
+      'avoid_too_many_widgets_per_build',
       'always_pass_global_key',
       'avoid_flexible_outside_flex',
       'check_for_equals_in_render_object_setters',
@@ -179,6 +188,9 @@ const CATEGORIES = {
   'control-flow': {
     label: 'Control Flow',
     rules: [
+      'prefer_conditional_expressions',
+      'prefer_early_return',
+      'avoid_negated_conditions',
       'avoid_cascade_after_if_null',
       'avoid_collapsible_if',
       'avoid_constant_conditions',
@@ -244,6 +256,7 @@ const CATEGORIES = {
   'type-annotations': {
     label: 'Type Annotations',
     rules: [
+      'prefer_typedefs_for_callbacks',
       'prefer_type_over_var',
       'prefer_explicit_function_type',
       'prefer_void_callback',
@@ -254,6 +267,13 @@ const CATEGORIES = {
   'code-organization': {
     label: 'Code Organization',
     rules: [
+      'arguments_ordering',
+      'initializers_ordering',
+      'record_fields_ordering',
+      'pattern_fields_ordering',
+      'enum_constants_ordering',
+      'map_keys_ordering',
+      'parameters_ordering',
       'prefer_abstract_final_static_class',
       'avoid_generics_shadowing',
       'prefer_for_loop_in_children',
@@ -304,6 +324,11 @@ const CATEGORIES = {
   'code-quality': {
     label: 'Code Quality',
     rules: [
+      'prefer_named_boolean_parameters',
+      'prefer_declaring_const_constructor',
+      'avoid_deep_nesting',
+      'avoid_too_many_methods',
+      'match_getter_setter_field_names',
       'avoid_shadowed_extension_methods',
       'function_always_returns_null',
       'avoid_commented_out_code',
@@ -323,6 +348,17 @@ const CATEGORIES = {
       'prefer_primary_constructors',
       'prefer_private_named_parameters',
       'prefer_single_setstate',
+      'avoid_long_files',
+      'max_imports',
+      'max_statements',
+      'avoid_high_cyclomatic_complexity',
+    ],
+  },
+  'formatting': {
+    label: 'Formatting',
+    rules: [
+      'double_literal_format',
+      'avoid_inconsistent_digit_separators',
     ],
   },
 };
