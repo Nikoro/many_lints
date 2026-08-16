@@ -288,7 +288,7 @@ Both `include` and `message` work on **every** rule, exactly like `exclude`.
 
 ## Per-rule options
 
-Beyond `exclude`, `include` and `message`, **78 rules** accept options that change *what*
+Beyond `exclude`, `include` and `message`, **79 rules** accept options that change *what*
 they report. Those rules carry a <span class="rule-badge rule-badge--config">Configurable</span>
 badge on their page, and every option is documented there with its type and default.
 
@@ -367,6 +367,7 @@ options never changes results until you set one.
 | [`prefer_match_file_name`](/many_lints/docs/rules/code-organization/prefer-match-file-name/) | `ignored_suffixes`, `entrypoints`, `additional_entrypoints` |
 | [`prefer_correct_test_file_name`](/many_lints/docs/rules/testing-rules/prefer-correct-test-file-name/) | `directories`, `additional_directories` |
 | [`format_test_name`](/many_lints/docs/rules/testing-rules/format-test-name/) | `pattern`, `check_groups` |
+| [`format_comment`](/many_lints/docs/rules/formatting/format-comment/) | `check_regular_comments` |
 | [`prefer_correct_type_name`](/many_lints/docs/rules/class-naming/prefer-correct-type-name/) | `min_length`, `max_length`, `ignored_names` |
 | [`prefer_moving_to_variable`](/many_lints/docs/rules/code-quality/prefer-moving-to-variable/) | `allowed_duplicated_chains`, `min_chain_length`, `ignored_invocations`, `ignored_targets` |
 | [`prefer_private_named_parameters`](/many_lints/docs/rules/code-quality/prefer-private-named-parameters/) | `only_same_name` |

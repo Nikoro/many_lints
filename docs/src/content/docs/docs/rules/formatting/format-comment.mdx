@@ -1,0 +1,100 @@
+---
+title: format_comment
+description: "Write comments as capitalised, terminated sentences"
+sidebar:
+  label: format_comment
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Formatting</span>
+
+This rule flags a comment that does not start with a capital letter or does not end with a period.
+
+By default only doc comments (`///`) are checked. This rule is in **no preset**, since sentence-shaped comments are a house style.
+
+## Why use this rule
+
+[Effective Dart](https://dart.dev/effective-dart/documentation#do-start-doc-comments-with-a-single-sentence-summary) asks for exactly this of doc comments — start with a one-sentence summary, where a sentence is capitalised and terminated.
+
+The value is not the punctuation itself but the discipline behind it: a fragment that cannot be punctuated as a sentence is usually a label restating the code (`/// the user id`), which is a comment worth deleting rather than fixing.
+
+A great deal is deliberately exempt, because a comment is also where people legitimately put things that are not prose:
+
+- Anything a **tool** reads: `ignore:`, `TODO`, `FIXME`, `coverage:`.
+- A line that **is** a bare URL, a `{@template}` macro, or an indented code sample.
+- A **fenced code block** inside a doc comment.
+- A line opening on an **identifier** — backticked, `[bracketed]`, or bare. Capitalising `dart_frog` or `runApp` would falsify the name.
+- Every line but the first and last of a **block**, since only the first starts the sentence and only the last ends it.
+
+**See also:** [Effective Dart: documentation](https://dart.dev/effective-dart/documentation)
+
+## Don't
+
+```dart
+/// a user of the system.
+class User {}
+
+/// A user of the system
+class User {}
+```
+
+## Do
+
+```dart
+/// A user of the system.
+class User {}
+
+/// A user of the system, holding the identity that every other record
+/// in the database ultimately points back to.
+class User {}
+
+/// dart_frog mounts a dynamic route before its static siblings.
+class Router {}
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    format_comment:
+      check_regular_comments: true
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  format_comment:
+    check_regular_comments: true
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `check_regular_comments` | bool | `false` | Also hold `//` comments to the same shape, not just `///` |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      format_comment: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

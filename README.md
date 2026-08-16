@@ -142,7 +142,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-242 lints with 103 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
+243 lints with 103 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
@@ -165,7 +165,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 | [Testing Rules](https://nikoro.github.io/many_lints/docs/rules/testing-rules/) | 5 | Testing best practices and matchers |
 | [Resource Management](https://nikoro.github.io/many_lints/docs/rules/resource-management/) | 5 | Resource cleanup and disposal |
 | [Code Quality](https://nikoro.github.io/many_lints/docs/rules/code-quality/) | 28 | General code quality improvements |
-| [Formatting](https://nikoro.github.io/many_lints/docs/rules/formatting/) | 2 | Literal formatting conventions |
+| [Formatting](https://nikoro.github.io/many_lints/docs/rules/formatting/) | 3 | Literal formatting conventions |
 
 ## Available Assists
 

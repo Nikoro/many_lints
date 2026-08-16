@@ -364,6 +364,7 @@ const CATEGORIES = {
     rules: [
       'double_literal_format',
       'avoid_inconsistent_digit_separators',
+      'format_comment',
     ],
   },
 };

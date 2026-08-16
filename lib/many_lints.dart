@@ -97,6 +97,7 @@ import 'package:many_lints/src/rules/prefer_match_file_name.dart';
 import 'package:many_lints/src/rules/prefer_correct_test_file_name.dart';
 import 'package:many_lints/src/rules/format_test_name.dart';
 import 'package:many_lints/src/rules/match_lib_folder_structure.dart';
+import 'package:many_lints/src/rules/format_comment.dart';
 import 'package:many_lints/src/rules/avoid_long_parameter_list.dart';
 import 'package:many_lints/src/rules/avoid_nested_conditional_expressions.dart';
 import 'package:many_lints/src/rules/prefer_getter_over_method.dart';
@@ -528,6 +529,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, PreferCorrectTestFileName());
     _registerWarningRule(registry, FormatTestName());
     _registerWarningRule(registry, MatchLibFolderStructure());
+    _registerWarningRule(registry, FormatComment());
     _registerWarningRule(registry, AvoidLongParameterList());
     _registerWarningRule(registry, AvoidNestedConditionalExpressions());
     _registerWarningRule(registry, PreferGetterOverMethod());

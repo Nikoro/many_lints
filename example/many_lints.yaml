@@ -271,3 +271,9 @@ rules:
   # short fixture names (`Ab`, `Foo`) that the rule is right to flag elsewhere.
   prefer_correct_type_name:
     include: ["lib/prefer_correct_type_name_example.dart"]
+
+  # Sentence-shaped comments are a house style, so the rule sits outside every
+  # preset. Scoped to its own example: this package's other files open their
+  # comments with a rule name (`avoid_only_rethrow`, lowercase by definition).
+  format_comment:
+    include: ["lib/format_comment_example.dart"]
