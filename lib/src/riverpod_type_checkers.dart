@@ -24,6 +24,20 @@ bool hasRiverpodAnnotation(AnnotatedNode node) {
   });
 }
 
+/// TypeChecker for Riverpod's `ref` handle itself, in each of its spellings.
+///
+/// `WidgetRef` is what a consumer's `build` receives; `Ref` is what a notifier
+/// and a provider body hold. Both are matched, and both are needed by the
+/// rules that ask *which* ecosystem a `.read` / `.watch` belongs to — matching
+/// the receiver's name alone would claim any field somebody happened to call
+/// `ref`, which is a real class name in other packages.
+const riverpodRefChecker = TypeChecker.any([
+  TypeChecker.fromName('WidgetRef', packageName: 'flutter_riverpod'),
+  TypeChecker.fromName('WidgetRef', packageName: 'hooks_riverpod'),
+  TypeChecker.fromName('Ref', packageName: 'flutter_riverpod'),
+  TypeChecker.fromName('Ref', packageName: 'riverpod'),
+]);
+
 /// TypeChecker for the consumer *widgets* — those whose `build` receives a
 /// Riverpod `ref` directly.
 ///

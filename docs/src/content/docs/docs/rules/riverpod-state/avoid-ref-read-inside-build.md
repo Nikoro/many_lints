@@ -1,6 +1,6 @@
 ---
 title: avoid_ref_read_inside_build
-description: "Use ref.watch instead of ref.read inside the build method"
+description: "Subscribe in build; do not read once"
 sidebar:
   badge:
     text: "Fix"
@@ -13,22 +13,43 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Riverpod State</span>
 
-This rule flags `ref.read()` calls that appear directly inside a `build()` method of a Riverpod consumer widget or state. Since `ref.read` only fetches the value once and does not subscribe to changes, the widget will not rebuild when the provider updates.
+This rule flags a **one-off provider read** inside a `build()` method. Such a read fetches the value once and does not subscribe, so the widget will not rebuild when the provider updates.
+
+It covers both ecosystems, because the mistake is identical in each:
+
+| | One-off (flagged in `build`) | Subscribing (correct in `build`) |
+|---|---|---|
+| **Riverpod** | `ref.read(...)` | `ref.watch(...)` |
+| **package:provider** | `context.read<T>()` | `context.watch<T>()` |
 
 ## Why use this rule
 
-Using `ref.read` in `build()` is almost always a mistake. The widget renders with whatever value the provider had at that moment, but never updates when the value changes. This leads to stale UI that does not reflect the current application state. Use `ref.watch` to subscribe and rebuild automatically. Note that `ref.read` inside callbacks (like `onPressed`) is perfectly fine and intentional.
+A one-off read in `build()` is almost always a mistake. The widget renders with whatever value the provider had at that moment and is never told it changed, so the UI goes stale until something unrelated rebuilds it — a bug that reproduces only in the order the user happened to tap things.
 
-**See also:** [ref.read vs ref.watch](https://riverpod.dev/docs/essentials/combining_requests)
+A one-off read inside a **callback** (`onPressed`) is intentional and is not reported.
+
+The two ecosystems are told apart by the **receiver's resolved type**, not by its name: Riverpod's `ref` is a `WidgetRef`/`Ref`, while provider's extensions hang off `BuildContext`. So `widgetContext.read<T>()` is caught under any receiver name, while a field of some unrelated class you happened to call `ref` is not.
+
+**See also:** [ref.read vs ref.watch](https://riverpod.dev/docs/essentials/combining_requests), [provider: read vs watch](https://pub.dev/packages/provider)
 
 ## Don't
 
 ```dart
+// Riverpod
 class MyWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Reads once, never rebuilds on changes
     final value = ref.read(someProvider);
+    return Text(value);
+  }
+}
+
+// package:provider
+class MyOtherWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final value = context.read<String>();
     return Text(value);
   }
 }
@@ -46,7 +67,16 @@ class MyWidget extends ConsumerWidget {
   }
 }
 
-// ref.read inside a callback is fine
+// package:provider
+class MyProviderWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final value = context.watch<String>();
+    return Text(value);
+  }
+}
+
+// A one-off read inside a callback is fine, in either ecosystem.
 class MyOtherWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {

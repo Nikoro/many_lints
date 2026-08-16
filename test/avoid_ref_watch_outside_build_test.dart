@@ -18,6 +18,7 @@ class Widget {}
 class BuildContext {}
 class StatefulWidget extends Widget {}
 class State<T extends StatefulWidget> {
+  BuildContext get context => throw '';
   void initState() {}
   void dispose() {}
 }
@@ -58,7 +59,70 @@ class HookConsumerState<T extends HookConsumerStatefulWidget> extends State<T> {
   Widget build(BuildContext context) => Widget();
 }
 ''');
+    // package:provider reaches the same two operations through extensions on
+    // BuildContext, which is why the rule matches on the receiver's TYPE.
+    newPackage('provider').addFile('lib/provider.dart', r'''
+import 'package:flutter/widgets.dart';
+export 'package:flutter/widgets.dart';
+extension ReadContext on BuildContext {
+  T read<T>() => throw '';
+}
+extension WatchContext on BuildContext {
+  T watch<T>() => throw '';
+}
+''');
     super.setUp();
+  }
+
+  // ---- package:provider ----
+
+  // Worse than Riverpod's version of this mistake: provider's `watch` throws
+  // outright when called from initState, so this catches a crash.
+  Future<void> test_contextWatchInInitState() async {
+    await assertDiagnostics(
+      r'''
+import 'package:provider/provider.dart';
+
+class MyState extends State<StatefulWidget> {
+  @override
+  void initState() {
+    final value = context.watch<int>();
+  }
+
+  Widget build(BuildContext context) => Widget();
+}
+''',
+      [lint(139, 20)],
+    );
+  }
+
+  Future<void> test_contextWatchInBuildIsFine() async {
+    await assertNoDiagnostics(r'''
+import 'package:provider/provider.dart';
+
+class MyWidget extends Widget {
+  Widget build(BuildContext context) {
+    final value = context.watch<int>();
+    return Widget();
+  }
+}
+''');
+  }
+
+  // `context.read` is the one-off read, which is what callbacks should use.
+  Future<void> test_contextReadOutsideBuildIsFine() async {
+    await assertNoDiagnostics(r'''
+import 'package:provider/provider.dart';
+
+class MyState extends State<StatefulWidget> {
+  @override
+  void initState() {
+    final value = context.read<int>();
+  }
+
+  Widget build(BuildContext context) => Widget();
+}
+''');
   }
 
   // ---- Positive cases (should trigger lint) ----

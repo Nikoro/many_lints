@@ -3,9 +3,21 @@
 
 // avoid_ref_watch_outside_build
 //
-// Warns when ref.watch() is called outside a build() method. ref.watch
-// creates a subscription tied to a build; calling it from a lifecycle
-// method or a callback leaks listeners and rebuilds at unexpected times.
+// Warns when a SUBSCRIBING provider read happens outside a build() method.
+// Such a read ties a listener to the lifecycle of a build; calling it from a
+// lifecycle method or a callback leaks listeners and rebuilds unexpectedly.
+//
+// Covers both ecosystems, told apart by the receiver's resolved TYPE:
+//
+//   Riverpod          ref.watch(...)      -> use ref.read(...) in callbacks
+//   package:provider  context.watch<T>()  -> use context.read<T>()
+//
+// With package:provider this is a CRASH rather than a smell: context.watch<T>()
+// throws outright when called from initState.
+//
+// Only the Riverpod half is shown below, because this example package does not
+// depend on package:provider. The provider half is covered by the rule's tests
+// and by its docs page.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

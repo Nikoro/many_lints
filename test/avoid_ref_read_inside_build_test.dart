@@ -58,7 +58,69 @@ class HookConsumerState<T extends HookConsumerStatefulWidget> extends State<T> {
   Widget build(BuildContext context) => Widget();
 }
 ''');
+    // package:provider reaches the same two operations through extensions on
+    // BuildContext, which is why the rule matches on the receiver's TYPE.
+    newPackage('provider').addFile('lib/provider.dart', r'''
+import 'package:flutter/widgets.dart';
+export 'package:flutter/widgets.dart';
+extension ReadContext on BuildContext {
+  T read<T>() => throw '';
+}
+extension WatchContext on BuildContext {
+  T watch<T>() => throw '';
+}
+''');
     super.setUp();
+  }
+
+  // ---- package:provider ----
+
+  Future<void> test_contextReadInWidgetBuild() async {
+    await assertDiagnostics(
+      r'''
+import 'package:provider/provider.dart';
+
+class MyWidget extends Widget {
+  Widget build(BuildContext context) {
+    final value = context.read<int>();
+    return Widget();
+  }
+}
+''',
+      [lint(131, 19)],
+    );
+  }
+
+  // `context.watch` is the subscribing read, which is what belongs in build.
+  Future<void> test_contextWatchInBuildIsFine() async {
+    await assertNoDiagnostics(r'''
+import 'package:provider/provider.dart';
+
+class MyWidget extends Widget {
+  Widget build(BuildContext context) {
+    final value = context.watch<int>();
+    return Widget();
+  }
+}
+''');
+  }
+
+  // A BuildContext under any other name is the same call, which is what
+  // matching the receiver's type buys over matching its name.
+  Future<void> test_contextReadThroughRenamedReceiver() async {
+    await assertDiagnostics(
+      r'''
+import 'package:provider/provider.dart';
+
+class MyWidget extends Widget {
+  Widget build(BuildContext ctx) {
+    final value = ctx.read<int>();
+    return Widget();
+  }
+}
+''',
+      [lint(127, 15)],
+    );
   }
 
   // ---- Positive cases (should trigger lint) ----

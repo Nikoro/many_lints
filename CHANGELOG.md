@@ -4,6 +4,14 @@
 
 ### Breaking
 
+- **`avoid_ref_read_inside_build` and `avoid_ref_watch_outside_build` now cover `package:provider` as well as Riverpod.** Both rules previously only fired inside a Riverpod consumer, so a project using `package:provider` got nothing from them. They now also report `context.read<T>()` inside `build` and `context.watch<T>()` outside it.
+
+  Listed as breaking because `avoid_ref_read_inside_build` is in the **`recommended`** preset: a provider-based codebase that upgrades will see diagnostics it did not see before. They are true positives — the mistake is identical in both ecosystems, and the provider half of `avoid_ref_watch_outside_build` catches an outright **crash**, since `context.watch<T>()` throws when called from `initState`.
+
+  The receiver is matched on its **resolved type**, not its name: Riverpod's `ref` is a `WidgetRef`/`Ref`, and provider's extensions hang off `BuildContext`. So `widgetContext.read<T>()` is caught under any receiver name, while a field of an unrelated class you happened to call `ref` is not. That last part is a regression this change had to fix rather than a hypothetical — covering provider means admitting every widget class to the rules, and until the receiver was type-checked, a plain widget holding some other package's `Ref` reported.
+
+  The quick fix's label changed from `Replace with 'ref.watch'` to `Replace with 'watch'`, since a `FixKind` is constant and the old wording named an API a provider user does not have.
+
 - **`prefer_immutable_bloc_state` no longer matches on class name.** It recognised state classes two ways: through the `Bloc<E, S>` / `Cubit<S>` type argument, and through a bare `RegExp(r'State$')` over class names. In a project without the `bloc` package only the second ever matched, so the rule degenerated into "every class named `...State` must be `@immutable`" — reported under a message naming a package the project does not use. One Riverpod-only app saw 27 classes flagged, none of them Bloc state.
 
   The name-based half moved to the new `prefer_immutable_state`, which says what it checks and carries the `name_pattern` option. To keep the old behaviour, enable both rules; a project that never used Bloc wants only the new one.

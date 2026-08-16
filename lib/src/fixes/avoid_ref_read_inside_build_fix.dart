@@ -5,12 +5,23 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces `ref.read(...)` with `ref.watch(...)` inside build methods.
+/// Fix that turns a one-off provider read inside `build` into a subscribing
+/// one — `ref.read(...)` to `ref.watch(...)`, and provider's `context.read<T>()`
+/// to `context.watch<T>()`.
+///
+/// Only the method name is rewritten, which is why one fix serves both: the
+/// receiver, the type arguments and the arguments are all left as written.
 class AvoidRefReadInsideBuildFix extends ResolvedCorrectionProducer {
+  /// Named for the operation rather than the receiver.
+  ///
+  /// `registerFixForRule` builds the producer once at registration and throws
+  /// if `fixKind` is null, so the kind cannot depend on which ecosystem the
+  /// call belongs to. A label saying `ref.watch` would name an API a
+  /// package:provider user does not have.
   static const _fixKind = FixKind(
     'many_lints.fix.avoidRefReadInsideBuild',
     DartFixKindPriority.standard,
-    "Replace with 'ref.watch'",
+    "Replace with 'watch'",
   );
 
   AvoidRefReadInsideBuildFix({required super.context});

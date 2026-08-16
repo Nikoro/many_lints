@@ -3,9 +3,18 @@
 
 // avoid_ref_read_inside_build
 //
-// Warns when ref.read() is called inside a build() method of a Riverpod
-// consumer widget or state. ref.read reads a value once and does not listen
-// for changes, so the widget won't rebuild when the provider's value changes.
+// Warns when a ONE-OFF provider read happens inside a build() method. Such a
+// read fetches the value once and does not subscribe, so the widget won't
+// rebuild when the provider's value changes.
+//
+// Covers both ecosystems, told apart by the receiver's resolved TYPE:
+//
+//   Riverpod          ref.read(...)      -> use ref.watch(...)
+//   package:provider  context.read<T>()  -> use context.watch<T>()
+//
+// Only the Riverpod half is shown below, because this example package does not
+// depend on package:provider. The provider half is covered by the rule's tests
+// and by its docs page.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
