@@ -22,6 +22,13 @@ import '../many_lints_rule.dart';
 ///
 /// Not to be confused with `avoid_returning_widgets`, which is about a
 /// function *returning* a widget. This one is about behaviour attached to one.
+///
+/// Set `report_functions: true` to apply the same budget to ordinary function
+/// calls — often shipped as a separate rule, but it is this one with
+/// the widget requirement dropped. It is off by default because outside a widget
+/// tree the argument is much weaker: a long closure passed to `compute` or a
+/// stream transform is often exactly where the logic belongs, and there is no
+/// layout description for it to interrupt.
 class PreferExtractingCallbacks extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_extracting_callbacks',
@@ -46,7 +53,9 @@ class PreferExtractingCallbacks extends ManyLintsRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    registry.addInstanceCreationExpression(this, _Visitor(this));
+    final visitor = _Visitor(this);
+    registry.addInstanceCreationExpression(this, visitor);
+    registry.addMethodInvocation(this, visitor);
   }
 }
 
@@ -60,6 +69,26 @@ class _Visitor extends SimpleAstVisitor<void> {
     final element = node.constructorName.type.element;
     if (element == null || !widgetChecker.isSuperOf(element)) return;
 
+    _checkArguments(node.argumentList);
+  }
+
+  /// Covers the separate `prefer-extracting-function-callbacks` case, which is
+  /// this rule with the widget requirement dropped.
+  ///
+  /// Off by default, because outside a widget tree the argument is much weaker:
+  /// a long closure passed to `compute` or a stream transform is often exactly
+  /// where the logic belongs, and there is no layout description for it to
+  /// interrupt.
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (!rule.config.boolOption('report_functions', defaultValue: false)) {
+      return;
+    }
+
+    _checkArguments(node.argumentList);
+  }
+
+  void _checkArguments(ArgumentList arguments) {
     final maxStatements = rule.config.intOption(
       'max_statements',
       defaultValue: 3,
@@ -69,7 +98,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       defaultValue: const {'builder', 'itemBuilder', 'separatorBuilder'},
     );
 
-    for (final argument in node.argumentList.arguments) {
+    for (final argument in arguments.arguments) {
       if (argument is! NamedArgument) continue;
 
       final name = argument.name.lexeme;

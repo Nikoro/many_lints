@@ -8,6 +8,7 @@ void main() {
   defineReflectiveSuite(() {
     defineReflectiveTests(PreferExtractingCallbacksTest);
     defineReflectiveTests(PreferExtractingCallbacksThresholdTest);
+    defineReflectiveTests(PreferExtractingCallbacksFunctionsTest);
   });
 }
 
@@ -79,6 +80,25 @@ final button = ElevatedButton(onPressed: submit);
 ''');
   }
 
+  // An ordinary function call is NOT a widget, so it is silent by default —
+  // the control for the `report_functions` pair below.
+  Future<void> test_functionCallIsSilentByDefault() async {
+    await assertNoDiagnostics(r'''
+void schedule({void Function()? task}) {}
+
+void run() {
+  schedule(
+    task: () {
+      print(1);
+      print(2);
+      print(3);
+      print(4);
+    },
+  );
+}
+''');
+  }
+
   // A `builder` describes a subtree; extracting it would trip
   // `avoid_returning_widgets` instead.
   Future<void> test_builderIsExempt() async {
@@ -141,6 +161,61 @@ final button = ElevatedButton(
     print(1);
   },
 );
+''');
+  }
+}
+
+/// `report_functions`, which covers the separate
+/// `prefer-extracting-function-callbacks`.
+@reflectiveTest
+class PreferExtractingCallbacksFunctionsTest extends ManyLintsRuleTest {
+  @override
+  void setUp() {
+    rule = PreferExtractingCallbacks();
+    newPackage('flutter').addFile('lib/widgets.dart', _flutter);
+    super.setUp();
+    ConfigLoader.clearCache();
+    newFile(
+      '$testPackageRootPath/${ConfigLoader.fileName}',
+      'rules:\n'
+          '  prefer_extracting_callbacks:\n'
+          '    report_functions: true\n',
+    );
+  }
+
+  // Silent by default (see the control above), reports once switched on.
+  Future<void> test_functionCallReportsWhenEnabled() async {
+    await assertDiagnostics(
+      r'''
+void schedule({void Function()? task}) {}
+
+void run() {
+  schedule(
+    task: () {
+      print(1);
+      print(2);
+      print(3);
+      print(4);
+    },
+  );
+}
+''',
+      [lint(78, 74)],
+    );
+  }
+
+  // The budget still applies, so a short closure stays silent either way.
+  Future<void> test_shortFunctionCallbackIsStillSilent() async {
+    await assertNoDiagnostics(r'''
+void schedule({void Function()? task}) {}
+
+void run() {
+  schedule(
+    task: () {
+      print(1);
+    },
+  );
+}
 ''');
   }
 }

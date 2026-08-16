@@ -92,6 +92,9 @@ rules:
 | `max_statements` | int | `3` | Longest inline closure body that is left alone |
 | `ignored_parameters` | list of strings | `[builder, itemBuilder, separatorBuilder]` | Named parameters whose closures describe a subtree rather than behaviour |
 | `additional_ignored_parameters` | list of strings | `[]` | Names to add to that list |
+| `report_functions` | bool | `false` | Apply the same budget to ordinary function calls, not just widget constructors |
+
+`report_functions` covers what is sometimes shipped as a separate `prefer-extracting-function-callbacks` rule — it is this one with the widget requirement dropped. It is **off by default** because outside a widget tree the argument is much weaker: a long closure passed to `compute` or a stream transform is often exactly where the logic belongs, and there is no layout description for it to interrupt.
 
 ## Turning this rule off
 
