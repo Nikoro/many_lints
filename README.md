@@ -142,7 +142,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-247 lints with 103 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
+251 lints with 103 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
@@ -158,13 +158,13 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 | [Control Flow](https://nikoro.github.io/many_lints/docs/rules/control-flow/) | 27 | Control flow statements and patterns |
 | [Collection & Type](https://nikoro.github.io/many_lints/docs/rules/collection-type/) | 20 | Collection and type-related checks |
 | [Pattern Matching](https://nikoro.github.io/many_lints/docs/rules/pattern-matching/) | 6 | Dart pattern matching best practices |
-| [Type Annotations](https://nikoro.github.io/many_lints/docs/rules/type-annotations/) | 6 | Type annotation conventions |
+| [Type Annotations](https://nikoro.github.io/many_lints/docs/rules/type-annotations/) | 8 | Type annotation conventions |
 | [Code Organization](https://nikoro.github.io/many_lints/docs/rules/code-organization/) | 17 | Code structure and organization |
 | [Shorthand Patterns](https://nikoro.github.io/many_lints/docs/rules/shorthand-patterns/) | 5 | Dot shorthand syntax patterns |
 | [Hook Rules](https://nikoro.github.io/many_lints/docs/rules/hook-rules/) | 4 | Flutter Hooks conventions |
 | [Testing Rules](https://nikoro.github.io/many_lints/docs/rules/testing-rules/) | 5 | Testing best practices and matchers |
 | [Resource Management](https://nikoro.github.io/many_lints/docs/rules/resource-management/) | 5 | Resource cleanup and disposal |
-| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/code-quality/) | 30 | General code quality improvements |
+| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/code-quality/) | 32 | General code quality improvements |
 | [Formatting](https://nikoro.github.io/many_lints/docs/rules/formatting/) | 3 | Literal formatting conventions |
 
 ## Available Assists

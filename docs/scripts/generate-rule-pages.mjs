@@ -259,6 +259,8 @@ const CATEGORIES = {
   'type-annotations': {
     label: 'Type Annotations',
     rules: [
+      'prefer_explicit_parameter_names',
+      'prefer_explicit_type_arguments',
       'prefer_typedefs_for_callbacks',
       'prefer_type_over_var',
       'prefer_explicit_function_type',
@@ -333,6 +335,8 @@ const CATEGORIES = {
     rules: [
       'no_magic_number',
       'no_magic_string',
+      'prefer_named_parameters',
+      'avoid_accessing_other_classes_private_members',
       'prefer_named_boolean_parameters',
       'prefer_declaring_const_constructor',
       'avoid_deep_nesting',

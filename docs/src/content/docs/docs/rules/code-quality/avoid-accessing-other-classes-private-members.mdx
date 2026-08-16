@@ -1,0 +1,106 @@
+---
+title: avoid_accessing_other_classes_private_members
+description: "Make the underscore mean what everyone reads it as"
+sidebar:
+  label: avoid_accessing_other_classes_private_members
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule flags one class reading another class's private member.
+
+This rule is in **no preset**: it imposes an architecture rather than catching a defect.
+
+## Why use this rule
+
+Dart scopes privacy to the **library**, not the class. `_field` is visible to every declaration in the same file — and to every `part` of it. Most people write `_` meaning "mine", and the language quietly means "this file's".
+
+In a short file those coincide. In a long one, or a `part`-heavy library, they do not, and a class ends up depending on another's internals with nothing in the code to mark it. This rule makes the language behave the way the underscore already reads.
+
+Several idioms legitimately reach across, and are exempt:
+
+- A **`State` reading `widget._foo`** — one object the framework split in two.
+- **`copyWith`, `operator ==`, `hashCode` and `toString`**, which exist precisely to read another instance's fields.
+- **Another instance of the same class**: `other._value` inside `==` is the pattern, not a violation.
+- **`this._x`** and a bare `_x`, which are the class's own business.
+
+**See also:** [Dart: libraries and privacy](https://dart.dev/language/libraries)
+
+## Don't
+
+```dart
+class Account {
+  int _balance = 0;
+}
+
+class Report {
+  // Compiles, because both classes live in one library.
+  int total(Account account) => account._balance;
+}
+```
+
+## Do
+
+```dart
+class Account {
+  int _balance = 0;
+
+  int get balance => _balance;
+
+  // Another instance of the SAME class is the `==` / `copyWith` pattern.
+  bool sameAs(Account other) => _balance == other._balance;
+}
+
+class Report {
+  int total(Account account) => account.balance;
+}
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_accessing_other_classes_private_members:
+      additional_ignored_members: [merge]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_accessing_other_classes_private_members:
+    additional_ignored_members: [merge]
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ignored_members` | list of strings | `[copyWith, ==, hashCode, toString]` | Members whose job is to read another instance's fields |
+| `additional_ignored_members` | list of strings | `[]` | Names to add to that list |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      avoid_accessing_other_classes_private_members: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

@@ -296,3 +296,16 @@ rules:
     enabled: true
   prefer_extracting_callbacks:
     enabled: true
+
+  # Style choices a coherent codebase may reasonably reject, so all four sit
+  # outside every preset.
+  prefer_named_parameters:
+    include: ["lib/prefer_named_parameters_example.dart"]
+  prefer_explicit_parameter_names:
+    include: ["lib/prefer_explicit_parameter_names_example.dart"]
+  avoid_accessing_other_classes_private_members:
+    enabled: true
+  # Reports nothing until it names the APIs worth pinning.
+  prefer_explicit_type_arguments:
+    methods: [showDialog]
+    include: ["lib/prefer_explicit_type_arguments_example.dart"]

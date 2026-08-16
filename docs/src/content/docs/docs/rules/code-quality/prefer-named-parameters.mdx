@@ -1,0 +1,98 @@
+---
+title: prefer_named_parameters
+description: "Name parameters once there are more than a couple"
+sidebar:
+  label: prefer_named_parameters
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+This rule flags a declaration taking more than a few positional parameters.
+
+This rule is in **no preset**: the budget is a house style.
+
+## Why use this rule
+
+`move(3, 4, 5)` tells the reader nothing, and swapping two arguments of the same type compiles cleanly and fails at runtime. Named parameters put the meaning at the call site, where it is read.
+
+The threshold matters more than the principle. One or two positional parameters are usually the *subject* of the call — `substring(0, 4)`, `Point(x, y)` — and naming them is noise, so the default budget is 2.
+
+Exempt by default:
+
+- An **`@override`**, whose signature belongs to the supertype, and an **operator**, whose parameters cannot be named.
+- A **private constructor**. It is not an API: it is reached from one place in the same library, usually a factory assembling injected dependencies (`Pipeline._(this._storage, this._adapter, this._policy)`), and naming those adds ceremony at the one call site that already knows the order.
+- **`main`, `onRequest` and `middleware`**, whose positional signature a framework dictates. dart_frog passes the URL's path segments in order, so naming them is not the author's to decide.
+
+Those last two accounted for 22 of 28 reports on a real codebase.
+
+**See also:** [Effective Dart: parameters](https://dart.dev/effective-dart/design#parameters)
+
+## Don't
+
+```dart
+void move(int x, int y, int z) {}
+```
+
+## Do
+
+```dart
+void move({required int x, required int y, required int z}) {}
+
+// One or two positional parameters are the subject of the call.
+String slice(String value, int start) => value;
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_named_parameters:
+      max_positional: 2
+      additional_ignored_names: [handleRequest]
+      ignore_private_constructors: true
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_named_parameters:
+    max_positional: 2
+    additional_ignored_names: [handleRequest]
+    ignore_private_constructors: true
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_positional` | int | `2` | Most positional parameters a declaration may take |
+| `ignored_names` | list of strings | `[main, onRequest, middleware]` | Declarations whose signature a framework dictates |
+| `additional_ignored_names` | list of strings | `[]` | Names to add to that list |
+| `ignore_private_constructors` | bool | `true` | Skip `Type._(...)`, which is not an API |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_named_parameters: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

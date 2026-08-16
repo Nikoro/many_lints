@@ -1,0 +1,89 @@
+---
+title: prefer_explicit_parameter_names
+description: "Name the parameters of a function type"
+sidebar:
+  label: prefer_explicit_parameter_names
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Type Annotations</span>
+
+This rule flags a function type — in a typedef or a function-typed parameter — that declares unnamed parameters.
+
+This rule is in **no preset**.
+
+## Why use this rule
+
+`void Function(String, int)` tells a reader the types and nothing else. At the point where someone writes the callback, `(String, int)` gives them two anonymous values to guess at — is the `int` an index, a count, an id?
+
+`void Function(String label, int count)` answers that in the signature, where the answer belongs, and IDEs echo those names into the closure they generate.
+
+A single-parameter function type is exempt by default: `void Function(T)` is unambiguous from the type alone, and naming it adds nothing.
+
+**See also:** [Effective Dart: type annotations](https://dart.dev/effective-dart/design#types)
+
+## Don't
+
+```dart
+typedef OnChanged = void Function(String, int);
+
+void listen(void Function(String, int) callback) {}
+```
+
+## Do
+
+```dart
+typedef OnChanged = void Function(String label, int count);
+
+void listen(void Function(String label, int count) callback) {}
+
+// Exempt by default — unambiguous from the type alone.
+typedef OnTap = void Function(String);
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_explicit_parameter_names:
+      min_parameters: 2
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_explicit_parameter_names:
+    min_parameters: 2
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `min_parameters` | int | `2` | Fewest parameters a function type must have before names are required |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_explicit_parameter_names: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

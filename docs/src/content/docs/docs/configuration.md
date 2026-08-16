@@ -288,7 +288,7 @@ Both `include` and `message` work on **every** rule, exactly like `exclude`.
 
 ## Per-rule options
 
-Beyond `exclude`, `include` and `message`, **82 rules** accept options that change *what*
+Beyond `exclude`, `include` and `message`, **86 rules** accept options that change *what*
 they report. Those rules carry a <span class="rule-badge rule-badge--config">Configurable</span>
 badge on their page, and every option is documented there with its type and default.
 
@@ -371,6 +371,10 @@ options never changes results until you set one.
 | [`no_magic_number`](/many_lints/docs/rules/code-quality/no-magic-number/) | `allowed`, `additional_allowed`, `ignored_invocations`, `additional_ignored_invocations`, `ignore_tests` |
 | [`no_magic_string`](/many_lints/docs/rules/code-quality/no-magic-string/) | `min_occurrences`, `min_length`, `ignored_invocations`, `ignore_tests` |
 | [`prefer_extracting_callbacks`](/many_lints/docs/rules/widget-best-practices/prefer-extracting-callbacks/) | `max_statements`, `ignored_parameters`, `additional_ignored_parameters` |
+| [`prefer_named_parameters`](/many_lints/docs/rules/code-quality/prefer-named-parameters/) | `max_positional`, `ignored_names`, `additional_ignored_names`, `ignore_private_constructors` |
+| [`prefer_explicit_parameter_names`](/many_lints/docs/rules/type-annotations/prefer-explicit-parameter-names/) | `min_parameters` |
+| [`prefer_explicit_type_arguments`](/many_lints/docs/rules/type-annotations/prefer-explicit-type-arguments/) | `methods`, `additional_methods` |
+| [`avoid_accessing_other_classes_private_members`](/many_lints/docs/rules/code-quality/avoid-accessing-other-classes-private-members/) | `ignored_members`, `additional_ignored_members` |
 | [`prefer_correct_type_name`](/many_lints/docs/rules/class-naming/prefer-correct-type-name/) | `min_length`, `max_length`, `ignored_names` |
 | [`prefer_moving_to_variable`](/many_lints/docs/rules/code-quality/prefer-moving-to-variable/) | `allowed_duplicated_chains`, `min_chain_length`, `ignored_invocations`, `ignored_targets` |
 | [`prefer_private_named_parameters`](/many_lints/docs/rules/code-quality/prefer-private-named-parameters/) | `only_same_name` |
