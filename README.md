@@ -142,7 +142,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-245 lints with 103 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
+247 lints with 103 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
@@ -152,7 +152,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 | [Riverpod State](https://nikoro.github.io/many_lints/docs/rules/riverpod-state/) | 9 | Riverpod-specific state rules |
 | [Async Safety](https://nikoro.github.io/many_lints/docs/rules/async-safety/) | 10 | Async/await and state mutation safety |
 | [fpdart](https://nikoro.github.io/many_lints/docs/rules/fpdart/) | 22 | Functional error handling with Either, Option and TaskEither |
-| [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/widget-best-practices/) | 23 | General widget best practices |
+| [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/widget-best-practices/) | 25 | General widget best practices |
 | [Widget Replacement](https://nikoro.github.io/many_lints/docs/rules/widget-replacement/) | 13 | Simpler widget alternatives |
 | [State Management](https://nikoro.github.io/many_lints/docs/rules/state-management/) | 10 | StatefulWidget and state patterns |
 | [Control Flow](https://nikoro.github.io/many_lints/docs/rules/control-flow/) | 27 | Control flow statements and patterns |

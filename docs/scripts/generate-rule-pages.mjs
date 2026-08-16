@@ -128,6 +128,8 @@ const CATEGORIES = {
   'widget-best-practices': {
     label: 'Widget Best Practices',
     rules: [
+      'prefer_widget_private_members',
+      'prefer_extracting_callbacks',
       'avoid_deep_widget_nesting',
       'avoid_too_many_widgets_per_build',
       'always_pass_global_key',

@@ -1,0 +1,107 @@
+---
+title: prefer_extracting_callbacks
+description: "Keep long callbacks out of the widget tree"
+sidebar:
+  label: prefer_extracting_callbacks
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Widget Best Practices</span>
+
+This rule flags a widget's callback argument holding a long inline closure.
+
+This rule is in **no preset**: it imposes an architecture rather than catching a defect.
+
+## Why use this rule
+
+A closure written inline inside `build` puts logic in the middle of a layout description, where it is read by everyone scanning for the tree's shape and re-created on every rebuild. Extracting it to a method leaves the tree readable and gives the behaviour a name.
+
+The threshold is what makes the rule usable: `onTap: () => _submit()` is a tear-off in all but spelling, and reporting it would be noise. Only closures whose body exceeds `max_statements` (default 3) report.
+
+A `builder` argument is exempt by default. Its whole job is to describe a subtree, so extracting it to a method would trip [`avoid_returning_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-returning-widgets/) instead — the two rules would otherwise disagree about the same code.
+
+Not to be confused with `avoid_returning_widgets`, which is about a function *returning* a widget. This one is about behaviour attached to one.
+
+**See also:** [Flutter: performance best practices](https://docs.flutter.dev/perf/best-practices)
+
+## Don't
+
+```dart
+ElevatedButton(
+  onPressed: () {
+    print('validating');
+    print('saving');
+    print('closing');
+    print('done');
+  },
+  child: const Text('Save'),
+)
+```
+
+## Do
+
+```dart
+void _save() {
+  print('validating');
+  print('saving');
+  print('closing');
+  print('done');
+}
+
+// The tree stays readable and the behaviour has a name.
+ElevatedButton(onPressed: _save, child: const Text('Save'))
+
+// A short closure is a tear-off in all but spelling — never reported.
+ElevatedButton(onPressed: () => print('save'), child: const Text('Save'))
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_extracting_callbacks:
+      max_statements: 3
+      additional_ignored_parameters: [contentBuilder]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_extracting_callbacks:
+    max_statements: 3
+    additional_ignored_parameters: [contentBuilder]
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_statements` | int | `3` | Longest inline closure body that is left alone |
+| `ignored_parameters` | list of strings | `[builder, itemBuilder, separatorBuilder]` | Named parameters whose closures describe a subtree rather than behaviour |
+| `additional_ignored_parameters` | list of strings | `[]` | Names to add to that list |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_extracting_callbacks: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

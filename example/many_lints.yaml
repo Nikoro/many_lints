@@ -289,3 +289,10 @@ rules:
     additional_ignored_invocations: [Insets]
   no_magic_string:
     include: ["lib/no_magic_string_example.dart"]
+
+  # Both impose an architecture rather than catching a defect, so they sit
+  # outside every preset.
+  prefer_widget_private_members:
+    enabled: true
+  prefer_extracting_callbacks:
+    enabled: true
