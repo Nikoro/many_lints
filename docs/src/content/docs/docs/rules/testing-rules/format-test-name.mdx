@@ -1,0 +1,100 @@
+---
+title: format_test_name
+description: "Hold test descriptions to a house pattern"
+sidebar:
+  label: format_test_name
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Testing Rules</span>
+
+This rule flags a test description that does not match the configured pattern.
+
+This rule is in **no preset**, and reports **nothing until you set a pattern** — the right one is a house style with no defensible default.
+
+## Why use this rule
+
+A test name is read far more often than it is written: in CI output, in a failure report, in a bisect log. It is read *without the code beside it*, so it has to carry the expectation on its own. A house pattern (`should ...`, `given ... when ... then ...`) makes that output scannable, and makes a test whose name no longer describes its body visible in review.
+
+`group(...)` names are exempt by default. A group names a *subject* (`UserRepository`, `when offline`) rather than an expectation, so holding it to the same sentence pattern fights the convention it is meant to enforce. Set `check_groups: true` to include them.
+
+A non-literal description — an interpolation, a constant, a variable — is never reported, since it cannot be read without evaluating it. That keeps parameterised tests silent.
+
+**See also:** [package:test](https://pub.dev/packages/test), [Effective Dart: testing](https://dart.dev/guides/testing)
+
+## Don't
+
+```dart
+// With pattern 'should .*'
+test('works fine', () {});
+```
+
+## Do
+
+```dart
+test('should load a user from the cache', () {});
+
+// A group names a subject, so it is exempt by default.
+group('UserRepository', () {});
+```
+
+## Enabling this rule
+
+This rule reports **nothing until you set a pattern**:
+
+```yaml
+# many_lints.yaml
+rules:
+  format_test_name:
+    pattern: 'should .*'
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    format_test_name:
+      pattern: 'should .*'
+      check_groups: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  format_test_name:
+    pattern: 'should .*'
+    check_groups: false
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `pattern` | string | `—` | A regular expression the whole description must match. Unset means the rule is silent |
+| `check_groups` | bool | `false` | Also hold `group(...)` names to the pattern |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      format_test_name: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

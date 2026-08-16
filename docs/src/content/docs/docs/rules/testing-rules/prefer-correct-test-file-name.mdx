@@ -1,0 +1,94 @@
+---
+title: prefer_correct_test_file_name
+description: "Name test files so the runner actually runs them"
+sidebar:
+  label: prefer_correct_test_file_name
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Testing Rules</span>
+
+This rule flags a file under `test/` that declares tests but is not named `*_test.dart`.
+
+This rule is in **no preset**.
+
+## Why use this rule
+
+`package:test` only runs files matching `*_test.dart`. A file named `user_repository_tests.dart` or `test_user_repository.dart` still compiles, still passes analysis, and is **silently never executed** — the worst failure mode a test can have, because the suite stays green by not running the test at all.
+
+Nothing else catches this. The analyzer is happy, the file has no errors, and CI reports success; the only symptom is a bug shipping past a test that was written to prevent it.
+
+The rule reports only files that actually declare tests — a top-level `main` containing a `test(...)`, `testWidgets(...)` or `group(...)` call. The helpers, fixtures, builders and robots that legitimately live under `test/` without being test files are left alone.
+
+**See also:** [package:test](https://pub.dev/packages/test), [Flutter: testing](https://docs.flutter.dev/testing/overview)
+
+## Don't
+
+```dart
+// test/user_repository_tests.dart — plural, so it never runs
+void main() {
+  test('should load a user', () {});
+}
+```
+
+## Do
+
+```dart
+// test/user_repository_test.dart
+void main() {
+  test('should load a user', () {});
+}
+```
+
+```dart
+// test/support/user_builder.dart — declares no tests, never reported
+class UserBuilder {}
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_correct_test_file_name:
+      directories: [test, integration_test]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_correct_test_file_name:
+    directories: [test, integration_test]
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `directories` | list of strings | `[test, integration_test, test_driver]` | Top-level directories the rule applies to |
+| `additional_directories` | list of strings | `[]` | Directories to add to the defaults, instead of restating them |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_correct_test_file_name: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

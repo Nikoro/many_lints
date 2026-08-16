@@ -1,0 +1,85 @@
+---
+title: match_lib_folder_structure
+description: "Keep folders under lib/ in lower_snake_case"
+sidebar:
+  label: match_lib_folder_structure
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Organization</span>
+
+This rule flags a file under `lib/` that sits in a folder whose name is not `lower_snake_case`.
+
+This rule is in **no preset**.
+
+## Why use this rule
+
+A folder name becomes part of every `package:` URI that imports through it, so it is public API in a way a local variable name is not — renaming it later is a breaking change for every consumer.
+
+`CamelCase` and `kebab-case` folders also break on case-insensitive filesystems. A folder renamed from `Models` to `models` is invisible to git on macOS by default, so the import keeps resolving on the machine that made the change and fails in CI, which is the worst place to find out.
+
+The SDK's [`file_names`](https://dart.dev/tools/linter-rules/file_names) rule checks the **file**; nothing in the SDK checks the directories above it, which is the gap this fills.
+
+The diagnostic is reported once per file, at the first offending folder: a second one on the same path would be fixed by the same rename.
+
+**See also:** [`file_names`](https://dart.dev/tools/linter-rules/file_names), [Effective Dart: naming](https://dart.dev/effective-dart/style#do-name-libraries-and-source-files-using-lowercase_with_underscores)
+
+## Don't
+
+```
+lib/dataSources/user_repository.dart
+lib/data-sources/user_repository.dart
+```
+
+## Do
+
+```
+lib/data_sources/user_repository.dart
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    match_lib_folder_structure:
+      root: lib
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  match_lib_folder_structure:
+    root: lib
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `root` | string | `lib` | The top-level directory the rule applies to. Files outside it are never reported |
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      match_lib_folder_structure: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

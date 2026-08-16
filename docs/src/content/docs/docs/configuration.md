@@ -288,7 +288,7 @@ Both `include` and `message` work on **every** rule, exactly like `exclude`.
 
 ## Per-rule options
 
-Beyond `exclude`, `include` and `message`, **66 rules** accept options that change *what*
+Beyond `exclude`, `include` and `message`, **78 rules** accept options that change *what*
 they report. Those rules carry a <span class="rule-badge rule-badge--config">Configurable</span>
 badge on their page, and every option is documented there with its type and default.
 
@@ -363,6 +363,11 @@ options never changes results until you set one.
 | [`prefer_from_predicate`](/many_lints/docs/rules/fpdart/prefer-from-predicate/) | `max_condition_complexity` |
 | [`prefer_immutable_state`](/many_lints/docs/rules/state-management/prefer-immutable-state/) | `name_pattern` |
 | [`member_ordering`](/many_lints/docs/rules/code-organization/member-ordering/) | `order` |
+| [`match_lib_folder_structure`](/many_lints/docs/rules/code-organization/match-lib-folder-structure/) | `root` |
+| [`prefer_match_file_name`](/many_lints/docs/rules/code-organization/prefer-match-file-name/) | `ignored_suffixes`, `entrypoints`, `additional_entrypoints` |
+| [`prefer_correct_test_file_name`](/many_lints/docs/rules/testing-rules/prefer-correct-test-file-name/) | `directories`, `additional_directories` |
+| [`format_test_name`](/many_lints/docs/rules/testing-rules/format-test-name/) | `pattern`, `check_groups` |
+| [`prefer_correct_type_name`](/many_lints/docs/rules/class-naming/prefer-correct-type-name/) | `min_length`, `max_length`, `ignored_names` |
 | [`prefer_moving_to_variable`](/many_lints/docs/rules/code-quality/prefer-moving-to-variable/) | `allowed_duplicated_chains`, `min_chain_length`, `ignored_invocations`, `ignored_targets` |
 | [`prefer_private_named_parameters`](/many_lints/docs/rules/code-quality/prefer-private-named-parameters/) | `only_same_name` |
 | [`prefer_safe_collection_access`](/many_lints/docs/rules/fpdart/prefer-safe-collection-access/) | `report_outside_pipelines`, `accessors`, `additional_accessors` |

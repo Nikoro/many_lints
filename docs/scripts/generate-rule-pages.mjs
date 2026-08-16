@@ -33,6 +33,7 @@ const CATEGORIES = {
       'prefer_correct_identifier_length',
       'prefer_prefixed_global_constants',
       'match_class_name_pattern',
+      'prefer_correct_type_name',
       'prefer_correct_error_name',
       'prefer_correct_handler_name',
       'use_class_suffix',
@@ -282,6 +283,8 @@ const CATEGORIES = {
       'avoid_unnecessary_constructor',
       'member_ordering',
       'avoid_unnecessary_extends',
+      'prefer_match_file_name',
+      'match_lib_folder_structure',
     ],
   },
   'shorthand-patterns': {
@@ -309,6 +312,8 @@ const CATEGORIES = {
       'avoid_misused_test_matchers',
       'prefer_test_matchers',
       'prefer_expect_later',
+      'prefer_correct_test_file_name',
+      'format_test_name',
     ],
   },
   'resource-management': {

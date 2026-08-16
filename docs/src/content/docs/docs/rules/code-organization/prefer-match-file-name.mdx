@@ -1,0 +1,100 @@
+---
+title: prefer_match_file_name
+description: "Name a file after the first public declaration in it"
+sidebar:
+  label: prefer_match_file_name
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Organization</span>
+
+This rule flags a file whose name does not match the first public declaration in it: `user_repository.dart` should declare `class UserRepository`.
+
+Only the **first** public declaration is checked. A file legitimately holds several — a class plus its extension, a sealed hierarchy — and only one of them can name the file, so the rest are not evidence of a problem.
+
+This rule is in **no preset**.
+
+## Why use this rule
+
+The SDK's [`file_names`](https://dart.dev/tools/linter-rules/file_names) rule validates the *spelling* of a file name but never checks whether it describes the contents. Matching them is what lets a reader find a type from a directory listing, and what makes renaming a type show up in review as a rename of its file rather than as an unrelated edit buried in a diff.
+
+Three cases are skipped rather than reported:
+
+- A **part file**, whose name belongs to the composite it is part of (`_header.dart` inside `profile_page/`) rather than to its own declaration.
+- A file with **no public declaration** — a private-only file has no name to match, and a barrel of `export` directives declares nothing at all.
+- An **entrypoint function**: a name the language or a framework demands, which therefore cannot name the file. `main` is the language's own — every test file has one, and none can be `main.dart`. `onRequest` and `middleware` are dart_frog's route contract, where the file's *path* is the API. On a real codebase these accounted for 183 of 206 reports, all wrong.
+
+Acronyms convert the way a reader expects: `HTTPClient` maps to `http_client.dart`, not `h_t_t_p_client.dart`.
+
+**See also:** [`file_names`](https://dart.dev/tools/linter-rules/file_names), [Effective Dart: naming](https://dart.dev/effective-dart/style#do-name-libraries-and-source-files-using-lowercase_with_underscores)
+
+## Don't
+
+```dart
+// In a file named something_else.dart:
+class UserRepository {}
+```
+
+## Do
+
+```dart
+// In a file named user_repository.dart:
+class UserRepository {}
+
+// Later declarations in the same file are not reported — only the first
+// public one names the file.
+extension UserRepositoryCaching on UserRepository {}
+```
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_match_file_name:
+      ignored_suffixes: ['.g.dart', '.freezed.dart']
+      additional_entrypoints: [buildTransaction]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_match_file_name:
+    ignored_suffixes: ['.g.dart', '.freezed.dart']
+    additional_entrypoints: [buildTransaction]
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ignored_suffixes` | list of strings | `[]` | File-name suffixes the rule skips entirely, matched with the extension included |
+| `entrypoints` | list of strings | `[main, onRequest, middleware]` | Function names a framework demands, which never name a file |
+| `additional_entrypoints` | list of strings | `[]` | Entrypoints to add to the defaults, instead of restating them |
+
+Generated files are usually better handled with the global `analyzer: exclude:`, which stops them being analyzed at all; `ignored_suffixes` is for the cases you still want other rules to see.
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+plugins:
+  many_lints:
+    diagnostics:
+      prefer_match_file_name: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

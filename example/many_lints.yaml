@@ -251,3 +251,23 @@ rules:
   match_class_name_pattern:
     pattern: '[A-Z][A-Za-z0-9]*Page'
     include: ["lib/match_class_name_pattern_example.dart"]
+
+  # The naming batch that judges a file's PATH rather than its AST. Every file
+  # in this package is named `<rule>_example.dart` and sits flat in `lib/`, so
+  # each of these is scoped to the one file that demonstrates it — otherwise
+  # `prefer_match_file_name` alone would report from all ~240 of them.
+  prefer_match_file_name:
+    include: ["lib/prefer_match_file_name_example.dart"]
+  match_lib_folder_structure:
+    enabled: true
+  prefer_correct_test_file_name:
+    enabled: true
+  format_test_name:
+    pattern: 'should .*'
+    include: ["lib/format_test_name_example.dart"]
+
+  # A type-name budget is a house style, so the rule sits outside every preset.
+  # Scoped to its own example: this package documents rules with deliberately
+  # short fixture names (`Ab`, `Foo`) that the rule is right to flag elsewhere.
+  prefer_correct_type_name:
+    include: ["lib/prefer_correct_type_name_example.dart"]
