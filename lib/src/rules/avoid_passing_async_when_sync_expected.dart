@@ -36,8 +36,9 @@ import '../many_lints_rule.dart';
 /// ```
 ///
 /// Flutter's `onPressed` and friends are `void`-returning by design and are
-/// commonly given `async` bodies. Add them to `ignored_parameters` — or set
-/// `ignore_widget_callbacks` — when that is the intended fire-and-forget.
+/// commonly given `async` bodies, so they are ignored by default. Set
+/// `ignore_widget_callbacks: false` when a project wants to audit those
+/// fire-and-forget handlers too.
 class AvoidPassingAsyncWhenSyncExpected extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_passing_async_when_sync_expected',
@@ -123,12 +124,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // `ignore_widget_callbacks: true` silences the Flutter handlers that are
-    // fire-and-forget by contract. Off by default: the future really is
-    // dropped there too, and a project that wants the reminder should get it.
+    // Flutter handlers are fire-and-forget by contract and commonly async.
+    // A project can opt into auditing them when it has its own error boundary.
     final ignoreWidgetCallbacks = rule.config.boolOption(
       'ignore_widget_callbacks',
-      defaultValue: false,
+      defaultValue: true,
     );
 
     if (ignoreWidgetCallbacks && _widgetCallbacks.contains(parameterName)) {

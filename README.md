@@ -57,9 +57,9 @@ For local development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 | Preset | Rules | Contents |
 |--------|-------|----------|
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
-| `core` | 36 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
-| `recommended` | 94 | `core` plus likely defects and concrete runtime risks. |
-| `opinionated` | 184 | `recommended` plus this package's own style preferences. |
+| `core` | 35 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
+| `recommended` | 90 | `core` plus likely defects and concrete runtime risks. |
+| `opinionated` | 177 | `recommended` plus this package's own style preferences. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml` includes `core.yaml`. `core` and `recommended` deliberately exclude anything that imposes an architecture, a naming scheme, or a contested style choice.
 

@@ -70,8 +70,8 @@ void fn() {
 
 ## Configuration
 
-This rule is in the **`opinionated`** preset. With a lower preset, enable it by
-name:
+This rule is opt-in because compact nested shorthands are a readability choice
+on which coherent codebases disagree. Enable it by name:
 
 ```yaml
 # many_lints.yaml

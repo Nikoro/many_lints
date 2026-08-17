@@ -1561,8 +1561,24 @@ rules:
     });
 
     group('avoid_passing_async_when_sync_expected exemptions', () {
-      test('an async void callback is reported with no config', () async {
+      test('a widget callback is ignored with no config', () async {
         final errors = await harness.analyze(_asyncVoidCallbackCode);
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_passing_async_when_sync_expected')),
+        );
+      });
+
+      test('ignore_widget_callbacks false reports onPressed', () async {
+        final errors = await harness.analyze(
+          _asyncVoidCallbackCode,
+          config: '''
+rules:
+  avoid_passing_async_when_sync_expected:
+    ignore_widget_callbacks: false
+''',
+        );
 
         expect(
           errors.map((e) => e.code),
@@ -1749,7 +1765,10 @@ rules:
 
     group('avoid_duplicate_collection_elements ignore_literals', () {
       test('reports duplicate literals by default', () async {
-        final errors = await harness.analyze(_duplicateLiteralCode);
+        final errors = await harness.analyze(
+          _duplicateLiteralCode,
+          config: 'rules:\n  avoid_duplicate_collection_elements: true',
+        );
 
         expect(
           errors.map((e) => e.code),
@@ -1791,8 +1810,11 @@ rules:
     });
 
     group('prefer_class_destructuring min_occurrences', () {
-      test('reports at the default threshold with no config', () async {
-        final errors = await harness.analyze(_threePropertyCode);
+      test('reports at the default threshold', () async {
+        final errors = await harness.analyze(
+          _threePropertyCode,
+          config: 'rules:\n  prefer_class_destructuring: true',
+        );
 
         expect(
           errors.map((e) => e.code),
@@ -1803,7 +1825,10 @@ rules:
       test('two properties are below the default threshold', () async {
         // Asymmetric baseline: proves the fixture below is genuinely silent by
         // default, so raising it to a lint is the option's doing.
-        final errors = await harness.analyze(_twoPropertyCode);
+        final errors = await harness.analyze(
+          _twoPropertyCode,
+          config: 'rules:\n  prefer_class_destructuring: true',
+        );
 
         expect(
           errors.map((e) => e.code),
@@ -2256,14 +2281,20 @@ rules:
     });
 
     group('prefer_moving_to_variable', () {
-      test('reports a repeated invocation chain with no config', () async {
-        final errors = await harness.analyze(_repeatedChainCode);
+      test(
+        'reports a repeated invocation chain with default options',
+        () async {
+          final errors = await harness.analyze(
+            _repeatedChainCode,
+            config: 'rules:\n  prefer_moving_to_variable: true',
+          );
 
-        expect(
-          errors.map((e) => e.code),
-          contains('prefer_moving_to_variable'),
-        );
-      });
+          expect(
+            errors.map((e) => e.code),
+            contains('prefer_moving_to_variable'),
+          );
+        },
+      );
 
       test('max_extra_occurrences tolerates the second use', () async {
         final errors = await harness.analyze(
@@ -2380,7 +2411,10 @@ rules:
       });
 
       test('a property chain reports at the default length', () async {
-        final errors = await harness.analyze(_repeatedPropertyChainCode);
+        final errors = await harness.analyze(
+          _repeatedPropertyChainCode,
+          config: 'rules:\n  prefer_moving_to_variable: true',
+        );
 
         expect(
           errors.map((e) => e.code),

@@ -65,8 +65,8 @@ When a chain and its own prefix both repeat the same number of times, only the l
 
 ## Turning this rule off
 
-This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
+This rule is opt-in because some codebases deliberately keep short expressions
+at their call sites. Enable it by name:
 
 ```yaml
 # many_lints.yaml

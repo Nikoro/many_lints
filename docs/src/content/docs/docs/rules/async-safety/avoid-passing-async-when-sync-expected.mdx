@@ -62,7 +62,7 @@ schedule(() async {
 
 Only arguments are checked. A closure assigned to a variable of type `void Function()` is not reported — the same hazard exists, but the assignment is explicit enough that the author chose the type deliberately.
 
-Flutter's `onPressed`, `onTap` and similar handlers are `void`-returning by design and are idiomatically given `async` bodies. They **are** reported by default, because the future really is dropped there too and unhandled errors behave the same way. Use `ignore_widget_callbacks: true` if your project treats that as intended.
+Flutter's `onPressed`, `onTap` and similar handlers are `void`-returning by design and are idiomatically given `async` bodies. They are ignored by default. Set `ignore_widget_callbacks: false` if your project has an error boundary for those futures and wants to audit every fire-and-forget handler.
 
 ## Turning this rule off
 
@@ -115,5 +115,5 @@ rules:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `ignore_widget_callbacks` | bool | `false` | Skip the common Flutter handlers (`onPressed`, `onTap`, `onLongPress`, `onChanged`, `onSubmitted`, `onDoubleTap`, `onRefresh`, `onSaved`, `listener`) |
+| `ignore_widget_callbacks` | bool | `true` | Skip the common Flutter handlers (`onPressed`, `onTap`, `onLongPress`, `onChanged`, `onSubmitted`, `onDoubleTap`, `onRefresh`, `onSaved`, `listener`) |
 | `ignored_parameters` | list of strings | `[]` | Additional parameter names to skip, by name |

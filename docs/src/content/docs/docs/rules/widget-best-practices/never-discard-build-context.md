@@ -66,8 +66,8 @@ A name such as `_context` is not a discard — it is a private name that remains
 
 ## Configuration
 
-This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
+This rule is opt-in because builders that perform no inherited lookup can
+legitimately discard their context. Enable it by name:
 
 ```yaml
 # many_lints.yaml

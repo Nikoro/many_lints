@@ -77,6 +77,13 @@ class _Visitor extends SimpleAstVisitor<void> {
     final target = invocation.realTarget;
     if (target == null) return;
 
+    // `groups.putIfAbsent(keyOf(item), () => []).add(item)` distributes the
+    // source across a different target per iteration. There is no equivalent
+    // `addAll` call when the receiver itself depends on the loop variable.
+    final targetVisitor = _ElementReferenceVisitor(loopVariable);
+    target.accept(targetVisitor);
+    if (targetVisitor.found) return;
+
     final arguments = invocation.argumentList.arguments;
     if (arguments.length != 1) return;
 
@@ -174,4 +181,16 @@ class _Visitor extends SimpleAstVisitor<void> {
       target == null || _isStableReceiver(target),
     _ => false,
   };
+}
+
+class _ElementReferenceVisitor extends RecursiveAstVisitor<void> {
+  _ElementReferenceVisitor(this.element);
+
+  final Object element;
+  bool found = false;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (node.element == element) found = true;
+  }
 }

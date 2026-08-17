@@ -152,6 +152,16 @@ void copy(List<String> target, List<int> source) {
 ''');
   }
 
+  Future<void> test_loopWhoseTargetDependsOnTheItem() async {
+    await assertNoDiagnostics(r'''
+void group(Map<int, List<int>> groups, List<int> source) {
+  for (final item in source) {
+    groups.putIfAbsent(item, () => []).add(item);
+  }
+}
+''');
+  }
+
   Future<void> test_loopWithCondition() async {
     await assertNoDiagnostics(r'''
 void copy(List<int> target, List<int> source) {

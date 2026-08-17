@@ -62,16 +62,15 @@ The rule stays silent in cases where a catch-all is legitimate:
 
 ## Configuration
 
-This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
-`avoid_wildcard_cases_with_enums: true`.
+This rule is opt-in because catch-all behavior is sometimes the contract, such
+as mapping every unsupported HTTP method to the same response.
 
-To turn it off:
+Enable it by name:
 
 ```yaml
 # many_lints.yaml
 rules:
-  avoid_wildcard_cases_with_enums: false
+  avoid_wildcard_cases_with_enums: true
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

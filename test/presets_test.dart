@@ -135,7 +135,6 @@ void main() {
         'avoid_catch_error',
         'avoid_future_of_either',
         'avoid_future_of_option',
-        'avoid_nested_shorthands',
         'avoid_redundant_async',
         'avoid_unnecessary_call',
         'avoid_unnecessary_constructor',
@@ -158,6 +157,23 @@ void main() {
         expect(recommendedRules, isNot(contains(name)), reason: name);
         expect(opinionatedRules, contains(name), reason: name);
       }
+    });
+
+    test('context-dependent heuristics stay opt-in', () {
+      for (final name in const [
+        'avoid_duplicate_collection_elements',
+        'avoid_nested_shorthands',
+        'avoid_unused_after_null_check',
+        'avoid_wildcard_cases_with_enums',
+        'never_discard_build_context',
+        'prefer_class_destructuring',
+        'prefer_moving_to_variable',
+      ]) {
+        expect(opinionatedRules, isNot(contains(name)), reason: name);
+      }
+
+      expect(recommendedRules, isNot(contains('prefer_add_all')));
+      expect(opinionatedRules, contains('prefer_add_all'));
     });
 
     // Guards against a preset naming a rule that was renamed or removed, which

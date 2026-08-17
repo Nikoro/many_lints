@@ -55,15 +55,15 @@ For `x == null`, only the `else` branch is examined, since that is the branch wh
 
 ## Configuration
 
-This rule is in the **`core`** preset, so it is on with `preset: core`,
-`preset: recommended` or `preset: opinionated`.
+This rule is opt-in because checking whether a value exists can legitimately
+select behavior without reading the value inside the selected branch.
 
-To turn it off:
+Enable it by name:
 
 ```yaml
 # many_lints.yaml
 rules:
-  avoid_unused_after_null_check: false
+  avoid_unused_after_null_check: true
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
