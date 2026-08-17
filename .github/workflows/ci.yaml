@@ -16,10 +16,12 @@ jobs:
     steps:
       - name: Checkout the code
         uses: actions/checkout@v7
-      - name: Set up Dart
-        uses: dart-lang/setup-dart@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          sdk: "3.13.0"
+          flutter-version: "3.41.0"
+          channel: stable
+          cache: true
       - name: Cache pub dependencies
         uses: actions/cache@v6
         with:
@@ -28,6 +30,9 @@ jobs:
           restore-keys: pub-
       - name: Get dependencies
         run: dart pub get --no-example
+      - name: Get example dependencies
+        working-directory: example
+        run: flutter pub get
       - name: Check code formatting
         run: dart format --enable-experiment=primary-constructors . --output=none --set-exit-if-changed
       - name: Static code analysis
