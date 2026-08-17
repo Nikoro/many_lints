@@ -1,6 +1,6 @@
 # many_lints Examples
 
-This directory contains example code demonstrating each lint rule provided by `many_lints`. Each file in `lib/` corresponds to a single rule and contains code that triggers the lint. Unrelated SDK and `many_lints` diagnostics are suppressed per file, so `dart analyze example` shows only the rule each example is meant to demonstrate.
+This directory contains example code demonstrating every lint rule provided by `many_lints`. Each file in `lib/` corresponds to one rule and marks the relevant bad and good cases. Most files trigger their named lint directly; the two path-based rules (`match_lib_folder_structure` and `prefer_correct_test_file_name`) use commented path examples because a flat `lib/` file cannot violate either rule. Since the broad example preset is enabled, `dart analyze example` can also show related diagnostics from other rules.
 
 ## Setup
 
@@ -8,7 +8,7 @@ Add to your `analysis_options.yaml`:
 
 ```yaml
 plugins:
-  many_lints: ^0.9.0
+  many_lints: ^1.0.0
 ```
 
 ## Excluding paths per rule
@@ -29,7 +29,7 @@ run `dart analyze` again to see the two diagnostics come back.
 
 Note that `avoid_commented_out_code` *does* still report in that file. Each `exclude`
 sits under one rule and affects only that rule — excluding a path from
-`avoid_only_rethrow` says nothing about the other 179 rules. To skip a path for several
+`avoid_only_rethrow` says nothing about the other rules. To skip a path for several
 rules, give each of them its own `exclude`.
 
 Paths are globs, but a plain path works too — `lib/generated/foo.dart` is a valid
@@ -86,6 +86,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `member_ordering` | Class members declared out of the configured order | — |
 | `prefer_boolean_prefixes` | Booleans should be named as questions | — |
 | `prefer_correct_callback_field_name` | Callbacks should be named `on...` | — |
+| `prefer_correct_future_return_type` | Async declarations should expose a non-nullable `Future` return type | Yes |
 | `avoid_unnecessary_extends` | An explicit `extends Object` states the default | — |
 | `avoid_unnecessary_enum_prefix` | An enum constant repeating its own enum name | — |
 | `avoid_late_final_reassignment` | A `late final` field assigned twice on one path | — |
@@ -180,7 +181,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `prefer_class_destructuring` | Use class destructuring for repeated property accesses | Yes |
 | `prefer_compute_over_isolate_run` | Use `compute()` instead of `Isolate.run()` | Yes |
 | `prefer_const_border_radius` | Prefer `BorderRadius.all` over `BorderRadius.circular` | Yes |
-| `prefer_correct_json_casts` | JSON value cast to a non-nullable type throws on a missing key | — | `BorderRadius.all(Radius.circular())` over `BorderRadius.circular()` | Yes |
+| `prefer_correct_json_casts` | JSON value cast to a non-nullable type throws on a missing key | — |
 | `prefer_constrained_box_over_container` | `ConstrainedBox` over `Container` with only constraints | Yes |
 | `prefer_container` | Nested widgets → single `Container` | Yes |
 | `prefer_correct_edge_insets_constructor` | Use a simpler `EdgeInsets` constructor | Yes |

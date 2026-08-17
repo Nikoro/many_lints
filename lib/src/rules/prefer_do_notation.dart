@@ -42,7 +42,7 @@ import '../many_lints_rule.dart';
 ///
 /// ## Options
 ///
-/// - `max_flatmap_depth`: how deeply `flatMap` callbacks may nest before the
+/// - `max_flat_map_depth`: how deeply `flatMap` callbacks may nest before the
 ///   outermost is reported. Defaults to `3`.
 class PreferDoNotation extends ManyLintsRule {
   static const LintCode code = LintCode(
@@ -89,7 +89,10 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (_enclosingFlatMapCallback(node) != null) return;
 
     final depth = _nestingDepth(node);
-    if (depth < rule.config.intOption('max_flatmap_depth', defaultValue: 3)) {
+    final maxDepth = rule.config.options.containsKey('max_flat_map_depth')
+        ? rule.config.intOption('max_flat_map_depth', defaultValue: 3)
+        : rule.config.intOption('max_flatmap_depth', defaultValue: 3);
+    if (depth < maxDepth) {
       return;
     }
 

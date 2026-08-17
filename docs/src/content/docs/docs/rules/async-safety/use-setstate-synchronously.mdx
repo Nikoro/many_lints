@@ -18,7 +18,7 @@ This is a real crash, not a style preference. Between the `await` and the line a
 
 This is the `State` counterpart to [`use_ref_read_synchronously`](/many_lints/docs/rules/async-safety/use-ref-read-synchronously/), and it shares that rule's async-gap machinery. It applies inside any `State` subclass, including additional bases named through `state_base_classes`.
 
-This rule is in **no preset**.
+This rule is in the **`recommended`** preset.
 
 ## Don't
 
@@ -40,16 +40,9 @@ Future<void> load() async {
 }
 ```
 
-## Enabling this rule
+## Configuration
 
-This rule is in no preset, so enable it by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  use_setstate_synchronously:
-    enabled: true
-```
+This rule is on with `preset: recommended` or `preset: opinionated`.
 
 ## Options
 

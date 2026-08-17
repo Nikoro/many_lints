@@ -72,14 +72,14 @@ Rule documentation pages are **hand-maintained** and committed directly. The gen
 Each rule page follows this format:
 - **Badges**: `<span class="rule-badge rule-badge--{version,warning,fix,config,category}">` — version introduced, severity, fix availability, `Configurable` (only if the rule takes options), category
 - **Description**: Human-friendly 2-3 sentence explanation
-- **Why use this rule**: Real-world context with "See also" links to official docs
+- **Rationale**: Real-world context belongs either in a dedicated "Why use this rule" section or in the opening explanation when a separate section would only repeat it
 - **Don't / Do**: Separate code blocks showing bad and good patterns
-- **Turning this rule off**: YAML snippet to disable the rule, plus a link to per-rule `exclude`
+- **Turning this rule off**: Optional convenience section. The canonical enable/disable and exclusion instructions live on the Configuration page, so older concise pages do not need to repeat them
 - **Options** (configurable rules only): a sibling `##` heading, not nested under the section above
 
 ### Configurable rules use `.mdx`
 
-The 52 rules that accept options are `.mdx`, not `.md`, because every options snippet is
+The 116 rules that accept options are `.mdx`, not `.md`, because every options snippet is
 shown in both supported locations via Starlight tabs:
 
 ```mdx

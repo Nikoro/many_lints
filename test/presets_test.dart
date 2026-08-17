@@ -115,6 +115,51 @@ void main() {
       expect(Preset.recommended.enables('prefer_type_over_var'), isFalse);
     });
 
+    test('bug-focused preset curation stays intentional', () {
+      for (final name in const [
+        'avoid_duplicate_mixins',
+        'avoid_unremovable_callbacks_in_listeners',
+        'function_always_returns_null',
+        'function_always_returns_same_value',
+        'no_equal_conditions',
+        'no_equal_then_else',
+        'match_getter_setter_field_names',
+        'prefer_correct_test_file_name',
+        'use_setstate_synchronously',
+      ]) {
+        expect(coreRules, isNot(contains(name)), reason: name);
+        expect(recommendedRules, contains(name), reason: name);
+      }
+
+      for (final name in const [
+        'avoid_catch_error',
+        'avoid_future_of_either',
+        'avoid_future_of_option',
+        'avoid_nested_shorthands',
+        'avoid_redundant_async',
+        'avoid_unnecessary_call',
+        'avoid_unnecessary_constructor',
+        'avoid_unnecessary_continue',
+        'avoid_unnecessary_extends',
+        'avoid_unnecessary_return',
+        'check_for_equals_in_render_object_setters',
+        'prefer_chain_either',
+        'prefer_chaining_over_intermediate_run',
+        'prefer_correct_json_casts',
+        'prefer_do_notation',
+        'prefer_from_nullable',
+        'prefer_from_predicate',
+        'prefer_returning_condition',
+        'prefer_string_parse_extensions',
+        'prefer_task_either_over_try_catch',
+        'prefer_unit_over_void',
+        'prefer_correct_future_return_type',
+      ]) {
+        expect(recommendedRules, isNot(contains(name)), reason: name);
+        expect(opinionatedRules, contains(name), reason: name);
+      }
+    });
+
     // Guards against a preset naming a rule that was renamed or removed, which
     // would silently shrink the preset with nothing to notice it.
     test('every preset rule name is a real registered rule', () {
@@ -174,7 +219,7 @@ rules:
       // Not in any preset, but switched on.
       expect(config.isRuleEnabled('prefer_type_over_var'), isTrue);
       // Untouched, so the preset still decides.
-      expect(config.isRuleEnabled('no_equal_then_else'), isTrue);
+      expect(config.isRuleEnabled('avoid_self_compare'), isTrue);
       expect(config.isRuleEnabled('avoid_collapsible_if'), isFalse);
     });
 

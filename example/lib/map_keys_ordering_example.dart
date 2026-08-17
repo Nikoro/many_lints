@@ -32,4 +32,5 @@ const short = {'banana': 1, 'apple': 2};
 
 // A spread makes the literal's contents unsortable: ordering the rest around
 // it would produce an arrangement the user cannot reach.
-const spread = {'banana': 1, ...short, 'apple': 2, 'cherry': 3, 'date': 4};
+const base = {'fig': 1};
+const spread = {'banana': 1, ...base, 'apple': 2, 'cherry': 3, 'date': 4};

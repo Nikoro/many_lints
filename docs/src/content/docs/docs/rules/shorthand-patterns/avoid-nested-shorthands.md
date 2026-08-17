@@ -70,8 +70,8 @@ void fn() {
 
 ## Configuration
 
-This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended`, `preset: opinionated`, or by name:
+This rule is in the **`opinionated`** preset. With a lower preset, enable it by
+name:
 
 ```yaml
 # many_lints.yaml

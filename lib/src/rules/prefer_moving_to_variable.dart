@@ -76,10 +76,17 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitBlock(Block node) {
     // Resolved per visit, not cached: rule instances are reused across
     // package roots.
-    final allowed = rule.config.intOption(
-      'allowed_duplicated_chains',
-      defaultValue: PreferMovingToVariable._defaultAllowedDuplicatedChains,
-    );
+    final allowed = rule.config.options.containsKey('max_extra_occurrences')
+        ? rule.config.intOption(
+            'max_extra_occurrences',
+            defaultValue:
+                PreferMovingToVariable._defaultAllowedDuplicatedChains,
+          )
+        : rule.config.intOption(
+            'allowed_duplicated_chains',
+            defaultValue:
+                PreferMovingToVariable._defaultAllowedDuplicatedChains,
+          );
     final minChainLength = rule.config.intOption(
       'min_chain_length',
       defaultValue: PreferMovingToVariable._defaultMinChainLength,

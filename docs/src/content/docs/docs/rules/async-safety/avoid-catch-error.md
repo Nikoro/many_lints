@@ -68,9 +68,8 @@ The receiver must resolve to a `Future` (or a subtype), so an unrelated user-def
 
 ## Configuration
 
-This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
-`avoid_catch_error: true`.
+This rule is in the **`opinionated`** preset. With a lower preset, enable it by
+name with `avoid_catch_error: true`.
 
 To turn it off:
 

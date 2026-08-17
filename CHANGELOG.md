@@ -2,7 +2,21 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added `prefer_correct_future_return_type` to the `opinionated` preset, with
+  diagnostics and a quick fix for async declarations whose return type hides
+  their non-nullable `Future` result.
+
 ### Breaking
+
+- **The `core` and `recommended` presets are now bug-focused.** Six
+  likely-but-not-certain findings moved from `core` to `recommended`; rules
+  that only prefer an equivalent spelling, API shape, or functional style
+  moved from `recommended` to `opinionated`. `match_getter_setter_field_names`,
+  `prefer_correct_test_file_name`, and `use_setstate_synchronously` moved into
+  `recommended` because they identify concrete mismatches or stale-state
+  risks. Existing `opinionated` preferences remain enabled.
 
 - **`avoid_ref_read_inside_build` and `avoid_ref_watch_outside_build` now cover `package:provider` as well as Riverpod.** Both rules previously only fired inside a Riverpod consumer, so a project using `package:provider` got nothing from them. They now also report `context.read<T>()` inside `build` and `context.watch<T>()` outside it.
 
@@ -32,18 +46,14 @@
   | Preset | Rules | Contents |
   |--------|-------|----------|
   | `none` | 0 | Nothing. The default. |
-  | `core` | 31 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
-  | `recommended` | 79 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
-  | `all` | 156 | Every rule, including opinionated ones. |
+  | `core` | 36 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
+  | `recommended` | 94 | `core` plus likely defects and concrete runtime risks. |
+  | `opinionated` | 184 | `recommended` plus this package's own style preferences. |
 
   `core` and `recommended` are deliberately conservative: a rule that imposes an architecture, a naming scheme, or a contested style choice is in neither, and rules that do nothing until configured (the `banned_*` family, `use_class_prefix`/`use_class_suffix`) are in no preset at all.
 
-  **To restore the previous behaviour**, select every rule explicitly:
-
-  ```yaml
-  # many_lints.yaml
-  preset: all
-  ```
+  There is deliberately no preset that enables every rule: some rules contradict
+  one another, and config-only rules have no meaningful built-in policy.
 
   A preset can be tuned in either direction without restating its contents, using `enabled:`:
 
@@ -89,7 +99,7 @@
 
 ### Added
 
-- `prefer_returning_condition` warns when an `if` returns `true` with a following `return false` — the condition itself, spelled out in three lines. In the `recommended` preset.
+- `prefer_returning_condition` warns when an `if` returns `true` with a following `return false` — the condition itself, spelled out in three lines. In the `opinionated` preset.
 
 - `avoid_nested_conditional_expressions` warns when a conditional is nested inside another, packing a decision tree onto one line. The outermost carries the diagnostic, so one chain reports once. Configurable through `max_depth` (default `1`). In the `opinionated` preset.
 
@@ -99,13 +109,17 @@
 
 - `prefer_getter_over_method` warns when a no-argument method only reads a value. Three exclusions keep it off members whose parentheses are fixed: a body that calls anything (`Clock.now()` answers differently each time), a conventional name (`toJson`, `call`, `copyWith`), and a `Stream`/`Future` return. **In no preset.**
 
-- `no_equal_conditions` warns when an `if`/`else if` chain tests the same condition twice, making the later branch unreachable and letting the case it was meant to handle fall through to `else`. Two independent `if`s are not compared, since the first may have changed the state the second reads. In the `core` preset.
+- `no_equal_conditions` warns when an `if`/`else if` chain tests the same condition twice, making the later branch unreachable and letting the case it was meant to handle fall through to `else`. Two independent `if`s are not compared, since the first may have changed the state the second reads. In the `recommended` preset.
 
-- `function_always_returns_same_value` warns when every `return` in a function yields the same constant, so the branching around them decides nothing. Protocol callbacks are excluded both by name (`onNotification`, `shouldRepaint`, any `on...`) and by shape — a parameter typed `...Notification` marks a listener whose `bool` is a "handled" signal rather than an answer. In the `core` preset.
+- `function_always_returns_same_value` warns when every `return` in a function yields the same constant, so the branching around them decides nothing. Protocol callbacks are excluded both by name (`onNotification`, `shouldRepaint`, any `on...`) and by shape — a parameter typed `...Notification` marks a listener whose `bool` is a "handled" signal rather than an answer. In the `recommended` preset.
 
-- `avoid_redundant_async` warns when a function is marked `async` but never awaits, which wraps the result in an extra `Future`, defers the body, and turns a synchronous throw into a rejected future. `async*`, an `@override`, and a body with nothing to return are left alone. In the `recommended` preset.
+- `avoid_redundant_async` warns only when a function has no `await` or `throw`
+  and every explicit return already produces a compatible `Future`. Raw-value,
+  mixed-return, fall-through, `async*`, and `@override` bodies are left alone,
+  so removing `async` never creates an invalid return. In the `opinionated`
+  preset.
 
-- `avoid_unnecessary_call` warns when a function is invoked through an explicit `.call()`. A null-aware invocation is left alone (`callback?()` does not parse), as is a class defining `call` as a real method — the receiver's type tells the two apart. In the `recommended` preset.
+- `avoid_unnecessary_call` warns when a function is invoked through an explicit `.call()`. A null-aware invocation is left alone (`callback?()` does not parse), as is a class defining `call` as a real method — the receiver's type tells the two apart. In the `opinionated` preset.
 
 - `avoid_long_functions` warns when a function body exceeds `max_lines` (default 50), counted between the braces so the signature and doc comment do not count. **In no preset:** a budget is a house style, and measured against a production Flutter app the default reported 187 functions with a median of 98 lines, all genuinely long and none of them a bug. Test files usually want `exclude: [test/**]` rather than a higher budget.
 
@@ -119,25 +133,25 @@
 
 - `avoid_late_final_reassignment` warns when a `late final` field is assigned twice on one straight-line path. `late final` promises one assignment and Dart enforces it, but at run time by throwing `LateInitializationError` — so a second write the analyzer can see is a guaranteed crash rather than a possibility. Branches are not followed: two writes in opposite arms of an `if` are how a `late final` is meant to be initialised. In the `core` preset.
 
-- `avoid_unnecessary_constructor` warns when a class declares an empty unnamed constructor identical to the one Dart provides when none is written. A `const`, named, documented or annotated constructor each does something the implicit one cannot and is left alone — as is any class with a second constructor, where declaring the unnamed one is what keeps it available. In the `recommended` preset.
+- `avoid_unnecessary_constructor` warns when a class declares an empty unnamed constructor identical to the one Dart provides when none is written. A `const`, named, documented or annotated constructor each does something the implicit one cannot and is left alone — as is any class with a second constructor, where declaring the unnamed one is what keeps it available. In the `opinionated` preset.
 
-- `avoid_unnecessary_extends` warns when a class explicitly extends `Object`, which every class does anyway. A user-declared `Object` shadowing `dart:core`'s is a real choice and is left alone. In the `recommended` preset.
+- `avoid_unnecessary_extends` warns when a class explicitly extends `Object`, which every class does anyway. A user-declared `Object` shadowing `dart:core`'s is a real choice and is left alone. In the `opinionated` preset.
 
-- `avoid_unnecessary_return` warns when a bare `return;` is the last statement of a function returning `void` or `Future<void>`, where control leaves the function without it. An early `return;` that skips later statements is left alone, as is an omitted return type, which means `dynamic` rather than `void`. In the `recommended` preset.
+- `avoid_unnecessary_return` warns when a bare `return;` is the last statement of a function returning `void` or `Future<void>`, where control leaves the function without it. An early `return;` that skips later statements is left alone, as is an omitted return type, which means `dynamic` rather than `void`. In the `opinionated` preset.
 
 - `avoid_unnecessary_enum_prefix` warns when an enum constant repeats its own enum's name, which every call site already carries — `Status.statusActive` rather than `Status.active`. The prefix has to end at a word boundary, so `statusable` is not a match, and a constant named exactly like its enum is the whole word rather than a prefix. In the `opinionated` preset.
 
 - `no_equal_switch_case` warns when two branches of a `switch` produce identical bodies, where sharing the patterns with `||` would say it once. Three shapes are excluded because none can be merged: a guarded case (each `when` belongs to its own pattern), the catch-all (it has to stay last), and an empty body (that is a fallthrough). **In no preset** — whether two independent enum branches that agree today should be merged is a genuine judgement call, so it stays opt-in by name.
 
-- `avoid_duplicate_mixins` warns when a `with` clause applies the same mixin more than once. Every application after the first contributes nothing, but a reader counting the behaviours mixed in sees one more than exists. Resolved types are compared rather than source text, so an aliased import counts as one mixin while a different generic instantiation does not. Re-applying a mixin a superclass already has is left alone, since that does change the linearization order. In the `core` preset.
+- `avoid_duplicate_mixins` warns when a `with` clause applies the same mixin more than once. Every application after the first contributes nothing, but a reader counting the behaviours mixed in sees one more than exists. Resolved types are compared rather than source text, so an aliased import counts as one mixin while a different generic instantiation does not. Re-applying a mixin a superclass already has is left alone, since that does change the linearization order. In the `recommended` preset.
 
 - `avoid_self_compare` warns when a value is passed to its own `compareTo`, which always answers `0` — so a sort built on it leaves the list untouched, and a conditional guarded by it always takes the same branch. Only receivers and arguments that are safe to evaluate twice are compared: a repeated call, and a hand-written getter that can report a moving value, are both left alone. The operator form (`a == a`) stays with `avoid_equal_expressions`, so the two never report the same line. In the `core` preset.
 
-- `avoid_unnecessary_continue` warns when a `continue` is the last statement of a loop body, where control reaches the next iteration without it. It is usually a leftover from a change that moved or deleted the statements it once guarded, and it reads as though something below is being skipped. A labelled `continue`, and one ending a `then` branch to skip an `else`, are both doing real work and are left alone. Ships with a quick fix. In the `recommended` preset.
+- `avoid_unnecessary_continue` warns when a `continue` is the last statement of a loop body, where control reaches the next iteration without it. It is usually a leftover from a change that moved or deleted the statements it once guarded, and it reads as though something below is being skipped. A labelled `continue`, and one ending a `then` branch to skip an `else`, are both doing real work and are left alone. Ships with a quick fix. In the `opinionated` preset.
 
 - `prefer_moving_to_variable` warns when the same property-access or invocation chain is repeated inside one block, and could be computed once into a variable. Reported at the first occurrence, which is where the variable belongs. In the `opinionated` preset.
 
-  Four options, two of them beyond the usual scope of this rule: `allowed_duplicated_chains` (how many extra repetitions to tolerate, default `0`), `min_chain_length` (the shortest pure-property chain worth naming, default `2`, so `a.b` twice is left alone), `ignored_invocations` and `ignored_targets`.
+  Four options, two of them beyond the usual scope of this rule: `max_extra_occurrences` (how many extra repetitions to tolerate, default `0`; the original `allowed_duplicated_chains` spelling remains as a deprecated alias), `min_chain_length` (the shortest pure-property chain worth naming, default `2`, so `a.b` twice is left alone), `ignored_invocations` and `ignored_targets`.
 
   A chain containing an invocation ignores `min_chain_length`: repeating `Theme.of(context)` repeats the work, where repeating a field read only repeats the text. Calls made for their effect (`print(x)`), anything that allocates or awaits, chains inside a closure, and assignment targets are all left alone, since re-evaluating those is either the point or not a value at all. When a chain and its own prefix repeat equally often, only the longest is reported.
 

@@ -36,6 +36,7 @@ import 'package:many_lints/src/rules/avoid_passing_build_context_to_blocs.dart';
 import 'package:many_lints/src/rules/prefer_bloc_extensions.dart';
 import 'package:many_lints/src/rules/prefer_boolean_prefixes.dart';
 import 'package:many_lints/src/rules/prefer_correct_callback_field_name.dart';
+import 'package:many_lints/src/rules/prefer_correct_future_return_type.dart';
 import 'package:many_lints/src/rules/prefer_immutable_bloc_state.dart';
 import 'package:many_lints/src/rules/prefer_immutable_state.dart';
 import 'package:many_lints/src/rules/prefer_multi_bloc_provider.dart';
@@ -340,6 +341,7 @@ import 'package:many_lints/src/fixes/prefer_const_border_radius_fix.dart';
 import 'package:many_lints/src/fixes/avoid_wrapping_in_padding_fix.dart';
 import 'package:many_lints/src/fixes/prefer_constrained_box_over_container_fix.dart';
 import 'package:many_lints/src/fixes/prefer_explicit_function_type_fix.dart';
+import 'package:many_lints/src/fixes/prefer_correct_future_return_type_fix.dart';
 import 'package:many_lints/src/fixes/prefer_overriding_parent_equality_fix.dart';
 import 'package:many_lints/src/fixes/prefer_padding_over_container_fix.dart';
 import 'package:many_lints/src/fixes/prefer_primary_constructors_fix.dart';
@@ -416,6 +418,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, PreferBlocExtensions());
     _registerWarningRule(registry, PreferBooleanPrefixes());
     _registerWarningRule(registry, PreferCorrectCallbackFieldName());
+    _registerWarningRule(registry, PreferCorrectFutureReturnType());
     _registerWarningRule(registry, PreferImmutableBlocState());
     _registerWarningRule(registry, PreferImmutableState());
     _registerWarningRule(registry, PreferMultiBlocProvider());
@@ -686,6 +689,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       PreferUnitOverVoid.code,
       PreferUnitOverVoidFix.new,
+    );
+    registry.registerFixForRule(
+      PreferCorrectFutureReturnType.code,
+      PreferCorrectFutureReturnTypeFix.new,
     );
     registry.registerFixForRule(
       PreferFromNullable.code,

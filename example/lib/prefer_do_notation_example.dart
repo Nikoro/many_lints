@@ -35,6 +35,6 @@ Option<int> goodChained() =>
     _banana.flatMap(_length).flatMap(_label).flatMap(_length);
 
 // ✅ Good: two levels read fine, so this is not reported by default.
-// Set `max_flatmap_depth: 2` to flag it too.
+// Set `max_flat_map_depth: 2` to flag it too.
 Option<String> goodTwoLevels() =>
     _banana.flatMap((banana) => _apple.flatMap((apple) => Option.of(apple)));

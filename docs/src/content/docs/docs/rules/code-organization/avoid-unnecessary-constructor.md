@@ -38,6 +38,8 @@ class Repository {}
 
 ## Turning this rule off
 
+This rule is in the **`opinionated`** preset.
+
 To disable this rule:
 
 ```yaml

@@ -17,21 +17,21 @@ class AvoidRedundantAsyncTest extends ManyLintsRuleTest {
 
   // ---- Positive cases (should trigger lint) ----
 
-  Future<void> test_asyncWithoutAwait() async {
+  Future<void> test_returnsExistingFutureFromBlock() async {
     await assertDiagnostics(
       r'''
-Future<int> f() async {
-  return 1;
+Future<int> f(Future<int> value) async {
+  return value;
 }
 ''',
       [lint(12, 1)],
     );
   }
 
-  Future<void> test_asyncExpressionBody() async {
+  Future<void> test_returnsExistingFutureFromExpressionBody() async {
     await assertDiagnostics(
       r'''
-Future<int> f() async => 1;
+Future<int> f(Future<int> value) async => value;
 ''',
       [lint(12, 1)],
     );
@@ -87,15 +87,52 @@ Future<void> f() async {
 ''');
   }
 
+  Future<void> test_asyncIsRequiredForRawExpressionValue() async {
+    await assertNoDiagnostics(r'''
+Future<int> f() async => 1;
+''');
+  }
+
+  Future<void> test_asyncIsRequiredForRawBlockValue() async {
+    await assertNoDiagnostics(r'''
+Future<int> f() async {
+  return 1;
+}
+''');
+  }
+
+  Future<void> test_asyncTurnsThrowIntoAsynchronousError() async {
+    await assertNoDiagnostics(r'''
+Future<int> f(Future<int> value, bool fail) async {
+  if (fail) throw 'failed';
+  return value;
+}
+''');
+  }
+
+  Future<void> test_mixedRawAndFutureReturnsAreSkipped() async {
+    await assertNoDiagnostics(r'''
+Future<int> f(bool cached, Future<int> value) async {
+  if (cached) return value;
+  return 1;
+}
+''');
+  }
+
+  Future<void> test_blockThatCanFallThroughIsSkipped() async {
+    await assertNoDiagnostics(r'''
+Future<void> f(bool cached, Future<void> value) async {
+  if (cached) return value;
+}
+''');
+  }
+
   Future<void> test_awaitInsideNestedClosureBelongsToIt() async {
-    await assertDiagnostics(
-      r'''
+    await assertNoDiagnostics(r'''
 Future<int> f(Future<int> other) async {
   final compute = () async => await other;
   return 1;
 }
-''',
-      [lint(12, 1)],
-    );
+''');
   }
 }

@@ -9,32 +9,50 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Async Safety</span>
 
-This rule flags a function marked `async` whose body never awaits.
+This rule flags a function marked `async` whose body never awaits or throws,
+and whose return paths already produce compatible `Future` values. Removing
+`async` is therefore a cleanup that keeps the code compiling.
+
+The rule is part of the **`opinionated`** preset.
 
 ## Why use this rule
 
-`async` without `await` is not free. The body stops running synchronously up to its first suspension, the result is wrapped in an extra `Future`, and a `throw` becomes a rejected future rather than a synchronous error a caller can catch at the call site. None of that is what the author wanted when the keyword is simply left over from a body that used to await.
+`async` without `await` is not automatically redundant. It still wraps a raw
+return value in a future and converts a synchronous throw into an asynchronous
+error. In both cases removing it would change semantics or produce code that
+does not compile, so the rule deliberately stays silent.
 
-A function already returning a `Future` needs no `async` for its callers to await it, so removing the keyword keeps the signature intact.
+A function whose paths already return futures needs no `async` for callers to
+await it. The rule checks the resolved types of every explicit return before
+reporting and leaves fall-through or bare-return bodies alone.
 
-Three cases are left alone: `async*`, where the keyword is what makes the function a stream generator; an `@override`, whose `async` may be required by the supertype; and a body with nothing to return, where dropping `async` would turn `Future<void>` into `void` — a signature change rather than a cleanup.
+Other cases left alone include `async*`, where the keyword makes the function
+a stream generator, and an `@override`, whose implementation details should
+not be rewritten by this cleanup rule.
 
 **See also:** [Dart asynchrony support](https://dart.dev/language/async)
 
 ## Don't
 
 ```dart
-Future<Config> load() async {
-  return _cached;
+Future<List<Config>> loadAll() async {
+  return Future.wait(_pending);
 }
 ```
 
 ## Do
 
 ```dart
-Future<Config> load() {
-  return _cached;
+Future<List<Config>> loadAll() {
+  return Future.wait(_pending);
 }
+```
+
+Returning a raw value is valid and is not reported, because `async` performs
+the required wrapping:
+
+```dart
+Future<int> count() async => 1;
 ```
 
 ## Turning this rule off

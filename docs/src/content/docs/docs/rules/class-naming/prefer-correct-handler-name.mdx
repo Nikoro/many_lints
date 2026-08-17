@@ -57,6 +57,7 @@ many_lints:
   rules:
     prefer_correct_handler_name:
       prefixes: [on, handle]
+      additional_prefixes: [process]
       require_private: true
 ```
 
@@ -68,6 +69,7 @@ many_lints:
 rules:
   prefer_correct_handler_name:
     prefixes: [on, handle]
+    additional_prefixes: [process]
     require_private: true
 ```
 
@@ -77,6 +79,7 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `prefixes` | list | `[on, handle]` | Accepted handler prefixes |
+| `additional_prefixes` | list | `[]` | Prefixes to add without replacing the defaults |
 | `require_private` | bool | `true` | Whether a handler must also start with an underscore |
 
 ## Turning this rule off

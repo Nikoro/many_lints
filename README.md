@@ -57,9 +57,9 @@ For local development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 | Preset | Rules | Contents |
 |--------|-------|----------|
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
-| `core` | 42 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
-| `recommended` | 112 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
-| `opinionated` | 180 | `recommended` plus this package's own style preferences. |
+| `core` | 36 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
+| `recommended` | 94 | `core` plus likely defects and concrete runtime risks. |
+| `opinionated` | 184 | `recommended` plus this package's own style preferences. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml` includes `core.yaml`. `core` and `recommended` deliberately exclude anything that imposes an architecture, a naming scheme, or a contested style choice.
 
@@ -142,7 +142,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-251 lints with 103 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
+252 lints with 104 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
@@ -150,7 +150,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 | [Architecture](https://nikoro.github.io/many_lints/docs/rules/architecture/) | 6 | Configurable bans on imports, types, names and members |
 | [Bloc / Riverpod](https://nikoro.github.io/many_lints/docs/rules/bloc-riverpod/) | 12 | BLoC and Riverpod state management patterns |
 | [Riverpod State](https://nikoro.github.io/many_lints/docs/rules/riverpod-state/) | 9 | Riverpod-specific state rules |
-| [Async Safety](https://nikoro.github.io/many_lints/docs/rules/async-safety/) | 10 | Async/await and state mutation safety |
+| [Async Safety](https://nikoro.github.io/many_lints/docs/rules/async-safety/) | 11 | Async/await and state mutation safety |
 | [fpdart](https://nikoro.github.io/many_lints/docs/rules/fpdart/) | 22 | Functional error handling with Either, Option and TaskEither |
 | [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/widget-best-practices/) | 25 | General widget best practices |
 | [Widget Replacement](https://nikoro.github.io/many_lints/docs/rules/widget-replacement/) | 13 | Simpler widget alternatives |

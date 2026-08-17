@@ -61,7 +61,7 @@ many_lints:
     prefer_correct_identifier_length:
       min_length: 2
       max_length: 40
-      allow_names: built-in set
+      additional_allow_names: [id]
 ```
 
 </TabItem>
@@ -73,7 +73,7 @@ rules:
   prefer_correct_identifier_length:
     min_length: 2
     max_length: 40
-    allow_names: built-in set
+    additional_allow_names: [id]
 ```
 
 </TabItem>
@@ -84,6 +84,7 @@ rules:
 | `min_length` | int | `2` | Shortest allowed identifier |
 | `max_length` | int | `40` | Longest allowed identifier |
 | `allow_names` | list | `built-in set` | Names exempt from both bounds; use `additional_allow_names` to extend rather than replace |
+| `additional_allow_names` | list | `[]` | Names to add without replacing the built-in set |
 
 ## Turning this rule off
 

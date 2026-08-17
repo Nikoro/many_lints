@@ -5,11 +5,8 @@ sidebar:
   label: match_getter_setter_field_names
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
-
 <span class="rule-badge rule-badge--version">v0.10.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
-<span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Quality</span>
 
 This rule flags a getter and setter pair that does not read and write the same backing field.
@@ -18,7 +15,7 @@ This is the copy-paste bug that type checking cannot catch: both members compile
 
 Only a pair whose bodies are a **single field reference** is compared. A getter that computes, or a setter that validates before assigning, has no single field to compare and is skipped rather than guessed at. A compound assignment (`+=`, `??=`) reads the field too, so its asymmetry can be deliberate and is also skipped.
 
-This rule is in **no preset**.
+This rule is in the **`recommended`** preset.
 
 ## Don't
 
@@ -44,46 +41,9 @@ class Box {
 }
 ```
 
-## Enabling this rule
+## Configuration
 
-This rule is in no preset, so enable it by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  match_getter_setter_field_names:
-    enabled: true
-```
-
-## Options
-
-<Tabs syncKey="many-lints-config-file">
-<TabItem label="analysis_options.yaml">
-
-```yaml
-# analysis_options.yaml
-many_lints:
-  rules:
-    match_getter_setter_field_names:
-      —: —
-```
-
-</TabItem>
-<TabItem label="many_lints.yaml">
-
-```yaml
-# many_lints.yaml
-rules:
-  match_getter_setter_field_names:
-    —: —
-```
-
-</TabItem>
-</Tabs>
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `—` | — | `—` | This rule has no options; the check is unambiguous |
+This rule is on with `preset: recommended` or `preset: opinionated`.
 
 ## Turning this rule off
 

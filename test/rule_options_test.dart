@@ -2265,13 +2265,13 @@ rules:
         );
       });
 
-      test('allowed_duplicated_chains tolerates the second use', () async {
+      test('max_extra_occurrences tolerates the second use', () async {
         final errors = await harness.analyze(
           _repeatedChainCode,
           config: '''
 rules:
   prefer_moving_to_variable:
-    allowed_duplicated_chains: 1
+    max_extra_occurrences: 1
 ''',
         );
 
@@ -2289,13 +2289,29 @@ rules:
           config: '''
 rules:
   prefer_moving_to_variable:
-    allowed_duplicated_chains: 1
+    max_extra_occurrences: 1
 ''',
         );
 
         expect(
           errors.map((e) => e.code),
           contains('prefer_moving_to_variable'),
+        );
+      });
+
+      test('the old allowed_duplicated_chains key remains an alias', () async {
+        final errors = await harness.analyze(
+          _repeatedChainCode,
+          config: '''
+rules:
+  prefer_moving_to_variable:
+    allowed_duplicated_chains: 1
+''',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('prefer_moving_to_variable')),
         );
       });
 

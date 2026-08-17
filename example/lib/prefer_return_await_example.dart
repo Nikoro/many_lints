@@ -1,4 +1,4 @@
-// ignore_for_file: unused_local_variable, unused_catch_clause
+// ignore_for_file: unused_local_variable, unused_catch_clause, unawaited_return_in_try_block
 
 // prefer_return_await
 //

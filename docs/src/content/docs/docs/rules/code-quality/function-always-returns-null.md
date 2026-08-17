@@ -57,7 +57,7 @@ A function with no `return` at all is not this rule's concern; the analyzer alre
 
 ## Configuration
 
-This rule is in the **`core`** preset, so it is on with `preset: core`,
+This rule is in the **`recommended`** preset, so it is on with
 `preset: recommended` or `preset: opinionated`.
 
 To turn it off:

@@ -1969,3 +1969,23 @@ grep -n "class SplayTreeMap" ~/.pub-cache/hosted/pub.dev/analyzer-*/lib/src/test
 
 Pick a type the mock SDK actually declares, or mock the package yourself (see
 [config-cookbook.md](config-cookbook.md#testing-a-configurable-rule)).
+
+### Do Not Duplicate an Analyzer Compile Error
+
+An external rule's example can be stale relative to this package's Dart SDK.
+Before adding a reported shape, put it in an `assertDiagnostics` test and check
+for SDK diagnostics too. If the analyzer already rejects the declaration, the
+plugin lint adds noise and its quick fix is answering code that cannot compile.
+
+For example, Dart 3.11 rejects an unbounded generic async return type:
+
+```dart
+T load<T>() async => throw '';
+// illegal_async_return_type — do not add a second lint here
+```
+
+`prefer_correct_future_return_type` therefore covers legal broad async return
+types (`dynamic`, `Object`, `FutureOr<T>`, and `Future<T>?`) but deliberately
+leaves a type-parameter return to the analyzer.
+
+**Ref:** [prefer_correct_future_return_type.dart](../../../lib/src/rules/prefer_correct_future_return_type.dart)

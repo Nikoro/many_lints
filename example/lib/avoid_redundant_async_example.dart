@@ -3,27 +3,30 @@
 
 // avoid_redundant_async
 //
-// Warns when a function is marked async but never awaits, which wraps the
-// result in an extra Future and defers the body for nothing.
+// Warns when a function is marked async without awaiting or throwing and all
+// return paths already produce compatible Future values.
 
 class Config {}
 
-final _cached = Config();
+final Future<Config> _pending = Future.value(Config());
 
 // ❌ Bad: nothing is awaited
-// LINT: `async` adds a wrapping Future and defers the body
+// LINT: this Future can be returned directly
 Future<Config> badLoad() async {
-  return _cached;
+  return _pending;
 }
 
 // ❌ Bad: same with an expression body
 // LINT: the future is already there to return
-Future<Config> badExpression() async => _cached;
+Future<Config> badExpression() async => _pending;
 
 // ✅ Good: the future is returned directly
 Future<Config> goodLoad() {
-  return _cached as Future<Config>;
+  return _pending;
 }
+
+// ✅ Good: `async` is required to wrap a raw value in a Future.
+Future<Config> goodRawValue() async => Config();
 
 // ✅ Good: it actually awaits
 Future<Config> goodAwaiting(Future<Config> pending) async {

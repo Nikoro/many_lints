@@ -59,7 +59,7 @@ String elseIfChainIsFlat(int n) {
 
 void nestedFunctionStartsOver(List<int> xs, bool flag) {
   if (flag) {
-    for (final x in xs) {
+    for (final _ in xs) {
       // The callback's body is not reached through the enclosing nest.
       xs.forEach((e) {
         if (e > 0) {

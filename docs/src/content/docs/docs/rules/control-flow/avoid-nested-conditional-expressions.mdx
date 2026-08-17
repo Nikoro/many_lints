@@ -47,7 +47,7 @@ String label(int score) => switch (score) {
 many_lints:
   rules:
     avoid_nested_conditional_expressions:
-      : 2
+      max_depth: 2
 ```
 
 </TabItem>
@@ -57,7 +57,7 @@ many_lints:
 # many_lints.yaml
 rules:
   avoid_nested_conditional_expressions:
-    : 2
+    max_depth: 2
 ```
 
 </TabItem>
@@ -65,7 +65,7 @@ rules:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `` | max_depth | int | `1` |
+| `max_depth` | int | `1` | Maximum allowed conditional-expression nesting depth |
 
 ## Turning this rule off
 

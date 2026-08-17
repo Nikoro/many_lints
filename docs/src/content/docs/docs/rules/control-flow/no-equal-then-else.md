@@ -49,7 +49,7 @@ An `else if` chain is skipped: comparing the first branch against a whole nested
 
 ## Configuration
 
-This rule is in the **`core`** preset, so it is on with `preset: core`,
+This rule is in the **`recommended`** preset, so it is on with
 `preset: recommended` or `preset: opinionated`.
 
 To turn it off:

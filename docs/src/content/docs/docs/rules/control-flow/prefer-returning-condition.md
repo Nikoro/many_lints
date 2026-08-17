@@ -36,6 +36,8 @@ bool isEligible(Player player) => player.rating > 1200;
 
 ## Turning this rule off
 
+This rule is in the **`opinionated`** preset.
+
 To disable this rule:
 
 ```yaml

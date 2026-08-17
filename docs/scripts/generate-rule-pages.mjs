@@ -120,6 +120,7 @@ const CATEGORIES = {
       'avoid_nested_futures',
       'avoid_passing_async_when_sync_expected',
       'check_is_not_closed_after_async_gap',
+      'prefer_correct_future_return_type',
       'require_atomic_async_updates',
       'use_ref_and_state_synchronously',
       'use_ref_read_synchronously',

@@ -73,9 +73,9 @@ the analysis server.
 | Preset | Rules | What it contains |
 |--------|-------|------------------|
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
-| `core` | 42 | Near-certain bugs only. |
-| `recommended` | 112 | `core` plus idiomatic, uncontroversial Dart and Flutter practice. |
-| `opinionated` | 180 | `recommended` plus this package's own style preferences. |
+| `core` | 36 | Near-certain bugs only. |
+| `recommended` | 94 | `core` plus likely defects and concrete runtime risks. |
+| `opinionated` | 184 | `recommended` plus this package's own style preferences. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml`
 includes `core.yaml` — moving up a tier only ever adds rules.
@@ -288,7 +288,7 @@ Both `include` and `message` work on **every** rule, exactly like `exclude`.
 
 ## Per-rule options
 
-Beyond `exclude`, `include` and `message`, **86 rules** accept options that change *what*
+Beyond `exclude`, `include` and `message`, **116 rules** accept options that change *what*
 they report. Those rules carry a <span class="rule-badge rule-badge--config">Configurable</span>
 badge on their page, and every option is documented there with its type and default.
 
@@ -357,7 +357,7 @@ options never changes results until you set one.
 | [`dispose_provided_instances`](/many_lints/docs/rules/bloc-riverpod/dispose-provided-instances/) | `cleanup_methods`, `additional_cleanup_methods` |
 | [`emit_new_bloc_state_instances`](/many_lints/docs/rules/bloc-riverpod/emit-new-bloc-state-instances/) | `additional_methods` |
 | [`prefer_chaining_over_intermediate_run`](/many_lints/docs/rules/fpdart/prefer-chaining-over-intermediate-run/) | `min_sequence` |
-| [`prefer_do_notation`](/many_lints/docs/rules/fpdart/prefer-do-notation/) | `max_flatmap_depth` |
+| [`prefer_do_notation`](/many_lints/docs/rules/fpdart/prefer-do-notation/) | `max_flat_map_depth`, `max_flatmap_depth` (deprecated alias) |
 | [`prefer_class_destructuring`](/many_lints/docs/rules/collection-type/prefer-class-destructuring/) | `min_occurrences`, `ignored_types` |
 | [`prefer_container`](/many_lints/docs/rules/widget-replacement/prefer-container/) | `min_sequence` |
 | [`prefer_from_predicate`](/many_lints/docs/rules/fpdart/prefer-from-predicate/) | `max_condition_complexity` |
@@ -369,14 +369,14 @@ options never changes results until you set one.
 | [`format_test_name`](/many_lints/docs/rules/testing-rules/format-test-name/) | `pattern`, `check_groups` |
 | [`format_comment`](/many_lints/docs/rules/formatting/format-comment/) | `check_regular_comments` |
 | [`no_magic_number`](/many_lints/docs/rules/code-quality/no-magic-number/) | `allowed`, `additional_allowed`, `ignored_invocations`, `additional_ignored_invocations`, `ignore_tests` |
-| [`no_magic_string`](/many_lints/docs/rules/code-quality/no-magic-string/) | `min_occurrences`, `min_length`, `ignored_invocations`, `ignore_tests` |
-| [`prefer_extracting_callbacks`](/many_lints/docs/rules/widget-best-practices/prefer-extracting-callbacks/) | `max_statements`, `ignored_parameters`, `additional_ignored_parameters` |
+| [`no_magic_string`](/many_lints/docs/rules/code-quality/no-magic-string/) | `min_occurrences`, `min_length`, `ignored_invocations`, `additional_ignored_invocations`, `ignore_tests` |
+| [`prefer_extracting_callbacks`](/many_lints/docs/rules/widget-best-practices/prefer-extracting-callbacks/) | `max_statements`, `report_functions`, `ignored_parameters`, `additional_ignored_parameters` |
 | [`prefer_named_parameters`](/many_lints/docs/rules/code-quality/prefer-named-parameters/) | `max_positional`, `ignored_names`, `additional_ignored_names`, `ignore_private_constructors` |
 | [`prefer_explicit_parameter_names`](/many_lints/docs/rules/type-annotations/prefer-explicit-parameter-names/) | `min_parameters` |
 | [`prefer_explicit_type_arguments`](/many_lints/docs/rules/type-annotations/prefer-explicit-type-arguments/) | `methods`, `additional_methods` |
 | [`avoid_accessing_other_classes_private_members`](/many_lints/docs/rules/code-quality/avoid-accessing-other-classes-private-members/) | `ignored_members`, `additional_ignored_members` |
 | [`prefer_correct_type_name`](/many_lints/docs/rules/class-naming/prefer-correct-type-name/) | `min_length`, `max_length`, `ignored_names` |
-| [`prefer_moving_to_variable`](/many_lints/docs/rules/code-quality/prefer-moving-to-variable/) | `allowed_duplicated_chains`, `min_chain_length`, `ignored_invocations`, `ignored_targets` |
+| [`prefer_moving_to_variable`](/many_lints/docs/rules/code-quality/prefer-moving-to-variable/) | `max_extra_occurrences`, `allowed_duplicated_chains` (deprecated alias), `min_chain_length`, `ignored_invocations`, `ignored_targets` |
 | [`prefer_private_named_parameters`](/many_lints/docs/rules/code-quality/prefer-private-named-parameters/) | `only_same_name` |
 | [`prefer_safe_collection_access`](/many_lints/docs/rules/fpdart/prefer-safe-collection-access/) | `report_outside_pipelines`, `accessors`, `additional_accessors` |
 | [`prefer_shorthands_with_constructors`](/many_lints/docs/rules/shorthand-patterns/prefer-shorthands-with-constructors/) | `classes`, `additional_classes` |
@@ -395,6 +395,36 @@ options never changes results until you set one.
 | [`use_class_suffix`](/many_lints/docs/rules/class-naming/use-class-suffix/) | `entries`, `ignore_private` |
 | [`use_gap`](/many_lints/docs/rules/widget-best-practices/use-gap/) | `min_children` |
 | [`use_sliver_prefix`](/many_lints/docs/rules/widget-best-practices/use-sliver-prefix/) | `state_base_classes` |
+| [`use_setstate_synchronously`](/many_lints/docs/rules/async-safety/use-setstate-synchronously/) | `state_base_classes` |
+| [`match_class_name_pattern`](/many_lints/docs/rules/class-naming/match-class-name-pattern/) | `pattern` |
+| [`prefer_correct_error_name`](/many_lints/docs/rules/class-naming/prefer-correct-error-name/) | `exception_suffix`, `error_suffix`, `allow_suffixes` |
+| [`prefer_correct_handler_name`](/many_lints/docs/rules/class-naming/prefer-correct-handler-name/) | `prefixes`, `additional_prefixes`, `require_private` |
+| [`prefer_correct_identifier_length`](/many_lints/docs/rules/class-naming/prefer-correct-identifier-length/) | `min_length`, `max_length`, `allow_names`, `additional_allow_names` |
+| [`prefer_correct_setter_parameter_name`](/many_lints/docs/rules/class-naming/prefer-correct-setter-parameter-name/) | `parameter_name`, `allow_names` |
+| [`prefer_prefixed_global_constants`](/many_lints/docs/rules/class-naming/prefer-prefixed-global-constants/) | `prefix` |
+| [`arguments_ordering`](/many_lints/docs/rules/code-organization/arguments-ordering/) | `order`, `min_arguments` |
+| [`enum_constants_ordering`](/many_lints/docs/rules/code-organization/enum-constants-ordering/) | `order` |
+| [`initializers_ordering`](/many_lints/docs/rules/code-organization/initializers-ordering/) | `order` |
+| [`map_keys_ordering`](/many_lints/docs/rules/code-organization/map-keys-ordering/) | `order`, `min_entries` |
+| [`parameters_ordering`](/many_lints/docs/rules/code-organization/parameters-ordering/) | `order`, `group_required`, `min_parameters` |
+| [`pattern_fields_ordering`](/many_lints/docs/rules/code-organization/pattern-fields-ordering/) | `order` |
+| [`record_fields_ordering`](/many_lints/docs/rules/code-organization/record-fields-ordering/) | `order` |
+| [`avoid_deep_nesting`](/many_lints/docs/rules/code-quality/avoid-deep-nesting/) | `max_depth` |
+| [`avoid_high_cyclomatic_complexity`](/many_lints/docs/rules/code-quality/avoid-high-cyclomatic-complexity/) | `max_complexity`, `count_exhaustive_switches` |
+| [`avoid_long_files`](/many_lints/docs/rules/code-quality/avoid-long-files/) | `max_lines`, `count_comments` |
+| [`avoid_too_many_methods`](/many_lints/docs/rules/code-quality/avoid-too-many-methods/) | `max_methods`, `count_accessors` |
+| [`max_imports`](/many_lints/docs/rules/code-quality/max-imports/) | `max_imports`, `count_exports` |
+| [`max_statements`](/many_lints/docs/rules/code-quality/max-statements/) | `max_statements` |
+| [`prefer_named_boolean_parameters`](/many_lints/docs/rules/code-quality/prefer-named-boolean-parameters/) | `allow_single` |
+| [`avoid_negated_conditions`](/many_lints/docs/rules/control-flow/avoid-negated-conditions/) | `report_not_equal` |
+| [`prefer_early_return`](/many_lints/docs/rules/control-flow/prefer-early-return/) | `min_statements` |
+| [`avoid_inconsistent_digit_separators`](/many_lints/docs/rules/formatting/avoid-inconsistent-digit-separators/) | `group_size`, `hex_group_size` |
+| [`double_literal_format`](/many_lints/docs/rules/formatting/double-literal-format/) | `leading_zero`, `trailing_zero` |
+| [`avoid_future_of_either`](/many_lints/docs/rules/fpdart/avoid-future-of-either/) | `ignore_private` |
+| [`avoid_future_of_option`](/many_lints/docs/rules/fpdart/avoid-future-of-option/) | `ignore_private` |
+| [`prefer_typedefs_for_callbacks`](/many_lints/docs/rules/type-annotations/prefer-typedefs-for-callbacks/) | `min_parameters` |
+| [`avoid_deep_widget_nesting`](/many_lints/docs/rules/widget-best-practices/avoid-deep-widget-nesting/) | `max_depth` |
+| [`avoid_too_many_widgets_per_build`](/many_lints/docs/rules/widget-best-practices/avoid-too-many-widgets-per-build/) | `max_widgets` |
 
 `state_base_classes` is accepted by every rule that only applies inside a
 `StatefulWidget`'s `State`. Name a base class that does **not** extend Flutter's

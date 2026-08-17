@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+
 // prefer_prefixed_global_constants
 //
 // Detects a PUBLIC top-level constant without the configured prefix. A global

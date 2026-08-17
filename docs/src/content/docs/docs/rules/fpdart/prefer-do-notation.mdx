@@ -83,7 +83,7 @@ A plain `return x` becomes `Type.of(x)` on the way out, since `Do` lifts its own
 many_lints:
   rules:
     prefer_do_notation:
-      max_flatmap_depth: 2
+      max_flat_map_depth: 2
 ```
 
 </TabItem>
@@ -93,7 +93,7 @@ many_lints:
 # many_lints.yaml
 rules:
   prefer_do_notation:
-    max_flatmap_depth: 2
+    max_flat_map_depth: 2
 ```
 
 </TabItem>
@@ -101,13 +101,13 @@ rules:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `max_flatmap_depth` | int | `3` | How deeply `flatMap` callbacks may nest before the outermost is reported. `2` pushes a team toward `Do` almost immediately; `4` reserves it for genuinely long pipelines |
+| `max_flat_map_depth` | int | `3` | How deeply `flatMap` callbacks may nest before the outermost is reported. `2` pushes a team toward `Do` almost immediately; `4` reserves it for genuinely long pipelines |
+| `max_flatmap_depth` | int | `3` | Deprecated compatibility alias for `max_flat_map_depth` |
 
 ## Configuration
 
-This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
-`prefer_do_notation: true`.
+This rule is in the **`opinionated`** preset. With a lower preset, enable it by
+name with `prefer_do_notation: true`.
 
 To turn it off:
 

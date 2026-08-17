@@ -36,5 +36,7 @@ jobs:
         run: format --output=none --set-exit-if-changed
       - name: Static code analysis
         run: analyze
+      - name: Verify rule examples
+        run: dart run tool/verify_examples.dart
       - name: Run unit tests
         run: tests --fail-fast

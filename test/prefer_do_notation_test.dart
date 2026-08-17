@@ -86,7 +86,7 @@ Option<String> f(
     newFile('$testPackageRootPath/many_lints.yaml', '''
 rules:
   prefer_do_notation:
-    max_flatmap_depth: 4
+    max_flat_map_depth: 4
 ''');
 
     await assertNoDiagnostics(r'''
@@ -101,7 +101,7 @@ Option<String> f(Option<String> a, Option<String> b, Option<String> c) =>
     newFile('$testPackageRootPath/many_lints.yaml', '''
 rules:
   prefer_do_notation:
-    max_flatmap_depth: 2
+    max_flat_map_depth: 2
 ''');
 
     await assertDiagnostics(
@@ -113,6 +113,21 @@ Option<String> f(Option<String> a, Option<String> b) =>
 ''',
       [lint(100, 7)],
     );
+  }
+
+  Future<void> test_legacyMaxFlatmapDepthAlias() async {
+    newFile('$testPackageRootPath/many_lints.yaml', '''
+rules:
+  prefer_do_notation:
+    max_flatmap_depth: 4
+''');
+
+    await assertNoDiagnostics(r'''
+import 'package:fpdart/fpdart.dart';
+
+Option<String> f(Option<String> a, Option<String> b, Option<String> c) =>
+    a.flatMap((x) => b.flatMap((y) => c.flatMap((z) => Option.of('$x$y$z'))));
+''');
   }
 
   Future<void> test_nonFpdartFlatMapIsFine() async {

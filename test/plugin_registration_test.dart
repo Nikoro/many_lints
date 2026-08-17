@@ -54,7 +54,7 @@ void main() {
   test('expected number of active and removed rules are registered', () {
     plugin.register(registry);
     final totalRules = registry.warningRules.length + registry.lintRules.length;
-    expect(totalRules, equals(252));
+    expect(totalRules, equals(253));
     expect(
       registry.warningRules.values.whereType<RemovedAnalysisRule>().map(
         (rule) => rule.name,
@@ -165,6 +165,27 @@ void main() {
           reason: 'The preset table in $file is stale.',
         );
       }
+
+      final gettingStarted = File(
+        'docs/src/content/docs/docs/getting-started.mdx',
+      ).readAsStringSync();
+      expect(
+        _firstCapturedInt(
+          gettingStarted,
+          RegExp(r'collection of (\d+) custom lint rules'),
+        ),
+        totalRules,
+        reason: 'The Getting Started rule total is stale.',
+      );
+      for (final entry in expected.entries.where(
+        (entry) => entry.key != 'none',
+      )) {
+        expect(
+          _firstCapturedInt(gettingStarted, RegExp('`${entry.key}` \\((\\d+)')),
+          entry.value,
+          reason: 'The Getting Started ${entry.key} preset count is stale.',
+        );
+      }
     });
 
     test('README states the real rule and fix totals', () {
@@ -255,6 +276,162 @@ void main() {
     );
   });
 
+  test('rule documentation metadata and options stay in sync', () {
+    plugin.register(registry);
+
+    final registered = {
+      ...registry.warningRules.keys,
+      ...registry.lintRules.keys,
+    }..removeAll(removedRules);
+    final optionPages = <String, Set<String>>{};
+    final directOptionsByRule = <String, Set<String>>{};
+    const pageSuffixes = ['.md', '.mdx'];
+
+    for (final file in Directory(
+      'docs/src/content/docs/docs/rules',
+    ).listSync(recursive: true).whereType<File>()) {
+      final suffix = _matchingSuffix(file.path, pageSuffixes);
+      if (suffix == null) continue;
+
+      final name = _baseName(file.path, suffix: suffix, normalizeHyphens: true);
+      final content = file.readAsStringSync();
+      final title = RegExp(
+        r'^title: ([a-z0-9_]+)$',
+        multiLine: true,
+      ).firstMatch(content)?.group(1);
+      final sidebarLabel = RegExp(
+        r'^  label: ([a-z0-9_]+)$',
+        multiLine: true,
+      ).firstMatch(content)?.group(1);
+
+      expect(title, name, reason: '${file.path} has a stale title.');
+      expect(
+        sidebarLabel,
+        name,
+        reason: '${file.path} has a stale sidebar label.',
+      );
+
+      final expectedPreset = coreRules.contains(name)
+          ? 'core'
+          : recommendedRules.contains(name)
+          ? 'recommended'
+          : opinionatedRules.contains(name)
+          ? 'opinionated'
+          : 'none';
+      final presetClaims = <String>{
+        for (final match in RegExp(
+          r'(?:in|part of) the \*\*`(core|recommended|opinionated)`\*\* preset',
+        ).allMatches(content))
+          match.group(1)!,
+        if (RegExp(r'in \*\*no preset\*\*').hasMatch(content)) 'none',
+      };
+      expect(
+        presetClaims,
+        everyElement(expectedPreset),
+        reason: '$name documents a preset that does not enable it.',
+      );
+
+      final documentedOptions = {
+        for (final match in RegExp(
+          r'^\| `([a-z0-9_]+)` \|',
+          multiLine: true,
+        ).allMatches(content))
+          match.group(1)!,
+      };
+      final configurable = content.contains('rule-badge--config');
+      expect(
+        configurable,
+        documentedOptions.isNotEmpty,
+        reason:
+            '$name must have both a Configurable badge and a non-empty '
+            'options table, or neither.',
+      );
+
+      expect(
+        content,
+        isNot(
+          matches(
+            RegExp(
+              r'^\s*(?:[a-z0-9_]+: —|—: —|[a-z0-9_]+: built-in set)\s*$',
+              multiLine: true,
+            ),
+          ),
+        ),
+        reason: '$name contains a non-runnable YAML placeholder.',
+      );
+
+      if (documentedOptions.isNotEmpty) {
+        optionPages[name] = documentedOptions;
+      }
+
+      final source = File('lib/src/rules/$name.dart').readAsStringSync();
+      final sourceOptions = _directOptionKeys(source);
+      directOptionsByRule[name] = sourceOptions;
+      expect(
+        documentedOptions,
+        containsAll(sourceOptions),
+        reason:
+            '$name does not document every option read directly by its '
+            'implementation. Missing: '
+            '${sourceOptions.difference(documentedOptions)}',
+      );
+    }
+
+    expect(
+      registered,
+      containsAll(optionPages.keys),
+      reason: 'Only registered rules may have an options page.',
+    );
+
+    final configuration = File(
+      'docs/src/content/docs/docs/configuration.md',
+    ).readAsStringSync();
+    final catalog = <String, Set<String>>{
+      for (final match in RegExp(
+        r'^\| \[`([a-z0-9_]+)`\]\([^)]*\) \| (.+) \|$',
+        multiLine: true,
+      ).allMatches(configuration))
+        match.group(1)!: {
+          for (final option in RegExp(
+            r'`([a-z0-9_]+)`',
+          ).allMatches(match.group(2)!))
+            option.group(1)!,
+        },
+    };
+
+    expect(
+      catalog.keys,
+      unorderedEquals(optionPages.keys),
+      reason:
+          'The central configurable-rule catalog must list every and only '
+          'configurable rule page.',
+    );
+    for (final entry in catalog.entries) {
+      expect(
+        optionPages[entry.key],
+        containsAll(entry.value),
+        reason:
+            'The central catalog lists an option absent from the '
+            '${entry.key} page.',
+      );
+      expect(
+        entry.value,
+        containsAll(directOptionsByRule[entry.key]!),
+        reason:
+            'The central catalog omits an option read directly by '
+            '${entry.key}.',
+      );
+    }
+    expect(
+      _firstCapturedInt(
+        configuration,
+        RegExp(r'\*\*(\d+) rules\*\* accept options'),
+      ),
+      optionPages.length,
+      reason: 'The configurable-rule count is stale.',
+    );
+  });
+
   test('every registered quick fix has an end-to-end output test', () {
     plugin.register(registry);
 
@@ -291,7 +468,7 @@ void main() {
       0,
       (sum, v) => sum + v.length,
     );
-    expect(totalFixes, equals(103));
+    expect(totalFixes, equals(104));
   });
 
   test('assists are registered', () {
@@ -350,6 +527,44 @@ Map<String, int> _presetCounts(String content) => {
   ).allMatches(content))
     match.group(1)!: int.parse(match.group(2)!),
 };
+
+int? _firstCapturedInt(String content, RegExp pattern) {
+  final value = pattern.firstMatch(content)?.group(1);
+  return value == null ? null : int.parse(value);
+}
+
+/// Option keys read directly by a rule.
+///
+/// Shared option readers are covered by the page/catalog comparison; this
+/// catches the common failure mode where a rule starts reading a new literal
+/// key but its page is not updated. Name/number set helpers also expose an
+/// automatically generated `additional_` key.
+Set<String> _directOptionKeys(String source) {
+  final keys = <String>{};
+  final accessor = RegExp(
+    r'''\.(?:boolOption|intOption|stringOption|stringListOption|patternOption|entriesOption)\(\s*['"]([^'"]+)['"]''',
+    multiLine: true,
+  );
+  final rawLookup = RegExp(
+    r'''\.options\[['"]([^'"]+)['"]\]''',
+    multiLine: true,
+  );
+  final additiveSet = RegExp(
+    r'''\.(?:nameSetOption|numberSetOption)\(\s*['"]([^'"]+)['"]''',
+    multiLine: true,
+  );
+
+  for (final pattern in [accessor, rawLookup]) {
+    keys.addAll(pattern.allMatches(source).map((match) => match.group(1)!));
+  }
+  for (final match in additiveSet.allMatches(source)) {
+    final key = match.group(1)!;
+    keys
+      ..add(key)
+      ..add('additional_$key');
+  }
+  return keys;
+}
 
 /// The base names of every file in [directory] ending in one of [suffixes].
 ///
