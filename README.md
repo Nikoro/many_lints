@@ -72,9 +72,6 @@ rules:
 
 > **Important**: After any change to the `plugins` section, you must restart the Dart Analysis Server.
 
-For local development setup, see
-[CONTRIBUTING.md](https://github.com/Nikoro/many_lints/blob/main/CONTRIBUTING.md).
-
 ### Presets
 
 Presets are cumulative: moving right only adds rules.

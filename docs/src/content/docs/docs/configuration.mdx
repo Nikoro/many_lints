@@ -28,29 +28,6 @@ plugins:
     version: ^1.0.0
 ```
 
-## Local development
-
-For local development or when using many_lints from a cloned repository, use the `path` option:
-
-```sh
-git clone https://github.com/Nikoro/many_lints.git /path/to/many_lints
-```
-
-```yaml
-plugins:
-  many_lints:
-    path: /path/to/many_lints
-```
-
-Git dependencies are also supported and use the same syntax as package
-dependencies:
-
-```yaml
-plugins:
-  many_lints:
-    git: https://github.com/Nikoro/many_lints.git
-```
-
 ## Choosing rules
 
 **Every rule is off by default, but a preset is not required.** You can enable only the

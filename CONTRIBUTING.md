@@ -27,6 +27,26 @@ dart test
 cd docs && bun install && bun run build
 ```
 
+## Testing a Local Checkout in Another Project
+
+Point the other project's `analysis_options.yaml` at your checkout:
+
+```yaml
+plugins:
+  many_lints:
+    path: /path/to/many_lints
+```
+
+To test a branch or commit without a local checkout, use a Git dependency:
+
+```yaml
+plugins:
+  many_lints:
+    git: https://github.com/Nikoro/many_lints.git
+```
+
+Restart the Dart Analysis Server after changing the plugin source.
+
 ## Adding a New Lint Rule
 
 The easiest way to add a rule is to use the repository's `/new-lint` skill,
