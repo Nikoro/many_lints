@@ -15,6 +15,8 @@ sidebar:
 
 This rule flags a Bloc or Cubit state class that is missing the `@immutable` annotation. The state class is recognised through the type argument of `Bloc<Event, State>` or `Cubit<State>`, and the check is then widened to every subclass and implementor.
 
+This rule is in the **`opinionated`** preset.
+
 ## Why use this rule
 
 `emit` compares the new state against the current one and does nothing when they are equal. Mutating a state object in place therefore produces a state change no listener ever sees — the reference did not change, so `emit` discards it. The UI simply does not update, with no error to trace back to.

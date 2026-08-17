@@ -11,6 +11,8 @@ sidebar:
 
 This rule flags an enum constant that repeats the name of its own enum.
 
+This rule is in the **`opinionated`** preset.
+
 ## Why use this rule
 
 `enum Status { statusActive }` reads as `Status.statusActive` at every call site, where the type already says `Status`. The prefix is a habit carried over from languages whose enum constants share one namespace; Dart scopes them to the enum, so it buys nothing and lengthens every use.

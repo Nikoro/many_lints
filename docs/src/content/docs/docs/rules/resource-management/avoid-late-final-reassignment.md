@@ -11,6 +11,8 @@ sidebar:
 
 This rule flags a `late final` field assigned more than once on the same straight-line path.
 
+This rule is in the **`core`** preset.
+
 ## Why use this rule
 
 `late final` promises one assignment, and Dart enforces it — but at run time, by throwing `LateInitializationError` on the second write. A second assignment the analyzer can see on one path is therefore a guaranteed crash, not a possibility, and it is worth catching before the code runs.

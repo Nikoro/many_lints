@@ -536,8 +536,10 @@ void main() {
       };
       expect(
         presetClaims,
-        everyElement(expectedPreset),
-        reason: '$name documents a preset that does not enable it.',
+        {expectedPreset},
+        reason:
+            '$name must document exactly the preset tier that first enables '
+            'it, or state that it is in no preset.',
       );
 
       final documentedOptions = {

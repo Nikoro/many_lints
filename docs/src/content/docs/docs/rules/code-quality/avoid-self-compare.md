@@ -11,6 +11,8 @@ sidebar:
 
 This rule flags `a.compareTo(a)`, where the receiver and the argument are the same expression, so the result is always `0`.
 
+This rule is in the **`core`** preset.
+
 ## Why use this rule
 
 A comparison that always answers `0` decides nothing. A sort built on it leaves the list in its original order, and a conditional guarded by it always takes the same branch — quietly, with no error to trace back to.
