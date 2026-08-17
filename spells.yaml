@@ -1,0 +1,30 @@
+format:
+  description: Check code formatting.
+  script: dart --enable-experiment=primary-constructors format . ...args
+
+analyze:
+  description: Perform static analysis.
+  script: dart analyze
+
+tests:
+  description: Run tests.
+  switch:
+    report:
+      description: Run all tests and generate an HTML coverage report.
+      script: |
+        echo "Generating html report..."
+        rm -rf coverage
+        dart test --test-randomize-ordering-seed=random --coverage=coverage
+        dart run coverage:format_coverage --lcov --in=coverage/test --out=coverage/lcov.info --report-on=lib
+        genhtml coverage/lcov.info -o coverage/html
+        open coverage/html/index.html
+  default:
+    script: dart test --test-randomize-ordering-seed=random ...args
+
+check:
+  description: Check formatting, analyze, and run tests.
+  script: format --output=none --set-exit-if-changed && analyze && tests
+
+push:
+  description: Push local commits to the remote repository.
+  script: git push ...args
