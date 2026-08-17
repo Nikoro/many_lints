@@ -33,7 +33,7 @@ jobs:
       - name: Activate commands
         run: commands --silent
       - name: Check code formatting
-        run: format --output=none --set-exit-if-changed
+        run: dart --enable-experiment=primary-constructors format . --output=none --set-exit-if-changed
       - name: Static code analysis
         run: analyze
       - name: Verify rule examples
