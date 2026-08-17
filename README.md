@@ -218,7 +218,7 @@ To suppress a specific lint, use comments:
 
 ```dart
 // ignore: many_lints/prefer_center_over_align
-const Align(...);
+const example = Align(alignment: Alignment.center);
 
 // ignore_for_file: many_lints/use_class_suffix
 ```

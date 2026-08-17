@@ -26,7 +26,7 @@ void main() {
     return;
   }
 
-  final pages =
+  final sitePages =
       docsRoot
           .listSync(recursive: true)
           .whereType<File>()
@@ -35,13 +35,22 @@ void main() {
           )
           .toList()
         ..sort((a, b) => a.path.compareTo(b.path));
+  final pages = <File>[
+    File('README.md'),
+    File('CHANGELOG.md'),
+    File('CONTRIBUTING.md'),
+    File('example/README.md'),
+    ...sitePages,
+  ].where((file) => file.existsSync()).toList();
 
   final failures = <String>[];
   var dartSnippetCount = 0;
   var yamlSnippetCount = 0;
   var configPairCount = 0;
 
-  final routes = pages.map((file) => _routeFor(file, docsRoot.path)).toSet();
+  final routes = sitePages
+      .map((file) => _routeFor(file, docsRoot.path))
+      .toSet();
 
   for (final page in pages) {
     final source = page.readAsStringSync();
@@ -61,7 +70,10 @@ void main() {
     for (final match in _yamlFence.allMatches(source)) {
       yamlSnippetCount++;
       try {
-        loadYaml(match.group(1)!);
+        final yaml = loadYaml(match.group(1)!);
+        for (final problem in _semanticConfigProblems(yaml)) {
+          failures.add('${page.path}:${_lineAt(source, match.start)} $problem');
+        }
       } on YamlException catch (error) {
         failures.add(
           '${page.path}:${_lineAt(source, match.start)} contains invalid YAML: '
@@ -124,10 +136,58 @@ void main() {
   }
 
   stdout.writeln(
-    'Verified ${pages.length} documentation pages: $dartSnippetCount Dart '
+    'Verified ${pages.length} documentation files: $dartSnippetCount Dart '
     'snippets, $yamlSnippetCount YAML snippets, $configPairCount synchronized '
     'config pairs, and all internal documentation links.',
   );
+}
+
+Iterable<String> _semanticConfigProblems(Object? yaml) sync* {
+  if (yaml is! YamlMap) return;
+
+  final embedded = _yamlMapValue(yaml, 'many_lints');
+  final config = embedded is YamlMap
+      ? embedded
+      : _yamlMapValue(yaml, 'rules') is YamlMap
+      ? yaml
+      : null;
+  if (config is! YamlMap) return;
+
+  final rules = _yamlMapValue(config, 'rules');
+  if (rules is! YamlMap) return;
+
+  for (final (ruleName, affixKey) in const [
+    ('use_class_prefix', 'prefix'),
+    ('use_class_suffix', 'suffix'),
+  ]) {
+    final rule = _yamlMapValue(rules, ruleName);
+    if (rule is! YamlMap) continue;
+    final entries = _yamlMapValue(rule, 'entries');
+    if (entries is! YamlList) continue;
+
+    for (var index = 0; index < entries.length; index++) {
+      final entry = entries[index];
+      if (entry is! YamlMap) continue;
+      final type = _yamlMapValue(entry, 'type');
+      final affix = _yamlMapValue(entry, affixKey);
+      if (type is! String || type.isEmpty) {
+        yield '$ruleName.entries[$index] must define a non-empty `type`.';
+      }
+      if (affix is! String || affix.isEmpty) {
+        yield '$ruleName.entries[$index] must define a non-empty `$affixKey`.';
+      }
+      const commonKeys = {'type', 'package', 'ignore_private'};
+      final allowedKeys = {...commonKeys, affixKey};
+      final unknownKeys = entry.keys
+          .map((key) => '$key')
+          .where((key) => !allowedKeys.contains(key))
+          .toList();
+      if (unknownKeys.isNotEmpty) {
+        yield '$ruleName.entries[$index] contains unknown key(s): '
+            '${unknownKeys.join(', ')}.';
+      }
+    }
+  }
 }
 
 bool _parsesInDocumentedContext(String snippet) {

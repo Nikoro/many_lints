@@ -1,30 +1,50 @@
 # Official Lint Sync Report
 
-Generated: 2026-08-17 · Source: [dart.dev/tools/linter-rules](https://dart.dev/tools/linter-rules), Dart 3.13.0
+Generated: 2026-08-18 · Source: [`pkg/linter/tool/machine/rules.json`](https://github.com/dart-lang/sdk/blob/a51710497d1a0f28d0c601064c0a2d2a1f7ea0c1/pkg/linter/tool/machine/rules.json) @ `a51710497d1a0f28d0c601064c0a2d2a1f7ea0c1`
 SDK rules compared: 232 stable, 6 deprecated (238 candidates; 12 experimental and 14 removed excluded) · many_lints active rules: 251
 
 Comparison method: brace-matched extraction of all 251 active `LintCode` declarations,
 an exact-name pass, then a semantic pass over each rule's message and class
-documentation. The machine-readable `rules.json` endpoint returned HTTP 429
-for both `main` and `stable`, so this run used the official Dart 3.13 rendered
-catalog as the documented degraded fallback. The individual official detail
-pages and our complete visitor implementations were read before either
-`SUPERSET` verdict was assigned.
+documentation. The machine-readable catalog and the current
+[`flutter_lints/flutter.yaml`](https://github.com/flutter/packages/blob/main/packages/flutter_lints/lib/flutter.yaml)
+were fetched successfully. Full implementations and official tests were read
+before assigning the `SUPERSET` verdict.
 
 ## Summary
 
 | Verdict | Count |
 |---|---|
 | DUPLICATE | 0 |
-| SUPERSET | 0 |
+| SUPERSET | 1 |
 | SUBSET | 8 |
 | ADJACENT | 13 |
 | WATCH | 2 |
-| UNIQUE | 228 |
+| UNIQUE | 227 |
 
 The removed `prefer_contains` and `avoid_unnecessary_overrides_in_state` names
 remain registered as tombstones so the analyzer can direct existing
 configurations to the SDK rules.
+
+## Action deferred until the minimum SDK reaches Dart 3.13
+
+### SUPERSET
+
+- [ ] **`prefer_return_await`** → SDK
+  **[`async_return_with_no_await`](https://dart.dev/tools/linter-rules/async_return_with_no_await)**
+  (`stable`, since Dart 3.13, `hasFix`)
+  - Ours: "Missing await on returned Future inside try-catch block."
+  - SDK: "Return with no await."
+  - The SDK rule reports every `Future`/`FutureOr` returned without `await`
+    from an `async` function, including returns inside a `catch`, and also
+    covers expression-bodied functions. Its official visitor test deliberately
+    does not emit the lint inside the `try` body because the analyzer already
+    emits `unawaited_return_in_try_catch` there. Together, the SDK lint and
+    analyzer diagnostic cover every node our narrower visitor reports and
+    more.
+  - Do not deprecate this rule in 1.0.0: many_lints still supports Dart 3.11,
+    where the replacement does not exist. Re-evaluate as soon as the package's
+    minimum SDK reaches 3.13; until then, users on Dart 3.13 should not enable
+    both rules.
 
 ## Resolved for 1.0.0
 
@@ -185,14 +205,12 @@ backlog.
 
 ## Notes
 
-- GitHub rate-limited the current `flutter_lints/flutter.yaml` fetch. The
-  locally cached 6.0.0 file still only enables SDK rules and defines none of
-  its own; the official Dart 3.13 catalog's Flutter-set markers were used for
-  the reverse coverage check. Re-run from `rules.json` before release if the
-  rate limit clears.
-- 228 rules have no SDK counterpart at all — the Riverpod, Bloc, hooks,
+- The current `flutter_lints/flutter.yaml` still only enables SDK rules and
+  defines none of its own, so it adds no name collisions beyond `rules.json`.
+- 227 rules have no SDK counterpart at all — the Riverpod, Bloc, hooks,
   widget-replacement, banned-* / architecture, and shorthand families are
   entirely unique to this package.
-- There are no exact-name collisions among the 253 active source rules. The
-  removed `prefer_contains` tombstone intentionally keeps its former name so
-  old configurations receive migration guidance.
+- There are no exact-name collisions among the 251 active source rules. Two
+  additional registered names are removed-rule tombstones; `prefer_contains`
+  intentionally keeps its former name so old configurations receive migration
+  guidance.

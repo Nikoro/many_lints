@@ -28,7 +28,10 @@
 
   This also fixes a latent bug the split exposed: `Cubit` is itself a `Bloc`, and the Bloc branch was tested first, so a `Cubit<State>` was matched as a Bloc and then searched for a second type argument it does not have. Cubit state was only ever reported by the name heuristic, and went unreported once that was removed.
 
-- **Every rule is now off by default, and rules are selected with a preset.** Previously all 156 rules were enabled the moment the plugin was installed, which meant adopting the package on an existing codebase produced thousands of warnings before any of them could be judged useful.
+- **Every rule is now off by default, and rules are selected with a preset.** In
+  v0.9.0 all 133 rules were enabled the moment the plugin was installed, which
+  meant adopting the package on an existing codebase produced thousands of
+  warnings before any of them could be judged useful.
 
   Installing the plugin now reports nothing until a preset is chosen:
 
@@ -106,6 +109,27 @@
   Any `// ignore: many_lints/use_bloc_suffix` comment (or the `_cubit_`/`_notifier_` variants) must be renamed to the new rule, and `diagnostics:` entries likewise.
 
 ### Added
+
+This release adds 123 rules. The complete inventory, grouped by documentation
+category, is below; the following entries call out the rules whose behaviour or
+design needs additional migration context.
+
+- **Architecture:** `avoid_banned_annotations`, `avoid_banned_exports`, `avoid_banned_imports`, `avoid_banned_names`, `avoid_banned_types`, `banned_usage`
+- **Async safety:** `avoid_catch_error`, `avoid_future_ignore`, `avoid_missing_completer_stack_trace`, `avoid_passing_async_when_sync_expected`, `avoid_redundant_async`, `prefer_correct_future_return_type`, `require_atomic_async_updates`, `use_setstate_synchronously`
+- **Bloc / Riverpod:** `emit_new_bloc_state_instances`, `handle_bloc_event_subclasses`
+- **Class naming:** `avoid_unnecessary_enum_prefix`, `match_class_name_pattern`, `prefer_boolean_prefixes`, `prefer_correct_callback_field_name`, `prefer_correct_error_name`, `prefer_correct_handler_name`, `prefer_correct_identifier_length`, `prefer_correct_setter_parameter_name`, `prefer_correct_type_name`, `prefer_prefixed_global_constants`, `use_class_prefix`, `use_class_suffix`
+- **Code organization:** `arguments_ordering`, `avoid_duplicate_mixins`, `avoid_unnecessary_constructor`, `avoid_unnecessary_extends`, `enum_constants_ordering`, `initializers_ordering`, `map_keys_ordering`, `match_lib_folder_structure`, `member_ordering`, `parameters_ordering`, `pattern_fields_ordering`, `prefer_match_file_name`, `prefer_single_declaration_per_file`, `record_fields_ordering`
+- **Code quality:** `avoid_accessing_other_classes_private_members`, `avoid_complex_conditions`, `avoid_deep_nesting`, `avoid_high_cyclomatic_complexity`, `avoid_long_files`, `avoid_long_functions`, `avoid_long_parameter_list`, `avoid_non_null_assertion`, `avoid_self_compare`, `avoid_shadowed_extension_methods`, `avoid_too_many_methods`, `avoid_unnecessary_call`, `function_always_returns_null`, `function_always_returns_same_value`, `match_getter_setter_field_names`, `max_imports`, `max_statements`, `no_magic_number`, `no_magic_string`, `prefer_declaring_const_constructor`, `prefer_getter_over_method`, `prefer_moving_to_variable`, `prefer_named_parameters`, `prefer_primary_constructors`
+- **Collections and types:** `avoid_not_encodable_in_to_json`, `avoid_unrelated_type_casts`, `prefer_correct_json_casts`
+- **Control flow:** `avoid_negated_conditions`, `avoid_nested_conditional_expressions`, `avoid_unmodified_loop_condition`, `avoid_unnecessary_continue`, `avoid_unnecessary_return`, `avoid_unused_after_null_check`, `no_equal_conditions`, `no_equal_switch_case`, `no_equal_then_else`, `prefer_conditional_expressions`, `prefer_early_return`, `prefer_returning_condition`
+- **Formatting:** `avoid_inconsistent_digit_separators`, `double_literal_format`, `format_comment`
+- **fpdart:** `avoid_ad_hoc_left_type`, `avoid_bare_await_in_do`, `avoid_dollar_outside_do_frame`, `avoid_either_of_future`, `avoid_future_of_either`, `avoid_future_of_option`, `avoid_get_or_else_swallowing_failure`, `avoid_nested_do_notation`, `avoid_removed_fpdart_api`, `avoid_throw_in_fp_callback`, `avoid_unnecessary_option`, `avoid_unrun_task`, `avoid_untyped_safe_cast`, `prefer_chain_either`, `prefer_chaining_over_intermediate_run`, `prefer_do_notation`, `prefer_from_nullable`, `prefer_from_predicate`, `prefer_safe_collection_access`, `prefer_string_parse_extensions`, `prefer_task_either_over_try_catch`, `prefer_unit_over_void`
+- **Resource management:** `avoid_late_final_reassignment`, `avoid_unremovable_callbacks_in_listeners`
+- **Shorthand patterns:** `avoid_nested_shorthands`
+- **State management:** `avoid_late_context`, `prefer_immutable_state`
+- **Testing:** `format_test_name`, `prefer_correct_test_file_name`
+- **Type annotations:** `prefer_explicit_parameter_names`, `prefer_explicit_type_arguments`, `prefer_typedefs_for_callbacks`
+- **Widget best practices:** `always_pass_global_key`, `avoid_deep_widget_nesting`, `avoid_too_many_widgets_per_build`, `check_for_equals_in_render_object_setters`, `never_discard_build_context`, `prefer_extracting_callbacks`, `prefer_widget_private_members`
 
 - Added `prefer_correct_future_return_type` to the `opinionated` preset, with
   diagnostics and a quick fix for async declarations whose return type hides

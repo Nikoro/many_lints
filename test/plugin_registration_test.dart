@@ -259,6 +259,29 @@ void main() {
         reason: 'The README assist table is missing a registered assist.',
       );
     });
+
+    test('example README lists every active rule exactly once', () {
+      final exampleReadme = File('example/README.md').readAsStringSync();
+      final listed = RegExp(
+        r'^\| `([a-z0-9_]+)` \|',
+        multiLine: true,
+      ).allMatches(exampleReadme).map((match) => match.group(1)!).toList();
+      final registered = {
+        ...registry.warningRules.keys,
+        ...registry.lintRules.keys,
+      }..removeAll(removedRules);
+
+      expect(
+        listed.toSet(),
+        registered,
+        reason: 'The example README rule catalog is incomplete or stale.',
+      );
+      expect(
+        listed,
+        hasLength(registered.length),
+        reason: 'The example README rule catalog contains duplicate rows.',
+      );
+    });
   });
 
   test('documentation fix badges match registered quick fixes', () {
