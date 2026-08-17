@@ -1,5 +1,5 @@
 format: ## Checks code formatting
-  script: dart format . ...args
+  script: dart --enable-experiment=primary-constructors format . ...args
 
 analyze: ## Performs static analysis
   script: dart analyze
