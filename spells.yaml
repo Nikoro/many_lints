@@ -1,6 +1,6 @@
 format:
   description: Check code formatting.
-  script: dart --enable-experiment=primary-constructors format . ...args
+  script: dart format --enable-experiment=primary-constructors . ...args
 
 analyze:
   description: Perform static analysis.

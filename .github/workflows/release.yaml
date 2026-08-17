@@ -50,7 +50,7 @@ jobs:
           fi
       
       - name: Check code formatting
-        run: dart --enable-experiment=primary-constructors format . --output=none --set-exit-if-changed
+        run: dart format --enable-experiment=primary-constructors . --output=none --set-exit-if-changed
 
       - name: Static code analysis
         run: dart analyze

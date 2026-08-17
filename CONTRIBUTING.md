@@ -20,7 +20,7 @@ dart pub get
 3. Verify everything works:
 
 ```sh
-dart --enable-experiment=primary-constructors format --output=none --set-exit-if-changed .
+dart format --enable-experiment=primary-constructors --output=none --set-exit-if-changed .
 dart analyze
 dart run tool/verify_examples.dart
 dart test

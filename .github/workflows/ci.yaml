@@ -29,7 +29,7 @@ jobs:
       - name: Get dependencies
         run: dart pub get --no-example
       - name: Check code formatting
-        run: dart --enable-experiment=primary-constructors format . --output=none --set-exit-if-changed
+        run: dart format --enable-experiment=primary-constructors . --output=none --set-exit-if-changed
       - name: Static code analysis
         run: dart analyze
       - name: Verify rule examples
