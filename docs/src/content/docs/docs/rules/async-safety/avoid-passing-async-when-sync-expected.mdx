@@ -27,7 +27,7 @@ This is deliberately the *only* shape reported. For any other return type the an
 ## Don't
 
 ```dart
-void schedule(void Function() task) { ... }
+void schedule(void Function() task) => task();
 
 schedule(() async {
   await save();   // nothing awaits this; a failure becomes unhandled
@@ -39,7 +39,7 @@ schedule(() async {
 Change the parameter so the future has somewhere to go:
 
 ```dart
-void schedule(Future<void> Function() task) { ... }
+Future<void> schedule(Future<void> Function() task) => task();
 
 schedule(() async {
   await save();

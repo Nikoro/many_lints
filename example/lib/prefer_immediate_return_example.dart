@@ -67,3 +67,4 @@ int edgeCaseStatementBetween(int a) {
   print('done');
   return result;
 }
+// ignore_for_file: many_lints/prefer_primary_constructors

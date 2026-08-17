@@ -32,3 +32,4 @@ Option<String> goodCallbackWithoutDollar() => Option.Do(($) {
 
 // ✅ Good: `$` used directly in the block's expression body
 Option<String> goodExpressionBody() => Option.Do(($) => $(_first));
+// ignore_for_file: many_lints/prefer_returning_shorthands

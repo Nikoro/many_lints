@@ -68,3 +68,4 @@ OpenBar openClassesAreAllowed(OpenFoo value) => value as OpenBar;
 
 // ✅ Edge case: a type parameter's real argument is unknown here
 T fromTypeParameter<T>(Object value) => value as T;
+// ignore_for_file: many_lints/prefer_boolean_prefixes

@@ -37,3 +37,5 @@ Option<_User> goodPlainOption() => Option.of(const _User('ada'));
 Stream<Option<_User>> goodStream() async* {
   yield Option.of(const _User('ada'));
 }
+// ignore_for_file: many_lints/prefer_primary_constructors
+// ignore_for_file: many_lints/prefer_returning_shorthands

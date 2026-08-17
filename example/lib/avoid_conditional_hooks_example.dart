@@ -69,3 +69,4 @@ class MultipleHooksWidget extends HookWidget {
     return Text(label);
   }
 }
+// ignore_for_file: many_lints/prefer_boolean_prefixes

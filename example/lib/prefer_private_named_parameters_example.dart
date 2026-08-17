@@ -41,3 +41,7 @@ class LeveledBird {
 
   LeveledBird({required int level}) : _level = level;
 }
+// ignore_for_file: many_lints/initializers_ordering
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_declaring_const_constructor
+// ignore_for_file: many_lints/prefer_primary_constructors

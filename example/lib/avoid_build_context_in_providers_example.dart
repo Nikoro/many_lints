@@ -35,3 +35,4 @@ class GoodNotifier {
 
 // ✅ Good: An ordinary function is free to take a BuildContext
 int helper(BuildContext context) => 0;
+// ignore_for_file: many_lints/prefer_getter_over_method

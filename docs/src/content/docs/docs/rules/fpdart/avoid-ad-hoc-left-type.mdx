@@ -30,13 +30,13 @@ Naming the hierarchy makes an ad-hoc left type visible where it is introduced, r
 
 ```dart
 // with error_types: [Failure]
-TaskEither<String, User> load(String id) => ...;
+TaskEither<String, User> load(String id) => throw UnimplementedError();
 ```
 
 ## Do
 
 ```dart
-TaskEither<Failure, User> load(String id) => ...;
+TaskEither<Failure, User> load(String id) => throw UnimplementedError();
 ```
 
 Model the hierarchy as a sealed class so the fold can be exhaustive:
@@ -46,13 +46,15 @@ sealed class Failure {}
 class NetworkFailure extends Failure {}
 class AuthFailure extends Failure {}
 
-result.match(
-  (failure) => switch (failure) {
-    NetworkFailure() => retry(),
-    AuthFailure() => signOut(),
-  },
-  (user) => show(user),
-);
+void handle(Either<Failure, User> result) {
+  result.match(
+    (failure) => switch (failure) {
+      NetworkFailure() => retry(),
+      AuthFailure() => signOut(),
+    },
+    (user) => show(user),
+  );
+}
 ```
 
 ## Known limitations

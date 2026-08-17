@@ -57,3 +57,4 @@ class NoCopyWith {
 
   final int value;
 }
+// ignore_for_file: many_lints/prefer_primary_constructors

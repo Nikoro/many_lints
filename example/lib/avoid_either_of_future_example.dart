@@ -56,3 +56,5 @@ void goodSyncMap(Either<String, String> either) {
 void goodIterableMap(List<String> names) {
   final futures = names.map(_save);
 }
+// ignore_for_file: many_lints/prefer_primary_constructors
+// ignore_for_file: many_lints/prefer_returning_shorthands

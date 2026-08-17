@@ -24,23 +24,32 @@ A handler-less `GestureDetector` is dead code that adds clutter to the widget tr
 ## Don't
 
 ```dart
-// GestureDetector without any on* callback
-GestureDetector(child: Text('hello'))
+final widgets = <Widget>[
+  // GestureDetector without any on* callback
+  GestureDetector(child: const Text('hello')),
 
-// Non-handler arguments like behavior don't count
-GestureDetector(behavior: HitTestBehavior.opaque, child: Text('world'))
+  // Non-handler arguments like behavior don't count
+  GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    child: const Text('world'),
+  ),
+];
 ```
 
 ## Do
 
 ```dart
-GestureDetector(onTap: () => print('tapped'), child: Text('hello'))
-
-GestureDetector(
-  onLongPress: () => print('long pressed'),
-  onDoubleTap: () => print('double tapped'),
-  child: Text('world'),
-)
+final widgets = <Widget>[
+  GestureDetector(
+    onTap: () => print('tapped'),
+    child: const Text('hello'),
+  ),
+  GestureDetector(
+    onLongPress: () => print('long pressed'),
+    onDoubleTap: () => print('double tapped'),
+    child: const Text('world'),
+  ),
+];
 ```
 
 ## Configuration

@@ -78,3 +78,4 @@ class Container {
 void useStaticString() {
   final String str = Container.staticString;
 }
+// ignore_for_file: many_lints/member_ordering

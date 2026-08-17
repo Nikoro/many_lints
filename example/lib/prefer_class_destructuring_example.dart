@@ -63,3 +63,5 @@ void interactWithUser(UserProfile user) {
   print(user.email);
   user.toString();
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_primary_constructors

@@ -42,3 +42,4 @@ class EdgeCases {
     _ => false,
   };
 }
+// ignore_for_file: many_lints/prefer_boolean_prefixes

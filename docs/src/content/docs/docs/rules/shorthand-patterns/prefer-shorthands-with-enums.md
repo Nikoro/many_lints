@@ -66,6 +66,12 @@ void example(LogLevel? e) {
   final LogLevel defaultLevel = .debug;
 
   if (e == .debug) {}
+
+  // Collection in an untyped position — no context type, so no lint:
+  expect(rankings, equals([LogLevel.debug]));
+
+  // An explicit type argument does provide context:
+  takes(<LogLevel>[.debug]);
 }
 
 void fn({LogLevel value = .debug}) {}
@@ -74,12 +80,6 @@ LogLevel levelForBad() => .debug;
 
 // Explicit prefix is fine when type cannot be inferred:
 Object asObject() => LogLevel.debug;
-
-// Collection in an untyped position — no context type, so no lint:
-expect(rankings, equals([LogLevel.debug]));
-
-// An explicit type argument does provide context:
-takes(<LogLevel>[.debug]);
 ```
 
 ## Collection literals need a real context type
@@ -103,11 +103,13 @@ genuine context — a typed variable, a typed parameter, or an explicit type
 argument:
 
 ```dart
-final List<LogLevel> list = [.debug];      // reported
-takes(items: [.debug]);                  // reported (typed named argument)
-takes(<LogLevel>[.debug]);                 // reported (explicit type argument)
+void collectionExamples() {
+  final List<LogLevel> list = [.debug]; // reported
+  takes(items: [.debug]); // reported (typed named argument)
+  takes(<LogLevel>[.debug]); // reported (explicit type argument)
 
-final Map<LogLevel, String> m = {.debug: 'a'};  // key half has context
+  final Map<LogLevel, String> map = {.debug: 'a'}; // key has context
+}
 ```
 
 The same applies to a generic parameter whose type argument is solved *from* the
@@ -121,11 +123,13 @@ class Box<T> {
   final List<T> items;
 }
 
-// Not reported: `T` is inferred from the element, so there is no context type.
-Box(items: const [LogLevel.debug]);
+void boxExamples() {
+  // Not reported: `T` is inferred, so there is no context type.
+  Box(items: const [LogLevel.debug]);
 
-// Reported: the type argument is pinned, so the parameter imposes a context.
-Box<LogLevel>(items: const [.debug]);
+  // Reported: the type argument imposes a context.
+  Box<LogLevel>(items: const [.debug]);
+}
 ```
 
 ## Configuration

@@ -19,7 +19,7 @@ It is nearly always a typo. The wrong name gets picked out of an autocomplete li
 
 Only receivers and arguments that are safe to evaluate twice are compared. `next().compareTo(next())` reads the same but calls twice, and a hand-written getter can report a moving value, so both are left alone.
 
-The operator form of this mistake (`a == a`, `a < a`) is reported by [`avoid_equal_expressions`](/many_lints/docs/rules/control-flow/avoid-equal-expressions/), so the two rules never report the same line.
+The operator form of this mistake (`a == a`, `a < a`) is reported by [`avoid_equal_expressions`](/many_lints/docs/rules/code-quality/avoid-equal-expressions/), so the two rules never report the same line.
 
 **See also:** [`Comparable.compareTo`](https://api.dart.dev/stable/dart-core/Comparable/compareTo.html)
 

@@ -87,3 +87,5 @@ class UseCase {
 
   Map<String, dynamic> processData() => {};
 }
+// ignore_for_file: many_lints/prefer_getter_over_method
+// ignore_for_file: many_lints/prefer_moving_to_variable

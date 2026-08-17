@@ -198,7 +198,7 @@
 
 ### Changed
 
-- `avoid_returning_widgets` moves from `opinionated` to `recommended`, and gains the two exemptions that kept it out. Returning a widget from a helper is a performance defect with a mechanism — the helper denies Flutter the element identity it needs to skip the subtree, so the parent rebuilds wholesale — rather than the style preference `opinionated` is for, and it is [documented by Flutter](https://docs.flutter.dev/perf/best-practices). `recommended` goes from 99 rules to 100.
+- `avoid_returning_widgets` moves from `opinionated` to `recommended`, and gains the two exemptions that kept it out. Returning a widget from a helper is a performance defect with a mechanism — the helper denies Flutter the element identity it needs to skip the subtree, so the parent rebuilds wholesale — rather than the style preference `opinionated` is for, and it is [documented by Flutter](https://docs.flutter.dev/perf/best-practices).
 
   Two shapes are no longer reported:
 

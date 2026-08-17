@@ -87,3 +87,4 @@ class _NotABloc {
     emit(state);
   }
 }
+// ignore_for_file: many_lints/prefer_immutable_state

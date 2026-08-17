@@ -42,3 +42,4 @@ class StillLinted {
 }
 
 void doSomething() {}
+// ignore_for_file: many_lints/avoid_commented_out_code

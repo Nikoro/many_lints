@@ -60,3 +60,4 @@ bool goodComparison(bool a, bool b) => a == b;
 
 // ✅ Good: a single negation changes the result, so it stays
 bool goodSingleNegationInComparison(bool a, bool b) => !a == b;
+// ignore_for_file: many_lints/prefer_boolean_prefixes

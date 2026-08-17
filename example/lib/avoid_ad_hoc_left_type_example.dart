@@ -51,3 +51,4 @@ String goodExhaustiveFold(Either<Failure, _User> result) => result.match(
   },
   (user) => user.id,
 );
+// ignore_for_file: many_lints/prefer_primary_constructors

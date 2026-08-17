@@ -100,3 +100,5 @@ bool goodShortOrChain(Status status) =>
 // ✅ Good: a named set is a reusable collection, not an inlined branch
 const _known = {Status.active, Status.inactive, Status.pending};
 bool goodNamedSetContains(Status status) => _known.contains(status);
+// ignore_for_file: many_lints/prefer_boolean_prefixes
+// ignore_for_file: many_lints/prefer_returning_condition

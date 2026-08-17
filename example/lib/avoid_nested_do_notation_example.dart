@@ -33,3 +33,4 @@ Option<String> goodFlat() => Option.Do(($) {
 Option<String> goodSiblingA() => Option.Do(($) => $(_first));
 
 Option<String> goodSiblingB() => Option.Do(($) => $(_second));
+// ignore_for_file: many_lints/prefer_returning_shorthands

@@ -26,10 +26,12 @@ Flags uses of `Isolate.run()` from `dart:isolate`, which is not supported on the
 ```dart
 import 'dart:isolate';
 
-final result = await Isolate.run(() => expensiveWork());
-final result2 = await Isolate.run(() async => expensiveWork());
-final result3 = await Isolate.run(expensiveWork);
-final result4 = await Isolate.run<int>(() => expensiveWork());
+Future<void> runWork() async {
+  final result = await Isolate.run(() => expensiveWork());
+  final result2 = await Isolate.run(() async => expensiveWork());
+  final result3 = await Isolate.run(expensiveWork);
+  final result4 = await Isolate.run<int>(() => expensiveWork());
+}
 ```
 
 ## Do
@@ -37,7 +39,9 @@ final result4 = await Isolate.run<int>(() => expensiveWork());
 ```dart
 import 'package:flutter/foundation.dart';
 
-final result = await compute((_) => expensiveWork(), null);
+Future<void> runWork() async {
+  final result = await compute((_) => expensiveWork(), null);
+}
 ```
 
 ## Configuration

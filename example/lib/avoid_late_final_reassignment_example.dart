@@ -47,3 +47,4 @@ class GoodMutable {
     token = 'second';
   }
 }
+// ignore_for_file: many_lints/prefer_conditional_expressions

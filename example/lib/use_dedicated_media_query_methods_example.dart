@@ -27,3 +27,4 @@ class UseDedicatedMediaQueryMethodsExample extends StatelessWidget {
     );
   }
 }
+// ignore_for_file: many_lints/prefer_moving_to_variable

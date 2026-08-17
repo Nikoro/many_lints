@@ -17,7 +17,7 @@ bun run catalogs:check     # Verify generated documentation catalogs are current
 
 ## Tech Stack
 
-- **Framework**: Astro 6 with Starlight theme
+- **Framework**: Astro 7 with Starlight theme
 - **Package manager**: Bun
 - **Hosting**: GitHub Pages (via `.github/workflows/docs-deploy.yaml`)
 - **Content format**: MDX / Markdown with Starlight frontmatter
@@ -43,7 +43,7 @@ docs/
       index.mdx             # Splash landing page (hero + CTA)
       docs/
         getting-started.mdx # Quick setup guide
-        configuration.md    # Installation, diagnostics config, suppression
+        configuration.mdx   # Installation, diagnostics config, suppression
         rules.md            # Generated category index for all rules
         rules/              # Hand-maintained rule pages organized by category
           class-naming/
@@ -87,7 +87,7 @@ catalog by hand; update the rule page metadata or the catalog script instead.
 
 ### Configurable rules use `.mdx`
 
-The 116 rules that accept options are `.mdx`, not `.md`, because every options snippet is
+The 114 rules that accept options are `.mdx`, not `.md`, because every options snippet is
 shown in both supported locations via Starlight tabs:
 
 ```mdx
@@ -111,7 +111,7 @@ what tells the reader where the YAML goes.
 `generate-rule-pages.mjs` checks for both extensions and will not overwrite a `.mdx`
 page, even under `--force`.
 
-**Adding a new rule page**: Create a `.md` file (or `.mdx`, if the rule has options) in the appropriate category directory under `docs/src/content/docs/docs/rules/`. Use an existing page as a template. Determine the version tag from git history. A rule with options must also be added to the table under "Per-rule options" in `configuration.md`.
+**Adding a new rule page**: Create a `.md` file (or `.mdx`, if the rule has options) in the appropriate category directory under `docs/src/content/docs/docs/rules/`. Use an existing page as a template. Determine the version tag from git history. A rule with options must also be added to the table under "Per-rule options" in `configuration.mdx`.
 
 **Adding a new category**: Add the directory under `rules/` AND add a matching entry in the `sidebar` array in `astro.config.mjs`.
 
@@ -138,8 +138,9 @@ Starlight component overrides (registered in `astro.config.mjs` under `component
 
 GitHub Actions workflow (`.github/workflows/docs-deploy.yaml`):
 1. Triggers on pushes to `main` that touch `docs/**`
-2. Installs bun, builds with `bun run build`
-3. Deploys `docs/dist/` to GitHub Pages
+2. Installs Dart dependencies and runs `tool/verify_documentation.dart`
+3. Installs bun and builds with `bun run build`
+4. Deploys `docs/dist/` to GitHub Pages
 
 ## Routing
 

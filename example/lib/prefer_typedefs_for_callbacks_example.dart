@@ -20,3 +20,4 @@ void goodListen(EventHandler onEvent) {}
 void noParameters(void Function() callback) {}
 
 void oneParameter(void Function(String) callback) {}
+// ignore_for_file: many_lints/prefer_void_callback

@@ -27,41 +27,35 @@ Using `SizedBox(height: 16)` for spacing works, but it is error-prone in `Row` (
 ## Don't
 
 ```dart
-Column(
-  children: [
-    Text('First'),
-    SizedBox(height: 16),
-    Text('Second'),
-  ],
-)
-
-Row(
-  children: [
-    Text('Left'),
-    SizedBox(width: 8),
-    Text('Right'),
-  ],
-)
+final widgets = <Widget>[
+  Column(
+    children: const [
+      Text('First'),
+      SizedBox(height: 16),
+      Text('Second'),
+    ],
+  ),
+  Row(
+    children: const [
+      Text('Left'),
+      SizedBox(width: 8),
+      Text('Right'),
+    ],
+  ),
+];
 ```
 
 ## Do
 
 ```dart
-Column(
-  children: [
-    Text('First'),
-    Gap(16),
-    Text('Second'),
-  ],
-)
-
-Row(
-  children: [
-    Text('Left'),
-    Gap(8),
-    Text('Right'),
-  ],
-)
+final widgets = <Widget>[
+  Column(
+    children: const [Text('First'), Gap(16), Text('Second')],
+  ),
+  Row(
+    children: const [Text('Left'), Gap(8), Text('Right')],
+  ),
+];
 ```
 
 ## Turning this rule off

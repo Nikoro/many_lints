@@ -46,3 +46,4 @@ class GoodDocumented {
   /// Creates an empty instance, which the cache uses as a placeholder.
   GoodDocumented();
 }
+// ignore_for_file: many_lints/prefer_declaring_const_constructor

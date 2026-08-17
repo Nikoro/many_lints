@@ -67,3 +67,5 @@ bool goodMethodCalls(_Generator g) => g.next() == g.next();
 
 // ✅ Edge case: different indices
 bool goodDifferentIndices(List<int> items) => items[0] == items[1];
+// ignore_for_file: many_lints/prefer_boolean_prefixes
+// ignore_for_file: many_lints/prefer_getter_over_method

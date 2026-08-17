@@ -39,3 +39,6 @@ class Model {
   // A private name's underscore is a modifier, not part of its length.
   final int _id = 0;
 }
+// ignore_for_file: many_lints/prefer_moving_to_variable
+// ignore_for_file: many_lints/prefer_type_over_var
+// ignore_for_file: many_lints/use_existing_variable

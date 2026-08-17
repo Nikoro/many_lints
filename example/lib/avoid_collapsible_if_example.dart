@@ -77,3 +77,4 @@ void edgeCasePattern(Object value, bool b) {
     }
   }
 }
+// ignore_for_file: many_lints/prefer_primary_constructors

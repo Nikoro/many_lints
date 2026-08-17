@@ -33,16 +33,8 @@ ref.watch(myProvider(Foo()));
 ## Do
 
 ```dart
-// Const values are canonicalized, so equality holds
-ref.watch(myProvider(const [1, 2, 3]));
-ref.watch(myProvider(const Foo()));
-
-// Primitives compare by value
-ref.watch(myProvider(42));
-
-// A class with a real == is stable across rebuilds
 class Foo {
-  Foo(this.id);
+  const Foo(this.id);
   final int id;
 
   @override
@@ -52,7 +44,14 @@ class Foo {
   int get hashCode => id.hashCode;
 }
 
-ref.watch(myProvider(Foo(1)));
+void watchStableValues(WidgetRef ref) {
+  // Const values are canonicalized, so equality holds.
+  ref.watch(myProvider(const [1, 2, 3]));
+  ref.watch(myProvider(const Foo(1)));
+
+  // Primitives compare by value.
+  ref.watch(myProvider(42));
+}
 ```
 
 ## Configuration

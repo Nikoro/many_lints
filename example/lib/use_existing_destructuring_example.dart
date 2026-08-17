@@ -73,3 +73,6 @@ void goodBeforeDestructuring(Config config) {
   final Config(:name) = config;
   print(name);
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_boolean_prefixes
+// ignore_for_file: many_lints/prefer_primary_constructors

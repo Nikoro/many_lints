@@ -38,3 +38,4 @@ TaskEither<String, int> goodCallbackDoesMore() => _fetch().flatMap((body) {
 // ✅ Good: a genuinely async step belongs in flatMap
 TaskEither<String, int> goodAsyncStep() =>
     _fetch().flatMap((body) => TaskEither.of(body.length));
+// ignore_for_file: many_lints/prefer_returning_shorthands

@@ -141,3 +141,4 @@ class _GoodDifferentMethodsState extends State<GoodDifferentMethods> {
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
+// ignore_for_file: many_lints/member_ordering

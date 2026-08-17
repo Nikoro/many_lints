@@ -48,3 +48,5 @@ List<int> goodPlainDart(List<int> values) => values.map((v) {
   if (v < 0) throw Exception('negative');
   return v;
 }).toList();
+// ignore_for_file: many_lints/prefer_for_loop_in_children
+// ignore_for_file: many_lints/prefer_returning_shorthands

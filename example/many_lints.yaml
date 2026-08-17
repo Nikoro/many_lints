@@ -2,8 +2,10 @@
 #
 # Every rule is off by default, so a project selects a rule set with `preset:`.
 # This example carries one file per rule, so it takes the broadest preset and
-# then switches on the rules that sit outside every preset. A real project
-# normally wants `core` or `recommended`.
+# then switches on the rules that sit outside every preset. Rules that need a
+# narrower scope or custom options are configured explicitly below, even when
+# `pedantic` already enables them. A real project normally wants `core` or
+# `recommended`.
 preset: pedantic
 
 # The rest of this file demonstrates `exclude`: the rule stays enabled
@@ -33,14 +35,6 @@ rules:
   list_all_equatable_fields: true
   prefer_equatable_mixin: true
 
-  # These take a side a coherent codebase may reasonably reject.
-  avoid_unnecessary_option: true
-  avoid_get_or_else_swallowing_failure: true
-
-  # Naming conventions, which are a project's own choice.
-  prefer_use_prefix: true
-  use_sliver_prefix: true
-
   # Config-driven like the `banned_*` family below: it reports nothing until
   # `error_types` names the hierarchy that must stay intact. Scoped with
   # `include:` to its own example, since `Failure` is a common name across the
@@ -50,10 +44,10 @@ rules:
     include:
       - lib/avoid_ad_hoc_left_type_example.dart
 
-  # A file-organization convention, so it sits outside every preset. Scoped
-  # with `include:` to its own example: this example package deliberately keeps
-  # several declarations per file to document each rule in one place, so the
-  # rule would otherwise report from nearly every file here.
+  # This pedantic file-organization convention is scoped with `include:` to its
+  # own example: this example package deliberately keeps several declarations
+  # per file to document each rule in one place, so the rule would otherwise
+  # report from nearly every file here.
   #
   # `groups:` is what lets one rule cover the type-specific conventions too —
   # each group carries its own budget, so the example file's one bloc and one
@@ -127,53 +121,8 @@ rules:
         in: ['lib/banned_usage_example.dart']
         message: 'Inject a clock so this stays testable.'
 
-  # In no preset — merging two independent enum branches is a judgement call,
-  # so the rule is enabled here only to demonstrate it.
-  no_equal_switch_case:
-    enabled: true
-
-  # In no preset — the right member order is a house style, so the rule
-  # reports only where a project declares one. Enabled here to demonstrate it.
-  member_ordering:
-    enabled: true
-
-  # In no preset — naming is where codebases disagree most, and a predicate
-  # like `screen.atLeast(...)` reads fine without a question verb.
-  prefer_boolean_prefixes:
-    enabled: true
-
-  # In no preset — a naming convention rather than a correctness question.
-  prefer_correct_callback_field_name:
-    enabled: true
-
-  # In no preset — a line budget is a house style, and the default of 50 is
-  # stricter than many codebases run. Enabled here to demonstrate it.
-  avoid_long_functions:
-    enabled: true
-
-  # In no preset — each is a budget or an API-shape judgement rather than a
-  # correctness question. Enabled here to demonstrate them.
-  avoid_complex_conditions:
-    enabled: true
-  avoid_long_parameter_list:
-    enabled: true
-  prefer_getter_over_method:
-    enabled: true
-
-  # In no preset — literal spelling, branch ordering and guard shape are all
-  # house styles. Enabled here to demonstrate them.
-  double_literal_format:
-    enabled: true
-  avoid_inconsistent_digit_separators:
-    enabled: true
-  prefer_early_return:
-    enabled: true
-  avoid_negated_conditions:
-    enabled: true
-
-  # Budget rules. The defaults are sized for real code, so each example file
-  # lowers its own budget far enough to demonstrate the rule in a file short
-  # enough to read.
+  # Pedantic budget rules. Each example with a custom value lowers its own
+  # budget far enough to demonstrate the rule in a file short enough to read.
   avoid_long_files:
     max_lines: 20
     include: ["lib/avoid_long_files_example.dart"]
@@ -183,32 +132,17 @@ rules:
   max_statements:
     max_statements: 8
     include: ["lib/max_statements_example.dart"]
-  avoid_high_cyclomatic_complexity:
-    enabled: true
-
   # Widget metrics. The nesting default is 8; the widget-count example lowers
   # its budget so the file stays short enough to read.
-  avoid_deep_widget_nesting:
-    enabled: true
   avoid_too_many_widgets_per_build:
     max_widgets: 10
     include: ["lib/avoid_too_many_widgets_per_build_example.dart"]
 
   # Code metrics and naming. The ordering rules report nothing without an
   # `order:`, so each example file configures the one it demonstrates.
-  avoid_deep_nesting:
-    enabled: true
   avoid_too_many_methods:
     max_methods: 5
     include: ["lib/avoid_too_many_methods_example.dart"]
-  match_getter_setter_field_names:
-    enabled: true
-  prefer_correct_error_name:
-    enabled: true
-  prefer_correct_handler_name:
-    enabled: true
-  use_setstate_synchronously:
-    enabled: true
   enum_constants_ordering:
     order: alphabetical
     include: ["lib/enum_constants_ordering_example.dart"]
@@ -225,22 +159,12 @@ rules:
   arguments_ordering:
     order: alphabetical
     include: ["lib/arguments_ordering_example.dart"]
-  initializers_ordering:
-    enabled: true
   record_fields_ordering:
     order: alphabetical
     include: ["lib/record_fields_ordering_example.dart"]
   pattern_fields_ordering:
     order: alphabetical
     include: ["lib/pattern_fields_ordering_example.dart"]
-  prefer_conditional_expressions:
-    enabled: true
-  prefer_typedefs_for_callbacks:
-    enabled: true
-  prefer_declaring_const_constructor:
-    enabled: true
-  prefer_correct_setter_parameter_name:
-    enabled: true
   prefer_correct_identifier_length:
     include: ["lib/prefer_correct_identifier_length_example.dart"]
   prefer_prefixed_global_constants:
@@ -264,21 +188,21 @@ rules:
     pattern: 'should .*'
     include: ["lib/format_test_name_example.dart"]
 
-  # A type-name budget is a house style, so the rule sits outside every preset.
-  # Scoped to its own example: this package documents rules with deliberately
-  # short fixture names (`Ab`, `Foo`) that the rule is right to flag elsewhere.
+  # This pedantic type-name budget is scoped to its own example: this package
+  # documents rules with deliberately short fixture names (`Ab`, `Foo`) that
+  # the rule is right to flag elsewhere.
   prefer_correct_type_name:
     include: ["lib/prefer_correct_type_name_example.dart"]
 
-  # Sentence-shaped comments are a house style, so the rule sits outside every
-  # preset. Scoped to its own example: this package's other files open their
-  # comments with a rule name (`avoid_only_rethrow`, lowercase by definition).
+  # This pedantic comment style is scoped to its own example: this package's
+  # other files open comments with a rule name (`avoid_only_rethrow`, lowercase
+  # by definition).
   format_comment:
     include: ["lib/format_comment_example.dart"]
 
-  # What counts as "magic" is a house style, so both sit outside every preset.
-  # Scoped to their own examples: this package is full of deliberately literal
-  # fixtures, which is exactly what these rules report.
+  # These pedantic literal rules are scoped to their own examples: this package
+  # is full of deliberately literal fixtures, which is exactly what they
+  # report.
   no_magic_number:
     include: ["lib/no_magic_number_example.dart"]
     # `Insets` stands in for EdgeInsets, which this package cannot depend on:
@@ -288,21 +212,11 @@ rules:
   no_magic_string:
     include: ["lib/no_magic_string_example.dart"]
 
-  # Both impose an architecture rather than catching a defect, so they sit
-  # outside every preset.
-  prefer_widget_private_members:
-    enabled: true
-  prefer_extracting_callbacks:
-    enabled: true
-
-  # Style choices a coherent codebase may reasonably reject, so all four sit
-  # outside every preset.
+  # These pedantic style rules need per-example scoping or options here.
   prefer_named_parameters:
     include: ["lib/prefer_named_parameters_example.dart"]
   prefer_explicit_parameter_names:
     include: ["lib/prefer_explicit_parameter_names_example.dart"]
-  avoid_accessing_other_classes_private_members:
-    enabled: true
   # Reports nothing until it names the APIs worth pinning.
   prefer_explicit_type_arguments:
     methods: [showDialog]

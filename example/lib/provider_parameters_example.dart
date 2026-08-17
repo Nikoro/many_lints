@@ -55,3 +55,5 @@ void goodConstList(Ref ref) {
 void goodStableInstance(Ref ref) {
   ref.watch(stableProvider(const Stable(1)));
 }
+// ignore_for_file: many_lints/prefer_declaring_const_constructor
+// ignore_for_file: many_lints/prefer_primary_constructors

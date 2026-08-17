@@ -98,3 +98,5 @@ class PreferShorthandsWithConstructorsExample extends StatelessWidget {
     );
   }
 }
+// ignore_for_file: many_lints/avoid_long_functions
+// ignore_for_file: many_lints/member_ordering

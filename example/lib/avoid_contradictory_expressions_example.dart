@@ -53,3 +53,4 @@ void good(int x, int y) {
     print('ok');
   }
 }
+// ignore_for_file: many_lints/avoid_high_cyclomatic_complexity

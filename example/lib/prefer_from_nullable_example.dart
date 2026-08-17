@@ -35,3 +35,5 @@ Option<String> goodOtherCondition(String name) =>
 
 // ✅ Good: a plain nullable conditional, no Option involved
 String goodPlainDart(String? name) => name != null ? name : 'fallback';
+// ignore_for_file: many_lints/prefer_from_predicate
+// ignore_for_file: many_lints/prefer_returning_shorthands

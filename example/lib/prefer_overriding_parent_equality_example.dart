@@ -71,3 +71,6 @@ class SimpleChild extends SimpleParent {
   final int y;
   SimpleChild(this.y, int x) : super(x);
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_declaring_const_constructor
+// ignore_for_file: many_lints/prefer_primary_constructors

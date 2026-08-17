@@ -26,13 +26,13 @@ This rule flags an fpdart type parameterised with `void` — `TaskEither<Failure
 ## Don't
 
 ```dart
-TaskEither<Failure, void> save(User user) => ...;
+TaskEither<Failure, void> save(User user) => throw UnimplementedError();
 ```
 
 ## Do
 
 ```dart
-TaskEither<Failure, Unit> save(User user) => ...;
+TaskEither<Failure, Unit> save(User user) => throw UnimplementedError();
 ```
 
 The value to return is the `unit` constant:

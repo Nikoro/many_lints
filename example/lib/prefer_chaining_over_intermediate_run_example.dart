@@ -46,3 +46,5 @@ Future<void> goodRunInsideClosure() async {
   final result = await goodChained().run();
   final handler = () async => await _getArea().run();
 }
+// ignore_for_file: many_lints/prefer_primary_constructors
+// ignore_for_file: many_lints/prefer_returning_shorthands

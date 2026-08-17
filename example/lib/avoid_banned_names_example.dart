@@ -48,3 +48,4 @@ class DataSource {
 // 🔹 Edge case: only *declarations* are checked, never references. Renaming
 // the declaration fixes every use, so reporting each reference would bury the
 // one line you can act on.
+// ignore_for_file: many_lints/prefer_primary_constructors

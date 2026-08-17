@@ -81,3 +81,5 @@ class Derived extends Base {
   final int x;
   Derived(this.x);
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_declaring_const_constructor

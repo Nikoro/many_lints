@@ -56,3 +56,4 @@ String goodInt(int count) => 'count: $count';
 
 // ✅ Good: enums render as their constant name
 String goodEnum(Status status) => 'status: $status';
+// ignore_for_file: many_lints/prefer_primary_constructors

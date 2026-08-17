@@ -57,3 +57,4 @@ class TimerInitial extends TimerState {}
 class TimerCubit extends Cubit<TimerState> {
   TimerCubit() : super(TimerInitial());
 }
+// ignore_for_file: many_lints/member_ordering

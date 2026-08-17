@@ -31,21 +31,37 @@ This rule is in the **`pedantic`** preset: a budget is a house style, and the ri
 ## Don't
 
 ```dart
-String? authRedirect(...) {
-  // 21 paths: signed-in checks, onboarding state, deep-link handling
-  // and route guards, all interleaved in one function.
+String describe(int n, bool flag, String? label) {
+  if (n < 0) return 'negative';
+  if (n == 0) return 'zero';
+  if (n > 100 && flag) return 'large and flagged';
+  if (n > 100 || flag) return 'large or flagged';
+  if (label != null && label.isNotEmpty) return label;
+
+  for (var i = 0; i < n; i++) {
+    if (i.isEven) print(i);
+  }
+
+  try {
+    return int.parse(label ?? '').toString();
+  } on FormatException {
+    return 'bad format';
+  }
 }
 ```
 
 ## Do
 
 ```dart
-String? authRedirect(...) {
-  if (_isSigningIn(state)) return _signInRedirect(state);
-  if (_needsOnboarding(user)) return onboardingRoute;
+String describe(int n, String? label) {
+  if (_isSpecialCase(n)) return _specialCase(n);
 
-  return _guardedRoute(state);
+  return label ?? 'unknown';
 }
+
+bool _isSpecialCase(int n) => n <= 0 || n > 100;
+
+String _specialCase(int n) => n <= 0 ? 'small' : 'large';
 ```
 
 ## Enabling this rule

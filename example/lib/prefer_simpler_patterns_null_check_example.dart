@@ -41,3 +41,6 @@ void good(WithField object) {
     print('not null');
   }
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_declaring_const_constructor
+// ignore_for_file: many_lints/prefer_primary_constructors

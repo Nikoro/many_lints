@@ -121,3 +121,5 @@ void goodRepeatedCascade() {
   final list = []..add(1);
   print([]..add(1));
 }
+// ignore_for_file: many_lints/prefer_declaring_const_constructor
+// ignore_for_file: many_lints/prefer_moving_to_variable

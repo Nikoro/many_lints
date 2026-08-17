@@ -99,3 +99,4 @@ void good() {
   // Correct: expectLater with matcher
   expectLater(scores, hasLength(3));
 }
+// ignore_for_file: many_lints/member_ordering

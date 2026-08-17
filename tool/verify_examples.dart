@@ -1,6 +1,7 @@
 import 'dart:io';
 
-/// Verifies that every runnable example triggers the rule named by its file.
+/// Verifies that every runnable example triggers only the rule named by its
+/// file.
 ///
 /// The example package intentionally enables many_lints diagnostics, so a
 /// normal `dart analyze example` exits non-zero and produces many expected
@@ -43,6 +44,7 @@ Future<void> main() async {
     (file) => file.path.endsWith('_example.dart'),
   );
   final missing = <String>[];
+  final expectedRuleByFile = <String, String>{};
 
   for (final file in examples) {
     final fileName = file.uri.pathSegments.last;
@@ -50,6 +52,7 @@ Future<void> main() async {
       0,
       fileName.length - '_example.dart'.length,
     );
+    expectedRuleByFile[fileName] = ruleName;
     if (pathOnlyRules.contains(ruleName)) continue;
 
     final hasOwnDiagnostic = diagnostics.any(
@@ -59,6 +62,12 @@ Future<void> main() async {
     if (!hasOwnDiagnostic) missing.add(ruleName);
   }
 
+  final unexpected = diagnostics.where((diagnostic) {
+    final fileName = Uri.file(diagnostic.path).pathSegments.last;
+    final expectedRule = expectedRuleByFile[fileName];
+    return expectedRule == null || diagnostic.code != expectedRule;
+  }).toList();
+
   if (missing.isNotEmpty) {
     stderr.writeln(
       'Examples that do not trigger their own rule: ${missing.join(', ')}',
@@ -67,8 +76,21 @@ Future<void> main() async {
     return;
   }
 
+  if (unexpected.isNotEmpty) {
+    stderr.writeln(
+      'Example analysis produced diagnostics outside the rule demonstrated '
+      'by each file:',
+    );
+    for (final diagnostic in unexpected) {
+      stderr.writeln(diagnostic.originalLine);
+    }
+    exitCode = 1;
+    return;
+  }
+
   stdout.writeln(
-    'Verified ${examples.length} examples: no analyzer errors/warnings and '
+    'Verified ${examples.length} isolated examples: no analyzer '
+    'errors/warnings or cross-rule diagnostics, and '
     '${examples.length - pathOnlyRules.length} runnable rule demonstrations.',
   );
 }

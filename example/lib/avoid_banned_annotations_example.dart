@@ -40,3 +40,4 @@ class Config {
 // 🔹 Edge case: configure the bare name, without the '@'. Both
 // '@visibleForTesting' and a prefixed '@meta.visibleForTesting' match the same
 // entry, so an import prefix cannot slip past the rule.
+// ignore_for_file: many_lints/prefer_primary_constructors

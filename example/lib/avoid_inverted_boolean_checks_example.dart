@@ -39,3 +39,4 @@ bool goodCustomType(_Version a, _Version b) => !(a > b);
 
 // ✅ Good: equality is handled by avoid_unnecessary_negations
 bool goodEquality(int a, int b) => !(a == b);
+// ignore_for_file: many_lints/prefer_boolean_prefixes

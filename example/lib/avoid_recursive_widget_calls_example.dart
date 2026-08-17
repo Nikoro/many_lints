@@ -92,3 +92,4 @@ class _GoodFactory extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
+// ignore_for_file: many_lints/prefer_widget_private_members

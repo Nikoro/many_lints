@@ -62,3 +62,6 @@ class Helper {
     }
   }
 }
+// ignore_for_file: many_lints/avoid_only_rethrow
+// ignore_for_file: many_lints/prefer_primary_constructors
+// ignore_for_file: many_lints/prefer_returning_shorthands

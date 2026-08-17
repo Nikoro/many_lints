@@ -48,7 +48,7 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 A handler for the base type covers every subclass:
 
 ```dart
-on<CounterEvent>((event, emit) => ...);
+on<CounterEvent>((event, emit) => emit(state));
 ```
 
 ## Known limitations

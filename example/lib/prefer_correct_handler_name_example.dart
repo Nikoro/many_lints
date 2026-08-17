@@ -46,3 +46,4 @@ class EdgeCases {
   // LINT: reported, because `_online` only looks on-prefixed
   Button looksPrefixed() => Button(onTap: _online);
 }
+// ignore_for_file: many_lints/prefer_declaring_const_constructor

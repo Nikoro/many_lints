@@ -52,3 +52,6 @@ class GoodWidgetWithTypes {
     this.combine,
   );
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_primary_constructors
+// ignore_for_file: many_lints/prefer_typedefs_for_callbacks

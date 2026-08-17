@@ -73,3 +73,5 @@ class Helpers {
   String getName() => 'hello';
   int getCount() => 42;
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_getter_over_method

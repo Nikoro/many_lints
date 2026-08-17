@@ -39,3 +39,4 @@ int goodCounter(Ref ref) => 0;
 
 // ✅ Good: An unannotated class is not a provider
 class PlainClass {}
+// ignore_for_file: many_lints/prefer_getter_over_method

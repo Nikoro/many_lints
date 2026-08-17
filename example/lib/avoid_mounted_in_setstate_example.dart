@@ -70,3 +70,5 @@ class _GoodExampleState extends State<GoodExample> {
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/use_setstate_synchronously

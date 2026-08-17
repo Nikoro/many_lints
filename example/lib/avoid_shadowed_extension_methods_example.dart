@@ -61,3 +61,4 @@ extension StaticExtension on Model {
 extension DescribeExtension on Model {
   String describe() => 'model';
 }
+// ignore_for_file: many_lints/prefer_getter_over_method

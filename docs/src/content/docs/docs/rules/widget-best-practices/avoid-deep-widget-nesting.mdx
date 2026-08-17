@@ -18,7 +18,7 @@ This rule flags a widget tree nested more deeply than the configured budget.
 
 Nesting depth matches how a widget tree actually goes wrong. A `build` can be short and still be unreadable: eight levels of `Padding` inside `Column` inside `Expanded` push the widget that matters off the right edge, and every edit has to count brackets to find its place.
 
-Extracting a subtree into a named widget removes a whole level and gives the part a name at the same time — which is why this rule pairs naturally with [`prefer_single_widget_per_file`](/many_lints/docs/rules/code-organization/prefer-single-widget-per-file/).
+Extracting a subtree into a named widget removes a whole level and gives the part a name at the same time — which is why this rule pairs naturally with [`prefer_single_widget_per_file`](/many_lints/docs/rules/widget-best-practices/prefer-single-widget-per-file/).
 
 Only widget instantiations are counted, so the lists, closures and conditionals between them do not inflate the number.
 

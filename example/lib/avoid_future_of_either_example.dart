@@ -41,3 +41,5 @@ Future<Either<String, _User>>? goodNullableIsNotReported;
 Stream<Either<String, _User>> goodStream() async* {
   yield Either.of(const _User('ada'));
 }
+// ignore_for_file: many_lints/prefer_primary_constructors
+// ignore_for_file: many_lints/prefer_returning_shorthands

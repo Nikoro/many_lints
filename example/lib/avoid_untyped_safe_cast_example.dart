@@ -48,3 +48,4 @@ Either<String, int> goodFromReturnType(dynamic json) =>
 void goodFromAnnotation(dynamic json) {
   final Either<String, int> result = Either.safeCast(json, (v) => 'nope');
 }
+// ignore_for_file: many_lints/prefer_returning_shorthands

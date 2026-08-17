@@ -32,3 +32,4 @@ void edgeCases(Object o) {
     print('$b$a');
   }
 }
+// ignore_for_file: many_lints/prefer_primary_constructors

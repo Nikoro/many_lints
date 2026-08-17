@@ -31,7 +31,7 @@ Not to be confused with `avoid_returning_widgets`, which is about a function *re
 ## Don't
 
 ```dart
-ElevatedButton(
+final button = ElevatedButton(
   onPressed: () {
     print('validating');
     print('saving');
@@ -39,7 +39,7 @@ ElevatedButton(
     print('done');
   },
   child: const Text('Save'),
-)
+);
 ```
 
 ## Do
@@ -53,10 +53,16 @@ void _save() {
 }
 
 // The tree stays readable and the behaviour has a name.
-ElevatedButton(onPressed: _save, child: const Text('Save'))
+final button = ElevatedButton(
+  onPressed: _save,
+  child: const Text('Save'),
+);
 
 // A short closure is a tear-off in all but spelling — never reported.
-ElevatedButton(onPressed: () => print('save'), child: const Text('Save'))
+final shortButton = ElevatedButton(
+  onPressed: () => print('save'),
+  child: const Text('Save'),
+);
 ```
 
 ## Options

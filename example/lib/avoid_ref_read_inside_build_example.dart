@@ -75,3 +75,4 @@ class _GoodRefReadOutsideBuild extends ConsumerState<ConsumerStatefulWidget> {
     return const SizedBox();
   }
 }
+// ignore_for_file: many_lints/member_ordering

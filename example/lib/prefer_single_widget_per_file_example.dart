@@ -47,3 +47,5 @@ class MyModel {
 
 // ✅ Good: StatefulWidget with its private State class is fine
 // (State classes are private and extend State, not Widget directly)
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_primary_constructors

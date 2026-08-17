@@ -63,3 +63,6 @@ class Processor {
   void process<T>(T item) {}
   R transform<R>(Object input) => throw '';
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_declaring_const_constructor
+// ignore_for_file: many_lints/prefer_primary_constructors

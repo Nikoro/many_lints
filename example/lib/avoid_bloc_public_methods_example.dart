@@ -49,3 +49,4 @@ class GoodCounterBloc extends Bloc<CounterEvent, int> {
   // Static methods are fine
   static CounterEvent createIncrement() => Increment();
 }
+// ignore_for_file: many_lints/member_ordering

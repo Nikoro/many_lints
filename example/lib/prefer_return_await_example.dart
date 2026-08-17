@@ -59,3 +59,4 @@ Future<String> goodNonAsync() {
 }
 
 Future<String> asyncOp() async => 'result';
+// ignore_for_file: many_lints/avoid_redundant_async

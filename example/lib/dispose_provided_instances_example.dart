@@ -85,3 +85,4 @@ final regularProvider = Provider<RegularService>((ref) {
   final instance = RegularService();
   return instance;
 });
+// ignore_for_file: many_lints/member_ordering

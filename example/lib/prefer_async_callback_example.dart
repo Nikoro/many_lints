@@ -40,3 +40,5 @@ void goodFutureInt(Future<int> Function() callback) {}
 void goodFutureString(Future<String> Function() callback) {}
 void goodWithParams(Future<void> Function(int value) callback) {}
 void goodVoidCallback(void Function() callback) {}
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_primary_constructors

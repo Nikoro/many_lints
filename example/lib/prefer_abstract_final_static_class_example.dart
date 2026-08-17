@@ -66,3 +66,6 @@ class WithConstructor {
   WithConstructor();
   static const value = 42;
 }
+// ignore_for_file: many_lints/avoid_unnecessary_constructor
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_declaring_const_constructor

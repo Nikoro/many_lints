@@ -78,3 +78,5 @@ class EmptyEquatable extends Equatable {
   @override
   List<Object?> get props => [];
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_declaring_const_constructor

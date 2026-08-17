@@ -47,3 +47,7 @@ Option<_Player> goodElementAt(List<_Player> players) =>
 // ✅ Good: outside a pipeline this is ordinary Dart, and is not reported by
 // default. Set `report_outside_pipelines: true` to flag it too.
 _Player goodOutsidePipeline(List<_Player> players) => players.first;
+// ignore_for_file: many_lints/avoid_unsafe_collection_methods
+// ignore_for_file: many_lints/prefer_declaring_const_constructor
+// ignore_for_file: many_lints/prefer_primary_constructors
+// ignore_for_file: many_lints/prefer_returning_shorthands

@@ -52,3 +52,4 @@ class GoodDerived extends GoodBase {
   @override
   bool get isReady => true;
 }
+// ignore_for_file: many_lints/prefer_getter_over_method

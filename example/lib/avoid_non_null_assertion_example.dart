@@ -103,3 +103,4 @@ class EdgeCases {
     print(x);
   }
 }
+// ignore_for_file: many_lints/prefer_getter_over_method

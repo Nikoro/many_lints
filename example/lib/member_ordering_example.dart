@@ -61,3 +61,5 @@ class GoodNotifier {
 
   void _reset() {}
 }
+// ignore_for_file: many_lints/prefer_declaring_const_constructor
+// ignore_for_file: many_lints/prefer_getter_over_method

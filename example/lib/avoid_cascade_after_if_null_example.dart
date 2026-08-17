@@ -34,3 +34,4 @@ void good(Kettle? spareKettle) {
   // No if-null involved, cascade is unambiguous
   final kettle3 = Kettle()..boil();
 }
+// ignore_for_file: many_lints/member_ordering

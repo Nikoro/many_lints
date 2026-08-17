@@ -32,3 +32,4 @@ void edgeCases() {
   // Below `min_arguments`, order carries no cost.
   card(elevation: 2, color: 1);
 }
+// ignore_for_file: many_lints/avoid_long_parameter_list

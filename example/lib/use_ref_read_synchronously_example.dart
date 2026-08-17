@@ -91,3 +91,4 @@ class _GoodSyncCallback extends ConsumerWidget {
 }
 
 Future<void> fetchData() => Future<void>.delayed(const Duration(seconds: 1));
+// ignore_for_file: many_lints/prefer_moving_to_variable

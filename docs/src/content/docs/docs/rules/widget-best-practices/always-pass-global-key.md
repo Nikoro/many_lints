@@ -28,7 +28,7 @@ class MyForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final key = GlobalKey<FormState>();   // new identity every rebuild
-    return Form(key: key, child: ...);
+    return Form(key: key, child: const SizedBox());
   }
 }
 ```
@@ -43,7 +43,7 @@ class _MyFormState extends State<MyForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(key: _formKey, child: ...);
+    return Form(key: _formKey, child: const SizedBox());
   }
 }
 ```

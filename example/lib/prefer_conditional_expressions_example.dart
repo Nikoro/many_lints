@@ -64,3 +64,5 @@ void edgeCases(bool active, int n) {
 
   print('$a$b$count$n');
 }
+// ignore_for_file: many_lints/avoid_redundant_else
+// ignore_for_file: many_lints/prefer_type_over_var

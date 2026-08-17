@@ -144,3 +144,6 @@ class _GoodCallbackState extends State<GoodCallback> {
     );
   }
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_immutable_state
+// ignore_for_file: many_lints/use_setstate_synchronously

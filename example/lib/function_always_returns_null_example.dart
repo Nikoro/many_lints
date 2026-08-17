@@ -59,3 +59,4 @@ String? closureReturn(String key) {
   inner();
   return key;
 }
+// ignore_for_file: many_lints/function_always_returns_same_value

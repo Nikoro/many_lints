@@ -36,3 +36,4 @@ Option<String> goodPlainNullable(String? name) => Option.fromNullable(name);
 
 // ✅ Good: a bare tryParse, no Option involved
 int? goodBareParse(String input) => int.tryParse(input);
+// ignore_for_file: many_lints/prefer_returning_shorthands

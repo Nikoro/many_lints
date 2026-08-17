@@ -24,18 +24,24 @@ The cost lands exactly where it hurts most: an error message written to diagnose
 
 ```dart
 class User {
+  const User(this.id, this.email);
+
   final String id;
   final String email;
 }
 
-// Logs: "failed for Instance of 'User'"
-logger.severe('failed for $user');
+void logFailure(User user) {
+  // Logs: "failed for Instance of 'User'"
+  logger.severe('failed for $user');
+}
 ```
 
 ## Do
 
 ```dart
 class User {
+  const User(this.id, this.email);
+
   final String id;
   final String email;
 
@@ -43,7 +49,9 @@ class User {
   String toString() => 'User(id: $id, email: $email)';
 }
 
-logger.severe('failed for $user');
+void logFailure(User user) {
+  logger.severe('failed for $user');
+}
 ```
 
 Or interpolate the fields you actually need:

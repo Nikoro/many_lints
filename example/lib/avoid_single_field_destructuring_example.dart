@@ -42,3 +42,5 @@ void goodMultipleFields(Config config) {
 void goodRegularDeclaration() {
   final x = 42;
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_primary_constructors

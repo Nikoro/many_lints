@@ -126,3 +126,4 @@ class _GoodMultipleListenersState extends State<GoodMultipleListeners> {
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
+// ignore_for_file: many_lints/member_ordering

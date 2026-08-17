@@ -73,3 +73,4 @@ class _PlainSetterRender extends RenderBox {
     _value = newValue;
   }
 }
+// ignore_for_file: many_lints/prefer_correct_setter_parameter_name

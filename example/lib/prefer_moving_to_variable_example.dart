@@ -73,3 +73,4 @@ int goodInstanceCreation() => const _Inner().value + const _Inner().value;
 // hoisted out of it.
 List<int> goodInsideClosure(Object context, List<int> items) =>
     items.map((e) => _Theme.of(context).colors.primary).toList();
+// ignore_for_file: many_lints/member_ordering

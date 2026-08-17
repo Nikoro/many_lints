@@ -127,3 +127,4 @@ class _GoodDeactivateState extends State<GoodDeactivate> {
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
+// ignore_for_file: many_lints/prefer_immutable_state

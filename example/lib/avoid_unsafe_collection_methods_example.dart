@@ -67,3 +67,4 @@ class _Pair {
 }
 
 int _edgeCaseNonCollection(_Pair pair) => pair.first;
+// ignore_for_file: many_lints/prefer_primary_constructors

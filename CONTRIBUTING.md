@@ -21,7 +21,8 @@ dart pub get
 
 ```sh
 dart format --enable-experiment=primary-constructors --output=none --set-exit-if-changed .
-dart analyze
+dart analyze --fatal-infos
+dart run tool/verify_documentation.dart
 dart run tool/verify_examples.dart
 dart test
 cd docs && bun install && bun run build
@@ -89,7 +90,8 @@ and [testing rules](https://github.com/dart-lang/sdk/blob/main/pkg/analysis_serv
 7. **Add a rule page** under
    `docs/src/content/docs/docs/rules/<category>/`, including its preset,
    examples, quick-fix behavior, options, and useful official Dart or Flutter
-   references.
+   references. Run `dart run tool/verify_documentation.dart` to check every
+   Dart/YAML snippet, synchronized config pair, and internal docs link.
 
 8. **Refresh generated catalogs** with `cd docs && bun run catalogs`. Update
    `CHANGELOG.md` under `[Unreleased]` and review any README count changes
@@ -101,13 +103,14 @@ and [testing rules](https://github.com/dart-lang/sdk/blob/main/pkg/analysis_serv
 dart test                          # Run all tests
 dart test test/<rule_name>_test.dart  # Run a specific test file
 dart test --fail-fast              # Stop on first failure
-dart run tool/verify_examples.dart # Verify every example triggers its rule
+dart run tool/verify_documentation.dart # Verify docs snippets, config, links
+dart run tool/verify_examples.dart # Verify isolated per-rule examples
 ```
 
 ## Code Style
 
 - Run `dart format .` before committing
-- Run `dart analyze` and fix any issues
+- Run `dart analyze --fatal-infos` and fix any issues
 - Use English for all code, comments, and commit messages
 - Follow existing naming conventions (snake_case for rules, PascalCase for classes)
 

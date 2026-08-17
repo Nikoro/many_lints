@@ -75,3 +75,7 @@ class GoodNotifier4 extends Notifier<int> {
   @override
   int build() => 0;
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_declaring_const_constructor
+// ignore_for_file: many_lints/prefer_immutable_state
+// ignore_for_file: many_lints/prefer_primary_constructors

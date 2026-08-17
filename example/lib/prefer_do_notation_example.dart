@@ -38,3 +38,4 @@ Option<int> goodChained() =>
 // Set `max_flat_map_depth: 2` to flag it too.
 Option<String> goodTwoLevels() =>
     _banana.flatMap((banana) => _apple.flatMap((apple) => Option.of(apple)));
+// ignore_for_file: many_lints/prefer_returning_shorthands

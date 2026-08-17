@@ -50,3 +50,4 @@ class WithBody {
 
   final int x;
 }
+// ignore_for_file: many_lints/prefer_primary_constructors

@@ -85,3 +85,4 @@ class GoodNoBuilderExample extends StatelessWidget {
 
   Widget _banner(BuildContext ctx) => const Text('hello');
 }
+// ignore_for_file: many_lints/member_ordering

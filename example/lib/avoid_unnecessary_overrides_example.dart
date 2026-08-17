@@ -117,3 +117,5 @@ class _NoAnnotation extends _Base {
     super.foo();
   }
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_correct_setter_parameter_name

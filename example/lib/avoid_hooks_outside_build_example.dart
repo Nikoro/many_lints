@@ -105,3 +105,4 @@ void edgeCase() {
   // Not an unqualified hook call — no lint
   _Controller().useResource();
 }
+// ignore_for_file: many_lints/prefer_widget_private_members

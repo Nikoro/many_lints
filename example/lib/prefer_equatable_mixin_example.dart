@@ -54,3 +54,5 @@ class Pet extends Animal with EquatableMixin {
 abstract class GoodBaseEntity with EquatableMixin {
   const GoodBaseEntity();
 }
+// ignore_for_file: many_lints/prefer_declaring_const_constructor
+// ignore_for_file: many_lints/prefer_primary_constructors

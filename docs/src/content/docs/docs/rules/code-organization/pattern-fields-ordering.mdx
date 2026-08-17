@@ -23,13 +23,17 @@ This rule is in the **`pedantic`** preset.
 ## Don't
 
 ```dart
-if (user case User(name: final n, age: final a)) { ... }
+if (user case User(name: final n, age: final a)) {
+  print('$n is $a');
+}
 ```
 
 ## Do
 
 ```dart
-if (user case User(age: final a, name: final n)) { ... }
+if (user case User(age: final a, name: final n)) {
+  print('$n is $a');
+}
 ```
 
 ## Enabling this rule

@@ -76,3 +76,5 @@ void goodExamples() {
   // No shorthands at all.
   final g = Another(Some(version: SomeClass('val')));
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_declaring_const_constructor

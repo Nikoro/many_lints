@@ -75,3 +75,4 @@ int edgeCaseFallthrough(bool flag) {
   }
   return 3;
 }
+// ignore_for_file: many_lints/prefer_conditional_expressions

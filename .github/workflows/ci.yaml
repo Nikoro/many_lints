@@ -36,8 +36,57 @@ jobs:
       - name: Check code formatting
         run: dart format --enable-experiment=primary-constructors . --output=none --set-exit-if-changed
       - name: Static code analysis
-        run: dart analyze
+        run: dart analyze --fatal-infos
+      - name: Verify documentation sources
+        run: dart run tool/verify_documentation.dart
       - name: Verify rule examples
         run: dart run tool/verify_examples.dart
       - name: Run unit tests
         run: dart test --test-randomize-ordering-seed=random --fail-fast
+
+  minimum-sdk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v7
+      - name: Set up minimum supported Dart SDK
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "3.11.0"
+      - name: Cache pub dependencies
+        uses: actions/cache@v6
+        with:
+          path: ~/.pub-cache
+          key: pub-dart-3.11-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-dart-3.11-
+      - name: Get dependencies
+        run: dart pub get --no-example
+      - name: Static code analysis
+        run: dart analyze --fatal-infos
+      - name: Run unit tests
+        run: dart test --test-randomize-ordering-seed=random --fail-fast
+
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v7
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "3.13.0"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+      - name: Install package dependencies
+        run: dart pub get --no-example
+      - name: Verify documentation sources
+        run: dart run tool/verify_documentation.dart
+      - name: Install docs dependencies
+        working-directory: docs
+        run: bun install --frozen-lockfile
+      - name: Build docs
+        working-directory: docs
+        run: bun run build

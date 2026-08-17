@@ -40,3 +40,4 @@ List<User> all() => const [User('ada')];
 // 🔹 Edge case: matching is on the *declared* name, so an import prefix does
 // not hide a usage — `p.LegacyUser` would still report. Qualify an entry as
 // `package:uri#Name` when a bare name is ambiguous across packages.
+// ignore_for_file: many_lints/prefer_primary_constructors

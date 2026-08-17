@@ -90,3 +90,6 @@ class Config {
   const Config.development(this.host, this.port);
   const Config.production(this.host, this.port);
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_getter_over_method
+// ignore_for_file: many_lints/prefer_primary_constructors

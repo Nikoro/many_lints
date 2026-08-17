@@ -35,3 +35,4 @@ Future<List<int>> goodFutureOfList() => throw UnimplementedError();
 
 // ✅ Good: a list of futures is also normal
 List<Future<int>> goodListOfFutures() => throw UnimplementedError();
+// ignore_for_file: many_lints/avoid_redundant_async

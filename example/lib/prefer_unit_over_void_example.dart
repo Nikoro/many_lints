@@ -55,3 +55,5 @@ class _RepositoryImpl implements _Repository {
     (error, stackTrace) => error.toString(),
   );
 }
+// ignore_for_file: many_lints/prefer_primary_constructors
+// ignore_for_file: many_lints/prefer_returning_shorthands

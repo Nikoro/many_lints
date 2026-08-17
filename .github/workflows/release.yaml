@@ -10,13 +10,20 @@ jobs:
     permissions:
       id-token: write
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     environment: pub.dev
     steps:
       - uses: actions/checkout@v7
-      - uses: dart-lang/setup-dart@v1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          sdk: "3.13.0"
+          flutter-version: "3.47.0"
+          channel: stable
+          cache: true
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
       - name: Cache pub dependencies
         uses: actions/cache@v6
         with:
@@ -25,6 +32,14 @@ jobs:
           restore-keys: pub-
       - name: Install dependencies
         run: dart pub get --no-example
+
+      - name: Install example dependencies
+        working-directory: example
+        run: flutter pub get
+
+      - name: Install docs dependencies
+        working-directory: docs
+        run: bun install --frozen-lockfile
       
       - name: Verify pubspec.yaml version matches tag
         run: |
@@ -53,7 +68,17 @@ jobs:
         run: dart format --enable-experiment=primary-constructors . --output=none --set-exit-if-changed
 
       - name: Static code analysis
-        run: dart analyze
+        run: dart analyze --fatal-infos
+
+      - name: Verify rule examples
+        run: dart run tool/verify_examples.dart
+
+      - name: Verify documentation sources
+        run: dart run tool/verify_documentation.dart
+
+      - name: Build docs
+        working-directory: docs
+        run: bun run build
         
       - name: Run unit tests
         run: dart test --test-randomize-ordering-seed=random

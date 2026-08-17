@@ -59,3 +59,4 @@ class GoodExamples {
     };
   }
 }
+// ignore_for_file: many_lints/no_equal_switch_case

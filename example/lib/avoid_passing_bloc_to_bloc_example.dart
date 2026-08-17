@@ -55,3 +55,5 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 class IndependentBloc extends Bloc<TimerEvent, int> {
   IndependentBloc() : super(0);
 }
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_getter_over_method

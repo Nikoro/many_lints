@@ -38,3 +38,5 @@ Option<int> goodComplexCondition(int age) =>
 // predicate on the wrapped value
 Option<int> goodUnrelatedCondition(int age, bool enabled) =>
     enabled ? Option.of(age) : Option<int>.none();
+// ignore_for_file: many_lints/prefer_from_nullable
+// ignore_for_file: many_lints/prefer_returning_shorthands

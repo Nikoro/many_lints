@@ -92,3 +92,4 @@ void closurePresent(int limit, void Function(void Function()) run) {
     });
   }
 }
+// ignore_for_file: many_lints/prefer_boolean_prefixes

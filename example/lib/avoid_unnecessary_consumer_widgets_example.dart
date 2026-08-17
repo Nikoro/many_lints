@@ -59,3 +59,4 @@ class _MixinConsumerExampleState extends ConsumerState<MixinConsumerExample>
     return TextButton(onPressed: track, child: const Text('Save'));
   }
 }
+// ignore_for_file: many_lints/prefer_correct_handler_name

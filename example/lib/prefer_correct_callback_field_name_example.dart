@@ -41,3 +41,4 @@ class GoodBuilders {
 typedef Handler = void Function();
 
 Handler middleware(Handler handler) => handler;
+// ignore_for_file: many_lints/prefer_typedefs_for_callbacks

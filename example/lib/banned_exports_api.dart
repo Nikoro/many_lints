@@ -8,3 +8,4 @@ class ApiClient {
 
   final String baseUrl;
 }
+// ignore_for_file: many_lints/prefer_primary_constructors

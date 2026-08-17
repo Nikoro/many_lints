@@ -42,3 +42,5 @@ TaskEither<String, int> goodAwaitInClosure() => TaskEither.Do(($) async {
 
 // ✅ Good: synchronous blocks cannot hit this at all
 Option<String> goodSyncBlock(Option<String> o) => Option.Do(($) => $(o));
+// ignore_for_file: many_lints/prefer_immediate_return
+// ignore_for_file: many_lints/prefer_returning_shorthands

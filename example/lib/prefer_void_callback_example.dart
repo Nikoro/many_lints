@@ -40,3 +40,5 @@ void goodWithParams(void Function(int value) callback) {}
 void goodIntReturn(int Function() callback) {}
 void goodFutureReturn(Future<void> Function() callback) {}
 void goodGeneric(void Function<T>() callback) {}
+// ignore_for_file: many_lints/member_ordering
+// ignore_for_file: many_lints/prefer_primary_constructors
