@@ -3,6 +3,8 @@ title: Configuration
 description: How to install and configure many_lints in your Flutter & Dart project.
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 ## Installation
 
 Add `many_lints` to the **top-level** `plugins` section in your `analysis_options.yaml` file (NOT under `analyzer:`):
@@ -49,23 +51,77 @@ plugins:
     git: https://github.com/Nikoro/many_lints.git
 ```
 
-## Choosing a preset
+## Choosing rules
 
-**Every rule is off by default.** Installing the plugin reports nothing until you pick a
-preset — so adding `many_lints` to an existing codebase never floods it with warnings on
-day one.
+**Every rule is off by default, but a preset is not required.** You can enable only the
+rules you choose, start from a preset, or start from a preset and override individual
+rules. Installing the plugin alone therefore never floods an existing codebase with
+warnings.
 
-Pick a preset with the `preset:` key, in **either** of the two config locations described
-below:
+### Selecting individual rules
+
+Use this mode when you want a small, explicit rule set:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
 
 ```yaml
-# many_lints.yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_equal_expressions: true
+    avoid_only_rethrow:
+      enabled: true
+      exclude: test/**
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml — next to pubspec.yaml
+rules:
+  avoid_equal_expressions: true
+  avoid_only_rethrow:
+    enabled: true
+    exclude: test/**
+```
+
+</TabItem>
+</Tabs>
+
+The boolean and `enabled:` forms are equivalent. Adding `include`, `exclude`, `message`,
+or a rule-specific option also enables that rule unless you explicitly set
+`enabled: false`.
+
+### Starting from a preset
+
+Presets are optional shortcuts for enabling a maintained group of rules. Select one with
+the `preset:` key, in **either** of the two config locations described below:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  preset: recommended
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml — next to pubspec.yaml
 preset: recommended
 ```
 
+</TabItem>
+</Tabs>
+
 :::caution[No diagnostics after installing?]
-That is the intended behaviour, not a broken setup. Add `preset: recommended` and restart
-the analysis server.
+That is the intended behaviour, not a broken setup. Choose a preset or enable at least
+one rule by name, then restart the analysis server.
 :::
 
 ### The presets
@@ -119,8 +175,25 @@ things. `opinionated` and `pedantic` pick one side of each pair and leave the ot
 
 If you prefer the other side, enable it explicitly and turn off the one you don't want:
 
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
 ```yaml
-# many_lints.yaml
+# analysis_options.yaml
+many_lints:
+  preset: opinionated
+  rules:
+    use_gap:
+      enabled: true
+    prefer_spacing:
+      enabled: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml — next to pubspec.yaml
 preset: opinionated
 rules:
   use_gap:
@@ -128,6 +201,9 @@ rules:
   prefer_spacing:
     enabled: false
 ```
+
+</TabItem>
+</Tabs>
 :::
 
 Two other groups sit outside every preset. Rules that do nothing until you configure them —
@@ -140,8 +216,30 @@ not depend on, such as `use_gap` (the `gap` package) and the `equatable` rules.
 `enabled:` overrides the preset for one rule, in either direction, so you never have to
 restate a preset's contents to tweak it:
 
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
 ```yaml
-# many_lints.yaml
+# analysis_options.yaml
+many_lints:
+  preset: recommended
+  rules:
+    # Add a rule the preset leaves out.
+    use_class_suffix:
+      enabled: true
+      entries:
+        - class: Bloc
+          suffix: Bloc
+    # Drop one the preset includes.
+    avoid_only_rethrow:
+      enabled: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml — next to pubspec.yaml
 preset: recommended
 rules:
   # Add a rule the preset leaves out.
@@ -155,13 +253,34 @@ rules:
     enabled: false
 ```
 
+</TabItem>
+</Tabs>
+
 When a rule needs nothing but on-or-off, the terse spelling works too:
 
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
 ```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_type_over_var: true
+    avoid_only_rethrow: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml — next to pubspec.yaml
 rules:
   prefer_type_over_var: true
   avoid_only_rethrow: false
 ```
+
+</TabItem>
+</Tabs>
 
 ### Severity
 
@@ -177,8 +296,8 @@ plugins:
 ```
 
 :::note
-`diagnostics:` can also disable a rule, but it cannot enable one that a preset left off —
-that is what `enabled:` is for. Prefer keeping enablement in one place and using
+`diagnostics:` can also disable a rule, but it cannot enable one that is not enabled
+through `preset:` or `rules:`. Prefer keeping enablement in one place and using
 `diagnostics:` only for severity.
 :::
 
@@ -188,10 +307,12 @@ A preset turns a rule on everywhere. To keep a rule on but silence it for
 certain paths, write a `rules:` block — in **either** of these two places, whichever
 you prefer.
 
-### Option A — in `analysis_options.yaml`
+The recommended location is a top-level `many_lints:` key in `analysis_options.yaml` — a
+sibling of `plugins:`, not nested inside it. A standalone `many_lints.yaml` next to
+`pubspec.yaml` is fully equivalent.
 
-Under a top-level `many_lints:` key. Note it is top-level: a sibling of `plugins:`,
-not nested inside it.
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
 
 ```yaml
 # analysis_options.yaml
@@ -206,24 +327,26 @@ many_lints:
         - "**/*.g.dart"
 ```
 
-### Option B — in a separate `many_lints.yaml`
-
-Placed next to your `pubspec.yaml`.
+</TabItem>
+<TabItem label="many_lints.yaml">
 
 ```yaml
-# many_lints.yaml
+# many_lints.yaml — next to pubspec.yaml
 rules:
   avoid_only_rethrow:
     exclude:
       - test/**
-      - "**/*.g.dart"
+        - "**/*.g.dart"
 ```
+
+</TabItem>
+</Tabs>
 
 ### Which to pick
 
-Both are fully equivalent — the `rules:` block is identical, it just sits one level
-deeper in Option A. Use Option A to keep everything in one file, or Option B to keep
-lint configuration separate.
+Use `analysis_options.yaml` for the normal single-file setup. Choose standalone
+`many_lints.yaml` only when you deliberately want plugin configuration separated. If you
+create both, `many_lints.yaml` wins outright; they are not merged.
 
 ### What `exclude` accepts
 
@@ -235,17 +358,41 @@ Patterns are globs matched against the path relative to the package root, using 
 glob semantics as the analyzer's own `analyzer: exclude:`. A plain path is a valid
 pattern too, and the list can hold as many entries as you need:
 
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
 ```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_only_rethrow:
+      exclude:
+        - lib/legacy/parser.dart      # one specific file
+        - lib/generated/**            # a whole directory tree
+        - "**/*.g.dart"               # every generated file
+    prefer_type_over_var:
+      exclude:
+        - test/**                     # a different rule, its own list
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml — next to pubspec.yaml
 rules:
   avoid_only_rethrow:
     exclude:
-      - lib/legacy/parser.dart      # one specific file
-      - lib/generated/**            # a whole directory tree
-      - "**/*.g.dart"               # every generated file
+      - lib/legacy/parser.dart
+      - lib/generated/**
+      - "**/*.g.dart"
   prefer_type_over_var:
     exclude:
-      - test/**                     # a different rule, its own list
+      - test/**
 ```
+
+</TabItem>
+</Tabs>
 
 :::caution[If you create both]
 `many_lints.yaml` wins outright and the `analysis_options.yaml` section is ignored —
@@ -266,12 +413,31 @@ across packages, use Option B in each package instead.
 
 `include` is the inverse of `exclude`: the rule runs **only** where it matches.
 
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
 ```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_banned_imports:
+      include:
+        - lib/domain/**       # architectural rules are most useful scoped
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml — next to pubspec.yaml
 rules:
   avoid_banned_imports:
     include:
-      - lib/domain/**       # architectural rules are most useful scoped
+      - lib/domain/**
 ```
+
+</TabItem>
+</Tabs>
 
 Like `exclude`, it takes globs relative to the package root, and a bare string works
 where you only need one pattern (`include: lib/domain/**`).
@@ -285,11 +451,29 @@ have to reason about which was written first.
 `message` appends a sentence to every diagnostic a rule reports, which turns a generic
 lint into your team's house style:
 
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
 ```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_border_all:
+      message: Use AppBorders from our design system.
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml — next to pubspec.yaml
 rules:
   avoid_border_all:
     message: Use AppBorders from our design system.
 ```
+
+</TabItem>
+</Tabs>
 
 ```
 warning • Prefer Border.fromBorderSide over Border.all. Use AppBorders from our
@@ -310,14 +494,33 @@ badge on their page, and every option is documented there with its type and defa
 Options go in the same `rules:` block as `exclude`, in whichever of the two files you chose
 above:
 
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
 ```yaml
-# many_lints.yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_container:
+      exclude:
+        - test/**            # works on every rule
+      min_sequence: 4        # an option, specific to this rule
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml — next to pubspec.yaml
 rules:
   prefer_container:
     exclude:
-      - test/**            # works on every rule
-    min_sequence: 4        # an option, specific to this rule
+      - test/**
+    min_sequence: 4
 ```
+
+</TabItem>
+</Tabs>
 
 Every option defaults to the rule's previous behaviour, so adding this package's
 options never changes results until you set one.

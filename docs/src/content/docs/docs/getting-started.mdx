@@ -3,6 +3,8 @@ title: Getting Started
 description: Get started with many_lints — a comprehensive collection of 251 custom lint rules for Flutter & Dart projects.
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 ## Quick Setup
 
 Add `many_lints` to your `analysis_options.yaml`:
@@ -14,27 +16,97 @@ plugins:
 
 The analysis server will automatically download and resolve the plugin from [pub.dev](https://pub.dev/packages/many_lints).
 
-Then pick a preset. **Every rule is off until you do**, so installing the plugin never
-floods an existing codebase with warnings:
+Rules are opt-in. Choose whichever setup fits the project.
+
+**Start from a preset** — `recommended` is the usual production default:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
 
 ```yaml
-# many_lints.yaml — next to your pubspec.yaml
+# analysis_options.yaml
+many_lints:
+  preset: recommended
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml — next to pubspec.yaml
 preset: recommended
 ```
+
+</TabItem>
+</Tabs>
+
+**Select rules manually** — no preset is required:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_equal_expressions: true
+    avoid_only_rethrow: true
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml — next to pubspec.yaml
+rules:
+  avoid_equal_expressions: true
+  avoid_only_rethrow: true
+```
+
+</TabItem>
+</Tabs>
+
+**Start from a preset and override it** — add omitted rules or disable included ones:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  preset: recommended
+  rules:
+    prefer_type_over_var: true
+    avoid_only_rethrow: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml — next to pubspec.yaml
+preset: recommended
+rules:
+  prefer_type_over_var: true
+  avoid_only_rethrow: false
+```
+
+</TabItem>
+</Tabs>
 
 Restart the Dart Analysis Server and you're done.
 
 :::caution[Seeing no warnings?]
-That is expected without a preset — it is not a broken install. Add the
-`many_lints.yaml` above, then restart the analysis server.
+No rule is enabled yet — it is not a broken install. Choose a preset or enable at least
+one rule by name, then restart the analysis server.
 :::
 
 There are five presets: `core` (35 near-certain-bug rules), `recommended` (91 rules —
 `core` plus likely defects and concrete runtime risks), `opinionated` (177 rules — `recommended`
 plus this package's own style preferences), `pedantic` (234 rules — strict structure,
 naming, complexity and ordering) and `none`. See
-[Configuration](/many_lints/docs/configuration/) for what each contains and how to add or
-drop individual rules.
+[Configuration](/many_lints/docs/configuration/) for manual selection, preset contents,
+and per-rule overrides.
 
 :::note
 Requires Dart 3.11+ (Flutter 3.41+)

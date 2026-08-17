@@ -159,13 +159,13 @@ void main() {
       // The docs site carries the same table, and its counts drifted silently
       // once already (31/79/156 against presets holding 37/98/162).
       final configurationPage = File(
-        'docs/src/content/docs/docs/configuration.md',
+        'docs/src/content/docs/docs/configuration.mdx',
       ).readAsStringSync();
 
       for (final (file, content) in [
         ('README.md', readme),
         ('CLAUDE.md', claudeMd),
-        ('configuration.md', configurationPage),
+        ('configuration.mdx', configurationPage),
       ]) {
         expect(
           _presetCounts(content),
@@ -328,6 +328,56 @@ void main() {
         );
       }
     }
+  });
+
+  test('primary configuration docs show both YAML locations in order', () {
+    final tabGroupPattern = RegExp(
+      r'<Tabs syncKey="many-lints-config-file">(.*?)</Tabs>',
+      dotAll: true,
+    );
+    const analysisOptionsTab = '<TabItem label="analysis_options.yaml">';
+    const standaloneTab = '<TabItem label="many_lints.yaml">';
+
+    for (final path in [
+      'docs/src/content/docs/docs/getting-started.mdx',
+      'docs/src/content/docs/docs/configuration.mdx',
+    ]) {
+      final content = File(path).readAsStringSync();
+      final groups = tabGroupPattern.allMatches(content).toList();
+
+      expect(groups, isNotEmpty, reason: '$path must use configuration tabs.');
+      for (final group in groups) {
+        final tabs = group.group(1)!;
+        expect(
+          tabs,
+          contains(analysisOptionsTab),
+          reason: '$path must show analysis_options.yaml in every tab group.',
+        );
+        expect(
+          tabs,
+          contains(standaloneTab),
+          reason: '$path must show many_lints.yaml in every tab group.',
+        );
+        expect(
+          tabs.indexOf(analysisOptionsTab),
+          lessThan(tabs.indexOf(standaloneTab)),
+          reason:
+              'analysis_options.yaml must be the first/default tab in $path.',
+        );
+        expect(tabs, contains('# analysis_options.yaml'));
+        expect(tabs, contains('# many_lints.yaml'));
+      }
+    }
+
+    final readme = File('README.md').readAsStringSync();
+    final primaryExample = readme.indexOf(
+      '# analysis_options.yaml (recommended)',
+    );
+    final standaloneExample = readme.indexOf(
+      '# many_lints.yaml — alternative standalone file',
+    );
+    expect(primaryExample, isNonNegative);
+    expect(standaloneExample, greaterThan(primaryExample));
   });
 
   test('every rule page links to related rules that exist', () {
@@ -520,7 +570,7 @@ void main() {
     );
 
     final configuration = File(
-      'docs/src/content/docs/docs/configuration.md',
+      'docs/src/content/docs/docs/configuration.mdx',
     ).readAsStringSync();
     final catalog = <String, Set<String>>{
       for (final match in RegExp(

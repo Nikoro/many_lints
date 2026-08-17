@@ -39,14 +39,36 @@ plugins:
 
 The analysis server will automatically download and resolve the plugin from [pub.dev](https://pub.dev/packages/many_lints). There is no need to add it to your `pubspec.yaml`.
 
-Then pick a preset. **Every rule is off until you do**, so installing the plugin never floods an existing codebase:
+Rules are opt-in. The quickest setup is a preset:
 
 ```yaml
-# many_lints.yaml — next to your pubspec.yaml
-preset: recommended
+# analysis_options.yaml (recommended)
+many_lints:
+  preset: recommended
 ```
 
-> **Seeing no warnings?** That is expected without a preset, not a broken install.
+But a preset is optional. You can instead enable only selected rules, or start from a
+preset and override individual rules:
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_equal_expressions: true
+    avoid_only_rethrow: true
+```
+
+Alternatively, put the same `preset:` and `rules:` keys in a standalone
+`many_lints.yaml` next to `pubspec.yaml`.
+
+```yaml
+# many_lints.yaml — alternative standalone file
+rules:
+  avoid_equal_expressions: true
+  avoid_only_rethrow: true
+```
+
+> **Seeing no warnings?** No rule is enabled yet. Choose a preset or enable rules by name.
 
 > **Important**: After any change to the `plugins` section, you must restart the Dart Analysis Server.
 
@@ -76,29 +98,47 @@ Presets select only Many Lints rules. Enable official
 
 ### Rules in one example
 
-Put rule configuration in `many_lints.yaml` next to `pubspec.yaml`:
+The recommended location is the top-level `many_lints:` section in
+`analysis_options.yaml`, alongside `plugins:`:
 
 ```yaml
-preset: recommended
+# analysis_options.yaml
+plugins:
+  many_lints: ^1.0.0
 
-rules:
-  prefer_type_over_var: true       # add a rule outside the preset
-  avoid_only_rethrow: false        # remove a rule from the preset
+many_lints:
+  preset: recommended
+  rules:
+    prefer_type_over_var: true       # add a rule outside the preset
+    avoid_only_rethrow: false        # remove a rule from the preset
 
-  avoid_long_functions:
-    include: lib/domain/**          # run only in matching paths
-    exclude: "**/*.g.dart"          # exclude wins if both match
-    message: Extract a focused helper.
-    max_lines: 80                   # rule-specific option
+    avoid_long_functions:
+      include: lib/domain/**         # run only in matching paths
+      exclude: "**/*.g.dart"         # exclude wins if both match
+      message: Extract a focused helper.
+      max_lines: 80                  # rule-specific option
 ```
 
-The same configuration can live under a top-level `many_lints:` key in
-`analysis_options.yaml` (as a sibling of `plugins:`). If both locations exist,
-`many_lints.yaml` wins; they are not merged.
+Or keep only the Many Lints configuration in a separate file:
+
+```yaml
+# many_lints.yaml — next to pubspec.yaml
+preset: recommended
+rules:
+  prefer_type_over_var: true
+  avoid_only_rethrow: false
+  avoid_long_functions:
+    include: lib/domain/**
+    exclude: "**/*.g.dart"
+    message: Extract a focused helper.
+    max_lines: 80
+```
+
+If both locations exist, `many_lints.yaml` wins; they are not merged.
 
 | Key | Meaning |
 |-----|---------|
-| `enabled` / `true` / `false` | Overrides the preset for one rule. |
+| `enabled` / `true` / `false` | Enables or disables one rule; overrides a preset when present. |
 | `include` | Runs the rule only for matching package-relative globs. String or list. |
 | `exclude` | Skips matching paths. String or list; takes precedence over `include`. |
 | `message` | Appends a project-specific note without changing the diagnostic code or fix. |
@@ -123,7 +163,8 @@ plugins:
       avoid_equal_expressions: error   # error | warning | info
 ```
 
-`diagnostics:` cannot enable a rule omitted by the preset. The `rules:` block cannot be
+`diagnostics:` cannot enable a rule that is not enabled through `preset:` or `rules:`.
+The `rules:` block cannot be
 nested inside `plugins: many_lints`, and top-level `many_lints:` configuration is not
 inherited through the analyzer's YAML `include:`. See
 [configuration locations and limitations](https://nikoro.github.io/many_lints/docs/configuration/#which-to-pick)
@@ -131,7 +172,9 @@ for shared-config setups.
 
 ## Available Lints
 
-251 lints with 103 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
+251 lints with 103 quick fixes. All are off by default — enable selected rules by name,
+use a [preset](#presets), or combine a preset with per-rule overrides. Each rule links to
+its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
