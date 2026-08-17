@@ -50,7 +50,8 @@ preset: recommended
 
 > **Important**: After any change to the `plugins` section, you must restart the Dart Analysis Server.
 
-For local development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
+For local development setup, see
+[CONTRIBUTING.md](https://github.com/Nikoro/many_lints/blob/main/CONTRIBUTING.md).
 
 ### Presets
 
@@ -59,8 +60,8 @@ For local development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
 | `core` | 35 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
 | `recommended` | 91 | `core` plus likely defects and concrete runtime risks. |
-| `opinionated` | 178 | `recommended` plus this package's own style preferences. |
-| `pedantic` | 236 | `opinionated` plus strict naming, structure, complexity and ordering. |
+| `opinionated` | 177 | `recommended` plus this package's own style preferences. |
+| `pedantic` | 234 | `opinionated` plus strict naming, structure, complexity and ordering. |
 
 See the [Presets guide](https://nikoro.github.io/many_lints/docs/presets/) for
 the idea behind each tier and the exact rules each one adds.
@@ -146,30 +147,30 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-253 lints with 104 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
+251 lints with 103 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
-| [Class Naming](https://nikoro.github.io/many_lints/docs/rules/class-naming/) | 12 | Class and type naming conventions |
-| [Architecture](https://nikoro.github.io/many_lints/docs/rules/architecture/) | 6 | Configurable bans on imports, types, names and members |
-| [Bloc / Riverpod](https://nikoro.github.io/many_lints/docs/rules/bloc-riverpod/) | 12 | BLoC and Riverpod state management patterns |
-| [Riverpod State](https://nikoro.github.io/many_lints/docs/rules/riverpod-state/) | 9 | Riverpod-specific state rules |
-| [Async Safety](https://nikoro.github.io/many_lints/docs/rules/async-safety/) | 12 | Async/await and state mutation safety |
-| [fpdart](https://nikoro.github.io/many_lints/docs/rules/fpdart/) | 22 | Functional error handling with Either, Option and TaskEither |
-| [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/widget-best-practices/) | 25 | General widget best practices |
-| [Widget Replacement](https://nikoro.github.io/many_lints/docs/rules/widget-replacement/) | 13 | Simpler widget alternatives |
-| [State Management](https://nikoro.github.io/many_lints/docs/rules/state-management/) | 10 | StatefulWidget and state patterns |
-| [Control Flow](https://nikoro.github.io/many_lints/docs/rules/control-flow/) | 27 | Control flow statements and patterns |
-| [Collection & Type](https://nikoro.github.io/many_lints/docs/rules/collection-type/) | 20 | Collection and type-related checks |
-| [Pattern Matching](https://nikoro.github.io/many_lints/docs/rules/pattern-matching/) | 6 | Dart pattern matching best practices |
-| [Type Annotations](https://nikoro.github.io/many_lints/docs/rules/type-annotations/) | 8 | Type annotation conventions |
-| [Code Organization](https://nikoro.github.io/many_lints/docs/rules/code-organization/) | 17 | Code structure and organization |
-| [Shorthand Patterns](https://nikoro.github.io/many_lints/docs/rules/shorthand-patterns/) | 5 | Dot shorthand syntax patterns |
-| [Hook Rules](https://nikoro.github.io/many_lints/docs/rules/hook-rules/) | 4 | Flutter Hooks conventions |
-| [Testing Rules](https://nikoro.github.io/many_lints/docs/rules/testing-rules/) | 5 | Testing best practices and matchers |
-| [Resource Management](https://nikoro.github.io/many_lints/docs/rules/resource-management/) | 5 | Resource cleanup and disposal |
-| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/code-quality/) | 32 | General code quality improvements |
-| [Formatting](https://nikoro.github.io/many_lints/docs/rules/formatting/) | 3 | Literal formatting conventions |
+| [Class Naming](https://nikoro.github.io/many_lints/docs/rules/#class-naming) | 12 | Class and type naming conventions |
+| [Architecture](https://nikoro.github.io/many_lints/docs/rules/#architecture) | 6 | Configurable bans on imports, types, names and members |
+| [Bloc / Riverpod](https://nikoro.github.io/many_lints/docs/rules/#bloc-riverpod) | 12 | BLoC and Riverpod state management patterns |
+| [Riverpod State](https://nikoro.github.io/many_lints/docs/rules/#riverpod-state) | 9 | Riverpod-specific state rules |
+| [Async Safety](https://nikoro.github.io/many_lints/docs/rules/#async-safety) | 12 | Async/await and state mutation safety |
+| [fpdart](https://nikoro.github.io/many_lints/docs/rules/#fpdart) | 22 | Functional error handling with Either, Option and TaskEither |
+| [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/#widget-best-practices) | 25 | General widget best practices |
+| [Widget Replacement](https://nikoro.github.io/many_lints/docs/rules/#widget-replacement) | 13 | Simpler widget alternatives |
+| [State Management](https://nikoro.github.io/many_lints/docs/rules/#state-management) | 9 | StatefulWidget and state patterns |
+| [Control Flow](https://nikoro.github.io/many_lints/docs/rules/#control-flow) | 27 | Control flow statements and patterns |
+| [Collection & Type](https://nikoro.github.io/many_lints/docs/rules/#collection-type) | 20 | Collection and type-related checks |
+| [Pattern Matching](https://nikoro.github.io/many_lints/docs/rules/#pattern-matching) | 6 | Dart pattern matching best practices |
+| [Type Annotations](https://nikoro.github.io/many_lints/docs/rules/#type-annotations) | 8 | Type annotation conventions |
+| [Code Organization](https://nikoro.github.io/many_lints/docs/rules/#code-organization) | 17 | Code structure and organization |
+| [Shorthand Patterns](https://nikoro.github.io/many_lints/docs/rules/#shorthand-patterns) | 5 | Dot shorthand syntax patterns |
+| [Hook Rules](https://nikoro.github.io/many_lints/docs/rules/#hook-rules) | 4 | Flutter Hooks conventions |
+| [Testing Rules](https://nikoro.github.io/many_lints/docs/rules/#testing-rules) | 5 | Testing best practices and matchers |
+| [Resource Management](https://nikoro.github.io/many_lints/docs/rules/#resource-management) | 5 | Resource cleanup and disposal |
+| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/#code-quality) | 31 | General code quality improvements |
+| [Formatting](https://nikoro.github.io/many_lints/docs/rules/#formatting) | 3 | Literal formatting conventions |
 
 ## Available Assists
 

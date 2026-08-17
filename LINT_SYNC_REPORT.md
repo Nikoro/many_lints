@@ -1,13 +1,15 @@
 # Official Lint Sync Report
 
-Generated: 2026-08-09 · Source: `pkg/linter/tool/machine/rules.json` @ `dart-lang/sdk` main
-SDK rules compared: 232 stable, 5 deprecated (237 candidates; 11 experimental and 14 removed excluded) · many_lints active rules: 154
+Generated: 2026-08-17 · Source: [dart.dev/tools/linter-rules](https://dart.dev/tools/linter-rules), Dart 3.13.0
+SDK rules compared: 232 stable, 6 deprecated (238 candidates; 12 experimental and 14 removed excluded) · many_lints active rules: 251
 
-Comparison method: exact-name pass over all 154 active rule names, then a semantic pass
-comparing each rule's `problemMessage` + class doc against the SDK
-`description` + `details` (BAD/GOOD samples). Rules reaching a verdict of
-`DUPLICATE` or `SUPERSET` had their visitor logic read in full before the
-verdict was assigned.
+Comparison method: brace-matched extraction of all 251 active `LintCode` declarations,
+an exact-name pass, then a semantic pass over each rule's message and class
+documentation. The machine-readable `rules.json` endpoint returned HTTP 429
+for both `main` and `stable`, so this run used the official Dart 3.13 rendered
+catalog as the documented degraded fallback. The individual official detail
+pages and our complete visitor implementations were read before either
+`SUPERSET` verdict was assigned.
 
 ## Summary
 
@@ -15,17 +17,43 @@ verdict was assigned.
 |---|---|
 | DUPLICATE | 0 |
 | SUPERSET | 0 |
-| SUBSET | 7 |
-| ADJACENT | 7 |
+| SUBSET | 8 |
+| ADJACENT | 13 |
 | WATCH | 2 |
-| UNIQUE | 138 |
+| UNIQUE | 228 |
 
-The removed `prefer_contains` name remains registered as a tombstone so the
-analyzer can direct existing configurations to the SDK rule.
+The removed `prefer_contains` and `avoid_unnecessary_overrides_in_state` names
+remain registered as tombstones so the analyzer can direct existing
+configurations to the SDK rules.
 
-## Action required
+## Resolved for 1.0.0
 
-### DUPLICATE — resolved for 1.0.0
+- [x] **`prefer_named_boolean_parameters`** → SDK
+  **[`avoid_positional_boolean_parameters`](https://dart.dev/tools/linter-rules/avoid_positional_boolean_parameters)**
+  (`stable`)
+  - Ours: "The boolean parameter '{0}' is positional."
+  - SDK: "Avoid positional boolean parameters."
+  - The triggers and rationale are the same. The SDK rule is broader: its
+    documented bad examples include a single positional boolean, while ours
+    permits one by default through `allow_single: true`.
+  - Removed before publication. Its former docs URL redirects to the official
+    SDK rule.
+
+- [x] **`avoid_unnecessary_overrides_in_state`** → SDK
+  **[`unnecessary_overrides`](https://dart.dev/tools/linter-rules/unnecessary_overrides)**
+  (`stable`, in `core`, `hasFix`)
+  - Ours: "This method override only calls super.{0}() without additional logic."
+  - SDK: "Don't override a method to do a super method invocation with the same parameters."
+  - Every intended State lifecycle case is an ordinary no-argument
+    pass-through override and is already covered by the SDK. Our own broader
+    `avoid_unnecessary_overrides` also reports the same nodes, so enabling the
+    `opinionated` preset previously produced two many_lints diagnostics before
+    the SDK diagnostic was even considered.
+  - Unlike both broader rules, the State-specific visitor did not preserve the
+    legitimate documentation, annotation, `covariant`, and `noSuchMethod`
+    exemptions. It added false-positive surface, not useful coverage.
+  - Removed for 1.0.0. Its registered tombstone and former docs URL direct
+    existing users to the official SDK rule.
 
 - [x] **`prefer_contains`** → SDK **`prefer_contains`** (`stable`, since Dart 2.0, `hasFix`)
   - **Former exact name collision.** Before 1.0.0 both implementations
@@ -85,6 +113,12 @@ analyzer can direct existing configurations to the SDK rule.
   class with top-level members; ours says keep it and mark it `abstract final`.
   Not a duplicate, but users should not enable both. Document the conflict.
 
+- **`member_ordering`** vs SDK `sort_constructors_first` — our configurable
+  rule additionally orders fields, accessors, methods, factories, overrides,
+  and Flutter `build`. With its default constructor-first order, however, the
+  two rules report the same misplaced constructor. Users should choose
+  `member_ordering` or the narrower SDK rule, not enable both.
+
 ### ADJACENT — no action
 
 `avoid_only_rethrow` (SDK `use_rethrow_when_possible` targets `throw e;`, ours
@@ -97,7 +131,16 @@ collections of the same type having no deep equality), `prefer_type_over_var`
 `prefer_constrained_box_over_container` / `prefer_transform_over_container`
 (SDK covers only the `Color` → `ColoredBox`, `Decoration` → `DecoratedBox`,
 whitespace → `SizedBox`, and empty-`Container` cases; the four parameters ours
-covers are untouched by any SDK rule).
+covers are untouched by any SDK rule), `prefer_correct_future_return_type`
+(an imprecise declared return type, not a missing `await`),
+`avoid_passing_async_when_sync_expected` (an async closure accepted by a
+sync-void parameter, not an `async void` declaration), `avoid_future_ignore`
+(intentional error suppression through `Future.ignore()`, not an unawaited
+future), `prefer_declaring_const_constructor` (makes a constructor const while
+excluding the immutable case the SDK owns), `no_equal_switch_case` (equal case
+bodies rather than duplicate case values), and `parameters_ordering`
+(alphabetical ordering within required/optional groups; the SDK separately
+owns required-before-optional placement).
 
 ### Resolved 2026-08-13 (Dart 3.13)
 
@@ -117,6 +160,9 @@ covers are untouched by any SDK rule).
 - **`prefer_type_over_var`** — SDK `var_with_no_type_annotation`
   (`experimental`) is the closest thing to a direct replacement. Re-check when
   it stabilises.
+- **`avoid_redundant_async`** — SDK `unnecessary_async` (`experimental`) has
+  the same core goal. Ours applies stricter return-compatibility checks before
+  suggesting removal; re-evaluate both visitors if the SDK rule stabilises.
 
 ## Gaps — Flutter-category SDK rules we do not cover
 
@@ -139,15 +185,14 @@ backlog.
 
 ## Notes
 
-- `flutter_lints`' `flutter.yaml` was fetched and checked: it enables SDK rules
-  only and defines none of its own, so it introduces no additional collisions
-  beyond those listed above.
-- 138 rules have no SDK counterpart at all — the Riverpod, Bloc, hooks,
+- GitHub rate-limited the current `flutter_lints/flutter.yaml` fetch. The
+  locally cached 6.0.0 file still only enables SDK rules and defines none of
+  its own; the official Dart 3.13 catalog's Flutter-set markers were used for
+  the reverse coverage check. Re-run from `rules.json` before release if the
+  rate limit clears.
+- 228 rules have no SDK counterpart at all — the Riverpod, Bloc, hooks,
   widget-replacement, banned-* / architecture, and shorthand families are
   entirely unique to this package.
-- The 17 rules added after the previous 138-rule audit were checked in both
-  the exact-name and semantic passes. None duplicates a stable or deprecated
-  SDK rule. In particular, `prefer_correct_json_casts` covers dynamically typed
-  JSON index reads, which the SDK's `cast_nullable_to_non_nullable` cannot
-  diagnose from the static type, and `avoid_passing_async_when_sync_expected`
-  targets a discarded async callback rather than an `async void` declaration.
+- There are no exact-name collisions among the 253 active source rules. The
+  removed `prefer_contains` tombstone intentionally keeps its former name so
+  old configurations receive migration guidance.

@@ -67,10 +67,9 @@ class CounterCubit extends Cubit<CounterState> {
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      prefer_immutable_bloc_state: false
+# many_lints.yaml
+rules:
+  prefer_immutable_bloc_state: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

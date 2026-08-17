@@ -23,7 +23,7 @@ import '../many_lints_rule.dart';
 ///   punctuation rather than identifiers.
 /// - Tests, where a repeated fixture string is the test data.
 ///
-/// This rule is in **no preset**: the threshold is a house style.
+/// This rule is only in the `pedantic` preset: the threshold is a house style.
 class NoMagicString extends ManyLintsRule {
   static const LintCode code = LintCode(
     'no_magic_string',

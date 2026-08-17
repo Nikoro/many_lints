@@ -10,7 +10,10 @@ import 'package:many_lints/src/presets.dart';
 import 'package:test/test.dart';
 
 void main() {
-  const removedRules = {'prefer_contains'};
+  const removedRules = {
+    'avoid_unnecessary_overrides_in_state',
+    'prefer_contains',
+  };
   late ManyLintsPlugin plugin;
   late PluginRegistryImpl registry;
 
@@ -54,7 +57,7 @@ void main() {
   test('expected number of active and removed rules are registered', () {
     plugin.register(registry);
     final totalRules = registry.warningRules.length + registry.lintRules.length;
-    expect(totalRules, equals(254));
+    expect(totalRules, equals(253));
     expect(
       registry.warningRules.values.whereType<RemovedAnalysisRule>().map(
         (rule) => rule.name,
@@ -64,6 +67,10 @@ void main() {
     final removed = registry.warningRules['prefer_contains']!;
     expect(removed.state.isRemoved, isTrue);
     expect(removed.state.replacedBy, 'prefer_contains');
+    final removedStateRule =
+        registry.warningRules['avoid_unnecessary_overrides_in_state']!;
+    expect(removedStateRule.state.isRemoved, isTrue);
+    expect(removedStateRule.state.replacedBy, 'unnecessary_overrides');
   });
 
   test('rule sources, tests, docs, and examples stay in sync', () {
@@ -203,13 +210,13 @@ void main() {
     });
 
     test('README category table covers every rule exactly once', () {
-      // Each row links to a category directory, so the row set and the
-      // directory set must match — a new category with no row would otherwise
-      // only show up as a wrong total.
+      // Each row links to its anchor in the generated rules catalog, so the
+      // row set and the directory set must match — a new category with no row
+      // would otherwise only show up as a wrong total.
       final rows = <String, int>{
         for (final match in RegExp(
           r'\| \[[^\]]+\]\(https://nikoro\.github\.io/many_lints/docs/rules/'
-          r'([a-z-]+)/\) \| *(\d+) \|',
+          r'#([a-z-]+)\) \| *(\d+) \|',
         ).allMatches(readme))
           match.group(1)!: int.parse(match.group(2)!),
       };
@@ -275,6 +282,52 @@ void main() {
       registeredFixes,
       reason: 'A Fix badge must describe a quick fix registered for the rule.',
     );
+  });
+
+  test('every rule page has exactly one valid introduction version badge', () {
+    final packageMatch = RegExp(
+      r'^version:\s*(\d+)\.(\d+)\.(\d+)',
+      multiLine: true,
+    ).firstMatch(File('pubspec.yaml').readAsStringSync())!;
+    final packageVersion =
+        int.parse(packageMatch.group(1)!) * 1000000 +
+        int.parse(packageMatch.group(2)!) * 1000 +
+        int.parse(packageMatch.group(3)!);
+    final badgePattern = RegExp(
+      r'<span class="rule-badge rule-badge--version">'
+      r'(Unreleased|v(\d+)\.(\d+)\.(\d+))</span>',
+    );
+
+    for (final file
+        in Directory('docs/src/content/docs/docs/rules')
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where(
+              (file) => file.path.endsWith('.md') || file.path.endsWith('.mdx'),
+            )) {
+      final badges = badgePattern.allMatches(file.readAsStringSync()).toList();
+      expect(
+        badges,
+        hasLength(1),
+        reason:
+            '${file.path} must have exactly one introduction version badge.',
+      );
+
+      final badge = badges.single;
+      if (badge.group(2) case final major?) {
+        final introducedVersion =
+            int.parse(major) * 1000000 +
+            int.parse(badge.group(3)!) * 1000 +
+            int.parse(badge.group(4)!);
+        expect(
+          introducedVersion,
+          lessThanOrEqualTo(packageVersion),
+          reason:
+              '${file.path} claims an introduction version newer than the '
+              'package version.',
+        );
+      }
+    }
   });
 
   test('every rule page links to related rules that exist', () {
@@ -551,7 +604,7 @@ void main() {
       0,
       (sum, v) => sum + v.length,
     );
-    expect(totalFixes, equals(104));
+    expect(totalFixes, equals(103));
   });
 
   test('assists are registered', () {

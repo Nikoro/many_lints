@@ -19,7 +19,7 @@ Flags `AsyncValue(:final value?)` when the value type is nullable. The `?` patte
 
 For an `AsyncValue<int?>`, a successfully loaded `null` is a real result. The `?` pattern rejects it, so that case silently falls through to the loading or error branch — the UI shows a spinner forever for data that actually arrived. `hasValue: true` asks the question you meant: *has this loaded?*
 
-**See also:** [Riverpod - AsyncValue](https://riverpod.dev/docs/essentials/first_request)
+**See also:** [Riverpod - AsyncValue](https://pub.dev/documentation/riverpod/latest/riverpod/AsyncValue-class.html)
 
 ## Don't
 

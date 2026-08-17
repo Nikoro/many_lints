@@ -4,7 +4,7 @@
 # This example carries one file per rule, so it takes the broadest preset and
 # then switches on the rules that sit outside every preset. A real project
 # normally wants `core` or `recommended`.
-preset: opinionated
+preset: pedantic
 
 # The rest of this file demonstrates `exclude`: the rule stays enabled
 # everywhere else, but is skipped for the listed paths. See
@@ -234,8 +234,6 @@ rules:
     order: alphabetical
     include: ["lib/pattern_fields_ordering_example.dart"]
   prefer_conditional_expressions:
-    enabled: true
-  prefer_named_boolean_parameters:
     enabled: true
   prefer_typedefs_for_callbacks:
     enabled: true

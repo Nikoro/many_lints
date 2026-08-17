@@ -48,10 +48,9 @@ Future<int> loadNullableCount() async => 3;
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      prefer_correct_future_return_type: false
+# many_lints.yaml
+rules:
+  prefer_correct_future_return_type: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

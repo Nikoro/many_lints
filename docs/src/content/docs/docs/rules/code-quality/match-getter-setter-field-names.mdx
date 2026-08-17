@@ -5,7 +5,7 @@ sidebar:
   label: match_getter_setter_field_names
 ---
 
-<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--version">v1.0.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Code Quality</span>
 
@@ -50,10 +50,9 @@ This rule is on with `preset: recommended` or `preset: opinionated`.
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      match_getter_setter_field_names: false
+# many_lints.yaml
+rules:
+  match_getter_setter_field_names: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

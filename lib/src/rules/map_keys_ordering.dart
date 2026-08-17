@@ -14,11 +14,12 @@ import '../ordering_check.dart';
 /// honest: a new key lands in the middle where it can be seen, rather than
 /// appended at the end beside a duplicate nobody noticed.
 ///
-/// **This rule reports nothing until configured.** Many map literals are
-/// deliberately ordered by meaning — a config map mirroring a form's field
-/// order, a theme map going from lightest to darkest — and alphabetising those
-/// would be a regression. Set `order: alphabetical` (or `by_length`,
-/// or `alphabetical_case_sensitive`) where a mechanical order is wanted.
+/// **Outside the `pedantic` preset, this rule reports nothing until
+/// configured.** Many map literals are deliberately ordered by meaning — a
+/// config map mirroring a form's field order, a theme map going from lightest
+/// to darkest — and alphabetising those would be a regression. Set
+/// `order: alphabetical` (or `by_length`, or
+/// `alphabetical_case_sensitive`) where a mechanical order is wanted.
 ///
 /// Only literals whose keys are *all* simple strings or identifiers are
 /// checked; a computed key has no name to sort by, so such a map is skipped

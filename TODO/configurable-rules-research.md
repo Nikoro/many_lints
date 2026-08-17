@@ -198,7 +198,6 @@ concepts and must not be merged:
   *ordering* contract (`initState` calls super first, `dispose` last).
 - `avoid_unnecessary_setstate` — `_lifecycleMethods`, the methods that already trigger a
   rebuild, so `setState` in them is redundant.
-- `avoid_unnecessary_overrides_in_state` — no list at all; matches any overridden member.
 - `dispose_fields` / `avoid_empty_setstate` — no lifecycle list.
 
 Only two of the four have a list, and they answer different questions. Nothing to fix.

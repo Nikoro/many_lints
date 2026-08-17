@@ -8,6 +8,10 @@ export default defineConfig({
     '/docs/': '/many_lints/docs/getting-started/',
     '/docs/rules/collection-type/prefer-contains/':
       'https://dart.dev/tools/linter-rules/prefer_contains',
+    '/docs/rules/code-quality/prefer-named-boolean-parameters/':
+      'https://dart.dev/tools/linter-rules/avoid_positional_boolean_parameters',
+    '/docs/rules/state-management/avoid-unnecessary-overrides-in-state/':
+      'https://dart.dev/tools/linter-rules/unnecessary_overrides',
   },
   integrations: [
     starlight({
@@ -34,6 +38,7 @@ export default defineConfig({
         {
           label: 'Rules',
           items: [
+            { label: 'All Rules', slug: 'docs/rules' },
             {
               label: 'Class Naming',
               items: [{ autogenerate: { directory: 'docs/rules/class-naming' } }],

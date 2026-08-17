@@ -1,5 +1,5 @@
 // ignore_for_file: unused_local_variable, unused_element
-// ignore_for_file: many_lints/avoid_ref_watch_outside_build, many_lints/avoid_unnecessary_overrides, many_lints/avoid_unnecessary_overrides_in_state, many_lints/prefer_immutable_bloc_state
+// ignore_for_file: many_lints/avoid_ref_watch_outside_build, many_lints/avoid_unnecessary_overrides, many_lints/prefer_immutable_bloc_state
 
 // avoid_ref_inside_state_dispose
 //

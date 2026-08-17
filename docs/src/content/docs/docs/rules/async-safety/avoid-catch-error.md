@@ -5,7 +5,7 @@ sidebar:
   label: avoid_catch_error
 ---
 
-<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--version">v1.0.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Async Safety</span>
 

@@ -5,7 +5,7 @@ sidebar:
   label: prefer_widget_private_members
 ---
 
-<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--version">v1.0.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
@@ -72,10 +72,9 @@ class GoodDialog extends StatelessWidget {
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      prefer_widget_private_members: false
+# many_lints.yaml
+rules:
+  prefer_widget_private_members: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

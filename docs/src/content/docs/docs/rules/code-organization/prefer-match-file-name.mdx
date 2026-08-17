@@ -7,7 +7,7 @@ sidebar:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--version">v1.0.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
@@ -91,10 +91,9 @@ Generated files are usually better handled with the global `analyzer: exclude:`,
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      prefer_match_file_name: false
+# many_lints.yaml
+rules:
+  prefer_match_file_name: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

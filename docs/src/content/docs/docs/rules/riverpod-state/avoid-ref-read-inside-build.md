@@ -30,7 +30,7 @@ A one-off read inside a **callback** (`onPressed`) is intentional and is not rep
 
 The two ecosystems are told apart by the **receiver's resolved type**, not by its name: Riverpod's `ref` is a `WidgetRef`/`Ref`, while provider's extensions hang off `BuildContext`. So `widgetContext.read<T>()` is caught under any receiver name, while a field of some unrelated class you happened to call `ref` is not.
 
-**See also:** [ref.read vs ref.watch](https://riverpod.dev/docs/essentials/combining_requests), [provider: read vs watch](https://pub.dev/packages/provider)
+**See also:** [Riverpod refs](https://riverpod.dev/docs/concepts2/refs), [provider: read vs watch](https://pub.dev/packages/provider)
 
 ## Don't
 

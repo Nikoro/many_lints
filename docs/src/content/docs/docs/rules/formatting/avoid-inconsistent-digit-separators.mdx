@@ -10,7 +10,7 @@ sidebar:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--version">v1.0.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--config">Configurable</span>
@@ -103,10 +103,9 @@ Set either option to `0` to accept any group size, as long as it is used consist
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      avoid_inconsistent_digit_separators: false
+# many_lints.yaml
+rules:
+  avoid_inconsistent_digit_separators: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

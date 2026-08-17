@@ -10,7 +10,7 @@
 ///
 /// ```yaml
 /// plugins:
-///   many_lints: ^0.9.0
+///   many_lints: ^1.0.0
 /// ```
 ///
 /// The analysis server will automatically download and resolve the plugin
@@ -86,7 +86,6 @@ import 'package:many_lints/src/rules/initializers_ordering.dart';
 import 'package:many_lints/src/rules/record_fields_ordering.dart';
 import 'package:many_lints/src/rules/pattern_fields_ordering.dart';
 import 'package:many_lints/src/rules/prefer_conditional_expressions.dart';
-import 'package:many_lints/src/rules/prefer_named_boolean_parameters.dart';
 import 'package:many_lints/src/rules/prefer_typedefs_for_callbacks.dart';
 import 'package:many_lints/src/rules/prefer_declaring_const_constructor.dart';
 import 'package:many_lints/src/rules/prefer_correct_setter_parameter_name.dart';
@@ -197,7 +196,6 @@ import 'package:many_lints/src/rules/avoid_unnecessary_gesture_detector.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_option.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_overrides.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_setstate.dart';
-import 'package:many_lints/src/rules/avoid_unnecessary_overrides_in_state.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_stateful_widgets.dart';
 import 'package:many_lints/src/rules/avoid_mounted_in_setstate.dart';
 import 'package:many_lints/src/rules/avoid_collection_methods_with_unrelated_types.dart';
@@ -315,7 +313,6 @@ import 'package:many_lints/src/fixes/avoid_incorrect_image_opacity_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_gesture_detector_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_overrides_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_setstate_fix.dart';
-import 'package:many_lints/src/fixes/avoid_unnecessary_overrides_in_state_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_stateful_widgets_fix.dart';
 import 'package:many_lints/src/fixes/avoid_duplicate_cascades_fix.dart';
 import 'package:many_lints/src/fixes/avoid_duplicate_collection_elements_fix.dart';
@@ -442,7 +439,6 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidIncorrectImageOpacity());
     _registerWarningRule(registry, AvoidUnnecessaryGestureDetector());
     _registerWarningRule(registry, AvoidUnnecessaryOverrides());
-    _registerWarningRule(registry, AvoidUnnecessaryOverridesInState());
     _registerWarningRule(registry, AvoidUnnecessarySetstate());
     _registerWarningRule(registry, AvoidUnnecessaryStatefulWidgets());
     _registerWarningRule(registry, AvoidMountedInSetstate());
@@ -529,7 +525,6 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, RecordFieldsOrdering());
     _registerWarningRule(registry, PatternFieldsOrdering());
     _registerWarningRule(registry, PreferConditionalExpressions());
-    _registerWarningRule(registry, PreferNamedBooleanParameters());
     _registerWarningRule(registry, PreferTypedefsForCallbacks());
     _registerWarningRule(registry, PreferDeclaringConstConstructor());
     _registerWarningRule(registry, PreferCorrectSetterParameterName());
@@ -675,6 +670,15 @@ class ManyLintsPlugin extends Plugin {
         description:
             'Removed in many_lints 1.0.0. Use the Dart SDK rule instead.',
         replacedBy: 'prefer_contains',
+      ),
+    );
+    _registerWarningRule(
+      registry,
+      RemovedAnalysisRule(
+        name: 'avoid_unnecessary_overrides_in_state',
+        description:
+            'Removed in many_lints 1.0.0. Use the Dart SDK rule instead.',
+        replacedBy: 'unnecessary_overrides',
       ),
     );
 
@@ -886,10 +890,6 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidUnnecessaryOverrides.code,
       AvoidUnnecessaryOverridesFix.new,
-    );
-    registry.registerFixForRule(
-      AvoidUnnecessaryOverridesInState.code,
-      AvoidUnnecessaryOverridesInStateFix.new,
     );
     registry.registerFixForRule(
       AvoidUnnecessarySetstate.code,

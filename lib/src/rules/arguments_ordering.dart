@@ -17,8 +17,9 @@ import '../ordering_check.dart';
 /// **Positional arguments are never ordered**, since their order is the call's
 /// meaning and reordering them changes what it does.
 ///
-/// **This rule reports nothing until configured**, because a widget call
-/// deliberately leads with the arguments that matter most. Set
+/// **Outside the `pedantic` preset, this rule reports nothing until
+/// configured**, because a widget call deliberately leads with the arguments
+/// that matter most. Set
 /// `order: alphabetical` (or `by_length`, or `alphabetical_case_sensitive`)
 /// where a mechanical order is genuinely wanted.
 ///

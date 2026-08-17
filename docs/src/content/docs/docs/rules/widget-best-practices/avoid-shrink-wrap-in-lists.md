@@ -21,7 +21,7 @@ The quick fix removes the argument. `shrinkWrap` defaults to `false`, so that re
 
 A `ListView` with `shrinkWrap: true` forces Flutter to measure every single child up front, even the ones that are off-screen. For large lists this is extremely expensive and can cause visible jank or even ANRs. The recommended alternative is to use `CustomScrollView` with `SliverList`, which gives you the same nested-scrollable layout without the performance cost.
 
-**See also:** [ListView.shrinkWrap](https://api.flutter.dev/flutter/widgets/ListView/shrinkWrap.html) | [Flutter performance best practices](https://docs.flutter.dev/perf/best-practices)
+**See also:** [ScrollView.shrinkWrap](https://api.flutter.dev/flutter/widgets/ScrollView/shrinkWrap.html) | [Flutter performance best practices](https://docs.flutter.dev/perf/best-practices)
 
 ## Don't
 

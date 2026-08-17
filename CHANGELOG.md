@@ -2,11 +2,7 @@
 
 ## [Unreleased]
 
-### Added
-
-- Added `prefer_correct_future_return_type` to the `opinionated` preset, with
-  diagnostics and a quick fix for async declarations whose return type hides
-  their non-nullable `Future` result.
+## [1.0.0] - 2026-08-17
 
 ### Breaking
 
@@ -41,14 +37,15 @@
   preset: recommended
   ```
 
-  Four presets are available, each building on the previous one the way `package:lints/recommended.yaml` includes `core.yaml`:
+  Five presets are available, each active tier building on the previous one:
 
   | Preset | Rules | Contents |
   |--------|-------|----------|
   | `none` | 0 | Nothing. The default. |
-  | `core` | 36 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
-  | `recommended` | 94 | `core` plus likely defects and concrete runtime risks. |
-  | `opinionated` | 184 | `recommended` plus this package's own style preferences. |
+  | `core` | 35 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
+  | `recommended` | 91 | `core` plus likely defects and concrete runtime risks. |
+  | `opinionated` | 177 | `recommended` plus this package's own style preferences. |
+  | `pedantic` | 234 | `opinionated` plus strict naming, structure, complexity, and ordering. |
 
   `core` and `recommended` are deliberately conservative: a rule that imposes an architecture, a naming scheme, or a contested style choice is in neither, and rules that do nothing until configured (the `banned_*` family, `use_class_prefix`/`use_class_suffix`) are in no preset at all.
 
@@ -75,6 +72,17 @@
   fix. A removed-rule tombstone remains registered so existing configurations
   point users to the SDK rule instead of producing an unknown-rule warning.
 
+- Removed `prefer_named_boolean_parameters` in favor of the Dart SDK's
+  [`avoid_positional_boolean_parameters`](https://dart.dev/tools/linter-rules/avoid_positional_boolean_parameters),
+  which covers the same intent and also diagnoses a single positional boolean
+  parameter by default.
+
+- Removed `avoid_unnecessary_overrides_in_state` in favor of the Dart SDK's
+  [`unnecessary_overrides`](https://dart.dev/tools/linter-rules/unnecessary_overrides).
+  The SDK rule covers the State lifecycle cases, preserves legitimate override
+  exemptions, and provides a fix. A removed-rule tombstone points existing
+  configurations to the SDK rule.
+
 - `use_bloc_suffix`, `use_cubit_suffix` and `use_notifier_suffix` are replaced by two general rules, `use_class_suffix` and `use_class_prefix`. The old rules enforced naming for exactly three hardcoded base types; the new ones work for any type, including one declared in your own package, so a project using `...Store`, `...Repository` or `...UseCase` can adopt them instead of forking.
 
   Both are entirely config-driven and report nothing until configured. To restore the previous behaviour:
@@ -99,15 +107,19 @@
 
 ### Added
 
+- Added `prefer_correct_future_return_type` to the `opinionated` preset, with
+  diagnostics and a quick fix for async declarations whose return type hides
+  their non-nullable `Future` result.
+
 - `prefer_returning_condition` warns when an `if` returns `true` with a following `return false` — the condition itself, spelled out in three lines. In the `opinionated` preset.
 
 - `avoid_nested_conditional_expressions` warns when a conditional is nested inside another, packing a decision tree onto one line. The outermost carries the diagnostic, so one chain reports once. Configurable through `max_depth` (default `1`). In the `opinionated` preset.
 
-- `avoid_complex_conditions` warns when a condition combines more `&&`/`||` operands than `max_operands` (default 3). A hand-written `operator ==` is never reported: it is one `&&` per field by construction, and splitting it would scatter a check that reads as a unit. **In no preset.**
+- `avoid_complex_conditions` warns when a condition combines more `&&`/`||` operands than `max_operands` (default 3). A hand-written `operator ==` is never reported: it is one `&&` per field by construction, and splitting it would scatter a check that reads as a unit. In the **`pedantic`** preset.
 
-- `avoid_long_parameter_list` warns when a function takes more parameters than the budget. Positional and named are counted separately (defaults 4 and 10), since named parameters are labelled at the call site and do not depend on order. **In no preset.**
+- `avoid_long_parameter_list` warns when a function takes more parameters than the budget. Positional and named are counted separately (defaults 4 and 10), since named parameters are labelled at the call site and do not depend on order. In the **`pedantic`** preset.
 
-- `prefer_getter_over_method` warns when a no-argument method only reads a value. Three exclusions keep it off members whose parentheses are fixed: a body that calls anything (`Clock.now()` answers differently each time), a conventional name (`toJson`, `call`, `copyWith`), and a `Stream`/`Future` return. **In no preset.**
+- `prefer_getter_over_method` warns when a no-argument method only reads a value. Three exclusions keep it off members whose parentheses are fixed: a body that calls anything (`Clock.now()` answers differently each time), a conventional name (`toJson`, `call`, `copyWith`), and a `Stream`/`Future` return. In the **`pedantic`** preset.
 
 - `no_equal_conditions` warns when an `if`/`else if` chain tests the same condition twice, making the later branch unreachable and letting the case it was meant to handle fall through to `else`. Two independent `if`s are not compared, since the first may have changed the state the second reads. In the `recommended` preset.
 
@@ -121,13 +133,13 @@
 
 - `avoid_unnecessary_call` warns when a function is invoked through an explicit `.call()`. A null-aware invocation is left alone (`callback?()` does not parse), as is a class defining `call` as a real method — the receiver's type tells the two apart. In the `opinionated` preset.
 
-- `avoid_long_functions` warns when a function body exceeds `max_lines` (default 50), counted between the braces so the signature and doc comment do not count. **In no preset:** a budget is a house style, and measured against a production Flutter app the default reported 187 functions with a median of 98 lines, all genuinely long and none of them a bug. Test files usually want `exclude: [test/**]` rather than a higher budget.
+- `avoid_long_functions` warns when a function body exceeds `max_lines` (default 50), counted between the braces so the signature and doc comment do not count. In the **`pedantic`** preset: a budget is a house style, and measured against a production Flutter app the default reported 187 functions with a median of 98 lines, all genuinely long and none of them a bug. Test files usually want `exclude: [test/**]` rather than a higher budget.
 
-- `prefer_correct_callback_field_name` warns when a callback field or parameter is named `somethingCallback` or `somethingHandler` rather than `onSomething`, the spelling Flutter uses throughout its API. A function named for what it computes (`builder`, `comparator`) is never reported, nor is a bare framework noun: a parameter named exactly `handler` is the request handler in dart_frog, not a callback for an event. **In no preset**, like the other naming rules.
+- `prefer_correct_callback_field_name` warns when a callback field or parameter is named `somethingCallback` or `somethingHandler` rather than `onSomething`, the spelling Flutter uses throughout its API. A function named for what it computes (`builder`, `comparator`) is never reported, nor is a bare framework noun: a parameter named exactly `handler` is the request handler in dart_frog, not a callback for an event. In the **`pedantic`** preset, like the other strict naming rules.
 
-- `prefer_boolean_prefixes` warns when a boolean field, getter or method is not named as a yes-or-no question. The verb does not have to lead — `localeIsDefault` asks the same question as `isDefaultLocale` — and a bare third-person verb (`involves`, `matches`) is already one. Overrides, setters, and a private field backing an accessor are never reported, since none of them can be renamed independently. **In no preset:** naming is where codebases disagree most, and a predicate like `screen.atLeast(Breakpoint.tablet)` reads fine without a question verb.
+- `prefer_boolean_prefixes` warns when a boolean field, getter or method is not named as a yes-or-no question. The verb does not have to lead — `localeIsDefault` asks the same question as `isDefaultLocale` — and a bare third-person verb (`involves`, `matches`) is already one. Overrides, setters, and a private field backing an accessor are never reported, since none of them can be renamed independently. In the **`pedantic`** preset: naming is where codebases disagree most, and a predicate like `screen.atLeast(Breakpoint.tablet)` reads fine without a question verb.
 
-- `member_ordering` warns when a class member is declared before one the configured order puts earlier. The order is declared through `order:`, and the default puts the constructor first, then fields, then behaviour — the shape modern Dart and Flutter code already has. `==` / `hashCode` / `toString`, operators, and a Riverpod `Notifier.build` are never reported, because each is a member whose position is fixed by something other than taste. **In no preset:** against a production Flutter app already following a consistent style it still reported 227 members, every one a real deviation and none of them a bug, so it stays opt-in by name.
+- `member_ordering` warns when a class member is declared before one the configured order puts earlier. The order is declared through `order:`, and the default puts the constructor first, then fields, then behaviour — the shape modern Dart and Flutter code already has. `==` / `hashCode` / `toString`, operators, and a Riverpod `Notifier.build` are never reported, because each is a member whose position is fixed by something other than taste. In the **`pedantic`** preset: against a production Flutter app already following a consistent style it still reported 227 members, every one a real deviation and none of them a bug.
 
 - `prefer_immutable_state` warns when a class whose name marks it as state lacks `@immutable`. It owns the name-based half that `prefer_immutable_bloc_state` used to carry, including the `name_pattern` option, and is deliberately state-management-agnostic: it covers Riverpod notifier state, a hand-rolled store, or any plain `...State` value object. Flutter `State<T>` subclasses are excluded by type, since holding mutable fields is their entire job. In the `opinionated` preset.
 
@@ -141,7 +153,7 @@
 
 - `avoid_unnecessary_enum_prefix` warns when an enum constant repeats its own enum's name, which every call site already carries — `Status.statusActive` rather than `Status.active`. The prefix has to end at a word boundary, so `statusable` is not a match, and a constant named exactly like its enum is the whole word rather than a prefix. In the `opinionated` preset.
 
-- `no_equal_switch_case` warns when two branches of a `switch` produce identical bodies, where sharing the patterns with `||` would say it once. Three shapes are excluded because none can be merged: a guarded case (each `when` belongs to its own pattern), the catch-all (it has to stay last), and an empty body (that is a fallthrough). **In no preset** — whether two independent enum branches that agree today should be merged is a genuine judgement call, so it stays opt-in by name.
+- `no_equal_switch_case` warns when two branches of a `switch` produce identical bodies, where sharing the patterns with `||` would say it once. Three shapes are excluded because none can be merged: a guarded case (each `when` belongs to its own pattern), the catch-all (it has to stay last), and an empty body (that is a fallthrough). In the **`pedantic`** preset — whether two independent enum branches that agree today should be merged is a genuine judgement call.
 
 - `avoid_duplicate_mixins` warns when a `with` clause applies the same mixin more than once. Every application after the first contributes nothing, but a reader counting the behaviours mixed in sees one more than exists. Resolved types are compared rather than source text, so an aliased import counts as one mixin while a different generic instantiation does not. Re-applying a mixin a superclass already has is left alone, since that does change the linearization order. In the `recommended` preset.
 
@@ -149,7 +161,7 @@
 
 - `avoid_unnecessary_continue` warns when a `continue` is the last statement of a loop body, where control reaches the next iteration without it. It is usually a leftover from a change that moved or deleted the statements it once guarded, and it reads as though something below is being skipped. A labelled `continue`, and one ending a `then` branch to skip an `else`, are both doing real work and are left alone. Ships with a quick fix. In the `opinionated` preset.
 
-- `prefer_moving_to_variable` warns when the same property-access or invocation chain is repeated inside one block, and could be computed once into a variable. Reported at the first occurrence, which is where the variable belongs. In the `opinionated` preset.
+- `prefer_moving_to_variable` warns when the same property-access or invocation chain is repeated inside one block, and could be computed once into a variable. Reported at the first occurrence, which is where the variable belongs. In the `pedantic` preset.
 
   Four options, two of them beyond the usual scope of this rule: `max_extra_occurrences` (how many extra repetitions to tolerate, default `0`; the original `allowed_duplicated_chains` spelling remains as a deprecated alias), `min_chain_length` (the shortest pure-property chain worth naming, default `2`, so `a.b` twice is left alone), `ignored_invocations` and `ignored_targets`.
 
@@ -159,7 +171,7 @@
 - `never_discard_build_context` warns when a `BuildContext` parameter is named with a wildcard (`_`, `__`). Discarding it does not remove the need for a context — the body falls back to an outer one, which sits higher in the tree, so `Theme.of`/`MediaQuery.of`/`Navigator.of` resolve against a different subtree. Ships a quick fix that names the parameter `context`, withheld when that name is already in scope and renaming would shadow it.
 - `use_class_suffix` and `use_class_prefix`, each taking an `entries:` list of `{type, suffix|prefix, package?, ignore_private?}`. A base type matches whether it is reached by `extends`, `implements`, `with`, or an indirect ancestor, and `package:` is optional — omit it to match a type of that name from any library. Both ship a quick fix that renames the class and any same-named unnamed constructor.
 - A rule-wide `ignore_private` option on both rules, overridable per entry.
-- `prefer_single_declaration_per_file` warns when a file declares more than one top-level declaration. Classes, mixins, enums, extensions and extension types count; private declarations are skipped by default. In no preset — it imposes a file-organization convention, so it runs only when enabled by name.
+- `prefer_single_declaration_per_file` warns when a file declares more than one top-level declaration. Classes, mixins, enums, extensions and extension types count; private declarations are skipped by default. In the `pedantic` preset — it imposes a strict file-organization convention.
 
   Configurable along two axes. `kinds:` picks which declaration kinds count, and `types:` narrows to subtypes of named base types, which turns the rule into the type-specific convention:
 
@@ -195,6 +207,12 @@
 
 ### Fixed
 
+- Switched the example package to the `pedantic` preset so every preset-backed
+  rule is exercised by the example verifier, including pedantic-only rules.
+- Replaced obsolete `plugins.many_lints.diagnostics` snippets across rule pages
+  with the supported per-rule configuration and added a documentation check to
+  prevent that syntax from returning.
+
 - The suffix quick fix no longer eats a character when repairing a near-miss. It scanned candidate lengths longest-first and took the first match within two edits, so `CounterBlok` became `CounterBloc` by way of stripping `rBlok` — producing `CounteBloc`. It now ranks candidates by edit distance and prefers the length closest to the affix.
 - `cleanup_methods: []` now genuinely replaces the built-in cleanup methods with an empty list for `dispose_fields` and `dispose_provided_instances`. It previously fell back to `[dispose, close, cancel]`, contradicting the documented replacement semantics.
 - Added end-to-end `PluginServer` coverage for every previously untested
@@ -203,6 +221,9 @@
 
 ### Documentation
 
+- Added a generated, category-grouped index of all rules, repaired README
+  category links, and corrected stale Dart, Flutter, Riverpod, and test API
+  references.
 - Documented the shared `state_base_classes` option on every rule that supports it, and corrected the example inventory so each rule page, example and quick-fix badge matches the plugin registry.
 
 ## [0.9.0] - 2026-08-08
@@ -224,7 +245,7 @@
 
 ### Fixed
 
-- **27 quick fixes never fired at all.** They were registered and offered by name, but the IDE only ever showed the "Ignore …" suppression actions — selecting the fix did nothing. Each one type-tested the correction producer's `node` directly (`if (node is! ConstructorName) return;`, `node.parent`, …), which stopped matching after the analyzer 13 AST refactor: `nodeCovering` resolves the diagnostic range to the *deepest* node, so an unnamed `Foo(...)` yields `NamedType` rather than `ConstructorName`, and a `reportAtToken` on a class name yields a name-part wrapper rather than the `ClassDeclaration`. Every affected fix now walks up with `thisOrAncestorOfType` instead. Affected: `avoid_incomplete_copy_with`, `avoid_incorrect_image_opacity`, `avoid_unnecessary_consumer_widgets`, `avoid_unnecessary_gesture_detector`, `avoid_unnecessary_overrides`, `avoid_unnecessary_overrides_in_state`, `avoid_unnecessary_setstate`, `avoid_unnecessary_stateful_widgets`, `avoid_wrapping_in_padding`, `list_all_equatable_fields`, `prefer_abstract_final_static_class`, `prefer_align_over_container`, `prefer_center_over_align`, `prefer_constrained_box_over_container`, `prefer_container`, `prefer_multi_bloc_provider`, `prefer_overriding_parent_equality`, `prefer_padding_over_container`, `prefer_returning_shorthands`, `prefer_sized_box_square`, `prefer_switch_expression`, `prefer_text_rich`, `prefer_transform_over_container`, `prefer_type_over_var`, `use_closest_build_context`, `use_gap`, `use_sliver_prefix`.
+- **26 quick fixes never fired at all.** They were registered and offered by name, but the IDE only ever showed the "Ignore …" suppression actions — selecting the fix did nothing. Each one type-tested the correction producer's `node` directly (`if (node is! ConstructorName) return;`, `node.parent`, …), which stopped matching after the analyzer 13 AST refactor: `nodeCovering` resolves the diagnostic range to the *deepest* node, so an unnamed `Foo(...)` yields `NamedType` rather than `ConstructorName`, and a `reportAtToken` on a class name yields a name-part wrapper rather than the `ClassDeclaration`. Every affected fix now walks up with `thisOrAncestorOfType` instead. Affected: `avoid_incomplete_copy_with`, `avoid_incorrect_image_opacity`, `avoid_unnecessary_consumer_widgets`, `avoid_unnecessary_gesture_detector`, `avoid_unnecessary_overrides`, `avoid_unnecessary_setstate`, `avoid_unnecessary_stateful_widgets`, `avoid_wrapping_in_padding`, `list_all_equatable_fields`, `prefer_abstract_final_static_class`, `prefer_align_over_container`, `prefer_center_over_align`, `prefer_constrained_box_over_container`, `prefer_container`, `prefer_multi_bloc_provider`, `prefer_overriding_parent_equality`, `prefer_padding_over_container`, `prefer_returning_shorthands`, `prefer_sized_box_square`, `prefer_switch_expression`, `prefer_text_rich`, `prefer_transform_over_container`, `prefer_type_over_var`, `use_closest_build_context`, `use_gap`, `use_sliver_prefix`.
 - The three suffix fixes (`use_bloc_suffix`, `use_cubit_suffix`, `use_notifier_suffix`) had the same problem, and additionally renamed only the class — leaving `class FooBloc { Foo(); }`, which does not compile. They now rename any same-named constructor along with the class.
 - `avoid_generics_shadowing` renamed the type parameter's declaration but left its usages behind (`void process<T>(Config c) {}` — not compilable). It located the declaring scope with a fixed `parent.parent` hop, which stopped reaching class and top-level-function declarations once analyzer 13 added intermediate nodes; it now walks up.
 - `avoid_incomplete_copy_with` emitted `dynamic` for any parameter declared as a field formal (`required this.name`), since those carry no type annotation. It now falls back to the resolved element type, producing `String? surname`.

@@ -1,8 +1,28 @@
-docs/
+# Build and tool state
+.dart_tool/
+.pub/
+build/
 coverage/
-example/.dart_tool/
-.claude/
+pubspec.lock
+*.log
+.DS_Store
+
+# Repository-only automation and working notes
 .agents/
+.claude/
 .github/
+.idea/
+AGENTS.md
+CLAUDE.md
+LINT_SYNC_REPORT.md
+TODO/
+commands.yaml
+findings/
 logo/
-CONTRIBUTING.md
+
+# Development-only sources
+analysis_options.yaml
+docs/
+test/
+tool/
+example/.dart_tool/

@@ -184,7 +184,6 @@ const CATEGORIES = {
       'avoid_inherited_widget_in_initstate',
       'avoid_unnecessary_stateful_widgets',
       'avoid_unnecessary_overrides',
-      'avoid_unnecessary_overrides_in_state',
       'avoid_unnecessary_setstate',
       'prefer_immutable_state',
       'avoid_mounted_in_setstate',
@@ -339,7 +338,6 @@ const CATEGORIES = {
       'no_magic_string',
       'prefer_named_parameters',
       'avoid_accessing_other_classes_private_members',
-      'prefer_named_boolean_parameters',
       'prefer_declaring_const_constructor',
       'avoid_deep_nesting',
       'avoid_too_many_methods',
@@ -516,10 +514,9 @@ ${exampleSection}
 To disable this rule:
 
 \`\`\`yaml
-plugins:
-  many_lints:
-    diagnostics:
-      ${rule.name}: false
+# many_lints.yaml
+rules:
+  ${rule.name}: false
 \`\`\`
 `;
 }

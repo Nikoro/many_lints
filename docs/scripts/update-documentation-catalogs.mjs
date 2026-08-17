@@ -38,6 +38,15 @@ const PRESETS_FILE = join(
   'docs',
   'presets.md',
 );
+const RULES_FILE = join(
+  ROOT,
+  'docs',
+  'src',
+  'content',
+  'docs',
+  'docs',
+  'rules.md',
+);
 const SOURCE_PRESETS = join(ROOT, 'lib', 'src', 'presets.dart');
 const CHECK = process.argv.includes('--check');
 const GENERATED_MARKER =
@@ -97,7 +106,7 @@ const RELATED_GROUPS = [
   ['avoid_long_files', 'avoid_long_parameter_list', 'avoid_too_many_methods', 'max_imports'],
   ['avoid_deep_widget_nesting', 'avoid_too_many_widgets_per_build', 'prefer_extracting_callbacks'],
   ['no_magic_number', 'no_magic_string', 'prefer_moving_to_variable'],
-  ['prefer_named_boolean_parameters', 'prefer_named_parameters', 'prefer_private_named_parameters'],
+  ['prefer_named_parameters', 'prefer_private_named_parameters'],
   ['prefer_explicit_function_type', 'prefer_explicit_parameter_names', 'prefer_typedefs_for_callbacks', 'prefer_void_callback'],
   ['prefer_boolean_prefixes', 'prefer_correct_callback_field_name', 'prefer_correct_error_name', 'prefer_correct_handler_name', 'prefer_correct_setter_parameter_name'],
   ['prefer_correct_identifier_length', 'prefer_correct_type_name', 'match_class_name_pattern', 'use_class_prefix', 'use_class_suffix'],
@@ -199,6 +208,22 @@ function readRulePages() {
       };
     })
     .sort((left, right) => left.name.localeCompare(right.name));
+}
+
+function validateConfigurationExamples(pages) {
+  for (const page of pages) {
+    if (/plugins:\s*\n\s+many_lints:\s*\n\s+diagnostics:/.test(page.content)) {
+      throw new Error(
+        `Obsolete plugin diagnostics configuration in ${page.path}; ` +
+          'use a rule-level enabled value in many_lints.yaml instead.',
+      );
+    }
+    if (/diagnostics:\s+(?:true|false)\b/.test(page.content)) {
+      throw new Error(
+        `Boolean diagnostic severity in ${page.path}; use enabled instead.`,
+      );
+    }
+  }
 }
 
 function relationScore(rule, candidate) {
@@ -365,8 +390,9 @@ ban on postfix \`!\` including \`map[key]!\`.
 Use it for codebases that want one predictable shape everywhere and accept
 configuration work during adoption. Because a plugin cannot activate Dart SDK
 lints, combine it with SDK rules such as \`always_specify_types\`,
-\`directives_ordering\`, and \`sort_constructors_first\` for the full strict
-style.
+\`directives_ordering\`, and \`public_member_api_docs\` for the full strict
+style. Avoid pairing \`member_ordering\` with \`sort_constructors_first\`: their
+constructor-first checks overlap.
 
 ### Rules added by \`pedantic\` (${pedantic.length})
 
@@ -418,7 +444,57 @@ function updatePresetPage(pages) {
   }
 }
 
+function rulesPage(pages) {
+  const byCategory = new Map();
+  for (const page of pages) {
+    const entries = byCategory.get(page.category) ?? [];
+    entries.push(page);
+    byCategory.set(page.category, entries);
+  }
+
+  const sections = [...byCategory.entries()]
+    .sort(([left], [right]) =>
+      CATEGORY_LABELS[left].localeCompare(CATEGORY_LABELS[right]),
+    )
+    .map(([category, categoryPages]) => {
+      const items = categoryPages
+        .sort((left, right) => left.name.localeCompare(right.name))
+        .map((page) => `- ${ruleLink(page)} — ${page.description}`)
+        .join('\n');
+      return `<a id="${category}"></a>\n\n## ${CATEGORY_LABELS[category]} (${categoryPages.length})\n\n${items}`;
+    })
+    .join('\n\n');
+
+  return `---
+title: Rules
+description: Browse all Many Lints rules by category.
+sidebar:
+  order: 5
+---
+
+Many Lints provides ${pages.length} opt-in rules. Choose a category below, or use
+the site search when you already know the API or pattern you want to check.
+
+${sections}
+
+${GENERATED_MARKER}
+`;
+}
+
+function updateRulesPage(pages) {
+  const updated = rulesPage(pages);
+  if (CHECK) {
+    if (!existsSync(RULES_FILE) || readFileSync(RULES_FILE, 'utf8') !== updated) {
+      throw new Error(`Stale rules catalog: ${RULES_FILE}`);
+    }
+  } else {
+    writeFileSync(RULES_FILE, updated);
+  }
+}
+
 const pages = readRulePages();
+validateConfigurationExamples(pages);
 updateRulePages(pages);
 updatePresetPage(pages);
-console.log(`${CHECK ? 'Checked' : 'Updated'} ${pages.length} rule pages and the preset catalog.`);
+updateRulesPage(pages);
+console.log(`${CHECK ? 'Checked' : 'Updated'} ${pages.length} rule pages, the rules catalog, and the preset catalog.`);

@@ -5,7 +5,7 @@ sidebar:
   label: prefer_getter_over_method
 ---
 
-<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--version">v1.0.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Code Quality</span>
 
@@ -65,10 +65,9 @@ rules:
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      prefer_getter_over_method: false
+# many_lints.yaml
+rules:
+  prefer_getter_over_method: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

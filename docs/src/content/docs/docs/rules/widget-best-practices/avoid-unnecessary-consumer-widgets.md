@@ -23,7 +23,7 @@ The same applies to `ConsumerStatefulWidget`. There the `ref` is a getter on the
 
 Every `ConsumerWidget` subscribes to the Riverpod container, which means it participates in the provider dependency graph even when it does not need to. Switching to `StatelessWidget` removes that overhead, makes the widget's dependencies explicit (it has none), and signals to other developers that this widget is purely presentational.
 
-**See also:** [ConsumerWidget](https://riverpod.dev/docs/essentials/combining_requests)
+**See also:** [Riverpod consumers](https://riverpod.dev/docs/concepts2/consumers)
 
 ## Don't
 

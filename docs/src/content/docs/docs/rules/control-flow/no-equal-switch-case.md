@@ -5,7 +5,7 @@ sidebar:
   label: no_equal_switch_case
 ---
 
-<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--version">v1.0.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
@@ -58,10 +58,9 @@ rules:
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      no_equal_switch_case: false
+# many_lints.yaml
+rules:
+  no_equal_switch_case: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

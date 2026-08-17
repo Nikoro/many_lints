@@ -7,7 +7,7 @@ sidebar:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--version">v1.0.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
@@ -18,9 +18,12 @@ A long named-parameter list has the same problem as a long map literal: without 
 
 **Positional parameters are never ordered.** They are ordered by meaning and by every call site that depends on them — sorting those would break the code.
 
-Outside `preset: pedantic`, **this rule reports nothing until configured**, since a widget constructor deliberately leads with its most important parameters. The pedantic preset chooses alphabetical order, keeps required parameters as the first group, and checks lists from two named parameters upward.
+Outside `preset: pedantic`, **this rule reports nothing until configured**, since a widget constructor deliberately leads with its most important parameters. The pedantic preset chooses alphabetical order, sorts required and optional parameters independently, and checks lists from two named parameters upward.
 
-By default `required` parameters are sorted as one group before the optional ones, matching the SDK's `always_put_required_named_parameters_first`, so both conventions can hold at once.
+By default `required` and optional parameters are sorted as independent groups.
+Their relative placement is deliberately left to the official Dart rule
+[`always_put_required_named_parameters_first`](https://dart.dev/tools/linter-rules/always_put_required_named_parameters_first),
+so the two rules do not report the same issue.
 
 This rule is in the **`pedantic`** preset.
 
@@ -28,10 +31,10 @@ This rule is in the **`pedantic`** preset.
 
 ```dart
 void configure({
-  String? theme,
   required String name,
-  int? timeout,
   required String id,
+  String? theme,
+  int? timeout,
   bool? verbose,
 })
 ```
@@ -100,10 +103,9 @@ rules:
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      parameters_ordering: false
+# many_lints.yaml
+rules:
+  parameters_ordering: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

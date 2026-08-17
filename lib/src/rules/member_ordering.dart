@@ -16,10 +16,10 @@ import '../many_lints_rule.dart';
 /// lands in whichever spot happened to be free.
 ///
 /// The order is entirely configurable through `order:`, because the right one
-/// is a house style rather than a fact — which is also why this rule sits in
-/// no preset. Against a production Flutter app already following a consistent
-/// style it still reported 227 members, every one a real deviation and none of
-/// them a bug.
+/// is a house style rather than a fact — which is also why this rule only
+/// appears in the `pedantic` preset. Against a production Flutter app already
+/// following a consistent style it still reported 227 members, every one a
+/// real deviation and none of them a bug.
 class MemberOrdering extends ManyLintsRule {
   static const LintCode code = LintCode(
     'member_ordering',

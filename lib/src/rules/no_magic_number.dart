@@ -25,8 +25,9 @@ import '../many_lints_rule.dart';
 /// - Tests are exempt by default. A fixture's numbers are the test data, and
 ///   naming each one buries the case it describes.
 ///
-/// This rule is in **no preset**: what counts as magic is a house style, and
-/// in a Flutter codebase full of layout numbers the honest default is off.
+/// This rule is only in the `pedantic` preset: what counts as magic is a house
+/// style, and lower tiers should not impose it on Flutter codebases full of
+/// layout numbers.
 class NoMagicNumber extends ManyLintsRule {
   static const LintCode code = LintCode(
     'no_magic_number',

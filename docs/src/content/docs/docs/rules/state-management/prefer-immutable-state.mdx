@@ -10,7 +10,7 @@ sidebar:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--version">v1.0.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--config">Configurable</span>
@@ -62,10 +62,9 @@ class LoginEmailState {
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      prefer_immutable_state: false
+# many_lints.yaml
+rules:
+  prefer_immutable_state: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
@@ -103,6 +102,6 @@ rules:
 ## Related rules
 
 - [`avoid_state_constructors`](/many_lints/docs/rules/state-management/avoid-state-constructors/) — Avoid constructors with logic in State classes.
-- [`avoid_unnecessary_overrides_in_state`](/many_lints/docs/rules/state-management/avoid-unnecessary-overrides-in-state/) — Detect State lifecycle overrides that only call super.
 - [`prefer_immutable_bloc_state`](/many_lints/docs/rules/bloc-riverpod/prefer-immutable-bloc-state/) — Ensure Bloc and Cubit state classes are annotated with @immutable.
 - [`avoid_empty_setstate`](/many_lints/docs/rules/state-management/avoid-empty-setstate/) — Don't call setState with an empty callback.
+- [`avoid_inherited_widget_in_initstate`](/many_lints/docs/rules/state-management/avoid-inherited-widget-in-initstate/) — Don't look up inherited widgets inside initState.

@@ -19,7 +19,7 @@ Flags functional list-building patterns like `.map().toList()`, `List.generate()
 
 Collection-for syntax (`[for (final item in items) Widget(item)]`) is the idiomatic Dart way to build lists inline. It avoids creating intermediate iterables, integrates naturally with collection-if for conditional elements, and is easier to read in deeply nested widget trees than chained method calls.
 
-**See also:** [Flutter - Column children](https://api.flutter.dev/flutter/widgets/Column/children.html) | [Flutter - Row children](https://api.flutter.dev/flutter/widgets/Row/children.html)
+**See also:** [Flutter - Flex.children](https://api.flutter.dev/flutter/widgets/Flex/children.html) | [Dart collection elements](https://dart.dev/language/collections#control-flow-operators)
 
 ## Don't
 

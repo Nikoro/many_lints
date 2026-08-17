@@ -78,8 +78,8 @@ of every tier and lists the exact rules each one adds.
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
 | `core` | 35 | Near-certain bugs only. |
 | `recommended` | 91 | `core` plus likely defects and concrete runtime risks. |
-| `opinionated` | 178 | `recommended` plus this package's own style preferences. |
-| `pedantic` | 236 | `opinionated` plus strict naming, structure, complexity and ordering. |
+| `opinionated` | 177 | `recommended` plus this package's own style preferences. |
+| `pedantic` | 234 | `opinionated` plus strict naming, structure, complexity and ordering. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml`
 includes `core.yaml` — moving up a tier only ever adds rules.
@@ -303,7 +303,7 @@ Both `include` and `message` work on **every** rule, exactly like `exclude`.
 
 ## Per-rule options
 
-Beyond `exclude`, `include` and `message`, **116 rules** accept options that change *what*
+Beyond `exclude`, `include` and `message`, **114 rules** accept options that change *what*
 they report. Those rules carry a <span class="rule-badge rule-badge--config">Configurable</span>
 badge on their page, and every option is documented there with its type and default.
 
@@ -354,7 +354,6 @@ options never changes results until you set one.
 | [`avoid_returning_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-returning-widgets/) | `ignored_names`, `ignored_annotations`, `additional_ignored_annotations`, `allow_nullable` |
 | [`avoid_state_constructors`](/many_lints/docs/rules/state-management/avoid-state-constructors/) | `state_base_classes` |
 | [`avoid_unassigned_stream_subscriptions`](/many_lints/docs/rules/resource-management/avoid-unassigned-stream-subscriptions/) | `ignored_instances` |
-| [`avoid_unnecessary_overrides_in_state`](/many_lints/docs/rules/state-management/avoid-unnecessary-overrides-in-state/) | `state_base_classes` |
 | [`avoid_unnecessary_setstate`](/many_lints/docs/rules/state-management/avoid-unnecessary-setstate/) | `state_base_classes` |
 | [`avoid_unnecessary_stateful_widgets`](/many_lints/docs/rules/state-management/avoid-unnecessary-stateful-widgets/) | `state_base_classes` |
 | [`avoid_unnecessary_option`](/many_lints/docs/rules/fpdart/avoid-unnecessary-option/) | `ignore_public_api` |
@@ -430,7 +429,6 @@ options never changes results until you set one.
 | [`avoid_too_many_methods`](/many_lints/docs/rules/code-quality/avoid-too-many-methods/) | `max_methods`, `count_accessors` |
 | [`max_imports`](/many_lints/docs/rules/code-quality/max-imports/) | `max_imports`, `count_exports` |
 | [`max_statements`](/many_lints/docs/rules/code-quality/max-statements/) | `max_statements` |
-| [`prefer_named_boolean_parameters`](/many_lints/docs/rules/code-quality/prefer-named-boolean-parameters/) | `allow_single` |
 | [`avoid_negated_conditions`](/many_lints/docs/rules/control-flow/avoid-negated-conditions/) | `report_not_equal` |
 | [`prefer_early_return`](/many_lints/docs/rules/control-flow/prefer-early-return/) | `min_statements` |
 | [`avoid_inconsistent_digit_separators`](/many_lints/docs/rules/formatting/avoid-inconsistent-digit-separators/) | `group_size`, `hex_group_size` |

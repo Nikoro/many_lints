@@ -5,7 +5,7 @@ sidebar:
   label: avoid_self_compare
 ---
 
-<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--version">v1.0.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Code Quality</span>
 
@@ -49,10 +49,9 @@ if (current.compareTo(previous) > 0) {
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      avoid_self_compare: false
+# many_lints.yaml
+rules:
+  avoid_self_compare: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

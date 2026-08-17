@@ -148,7 +148,6 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `prefer_returning_condition` | An if/return pair that is just the condition | — |
 | `prefer_getter_over_method` | A no-argument value read should be a getter | — |
 | `avoid_unnecessary_overrides` | Override only calls `super` without additional logic | Yes |
-| `avoid_unnecessary_overrides_in_state` | State method override only calls `super` | Yes |
 | `avoid_unnecessary_setstate` | Unnecessary call to `setState` | Yes |
 | `avoid_unnecessary_stateful_widgets` | `StatefulWidget` with no mutable state | Yes |
 | `avoid_unrelated_type_casts` | `as` cast or `is` check between unrelated types | — |

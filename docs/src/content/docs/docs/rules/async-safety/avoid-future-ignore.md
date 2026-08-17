@@ -5,7 +5,7 @@ sidebar:
   label: avoid_future_ignore
 ---
 
-<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--version">v1.0.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Async Safety</span>
 
@@ -64,10 +64,9 @@ void discardObsoleteRequest(Future<void> request) {
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      avoid_future_ignore: false
+# many_lints.yaml
+rules:
+  avoid_future_ignore: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

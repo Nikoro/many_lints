@@ -5,7 +5,7 @@ sidebar:
   label: avoid_unnecessary_call
 ---
 
-<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--version">v1.0.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Code Quality</span>
 
@@ -40,10 +40,9 @@ This rule is in the **`opinionated`** preset.
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      avoid_unnecessary_call: false
+# many_lints.yaml
+rules:
+  avoid_unnecessary_call: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

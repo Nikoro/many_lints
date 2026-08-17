@@ -19,7 +19,7 @@ Flags `expect()` calls where the first argument is a `Future`. Passing a Future 
 
 Using `expect()` with a Future is almost always a bug. The test framework cannot await a synchronous `expect()` call, so the assertion is evaluated against the Future object itself rather than its resolved value. Switching to `await expectLater()` ensures the Future completes before the matcher runs.
 
-**See also:** [test package - expectLater](https://pub.dev/documentation/test_api/latest/test_api/expectLater.html)
+**See also:** [test package - expectLater](https://pub.dev/documentation/test/latest/test/expectLater.html)
 
 ## Don't
 

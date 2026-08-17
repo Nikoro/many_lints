@@ -5,7 +5,7 @@ sidebar:
   label: prefer_returning_condition
 ---
 
-<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--version">v1.0.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
@@ -41,10 +41,9 @@ This rule is in the **`opinionated`** preset.
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      prefer_returning_condition: false
+# many_lints.yaml
+rules:
+  prefer_returning_condition: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

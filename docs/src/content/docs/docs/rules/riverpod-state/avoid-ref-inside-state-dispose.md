@@ -15,7 +15,7 @@ This rule catches `ref` usage inside the `dispose()` method of `ConsumerState` c
 
 In Riverpod, the lifecycle of providers and widgets is not tightly coupled. When `dispose()` fires, there is no guarantee that the providers you are trying to access are still alive. Accessing `ref` in `dispose()` can silently read disposed state or throw `UnmountedRefException`, leading to hard-to-debug crashes in production.
 
-**See also:** [Riverpod provider lifecycle](https://riverpod.dev/docs/essentials/auto_dispose)
+**See also:** [Riverpod automatic disposal](https://riverpod.dev/docs/concepts2/auto_dispose)
 
 ## Don't
 

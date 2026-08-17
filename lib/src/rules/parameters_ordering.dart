@@ -18,14 +18,16 @@ import '../ordering_check.dart';
 /// meaning and by the call sites that depend on them — sorting those would
 /// change every caller and break the code.
 ///
-/// **This rule reports nothing until configured**, since a widget constructor
-/// deliberately leads with its most important parameters. Set
+/// **Outside the `pedantic` preset, this rule reports nothing until
+/// configured**, since a widget constructor deliberately leads with its most
+/// important parameters. Set
 /// `order: alphabetical` (or `by_length`, or `alphabetical_case_sensitive`)
 /// where a mechanical order is wanted.
 ///
-/// `required` parameters are ordered as one group before the optional ones by
-/// default, matching the SDK's own `always_put_required_named_parameters_first`
-/// — set `group_required: false` to sort all named parameters together.
+/// `required` and optional parameters are ordered as independent groups by
+/// default. Their relative placement belongs to the SDK's
+/// `always_put_required_named_parameters_first`; set `group_required: false`
+/// to sort all named parameters together instead.
 /// `min_parameters` (default 5) keeps short signatures out of it.
 class ParametersOrdering extends ManyLintsRule {
   static const LintCode code = LintCode(
@@ -89,8 +91,8 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // Required and optional are sorted as two runs, so the required-first
-    // convention and an alphabetical order can both hold at once.
+    // Required and optional are sorted as two independent runs. The SDK's
+    // always_put_required_named_parameters_first owns their relative placement.
     _report(named.where((p) => p.isRequired).toList(growable: false), mode);
     _report(named.where((p) => !p.isRequired).toList(growable: false), mode);
   }

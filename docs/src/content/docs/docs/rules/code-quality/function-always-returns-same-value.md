@@ -5,7 +5,7 @@ sidebar:
   label: function_always_returns_same_value
 ---
 
-<span class="rule-badge rule-badge--version">v0.10.0</span>
+<span class="rule-badge rule-badge--version">v1.0.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Code Quality</span>
 
@@ -49,10 +49,9 @@ This rule is in the **`recommended`** preset, so it is on with
 To disable this rule:
 
 ```yaml
-plugins:
-  many_lints:
-    diagnostics:
-      function_always_returns_same_value: false
+# many_lints.yaml
+rules:
+  function_always_returns_same_value: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

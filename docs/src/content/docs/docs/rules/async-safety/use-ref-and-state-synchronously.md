@@ -19,7 +19,7 @@ This rule warns when `ref` or `state` is accessed after an `await` in a Riverpod
 
 Async methods in Notifiers can outlive the notifier itself. When a user navigates away or a provider is disposed mid-await, the notifier is torn down but the async method keeps running. Without a `ref.mounted` guard, the next `ref.read()` or `state = ...` will crash at runtime with an exception that is easy to miss during development but hits users in production.
 
-**See also:** [Riverpod async safety](https://riverpod.dev/docs/essentials/auto_dispose) | [Flutter mounted check](https://api.flutter.dev/flutter/widgets/State/mounted.html) | [Dart lint: use_build_context_synchronously](https://dart.dev/tools/linter-rules/use_build_context_synchronously)
+**See also:** [Riverpod automatic disposal](https://riverpod.dev/docs/concepts2/auto_dispose) | [Flutter mounted check](https://api.flutter.dev/flutter/widgets/State/mounted.html) | [Dart lint: use_build_context_synchronously](https://dart.dev/tools/linter-rules/use_build_context_synchronously)
 
 ## Don't
 

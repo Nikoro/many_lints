@@ -17,8 +17,9 @@ import '../ordering_check.dart';
 /// **Positional fields are never ordered**: their position *is* their
 /// identity, and reordering them makes a different type.
 ///
-/// **This rule reports nothing until configured.** Set `order: alphabetical`
-/// (or `by_length`, or `alphabetical_case_sensitive`) to adopt one.
+/// **Outside the `pedantic` preset, this rule reports nothing until
+/// configured.** Set `order: alphabetical` (or `by_length`, or
+/// `alphabetical_case_sensitive`) to adopt one.
 class RecordFieldsOrdering extends ManyLintsRule {
   static const LintCode code = LintCode(
     'record_fields_ordering',

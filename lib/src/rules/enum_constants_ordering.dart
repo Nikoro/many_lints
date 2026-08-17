@@ -14,12 +14,13 @@ import '../ordering_check.dart';
 /// makes an addition show up in a diff as one line in the middle rather than
 /// one appended at the end, which is where duplicates hide.
 ///
-/// **This rule reports nothing until configured**, because the useful order
-/// for an enum is often semantic rather than alphabetical — `small, medium,
-/// large` is correctly ordered and alphabetising it would be a regression.
-/// Set `order: alphabetical` (or `by_length`, or
-/// `alphabetical_case_sensitive`) on the enums where a mechanical order is
-/// genuinely wanted, narrowing with `include` where needed.
+/// **Outside the `pedantic` preset, this rule reports nothing until
+/// configured**, because the useful order for an enum is often semantic rather
+/// than alphabetical — `small, medium, large` is correctly ordered and
+/// alphabetising it would be a regression. Set `order: alphabetical` (or
+/// `by_length`, or `alphabetical_case_sensitive`) on the enums where a
+/// mechanical order is genuinely wanted, narrowing with `include` where
+/// needed.
 class EnumConstantsOrdering extends ManyLintsRule {
   static const LintCode code = LintCode(
     'enum_constants_ordering',

@@ -14,9 +14,9 @@ import '../many_lints_rule.dart';
 /// A `const` constructor is what lets a value be built once at compile time
 /// and shared, rather than allocated at every call. In Flutter that is the
 /// difference between a widget the framework can skip rebuilding and one it
-/// cannot, which is why `prefer_const_constructors` is in every lint preset —
-/// but that rule only fires where a `const` constructor already exists. This
-/// one asks for the constructor in the first place.
+/// cannot. The SDK's `prefer_const_constructors` can enforce `const` at call
+/// sites, but only where a `const` constructor already exists. This rule asks
+/// for the constructor in the first place.
 ///
 /// A class qualifies when every field is `final`, it declares exactly one
 /// generative constructor, that constructor's body is empty, and it has no

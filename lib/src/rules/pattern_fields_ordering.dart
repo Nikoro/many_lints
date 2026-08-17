@@ -15,8 +15,9 @@ import '../ordering_check.dart';
 /// spelling picks its own order, the reader cannot compare two of them at a
 /// glance to see which fields one takes and the other does not.
 ///
-/// **This rule reports nothing until configured.** Set `order: alphabetical`
-/// (or `by_length`, or `alphabetical_case_sensitive`) to adopt one.
+/// **Outside the `pedantic` preset, this rule reports nothing until
+/// configured.** Set `order: alphabetical` (or `by_length`, or
+/// `alphabetical_case_sensitive`) to adopt one.
 ///
 /// Only fields with an explicit or inferable name are ordered; a positional
 /// field in a record pattern is identified by position and is left alone.

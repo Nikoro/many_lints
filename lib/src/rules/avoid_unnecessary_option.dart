@@ -38,9 +38,9 @@ const _combinators = {
 /// exclusive, and the right move is to convert at the border rather than fight
 /// the language.
 ///
-/// This rule is deliberately opinionated and lives outside the presets, since
-/// a codebase that has standardised on `Option` everywhere is making a
-/// coherent choice.
+/// This rule is deliberately opinionated and only belongs to the `pedantic`
+/// preset, since a codebase that has standardised on `Option` everywhere is
+/// making a coherent choice.
 ///
 /// **Bad:**
 /// ```dart
