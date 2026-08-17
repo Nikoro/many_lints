@@ -14,7 +14,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule flags a widget's callback argument holding a long inline closure.
 
-This rule is in **no preset**: it imposes an architecture rather than catching a defect.
+This rule is in the **`pedantic`** preset: it imposes an architecture rather than catching a defect.
 
 ## Why use this rule
 
@@ -108,3 +108,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_deep_widget_nesting`](/many_lints/docs/rules/widget-best-practices/avoid-deep-widget-nesting/) — Keep a widget tree within a nesting budget.
+- [`avoid_too_many_widgets_per_build`](/many_lints/docs/rules/widget-best-practices/avoid-too-many-widgets-per-build/) — Keep one build method within a widget budget.
+- [`always_pass_global_key`](/many_lints/docs/rules/widget-best-practices/always-pass-global-key/) — Don't create a GlobalKey inside build.
+- [`avoid_conditional_hooks`](/many_lints/docs/rules/widget-best-practices/avoid-conditional-hooks/) — Never call hooks inside conditionals, loops, or ternaries.

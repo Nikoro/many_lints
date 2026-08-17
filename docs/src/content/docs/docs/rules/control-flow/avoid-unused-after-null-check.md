@@ -9,6 +9,8 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
+This rule is in the **`pedantic`** preset.
+
 This rule flags `if (x != null) { ... }` where the guarded branch never mentions `x`. The check exists to make `x` usable, so a branch that ignores it is usually operating on the wrong variable.
 
 ## Why use this rule
@@ -55,8 +57,9 @@ For `x == null`, only the `else` branch is examined, since that is the branch wh
 
 ## Configuration
 
-This rule is opt-in because checking whether a value exists can legitimately
-select behavior without reading the value inside the selected branch.
+This rule appears only in the **`pedantic`** preset because checking whether a
+value exists can legitimately select behavior without reading the value inside
+the selected branch.
 
 Enable it by name:
 
@@ -67,3 +70,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_cascade_after_if_null`](/many_lints/docs/rules/control-flow/avoid-cascade-after-if-null/) — Detect cascades after if-null operators without parentheses.
+- [`prefer_simpler_patterns_null_check`](/many_lints/docs/rules/control-flow/prefer-simpler-patterns-null-check/) — Suggest simpler null-check patterns in if-case expressions.
+- [`avoid_collapsible_if`](/many_lints/docs/rules/control-flow/avoid-collapsible-if/) — Merge nested if statements with &amp;&amp;.
+- [`avoid_constant_conditions`](/many_lints/docs/rules/control-flow/avoid-constant-conditions/) — Detect comparisons where both sides are constants.

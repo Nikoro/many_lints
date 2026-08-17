@@ -69,3 +69,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`function_always_returns_same_value`](/many_lints/docs/rules/code-quality/function-always-returns-same-value/) — Flag a function whose every return yields the same constant.
+- [`avoid_non_null_assertion`](/many_lints/docs/rules/code-quality/avoid-non-null-assertion/) — Don't assert away null with the ! operator.
+- [`avoid_accessing_other_classes_private_members`](/many_lints/docs/rules/code-quality/avoid-accessing-other-classes-private-members/) — Make the underscore mean what everyone reads it as.
+- [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) — Detect and flag commented-out code.

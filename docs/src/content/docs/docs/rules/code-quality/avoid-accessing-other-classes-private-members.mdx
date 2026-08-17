@@ -14,7 +14,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule flags one class reading another class's private member.
 
-This rule is in **no preset**: it imposes an architecture rather than catching a defect.
+This rule is in the **`pedantic`** preset: it imposes an architecture rather than catching a defect.
 
 ## Why use this rule
 
@@ -104,3 +104,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`prefer_private_named_parameters`](/many_lints/docs/rules/code-quality/prefer-private-named-parameters/) — Prefer private named parameters (Dart 3.12+) over initializer-list boilerplate.
+- [`prefer_widget_private_members`](/many_lints/docs/rules/widget-best-practices/prefer-widget-private-members/) — A widget's public API is its constructor.
+- [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) — Detect and flag commented-out code.
+- [`avoid_complex_conditions`](/many_lints/docs/rules/code-quality/avoid-complex-conditions/) — Keep boolean conditions within an operand budget.

@@ -1970,6 +1970,16 @@ grep -n "class SplayTreeMap" ~/.pub-cache/hosted/pub.dev/analyzer-*/lib/src/test
 Pick a type the mock SDK actually declares, or mock the package yourself (see
 [config-cookbook.md](config-cookbook.md#testing-a-configurable-rule)).
 
+The same gap applies to recently added SDK extensions. If a rule must resolve a
+specific extension member, add the extension to its declaring mock library and
+make every real-SDK re-export visible in the mock too. For example,
+`Future.ignore()` needs `FutureExtensions` added to mock `dart:async` **and**
+included in mock `dart:core`'s `show` export. Patch both files in `setUp()` after
+`super.setUp()` and before the first analysis; do not weaken production element
+matching just to accommodate the test SDK.
+
+**Ref:** [avoid_future_ignore_test.dart](../../../test/avoid_future_ignore_test.dart)
+
 ### Do Not Duplicate an Analyzer Compile Error
 
 An external rule's example can be stale relative to this package's Dart SDK.

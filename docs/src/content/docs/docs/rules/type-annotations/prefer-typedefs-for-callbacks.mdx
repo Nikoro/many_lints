@@ -18,7 +18,7 @@ This rule flags an inline function type written where a typedef would name it.
 
 Only function types with at least `min_parameters` parameters are reported. `void Function()` and `void Function(String)` are already readable, and naming them adds indirection without adding information — which is why Flutter's own `VoidCallback` and `ValueChanged<T>` exist for exactly the shapes that clear this bar.
 
-This rule is in **no preset**.
+This rule is in the **`pedantic`** preset.
 
 ## Don't
 
@@ -36,7 +36,7 @@ void listen(EventHandler onEvent) {}
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -87,3 +87,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`prefer_explicit_function_type`](/many_lints/docs/rules/type-annotations/prefer-explicit-function-type/) — Prefer explicit function type annotations over the bare 'Function' type.
+- [`prefer_explicit_parameter_names`](/many_lints/docs/rules/type-annotations/prefer-explicit-parameter-names/) — Name the parameters of a function type.
+- [`prefer_void_callback`](/many_lints/docs/rules/type-annotations/prefer-void-callback/) — Use 'VoidCallback' instead of 'void Function()'.
+- [`prefer_async_callback`](/many_lints/docs/rules/type-annotations/prefer-async-callback/) — Use 'AsyncCallback' instead of 'Future&lt;void&gt; Function()'.

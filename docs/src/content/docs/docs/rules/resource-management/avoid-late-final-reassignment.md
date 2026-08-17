@@ -72,3 +72,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`always_remove_listener`](/many_lints/docs/rules/resource-management/always-remove-listener/) — Ensure every addListener() has a matching removeListener() in dispose().
+- [`avoid_unassigned_stream_subscriptions`](/many_lints/docs/rules/resource-management/avoid-unassigned-stream-subscriptions/) — Ensure stream subscriptions are assigned to a variable for proper cancellation.
+- [`avoid_unremovable_callbacks_in_listeners`](/many_lints/docs/rules/resource-management/avoid-unremovable-callbacks-in-listeners/) — Don't pass an inline closure to addListener.
+- [`dispose_fields`](/many_lints/docs/rules/resource-management/dispose-fields/) — Ensure State fields with disposal methods are cleaned up in dispose().

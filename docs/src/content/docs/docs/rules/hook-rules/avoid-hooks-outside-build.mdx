@@ -110,3 +110,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `additional_methods` | list of strings | `[]` | Further methods of a hook widget treated as valid hook contexts, alongside `build` |
+
+## Related rules
+
+- [`avoid_misused_hooks`](/many_lints/docs/rules/hook-rules/avoid-misused-hooks/) — Don't call hooks inside loops.
+- [`avoid_conditional_hooks`](/many_lints/docs/rules/widget-best-practices/avoid-conditional-hooks/) — Never call hooks inside conditionals, loops, or ternaries.
+- [`avoid_unnecessary_hook_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-unnecessary-hook-widgets/) — Don't extend HookWidget if you never call any hooks.
+- [`avoid_ref_watch_outside_build`](/many_lints/docs/rules/riverpod-state/avoid-ref-watch-outside-build/) — Subscribe only in build; read once everywhere else.

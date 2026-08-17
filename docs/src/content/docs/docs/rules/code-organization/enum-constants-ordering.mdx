@@ -16,11 +16,11 @@ This rule flags an enum whose constants are not in the configured order.
 
 An enum is a list a reader scans rather than reads, and finding a constant in an unordered list of twenty means checking all twenty. Ordering also makes an addition show up in a diff as one line in the middle rather than one appended at the end, which is where duplicates hide.
 
-**This rule reports nothing until configured**, because the useful order for an enum is often semantic rather than alphabetical — `small, medium, large` is correctly ordered and alphabetising it would be a regression.
+Outside `preset: pedantic`, **this rule reports nothing until configured**, because the useful order for an enum is often semantic rather than alphabetical — `small, medium, large` is correctly ordered and alphabetising it would be a regression. The pedantic preset deliberately chooses alphabetical order for mechanical consistency.
 
 Only the **first** out-of-order constant is reported: one misplaced name makes every later name look wrong too, and reporting them all would turn one edit into a wall of diagnostics.
 
-This rule is in **no preset**.
+This rule is in the **`pedantic`** preset.
 
 ## Don't
 
@@ -34,13 +34,13 @@ enum Fruit { banana, apple, cherry }
 enum Fruit { apple, banana, cherry }
 
 // Still correct with no `order:` configured — a semantic order is
-// exactly why this rule is opt-in.
+// exactly why less strict presets leave this rule disabled.
 enum Size { small, medium, large }
 ```
 
 ## Enabling this rule
 
-This rule reports **nothing until you choose an order**, so enabling it by name is not enough — set `order:`:
+Outside `preset: pedantic`, enabling it by name is not enough — set `order:`:
 
 ```yaml
 # many_lints.yaml
@@ -91,3 +91,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`pattern_fields_ordering`](/many_lints/docs/rules/code-organization/pattern-fields-ordering/) — Keep pattern fields in a configured order.
+- [`record_fields_ordering`](/many_lints/docs/rules/code-organization/record-fields-ordering/) — Keep record named fields in a configured order.
+- [`avoid_missing_enum_constant_in_map`](/many_lints/docs/rules/collection-type/avoid-missing-enum-constant-in-map/) — Cover every enum constant in a map keyed by that enum.
+- [`prefer_enums_by_name`](/many_lints/docs/rules/collection-type/prefer-enums-by-name/) — Use .byName() instead of .firstWhere() to look up enum values by name.

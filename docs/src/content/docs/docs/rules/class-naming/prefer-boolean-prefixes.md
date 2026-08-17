@@ -15,7 +15,7 @@ This rule flags a boolean field, getter or method whose name does not read as a 
 
 `if (user.admin)` reads as though `admin` might be an object, and the reader has to check. `if (user.isAdmin)` can only be a condition. The verb is what tells you at the call site that nothing further is needed to get a boolean out of it, and it is why `isEmpty`, `hasListeners` and `canPop` read the way they do throughout the SDK.
 
-This rule is in **no preset**. Naming is where reasonable codebases disagree most, and the empirical run found a legitimate style it cannot accommodate: a predicate like `screen.atLeast(Breakpoint.tablet)` reads perfectly without a question verb. Enable it by name if the convention is one you want enforced.
+This rule is in the **`pedantic`** preset. Naming is where reasonable codebases disagree most, and the empirical run found a legitimate style it cannot accommodate: a predicate like `screen.atLeast(Breakpoint.tablet)` reads perfectly without a question verb. Enable it by name if the convention is one you want enforced.
 
 **See also:** [Effective Dart: naming](https://dart.dev/effective-dart/design#prefer-a-non-imperative-verb-phrase-for-a-boolean-property-or-variable)
 
@@ -47,7 +47,7 @@ class User {
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -68,3 +68,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`prefer_correct_callback_field_name`](/many_lints/docs/rules/class-naming/prefer-correct-callback-field-name/) — Name callbacks onSomething, the way Flutter does.
+- [`prefer_correct_error_name`](/many_lints/docs/rules/class-naming/prefer-correct-error-name/) — Name exception and error classes with the matching suffix.
+- [`prefer_correct_handler_name`](/many_lints/docs/rules/class-naming/prefer-correct-handler-name/) — Name event handlers after the event they answer.
+- [`prefer_correct_setter_parameter_name`](/many_lints/docs/rules/class-naming/prefer-correct-setter-parameter-name/) — Use one parameter name in every setter.

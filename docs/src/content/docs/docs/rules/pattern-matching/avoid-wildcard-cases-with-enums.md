@@ -9,6 +9,8 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Pattern Matching</span>
 
+This rule is in the **`pedantic`** preset.
+
 This rule flags a `_` or `default` case in a switch over a non-nullable enum.
 
 ## Why use this rule
@@ -62,8 +64,9 @@ The rule stays silent in cases where a catch-all is legitimate:
 
 ## Configuration
 
-This rule is opt-in because catch-all behavior is sometimes the contract, such
-as mapping every unsupported HTTP method to the same response.
+This rule appears only in the **`pedantic`** preset because catch-all behavior is
+sometimes the contract, such as mapping every unsupported HTTP method to the
+same response.
 
 Enable it by name:
 
@@ -74,3 +77,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`prefer_wildcard_pattern`](/many_lints/docs/rules/pattern-matching/prefer-wildcard-pattern/) — **Opposing convention.** Use the wildcard pattern '_' instead of 'Object()' for catch-all cases.
+- [`prefer_switch_with_enums`](/many_lints/docs/rules/pattern-matching/prefer-switch-with-enums/) — Use a switch instead of an if-else chain over enum constants.
+- [`avoid_single_field_destructuring`](/many_lints/docs/rules/pattern-matching/avoid-single-field-destructuring/) — Avoid destructuring a single field when direct property access is simpler.
+- [`use_existing_destructuring`](/many_lints/docs/rules/pattern-matching/use-existing-destructuring/) — Add properties to an existing destructuring instead of accessing them directly.

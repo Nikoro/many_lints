@@ -67,3 +67,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_future_of_either`](/many_lints/docs/rules/fpdart/avoid-future-of-either/) — Future&lt;Either&gt; throws away the composition TaskEither already gives you.
+- [`avoid_future_of_option`](/many_lints/docs/rules/fpdart/avoid-future-of-option/) — Future&lt;Option&gt; throws away the composition TaskOption already gives you.
+- [`prefer_task_either_over_try_catch`](/many_lints/docs/rules/fpdart/prefer-task-either-over-try-catch/) — A repository's failures belong in its signature, not in a try/catch.
+- [`prefer_chain_either`](/many_lints/docs/rules/fpdart/prefer-chain-either/) — chainEither lifts a synchronous Either step for you.

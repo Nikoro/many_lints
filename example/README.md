@@ -91,6 +91,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_unnecessary_enum_prefix` | An enum constant repeating its own enum name | — |
 | `avoid_late_final_reassignment` | A `late final` field assigned twice on one path | — |
 | `avoid_expanded_as_spacer` | Prefer `Spacer` over `Expanded` with empty child | Yes |
+| `avoid_future_ignore` | Do not suppress both the result and errors of a `Future` with `.ignore()` | — |
 | `avoid_flexible_outside_flex` | `Flexible`/`Expanded` should only be inside `Row`/`Column`/`Flex` | — |
 | `avoid_generics_shadowing` | Generic type parameter shadows a top-level declaration | Yes |
 | `avoid_hooks_outside_build` | Only call hooks from a hook context | — |

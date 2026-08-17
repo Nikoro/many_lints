@@ -14,7 +14,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule flags a comment that does not start with a capital letter or does not end with a period.
 
-By default only doc comments (`///`) are checked. This rule is in **no preset**, since sentence-shaped comments are a house style.
+By default only doc comments (`///`) are checked. This rule is in the **`pedantic`** preset, since sentence-shaped comments are a house style.
 
 ## Why use this rule
 
@@ -98,3 +98,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`double_literal_format`](/many_lints/docs/rules/formatting/double-literal-format/) — Write double literals with exactly one leading zero and no redundant trailing zeros.
+- [`avoid_inconsistent_digit_separators`](/many_lints/docs/rules/formatting/avoid-inconsistent-digit-separators/) — Group digit separators at a regular interval.
+- [`format_test_name`](/many_lints/docs/rules/testing-rules/format-test-name/) — Hold test descriptions to a house pattern.
+- [`always_pass_global_key`](/many_lints/docs/rules/widget-best-practices/always-pass-global-key/) — Don't create a GlobalKey inside build.

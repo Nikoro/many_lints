@@ -110,3 +110,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `allowed_types` | list of strings | `[]` | Type names to treat as encodable, for projects whose serializer handles them through a custom converter |
+
+## Related rules
+
+- [`prefer_correct_json_casts`](/many_lints/docs/rules/collection-type/prefer-correct-json-casts/) — Cast JSON values to nullable types.
+- [`avoid_accessing_collections_by_constant_index`](/many_lints/docs/rules/collection-type/avoid-accessing-collections-by-constant-index/) — Avoid accessing a collection by a constant index inside a loop.
+- [`avoid_collection_equality_checks`](/many_lints/docs/rules/collection-type/avoid-collection-equality-checks/) — Avoid comparing collections with == or != as it checks reference equality, not contents.
+- [`avoid_collection_methods_with_unrelated_types`](/many_lints/docs/rules/collection-type/avoid-collection-methods-with-unrelated-types/) — Avoid calling collection methods with arguments whose types are unrelated to the collection's type parameter.

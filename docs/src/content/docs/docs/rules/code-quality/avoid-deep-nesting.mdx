@@ -22,7 +22,7 @@ An `else if` is a **sibling branch, not another level** — it is written flat a
 
 One diagnostic per function, anchored at the statement that first crosses the limit.
 
-This rule is in **no preset**.
+This rule is in the **`pedantic`** preset.
 
 ## Don't
 
@@ -63,7 +63,7 @@ void _processRow(List<int> row) {
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -114,3 +114,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_complex_conditions`](/many_lints/docs/rules/code-quality/avoid-complex-conditions/) — Keep boolean conditions within an operand budget.
+- [`avoid_high_cyclomatic_complexity`](/many_lints/docs/rules/code-quality/avoid-high-cyclomatic-complexity/) — Keep a function within a complexity budget.
+- [`avoid_long_functions`](/many_lints/docs/rules/code-quality/avoid-long-functions/) — Keep function bodies within a line budget.
+- [`max_statements`](/many_lints/docs/rules/code-quality/max-statements/) — Keep a function within a statement budget.

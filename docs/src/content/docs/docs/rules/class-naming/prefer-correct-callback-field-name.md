@@ -15,7 +15,7 @@ This rule flags a callback field or parameter named `somethingCallback`, `someth
 
 `onTap`, `onChanged` and `onPressed` run through the whole Flutter API, so `on...` is what a reader recognises as "this fires when something happens". A field called `tapCallback` carries the same meaning in a spelling every codebase invents differently, and at the call site `MyWidget(tapCallback: ...)` reads as a value where `onTap:` reads as an event.
 
-This rule is in **no preset**, because naming conventions are a house style rather than a correctness question.
+This rule is in the **`pedantic`** preset, because naming conventions are a house style rather than a correctness question.
 
 **See also:** [Effective Dart: naming](https://dart.dev/effective-dart/design#naming)
 
@@ -47,7 +47,7 @@ class ConfirmButton extends StatelessWidget {
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -68,3 +68,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`prefer_correct_error_name`](/many_lints/docs/rules/class-naming/prefer-correct-error-name/) — Name exception and error classes with the matching suffix.
+- [`prefer_correct_handler_name`](/many_lints/docs/rules/class-naming/prefer-correct-handler-name/) — Name event handlers after the event they answer.
+- [`prefer_correct_setter_parameter_name`](/many_lints/docs/rules/class-naming/prefer-correct-setter-parameter-name/) — Use one parameter name in every setter.
+- [`prefer_boolean_prefixes`](/many_lints/docs/rules/class-naming/prefer-boolean-prefixes/) — Name booleans as questions.

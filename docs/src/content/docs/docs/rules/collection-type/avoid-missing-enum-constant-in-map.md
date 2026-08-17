@@ -75,3 +75,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`prefer_enums_by_name`](/many_lints/docs/rules/collection-type/prefer-enums-by-name/) — Use .byName() instead of .firstWhere() to look up enum values by name.
+- [`enum_constants_ordering`](/many_lints/docs/rules/code-organization/enum-constants-ordering/) — Keep enum constants in a configured order.
+- [`avoid_accessing_collections_by_constant_index`](/many_lints/docs/rules/collection-type/avoid-accessing-collections-by-constant-index/) — Avoid accessing a collection by a constant index inside a loop.
+- [`avoid_map_keys_contains`](/many_lints/docs/rules/collection-type/avoid-map-keys-contains/) — Use containsKey() instead of .keys.contains() for better performance.

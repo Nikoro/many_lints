@@ -56,3 +56,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`use_class_prefix`](/many_lints/docs/rules/class-naming/use-class-prefix/) — Require a name prefix for classes deriving from a configured type.
+- [`match_class_name_pattern`](/many_lints/docs/rules/class-naming/match-class-name-pattern/) — Match class names against a regular expression.
+- [`prefer_boolean_prefixes`](/many_lints/docs/rules/class-naming/prefer-boolean-prefixes/) — Name booleans as questions.
+- [`prefer_correct_callback_field_name`](/many_lints/docs/rules/class-naming/prefer-correct-callback-field-name/) — Name callbacks onSomething, the way Flutter does.

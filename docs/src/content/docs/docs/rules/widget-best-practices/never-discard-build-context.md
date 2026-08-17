@@ -13,6 +13,8 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
+This rule is in the **`pedantic`** preset.
+
 This rule flags a `BuildContext` parameter named with a wildcard — `_`, `__`, and so on. Discarding the parameter throws away the closest context, which is usually the only correct one to use.
 
 ## Why use this rule
@@ -66,8 +68,8 @@ A name such as `_context` is not a discard — it is a private name that remains
 
 ## Configuration
 
-This rule is opt-in because builders that perform no inherited lookup can
-legitimately discard their context. Enable it by name:
+This rule appears only in the **`pedantic`** preset because builders that perform
+no inherited lookup can legitimately discard their context.
 
 ```yaml
 # many_lints.yaml
@@ -84,3 +86,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`use_closest_build_context`](/many_lints/docs/rules/widget-best-practices/use-closest-build-context/) — Use the inner BuildContext from builder callbacks, not the outer one.
+- [`avoid_build_context_in_providers`](/many_lints/docs/rules/riverpod-state/avoid-build-context-in-providers/) — Providers outlive widgets, so they should not receive a BuildContext.
+- [`avoid_passing_build_context_to_blocs`](/many_lints/docs/rules/bloc-riverpod/avoid-passing-build-context-to-blocs/) — Prevent passing BuildContext to Bloc or Cubit classes.
+- [`avoid_too_many_widgets_per_build`](/many_lints/docs/rules/widget-best-practices/avoid-too-many-widgets-per-build/) — Keep one build method within a widget budget.

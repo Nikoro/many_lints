@@ -4,9 +4,11 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "bun run catalogs:check && astro build",
     "preview": "astro preview",
     "generate": "bun run scripts/generate-rule-pages.mjs",
+    "catalogs": "bun run scripts/update-documentation-catalogs.mjs",
+    "catalogs:check": "bun run scripts/update-documentation-catalogs.mjs --check",
     "astro": "astro"
   },
   "dependencies": {

@@ -49,7 +49,7 @@ if (user != null) {
 }
 ```
 
-Reading a known-present entry out of a `Map` is exempt, because `Map`'s index operator is declared nullable no matter what the map holds:
+Reading a known-present entry out of a `Map` is exempt by default, because `Map`'s index operator is declared nullable no matter what the map holds. The `pedantic` preset disables this exception and therefore bans every postfix `!`:
 
 ```dart
 // Not reported.
@@ -107,6 +107,7 @@ many_lints:
   rules:
     avoid_non_null_assertion:
       ignore_checked_fields: true
+      ignore_map_indexes: false
 ```
 
 </TabItem>
@@ -117,6 +118,7 @@ many_lints:
 rules:
   avoid_non_null_assertion:
     ignore_checked_fields: true
+    ignore_map_indexes: false
 ```
 
 </TabItem>
@@ -125,3 +127,11 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `ignore_checked_fields` | bool | `false` | Don't report a `!` on a field an enclosing `if (field != null)` already checked. Off by default because type promotion does not apply to fields — the bang is genuinely what makes the code compile, and the field can still change between the check and the use |
+| `ignore_map_indexes` | bool | `true` | Allow the idiomatic `map[key]!` spelling. The `pedantic` preset changes this default to `false` |
+
+## Related rules
+
+- [`function_always_returns_null`](/many_lints/docs/rules/code-quality/function-always-returns-null/) — A nullable-returning function whose every path returns null.
+- [`avoid_accessing_other_classes_private_members`](/many_lints/docs/rules/code-quality/avoid-accessing-other-classes-private-members/) — Make the underscore mean what everyone reads it as.
+- [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) — Detect and flag commented-out code.
+- [`avoid_complex_conditions`](/many_lints/docs/rules/code-quality/avoid-complex-conditions/) — Keep boolean conditions within an operand budget.

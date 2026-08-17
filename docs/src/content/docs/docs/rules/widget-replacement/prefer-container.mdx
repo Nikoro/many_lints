@@ -134,3 +134,10 @@ rules:
 | `min_sequence` | int | `3` | Minimum number of consecutive Container-compatible widgets in a nesting chain before the rule reports |
 
 Raise it to only flag deeper nesting; lower it to `2` to catch every collapsible pair.
+
+## Related rules
+
+- [`prefer_align_over_container`](/many_lints/docs/rules/widget-replacement/prefer-align-over-container/) — **Opposing convention.** Use Align instead of Container when only alignment is set.
+- [`prefer_constrained_box_over_container`](/many_lints/docs/rules/widget-replacement/prefer-constrained-box-over-container/) — **Opposing convention.** Use ConstrainedBox instead of Container when only constraints is set.
+- [`prefer_padding_over_container`](/many_lints/docs/rules/widget-replacement/prefer-padding-over-container/) — **Opposing convention.** Use Padding instead of Container when only padding or margin is set.
+- [`prefer_transform_over_container`](/many_lints/docs/rules/widget-replacement/prefer-transform-over-container/) — **Opposing convention.** Use Transform instead of Container when only transform is set.

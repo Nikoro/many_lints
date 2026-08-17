@@ -106,3 +106,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_unsafe_collection_methods`](/many_lints/docs/rules/collection-type/avoid-unsafe-collection-methods/) — Check for emptiness before using first, last, single or reduce.
+- [`avoid_accessing_collections_by_constant_index`](/many_lints/docs/rules/collection-type/avoid-accessing-collections-by-constant-index/) — Avoid accessing a collection by a constant index inside a loop.
+- [`avoid_untyped_safe_cast`](/many_lints/docs/rules/fpdart/avoid-untyped-safe-cast/) — safeCast without explicit type arguments infers dynamic and always succeeds.
+- [`avoid_ad_hoc_left_type`](/many_lints/docs/rules/fpdart/avoid-ad-hoc-left-type/) — A pipeline only composes when every step shares one error type.

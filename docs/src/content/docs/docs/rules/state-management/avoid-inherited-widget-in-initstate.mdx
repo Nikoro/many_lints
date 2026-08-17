@@ -104,3 +104,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `state_base_classes` | list of strings | `[]` | Additional non-`State` base classes whose subclasses should be treated as state classes |
+
+## Related rules
+
+- [`avoid_empty_setstate`](/many_lints/docs/rules/state-management/avoid-empty-setstate/) — Don't call setState with an empty callback.
+- [`avoid_late_context`](/many_lints/docs/rules/state-management/avoid-late-context/) — Don't read BuildContext in a late field initializer.
+- [`avoid_mounted_in_setstate`](/many_lints/docs/rules/state-management/avoid-mounted-in-setstate/) — Detect mounted checks inside setState callbacks.
+- [`avoid_state_constructors`](/many_lints/docs/rules/state-management/avoid-state-constructors/) — Avoid constructors with logic in State classes.

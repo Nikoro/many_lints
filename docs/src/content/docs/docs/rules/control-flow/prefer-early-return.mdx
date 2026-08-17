@@ -29,7 +29,7 @@ The rule is deliberately narrow, and each exclusion below came from running it a
 - **Never when the condition is already negated.** `if (!map.containsKey(k))` inverts into a *longer* positive guard, and the negation is what made the precondition obvious. This was the rule's only hit on a production codebase, and the rewrite would have read worse than the original.
 - **Never for a pattern `if`.** `if (x case final int n)` binds variables the inverted branch cannot see.
 
-This rule is in **no preset**: where to draw the line between a guard and a wrapped body is a house style.
+This rule is in the **`pedantic`** preset: where to draw the line between a guard and a wrapped body is a house style.
 
 ## Don't
 
@@ -57,7 +57,7 @@ void save(User user) {
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -108,3 +108,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_collapsible_if`](/many_lints/docs/rules/control-flow/avoid-collapsible-if/) — Merge nested if statements with &amp;&amp;.
+- [`avoid_redundant_else`](/many_lints/docs/rules/control-flow/avoid-redundant-else/) — Drop the else when the if branch always exits.
+- [`prefer_immediate_return`](/many_lints/docs/rules/code-quality/prefer-immediate-return/) — Return an expression directly instead of via a throwaway variable.
+- [`avoid_unnecessary_return`](/many_lints/docs/rules/control-flow/avoid-unnecessary-return/) — Remove a bare `return;` that ends a void function.

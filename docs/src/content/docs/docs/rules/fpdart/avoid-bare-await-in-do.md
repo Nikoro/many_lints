@@ -59,3 +59,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_dollar_outside_do_frame`](/many_lints/docs/rules/fpdart/avoid-dollar-outside-do-frame/) — Calling a Do block's extraction function from a nested callback unwinds through code that cannot handle it.
+- [`avoid_nested_do_notation`](/many_lints/docs/rules/fpdart/avoid-nested-do-notation/) — A nested Do block short-circuits on its own instead of failing the outer pipeline.
+- [`prefer_do_notation`](/many_lints/docs/rules/fpdart/prefer-do-notation/) — Deeply nested flatMap callbacks read flatter as a Do block.
+- [`avoid_ad_hoc_left_type`](/many_lints/docs/rules/fpdart/avoid-ad-hoc-left-type/) — A pipeline only composes when every step shares one error type.

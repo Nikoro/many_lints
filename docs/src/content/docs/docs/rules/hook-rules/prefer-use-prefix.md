@@ -78,7 +78,7 @@ int regularFunction() => 42;
 
 ## Configuration
 
-This rule is in **no preset**, so it is off unless you enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -95,3 +95,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`prefer_use_callback`](/many_lints/docs/rules/hook-rules/prefer-use-callback/) — Use 'useCallback' instead of 'useMemoized' for memoizing functions.
+- [`avoid_hooks_outside_build`](/many_lints/docs/rules/hook-rules/avoid-hooks-outside-build/) — Only call hooks from a hook context.
+- [`avoid_misused_hooks`](/many_lints/docs/rules/hook-rules/avoid-misused-hooks/) — Don't call hooks inside loops.
+- [`avoid_unnecessary_enum_prefix`](/many_lints/docs/rules/class-naming/avoid-unnecessary-enum-prefix/) — Drop an enum name repeated in its own constants.

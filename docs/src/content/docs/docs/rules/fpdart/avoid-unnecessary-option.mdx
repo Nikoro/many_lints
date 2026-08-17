@@ -88,7 +88,7 @@ rules:
 
 ## Configuration
 
-This rule is in **no preset** — a codebase that has standardised on `Option`
+This rule is in the **`pedantic`** preset — a codebase that has standardised on `Option`
 everywhere is making a coherent choice, and this rule disagrees with it. Turn
 it on explicitly:
 
@@ -99,3 +99,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`prefer_from_nullable`](/many_lints/docs/rules/fpdart/prefer-from-nullable/) — A null check that builds an Option by hand is what Option.fromNullable is for.
+- [`prefer_from_predicate`](/many_lints/docs/rules/fpdart/prefer-from-predicate/) — A conditional guarding an Option is one Option.fromPredicate call.
+- [`avoid_future_of_option`](/many_lints/docs/rules/fpdart/avoid-future-of-option/) — Future&lt;Option&gt; throws away the composition TaskOption already gives you.
+- [`avoid_ad_hoc_left_type`](/many_lints/docs/rules/fpdart/avoid-ad-hoc-left-type/) — A pipeline only composes when every step shares one error type.

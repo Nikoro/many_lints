@@ -98,3 +98,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `only_same_name` | bool | `true` | When `false`, also report a parameter whose name differs from the field (`_id` from `identifier`). The quick fix declines those — adopting the shorthand renames the named argument, which breaks call sites |
+
+## Related rules
+
+- [`prefer_named_boolean_parameters`](/many_lints/docs/rules/code-quality/prefer-named-boolean-parameters/) — Make boolean parameters named, not positional.
+- [`prefer_named_parameters`](/many_lints/docs/rules/code-quality/prefer-named-parameters/) — Name parameters once there are more than a couple.
+- [`avoid_accessing_other_classes_private_members`](/many_lints/docs/rules/code-quality/avoid-accessing-other-classes-private-members/) — Make the underscore mean what everyone reads it as.
+- [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) — Detect and flag commented-out code.

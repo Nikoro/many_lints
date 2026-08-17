@@ -55,8 +55,8 @@ class UserRepository {}
 
 ## Turning this rule off
 
-This rule is in **no preset** — it imposes a file-organization convention, so it
-only runs when a project asks for it by name:
+This rule is in the **`pedantic`** preset — it imposes a file-organization
+convention, so it runs with that preset or when a project enables it by name:
 
 ```yaml
 # many_lints.yaml
@@ -205,3 +205,10 @@ group only, so overlapping groups never report the same declaration twice.
 an abstract base *and* a subclass of it holds two members of that group. Declare
 shared base types in their own file, which this rule is asking for anyway.
 :::
+
+## Related rules
+
+- [`prefer_single_widget_per_file`](/many_lints/docs/rules/widget-best-practices/prefer-single-widget-per-file/) — Keep one public widget per file for better organization.
+- [`prefer_match_file_name`](/many_lints/docs/rules/code-organization/prefer-match-file-name/) — Name a file after the first public declaration in it.
+- [`match_lib_folder_structure`](/many_lints/docs/rules/code-organization/match-lib-folder-structure/) — Keep folders under lib/ in lower_snake_case.
+- [`arguments_ordering`](/many_lints/docs/rules/code-organization/arguments-ordering/) — Keep named arguments in a configured order.

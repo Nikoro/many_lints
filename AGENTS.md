@@ -111,12 +111,13 @@ rules with `preset:` in `many_lints.yaml` (or the top-level `many_lints:` sectio
 |--------|-------|----------|
 | `none` | 0 | Nothing. The default. |
 | `core` | 35 | Near-certain bugs only. |
-| `recommended` | 90 | `core` plus likely defects and concrete runtime risks. |
-| `opinionated` | 177 | `recommended` plus this package's preferred style. |
+| `recommended` | 91 | `core` plus likely defects and concrete runtime risks. |
+| `opinionated` | 178 | `recommended` plus this package's preferred style. |
+| `pedantic` | 236 | `opinionated` plus strict naming, structure, complexity and ordering. |
 
 There is deliberately **no** preset enabling every rule: some rules contradict each other
 (`prefer_container` vs `prefer_padding_over_container`, `use_gap` vs `prefer_spacing`).
-`opinionated` picks one side; the other stays opt-in by name, as do config-only rules
+`opinionated` and `pedantic` pick one side; the other stays opt-in by name, as do config-only rules
 (the `banned_*` family, the affix rules) — see `conflictingWithOpinionated` in
 `lib/src/presets.dart`.
 

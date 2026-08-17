@@ -16,6 +16,8 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Collection & Type</span>
 
+This rule is in the **`pedantic`** preset.
+
 When you access three or more properties on the same object within a scope, Dart 3 class destructuring can consolidate those accesses into a single declaration. This makes the code more concise and groups related property extractions together.
 
 ## Why use this rule
@@ -76,8 +78,8 @@ void interactWithUser(UserProfile user) {
 
 ## Turning this rule off
 
-This rule is opt-in because destructuring can obscure the relationship between
-a value and its properties. Enable it by name:
+This rule appears only in the **`pedantic`** preset because destructuring can
+obscure the relationship between a value and its properties.
 
 ```yaml
 # many_lints.yaml
@@ -127,3 +129,10 @@ rules:
 |--------|------|---------|-------------|
 | `min_occurrences` | int | `3` | Minimum number of distinct property accesses on the same variable before the rule reports |
 | `ignored_types` | list of strings | `[]` | Type names never reported, for types where destructuring reads worse than repeated access |
+
+## Related rules
+
+- [`avoid_accessing_collections_by_constant_index`](/many_lints/docs/rules/collection-type/avoid-accessing-collections-by-constant-index/) — Avoid accessing a collection by a constant index inside a loop.
+- [`avoid_collection_equality_checks`](/many_lints/docs/rules/collection-type/avoid-collection-equality-checks/) — Avoid comparing collections with == or != as it checks reference equality, not contents.
+- [`avoid_collection_methods_with_unrelated_types`](/many_lints/docs/rules/collection-type/avoid-collection-methods-with-unrelated-types/) — Avoid calling collection methods with arguments whose types are unrelated to the collection's type parameter.
+- [`avoid_duplicate_collection_elements`](/many_lints/docs/rules/collection-type/avoid-duplicate-collection-elements/) — Don't repeat the same element in a collection literal.

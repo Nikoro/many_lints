@@ -64,7 +64,7 @@ class SliverProductList extends StatelessWidget {
 
 ## Turning this rule off
 
-This rule is in **no preset**, so it is off unless you enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -114,3 +114,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `state_base_classes` | list of strings | `[]` | Additional non-`State` base classes whose subclasses should be treated as state classes |
+
+## Related rules
+
+- [`always_pass_global_key`](/many_lints/docs/rules/widget-best-practices/always-pass-global-key/) — Don't create a GlobalKey inside build.
+- [`avoid_conditional_hooks`](/many_lints/docs/rules/widget-best-practices/avoid-conditional-hooks/) — Never call hooks inside conditionals, loops, or ternaries.
+- [`avoid_deep_widget_nesting`](/many_lints/docs/rules/widget-best-practices/avoid-deep-widget-nesting/) — Keep a widget tree within a nesting budget.
+- [`avoid_flexible_outside_flex`](/many_lints/docs/rules/widget-best-practices/avoid-flexible-outside-flex/) — Only use Flexible and Expanded as direct children of Row, Column, or Flex.

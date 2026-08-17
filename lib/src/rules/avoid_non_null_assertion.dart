@@ -92,10 +92,18 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
 
     // `map[key]!` is idiomatic: `Map.operator []` is declared to return a
-    // nullable value whatever the map holds, so there is no narrowing the user
-    // could do instead. `isAssignableFromType` walks `allSupertypes`, so a
-    // `HashMap` or any other `Map` subtype is exempt too.
-    if (operand is IndexExpression && _isMapIndex(operand)) return;
+    // nullable value whatever the map holds, so lower presets exempt it. The
+    // pedantic preset disables this exception because its contract is to ban
+    // every postfix bang, including the conventional map spelling.
+    final ignoreMapIndexes = rule.config.boolOption(
+      'ignore_map_indexes',
+      defaultValue: true,
+    );
+    if (ignoreMapIndexes &&
+        operand is IndexExpression &&
+        _isMapIndex(operand)) {
+      return;
+    }
 
     // `ignore_checked_fields: true` accepts a bang on a field that a preceding
     // `if (field != null)` already proved non-null. The default reports it:

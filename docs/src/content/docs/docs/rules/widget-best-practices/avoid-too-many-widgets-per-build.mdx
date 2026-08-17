@@ -24,7 +24,7 @@ Build methods are matched on their **return type**, not their name, so `build`, 
 
 Widgets built inside a `builder:` closure are counted separately, since that closure is its own build function.
 
-This rule is in **no preset**: a widget budget is a house style.
+This rule is in the **`pedantic`** preset: a widget budget is a house style.
 
 ## Don't
 
@@ -55,7 +55,7 @@ Widget build(BuildContext context) => const Column(
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -106,3 +106,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_deep_widget_nesting`](/many_lints/docs/rules/widget-best-practices/avoid-deep-widget-nesting/) — Keep a widget tree within a nesting budget.
+- [`prefer_extracting_callbacks`](/many_lints/docs/rules/widget-best-practices/prefer-extracting-callbacks/) — Keep long callbacks out of the widget tree.
+- [`avoid_returning_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-returning-widgets/) — Extract widget helper methods into separate widget classes.
+- [`avoid_single_child_in_multi_child_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-single-child-in-multi-child-widgets/) — Don't use Column, Row, or other multi-child widgets with only one child.

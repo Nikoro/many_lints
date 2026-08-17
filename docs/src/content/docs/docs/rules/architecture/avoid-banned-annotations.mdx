@@ -121,3 +121,10 @@ Each entry accepts:
 | `message` | string | no | A project-specific explanation appended to the diagnostic |
 
 Write the annotation name without the `@`. Both `@visibleForTesting` and the prefixed `@meta.visibleForTesting` match a single `visibleForTesting` entry, so an import prefix cannot slip past the rule.
+
+## Related rules
+
+- [`avoid_banned_exports`](/many_lints/docs/rules/architecture/avoid-banned-exports/) — Ban re-exports of specific libraries, optionally scoped by directory.
+- [`avoid_banned_imports`](/many_lints/docs/rules/architecture/avoid-banned-imports/) — Ban imports of specific libraries, optionally scoped by directory.
+- [`avoid_banned_names`](/many_lints/docs/rules/architecture/avoid-banned-names/) — Ban specific identifiers from being used as declaration names.
+- [`avoid_banned_types`](/many_lints/docs/rules/architecture/avoid-banned-types/) — Ban specific types from being named, optionally scoped by directory.

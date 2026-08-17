@@ -18,7 +18,9 @@ A call site with a dozen named arguments is a lookup table, and an unordered one
 
 **Positional arguments are never ordered**, since their order is the call's meaning and reordering them changes what it does.
 
-This rule is in **no preset**.
+This rule is in the **`pedantic`** preset. That preset supplies
+`order: alphabetical` and lowers `min_arguments` to `2`; outside it the rule
+stays silent until an order is configured.
 
 ## Don't
 
@@ -46,7 +48,7 @@ buildCard(
 
 ## Enabling this rule
 
-This rule reports **nothing until you choose an order**:
+Outside `preset: pedantic`, this rule reports **nothing until you choose an order**:
 
 ```yaml
 # many_lints.yaml
@@ -100,3 +102,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`initializers_ordering`](/many_lints/docs/rules/code-organization/initializers-ordering/) — Keep constructor initializers in field order.
+- [`map_keys_ordering`](/many_lints/docs/rules/code-organization/map-keys-ordering/) — Keep map literal keys in a configured order.
+- [`member_ordering`](/many_lints/docs/rules/code-organization/member-ordering/) — Keep class members in a configured order.
+- [`parameters_ordering`](/many_lints/docs/rules/code-organization/parameters-ordering/) — Keep named parameters in a configured order.

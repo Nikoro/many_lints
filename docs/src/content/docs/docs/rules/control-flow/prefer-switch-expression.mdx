@@ -136,3 +136,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `allow_fallthrough_cases` | bool | `false` | Also report switches where labels share a body. The quick fix merges them into a single `case a || b` pattern; a *trailing* fallthrough has nothing to merge into and stays unreported |
+
+## Related rules
+
+- [`avoid_nested_conditional_expressions`](/many_lints/docs/rules/control-flow/avoid-nested-conditional-expressions/) — Flag a conditional nested inside another.
+- [`prefer_conditional_expressions`](/many_lints/docs/rules/control-flow/prefer-conditional-expressions/) — Collapse a two-way if/else into a conditional expression.
+- [`prefer_switch_with_enums`](/many_lints/docs/rules/pattern-matching/prefer-switch-with-enums/) — Use a switch instead of an if-else chain over enum constants.
+- [`no_equal_switch_case`](/many_lints/docs/rules/control-flow/no-equal-switch-case/) — Flag two switch branches with identical bodies.

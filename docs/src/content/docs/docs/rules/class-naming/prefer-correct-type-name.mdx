@@ -18,7 +18,7 @@ The SDK's [`camel_case_types`](https://dart.dev/tools/linter-rules/camel_case_ty
 
 The defaults are deliberately loose — 3 to 40 characters — so the rule reports only genuine outliers.
 
-This rule is in **no preset**, because the right length is a house style.
+This rule is in the **`pedantic`** preset, because the right length is a house style.
 
 ## Why use this rule
 
@@ -99,3 +99,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`match_class_name_pattern`](/many_lints/docs/rules/class-naming/match-class-name-pattern/) — Match class names against a regular expression.
+- [`prefer_correct_identifier_length`](/many_lints/docs/rules/class-naming/prefer-correct-identifier-length/) — Keep identifier length within bounds.
+- [`use_class_prefix`](/many_lints/docs/rules/class-naming/use-class-prefix/) — Require a name prefix for classes deriving from a configured type.
+- [`use_class_suffix`](/many_lints/docs/rules/class-naming/use-class-suffix/) — Require a name suffix for classes deriving from a configured type.

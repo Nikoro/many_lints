@@ -54,7 +54,7 @@ void main() {
   test('expected number of active and removed rules are registered', () {
     plugin.register(registry);
     final totalRules = registry.warningRules.length + registry.lintRules.length;
-    expect(totalRules, equals(253));
+    expect(totalRules, equals(254));
     expect(
       registry.warningRules.values.whereType<RemovedAnalysisRule>().map(
         (rule) => rule.name,
@@ -146,6 +146,7 @@ void main() {
         'core': coreRules.length,
         'recommended': recommendedRules.length,
         'opinionated': opinionatedRules.length,
+        'pedantic': pedanticRules.length,
       };
 
       // The docs site carries the same table, and its counts drifted silently
@@ -276,6 +277,86 @@ void main() {
     );
   });
 
+  test('every rule page links to related rules that exist', () {
+    const pageSuffixes = ['.md', '.mdx'];
+    final pages = Directory('docs/src/content/docs/docs/rules')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => _matchingSuffix(file.path, pageSuffixes) != null);
+    final knownUrls = <String>{
+      for (final file in pages)
+        '/many_lints/docs/rules/'
+            '${file.path.split(Platform.pathSeparator).reversed.elementAt(1)}/'
+            '${_baseName(file.path, suffix: _matchingSuffix(file.path, pageSuffixes)!)}'
+            '/',
+    };
+
+    for (final file in pages) {
+      final suffix = _matchingSuffix(file.path, pageSuffixes)!;
+      final name = _baseName(file.path, suffix: suffix, normalizeHyphens: true);
+      final content = file.readAsStringSync();
+      final headings = RegExp(
+        r'^## Related rules$',
+        multiLine: true,
+      ).allMatches(content);
+      final links = RegExp(
+        r'^- \[`([a-z0-9_]+)`\]\((/many_lints/docs/rules/[^)]+/)\)',
+        multiLine: true,
+      ).allMatches(content).toList();
+
+      expect(
+        headings.length,
+        1,
+        reason: '${file.path} needs exactly one Related rules section.',
+      );
+      expect(
+        links.length,
+        inInclusiveRange(2, 4),
+        reason: '${file.path} needs two to four related-rule links.',
+      );
+      expect(
+        links.map((match) => match.group(1)),
+        isNot(contains(name)),
+        reason: '${file.path} links to itself.',
+      );
+      expect(
+        links.map((match) => match.group(2)),
+        everyElement(isIn(knownUrls)),
+        reason: '${file.path} links to a missing rule page.',
+      );
+    }
+  });
+
+  test('preset guide lists the exact rules added by every tier', () {
+    plugin.register(registry);
+    final registered = {
+      ...registry.warningRules.keys,
+      ...registry.lintRules.keys,
+    }..removeAll(removedRules);
+    final content = File(
+      'docs/src/content/docs/docs/presets.md',
+    ).readAsStringSync();
+
+    final expected = <String, Set<String>>{
+      'core': coreRules,
+      'recommended': recommendedRules.difference(coreRules),
+      'opinionated': opinionatedRules.difference(recommendedRules),
+      'pedantic': pedanticRules.difference(opinionatedRules),
+    };
+    for (final entry in expected.entries) {
+      expect(
+        _presetGuideRules(content, entry.key),
+        entry.value,
+        reason: 'The preset guide has a stale ${entry.key} rule list.',
+      );
+    }
+    expect(
+      _presetGuideRules(content, 'outside every preset'),
+      registered.difference(pedanticRules),
+      reason: 'The preset guide has a stale outside-presets rule list.',
+    );
+  });
+
   test('rule documentation metadata and options stay in sync', () {
     plugin.register(registry);
 
@@ -317,10 +398,12 @@ void main() {
           ? 'recommended'
           : opinionatedRules.contains(name)
           ? 'opinionated'
+          : pedanticRules.contains(name)
+          ? 'pedantic'
           : 'none';
       final presetClaims = <String>{
         for (final match in RegExp(
-          r'(?:in|part of) the \*\*`(core|recommended|opinionated)`\*\* preset',
+          r'(?:in|part of) the \*\*`(core|recommended|opinionated|pedantic)`\*\* preset',
         ).allMatches(content))
           match.group(1)!,
         if (RegExp(r'in \*\*no preset\*\*').hasMatch(content)) 'none',
@@ -522,7 +605,7 @@ void main() {
 /// the last column, so only the first two columns are matched.
 Map<String, int> _presetCounts(String content) => {
   for (final match in RegExp(
-    r'^\| `(none|core|recommended|opinionated)` \| *(\d+) \|',
+    r'^\| `(none|core|recommended|opinionated|pedantic)` \| *(\d+) \|',
     multiLine: true,
   ).allMatches(content))
     match.group(1)!: int.parse(match.group(2)!),
@@ -531,6 +614,29 @@ Map<String, int> _presetCounts(String content) => {
 int? _firstCapturedInt(String content, RegExp pattern) {
   final value = pattern.firstMatch(content)?.group(1);
   return value == null ? null : int.parse(value);
+}
+
+Set<String> _presetGuideRules(String content, String tier) {
+  final heading = tier == 'outside every preset'
+      ? RegExp(r'^## Rules outside every preset \(\d+\)$', multiLine: true)
+      : RegExp(
+          '^### Rules added by `${RegExp.escape(tier)}` \\(\\d+\\)\$',
+          multiLine: true,
+        );
+  final start = heading.firstMatch(content);
+  if (start == null) return const {};
+  final nextSections = RegExp(
+    r'^## ',
+    multiLine: true,
+  ).allMatches(content, start.end);
+  final nextSection = nextSections.isEmpty ? null : nextSections.first;
+  final section = content.substring(start.end, nextSection?.start);
+  return {
+    for (final match in RegExp(
+      r'\[`([a-z0-9_]+)`\]\(/many_lints/docs/rules/',
+    ).allMatches(section))
+      match.group(1)!,
+  };
 }
 
 /// Option keys read directly by a rule.

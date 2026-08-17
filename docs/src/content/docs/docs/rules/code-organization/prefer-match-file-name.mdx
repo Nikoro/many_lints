@@ -16,7 +16,7 @@ This rule flags a file whose name does not match the first public declaration in
 
 Only the **first** public declaration is checked. A file legitimately holds several — a class plus its extension, a sealed hierarchy — and only one of them can name the file, so the rest are not evidence of a problem.
 
-This rule is in **no preset**.
+This rule is in the **`pedantic`** preset.
 
 ## Why use this rule
 
@@ -98,3 +98,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`prefer_single_declaration_per_file`](/many_lints/docs/rules/code-organization/prefer-single-declaration-per-file/) — Keep one top-level declaration per file, with per-type budgets.
+- [`match_lib_folder_structure`](/many_lints/docs/rules/code-organization/match-lib-folder-structure/) — Keep folders under lib/ in lower_snake_case.
+- [`prefer_single_widget_per_file`](/many_lints/docs/rules/widget-best-practices/prefer-single-widget-per-file/) — Keep one public widget per file for better organization.
+- [`prefer_correct_test_file_name`](/many_lints/docs/rules/testing-rules/prefer-correct-test-file-name/) — Name test files so the runner actually runs them.

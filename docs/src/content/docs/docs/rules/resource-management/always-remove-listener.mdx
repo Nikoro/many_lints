@@ -115,3 +115,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `state_base_classes` | list of strings | `[]` | Additional non-`State` base classes whose subclasses should be treated as state classes |
+
+## Related rules
+
+- [`avoid_unremovable_callbacks_in_listeners`](/many_lints/docs/rules/resource-management/avoid-unremovable-callbacks-in-listeners/) — Don't pass an inline closure to addListener.
+- [`dispose_fields`](/many_lints/docs/rules/resource-management/dispose-fields/) — Ensure State fields with disposal methods are cleaned up in dispose().
+- [`dispose_provided_instances`](/many_lints/docs/rules/bloc-riverpod/dispose-provided-instances/) — Ensure disposable instances in Riverpod providers are cleaned up with ref.onDispose.
+- [`avoid_late_final_reassignment`](/many_lints/docs/rules/resource-management/avoid-late-final-reassignment/) — Flag a `late final` field assigned twice on one path.

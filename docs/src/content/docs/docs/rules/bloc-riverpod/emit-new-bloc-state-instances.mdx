@@ -117,3 +117,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `additional_methods` | list of strings | `[]` | Extra methods treated like `emit`, for a project wrapper that forwards to it |
+
+## Related rules
+
+- [`prefer_immutable_bloc_state`](/many_lints/docs/rules/bloc-riverpod/prefer-immutable-bloc-state/) — Ensure Bloc and Cubit state classes are annotated with @immutable.
+- [`avoid_duplicate_bloc_event_handlers`](/many_lints/docs/rules/bloc-riverpod/avoid-duplicate-bloc-event-handlers/) — Register each bloc event type exactly once.
+- [`handle_bloc_event_subclasses`](/many_lints/docs/rules/bloc-riverpod/handle-bloc-event-subclasses/) — Register a handler for every Bloc event subclass.
+- [`avoid_bloc_public_methods`](/many_lints/docs/rules/bloc-riverpod/avoid-bloc-public-methods/) — Prevent public methods, getters, and setters in Bloc classes.

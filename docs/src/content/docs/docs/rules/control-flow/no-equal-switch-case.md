@@ -15,7 +15,7 @@ This rule flags two branches of a `switch` that produce identical bodies, where 
 
 Repeating a body states the same outcome twice, and the two copies drift: one gets fixed and the other keeps the old behaviour, with nothing to show that they were ever meant to agree. Sharing the patterns (`case a || b`) says the outcome is deliberately the same and can only ever change in one place.
 
-This rule is in **no preset**. Whether two independent enum branches that happen to agree today *should* be merged is a genuine judgement call — they may be intended to diverge — so it stays opt-in by name.
+This rule is in the **`pedantic`** preset. Whether two independent enum branches that happen to agree today *should* be merged is a genuine judgement call — the strictest tier deliberately resolves that judgement in favour of one canonical branch.
 
 Three shapes are deliberately not reported, because none of them can be merged into an `||` pattern:
 
@@ -44,7 +44,7 @@ String label(int code) => switch (code) {
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -65,3 +65,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`no_equal_conditions`](/many_lints/docs/rules/control-flow/no-equal-conditions/) — Flag an if/else-if chain that repeats a condition.
+- [`no_equal_then_else`](/many_lints/docs/rules/control-flow/no-equal-then-else/) — Both branches of a condition are identical.
+- [`prefer_switch_expression`](/many_lints/docs/rules/control-flow/prefer-switch-expression/) — Suggest converting switch statements to switch expressions.
+- [`avoid_cascade_after_if_null`](/many_lints/docs/rules/control-flow/avoid-cascade-after-if-null/) — Detect cascades after if-null operators without parentheses.

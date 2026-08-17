@@ -20,7 +20,7 @@ Method count is the cheapest measure of whether a class still has one responsibi
 
 **Constructors are never counted.** A class with several named constructors is offering ways to build one thing, not doing several things.
 
-This rule is in **no preset**.
+This rule is in the **`pedantic`** preset.
 
 ## Don't
 
@@ -41,7 +41,7 @@ class UserAvatars { /* ... */ }
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -95,3 +95,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_long_files`](/many_lints/docs/rules/code-quality/avoid-long-files/) — Keep a file within a line budget.
+- [`avoid_long_parameter_list`](/many_lints/docs/rules/code-quality/avoid-long-parameter-list/) — Keep parameter lists within a budget.
+- [`max_imports`](/many_lints/docs/rules/code-quality/max-imports/) — Keep a file within an import budget.
+- [`avoid_shadowed_extension_methods`](/many_lints/docs/rules/code-quality/avoid-shadowed-extension-methods/) — An extension member the extended type already has.

@@ -64,6 +64,22 @@ class RuleConfig {
 
   static const empty = RuleConfig();
 
+  /// Returns this configuration with missing [defaults] filled in.
+  ///
+  /// Explicit project options win, so a preset can provide a complete policy
+  /// while remaining fully adjustable through the normal per-rule block.
+  RuleConfig withOptionDefaults(Map<String, Object?> defaults) {
+    if (defaults.isEmpty) return this;
+
+    return RuleConfig(
+      exclude: exclude,
+      include: include,
+      message: message,
+      enabled: enabled,
+      options: {...defaults, ...options},
+    );
+  }
+
   /// Whether the project wrote anything at all for this rule.
   ///
   /// Used to treat a configuration block as opting the rule in, so that
@@ -288,7 +304,8 @@ class ManyLintsConfig {
 
   static const empty = ManyLintsConfig({});
 
-  RuleConfig forRule(String ruleName) => _rules[ruleName] ?? RuleConfig.empty;
+  RuleConfig forRule(String ruleName) => (_rules[ruleName] ?? RuleConfig.empty)
+      .withOptionDefaults(preset.optionsFor(ruleName));
 
   /// Whether [ruleName] runs in this package.
   ///

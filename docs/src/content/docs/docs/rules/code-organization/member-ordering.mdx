@@ -18,7 +18,7 @@ This rule flags a class member declared before one that the configured order put
 
 A class read top to bottom should answer the same questions in the same sequence every time: how is it built, what does it hold, what can it do. When the order varies between files, finding a field means scanning the whole class rather than glancing at the top of it, and a diff that adds a method lands in whichever spot happened to be free.
 
-This rule is in **no preset**, and deliberately so. Measured against a production Flutter app that already follows a consistent house style, it still reported 227 members — every one a real deviation, none of them a bug. That is taste, not correctness, so it stays opt-in by name and the order is yours to declare.
+This rule is in the **`pedantic`** preset, and deliberately so. Measured against a production Flutter app that already follows a consistent house style, it still reported 227 members — every one a real deviation, none of them a bug. That is exactly the kind of mechanical uniformity the strictest tier chooses to enforce.
 
 ## The default order puts the constructor first
 
@@ -64,7 +64,7 @@ class Order {
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -125,3 +125,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`arguments_ordering`](/many_lints/docs/rules/code-organization/arguments-ordering/) — Keep named arguments in a configured order.
+- [`initializers_ordering`](/many_lints/docs/rules/code-organization/initializers-ordering/) — Keep constructor initializers in field order.
+- [`map_keys_ordering`](/many_lints/docs/rules/code-organization/map-keys-ordering/) — Keep map literal keys in a configured order.
+- [`parameters_ordering`](/many_lints/docs/rules/code-organization/parameters-ordering/) — Keep named parameters in a configured order.

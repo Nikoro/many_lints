@@ -81,3 +81,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_contradictory_expressions`](/many_lints/docs/rules/control-flow/avoid-contradictory-expressions/) — Detect logical AND conditions that always evaluate to false.
+- [`avoid_equal_expressions`](/many_lints/docs/rules/code-quality/avoid-equal-expressions/) — Both operands of a binary expression should not be identical.
+- [`avoid_self_compare`](/many_lints/docs/rules/code-quality/avoid-self-compare/) — Flag a value compared against itself with compareTo.
+- [`avoid_constant_switches`](/many_lints/docs/rules/control-flow/avoid-constant-switches/) — Detect switch statements on constant expressions.

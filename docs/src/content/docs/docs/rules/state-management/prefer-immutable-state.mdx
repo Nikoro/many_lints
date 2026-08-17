@@ -99,3 +99,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `name_pattern` | regex | `State$` | Pattern identifying state classes by name. A name matched in its entirety is not reported, so the bare affix itself is never flagged |
+
+## Related rules
+
+- [`avoid_state_constructors`](/many_lints/docs/rules/state-management/avoid-state-constructors/) — Avoid constructors with logic in State classes.
+- [`avoid_unnecessary_overrides_in_state`](/many_lints/docs/rules/state-management/avoid-unnecessary-overrides-in-state/) — Detect State lifecycle overrides that only call super.
+- [`prefer_immutable_bloc_state`](/many_lints/docs/rules/bloc-riverpod/prefer-immutable-bloc-state/) — Ensure Bloc and Cubit state classes are annotated with @immutable.
+- [`avoid_empty_setstate`](/many_lints/docs/rules/state-management/avoid-empty-setstate/) — Don't call setState with an empty callback.

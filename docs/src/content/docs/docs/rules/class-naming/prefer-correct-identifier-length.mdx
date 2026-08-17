@@ -20,7 +20,7 @@ Both bounds are house style, which is why this rule ships with generous defaults
 
 A private name's leading underscore is a modifier, not part of its length, so `_id` counts as two characters.
 
-This rule is in **no preset**.
+This rule is in the **`pedantic`** preset.
 
 ## Don't
 
@@ -40,7 +40,7 @@ for (var i = 0; i < 3; i++) {}   // conventional short names are exempt
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -98,3 +98,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`match_class_name_pattern`](/many_lints/docs/rules/class-naming/match-class-name-pattern/) — Match class names against a regular expression.
+- [`prefer_correct_type_name`](/many_lints/docs/rules/class-naming/prefer-correct-type-name/) — Keep type names within a sensible length and correctly capitalised.
+- [`use_class_prefix`](/many_lints/docs/rules/class-naming/use-class-prefix/) — Require a name prefix for classes deriving from a configured type.
+- [`use_class_suffix`](/many_lints/docs/rules/class-naming/use-class-suffix/) — Require a name suffix for classes deriving from a configured type.

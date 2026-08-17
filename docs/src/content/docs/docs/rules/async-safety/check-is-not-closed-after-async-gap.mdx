@@ -124,3 +124,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `additional_methods` | list of strings | `[]` | Extra methods treated like `emit`, for a project wrapper that forwards to it |
+
+## Related rules
+
+- [`require_atomic_async_updates`](/many_lints/docs/rules/async-safety/require-atomic-async-updates/) — Re-read shared state after an await instead of writing back a stale value.
+- [`use_ref_and_state_synchronously`](/many_lints/docs/rules/async-safety/use-ref-and-state-synchronously/) — Check ref.mounted before using ref or state after an await.
+- [`use_ref_read_synchronously`](/many_lints/docs/rules/async-safety/use-ref-read-synchronously/) — Add a mounted guard before calling ref.read after an await.
+- [`use_setstate_synchronously`](/many_lints/docs/rules/async-safety/use-setstate-synchronously/) — Guard setState after an await with a mounted check.

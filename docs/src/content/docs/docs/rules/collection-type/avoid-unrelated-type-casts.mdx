@@ -106,3 +106,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `report_is_checks` | bool | `true` | Also report `is` checks. Set to `false` to limit the rule to `as` casts |
+
+## Related rules
+
+- [`avoid_collection_methods_with_unrelated_types`](/many_lints/docs/rules/collection-type/avoid-collection-methods-with-unrelated-types/) — Avoid calling collection methods with arguments whose types are unrelated to the collection's type parameter.
+- [`prefer_correct_json_casts`](/many_lints/docs/rules/collection-type/prefer-correct-json-casts/) — Cast JSON values to nullable types.
+- [`avoid_accessing_collections_by_constant_index`](/many_lints/docs/rules/collection-type/avoid-accessing-collections-by-constant-index/) — Avoid accessing a collection by a constant index inside a loop.
+- [`avoid_collection_equality_checks`](/many_lints/docs/rules/collection-type/avoid-collection-equality-checks/) — Avoid comparing collections with == or != as it checks reference equality, not contents.

@@ -26,7 +26,7 @@ Only widget instantiations are counted, so the lists, closures and conditionals 
 
 A `builder:` closure starts a tree of its own, so its depth is counted separately rather than added to the caller's.
 
-This rule is in **no preset**: a nesting budget is a house style.
+This rule is in the **`pedantic`** preset: a nesting budget is a house style.
 
 **See also:** [Flutter — performance best practices](https://docs.flutter.dev/perf/best-practices)
 
@@ -78,7 +78,7 @@ class _Content extends StatelessWidget {
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -129,3 +129,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_too_many_widgets_per_build`](/many_lints/docs/rules/widget-best-practices/avoid-too-many-widgets-per-build/) — Keep one build method within a widget budget.
+- [`prefer_extracting_callbacks`](/many_lints/docs/rules/widget-best-practices/prefer-extracting-callbacks/) — Keep long callbacks out of the widget tree.
+- [`avoid_recursive_widget_calls`](/many_lints/docs/rules/widget-best-practices/avoid-recursive-widget-calls/) — Don't build a widget from inside its own build method.
+- [`prefer_single_widget_per_file`](/many_lints/docs/rules/widget-best-practices/prefer-single-widget-per-file/) — Keep one public widget per file for better organization.

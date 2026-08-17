@@ -53,3 +53,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_not_encodable_in_to_json`](/many_lints/docs/rules/collection-type/avoid-not-encodable-in-to-json/) — Don't put values jsonEncode cannot serialize into a toJson map.
+- [`avoid_unrelated_type_casts`](/many_lints/docs/rules/collection-type/avoid-unrelated-type-casts/) — Don't cast or type-test between unrelated types.
+- [`avoid_accessing_collections_by_constant_index`](/many_lints/docs/rules/collection-type/avoid-accessing-collections-by-constant-index/) — Avoid accessing a collection by a constant index inside a loop.
+- [`avoid_collection_equality_checks`](/many_lints/docs/rules/collection-type/avoid-collection-equality-checks/) — Avoid comparing collections with == or != as it checks reference equality, not contents.

@@ -70,12 +70,16 @@ the analysis server.
 
 ### The presets
 
+The dedicated [Presets guide](/many_lints/docs/presets/) explains the philosophy
+of every tier and lists the exact rules each one adds.
+
 | Preset | Rules | What it contains |
 |--------|-------|------------------|
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
 | `core` | 35 | Near-certain bugs only. |
-| `recommended` | 90 | `core` plus likely defects and concrete runtime risks. |
-| `opinionated` | 177 | `recommended` plus this package's own style preferences. |
+| `recommended` | 91 | `core` plus likely defects and concrete runtime risks. |
+| `opinionated` | 178 | `recommended` plus this package's own style preferences. |
+| `pedantic` | 236 | `opinionated` plus strict naming, structure, complexity and ordering. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml`
 includes `core.yaml` — moving up a tier only ever adds rules.
@@ -95,12 +99,23 @@ shorthand preferences, `prefer_type_over_var`). Where reasonable codebases disag
 tier takes a side — so expect to switch a few rules back off rather than to agree with all
 of it.
 
+**`pedantic`** is the deliberately uncompromising tier. It adds one declaration per file,
+file/type-name matching, constructor-first member ordering, alphabetical ordering for
+named parameters, arguments, enum constants, map keys, record fields and pattern fields,
+complexity and size budgets, explicit callback parameter names, and stricter naming rules.
+It also removes the usual `map[key]!` exemption from `avoid_non_null_assertion`.
+
+The plugin cannot enable SDK lints, so pair this preset with analyzer rules such as
+`always_specify_types`, `directives_ordering`, `sort_constructors_first`,
+`sort_unnamed_constructors_first` and `sort_child_properties_last` if you want the complete
+Flutter-strict style rather than only the custom rules supplied by this package.
+
 :::note[There is no preset that turns on every rule]
 Some rules deliberately contradict one another, so a catch-all preset would report two
 diagnostics on one line whose fixes undo each other. `prefer_container` merges nested
 widgets *into* a `Container`, while `prefer_padding_over_container` and its siblings
 unwrap one; `use_gap` and `prefer_spacing` both rewrite a spacing `SizedBox`, to different
-things. `opinionated` picks one side of each pair and leaves the other available by name.
+things. `opinionated` and `pedantic` pick one side of each pair and leave the other available by name.
 
 If you prefer the other side, enable it explicitly and turn off the one you don't want:
 
@@ -322,7 +337,7 @@ options never changes results until you set one.
 | [`avoid_default_tostring`](/many_lints/docs/rules/code-quality/avoid-default-tostring/) | `report_enums` |
 | [`avoid_duplicate_bloc_event_handlers`](/many_lints/docs/rules/bloc-riverpod/avoid-duplicate-bloc-event-handlers/) | `additional_methods` |
 | [`avoid_duplicate_collection_elements`](/many_lints/docs/rules/collection-type/avoid-duplicate-collection-elements/) | `ignore_literals` |
-| [`avoid_non_null_assertion`](/many_lints/docs/rules/code-quality/avoid-non-null-assertion/) | `ignore_checked_fields` |
+| [`avoid_non_null_assertion`](/many_lints/docs/rules/code-quality/avoid-non-null-assertion/) | `ignore_checked_fields`, `ignore_map_indexes` |
 | [`avoid_empty_setstate`](/many_lints/docs/rules/state-management/avoid-empty-setstate/) | `state_base_classes` |
 | [`avoid_get_or_else_swallowing_failure`](/many_lints/docs/rules/fpdart/avoid-get-or-else-swallowing-failure/) | `ignore_tests` |
 | [`avoid_hooks_outside_build`](/many_lints/docs/rules/hook-rules/avoid-hooks-outside-build/) | `additional_methods` |

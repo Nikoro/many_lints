@@ -117,3 +117,10 @@ Variables, parameters, methods, functions, classes, mixins, enums, extension typ
 References are deliberately *not* reported. A reference is not separately fixable (renaming the declaration fixes every use), so reporting them would bury the one line you can act on under diagnostics you cannot.
 
 Because `deny` matches exactly, banning `data` leaves `userData` and `dataSource` alone. Use `deny_pattern` to match by shape — and note it anchors to the whole name, so `.*Impl` matches `UserImpl` but not `ImplementationDetail`.
+
+## Related rules
+
+- [`avoid_banned_annotations`](/many_lints/docs/rules/architecture/avoid-banned-annotations/) — Ban specific annotations, optionally scoped by directory.
+- [`avoid_banned_exports`](/many_lints/docs/rules/architecture/avoid-banned-exports/) — Ban re-exports of specific libraries, optionally scoped by directory.
+- [`avoid_banned_imports`](/many_lints/docs/rules/architecture/avoid-banned-imports/) — Ban imports of specific libraries, optionally scoped by directory.
+- [`avoid_banned_types`](/many_lints/docs/rules/architecture/avoid-banned-types/) — Ban specific types from being named, optionally scoped by directory.

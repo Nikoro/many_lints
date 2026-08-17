@@ -115,3 +115,10 @@ rules:
 |--------|------|---------|-------------|
 | `ignored_names` | list of strings | `[]` | Hook names never reported, for `useX()` helpers that only follow the naming convention |
 | `ignored_widgets` | list of strings | `[]` | Widget class names whose hooks are never reported |
+
+## Related rules
+
+- [`avoid_hooks_outside_build`](/many_lints/docs/rules/hook-rules/avoid-hooks-outside-build/) — Only call hooks from a hook context.
+- [`avoid_conditional_hooks`](/many_lints/docs/rules/widget-best-practices/avoid-conditional-hooks/) — Never call hooks inside conditionals, loops, or ternaries.
+- [`avoid_unnecessary_hook_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-unnecessary-hook-widgets/) — Don't extend HookWidget if you never call any hooks.
+- [`prefer_use_callback`](/many_lints/docs/rules/hook-rules/prefer-use-callback/) — Use 'useCallback' instead of 'useMemoized' for memoizing functions.

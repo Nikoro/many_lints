@@ -18,7 +18,7 @@ Unlike its ordering siblings this rule has a **useful default**: it matches the 
 
 Initializers that are not plain field assignments — `super()`, `assert()`, a redirect — are skipped, since their position is fixed by the language or by intent.
 
-This rule is in **no preset**.
+This rule is in the **`pedantic`** preset.
 
 ## Don't
 
@@ -44,7 +44,7 @@ class Point {
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -95,3 +95,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`arguments_ordering`](/many_lints/docs/rules/code-organization/arguments-ordering/) — Keep named arguments in a configured order.
+- [`map_keys_ordering`](/many_lints/docs/rules/code-organization/map-keys-ordering/) — Keep map literal keys in a configured order.
+- [`member_ordering`](/many_lints/docs/rules/code-organization/member-ordering/) — Keep class members in a configured order.
+- [`parameters_ordering`](/many_lints/docs/rules/code-organization/parameters-ordering/) — Keep named parameters in a configured order.

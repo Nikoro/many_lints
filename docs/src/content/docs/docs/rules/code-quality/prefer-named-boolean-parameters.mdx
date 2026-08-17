@@ -18,7 +18,7 @@ A positional boolean is invisible at the call site: `save(true)` says nothing ab
 
 An **override is never reported** — the signature belongs to whoever declared it, and a subclass cannot change it. A single positional boolean is allowed by default, since `setEnabled(true)` reads acceptably.
 
-This rule is in **no preset**.
+This rule is in the **`pedantic`** preset.
 
 ## Don't
 
@@ -38,7 +38,7 @@ setVisible(visible: false, animate: true);
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -89,3 +89,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`prefer_named_parameters`](/many_lints/docs/rules/code-quality/prefer-named-parameters/) — Name parameters once there are more than a couple.
+- [`prefer_private_named_parameters`](/many_lints/docs/rules/code-quality/prefer-private-named-parameters/) — Prefer private named parameters (Dart 3.12+) over initializer-list boilerplate.
+- [`avoid_accessing_other_classes_private_members`](/many_lints/docs/rules/code-quality/avoid-accessing-other-classes-private-members/) — Make the underscore mean what everyone reads it as.
+- [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) — Detect and flag commented-out code.

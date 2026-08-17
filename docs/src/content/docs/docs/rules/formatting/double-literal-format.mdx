@@ -28,7 +28,7 @@ The bare-dot form is the one that actually misleads: `.5` reads as a member acce
 
 A single trailing zero is never reported. `1.0` cannot lose it without becoming `1.` (invalid Dart) or the integer `1` (a different type) — and in Flutter code, where `16.0` and `0.0` are everywhere, reporting them would make the rule unusable.
 
-This rule is in **no preset**: literal spelling is a house style.
+This rule is in the **`pedantic`** preset: literal spelling is a house style.
 
 **See also:** [Dart language tour — numbers](https://dart.dev/language/built-in-types#numbers)
 
@@ -52,7 +52,7 @@ const padding = 16.0;    // a single trailing zero is significant, never reporte
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -108,3 +108,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`format_comment`](/many_lints/docs/rules/formatting/format-comment/) — Write comments as capitalised, terminated sentences.
+- [`avoid_inconsistent_digit_separators`](/many_lints/docs/rules/formatting/avoid-inconsistent-digit-separators/) — Group digit separators at a regular interval.
+- [`format_test_name`](/many_lints/docs/rules/testing-rules/format-test-name/) — Hold test descriptions to a house pattern.
+- [`always_pass_global_key`](/many_lints/docs/rules/widget-best-practices/always-pass-global-key/) — Don't create a GlobalKey inside build.

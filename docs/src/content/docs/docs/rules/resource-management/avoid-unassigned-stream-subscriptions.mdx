@@ -101,3 +101,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `ignored_instances` | list of strings | `[]` | Receiver expressions whose subscriptions are torn down centrally |
+
+## Related rules
+
+- [`always_remove_listener`](/many_lints/docs/rules/resource-management/always-remove-listener/) — Ensure every addListener() has a matching removeListener() in dispose().
+- [`avoid_late_final_reassignment`](/many_lints/docs/rules/resource-management/avoid-late-final-reassignment/) — Flag a `late final` field assigned twice on one path.
+- [`avoid_unremovable_callbacks_in_listeners`](/many_lints/docs/rules/resource-management/avoid-unremovable-callbacks-in-listeners/) — Don't pass an inline closure to addListener.
+- [`dispose_fields`](/many_lints/docs/rules/resource-management/dispose-fields/) — Ensure State fields with disposal methods are cleaned up in dispose().

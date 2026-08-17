@@ -165,3 +165,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_either_of_future`](/many_lints/docs/rules/fpdart/avoid-either-of-future/) — A Future nested in Either or Option escapes the error channel.
+- [`avoid_future_of_either`](/many_lints/docs/rules/fpdart/avoid-future-of-either/) — Future&lt;Either&gt; throws away the composition TaskEither already gives you.
+- [`avoid_future_of_option`](/many_lints/docs/rules/fpdart/avoid-future-of-option/) — Future&lt;Option&gt; throws away the composition TaskOption already gives you.
+- [`avoid_unrun_task`](/many_lints/docs/rules/fpdart/avoid-unrun-task/) — Discarding a lazy fpdart value silently skips the work it describes.

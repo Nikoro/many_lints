@@ -11,6 +11,8 @@ bun run build              # Build static site
 bun run preview            # Preview built site
 bun run generate           # Bootstrap rule pages from Dart source (skip existing)
 bun run generate --force   # Bootstrap all rule pages (overwrite) — NOT used in CI
+bun run catalogs           # Refresh Related rules sections and the preset catalog
+bun run catalogs:check     # Verify generated documentation catalogs are current
 ```
 
 ## Tech Stack
@@ -76,6 +78,7 @@ Each rule page follows this format:
 - **Don't / Do**: Separate code blocks showing bad and good patterns
 - **Turning this rule off**: Optional convenience section. The canonical enable/disable and exclusion instructions live on the Configuration page, so older concise pages do not need to repeat them
 - **Options** (configurable rules only): a sibling `##` heading, not nested under the section above
+- **Related rules**: Generated as the final section by `bun run catalogs`. Review the suggested links after adding or moving a rule; explicit opposing conventions are maintained in `update-documentation-catalogs.mjs`
 
 ### Configurable rules use `.mdx`
 

@@ -28,7 +28,7 @@ rules:
     exclude: ["**/*.g.dart", "**/*.freezed.dart"]
 ```
 
-This rule is in **no preset**: a budget is a house style, and the right number differs per codebase.
+This rule is in the **`pedantic`** preset: a budget is a house style, and the right number differs per codebase.
 
 ## Don't
 
@@ -48,7 +48,7 @@ This rule is in **no preset**: a budget is a house style, and the right number d
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -102,3 +102,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_long_parameter_list`](/many_lints/docs/rules/code-quality/avoid-long-parameter-list/) — Keep parameter lists within a budget.
+- [`avoid_too_many_methods`](/many_lints/docs/rules/code-quality/avoid-too-many-methods/) — Keep a class within a method budget.
+- [`max_imports`](/many_lints/docs/rules/code-quality/max-imports/) — Keep a file within an import budget.
+- [`avoid_long_functions`](/many_lints/docs/rules/code-quality/avoid-long-functions/) — Keep function bodies within a line budget.

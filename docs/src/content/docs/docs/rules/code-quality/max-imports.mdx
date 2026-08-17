@@ -20,7 +20,7 @@ The import list is the cheapest available measure of how much a file depends on.
 
 `export` directives are not counted by default: a barrel file is exports by definition, and counting them would report every barrel in the project.
 
-This rule is in **no preset**: a budget is a house style, and the right number differs per codebase.
+This rule is in the **`pedantic`** preset: a budget is a house style, and the right number differs per codebase.
 
 ## Don't
 
@@ -38,7 +38,7 @@ This rule is in **no preset**: a budget is a house style, and the right number d
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -92,3 +92,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_long_files`](/many_lints/docs/rules/code-quality/avoid-long-files/) — Keep a file within a line budget.
+- [`avoid_long_parameter_list`](/many_lints/docs/rules/code-quality/avoid-long-parameter-list/) — Keep parameter lists within a budget.
+- [`avoid_too_many_methods`](/many_lints/docs/rules/code-quality/avoid-too-many-methods/) — Keep a class within a method budget.
+- [`max_statements`](/many_lints/docs/rules/code-quality/max-statements/) — Keep a function within a statement budget.

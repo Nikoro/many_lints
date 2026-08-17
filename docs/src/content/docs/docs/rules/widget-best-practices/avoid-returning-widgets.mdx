@@ -138,3 +138,10 @@ rules:
 | `ignored_annotations` | list of strings | `[FunctionalWidget, swidget, hwidget, hcwidget]` | Annotation names that exempt a member (written without `@`). **Replaces** the defaults; use `additional_ignored_annotations` to extend them |
 | `additional_ignored_annotations` | list of strings | `[]` | Annotation names to exempt **in addition** to the defaults |
 | `allow_nullable` | bool | `false` | Exempt nullable returns (`Widget?`), where null usually means "render nothing" |
+
+## Related rules
+
+- [`avoid_single_child_in_multi_child_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-single-child-in-multi-child-widgets/) — Don't use Column, Row, or other multi-child widgets with only one child.
+- [`avoid_too_many_widgets_per_build`](/many_lints/docs/rules/widget-best-practices/avoid-too-many-widgets-per-build/) — Keep one build method within a widget budget.
+- [`avoid_unnecessary_consumer_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-unnecessary-consumer-widgets/) — Don't extend ConsumerWidget if you never use WidgetRef.
+- [`avoid_unnecessary_hook_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-unnecessary-hook-widgets/) — Don't extend HookWidget if you never call any hooks.

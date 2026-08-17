@@ -135,3 +135,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `state_base_classes` | list of strings | `[]` | Additional non-`State` base classes whose subclasses should be treated as state classes |
+
+## Related rules
+
+- [`avoid_state_constructors`](/many_lints/docs/rules/state-management/avoid-state-constructors/) — Avoid constructors with logic in State classes.
+- [`avoid_unnecessary_overrides`](/many_lints/docs/rules/state-management/avoid-unnecessary-overrides/) — Detect overrides that only delegate to super.
+- [`prefer_immutable_state`](/many_lints/docs/rules/state-management/prefer-immutable-state/) — Ensure classes named as state are annotated with @immutable.
+- [`avoid_empty_setstate`](/many_lints/docs/rules/state-management/avoid-empty-setstate/) — Don't call setState with an empty callback.

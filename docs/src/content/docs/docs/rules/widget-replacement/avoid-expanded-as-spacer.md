@@ -62,3 +62,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`prefer_spacing`](/many_lints/docs/rules/widget-best-practices/prefer-spacing/) — Use the spacing argument on Row/Column instead of SizedBox spacers.
+- [`use_gap`](/many_lints/docs/rules/widget-best-practices/use-gap/) — Use Gap widget instead of SizedBox for spacing in multi-child widgets.
+- [`avoid_border_all`](/many_lints/docs/rules/widget-replacement/avoid-border-all/) — Use Border.fromBorderSide instead of Border.all for const support.
+- [`avoid_incorrect_image_opacity`](/many_lints/docs/rules/widget-replacement/avoid-incorrect-image-opacity/) — Use Image's opacity parameter instead of wrapping in Opacity.

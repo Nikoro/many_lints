@@ -81,6 +81,14 @@ class C {
 }
 ''';
 
+/// The conventional map-index bang is exempt below pedantic, but the strictest
+/// preset bans every postfix null assertion.
+const _mapBangCode = '''
+void f(Map<String, String> values) {
+  print(values['key']!.length);
+}
+''';
+
 /// The same, but with a typed `on ... catch` clause.
 const _typedRethrowCode = '''
 void doSomething() {}
@@ -634,6 +642,29 @@ rules:
   avoid_non_null_assertion:
     ignore_checked_fields: "not a bool"
 ''',
+        );
+
+        expect(errors.map((e) => e.code), contains('avoid_non_null_assertion'));
+      });
+    });
+
+    group('avoid_non_null_assertion.ignore_map_indexes', () {
+      test('the default keeps the idiomatic map-index exemption', () async {
+        final errors = await harness.analyze(
+          _mapBangCode,
+          config: 'preset: opinionated',
+        );
+
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_non_null_assertion')),
+        );
+      });
+
+      test('pedantic bans the map-index bang too', () async {
+        final errors = await harness.analyze(
+          _mapBangCode,
+          config: 'preset: pedantic',
         );
 
         expect(errors.map((e) => e.code), contains('avoid_non_null_assertion'));

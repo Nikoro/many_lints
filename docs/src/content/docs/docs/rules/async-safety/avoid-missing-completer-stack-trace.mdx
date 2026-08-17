@@ -97,3 +97,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `require_inside_catch` | bool | `true` | Only report inside a catch clause that binds a stack trace. Set to `false` to flag every `completeError` call with a single argument |
+
+## Related rules
+
+- [`avoid_catch_error`](/many_lints/docs/rules/async-safety/avoid-catch-error/) — Use try/catch instead of Future.catchError.
+- [`avoid_future_ignore`](/many_lints/docs/rules/async-safety/avoid-future-ignore/) — Do not silently suppress Future errors with an unexplained ignore call.
+- [`avoid_nested_futures`](/many_lints/docs/rules/async-safety/avoid-nested-futures/) — Don't declare Future&lt;Future&lt;T&gt;&gt;.
+- [`avoid_passing_async_when_sync_expected`](/many_lints/docs/rules/async-safety/avoid-passing-async-when-sync-expected/) — Don't pass an async closure where a void-returning function is expected.

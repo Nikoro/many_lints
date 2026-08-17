@@ -141,3 +141,10 @@ cleanup method.
 
 Both options apply to detection *and* recognition — a method listed here counts
 both as "this instance needs disposing" and as "this `ref.onDispose` disposes it".
+
+## Related rules
+
+- [`dispose_fields`](/many_lints/docs/rules/resource-management/dispose-fields/) — Ensure State fields with disposal methods are cleaned up in dispose().
+- [`always_remove_listener`](/many_lints/docs/rules/resource-management/always-remove-listener/) — Ensure every addListener() has a matching removeListener() in dispose().
+- [`avoid_unremovable_callbacks_in_listeners`](/many_lints/docs/rules/resource-management/avoid-unremovable-callbacks-in-listeners/) — Don't pass an inline closure to addListener.
+- [`emit_new_bloc_state_instances`](/many_lints/docs/rules/bloc-riverpod/emit-new-bloc-state-instances/) — Emit a new state instance instead of the existing state object.

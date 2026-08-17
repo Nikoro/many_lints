@@ -14,7 +14,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule flags a numeric literal used without a name to explain it.
 
-This rule is in **no preset**: what counts as magic is a house style, and in a Flutter codebase full of layout numbers the honest default is off.
+This rule is in the **`pedantic`** preset: what counts as magic is a house style, and in a Flutter codebase full of layout numbers the honest default is off.
 
 ## Why use this rule
 
@@ -100,3 +100,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`no_magic_string`](/many_lints/docs/rules/code-quality/no-magic-string/) — Name a string once it is repeated.
+- [`prefer_moving_to_variable`](/many_lints/docs/rules/code-quality/prefer-moving-to-variable/) — Compute a repeated property or invocation chain once into a variable.
+- [`avoid_accessing_other_classes_private_members`](/many_lints/docs/rules/code-quality/avoid-accessing-other-classes-private-members/) — Make the underscore mean what everyone reads it as.
+- [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) — Detect and flag commented-out code.

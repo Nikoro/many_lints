@@ -127,3 +127,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `ignore_contains` | bool | `false` | Skip `{E.a, E.b}.contains(value)` membership tests, reporting only if-else and `||` chains |
+
+## Related rules
+
+- [`avoid_wildcard_cases_with_enums`](/many_lints/docs/rules/pattern-matching/avoid-wildcard-cases-with-enums/) — Keep exhaustiveness checking by listing enum cases explicitly.
+- [`prefer_wildcard_pattern`](/many_lints/docs/rules/pattern-matching/prefer-wildcard-pattern/) — Use the wildcard pattern '_' instead of 'Object()' for catch-all cases.
+- [`prefer_switch_expression`](/many_lints/docs/rules/control-flow/prefer-switch-expression/) — Suggest converting switch statements to switch expressions.
+- [`avoid_nested_conditional_expressions`](/many_lints/docs/rules/control-flow/avoid-nested-conditional-expressions/) — Flag a conditional nested inside another.

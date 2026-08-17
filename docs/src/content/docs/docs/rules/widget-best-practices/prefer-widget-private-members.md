@@ -11,7 +11,7 @@ sidebar:
 
 This rule flags a public method or getter declared on a widget class.
 
-This rule is in **no preset**: it imposes an architecture rather than catching a defect.
+This rule is in the **`pedantic`** preset: it imposes an architecture rather than catching a defect.
 
 ## Why use this rule
 
@@ -79,3 +79,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_deep_widget_nesting`](/many_lints/docs/rules/widget-best-practices/avoid-deep-widget-nesting/) — Keep a widget tree within a nesting budget.
+- [`avoid_recursive_widget_calls`](/many_lints/docs/rules/widget-best-practices/avoid-recursive-widget-calls/) — Don't build a widget from inside its own build method.
+- [`prefer_single_widget_per_file`](/many_lints/docs/rules/widget-best-practices/prefer-single-widget-per-file/) — Keep one public widget per file for better organization.
+- [`avoid_accessing_other_classes_private_members`](/many_lints/docs/rules/code-quality/avoid-accessing-other-classes-private-members/) — Make the underscore mean what everyone reads it as.

@@ -135,3 +135,10 @@ rules:
 | `include_local_variables` | bool | `false` | Also track local variables, for code where a closure captures and writes one |
 
 A local is only shared when a closure captures and writes it, which is rarer and harder to confirm than a field, so the default tracks fields only.
+
+## Related rules
+
+- [`check_is_not_closed_after_async_gap`](/many_lints/docs/rules/async-safety/check-is-not-closed-after-async-gap/) — Check isClosed before emitting state after an await.
+- [`use_ref_and_state_synchronously`](/many_lints/docs/rules/async-safety/use-ref-and-state-synchronously/) — Check ref.mounted before using ref or state after an await.
+- [`use_ref_read_synchronously`](/many_lints/docs/rules/async-safety/use-ref-read-synchronously/) — Add a mounted guard before calling ref.read after an await.
+- [`use_setstate_synchronously`](/many_lints/docs/rules/async-safety/use-setstate-synchronously/) — Guard setState after an await with a mounted check.

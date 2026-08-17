@@ -152,6 +152,7 @@ import 'package:many_lints/src/rules/prefer_immediate_return.dart';
 import 'package:many_lints/src/rules/avoid_either_of_future.dart';
 import 'package:many_lints/src/rules/avoid_future_of_either.dart';
 import 'package:many_lints/src/rules/avoid_future_of_option.dart';
+import 'package:many_lints/src/rules/avoid_future_ignore.dart';
 import 'package:many_lints/src/rules/avoid_empty_spread.dart';
 import 'package:many_lints/src/rules/avoid_inverted_boolean_checks.dart';
 import 'package:many_lints/src/rules/avoid_unnecessary_negations.dart';
@@ -622,6 +623,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidPassingAsyncWhenSyncExpected());
     _registerWarningRule(registry, AvoidUnrelatedTypeCasts());
     _registerWarningRule(registry, AvoidUnnecessaryOption());
+    _registerWarningRule(registry, AvoidFutureIgnore());
     _registerWarningRule(registry, AvoidUnrunTask());
     _registerWarningRule(registry, AvoidUntypedSafeCast());
     _registerWarningRule(registry, AvoidNotEncodableInToJson());

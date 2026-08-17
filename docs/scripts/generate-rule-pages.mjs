@@ -113,6 +113,7 @@ const CATEGORIES = {
   'async-safety': {
     label: 'Async Safety',
     rules: [
+      'avoid_future_ignore',
       'use_setstate_synchronously',
       'avoid_catch_error',
       'avoid_redundant_async',

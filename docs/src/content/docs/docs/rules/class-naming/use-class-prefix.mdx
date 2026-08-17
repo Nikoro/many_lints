@@ -118,3 +118,10 @@ Each entry accepts:
 The two rules read different per-entry keys, so an entry carrying only `suffix:` gives this rule nothing to enforce, and vice versa. Configure each rule with its own entries.
 
 When a class matches several entries, the **first** one wins and it is reported once. An entry missing `type` or `prefix` is skipped; because a plugin cannot report problems against a YAML file, a malformed entry degrades quietly rather than failing analysis.
+
+## Related rules
+
+- [`match_class_name_pattern`](/many_lints/docs/rules/class-naming/match-class-name-pattern/) — Match class names against a regular expression.
+- [`use_class_suffix`](/many_lints/docs/rules/class-naming/use-class-suffix/) — Require a name suffix for classes deriving from a configured type.
+- [`prefer_correct_identifier_length`](/many_lints/docs/rules/class-naming/prefer-correct-identifier-length/) — Keep identifier length within bounds.
+- [`prefer_correct_type_name`](/many_lints/docs/rules/class-naming/prefer-correct-type-name/) — Keep type names within a sensible length and correctly capitalised.

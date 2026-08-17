@@ -46,6 +46,16 @@ const _opinionatedCode = '''
 var topLevel = 1;
 ''';
 
+/// Reported by `arguments_ordering`, whose alphabetical policy is supplied by
+/// the **pedantic** preset rather than by the rule's normal defaults.
+const _pedanticCode = '''
+void configure({int alpha = 0, int beta = 0}) {}
+
+void main() {
+  configure(beta: 2, alpha: 1);
+}
+''';
+
 void main() {
   group('Preset', () {
     test('parses each known name', () {
@@ -53,6 +63,7 @@ void main() {
       expect(Preset.parse('core'), Preset.core);
       expect(Preset.parse('recommended'), Preset.recommended);
       expect(Preset.parse('opinionated'), Preset.opinionated);
+      expect(Preset.parse('pedantic'), Preset.pedantic);
     });
 
     test('the removed `all` preset no longer resolves', () {
@@ -78,6 +89,13 @@ void main() {
     test('opinionated is a strict superset of recommended', () {
       expect(opinionatedRules, containsAll(recommendedRules));
       expect(opinionatedRules.length, greaterThan(recommendedRules.length));
+    });
+
+    test('pedantic is a strict superset of opinionated', () {
+      expect(pedanticRules, containsAll(opinionatedRules));
+      expect(pedanticRules.length, greaterThan(opinionatedRules.length));
+      expect(Preset.pedantic.enables('parameters_ordering'), isTrue);
+      expect(Preset.pedantic.enables('avoid_non_null_assertion'), isTrue);
     });
 
     // The whole point of dropping `all`: a preset must never turn on two rules
@@ -186,7 +204,7 @@ void main() {
       final registered = plugin.registeredRuleNames;
 
       expect(registered, isNotEmpty);
-      for (final name in {...opinionatedRules, ...conflictingWithOpinionated}) {
+      for (final name in {...pedanticRules, ...conflictingWithOpinionated}) {
         expect(
           registered,
           contains(name),
@@ -281,6 +299,34 @@ rules:
         isTrue,
       );
     });
+
+    test(
+      'pedantic supplies strict defaults that project options can replace',
+      () {
+        final defaults = ManyLintsConfig.parse('preset: pedantic');
+        expect(
+          defaults.forRule('arguments_ordering').options,
+          containsPair('order', 'alphabetical'),
+        );
+        expect(
+          defaults
+              .forRule('avoid_non_null_assertion')
+              .boolOption('ignore_map_indexes', defaultValue: true),
+          isFalse,
+        );
+
+        final overridden = ManyLintsConfig.parse('''
+preset: pedantic
+rules:
+  arguments_ordering:
+    order: by_length
+''');
+        expect(
+          overridden.forRule('arguments_ordering').options,
+          containsPair('order', 'by_length'),
+        );
+      },
+    );
   });
 
   group('end-to-end through PluginServer', () {
@@ -360,6 +406,15 @@ rules:
       );
 
       expect(errors.map((e) => e.code), contains('prefer_type_over_var'));
+    });
+
+    test('preset: pedantic enables and configures a pedantic rule', () async {
+      final errors = await harness.analyze(
+        _pedanticCode,
+        config: 'preset: pedantic',
+      );
+
+      expect(errors.map((e) => e.code), contains('arguments_ordering'));
     });
 
     test('an unknown preset silently enables nothing', () async {

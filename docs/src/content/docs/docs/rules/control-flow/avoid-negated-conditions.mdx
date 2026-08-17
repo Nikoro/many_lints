@@ -29,7 +29,7 @@ The rule only fires where the swap is a genuine improvement:
 - **Never on `!= null` or `!= 0`.** `x != null` is the null check the language is built around, and `byPoints != 0 ? byPoints : ...` is the comparator tie-break idiom. Both state a positive fact, and both turned up as false positives on a production codebase.
 - **Never for a pattern `if`.** The swapped branch could not see the bound variables.
 
-This rule is in **no preset**: branch ordering is a house style.
+This rule is in the **`pedantic`** preset: branch ordering is a house style.
 
 ## Don't
 
@@ -69,7 +69,7 @@ if (token != null) {
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -120,3 +120,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_inverted_boolean_checks`](/many_lints/docs/rules/control-flow/avoid-inverted-boolean-checks/) — Use the opposite operator instead of negating a comparison.
+- [`avoid_unnecessary_negations`](/many_lints/docs/rules/control-flow/avoid-unnecessary-negations/) — Collapse double negations.
+- [`prefer_returning_condition`](/many_lints/docs/rules/control-flow/prefer-returning-condition/) — Return the condition instead of true/false branches.
+- [`avoid_constant_conditions`](/many_lints/docs/rules/control-flow/avoid-constant-conditions/) — Detect comparisons where both sides are constants.

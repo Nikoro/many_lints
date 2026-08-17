@@ -22,7 +22,7 @@ A long parameter list is usually several values that belong together travelling 
 
 An `@override` is never reported, since it cannot change its signature.
 
-This rule is in **no preset**: a parameter budget is a house style.
+This rule is in the **`pedantic`** preset: a parameter budget is a house style.
 
 ## Don't
 
@@ -44,7 +44,7 @@ void schedule(String title, DateRange when, Court court) {}
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -98,3 +98,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_long_files`](/many_lints/docs/rules/code-quality/avoid-long-files/) — Keep a file within a line budget.
+- [`avoid_too_many_methods`](/many_lints/docs/rules/code-quality/avoid-too-many-methods/) — Keep a class within a method budget.
+- [`max_imports`](/many_lints/docs/rules/code-quality/max-imports/) — Keep a file within an import budget.
+- [`avoid_long_functions`](/many_lints/docs/rules/code-quality/avoid-long-functions/) — Keep function bodies within a line budget.

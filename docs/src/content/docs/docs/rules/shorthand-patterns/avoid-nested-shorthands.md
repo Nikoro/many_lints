@@ -9,6 +9,8 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Shorthand Patterns</span>
 
+This rule is in the **`pedantic`** preset.
+
 Flags a dot shorthand that appears inside the arguments of another dot shorthand invocation. A single shorthand is readable because the surrounding declaration supplies the type name, but once shorthands nest, that anchor is gone and you end up with expressions like `.new(.new(version: .new('val')))`.
 
 ## Why use this rule
@@ -70,8 +72,8 @@ void fn() {
 
 ## Configuration
 
-This rule is opt-in because compact nested shorthands are a readability choice
-on which coherent codebases disagree. Enable it by name:
+This rule appears only in the **`pedantic`** preset because compact nested
+shorthands are a readability choice on which coherent codebases disagree.
 
 ```yaml
 # many_lints.yaml
@@ -88,3 +90,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`prefer_returning_shorthands`](/many_lints/docs/rules/shorthand-patterns/prefer-returning-shorthands/) — Use dot shorthand constructors in expression function return values.
+- [`prefer_shorthands_with_constructors`](/many_lints/docs/rules/shorthand-patterns/prefer-shorthands-with-constructors/) — Use dot shorthand constructors for common Flutter classes.
+- [`prefer_shorthands_with_enums`](/many_lints/docs/rules/shorthand-patterns/prefer-shorthands-with-enums/) — Use dot shorthands instead of explicit enum prefixes.
+- [`prefer_shorthands_with_static_fields`](/many_lints/docs/rules/shorthand-patterns/prefer-shorthands-with-static-fields/) — Use dot shorthands instead of explicit class prefixes for static fields.

@@ -16,11 +16,11 @@ This rule flags a map literal whose keys are not in the configured order.
 
 A long map literal is a lookup table, and an unordered one has to be read end to end to answer "is this key here?". Ordering keeps a diff honest too: a new key lands in the middle where it can be seen, rather than appended at the end beside a duplicate nobody noticed.
 
-**This rule reports nothing until configured.** Many map literals are deliberately ordered by meaning — a config map mirroring a form's field order, a theme map going from lightest to darkest.
+Outside `preset: pedantic`, **this rule reports nothing until configured.** Many map literals are deliberately ordered by meaning — a config map mirroring a form's field order, a theme map going from lightest to darkest. The pedantic preset chooses alphabetical order.
 
 A literal containing a **computed key**, a spread, an `if` or a `for` is skipped entirely rather than partially ordered: ordering the rest around an unsortable entry would produce an arrangement the user cannot reach.
 
-This rule is in **no preset**.
+This rule is in the **`pedantic`** preset.
 
 ## Don't
 
@@ -48,7 +48,7 @@ const labels = {
 
 ## Enabling this rule
 
-This rule reports **nothing until you choose an order**, so enabling it by name is not enough — set `order:`:
+Outside `preset: pedantic`, enabling it by name is not enough — set `order:`:
 
 ```yaml
 # many_lints.yaml
@@ -102,3 +102,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`arguments_ordering`](/many_lints/docs/rules/code-organization/arguments-ordering/) — Keep named arguments in a configured order.
+- [`initializers_ordering`](/many_lints/docs/rules/code-organization/initializers-ordering/) — Keep constructor initializers in field order.
+- [`member_ordering`](/many_lints/docs/rules/code-organization/member-ordering/) — Keep class members in a configured order.
+- [`parameters_ordering`](/many_lints/docs/rules/code-organization/parameters-ordering/) — Keep named parameters in a configured order.

@@ -64,3 +64,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_unnecessary_option`](/many_lints/docs/rules/fpdart/avoid-unnecessary-option/) — An Option that is wrapped and immediately unwrapped earns nothing.
+- [`prefer_from_predicate`](/many_lints/docs/rules/fpdart/prefer-from-predicate/) — A conditional guarding an Option is one Option.fromPredicate call.
+- [`avoid_ad_hoc_left_type`](/many_lints/docs/rules/fpdart/avoid-ad-hoc-left-type/) — A pipeline only composes when every step shares one error type.
+- [`avoid_bare_await_in_do`](/many_lints/docs/rules/fpdart/avoid-bare-await-in-do/) — Awaiting a raw Future inside a Do block escapes the block's tracking.

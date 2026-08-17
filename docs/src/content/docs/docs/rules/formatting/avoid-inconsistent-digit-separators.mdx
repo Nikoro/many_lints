@@ -30,7 +30,7 @@ The leading group may be shorter than the rest, since that is what is left over:
 
 Hexadecimal literals are grouped by `hex_group_size` (default `4`) rather than by thousands, because hex groups by byte or half-word.
 
-This rule is in **no preset**: separator style is a house style.
+This rule is in the **`pedantic`** preset: separator style is a house style.
 
 **See also:** [Dart 3.6 digit separators](https://dart.dev/language/built-in-types#numbers)
 
@@ -54,7 +54,7 @@ const small = 12_345_678;       // a short leading group is correct
 
 ## Enabling this rule
 
-This rule is in no preset, so enable it by name:
+This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
 
 ```yaml
 # many_lints.yaml
@@ -110,3 +110,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`double_literal_format`](/many_lints/docs/rules/formatting/double-literal-format/) — Write double literals with exactly one leading zero and no redundant trailing zeros.
+- [`format_comment`](/many_lints/docs/rules/formatting/format-comment/) — Write comments as capitalised, terminated sentences.
+- [`always_pass_global_key`](/many_lints/docs/rules/widget-best-practices/always-pass-global-key/) — Don't create a GlobalKey inside build.
+- [`always_remove_listener`](/many_lints/docs/rules/resource-management/always-remove-listener/) — Ensure every addListener() has a matching removeListener() in dispose().

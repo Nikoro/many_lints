@@ -87,6 +87,7 @@ const _recommendedOnlyRules = <String>{
   'avoid_either_of_future',
   'avoid_empty_spread',
   'avoid_expanded_as_spacer',
+  'avoid_future_ignore',
   'avoid_generics_shadowing',
   'avoid_hooks_outside_build',
   'avoid_incorrect_image_opacity',
@@ -289,6 +290,103 @@ final opinionatedRules = <String>{
   ..._opinionatedOnlyRules,
 };
 
+/// Rules that [pedanticRules] adds on top of [opinionatedRules].
+///
+/// This tier deliberately optimizes for uniformity and explicitness rather
+/// than for a quiet signal. It enables structural budgets, naming rules and
+/// mechanical ordering that are too restrictive for a general-purpose house
+/// style, but useful in a codebase that wants every file to follow one shape.
+///
+/// Rules that need project vocabulary, introduce a package dependency or
+/// contradict a rule selected below still remain opt-in. In particular, a
+/// preset cannot guess banned APIs or class affixes, cannot assume `equatable`
+/// or `gap`, and must not enable `prefer_container` beside the rules that
+/// unwrap a `Container`.
+const _pedanticOnlyRules = <String>{
+  'arguments_ordering',
+  'avoid_accessing_other_classes_private_members',
+  'avoid_complex_conditions',
+  'avoid_deep_nesting',
+  'avoid_deep_widget_nesting',
+  'avoid_duplicate_collection_elements',
+  'avoid_get_or_else_swallowing_failure',
+  'avoid_high_cyclomatic_complexity',
+  'avoid_inconsistent_digit_separators',
+  'avoid_long_files',
+  'avoid_long_functions',
+  'avoid_long_parameter_list',
+  'avoid_negated_conditions',
+  'avoid_nested_shorthands',
+  'avoid_too_many_methods',
+  'avoid_too_many_widgets_per_build',
+  'avoid_unnecessary_option',
+  'avoid_unused_after_null_check',
+  'avoid_wildcard_cases_with_enums',
+  'double_literal_format',
+  'enum_constants_ordering',
+  'format_comment',
+  'initializers_ordering',
+  'map_keys_ordering',
+  'match_lib_folder_structure',
+  'max_imports',
+  'max_statements',
+  'member_ordering',
+  'never_discard_build_context',
+  'no_equal_switch_case',
+  'no_magic_number',
+  'no_magic_string',
+  'parameters_ordering',
+  'pattern_fields_ordering',
+  'prefer_boolean_prefixes',
+  'prefer_class_destructuring',
+  'prefer_conditional_expressions',
+  'prefer_correct_callback_field_name',
+  'prefer_correct_error_name',
+  'prefer_correct_handler_name',
+  'prefer_correct_identifier_length',
+  'prefer_correct_setter_parameter_name',
+  'prefer_correct_type_name',
+  'prefer_declaring_const_constructor',
+  'prefer_early_return',
+  'prefer_explicit_parameter_names',
+  'prefer_extracting_callbacks',
+  'prefer_getter_over_method',
+  'prefer_match_file_name',
+  'prefer_moving_to_variable',
+  'prefer_named_boolean_parameters',
+  'prefer_named_parameters',
+  'prefer_single_declaration_per_file',
+  'prefer_typedefs_for_callbacks',
+  'prefer_use_prefix',
+  'prefer_widget_private_members',
+  'record_fields_ordering',
+  'use_sliver_prefix',
+};
+
+/// [opinionatedRules] plus [_pedanticOnlyRules].
+final pedanticRules = <String>{...opinionatedRules, ..._pedanticOnlyRules};
+
+/// Option defaults supplied by the strictest preset.
+///
+/// A user's per-rule options override these values. Keeping the defaults here
+/// makes `preset: pedantic` complete on its own: ordering rules that are
+/// intentionally silent in lower presets receive an actual policy here.
+const pedanticRuleOptions = <String, Map<String, Object?>>{
+  'arguments_ordering': {'order': 'alphabetical', 'min_arguments': 2},
+  'avoid_non_null_assertion': {'ignore_map_indexes': false},
+  'enum_constants_ordering': {'order': 'alphabetical'},
+  'map_keys_ordering': {'order': 'alphabetical'},
+  'parameters_ordering': {
+    'order': 'alphabetical',
+    'group_required': true,
+    'min_parameters': 2,
+  },
+  'pattern_fields_ordering': {'order': 'alphabetical'},
+  'prefer_explicit_parameter_names': {'min_parameters': 1},
+  'prefer_single_declaration_per_file': {'ignore_private': false},
+  'record_fields_ordering': {'order': 'alphabetical'},
+};
+
 /// A named rule set that a project can select with `preset:`.
 enum Preset {
   /// Enables nothing. The default, and the explicit way to opt out.
@@ -301,7 +399,10 @@ enum Preset {
   recommended('recommended'),
 
   /// [recommended] plus the opinionated style rules this package prefers.
-  opinionated('opinionated');
+  opinionated('opinionated'),
+
+  /// [opinionated] plus strict naming, structure and ordering conventions.
+  pedantic('pedantic');
 
   const Preset(this.name);
 
@@ -333,5 +434,12 @@ enum Preset {
     Preset.core => coreRules.contains(ruleName),
     Preset.recommended => recommendedRules.contains(ruleName),
     Preset.opinionated => opinionatedRules.contains(ruleName),
+    Preset.pedantic => pedanticRules.contains(ruleName),
+  };
+
+  /// Built-in rule options supplied by this preset.
+  Map<String, Object?> optionsFor(String ruleName) => switch (this) {
+    Preset.pedantic => pedanticRuleOptions[ruleName] ?? const {},
+    _ => const {},
   };
 }

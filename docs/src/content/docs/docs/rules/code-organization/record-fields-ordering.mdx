@@ -18,7 +18,7 @@ A record is structurally typed, so its named fields are a set rather than a sequ
 
 **Positional fields are never ordered**: their position *is* their identity, and reordering them makes a different type.
 
-This rule is in **no preset**.
+This rule is in the **`pedantic`** preset.
 
 ## Don't
 
@@ -34,7 +34,8 @@ typedef Result = ({int code, String message});
 
 ## Enabling this rule
 
-This rule reports **nothing until you choose an order**:
+Outside `preset: pedantic`, which uses alphabetical order, this rule reports
+**nothing until you choose an order**:
 
 ```yaml
 # many_lints.yaml
@@ -85,3 +86,10 @@ plugins:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`pattern_fields_ordering`](/many_lints/docs/rules/code-organization/pattern-fields-ordering/) — Keep pattern fields in a configured order.
+- [`enum_constants_ordering`](/many_lints/docs/rules/code-organization/enum-constants-ordering/) — Keep enum constants in a configured order.
+- [`arguments_ordering`](/many_lints/docs/rules/code-organization/arguments-ordering/) — Keep named arguments in a configured order.
+- [`initializers_ordering`](/many_lints/docs/rules/code-organization/initializers-ordering/) — Keep constructor initializers in field order.

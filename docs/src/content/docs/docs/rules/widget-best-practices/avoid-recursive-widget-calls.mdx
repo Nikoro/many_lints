@@ -106,3 +106,10 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `state_base_classes` | list of strings | `[]` | Additional non-`State` base classes whose subclasses should be treated as state classes |
+
+## Related rules
+
+- [`avoid_deep_widget_nesting`](/many_lints/docs/rules/widget-best-practices/avoid-deep-widget-nesting/) — Keep a widget tree within a nesting budget.
+- [`prefer_single_widget_per_file`](/many_lints/docs/rules/widget-best-practices/prefer-single-widget-per-file/) — Keep one public widget per file for better organization.
+- [`prefer_widget_private_members`](/many_lints/docs/rules/widget-best-practices/prefer-widget-private-members/) — A widget's public API is its constructor.
+- [`always_pass_global_key`](/many_lints/docs/rules/widget-best-practices/always-pass-global-key/) — Don't create a GlobalKey inside build.

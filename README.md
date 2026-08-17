@@ -58,12 +58,16 @@ For local development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 |--------|-------|----------|
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
 | `core` | 35 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
-| `recommended` | 90 | `core` plus likely defects and concrete runtime risks. |
-| `opinionated` | 177 | `recommended` plus this package's own style preferences. |
+| `recommended` | 91 | `core` plus likely defects and concrete runtime risks. |
+| `opinionated` | 178 | `recommended` plus this package's own style preferences. |
+| `pedantic` | 236 | `opinionated` plus strict naming, structure, complexity and ordering. |
+
+See the [Presets guide](https://nikoro.github.io/many_lints/docs/presets/) for
+the idea behind each tier and the exact rules each one adds.
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml` includes `core.yaml`. `core` and `recommended` deliberately exclude anything that imposes an architecture, a naming scheme, or a contested style choice.
 
-There is deliberately no preset that enables every rule: some rules contradict one another (`prefer_container` vs `prefer_padding_over_container`, `use_gap` vs `prefer_spacing`), so enabling both halves would produce two diagnostics on one line whose fixes undo each other. `opinionated` takes one side of each pair; the other stays available by name. Rules that do nothing until configured, such as the `banned_*` family, are also left out.
+There is deliberately no preset that enables every rule: some rules contradict one another (`prefer_container` vs `prefer_padding_over_container`, `use_gap` vs `prefer_spacing`), so enabling both halves would produce two diagnostics on one line whose fixes undo each other. `opinionated` and `pedantic` take one side of each pair; the other stays available by name. Rules that need project-specific vocabulary, such as the `banned_*` family, are also left out.
 
 Adjust a preset in either direction without restating it:
 
@@ -142,7 +146,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 
 ## Available Lints
 
-252 lints with 104 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
+253 lints with 104 quick fixes. All are off by default — enable them with a [preset](#presets). Each rule links to its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
@@ -150,7 +154,7 @@ See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excl
 | [Architecture](https://nikoro.github.io/many_lints/docs/rules/architecture/) | 6 | Configurable bans on imports, types, names and members |
 | [Bloc / Riverpod](https://nikoro.github.io/many_lints/docs/rules/bloc-riverpod/) | 12 | BLoC and Riverpod state management patterns |
 | [Riverpod State](https://nikoro.github.io/many_lints/docs/rules/riverpod-state/) | 9 | Riverpod-specific state rules |
-| [Async Safety](https://nikoro.github.io/many_lints/docs/rules/async-safety/) | 11 | Async/await and state mutation safety |
+| [Async Safety](https://nikoro.github.io/many_lints/docs/rules/async-safety/) | 12 | Async/await and state mutation safety |
 | [fpdart](https://nikoro.github.io/many_lints/docs/rules/fpdart/) | 22 | Functional error handling with Either, Option and TaskEither |
 | [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/widget-best-practices/) | 25 | General widget best practices |
 | [Widget Replacement](https://nikoro.github.io/many_lints/docs/rules/widget-replacement/) | 13 | Simpler widget alternatives |

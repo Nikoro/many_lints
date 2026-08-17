@@ -131,3 +131,10 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_unnecessary_overrides_in_state`](/many_lints/docs/rules/state-management/avoid-unnecessary-overrides-in-state/) — Detect State lifecycle overrides that only call super.
+- [`avoid_empty_setstate`](/many_lints/docs/rules/state-management/avoid-empty-setstate/) — Don't call setState with an empty callback.
+- [`avoid_inherited_widget_in_initstate`](/many_lints/docs/rules/state-management/avoid-inherited-widget-in-initstate/) — Don't look up inherited widgets inside initState.
+- [`avoid_late_context`](/many_lints/docs/rules/state-management/avoid-late-context/) — Don't read BuildContext in a late field initializer.

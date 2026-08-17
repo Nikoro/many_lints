@@ -117,3 +117,10 @@ rules:
 |--------|------|---------|-------------|
 | `ignore_widget_callbacks` | bool | `true` | Skip the common Flutter handlers (`onPressed`, `onTap`, `onLongPress`, `onChanged`, `onSubmitted`, `onDoubleTap`, `onRefresh`, `onSaved`, `listener`) |
 | `ignored_parameters` | list of strings | `[]` | Additional parameter names to skip, by name |
+
+## Related rules
+
+- [`avoid_redundant_async`](/many_lints/docs/rules/async-safety/avoid-redundant-async/) — Flag an async function that never awaits.
+- [`avoid_future_ignore`](/many_lints/docs/rules/async-safety/avoid-future-ignore/) — Do not silently suppress Future errors with an unexplained ignore call.
+- [`avoid_nested_futures`](/many_lints/docs/rules/async-safety/avoid-nested-futures/) — Don't declare Future&lt;Future&lt;T&gt;&gt;.
+- [`prefer_correct_future_return_type`](/many_lints/docs/rules/async-safety/prefer-correct-future-return-type/) — Expose async results as non-nullable Future values.
