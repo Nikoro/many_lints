@@ -55,36 +55,65 @@ For local development setup, see
 
 ### Presets
 
-| Preset | Rules | Contents |
-|--------|-------|----------|
-| `none` | 0 | Nothing. The default, and the explicit way to opt out. |
-| `core` | 35 | Near-certain bugs only — dead conditions, impossible casts, leaked resources. |
-| `recommended` | 91 | `core` plus likely defects and concrete runtime risks. |
-| `opinionated` | 177 | `recommended` plus this package's own style preferences. |
-| `pedantic` | 234 | `opinionated` plus strict naming, structure, complexity and ordering. |
+Presets are cumulative: moving right only adds rules.
 
-See the [Presets guide](https://nikoro.github.io/many_lints/docs/presets/) for
-the idea behind each tier and the exact rules each one adds.
+| Preset | Rules | Choose it when... |
+|--------|------:|-------------------|
+| `none` | 0 | You want to enable every rule manually. This is the default. |
+| `core` | 35 | You want only near-certain bugs and runtime failures. |
+| `recommended` | 91 | You want safe production defaults. Best starting point for most projects. |
+| `opinionated` | 177 | You also want a consistent Many Lints house style. |
+| `pedantic` | 234 | You want strict naming, ordering, structure and complexity limits. |
 
-Each preset builds on the one above it, the same way `package:lints/recommended.yaml` includes `core.yaml`. `core` and `recommended` deliberately exclude anything that imposes an architecture, a naming scheme, or a contested style choice.
+There is no "all" preset: some rules intentionally conflict, and config-only rules such
+as `avoid_banned_imports` cannot have useful defaults. See the
+[preset comparison](https://nikoro.github.io/many_lints/docs/presets/) for the exact rules
+in every tier.
 
-There is deliberately no preset that enables every rule: some rules contradict one another (`prefer_container` vs `prefer_padding_over_container`, `use_gap` vs `prefer_spacing`), so enabling both halves would produce two diagnostics on one line whose fixes undo each other. `opinionated` and `pedantic` take one side of each pair; the other stays available by name. Rules that need project-specific vocabulary, such as the `banned_*` family, are also left out.
+Presets select only Many Lints rules. Enable official
+[Dart SDK lints](https://dart.dev/tools/linter-rules) separately through the standard
+`linter: rules:` configuration.
 
-Adjust a preset in either direction without restating it:
+### Rules in one example
+
+Put rule configuration in `many_lints.yaml` next to `pubspec.yaml`:
 
 ```yaml
-# many_lints.yaml
 preset: recommended
+
 rules:
-  prefer_type_over_var: true     # add a rule the preset omits
-  avoid_only_rethrow: false      # drop one it includes
+  prefer_type_over_var: true       # add a rule outside the preset
+  avoid_only_rethrow: false        # remove a rule from the preset
+
+  avoid_long_functions:
+    include: lib/domain/**          # run only in matching paths
+    exclude: "**/*.g.dart"          # exclude wins if both match
+    message: Extract a focused helper.
+    max_lines: 80                   # rule-specific option
 ```
 
-Configuring a rule by name — an `exclude:`, an option, a `message:` — also opts it in.
+The same configuration can live under a top-level `many_lints:` key in
+`analysis_options.yaml` (as a sibling of `plugins:`). If both locations exist,
+`many_lints.yaml` wins; they are not merged.
 
-### Configuring severity
+| Key | Meaning |
+|-----|---------|
+| `enabled` / `true` / `false` | Overrides the preset for one rule. |
+| `include` | Runs the rule only for matching package-relative globs. String or list. |
+| `exclude` | Skips matching paths. String or list; takes precedence over `include`. |
+| `message` | Appends a project-specific note without changing the diagnostic code or fix. |
+| Rule options | Change what a configurable rule reports; defaults preserve normal behaviour. |
 
-`preset:` decides *whether* a rule runs. To change how loudly it reports, use the analyzer's `diagnostics` key:
+Every rule supports `include`, `exclude` and `message`. Adding one of these keys or a
+rule-specific option also opts the rule in unless `enabled: false` is set. Options and
+defaults are listed on each
+[rule page](https://nikoro.github.io/many_lints/docs/rules/); the complete syntax is in the
+[configuration guide](https://nikoro.github.io/many_lints/docs/configuration/).
+
+### Severity
+
+Enablement belongs to `preset:` / `rules:`. Severity belongs to the plugin's analyzer
+configuration:
 
 ```yaml
 plugins:
@@ -94,56 +123,11 @@ plugins:
       avoid_equal_expressions: error   # error | warning | info
 ```
 
-### Excluding paths per rule
-
-A preset turns a rule on everywhere. To keep a rule on but skip certain paths, write a `rules:` block — in **either** of these two places, whichever you prefer:
-
-**Option A — in your existing `analysis_options.yaml`**, under a top-level `many_lints:` key (note: top-level, a sibling of `plugins:`, not nested inside it):
-
-```yaml
-# analysis_options.yaml
-plugins:
-  many_lints: ^1.0.0
-
-many_lints:
-  rules:
-    avoid_only_rethrow:
-      exclude:
-        - test/**
-        - "**/*.g.dart"
-```
-
-**Option B — in a separate `many_lints.yaml`** next to your `pubspec.yaml`:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_only_rethrow:
-    exclude:
-      - test/**
-      - "**/*.g.dart"
-```
-
-Both are fully equivalent — the `rules:` block is identical, it just sits one level deeper in Option A. Use Option A to keep everything in one file, or Option B to keep lint config separate.
-
-If you create both, `many_lints.yaml` wins outright and the `analysis_options.yaml` section is ignored — they are **not** merged.
-
-Every rule supports `exclude`. Each `exclude` sits under one rule and affects only that rule — to skip a path for several rules, give each of them its own `exclude`.
-
-Patterns are globs matched against the path relative to the package root, using the same semantics as the analyzer's own `analyzer: exclude:`. A plain path is a valid pattern too, and the list can hold as many entries as you need:
-
-```yaml
-rules:
-  avoid_only_rethrow:
-    exclude:
-      - lib/legacy/parser.dart      # one specific file
-      - lib/generated/**            # a whole directory tree
-      - "**/*.g.dart"               # every generated file
-```
-
-> The `rules:` block cannot live *inside* `plugins: many_lints:` — the analyzer only accepts enable/disable and severity there, and reports any other key as an unsupported option.
-
-See [Configuration](https://nikoro.github.io/many_lints/docs/configuration/#excluding-paths-per-rule) for details.
+`diagnostics:` cannot enable a rule omitted by the preset. The `rules:` block cannot be
+nested inside `plugins: many_lints`, and top-level `many_lints:` configuration is not
+inherited through the analyzer's YAML `include:`. See
+[configuration locations and limitations](https://nikoro.github.io/many_lints/docs/configuration/#which-to-pick)
+for shared-config setups.
 
 ## Available Lints
 
