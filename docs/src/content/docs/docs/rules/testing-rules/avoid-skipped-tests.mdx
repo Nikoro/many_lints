@@ -46,8 +46,12 @@ test('handles a timeout', () {}, skip: 'flaky on CI');
 
 // A whole group.
 group('upload', () {}, skip: true);
+```
 
-// A whole file.
+A whole file, as a library annotation — it must be the first directive in the
+file, so it is shown on its own:
+
+```dart
 @Skip('needs a real device')
 library;
 ```

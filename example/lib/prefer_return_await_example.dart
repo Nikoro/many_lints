@@ -1,4 +1,7 @@
 // ignore_for_file: unused_local_variable, unused_catch_clause, unawaited_return_in_try_block
+// These examples throw bare `Exception` incidentally, to keep the focus on the
+// rule this file demonstrates.
+// ignore_for_file: many_lints/prefer_typed_exceptions
 
 // prefer_return_await
 //

@@ -1,4 +1,7 @@
 // ignore_for_file: many_lints/prefer_correct_error_name, many_lints/prefer_primary_constructors, many_lints/prefer_void_callback
+// The bad example shows three throw forms in one function, so everything
+// after the first is unreachable by construction.
+// ignore_for_file: dead_code
 
 // prefer_typed_exceptions
 //

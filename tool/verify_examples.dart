@@ -39,6 +39,10 @@ Future<void> main() async {
     // one-example-per-rule convention checked by the test suite.
     'match_lib_folder_structure',
     'prefer_correct_test_file_name',
+    // Reports a library under `lib/` with no mirrored test file. The example
+    // package has no test tree at all, so the example suppresses the rule in
+    // its own header and documents the required layout instead.
+    'require_mirror_test',
   };
   final examples = Directory('example/lib').listSync().whereType<File>().where(
     (file) => file.path.endsWith('_example.dart'),

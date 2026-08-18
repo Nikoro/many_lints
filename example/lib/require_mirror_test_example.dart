@@ -1,4 +1,7 @@
 // ignore_for_file: many_lints/avoid_commented_out_code, many_lints/prefer_primary_constructors, many_lints/require_mirror_test
+// The private declarations below are deliberately unreferenced: a file with
+// no public surface is exactly the case the rule exempts.
+// ignore_for_file: unused_element
 
 // require_mirror_test
 //
