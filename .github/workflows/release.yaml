@@ -24,6 +24,9 @@ jobs:
         with:
           node-version: 24
       - uses: oven-sh/setup-bun@v2
+      # Must come after flutter-action: this action performs the OIDC exchange
+      # that authenticates `dart pub publish`, and its Dart must win in PATH.
+      - uses: dart-lang/setup-dart@v1
       - name: Cache pub dependencies
         uses: actions/cache@v6
         with:
