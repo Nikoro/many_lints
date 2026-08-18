@@ -1,0 +1,151 @@
+---
+title: avoid_exit_outside_entrypoint
+description: "Detect exit() outside the program entrypoint, which kills tests"
+sidebar:
+  label: avoid_exit_outside_entrypoint
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.1.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+Warns when `dart:io`'s `exit()` is called outside the program's entrypoint. By
+default only `bin/**` is allowed.
+
+## Why use this rule
+
+`exit()` in domain code destroys testability outright: the test process
+disappears mid-assertion. There is nothing to catch, nothing to assert on, and
+the failure mode is a runner that reports *nothing* rather than a red test —
+which reads as a passing suite far more often than it should.
+
+The split that fixes it is small. Domain code throws a typed error, and one
+thin entrypoint maps errors onto exit codes. That is also what makes the whole
+error taxonomy testable: you assert on the thrown type, and the mapping lives
+in one file you can read top to bottom.
+
+### Why not `banned_usage`
+
+[`banned_usage`](/many_lints/docs/rules/architecture/banned-usage/) matches
+`Type.member` or a bare member name. `exit` is a top-level function from
+`dart:io`, not a member of a type, and a bare `exit` entry would also hit any
+method of your own with that name. More importantly the useful policy here is
+path-based — allowed in the entrypoint, banned everywhere else — which is
+rule-shaped rather than project vocabulary. This rule resolves the element, so
+`Terminal().exit(3)` and a local function named `exit` are never reported.
+
+**See also:** [dart:io exit](https://api.dart.dev/stable/dart-io/exit.html) | [Writing command-line apps](https://dart.dev/tutorials/server/cmdline)
+
+## Don't
+
+```dart
+// lib/src/core/upload.dart
+import 'dart:io';
+
+Future<void> upload(File artifact) async {
+  final response = await client.put(artifact);
+  if (response.statusCode == 403) {
+    stderr.writeln('Permission denied');
+    exit(3);
+  }
+}
+```
+
+A test of `upload()` cannot assert on that 403 branch — reaching it kills the
+test runner.
+
+## Do
+
+```dart
+// lib/src/core/upload.dart
+Future<void> upload(File artifact) async {
+  final response = await client.put(artifact);
+  if (response.statusCode == 403) {
+    throw const AuthFailure('Permission denied');
+  }
+}
+```
+
+```dart
+// bin/tool.dart — the one place that knows about exit codes.
+Future<void> main(List<String> args) async {
+  try {
+    await upload(File(args.first));
+  } on AuthFailure catch (e) {
+    stderr.writeln(e.message);
+    exit(3);
+  }
+}
+```
+
+The branch is now testable:
+
+```dart
+test('a 403 is an auth failure', () {
+  expect(() => upload(artifact), throwsA(isA<AuthFailure>()));
+});
+```
+
+## Turning this rule off
+
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended`, `preset: opinionated` or `preset: pedantic`. Add it to
+`preset: core` with `avoid_exit_outside_entrypoint: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_exit_outside_entrypoint: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_exit_outside_entrypoint:
+      allow_in:
+        - 'bin/**'
+        - 'tool/**'
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_exit_outside_entrypoint:
+    allow_in:
+      - 'bin/**'
+      - 'tool/**'
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `allow_in` | list of globs | `['bin/**']` | Paths where `exit()` is permitted. Replaces the default |
+| `additional_allow_in` | list of globs | `[]` | Adds to whichever list won, without restating the default |
+
+Globs are matched against the path relative to the package root, with `/` as
+the separator on every platform.
+
+## Related rules
+
+- [`avoid_accessing_other_classes_private_members`](/many_lints/docs/rules/code-quality/avoid-accessing-other-classes-private-members/) — Make the underscore mean what everyone reads it as.
+- [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) — Detect and flag commented-out code.
+- [`avoid_complex_conditions`](/many_lints/docs/rules/code-quality/avoid-complex-conditions/) — Keep boolean conditions within an operand budget.
+- [`avoid_deep_nesting`](/many_lints/docs/rules/code-quality/avoid-deep-nesting/) — Keep control flow within a nesting budget.

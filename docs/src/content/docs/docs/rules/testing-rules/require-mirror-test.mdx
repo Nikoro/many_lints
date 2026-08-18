@@ -1,0 +1,164 @@
+---
+title: require_mirror_test
+description: "Detect libraries under lib/ with no matching test file"
+sidebar:
+  label: require_mirror_test
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.1.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Testing Rules</span>
+
+Warns when a library under `lib/` has no matching test file:
+
+```
+lib/src/core/version.dart   ->   test/src/core/version_test.dart
+lib/parser.dart             ->   test/parser_test.dart
+```
+
+This rule is in **no preset**. Whether a project mirrors its test tree is a
+project decision, so it must be enabled by name.
+
+## Why use this rule
+
+### What it proves, and what it does not
+
+It cannot show a test was written first — that needs git history, and is
+gameable. It cannot show the test exercises anything — that is coverage's job,
+and coverage has its own gaming problem.
+
+What it shows is that no production file shipped without somebody creating a
+place for its tests. That is the load-bearing half in practice, because the
+common failure is not a weak test but no test at all. The message says a test
+file is missing, not that the code is untested: the rule cannot tell the
+difference and should not imply it can.
+
+### Why this beats a shell script
+
+A script has to re-derive the mapping from a path string, and gets barrel
+detection wrong unless it reimplements a parser — the usual approximation greps
+for lines that are not blank, not a comment and not an `export`, which is close
+but not the same thing. This rule has the AST already, so "declares no public
+element" and "is a barrel" are exact rather than approximate. It also reports in
+the editor while the file is being written, which is when creating the test
+costs the least.
+
+**See also:** [Testing in Dart](https://dart.dev/guides/testing) | [package:test](https://pub.dev/packages/test)
+
+## Don't
+
+```dart
+// lib/src/core/version.dart — with no test/src/core/version_test.dart
+class Version {
+  const Version(this.major, this.minor);
+
+  final int major;
+  final int minor;
+}
+```
+
+## Do
+
+```dart
+// lib/src/core/version.dart
+class Version {
+  const Version(this.major, this.minor);
+
+  final int major;
+  final int minor;
+}
+```
+
+```dart
+// test/src/core/version_test.dart
+void main() {
+  test('parses a two-part version', () {
+    expect(Version.parse('1.2'), equals(const Version(1, 2)));
+  });
+}
+```
+
+## What it skips without being asked
+
+These need no configuration, and are the exclusions that make the rule usable:
+
+- **Generated files** — `.g.dart`, `.freezed.dart`, `.gr.dart`, `.gen.dart`,
+  `.config.dart`, `.mocks.dart`, `.pb.dart`, and anything under `generated/`.
+- **Barrel files** — detected from the AST rather than the filename, because a
+  barrel is not always named after its directory. A file that exports *and*
+  declares is not a barrel: it has code of its own to test.
+- **Files declaring nothing public** — a file of private helpers for its
+  library has no surface a test could target, and demanding one produces empty
+  test files, which is worse than no rule at all.
+- **Part files** — their declarations belong to the library that declares them.
+
+## Turning this rule off
+
+This rule is in no preset, so it does nothing until you name it:
+
+```yaml
+# many_lints.yaml
+rules:
+  require_mirror_test: true
+```
+
+To turn it back off, set it to `false` or remove the block.
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    require_mirror_test:
+      test_dir: test
+      suffix: _test
+      fallback_anywhere: true
+      exclude:
+        - 'lib/*.dart'
+        - '**/generated/**'
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  require_mirror_test:
+    test_dir: test
+    suffix: _test
+    fallback_anywhere: true
+    exclude:
+      - 'lib/*.dart'
+      - '**/generated/**'
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `test_dir` | string | `test` | The directory the mirrored path is rooted at |
+| `suffix` | string | `_test` | Appended to the file's base name |
+| `fallback_anywhere` | bool | `true` | Accept a file of the right name anywhere under `test_dir` |
+
+`fallback_anywhere` matters more than it looks. Projects reorganise test trees,
+and a rule that fails because a test moved teaches people to switch the rule
+off. Set it to `false` only if the exact mirrored path is itself the
+convention you want enforced.
+
+## Related rules
+
+- [`avoid_misused_test_matchers`](/many_lints/docs/rules/testing-rules/avoid-misused-test-matchers/) — Detect test matchers used with incompatible value types.
+- [`format_test_name`](/many_lints/docs/rules/testing-rules/format-test-name/) — Hold test descriptions to a house pattern.
+- [`prefer_correct_test_file_name`](/many_lints/docs/rules/testing-rules/prefer-correct-test-file-name/) — Name test files so the runner actually runs them.
+- [`prefer_test_matchers`](/many_lints/docs/rules/testing-rules/prefer-test-matchers/) — Prefer using a Matcher instead of a literal value in expect().

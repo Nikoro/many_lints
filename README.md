@@ -80,9 +80,9 @@ Presets are cumulative: moving right only adds rules.
 |--------|------:|-------------------|
 | `none` | 0 | You want to enable every rule manually. This is the default. |
 | `core` | 35 | You want only near-certain bugs and runtime failures. |
-| `recommended` | 91 | You want safe production defaults. Best starting point for most projects. |
-| `opinionated` | 177 | You also want a consistent Many Lints house style. |
-| `pedantic` | 234 | You want strict naming, ordering, structure and complexity limits. |
+| `recommended` | 96 | You want safe production defaults. Best starting point for most projects. |
+| `opinionated` | 183 | You also want a consistent Many Lints house style. |
+| `pedantic` | 240 | You want strict naming, ordering, structure and complexity limits. |
 
 There is no "all" preset: some rules intentionally conflict, and config-only rules such
 as `avoid_banned_imports` cannot have useful defaults. See the
@@ -169,7 +169,7 @@ for shared-config setups.
 
 ## Available Lints
 
-251 lints with 103 quick fixes. All are off by default — enable selected rules by name,
+258 lints with 103 quick fixes. All are off by default — enable selected rules by name,
 use a [preset](#presets), or combine a preset with per-rule overrides. Each rule links to
 its full documentation with examples and fix details.
 
@@ -184,16 +184,16 @@ its full documentation with examples and fix details.
 | [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/#widget-best-practices) | 25 | General widget best practices |
 | [Widget Replacement](https://nikoro.github.io/many_lints/docs/rules/#widget-replacement) | 13 | Simpler widget alternatives |
 | [State Management](https://nikoro.github.io/many_lints/docs/rules/#state-management) | 9 | StatefulWidget and state patterns |
-| [Control Flow](https://nikoro.github.io/many_lints/docs/rules/#control-flow) | 27 | Control flow statements and patterns |
+| [Control Flow](https://nikoro.github.io/many_lints/docs/rules/#control-flow) | 29 | Control flow statements and patterns |
 | [Collection & Type](https://nikoro.github.io/many_lints/docs/rules/#collection-type) | 20 | Collection and type-related checks |
 | [Pattern Matching](https://nikoro.github.io/many_lints/docs/rules/#pattern-matching) | 6 | Dart pattern matching best practices |
 | [Type Annotations](https://nikoro.github.io/many_lints/docs/rules/#type-annotations) | 8 | Type annotation conventions |
 | [Code Organization](https://nikoro.github.io/many_lints/docs/rules/#code-organization) | 17 | Code structure and organization |
 | [Shorthand Patterns](https://nikoro.github.io/many_lints/docs/rules/#shorthand-patterns) | 5 | Dot shorthand syntax patterns |
 | [Hook Rules](https://nikoro.github.io/many_lints/docs/rules/#hook-rules) | 4 | Flutter Hooks conventions |
-| [Testing Rules](https://nikoro.github.io/many_lints/docs/rules/#testing-rules) | 5 | Testing best practices and matchers |
+| [Testing Rules](https://nikoro.github.io/many_lints/docs/rules/#testing-rules) | 8 | Testing best practices and matchers |
 | [Resource Management](https://nikoro.github.io/many_lints/docs/rules/#resource-management) | 5 | Resource cleanup and disposal |
-| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/#code-quality) | 31 | General code quality improvements |
+| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/#code-quality) | 33 | General code quality improvements |
 | [Formatting](https://nikoro.github.io/many_lints/docs/rules/#formatting) | 3 | Literal formatting conventions |
 
 ## Available Assists

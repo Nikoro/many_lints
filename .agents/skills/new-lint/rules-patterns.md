@@ -1296,6 +1296,100 @@ static field gets reported despite being excluded by design.
 assignment analysis, staleness/atomicity checks, use-before-set.
 **Reference:** [require_atomic_async_updates.dart](../../../lib/src/rules/require_atomic_async_updates.dart)
 
+### `NamedCompilationUnitMember` is gone: reading a declaration's name (analyzer 14)
+
+Analyzer 14 removed `NamedCompilationUnitMember`, the supertype that used to
+expose a `name` token for every top-level declaration. There is now **no**
+shared supertype carrying one, and the subtypes split into two shapes:
+
+| Declaration | Name is at |
+|---|---|
+| `ClassDeclaration`, `EnumDeclaration`, `ExtensionTypeDeclaration` | `namePart.typeName` (a `ClassNamePart`) |
+| `MixinDeclaration`, `FunctionDeclaration`, `TypeAlias` | `name` (a `Token`) |
+| `ExtensionDeclaration` | `name` (a **`Token?`** — an unnamed extension is legal) |
+| `TopLevelVariableDeclaration` | no name of its own; walk `variables.variables` |
+
+Writing `Foo(:final name) || Bar(:final name)` across the two groups fails to
+compile twice over — `undefined_getter` on the `namePart` half, then
+`inconsistent_pattern_variable_logical_or` because the binding types differ
+(`Token` vs `Token?`). Match the groups separately:
+
+```dart
+bool isPublic(CompilationUnitMember member) => switch (member) {
+  ClassDeclaration(:final namePart) ||
+  EnumDeclaration(:final namePart) ||
+  ExtensionTypeDeclaration(:final namePart) =>
+    !namePart.typeName.lexeme.startsWith('_'),
+  FunctionDeclaration(:final name) ||
+  MixinDeclaration(:final name) ||
+  TypeAlias(:final name) => !name.lexeme.startsWith('_'),
+  ExtensionDeclaration(:final name) =>
+    name == null || !name.lexeme.startsWith('_'),
+  TopLevelVariableDeclaration(:final variables) =>
+    variables.variables.any((v) => !v.name.lexeme.startsWith('_')),
+  _ => false,
+};
+```
+
+Used by `require_mirror_test` to decide whether a file declares any public
+surface.
+
+### Reading the filesystem from a rule (`Folder`, `File`)
+
+A rule that must check for a *sibling file* — `require_mirror_test` asks
+whether `lib/foo.dart` has a `test/foo_test.dart` — reaches the package root
+through `RuleContext.package?.root`, captured in
+`registerManyLintsProcessors`. `ManyLintsRule` already captures it privately
+for configuration, so a rule needing it for its own logic stores its own copy.
+
+```dart
+Folder? packageRoot;
+
+@override
+void registerManyLintsProcessors(registry, RuleContext context) {
+  packageRoot = context.package?.root;
+  registry.addCompilationUnit(this, _Visitor(this));
+}
+```
+
+Then pair it with `relativePath` (already on `ManyLintsRule`) to build and stat
+the expected path. Use **`getFile` / `getFolder`**, not
+`getChildAssumingFile` / `getChildAssumingFolder` — both are deprecated in
+analyzer 14. `folder.getChildren()` can throw `FileSystemException` for a
+folder that vanished mid-analysis, so wrap a recursive walk in a try/catch and
+degrade to "not found".
+
+### Comments are attached to the *following* token
+
+Comments are not AST nodes. Each hangs off `token.precedingComments`, so the
+only way to see all of them is to walk the token stream from
+`unit.beginToken`, following `comment.next` within each group:
+
+```dart
+Iterable<Token> comments(CompilationUnit node) sync* {
+  Token? token = node.beginToken;
+  while (token != null) {
+    Token? comment = token.precedingComments;
+    while (comment != null) {
+      yield comment;
+      comment = comment.next;
+    }
+    if (token.isEof) break;
+    token = token.next;
+  }
+}
+```
+
+The consequence that costs time: for an **empty block**, the only token after
+an interior comment is the closing brace, so a comment inside `catch (e) { /* x */ }`
+is found at `body.rightBracket.precedingComments` — not on the block and not on
+the left brace. `avoid_empty_catch` relies on exactly this.
+
+Note that the analyzer emits its own `todo` / `fixme` / `hack` *infos* for
+marker comments. A rule test over such a fixture must expect them alongside its
+own lint (`error(diag.todo, offset, length)`), importing
+`package:analyzer/src/diagnostic/diagnostic.dart` as `diag`.
+
 ### Pattern Matching Features
 
 Analyzer 14.1.0 works well with Dart 3 pattern matching:

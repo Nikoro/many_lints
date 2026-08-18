@@ -98,7 +98,7 @@ To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints
 
 ## Related rules
 
+- [`avoid_empty_catch`](/many_lints/docs/rules/control-flow/avoid-empty-catch/) — Detect catch clauses that silently discard the failure.
 - [`avoid_cascade_after_if_null`](/many_lints/docs/rules/control-flow/avoid-cascade-after-if-null/) — Detect cascades after if-null operators without parentheses.
 - [`avoid_collapsible_if`](/many_lints/docs/rules/control-flow/avoid-collapsible-if/) — Merge nested if statements with &amp;&amp;.
 - [`avoid_constant_conditions`](/many_lints/docs/rules/control-flow/avoid-constant-conditions/) — Detect comparisons where both sides are constants.
-- [`avoid_constant_switches`](/many_lints/docs/rules/control-flow/avoid-constant-switches/) — Detect switch statements on constant expressions.

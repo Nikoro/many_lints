@@ -1,0 +1,150 @@
+---
+title: avoid_empty_catch
+description: "Detect catch clauses that silently discard the failure"
+sidebar:
+  label: avoid_empty_catch
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.1.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Control Flow</span>
+
+Warns when a catch clause does nothing with the exception it caught. An empty
+catch converts a failure into silence: the release continues, the upload never
+arrived, and the first sign of trouble is an unreadable stack trace weeks later
+in a part of the system that did nothing wrong.
+
+## Why use this rule
+
+The body has to do something observable — log, rethrow, wrap, or return a
+fallback the caller can see. Anything less is a decision that this failure does
+not matter, made in the one place where nobody will read it.
+
+This is the missing half of
+[`avoid_only_rethrow`](/many_lints/docs/rules/control-flow/avoid-only-rethrow/),
+which flags the opposite shape: a catch that does nothing *but* rethrow.
+
+### How this differs from the SDK's `empty_catches`
+
+Dart ships [`empty_catches`](https://dart.dev/tools/linter-rules/empty_catches),
+which covers the same area but permits the two shapes that cause most of the
+damage:
+
+| Code | `empty_catches` | `avoid_empty_catch` |
+|------|-----------------|---------------------|
+| `catch (e) {}` | reports | reports |
+| `catch (_) {}` | **allows** | reports |
+| `catch (e) { /* ignored */ }` | **allows** | reports by default |
+| `catch (e) { log(e); }` | allows | allows |
+
+Both exemptions are ways of writing "I have decided this failure does not
+matter", and `catch (_) {}` is the more common of the two precisely because the
+SDK rule blesses it. A comment is not an escape hatch either — it tells a
+reader who is already looking at this line, which is not who needs to know.
+
+Set `allow_with_comment: true` to restore the SDK's laxer policy. There is no
+need to enable both rules: this one reports everything `empty_catches` does.
+
+**See also:** [Dart lint: empty_catches](https://dart.dev/tools/linter-rules/empty_catches) | [Error handling](https://dart.dev/language/error-handling)
+
+## Don't
+
+```dart
+void bad() {
+  // The upload failed and nobody will ever know.
+  try {
+    uploadSymbols();
+  } catch (_) {}
+
+  // A comment does not make the failure visible at runtime.
+  try {
+    uploadSymbols();
+  } catch (e) {
+    // Ignored, really.
+  }
+
+  // An `on` clause with an empty body is the same defect, narrowed.
+  try {
+    uploadSymbols();
+  } on FormatException {}
+}
+```
+
+## Do
+
+```dart
+void good() {
+  // Log it.
+  try {
+    uploadSymbols();
+  } on UploadFailure catch (e, s) {
+    log.warning('symbol upload failed', e, s);
+  }
+
+  // Or return a fallback the caller can act on.
+  try {
+    return parseConfig(source);
+  } on FormatException {
+    return Config.defaults;
+  }
+}
+```
+
+## Turning this rule off
+
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended`, `preset: opinionated` or `preset: pedantic`. Add it to
+`preset: core` with `avoid_empty_catch: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_empty_catch: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_empty_catch:
+      allow_with_comment: true
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_empty_catch:
+    allow_with_comment: true
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `allow_with_comment` | bool | `false` | Accept a catch whose body holds a comment, matching the SDK's `empty_catches` policy |
+
+A deliberate ignore is occasionally right. Turning this on makes those cases
+explicit and greppable, at the cost of accepting every accidental one too.
+
+## Related rules
+
+- [`avoid_throw_in_catch_block`](/many_lints/docs/rules/control-flow/avoid-throw-in-catch-block/) — Detect throw expressions inside catch blocks.
+- [`avoid_cascade_after_if_null`](/many_lints/docs/rules/control-flow/avoid-cascade-after-if-null/) — Detect cascades after if-null operators without parentheses.
+- [`avoid_collapsible_if`](/many_lints/docs/rules/control-flow/avoid-collapsible-if/) — Merge nested if statements with &amp;&amp;.
+- [`avoid_constant_conditions`](/many_lints/docs/rules/control-flow/avoid-constant-conditions/) — Detect comparisons where both sides are constants.

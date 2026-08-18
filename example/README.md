@@ -89,11 +89,14 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_duplicate_collection_elements` | Don't repeat the same element in a collection literal. | Yes |
 | `avoid_duplicate_mixins` | Flag a mixin applied twice in one `with` clause. | — |
 | `avoid_either_of_future` | A Future nested in Either or Option escapes the error channel. | — |
+| `avoid_empty_catch` | Detect catch clauses that silently discard the failure. | — |
 | `avoid_empty_setstate` | Don't call setState with an empty callback. | — |
 | `avoid_empty_spread` | Remove spreads of empty collection literals. | Yes |
 | `avoid_equal_expressions` | Both operands of a binary expression should not be identical. | — |
+| `avoid_exit_outside_entrypoint` | Detect exit() outside the program entrypoint, which kills tests. | — |
 | `avoid_expanded_as_spacer` | Use Spacer instead of Expanded with an empty child. | Yes |
 | `avoid_flexible_outside_flex` | Only use Flexible and Expanded as direct children of Row, Column, or Flex. | — |
+| `avoid_focused_tests` | Detect tests focused with solo:, which silences their siblings. | — |
 | `avoid_future_ignore` | Do not silently suppress Future errors with an unexplained ignore call. | — |
 | `avoid_future_of_either` | Future&lt;Either&gt; throws away the composition TaskEither already gives you. | — |
 | `avoid_future_of_option` | Future&lt;Option&gt; throws away the composition TaskOption already gives you. | — |
@@ -143,9 +146,11 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_shrink_wrap_in_lists` | Avoid using shrinkWrap in ListView for better scroll performance. | Yes |
 | `avoid_single_child_in_multi_child_widgets` | Don't use Column, Row, or other multi-child widgets with only one child. | — |
 | `avoid_single_field_destructuring` | Avoid destructuring a single field when direct property access is simpler. | Yes |
+| `avoid_skipped_tests` | Detect tests, groups and libraries switched off in place. | — |
 | `avoid_state_constructors` | Avoid constructors with logic in State classes. | Yes |
 | `avoid_throw_in_catch_block` | Detect throw expressions inside catch blocks. | Yes |
 | `avoid_throw_in_fp_callback` | A throw inside an fpdart callback escapes the error channel the pipeline is built to carry. | — |
+| `avoid_todo_comments` | Detect TODO comments that reference no tracked issue. | — |
 | `avoid_too_many_methods` | Keep a class within a method budget. | — |
 | `avoid_too_many_widgets_per_build` | Keep one build method within a widget budget. | — |
 | `avoid_unassigned_stream_subscriptions` | Ensure stream subscriptions are assigned to a variable for proper cancellation. | — |
@@ -281,6 +286,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `prefer_theme_mode_getters` | Prefer ThemeMode.isDark/isLight/isSystem getters (Flutter 3.44+) over == comparisons. | Yes |
 | `prefer_transform_over_container` | Use Transform instead of Container when only transform is set. | Yes |
 | `prefer_type_over_var` | Prefer an explicit type annotation over 'var'. | Yes |
+| `prefer_typed_exceptions` | Detect throws that give callers nothing to catch selectively. | — |
 | `prefer_typedefs_for_callbacks` | Name a multi-parameter function type with a typedef. | — |
 | `prefer_unit_over_void` | void is not a value, so an fpdart type parameterised with it stops composing. | Yes |
 | `prefer_use_callback` | Use 'useCallback' instead of 'useMemoized' for memoizing functions. | Yes |
@@ -293,6 +299,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `provider_parameters` | Family provider arguments must have stable equality, or the provider is recreated on every rebuild. | — |
 | `record_fields_ordering` | Keep record named fields in a configured order. | — |
 | `require_atomic_async_updates` | Re-read shared state after an await instead of writing back a stale value. | — |
+| `require_mirror_test` | Detect libraries under lib/ with no matching test file. | — |
 | `use_class_prefix` | Require a name prefix for classes deriving from a configured type. | Yes |
 | `use_class_suffix` | Require a name suffix for classes deriving from a configured type. | Yes |
 | `use_closest_build_context` | Use the inner BuildContext from builder callbacks, not the outer one. | Yes |

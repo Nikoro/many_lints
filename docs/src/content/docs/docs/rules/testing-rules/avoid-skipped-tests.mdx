@@ -1,0 +1,126 @@
+---
+title: avoid_skipped_tests
+description: "Detect tests, groups and libraries switched off in place"
+sidebar:
+  label: avoid_skipped_tests
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.1.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Testing Rules</span>
+
+Warns when a test, group or whole library is switched off with `skip:` or
+`@Skip(...)`. A skipped test still counts as a test: the runner reports it and
+exits zero, so the suite keeps growing while the evidence it provides shrinks.
+
+## Why use this rule
+
+Every gate downstream stays green. CI passes. A mirror-test presence check like
+[`require_mirror_test`](/many_lints/docs/rules/testing-rules/require-mirror-test/)
+is satisfied, because the file still exists. A coverage gate sees the file
+counted but never executed. Nothing in the output says the assertion stopped
+running — you have to go looking.
+
+That matters more the less of the code you wrote yourself. Faced with a failing
+assertion, adding `skip: true` is the shortest path to a green run, and it is
+invisible in review unless somebody greps for it. It turns a hard gate into a
+suggestion, silently.
+
+A grep cannot replace this rule: `skip:` in a string literal, or a `skip`
+parameter on somebody's own function, are indistinguishable from the real thing
+in text. The AST tells them apart.
+
+**See also:** [package:test — skipping tests](https://pub.dev/packages/test#skipping-tests) | [eslint-plugin-jest: no-disabled-tests](https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-disabled-tests.md)
+
+## Don't
+
+```dart
+// A skip with no reason.
+test('parses a malformed manifest', () {}, skip: true);
+
+// A reason makes the skip readable, not acceptable — it still proves nothing.
+test('handles a timeout', () {}, skip: 'flaky on CI');
+
+// A whole group.
+group('upload', () {}, skip: true);
+
+// A whole file.
+@Skip('needs a real device')
+library;
+```
+
+## Do
+
+```dart
+// Fix the test.
+test('parses a malformed manifest', () {
+  expect(() => parse(malformed), throwsA(isA<ManifestFailure>()));
+});
+
+// Or delete it. A deleted test is honest about what is covered;
+// a skipped one is not.
+```
+
+`skip: false` is never reported. It is a no-op, and occasionally appears as a
+deliberate placeholder.
+
+## Turning this rule off
+
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended`, `preset: opinionated` or `preset: pedantic`. Add it to
+`preset: core` with `avoid_skipped_tests: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_skipped_tests: false
+```
+
+To keep the rule on but skip certain paths — a quarantine directory, if your
+project wants one — use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_skipped_tests:
+      allow_reason: true
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_skipped_tests:
+    allow_reason: true
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `allow_reason` | bool | `false` | Permit `skip: 'reason string'`, and report only the bare `skip: true` form |
+
+The default is `false` because "a documented skip is better than a deleted
+test" is a real argument that still does not make the test run. A project that
+wants an audit trail can opt into it; leaving it off keeps the default honest.
+
+## Related rules
+
+- [`avoid_focused_tests`](/many_lints/docs/rules/testing-rules/avoid-focused-tests/) — Detect tests focused with solo:, which silences their siblings.
+- [`avoid_misused_test_matchers`](/many_lints/docs/rules/testing-rules/avoid-misused-test-matchers/) — Detect test matchers used with incompatible value types.
+- [`format_test_name`](/many_lints/docs/rules/testing-rules/format-test-name/) — Hold test descriptions to a house pattern.
+- [`prefer_correct_test_file_name`](/many_lints/docs/rules/testing-rules/prefer-correct-test-file-name/) — Name test files so the runner actually runs them.

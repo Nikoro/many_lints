@@ -1,0 +1,148 @@
+---
+title: avoid_todo_comments
+description: "Detect TODO comments that reference no tracked issue"
+sidebar:
+  label: avoid_todo_comments
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.1.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Code Quality</span>
+
+Warns when a comment marks work that was never done — `TODO`, `FIXME`, `HACK`
+or `XXX` — without naming a tracked issue.
+
+## Why use this rule
+
+A `TODO` marks a known missing case that ships anyway. That has always been
+true; what changed is how cheap the marker became. Leaving one is the fastest
+way for code to look finished — it reads as work-in-progress rather than as a
+defect, and nothing downstream fails on it.
+
+The escape hatch that keeps this from being merely annoying is
+`require_reference`, which is **on by default**: a marker naming an issue
+passes, a bare one does not. That turns "I will get to it" into something a
+person who is not you can find, which is the entire difference between a note
+and a plan.
+
+### How this differs from the SDK's `flutter_style_todos`
+
+[`flutter_style_todos`](https://dart.dev/tools/linter-rules/flutter_style_todos)
+enforces the *shape* `TODO(username): message` and has no opinion on whether
+the TODO should exist. It accepts a username, which identifies who has context
+— not whether the work is tracked anywhere. This rule asks the other question,
+and the two compose without conflict: `// TODO(#42): ...` satisfies both.
+
+**See also:** [ESLint: no-warning-comments](https://eslint.org/docs/latest/rules/no-warning-comments) | [Dart lint: flutter_style_todos](https://dart.dev/tools/linter-rules/flutter_style_todos)
+
+## Don't
+
+```dart
+Future<void> upload(File artifact) async {
+  await _client.put(artifact);
+  // TODO: handle the 409 conflict case
+}
+
+// FIXME: this retries forever
+// HACK: works around the broken header
+// XXX: do not ship this
+```
+
+A username alone is not a reference — it says who to ask, not that anyone will:
+
+```dart
+// TODO(dominik): handle the 409 conflict case
+```
+
+## Do
+
+```dart
+Future<void> upload(File artifact) async {
+  await _client.put(artifact);
+  // TODO(#42): handle the 409 conflict case
+}
+
+// Any of these forms satisfy the default reference pattern:
+// TODO: handle this, https://github.com/example/repo/issues/42
+// TODO(PROJ-118): handle the 409 conflict case
+```
+
+Best of all, do the work — but a tracked issue is an honest second place.
+
+## Turning this rule off
+
+This rule is in the **`opinionated`** preset, so it is on with
+`preset: opinionated` or `preset: pedantic`. Add it to a lower preset with
+`avoid_todo_comments: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_todo_comments: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_todo_comments:
+      markers:
+        - TODO
+        - FIXME
+      require_reference: true
+      reference_pattern: '#\d+'
+      exclude:
+        - 'test/**'
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_todo_comments:
+    markers:
+      - TODO
+      - FIXME
+    require_reference: true
+    reference_pattern: '#\d+'
+    exclude:
+      - 'test/**'
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `markers` | list of strings | `['TODO', 'FIXME', 'HACK', 'XXX']` | Which words open a marker comment. Replaces the default |
+| `additional_markers` | list of strings | `[]` | Adds to whichever list won, without restating the default |
+| `require_reference` | bool | `true` | Accept a marker that names a tracked issue; report only bare ones |
+| `reference_pattern` | regex | `#\d+\|https?://\S+\|[A-Z]+-\d+` | What counts as a reference: an issue number, a URL, or a tracker key |
+
+Set `require_reference: false` to report every marker regardless — appropriate
+for a codebase that wants none at all.
+
+A marker is only recognised at the start of the comment body, so prose that
+mentions one ("the TODO above explains why") is not reported, and neither is a
+word that merely begins with one (`TODOS.md`, `HACKATHON`).
+
+## Related rules
+
+- [`avoid_accessing_other_classes_private_members`](/many_lints/docs/rules/code-quality/avoid-accessing-other-classes-private-members/) — Make the underscore mean what everyone reads it as.
+- [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) — Detect and flag commented-out code.
+- [`avoid_complex_conditions`](/many_lints/docs/rules/code-quality/avoid-complex-conditions/) — Keep boolean conditions within an operand budget.
+- [`avoid_deep_nesting`](/many_lints/docs/rules/code-quality/avoid-deep-nesting/) — Keep control flow within a nesting budget.

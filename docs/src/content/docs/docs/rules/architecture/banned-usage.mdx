@@ -132,6 +132,50 @@ The unnamed constructor is spelled `new`, so `Random.new` bans `Random()` while 
 
 A bare `member` name bans it on every type. `deny: ['now']` catches `DateTime.now()` and anything else named `now` — prefer the qualified form unless that is really what you mean.
 
+### Worked example: scope a layer, then carve out one exception
+
+`in:` and `exclude:` do different jobs and compose. `in:` scopes a **banned
+entry** to the paths where the policy applies; `exclude:` (available on every
+rule) skips paths for the **whole rule**. Together they express "banned across
+this layer, except in the one place that legitimately does it" — which is
+otherwise a shell script:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    banned_usage:
+      exclude: ['lib/src/cli/output/**']
+      banned:
+        - deny: ['print', 'Stdout.write', 'Stdout.writeln', 'Stdout.add']
+          in: ['lib/**']
+          message: 'Return the value and let the renderer emit it.'
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  banned_usage:
+    exclude: ['lib/src/cli/output/**']
+    banned:
+      - deny: ['print', 'Stdout.write', 'Stdout.writeln', 'Stdout.add']
+        in: ['lib/**']
+        message: 'Return the value and let the renderer emit it.'
+```
+
+</TabItem>
+</Tabs>
+
+Writing to stdout is now an error everywhere under `lib/` except the one
+renderer that owns the terminal. Domain code returns a value; a single layer
+decides how it is displayed, which is what makes the output testable.
+
 ## Related rules
 
 - [`avoid_banned_annotations`](/many_lints/docs/rules/architecture/avoid-banned-annotations/) — Ban specific annotations, optionally scoped by directory.

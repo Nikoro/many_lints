@@ -110,9 +110,9 @@ of every tier and lists the exact rules each one adds.
 |--------|-------|------------------|
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
 | `core` | 35 | Near-certain bugs only. |
-| `recommended` | 91 | `core` plus likely defects and concrete runtime risks. |
-| `opinionated` | 177 | `recommended` plus this package's own style preferences. |
-| `pedantic` | 234 | `opinionated` plus strict naming, structure, complexity and ordering. |
+| `recommended` | 96 | `core` plus likely defects and concrete runtime risks. |
+| `opinionated` | 183 | `recommended` plus this package's own style preferences. |
+| `pedantic` | 240 | `opinionated` plus strict naming, structure, complexity and ordering. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml`
 includes `core.yaml` — moving up a tier only ever adds rules.
@@ -464,7 +464,7 @@ Both `include` and `message` work on **every** rule, exactly like `exclude`.
 
 ## Per-rule options
 
-Beyond `exclude`, `include` and `message`, **114 rules** accept options that change *what*
+Beyond `exclude`, `include` and `message`, **120 rules** accept options that change *what*
 they report. Those rules carry a <span class="rule-badge rule-badge--config">Configurable</span>
 badge on their page, and every option is documented there with its type and default.
 
@@ -511,6 +511,9 @@ options never changes results until you set one.
 | [`avoid_banned_imports`](/many_lints/docs/rules/architecture/avoid-banned-imports/) | `banned` |
 | [`avoid_banned_names`](/many_lints/docs/rules/architecture/avoid-banned-names/) | `banned` |
 | [`avoid_banned_types`](/many_lints/docs/rules/architecture/avoid-banned-types/) | `banned` |
+| [`avoid_empty_catch`](/many_lints/docs/rules/control-flow/avoid-empty-catch/) | `allow_with_comment` |
+| [`avoid_exit_outside_entrypoint`](/many_lints/docs/rules/code-quality/avoid-exit-outside-entrypoint/) | `allow_in`, `additional_allow_in` |
+| [`avoid_skipped_tests`](/many_lints/docs/rules/testing-rules/avoid-skipped-tests/) | `allow_reason` |
 | [`avoid_throw_in_fp_callback`](/many_lints/docs/rules/fpdart/avoid-throw-in-fp-callback/) | `ignore_unimplemented`, `methods`, `additional_methods` |
 | [`avoid_collection_methods_with_unrelated_types`](/many_lints/docs/rules/collection-type/avoid-collection-methods-with-unrelated-types/) | `strict` |
 | [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) | `min_lines` |
@@ -533,6 +536,7 @@ options never changes results until you set one.
 | [`avoid_removed_fpdart_api`](/many_lints/docs/rules/fpdart/avoid-removed-fpdart-api/) | `additional_removed` |
 | [`avoid_returning_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-returning-widgets/) | `ignored_names`, `ignored_annotations`, `additional_ignored_annotations`, `allow_nullable` |
 | [`avoid_state_constructors`](/many_lints/docs/rules/state-management/avoid-state-constructors/) | `state_base_classes` |
+| [`avoid_todo_comments`](/many_lints/docs/rules/code-quality/avoid-todo-comments/) | `markers`, `additional_markers`, `require_reference`, `reference_pattern` |
 | [`avoid_unassigned_stream_subscriptions`](/many_lints/docs/rules/resource-management/avoid-unassigned-stream-subscriptions/) | `ignored_instances` |
 | [`avoid_unnecessary_setstate`](/many_lints/docs/rules/state-management/avoid-unnecessary-setstate/) | `state_base_classes` |
 | [`avoid_unnecessary_stateful_widgets`](/many_lints/docs/rules/state-management/avoid-unnecessary-stateful-widgets/) | `state_base_classes` |
@@ -582,9 +586,11 @@ options never changes results until you set one.
 | [`prefer_switch_expression`](/many_lints/docs/rules/control-flow/prefer-switch-expression/) | `allow_fallthrough_cases` |
 | [`prefer_task_either_over_try_catch`](/many_lints/docs/rules/fpdart/prefer-task-either-over-try-catch/) | `class_suffixes`, `additional_class_suffixes`, `ignore_private` |
 | [`prefer_switch_with_enums`](/many_lints/docs/rules/pattern-matching/prefer-switch-with-enums/) | `ignore_contains` |
+| [`prefer_typed_exceptions`](/many_lints/docs/rules/control-flow/prefer-typed-exceptions/) | `allow`, `additional_allow` |
 | [`prefer_unit_over_void`](/many_lints/docs/rules/fpdart/prefer-unit-over-void/) | `ignore_overrides` |
 | [`proper_super_calls`](/many_lints/docs/rules/control-flow/proper-super-calls/) | `state_base_classes` |
 | [`require_atomic_async_updates`](/many_lints/docs/rules/async-safety/require-atomic-async-updates/) | `include_local_variables` |
+| [`require_mirror_test`](/many_lints/docs/rules/testing-rules/require-mirror-test/) | `test_dir`, `suffix`, `fallback_anywhere` |
 | [`use_class_prefix`](/many_lints/docs/rules/class-naming/use-class-prefix/) | `entries`, `ignore_private` |
 | [`use_class_suffix`](/many_lints/docs/rules/class-naming/use-class-suffix/) | `entries`, `ignore_private` |
 | [`use_gap`](/many_lints/docs/rules/widget-best-practices/use-gap/) | `min_children` |

@@ -5,7 +5,7 @@ sidebar:
   order: 5
 ---
 
-Many Lints provides 251 opt-in rules. Choose a category below, or use
+Many Lints provides 258 opt-in rules. Choose a category below, or use
 the site search when you already know the API or pattern you want to check.
 
 <a id="architecture"></a>
@@ -94,7 +94,7 @@ the site search when you already know the API or pattern you want to check.
 
 <a id="code-quality"></a>
 
-## Code quality (31)
+## Code quality (33)
 
 - [`avoid_accessing_other_classes_private_members`](/many_lints/docs/rules/code-quality/avoid-accessing-other-classes-private-members/) — Make the underscore mean what everyone reads it as.
 - [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) — Detect and flag commented-out code.
@@ -102,6 +102,7 @@ the site search when you already know the API or pattern you want to check.
 - [`avoid_deep_nesting`](/many_lints/docs/rules/code-quality/avoid-deep-nesting/) — Keep control flow within a nesting budget.
 - [`avoid_default_tostring`](/many_lints/docs/rules/code-quality/avoid-default-tostring/) — Don't interpolate objects that don't override toString.
 - [`avoid_equal_expressions`](/many_lints/docs/rules/code-quality/avoid-equal-expressions/) — Both operands of a binary expression should not be identical.
+- [`avoid_exit_outside_entrypoint`](/many_lints/docs/rules/code-quality/avoid-exit-outside-entrypoint/) — Detect exit() outside the program entrypoint, which kills tests.
 - [`avoid_high_cyclomatic_complexity`](/many_lints/docs/rules/code-quality/avoid-high-cyclomatic-complexity/) — Keep a function within a complexity budget.
 - [`avoid_long_files`](/many_lints/docs/rules/code-quality/avoid-long-files/) — Keep a file within a line budget.
 - [`avoid_long_functions`](/many_lints/docs/rules/code-quality/avoid-long-functions/) — Keep function bodies within a line budget.
@@ -109,6 +110,7 @@ the site search when you already know the API or pattern you want to check.
 - [`avoid_non_null_assertion`](/many_lints/docs/rules/code-quality/avoid-non-null-assertion/) — Don't assert away null with the ! operator.
 - [`avoid_self_compare`](/many_lints/docs/rules/code-quality/avoid-self-compare/) — Flag a value compared against itself with compareTo.
 - [`avoid_shadowed_extension_methods`](/many_lints/docs/rules/code-quality/avoid-shadowed-extension-methods/) — An extension member the extended type already has.
+- [`avoid_todo_comments`](/many_lints/docs/rules/code-quality/avoid-todo-comments/) — Detect TODO comments that reference no tracked issue.
 - [`avoid_too_many_methods`](/many_lints/docs/rules/code-quality/avoid-too-many-methods/) — Keep a class within a method budget.
 - [`avoid_unnecessary_call`](/many_lints/docs/rules/code-quality/avoid-unnecessary-call/) — Invoke a function directly instead of through .call().
 - [`function_always_returns_null`](/many_lints/docs/rules/code-quality/function-always-returns-null/) — A nullable-returning function whose every path returns null.
@@ -155,7 +157,7 @@ the site search when you already know the API or pattern you want to check.
 
 <a id="control-flow"></a>
 
-## Control flow (27)
+## Control flow (29)
 
 - [`avoid_cascade_after_if_null`](/many_lints/docs/rules/control-flow/avoid-cascade-after-if-null/) — Detect cascades after if-null operators without parentheses.
 - [`avoid_collapsible_if`](/many_lints/docs/rules/control-flow/avoid-collapsible-if/) — Merge nested if statements with &amp;&amp;.
@@ -163,6 +165,7 @@ the site search when you already know the API or pattern you want to check.
 - [`avoid_constant_switches`](/many_lints/docs/rules/control-flow/avoid-constant-switches/) — Detect switch statements on constant expressions.
 - [`avoid_contradictory_expressions`](/many_lints/docs/rules/control-flow/avoid-contradictory-expressions/) — Detect logical AND conditions that always evaluate to false.
 - [`avoid_duplicate_cascades`](/many_lints/docs/rules/control-flow/avoid-duplicate-cascades/) — Detect duplicate cascade sections in cascade expressions.
+- [`avoid_empty_catch`](/many_lints/docs/rules/control-flow/avoid-empty-catch/) — Detect catch clauses that silently discard the failure.
 - [`avoid_inverted_boolean_checks`](/many_lints/docs/rules/control-flow/avoid-inverted-boolean-checks/) — Use the opposite operator instead of negating a comparison.
 - [`avoid_negated_conditions`](/many_lints/docs/rules/control-flow/avoid-negated-conditions/) — State the positive case first in an if/else.
 - [`avoid_nested_conditional_expressions`](/many_lints/docs/rules/control-flow/avoid-nested-conditional-expressions/) — Flag a conditional nested inside another.
@@ -183,6 +186,7 @@ the site search when you already know the API or pattern you want to check.
 - [`prefer_returning_condition`](/many_lints/docs/rules/control-flow/prefer-returning-condition/) — Return the condition instead of true/false branches.
 - [`prefer_simpler_patterns_null_check`](/many_lints/docs/rules/control-flow/prefer-simpler-patterns-null-check/) — Suggest simpler null-check patterns in if-case expressions.
 - [`prefer_switch_expression`](/many_lints/docs/rules/control-flow/prefer-switch-expression/) — Suggest converting switch statements to switch expressions.
+- [`prefer_typed_exceptions`](/many_lints/docs/rules/control-flow/prefer-typed-exceptions/) — Detect throws that give callers nothing to catch selectively.
 - [`proper_super_calls`](/many_lints/docs/rules/control-flow/proper-super-calls/) — Enforce correct ordering of super lifecycle calls in State classes.
 
 <a id="formatting"></a>
@@ -290,13 +294,16 @@ the site search when you already know the API or pattern you want to check.
 
 <a id="testing-rules"></a>
 
-## Testing (5)
+## Testing (8)
 
+- [`avoid_focused_tests`](/many_lints/docs/rules/testing-rules/avoid-focused-tests/) — Detect tests focused with solo:, which silences their siblings.
 - [`avoid_misused_test_matchers`](/many_lints/docs/rules/testing-rules/avoid-misused-test-matchers/) — Detect test matchers used with incompatible value types.
+- [`avoid_skipped_tests`](/many_lints/docs/rules/testing-rules/avoid-skipped-tests/) — Detect tests, groups and libraries switched off in place.
 - [`format_test_name`](/many_lints/docs/rules/testing-rules/format-test-name/) — Hold test descriptions to a house pattern.
 - [`prefer_correct_test_file_name`](/many_lints/docs/rules/testing-rules/prefer-correct-test-file-name/) — Name test files so the runner actually runs them.
 - [`prefer_expect_later`](/many_lints/docs/rules/testing-rules/prefer-expect-later/) — Use 'expectLater' instead of 'expect' when testing Futures.
 - [`prefer_test_matchers`](/many_lints/docs/rules/testing-rules/prefer-test-matchers/) — Prefer using a Matcher instead of a literal value in expect().
+- [`require_mirror_test`](/many_lints/docs/rules/testing-rules/require-mirror-test/) — Detect libraries under lib/ with no matching test file.
 
 <a id="type-annotations"></a>
 

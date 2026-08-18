@@ -37,6 +37,7 @@ lib/
     set_state_collection.dart   # SetStateCollector (shared rule + fix visitor)
     async_guard_utils.dart # Async helpers (containsAwait, isMountedGuardWithReturn)
     async_builder_utils.dart # Async builder source-allocation detection
+    test_invocation.dart  # Match test/group/setUp invocations by name (skip/solo rules)
     null_check_pattern_conversion.dart # Shared `if (x != null)` guard analysis for the two null-check assists
     rules/                # Lint rules (AnalysisRule + SimpleAstVisitor pattern)
     fixes/                # Quick fixes (ResolvedCorrectionProducer pattern)
@@ -111,9 +112,9 @@ rules with `preset:` in `many_lints.yaml` (or the top-level `many_lints:` sectio
 |--------|-------|----------|
 | `none` | 0 | Nothing. The default. |
 | `core` | 35 | Near-certain bugs only. |
-| `recommended` | 91 | `core` plus likely defects and concrete runtime risks. |
-| `opinionated` | 177 | `recommended` plus this package's preferred style. |
-| `pedantic` | 234 | `opinionated` plus strict naming, structure, complexity and ordering. |
+| `recommended` | 96 | `core` plus likely defects and concrete runtime risks. |
+| `opinionated` | 183 | `recommended` plus this package's preferred style. |
+| `pedantic` | 240 | `opinionated` plus strict naming, structure, complexity and ordering. |
 
 There is deliberately **no** preset enabling every rule: some rules contradict each other
 (`prefer_container` vs `prefer_padding_over_container`, `use_gap` vs `prefer_spacing`).
@@ -170,3 +171,4 @@ disabled rule a null-listener reporter. Resolution order in
 - `lib/src/set_state_collection.dart` - `SetStateCollector`, shared by the prefer_single_setstate rule and its fix
 - `lib/src/async_guard_utils.dart` - Async helpers (containsAwait, isMountedGuardWithReturn)
 - `lib/src/async_builder_utils.dart` - Detect newly allocated Future/Stream sources passed to async builders
+- `lib/src/test_invocation.dart` - `testInvocationKind()` / `isTestOrGroupInvocation()` / `namedArgument()`, shared by `avoid_skipped_tests` + `avoid_focused_tests`. Matches by **name**, not resolved element: `package:test` is a dev dependency, so an element-keyed rule goes silent in a project that has not resolved it
