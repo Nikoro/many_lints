@@ -183,6 +183,7 @@ import 'package:many_lints/src/rules/avoid_state_constructors.dart';
 import 'package:many_lints/src/rules/avoid_single_field_destructuring.dart';
 import 'package:many_lints/src/rules/avoid_flexible_outside_flex.dart';
 import 'package:many_lints/src/rules/avoid_constant_conditions.dart';
+import 'package:many_lints/src/rules/avoid_dst_unsafe_date_arithmetic.dart';
 import 'package:many_lints/src/rules/avoid_duplicate_cascades.dart';
 import 'package:many_lints/src/rules/avoid_contradictory_expressions.dart';
 import 'package:many_lints/src/rules/avoid_constant_switches.dart';
@@ -321,6 +322,7 @@ import 'package:many_lints/src/fixes/avoid_unnecessary_gesture_detector_fix.dart
 import 'package:many_lints/src/fixes/avoid_unnecessary_overrides_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_setstate_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_stateful_widgets_fix.dart';
+import 'package:many_lints/src/fixes/avoid_dst_unsafe_date_arithmetic_fix.dart';
 import 'package:many_lints/src/fixes/avoid_duplicate_cascades_fix.dart';
 import 'package:many_lints/src/fixes/avoid_duplicate_collection_elements_fix.dart';
 import 'package:many_lints/src/fixes/avoid_unnecessary_continue_fix.dart';
@@ -436,6 +438,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidTodoComments());
     _registerWarningRule(registry, PreferTypedExceptions());
     _registerWarningRule(registry, RequireMirrorTest());
+    _registerWarningRule(registry, AvoidDstUnsafeDateArithmetic());
     _registerWarningRule(registry, AvoidDuplicateCascades());
     _registerWarningRule(registry, AvoidConstantConditions());
     _registerWarningRule(registry, AvoidConstantSwitches());
@@ -762,6 +765,10 @@ class ManyLintsPlugin extends Plugin {
     registry.registerFixForRule(
       AvoidNegatedConditions.code,
       AvoidNegatedConditionsFix.new,
+    );
+    registry.registerFixForRule(
+      AvoidDstUnsafeDateArithmetic.code,
+      AvoidDstUnsafeDateArithmeticFix.new,
     );
     registry.registerFixForRule(
       AvoidDuplicateCascades.code,

@@ -83,6 +83,7 @@ const _recommendedOnlyRules = <String>{
   'avoid_build_context_in_providers',
   'avoid_cascade_after_if_null',
   'avoid_collapsible_if',
+  'avoid_dst_unsafe_date_arithmetic',
   'avoid_duplicate_mixins',
   'avoid_either_of_future',
   'avoid_empty_catch',

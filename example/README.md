@@ -84,6 +84,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_deep_widget_nesting` | Keep a widget tree within a nesting budget. | — |
 | `avoid_default_tostring` | Don't interpolate objects that don't override toString. | — |
 | `avoid_dollar_outside_do_frame` | Calling a Do block's extraction function from a nested callback unwinds through code that cannot handle it. | — |
+| `avoid_dst_unsafe_date_arithmetic` | Calendar day arithmetic on a local DateTime should not go through Duration. | Yes |
 | `avoid_duplicate_bloc_event_handlers` | Register each bloc event type exactly once. | — |
 | `avoid_duplicate_cascades` | Detect duplicate cascade sections in cascade expressions. | Yes |
 | `avoid_duplicate_collection_elements` | Don't repeat the same element in a collection literal. | Yes |

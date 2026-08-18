@@ -14,9 +14,9 @@ when the codebase deliberately makes a different choice.
 |--------|------------:|-----:|--------------|
 | `none` | 0 | 0 | Explicit opt-out or a fully hand-picked rule set. |
 | `core` | 35 | 35 | Near-certain defects with almost no stylistic judgement. |
-| `recommended` | 96 | 61 | The default choice for most production projects. |
-| `opinionated` | 183 | 87 | A coherent Many Lints house style. |
-| `pedantic` | 240 | 57 | Maximum uniformity, explicitness, ordering, and structural limits. |
+| `recommended` | 97 | 62 | The default choice for most production projects. |
+| `opinionated` | 184 | 87 | A coherent Many Lints house style. |
+| `pedantic` | 241 | 57 | Maximum uniformity, explicitness, ordering, and structural limits. |
 
 ## `none`: choose everything yourself
 
@@ -57,12 +57,12 @@ architecture mandates, dependency-specific preferences, and choices on which
 healthy codebases commonly disagree. This is the best starting point for most
 applications and packages.
 
-### Rules added by `recommended` (61)
+### Rules added by `recommended` (62)
 
 - **Async safety:** [`avoid_future_ignore`](/many_lints/docs/rules/async-safety/avoid-future-ignore/), [`avoid_missing_completer_stack_trace`](/many_lints/docs/rules/async-safety/avoid-missing-completer-stack-trace/), [`use_setstate_synchronously`](/many_lints/docs/rules/async-safety/use-setstate-synchronously/)
 - **Bloc / Riverpod:** [`avoid_notifier_constructors`](/many_lints/docs/rules/bloc-riverpod/avoid-notifier-constructors/), [`avoid_passing_build_context_to_blocs`](/many_lints/docs/rules/bloc-riverpod/avoid-passing-build-context-to-blocs/), [`dispose_provided_instances`](/many_lints/docs/rules/bloc-riverpod/dispose-provided-instances/), [`handle_bloc_event_subclasses`](/many_lints/docs/rules/bloc-riverpod/handle-bloc-event-subclasses/)
 - **Code organization:** [`avoid_duplicate_mixins`](/many_lints/docs/rules/code-organization/avoid-duplicate-mixins/), [`avoid_generics_shadowing`](/many_lints/docs/rules/code-organization/avoid-generics-shadowing/)
-- **Code quality:** [`avoid_exit_outside_entrypoint`](/many_lints/docs/rules/code-quality/avoid-exit-outside-entrypoint/), [`function_always_returns_null`](/many_lints/docs/rules/code-quality/function-always-returns-null/), [`function_always_returns_same_value`](/many_lints/docs/rules/code-quality/function-always-returns-same-value/), [`match_getter_setter_field_names`](/many_lints/docs/rules/code-quality/match-getter-setter-field-names/)
+- **Code quality:** [`avoid_dst_unsafe_date_arithmetic`](/many_lints/docs/rules/code-quality/avoid-dst-unsafe-date-arithmetic/), [`avoid_exit_outside_entrypoint`](/many_lints/docs/rules/code-quality/avoid-exit-outside-entrypoint/), [`function_always_returns_null`](/many_lints/docs/rules/code-quality/function-always-returns-null/), [`function_always_returns_same_value`](/many_lints/docs/rules/code-quality/function-always-returns-same-value/), [`match_getter_setter_field_names`](/many_lints/docs/rules/code-quality/match-getter-setter-field-names/)
 - **Collections and types:** [`avoid_accessing_collections_by_constant_index`](/many_lints/docs/rules/collection-type/avoid-accessing-collections-by-constant-index/), [`avoid_empty_spread`](/many_lints/docs/rules/collection-type/avoid-empty-spread/), [`avoid_map_keys_contains`](/many_lints/docs/rules/collection-type/avoid-map-keys-contains/), [`avoid_not_encodable_in_to_json`](/many_lints/docs/rules/collection-type/avoid-not-encodable-in-to-json/), [`prefer_any_or_every`](/many_lints/docs/rules/collection-type/prefer-any-or-every/), [`prefer_enums_by_name`](/many_lints/docs/rules/collection-type/prefer-enums-by-name/), [`prefer_iterable_of`](/many_lints/docs/rules/collection-type/prefer-iterable-of/)
 - **Control flow:** [`avoid_cascade_after_if_null`](/many_lints/docs/rules/control-flow/avoid-cascade-after-if-null/), [`avoid_collapsible_if`](/many_lints/docs/rules/control-flow/avoid-collapsible-if/), [`avoid_empty_catch`](/many_lints/docs/rules/control-flow/avoid-empty-catch/), [`avoid_inverted_boolean_checks`](/many_lints/docs/rules/control-flow/avoid-inverted-boolean-checks/), [`avoid_only_rethrow`](/many_lints/docs/rules/control-flow/avoid-only-rethrow/), [`avoid_throw_in_catch_block`](/many_lints/docs/rules/control-flow/avoid-throw-in-catch-block/), [`no_equal_conditions`](/many_lints/docs/rules/control-flow/no-equal-conditions/), [`no_equal_then_else`](/many_lints/docs/rules/control-flow/no-equal-then-else/), [`prefer_simpler_patterns_null_check`](/many_lints/docs/rules/control-flow/prefer-simpler-patterns-null-check/), [`prefer_typed_exceptions`](/many_lints/docs/rules/control-flow/prefer-typed-exceptions/), [`proper_super_calls`](/many_lints/docs/rules/control-flow/proper-super-calls/)
 - **fpdart:** [`avoid_either_of_future`](/many_lints/docs/rules/fpdart/avoid-either-of-future/), [`avoid_removed_fpdart_api`](/many_lints/docs/rules/fpdart/avoid-removed-fpdart-api/), [`prefer_safe_collection_access`](/many_lints/docs/rules/fpdart/prefer-safe-collection-access/)

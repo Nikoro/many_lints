@@ -353,6 +353,7 @@ const CATEGORIES = {
       'avoid_todo_comments',
       'avoid_exit_outside_entrypoint',
       'avoid_non_null_assertion',
+      'avoid_dst_unsafe_date_arithmetic',
       'avoid_default_tostring',
       'avoid_equal_expressions',
       'avoid_self_compare',

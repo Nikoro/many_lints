@@ -5,7 +5,7 @@ sidebar:
   order: 5
 ---
 
-Many Lints provides 258 opt-in rules. Choose a category below, or use
+Many Lints provides 259 opt-in rules. Choose a category below, or use
 the site search when you already know the API or pattern you want to check.
 
 <a id="architecture"></a>
@@ -94,13 +94,14 @@ the site search when you already know the API or pattern you want to check.
 
 <a id="code-quality"></a>
 
-## Code quality (33)
+## Code quality (34)
 
 - [`avoid_accessing_other_classes_private_members`](/many_lints/docs/rules/code-quality/avoid-accessing-other-classes-private-members/) — Make the underscore mean what everyone reads it as.
 - [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) — Detect and flag commented-out code.
 - [`avoid_complex_conditions`](/many_lints/docs/rules/code-quality/avoid-complex-conditions/) — Keep boolean conditions within an operand budget.
 - [`avoid_deep_nesting`](/many_lints/docs/rules/code-quality/avoid-deep-nesting/) — Keep control flow within a nesting budget.
 - [`avoid_default_tostring`](/many_lints/docs/rules/code-quality/avoid-default-tostring/) — Don't interpolate objects that don't override toString.
+- [`avoid_dst_unsafe_date_arithmetic`](/many_lints/docs/rules/code-quality/avoid-dst-unsafe-date-arithmetic/) — Calendar day arithmetic on a local DateTime should not go through Duration.
 - [`avoid_equal_expressions`](/many_lints/docs/rules/code-quality/avoid-equal-expressions/) — Both operands of a binary expression should not be identical.
 - [`avoid_exit_outside_entrypoint`](/many_lints/docs/rules/code-quality/avoid-exit-outside-entrypoint/) — Detect exit() outside the program entrypoint, which kills tests.
 - [`avoid_high_cyclomatic_complexity`](/many_lints/docs/rules/code-quality/avoid-high-cyclomatic-complexity/) — Keep a function within a complexity budget.

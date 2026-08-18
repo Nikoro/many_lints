@@ -80,9 +80,9 @@ Presets are cumulative: moving right only adds rules.
 |--------|------:|-------------------|
 | `none` | 0 | You want to enable every rule manually. This is the default. |
 | `core` | 35 | You want only near-certain bugs and runtime failures. |
-| `recommended` | 96 | You want safe production defaults. Best starting point for most projects. |
-| `opinionated` | 183 | You also want a consistent Many Lints house style. |
-| `pedantic` | 240 | You want strict naming, ordering, structure and complexity limits. |
+| `recommended` | 97 | You want safe production defaults. Best starting point for most projects. |
+| `opinionated` | 184 | You also want a consistent Many Lints house style. |
+| `pedantic` | 241 | You want strict naming, ordering, structure and complexity limits. |
 
 There is no "all" preset: some rules intentionally conflict, and config-only rules such
 as `avoid_banned_imports` cannot have useful defaults. See the
@@ -169,7 +169,7 @@ for shared-config setups.
 
 ## Available Lints
 
-258 lints with 103 quick fixes. All are off by default — enable selected rules by name,
+259 lints with 104 quick fixes. All are off by default — enable selected rules by name,
 use a [preset](#presets), or combine a preset with per-rule overrides. Each rule links to
 its full documentation with examples and fix details.
 
@@ -193,7 +193,7 @@ its full documentation with examples and fix details.
 | [Hook Rules](https://nikoro.github.io/many_lints/docs/rules/#hook-rules) | 4 | Flutter Hooks conventions |
 | [Testing Rules](https://nikoro.github.io/many_lints/docs/rules/#testing-rules) | 8 | Testing best practices and matchers |
 | [Resource Management](https://nikoro.github.io/many_lints/docs/rules/#resource-management) | 5 | Resource cleanup and disposal |
-| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/#code-quality) | 33 | General code quality improvements |
+| [Code Quality](https://nikoro.github.io/many_lints/docs/rules/#code-quality) | 34 | General code quality improvements |
 | [Formatting](https://nikoro.github.io/many_lints/docs/rules/#formatting) | 3 | Literal formatting conventions |
 
 ## Available Assists
