@@ -61,6 +61,8 @@ const CATEGORIES = {
       'avoid_bare_await_in_do',
       'avoid_dollar_outside_do_frame',
       'avoid_either_of_future',
+      'avoid_future_of_either',
+      'avoid_future_of_option',
       'avoid_get_or_else_swallowing_failure',
       'avoid_nested_do_notation',
       'avoid_throw_in_fp_callback',
