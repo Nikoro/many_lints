@@ -2,56 +2,51 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-19
+
 ### Added
 
-- **Seven quality-gate rules**, for the class of defect that keeps a gate green
-  while removing the evidence behind it.
+- `avoid_skipped_tests` (**recommended**) — reports `skip:` on a test, group or
+  lifecycle hook and `@Skip(...)` on a library. A skipped test still counts as a
+  test, so CI, a mirror-test check and a coverage gate all stay satisfied while
+  the assertion no longer runs. Set `allow_reason: true` to permit the
+  documented form.
+- `avoid_focused_tests` (**recommended**) — reports `solo:`, which silences
+  every sibling in the file. Takes no option, since a focus has no
+  documented-and-tolerable form.
+- `avoid_exit_outside_entrypoint` (**recommended**) — reports `dart:io`'s
+  `exit()` outside `bin/**`, which makes the test process disappear
+  mid-assertion. Resolves the element, so `Terminal().exit(3)` and a local
+  function named `exit` are never reported. Configure with `allow_in`.
+- `prefer_typed_exceptions` (**recommended**) — reports a throw that names no
+  type a caller could catch selectively. A superset of the SDK's
+  `only_throw_errors`, which is satisfied by `Exception(...)`. Extend the
+  allowed set with `additional_allow`.
+- `avoid_empty_catch` (**recommended**) — reports a catch clause that discards
+  the failure. A superset of the SDK's `empty_catches`, which permits
+  `catch (_) {}` and comment-only bodies; `allow_with_comment` restores the SDK
+  policy.
+- `avoid_dst_unsafe_date_arithmetic` (**recommended**) — reports calendar day
+  arithmetic on a local `DateTime` performed through a `Duration`. A calendar
+  day is 23 or 25 hours long across a DST transition, so the result lands on the
+  wrong wall-clock time; the bug never reproduces in UTC, so a CI machine
+  running in UTC stays green. Includes a quick fix that rewrites onto the
+  `DateTime` constructor.
+- `avoid_todo_comments` (**opinionated**) — reports a TODO/FIXME/HACK/XXX
+  marker naming no tracked issue. Orthogonal to `flutter_style_todos`, which
+  enforces the shape but has no opinion on whether the marker should exist.
+  Configure with `markers`, `require_reference` and `reference_pattern`.
+- `require_mirror_test` (**enabled by name only**) — reports a library under
+  `lib/` with no matching test file. Skips generated files, barrels (detected
+  from the AST, not the filename) and files declaring nothing public.
+  Configure with `test_dir`, `suffix` and `fallback_anywhere`.
 
-  Test integrity — `avoid_skipped_tests` reports `skip:` on a test, group or
-  lifecycle hook and `@Skip(...)` on a library. A skipped test still counts as
-  a test: the runner reports it and exits zero, so CI, a mirror-test check and
-  a coverage gate all stay satisfied while the assertion no longer runs. A
-  reason string is reported too, since it makes the skip readable rather than
-  acceptable; set `allow_reason: true` to permit the documented form.
-  `avoid_focused_tests` reports `solo:`, which is the same defect seen from the
-  other side — it silences every *sibling* in the file, and has no
-  documented-and-tolerable form, so it takes no option. Both are in
-  **`recommended`**.
+### Fixed
 
-- `avoid_exit_outside_entrypoint` (**`recommended`**) — `dart:io`'s `exit()`
-  outside `bin/**`. In domain code it destroys testability outright: the test
-  process disappears mid-assertion, so the runner reports nothing rather than a
-  red test. Resolves the element, so `Terminal().exit(3)` and a local function
-  named `exit` are never reported. Configure with `allow_in`.
-
-- `prefer_typed_exceptions` (**`recommended`**) — a throw that names no type a
-  caller could catch selectively: a bare `Exception('...')`, a raw string, or
-  an object implementing neither `Error` nor `Exception`. The SDK's
-  `only_throw_errors` covers the last case but is satisfied by `Exception(...)`,
-  which is where most of the damage is. SDK types specific enough to throw
-  directly are allowed by default; extend with `additional_allow`.
-
-- `avoid_empty_catch` (**`recommended`**) — a catch clause that discards the
-  failure. A deliberate superset of the SDK's `empty_catches`, which permits
-  the two shapes that cause most of the damage: `catch (_) {}` and a body
-  holding only a comment. `allow_with_comment: true` restores the SDK policy.
-  This is the missing half of `avoid_only_rethrow`.
-
-- `avoid_todo_comments` (**`opinionated`**) — a `TODO`, `FIXME`, `HACK` or
-  `XXX` naming no tracked issue. `require_reference` is on by default, so
-  `// TODO(#42):`, a URL, or a tracker key passes and a bare marker does not.
-  Distinct from the SDK's `flutter_style_todos`, which enforces the *shape*
-  `TODO(username):` and has no opinion on whether the marker should exist; the
-  two compose.
-
-- `require_mirror_test` (**no preset**) — a library under `lib/` with no
-  matching test file. It cannot prove a test was written first or that it
-  exercises anything, and the message says a test file is missing rather than
-  that the code is untested. Skips generated files, barrels (detected from the
-  AST, not the filename) and files declaring nothing public, without
-  configuration. Enabled by name only, since mirroring a test tree is a project
-  decision.
-
+- The documentation and example verification tools now pass on a clean
+  checkout: a library-annotation snippet that could not parse as a library, and
+  example files tripping `dead_code`, `unused_element` and cross-rule
+  diagnostics on the behaviour they demonstrate.
 
 ## [1.0.0] - 2026-08-18
 
