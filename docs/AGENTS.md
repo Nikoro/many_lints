@@ -87,7 +87,7 @@ catalog by hand; update the rule page metadata or the catalog script instead.
 
 ### Configurable rules use `.mdx`
 
-The 120 rules that accept options are `.mdx`, not `.md`, because every options snippet is
+The 123 rules that accept options are `.mdx`, not `.md`, because every options snippet is
 shown in both supported locations via Starlight tabs:
 
 ```mdx

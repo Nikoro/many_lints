@@ -38,6 +38,7 @@ lib/
     async_guard_utils.dart # Async helpers (containsAwait, isMountedGuardWithReturn)
     async_builder_utils.dart # Async builder source-allocation detection
     test_invocation.dart  # Match test/group/setUp invocations by name (skip/solo rules)
+    date_time_arithmetic.dart # Read a day-granularity DateTime.add/subtract shift
     null_check_pattern_conversion.dart # Shared `if (x != null)` guard analysis for the two null-check assists
     rules/                # Lint rules (AnalysisRule + SimpleAstVisitor pattern)
     fixes/                # Quick fixes (ResolvedCorrectionProducer pattern)
@@ -172,3 +173,4 @@ disabled rule a null-listener reporter. Resolution order in
 - `lib/src/async_guard_utils.dart` - Async helpers (containsAwait, isMountedGuardWithReturn)
 - `lib/src/async_builder_utils.dart` - Detect newly allocated Future/Stream sources passed to async builders
 - `lib/src/test_invocation.dart` - `testInvocationKind()` / `isTestOrGroupInvocation()` / `namedArgument()`, shared by `avoid_skipped_tests` + `avoid_focused_tests`. Matches by **name**, not resolved element: `package:test` is a dev dependency, so an element-keyed rule goes silent in a project that has not resolved it
+- `lib/src/date_time_arithmetic.dart` - `DateTimeShift.tryRead()`, shared by `avoid_dst_unsafe_date_arithmetic` + its fix so the two cannot disagree about what counts as day-granularity arithmetic. Returns `null` for sub-day durations (`Duration(hours: 2)` is genuinely absolute elapsed time), and carries `literalDays: null` when the amount is not a plain integer literal — the rule still reports, but the fix declines
