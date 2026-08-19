@@ -89,6 +89,13 @@ jobs:
       - name: Dry run publish
         run: dart pub publish --dry-run
       
+      # Re-mint the OIDC credential immediately before uploading. setup-dart
+      # exchanges it once, near the start of the job, and pub.dev rejects it
+      # with "Invalid JWT token: invalid timestamps" if the gates above push
+      # the upload past its validity window.
+      - name: Refresh pub.dev credentials
+        uses: dart-lang/setup-dart@v1
+
       - name: Publish to pub.dev
         run: dart pub publish --force
   
