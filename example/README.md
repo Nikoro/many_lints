@@ -195,9 +195,9 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `list_all_equatable_fields` | Ensure all fields are listed in Equatable props. | Yes |
 | `map_keys_ordering` | Keep map literal keys in a configured order. | — |
 | `match_class_name_pattern` | Match class names against a regular expression. | — |
-| `match_pattern` | Match code against a project-supplied pattern and offer its replacement. | Yes |
 | `match_getter_setter_field_names` | Make a getter and setter pair use the same field. | — |
 | `match_lib_folder_structure` | Keep folders under lib/ in lower_snake_case. | — |
+| `match_pattern` | Match code against a project-supplied pattern and offer its replacement. | Yes |
 | `max_imports` | Keep a file within an import budget. | — |
 | `max_statements` | Keep a function within a statement budget. | — |
 | `member_ordering` | Keep class members in a configured order. | — |
@@ -216,12 +216,12 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `prefer_abstract_final_static_class` | Classes with only static members should be declared as abstract final. | Yes |
 | `prefer_add_all` | Replace an add-only loop with addAll. | Yes |
 | `prefer_align_over_container` | Use Align instead of Container when only alignment is set. | Yes |
+| `prefer_and_then` | andThen says that the previous value is not used. | Yes |
 | `prefer_any_or_every` | Use .any() or .every() instead of .where().isEmpty/.isNotEmpty. | Yes |
 | `prefer_async_callback` | Use 'AsyncCallback' instead of 'Future&lt;void&gt; Function()'. | Yes |
 | `prefer_bloc_extensions` | Use context.read/watch instead of BlocProvider.of or RepositoryProvider.of. | Yes |
 | `prefer_boolean_prefixes` | Name booleans as questions. | — |
 | `prefer_center_over_align` | Use Center instead of Align when alignment is center. | Yes |
-| `prefer_and_then` | andThen says that the previous value is not used. | Yes |
 | `prefer_chain_either` | chainEither lifts a synchronous Either step for you. | — |
 | `prefer_chaining_over_intermediate_run` | Several .run() calls in one body are a chain that was never joined up. | — |
 | `prefer_class_destructuring` | Use Dart 3 class destructuring when accessing multiple properties on the same object. | Yes |

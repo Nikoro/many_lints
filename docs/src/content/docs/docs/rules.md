@@ -5,7 +5,7 @@ sidebar:
   order: 5
 ---
 
-Many Lints provides 259 opt-in rules. Choose a category below, or use
+Many Lints provides 261 opt-in rules. Choose a category below, or use
 the site search when you already know the API or pattern you want to check.
 
 <a id="architecture"></a>
@@ -94,7 +94,7 @@ the site search when you already know the API or pattern you want to check.
 
 <a id="code-quality"></a>
 
-## Code quality (34)
+## Code quality (35)
 
 - [`avoid_accessing_other_classes_private_members`](/many_lints/docs/rules/code-quality/avoid-accessing-other-classes-private-members/) — Make the underscore mean what everyone reads it as.
 - [`avoid_commented_out_code`](/many_lints/docs/rules/code-quality/avoid-commented-out-code/) — Detect and flag commented-out code.
@@ -117,6 +117,7 @@ the site search when you already know the API or pattern you want to check.
 - [`function_always_returns_null`](/many_lints/docs/rules/code-quality/function-always-returns-null/) — A nullable-returning function whose every path returns null.
 - [`function_always_returns_same_value`](/many_lints/docs/rules/code-quality/function-always-returns-same-value/) — Flag a function whose every return yields the same constant.
 - [`match_getter_setter_field_names`](/many_lints/docs/rules/code-quality/match-getter-setter-field-names/) — Make a getter and setter pair use the same field.
+- [`match_pattern`](/many_lints/docs/rules/code-quality/match-pattern/) — Match code against a project-supplied pattern and offer its replacement.
 - [`max_imports`](/many_lints/docs/rules/code-quality/max-imports/) — Keep a file within an import budget.
 - [`max_statements`](/many_lints/docs/rules/code-quality/max-statements/) — Keep a function within a statement budget.
 - [`no_magic_number`](/many_lints/docs/rules/code-quality/no-magic-number/) — Give a number a name when it carries a policy.
@@ -200,7 +201,7 @@ the site search when you already know the API or pattern you want to check.
 
 <a id="fpdart"></a>
 
-## fpdart (22)
+## fpdart (23)
 
 - [`avoid_ad_hoc_left_type`](/many_lints/docs/rules/fpdart/avoid-ad-hoc-left-type/) — A pipeline only composes when every step shares one error type.
 - [`avoid_bare_await_in_do`](/many_lints/docs/rules/fpdart/avoid-bare-await-in-do/) — Awaiting a raw Future inside a Do block escapes the block's tracking.
@@ -215,6 +216,7 @@ the site search when you already know the API or pattern you want to check.
 - [`avoid_unnecessary_option`](/many_lints/docs/rules/fpdart/avoid-unnecessary-option/) — An Option that is wrapped and immediately unwrapped earns nothing.
 - [`avoid_unrun_task`](/many_lints/docs/rules/fpdart/avoid-unrun-task/) — Discarding a lazy fpdart value silently skips the work it describes.
 - [`avoid_untyped_safe_cast`](/many_lints/docs/rules/fpdart/avoid-untyped-safe-cast/) — safeCast without explicit type arguments infers dynamic and always succeeds.
+- [`prefer_and_then`](/many_lints/docs/rules/fpdart/prefer-and-then/) — andThen says that the previous value is not used.
 - [`prefer_chain_either`](/many_lints/docs/rules/fpdart/prefer-chain-either/) — chainEither lifts a synchronous Either step for you.
 - [`prefer_chaining_over_intermediate_run`](/many_lints/docs/rules/fpdart/prefer-chaining-over-intermediate-run/) — Several .run() calls in one body are a chain that was never joined up.
 - [`prefer_do_notation`](/many_lints/docs/rules/fpdart/prefer-do-notation/) — Deeply nested flatMap callbacks read flatter as a Do block.
