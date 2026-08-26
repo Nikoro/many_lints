@@ -86,6 +86,21 @@ class _SetStateAfterAwaitFinder extends RecursiveAstVisitor<void> {
         continue;
       }
 
+      // `if (mounted) setState(...)` guards its then-branch as well as an
+      // early return guards the lines below it, so nothing in that branch is
+      // reported here. The branch is still visited by `super.visitBlock`
+      // below, which re-opens the gap if the branch itself awaits — the else
+      // branch, meanwhile, runs only when the guard failed, so it stays
+      // subject to the check.
+      if (afterAwait && isPositiveMountedGuard(statement)) {
+        final guard = statement as IfStatement;
+        final elseStatement = guard.elseStatement;
+        if (elseStatement != null) _reportSetStateIn(elseStatement);
+
+        _reportGuardedBranch(guard.thenStatement);
+        continue;
+      }
+
       if (afterAwait) _reportSetStateIn(statement);
 
       // Checked after reporting: an `await` on the same line as the setState
@@ -94,6 +109,20 @@ class _SetStateAfterAwaitFinder extends RecursiveAstVisitor<void> {
     }
 
     super.visitBlock(node);
+  }
+
+  /// Reports only the `setState` calls in a `mounted`-guarded branch that a
+  /// *new* await inside that branch has un-guarded again.
+  ///
+  /// The guard proves `mounted` at the moment the branch is entered, and that
+  /// holds until the branch suspends. Anything before the first await is safe;
+  /// anything after it faces a fresh gap the guard says nothing about.
+  ///
+  /// A branch that is a `Block` is left to `visitBlock`, which already applies
+  /// exactly this reasoning starting from a clean slate.
+  void _reportGuardedBranch(Statement branch) {
+    if (branch is Block) return;
+    if (containsAwait(branch)) _reportSetStateIn(branch);
   }
 
   /// Reports a `setState` call anywhere in [statement], excluding one written

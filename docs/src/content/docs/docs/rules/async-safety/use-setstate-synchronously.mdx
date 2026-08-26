@@ -40,6 +40,31 @@ Future<void> load() async {
 }
 ```
 
+The wrapper form is accepted too, for when there is nothing to do after the
+guard and an early return would only be noise:
+
+```dart
+Future<void> load() async {
+  final data = await repository.fetch();
+  if (mounted) setState(() => _data = data);
+}
+```
+
+## Which guards count
+
+A guard is recognised when reaching the `setState` proves `mounted`:
+
+| Guard | Recognised | Why |
+|---|---|---|
+| `if (!mounted) return;` | yes | The lines below run only while mounted. |
+| `if (!mounted \|\| failed) return;` | yes | The return fires whenever `mounted` is false. |
+| `if (mounted) setState(...)` | yes | The branch cannot be entered while unmounted. |
+| `if (mounted && ready) setState(...)` | yes | Entering still requires `mounted`. |
+| `if (!mounted && failed) return;` | no | Falls through while unmounted when `failed` is false. |
+| `if (mounted \|\| ready) setState(...)` | no | The branch also runs while unmounted. |
+| `if (mounted) { await x(); setState(...); }` | no | The await opens a fresh gap inside the guard. |
+| `if (mounted) {} else { setState(...); }` | no | The `else` runs precisely when the guard failed. |
+
 ## Configuration
 
 This rule is on with `preset: recommended` or `preset: opinionated`.

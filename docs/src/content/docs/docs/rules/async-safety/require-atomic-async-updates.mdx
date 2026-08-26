@@ -81,6 +81,15 @@ Statements are scanned in source order within one function body. Only fields of 
 
 A local initialized from a tracked read inherits that read's staleness, which is what catches the common `final current = _value;` shape. A write inside a nested closure is not reported, because that closure runs on its own schedule.
 
+Closures are excluded from the dependency check as well as from the write check. A field named inside the callback a write installs does not make that write depend on the pre-await read, so the ordinary cancel-then-reassign shape is left alone:
+
+```dart
+await Clipboard.setData(data);
+if (!mounted) return;
+_timer?.cancel();
+_timer = Timer(d, () => _timer?.cancel());   // not reported
+```
+
 The rule does not attempt to prove that two calls can actually interleave. A method that is only ever called from one place still reports if it has the shape — the pattern is fragile enough that the annotation cost is preferred over silence.
 
 ## Turning this rule off

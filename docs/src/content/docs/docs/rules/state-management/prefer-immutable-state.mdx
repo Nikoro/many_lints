@@ -36,6 +36,22 @@ Every Flutter `State<T>` subclass is named `...State`, and every one of them is 
 
 Which base classes count as a Flutter `State` follows the shared [`state_base_classes`](/many_lints/docs/configuration/) option, so a project with its own state-like base can point the exclusion at it.
 
+## Classes that already inherit `@immutable` are never reported
+
+Widget names ending in `State` are idiomatic Flutter — `EmptyState`, `ErrorState`, `LoadingState` describe what is rendered, not a state object. Flutter annotates `Widget` `@immutable`, so every `StatelessWidget` already has the annotation this rule asks for, and reporting one would be asking for something it inherits.
+
+The check is on the supertypes, so it is not Flutter-specific: any base class annotated `@immutable` passes it down to its subclasses.
+
+```dart
+// Not reported: StatelessWidget inherits @immutable from Widget.
+class PersonPickerEmptyState extends StatelessWidget {
+  const PersonPickerEmptyState({super.key});
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+```
+
 ## Don't
 
 ```dart

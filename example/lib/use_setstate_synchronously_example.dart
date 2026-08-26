@@ -51,6 +51,24 @@ class _GoodWidgetState extends State<GoodWidget> {
     await Future<void>.delayed(Duration.zero);
   }
 
+  // The wrapper form guards just as well as the early return, and is what you
+  // write when there is nothing to do after the guard.
+  Future<void> wrapperGuard() async {
+    await Future<void>.delayed(Duration.zero);
+    if (mounted) setState(() => _value = 3);
+  }
+
+  // A disjunction still returns whenever `mounted` is false, so reaching the
+  // line below proves the widget is mounted.
+  Future<bool> save() async => true;
+
+  Future<void> disjunctionGuard() async {
+    final succeeded = await save();
+    if (!mounted || succeeded) return;
+
+    setState(() => _value = 4);
+  }
+
   @override
   Widget build(BuildContext context) => Text('$_value');
 }

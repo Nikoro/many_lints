@@ -12,14 +12,26 @@ class PreferImmutableStateTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = PreferImmutableState();
+    // Faithful to the real `package:meta`: `hasImmutable` resolves through the
+    // library *name* and the `Immutable` class, so a lowercase stand-in would
+    // never be recognised as the annotation it imitates.
     newPackage('meta').addFile('lib/meta.dart', r'''
-class immutable {
-  const immutable();
+library meta;
+
+class Immutable {
+  const Immutable([this.reason]);
+  final String? reason;
 }
-const immutable = immutable();
+const Immutable immutable = Immutable();
 ''');
     newPackage('flutter').addFile('lib/widgets.dart', r'''
+import 'package:meta/meta.dart';
+
+@immutable
 abstract class Widget {}
+abstract class StatelessWidget extends Widget {
+  Widget build(Object context);
+}
 abstract class StatefulWidget extends Widget {
   State createState();
 }
@@ -107,6 +119,45 @@ class _LoginPageState extends State<LoginPage> {
   int counter = 0;
 }
 ''');
+  }
+
+  Future<void> test_widgetNamedStateInheritsImmutable() async {
+    // `EmptyState`, `ErrorState`, `LoadingState` are ordinary widget names.
+    // `StatelessWidget` inherits `@immutable` from `Widget`, so the annotation
+    // the rule asks for is already there.
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+class PersonPickerEmptyState extends StatelessWidget {
+  @override
+  Widget build(Object context) => this;
+}
+''');
+  }
+
+  Future<void> test_classInheritingImmutableFromItsOwnBase() async {
+    // Not a Flutter concern: any base annotated `@immutable` passes the
+    // annotation down, so the subclass has nothing left to add.
+    await assertNoDiagnostics(r'''
+import 'package:meta/meta.dart';
+
+@immutable
+class Snapshot {}
+
+class LoginState extends Snapshot {}
+''');
+  }
+
+  Future<void> test_mutableStateClassStillReported() async {
+    // The fix must not weaken the rule for the classes it exists for.
+    await assertDiagnostics(
+      r'''
+class CounterState {
+  int count = 0;
+}
+''',
+      [lint(6, 12)],
+    );
   }
 
   Future<void> test_partiallyAnnotatedHierarchy() async {

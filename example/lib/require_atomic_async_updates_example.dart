@@ -120,3 +120,24 @@ class _WriteBeforeAwait {
     await _repository.save();
   }
 }
+
+// ✅ Edge case: the callback a write installs is not part of the value written
+typedef _Callback = void Function();
+
+class _Timer {
+  const _Timer(this.callback);
+
+  final _Callback callback;
+
+  void cancel() {}
+}
+
+class _CancelThenReassign {
+  _Timer? _timer;
+
+  Future<void> restart() async {
+    await _repository.save();
+    _timer?.cancel();
+    _timer = _Timer(() => _timer?.cancel());
+  }
+}

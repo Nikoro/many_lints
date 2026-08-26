@@ -1,6 +1,9 @@
 // ignore_for_file: unused_field
 // ignore_for_file: many_lints/prefer_returning_shorthands
 // ignore_for_file: many_lints/prefer_overriding_parent_equality
+// The edge case below needs a second widget in this file, alongside the
+// LoginPage that demonstrates the Flutter State exclusion.
+// ignore_for_file: many_lints/prefer_single_widget_per_file
 
 import 'package:flutter/widgets.dart';
 
@@ -54,6 +57,16 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   int _attempts = 0;
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+
+// ✅ Edge case: a widget whose name ends in `State` describes what it renders.
+// `StatelessWidget` inherits `@immutable` from `Widget`, so the annotation the
+// rule asks for is already there.
+class PersonPickerEmptyState extends StatelessWidget {
+  const PersonPickerEmptyState({super.key});
 
   @override
   Widget build(BuildContext context) => const SizedBox.shrink();

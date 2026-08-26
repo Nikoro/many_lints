@@ -1,7 +1,7 @@
 # `use_setstate_synchronously` fires on `if (mounted) setState(...)`
 
 **Reported:** 2026-08-26 (found adopting the plugin in a Flutter app)
-**Status:** OPEN
+**Status:** RESOLVED
 **Affects:** `lib/src/rules/use_setstate_synchronously.dart`
 
 ## What happens
@@ -114,7 +114,7 @@ if (mounted) {} else { setState(() {}); }
 // no_lint — reaching this line proves mounted
 await f();
 if (!mounted || other) return;
-setState(() {});
+setState(() {});   // still REPORTED as of 1.1.0 (see note below)
 
 // lint — a conjunction does not prove it
 await f();
@@ -123,3 +123,57 @@ setState(() {});
 ```
 
 Environment: Dart 3.13.1, Flutter 3.47.1, many_lints 1.1.0.
+
+## Update 2026-08-26 — the disjunction case is still reported
+
+The `if (!mounted || other) return;` shape above is listed as `no_lint`, but
+1.1.0 still reports the `setState` that follows it:
+
+```dart
+Future<void> _delete() async {
+  await allowNextPop();
+  final succeeded = await widget.onDelete!();
+  if (!mounted || succeeded) return;
+  blockPop();
+  setState(() => _deleteFailed = true);   // LINT (false positive)
+}
+```
+
+Reaching the line proves `mounted`: the early return fires whenever `mounted`
+is false, whatever `succeeded` is. Worth a regression test alongside the
+wrapper case, since the two are likely the same missing analysis.
+
+Real call site: `test/core/presentation/unsaved_changes_guard_test.dart:51`.
+
+## Resolved 2026-08-26
+
+Both shapes are handled, in `lib/src/async_guard_utils.dart`:
+
+- `isMountedGuardWithReturn` now reads the condition structurally instead of
+  insisting on a bare `!mounted`. A **disjunction** counts —
+  `if (!mounted || succeeded) return;` returns whenever `mounted` is false,
+  whatever the other operand says. A conjunction still does not.
+- `isPositiveMountedGuard` is new, recognising the wrapper form
+  `if (mounted) …`. A **conjunction** counts there (`mounted && ready` cannot
+  be entered while unmounted); a disjunction does not. The mirror image of the
+  early-return rule, which is what the two forms are.
+
+`use_setstate_synchronously` consumes the wrapper guard and deliberately keeps
+reporting the three overshoot cases: the `else` branch is reported directly,
+and a non-block branch that awaits re-opens the gap. A block branch needs no
+special handling — `visitBlock` already re-scans it from a clean slate, so an
+await inside it puts the later `setState` after a fresh gap on its own.
+
+Parenthesised conditions are unwrapped, so `if (!(mounted)) return;` reads the
+same as the bare form.
+
+The two sibling rules sharing the helper (`use_ref_read_synchronously`,
+`use_ref_and_state_synchronously`) get the widened early-return guard for free;
+their suites still pass unchanged.
+
+Tests: four `no_lint` cases (wrapper, block wrapper, conjunction, disjunction
+early return) and four that must keep reporting (await inside the guard, else
+branch, positive disjunction, negative conjunction).
+
+Verified in the reporting app: all three `ignore` comments removed, analyzer
+clean.

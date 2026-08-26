@@ -88,7 +88,8 @@ class _Visitor extends SimpleAstVisitor<void> {
           // covering the whole name is rejected.
           if (namePattern.hasMatch(className) &&
               !namePattern.matchesWholeValue(className) &&
-              !_isFlutterState(declaration)) {
+              !_isFlutterState(declaration) &&
+              !_inheritsImmutable(declaration)) {
             stateClassNames.add(className);
           }
       }
@@ -141,6 +142,28 @@ class _Visitor extends SimpleAstVisitor<void> {
   bool _isFlutterState(ClassDeclaration declaration) {
     final element = declaration.declaredFragment?.element;
     return element != null && isStateElement(rule, element);
+  }
+
+  /// Whether [declaration] already inherits `@immutable` from a supertype.
+  ///
+  /// Asking for the annotation would be asking for something the class already
+  /// has. `StatelessWidget` is the case that matters: Flutter annotates
+  /// `Widget` `@immutable`, and widget names ending in `State` are idiomatic —
+  /// `EmptyState`, `ErrorState`, `LoadingState` are ordinary component names
+  /// describing what is rendered, not a state object. The name-based strategy
+  /// has no type information of its own, so without this every such widget is
+  /// reported.
+  ///
+  /// Only supertypes are consulted: an annotation on the class itself is what
+  /// [_hasImmutableAnnotation] reports on, and skipping the class here would
+  /// hide it from the subclass widening below.
+  bool _inheritsImmutable(ClassDeclaration declaration) {
+    final element = declaration.declaredFragment?.element;
+    if (element == null) return false;
+
+    return element.allSupertypes.any(
+      (supertype) => supertype.element.metadata.hasImmutable,
+    );
   }
 
   /// The name of the state type this class supplies to `Bloc` or `Cubit`, or

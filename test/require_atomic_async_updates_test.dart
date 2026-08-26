@@ -173,6 +173,55 @@ class Counter {
 ''');
   }
 
+  Future<void> test_callbackNamingTheFieldIsNotADependency() async {
+    // Cancel a timer, then reassign it with a callback that touches the same
+    // field. The callback is not part of the value being written; it runs
+    // later, on its own timeline.
+    await assertNoDiagnostics(r'''
+class Timer {
+  Timer(this.cb);
+  final void Function() cb;
+  void cancel() {}
+}
+
+class Widget {
+  Timer? _t;
+
+  Future<void> copy() async {
+    await Future<void>.delayed(Duration.zero);
+    _t?.cancel();
+    _t = Timer(() {
+      _t?.cancel();
+    });
+  }
+}
+''');
+  }
+
+  Future<void> test_readAndWriteBothAfterTheSameAwait() async {
+    // Nothing suspends between the read and the write, so nothing can
+    // interleave — the shape every `dispose()`-plus-async-handler pair has.
+    await assertNoDiagnostics(r'''
+class Timer {
+  void cancel() {}
+}
+
+class Widget {
+  Timer? _t;
+
+  void dispose() {
+    _t?.cancel();
+  }
+
+  Future<void> restart() async {
+    await Future<void>.delayed(Duration.zero);
+    _t?.cancel();
+    _t = Timer();
+  }
+}
+''');
+  }
+
   Future<void> test_writeBeforeAwaitIsIgnored() async {
     await assertNoDiagnostics(r'''
 class Counter {

@@ -257,7 +257,18 @@ class _StaleWriteFinder extends RecursiveAstVisitor<void> {
   void visitFunctionExpression(FunctionExpression node) {}
 }
 
-/// Detects a reference to any element in a given set.
+/// Detects a reference to any element in a given set, stopping at closures.
+///
+/// A closure is not part of the value being written; it is a callback the
+/// write installs, and it runs later, on its own timeline. Descending into one
+/// makes the rule read `_timer = Timer(d, () { _timer?.cancel(); })` as a
+/// write that depends on the value read before the await, when the callback
+/// merely names the same field. That shape — cancel a timer, then reassign it
+/// with a callback that touches it — is ordinary and correct, so the whole
+/// class of reports was false.
+///
+/// Every other visitor in this rule already stops at [visitFunctionExpression]
+/// for the same reason.
 class _StaleReadFinder extends RecursiveAstVisitor<void> {
   final Set<Element> stale;
   bool found = false;
@@ -272,6 +283,9 @@ class _StaleReadFinder extends RecursiveAstVisitor<void> {
       found = true;
     }
   }
+
+  @override
+  void visitFunctionExpression(FunctionExpression node) {}
 }
 
 /// Maps an element to a single identity shared by every way the same storage
