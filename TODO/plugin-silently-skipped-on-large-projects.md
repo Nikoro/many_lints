@@ -1,8 +1,8 @@
-# `dart analyze` silently skips the plugin on a large project (non-deterministic)
+# `dart analyze` drops plugin diagnostics on a cache hit (directory scope)
 
 **Reported:** 2026-08-26 (found while migrating a Flutter app's bash quality gates to lints)
-**Status:** OPEN
-**Affects:** every rule — this is the plugin attachment path, not one rule's logic
+**Status:** OPEN — diagnosed, upstream (see Diagnosis 2026-08-26)
+**Affects:** every rule — an upstream analysis-server cache bug, not this package
 
 ## What happens
 
@@ -80,3 +80,95 @@ checkout via `path:`), project of 731 files under `lib/` plus 529 test files.
 Run `dart analyze` N times over a fixture large enough to be slow, and assert
 the diagnostic count is identical on every run. A single-run test cannot catch
 this; the bug is precisely that one run disagrees with the next.
+
+## Diagnosis 2026-08-26 — it is the analysis-driver cache, not a timeout
+
+The bug is real and worse than "non-deterministic": it is **fully
+deterministic** once you know the trigger, and it is not size-dependent at all.
+The title and the timeout hypothesis above are both wrong.
+
+### The rule
+
+`dart analyze` invoked with a **directory** (or with no argument) reports plugin
+diagnostics **only on the first run after the analysis-driver cache is
+invalidated**. Every subsequent run serves that file's result from
+`~/.dartServer/.analysis-driver` with the plugin diagnostics **missing**.
+
+Invoked with **explicit file arguments**, the plugin runs every time.
+
+| Invocation | Plugin diagnostics |
+|---|---|
+| `dart analyze path/to/file.dart` | every run |
+| `dart analyze a.dart b.dart` | every run |
+| `dart analyze lib/core/presentation` (a 12-file dir) | first run only |
+| `dart analyze lib` | first run only |
+| `dart analyze` (package root) | first run only |
+
+Scale is irrelevant — a twelve-file directory fails exactly like the 731-file
+`lib/`. What separates the two columns is directory-vs-file argument, not size.
+
+### The control that proves it
+
+One probe file carrying an SDK diagnostic *and* two plugin diagnostics, three
+consecutive no-arg runs, nothing edited between them:
+
+```
+run 1: unused_local_variable   prefer_overriding_parent_equality   prefer_type_over_var
+run 2: unused_local_variable
+run 3: unused_local_variable
+```
+
+The SDK warning survives every run; both plugin diagnostics disappear after the
+first. So the file is still being analyzed and its cache entry is still being
+read — only the plugin's contribution is absent. Plugin output is not part of
+the cached result, and nothing re-runs the plugin on a cache hit.
+
+### What invalidates (and what does not)
+
+Only a change to the **set of files** resets it. Creating the probe file makes
+the next run report it; after that:
+
+- another run, nothing changed → silent
+- `touch` (mtime only) → silent
+- **editing the file's contents** → still silent
+
+That last one is the surprising part and rules out content hashing as the key.
+Deleting `~/.dartServer/.analysis-driver` resets it, which is what made the
+earlier cold-vs-warm timing (93s vs 18s) look like a plugin-attachment race. The
+timing is just cache population; it correlates with the symptom without causing
+it.
+
+### Why the original investigation looked random
+
+Every no-arg run that followed a file edit or a fresh checkout reported
+findings, and every repeat run reported none. Alternating between "1002" and "0"
+on consecutive invocations is exactly what this produces, and it is why the
+2-file fixture looked stable: those runs used explicit file arguments.
+
+### Where this leaves the two asks
+
+Ask 2 from above — *never proceed silently* — still stands and is still the more
+important half. Ask 1 is not "make attachment reliable"; attachment is fine. The
+fix is that a cached analysis result must either carry the plugin diagnostics it
+was computed with, or be invalidated when a plugin is configured.
+
+**This is an upstream bug in the analysis server's result cache, not in this
+package.** Nothing in `many_lints` can fix it: the plugin is never asked. It
+needs a `dart-lang/sdk` issue against the analysis-driver caching path.
+
+### Workaround until it is fixed
+
+A CI gate must not use a bare `dart analyze`. Either pass explicit file
+arguments (`git ls-files '*.dart' | xargs dart analyze`, batched to stay under
+the argument limit), or delete `~/.dartServer/.analysis-driver` before the run.
+Both make the plugin report reliably; the first is much faster.
+
+### Acceptance test
+
+The suggested "run N times, assert identical counts" test above is right, but it
+must invoke `dart analyze` **with a directory argument** and must not touch the
+files between runs. With explicit file arguments it passes today and catches
+nothing.
+
+Environment for this diagnosis: same as above, plus many_lints at HEAD
+(2026-08-26). Verified on a 12-file directory as well as the full project.
