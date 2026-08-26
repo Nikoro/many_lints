@@ -15,8 +15,9 @@ final _pear = Option.of('pear');
 // ❌ Bad: three levels deep, and the trailing brackets have to be counted
 // LINT: use Do notation
 Option<String> badNested() => _banana.flatMap(
-  (banana) =>
-      _apple.flatMap((apple) => _pear.flatMap((pear) => Option.of(pear))),
+  (banana) => _apple.flatMap(
+    (apple) => _pear.flatMap((pear) => Option.of('$banana$apple$pear')),
+  ),
 );
 
 // ✅ Good: flat, and each value is an ordinary local
@@ -36,6 +37,7 @@ Option<int> goodChained() =>
 
 // ✅ Good: two levels read fine, so this is not reported by default.
 // Set `max_flat_map_depth: 2` to flag it too.
-Option<String> goodTwoLevels() =>
-    _banana.flatMap((banana) => _apple.flatMap((apple) => Option.of(apple)));
+Option<String> goodTwoLevels() => _banana.flatMap(
+  (banana) => _apple.flatMap((apple) => Option.of('$banana$apple')),
+);
 // ignore_for_file: many_lints/prefer_returning_shorthands

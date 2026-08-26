@@ -146,6 +146,142 @@ The assist deliberately leaves them alone. `.run()` is usually the *wrong* repai
 
 Functions with no written return type are declined, since the assist edits that type in place. So are generators — a single `TaskEither` cannot stand in for a stream of values.
 
+## Narrow a `flatMap` to what it actually does
+
+`flatMap` is the general chaining tool, so it is what you reach for when you are thinking about chaining rather than about which combinator fits. These five assists put the cursor on a `flatMap` and offer the narrower name.
+
+Four of them are exact: fpdart declares the narrower combinator *as* the `flatMap` they replace, so the conversion changes the name and nothing else. The fifth, `chainFirst`, does not — see its warning below.
+
+Each resolves the receiver's type rather than matching the name `flatMap`, so an unrelated class with a method of that name is never offered an fpdart combinator.
+
+### Convert to `andThen`
+
+Put the cursor on a `flatMap` whose callback never reads its argument. Related rule: [`prefer_and_then`](/many_lints/docs/rules/fpdart/prefer-and-then/).
+
+```dart
+resetter.reset().flatMap((_) => authRepository.logout())
+```
+
+becomes
+
+```dart
+resetter.reset().andThen(authRepository.logout)
+```
+
+A callback body that is a bare no-argument call becomes a tear-off; anything else keeps a thunk (`andThen(() => seed(3))`). The check is by element, not by the `_` spelling — a named-but-unused parameter converts, and a used one is declined, because `andThen` discards the value.
+
+### Convert to `map`
+
+Put the cursor on a `flatMap` whose callback only re-wraps its result.
+
+```dart
+pipeline.flatMap((v) => TaskEither.right(transform(v)))
+```
+
+becomes
+
+```dart
+pipeline.map(transform)
+```
+
+Declined when the body branches: a conditional returning `left` on one side is a genuine `flatMap`, and `map` cannot fail.
+
+### Convert to `filterOrElse`
+
+Put the cursor on a `flatMap` whose body is a `right`/`left` ternary.
+
+```dart
+pipeline.flatMap((v) => v.isValid ? TaskEither.right(v) : TaskEither.left(Invalid()))
+```
+
+becomes
+
+```dart
+pipeline.filterOrElse((v) => v.isValid, (v) => Invalid())
+```
+
+Both branch orders work; when the failure comes first the predicate is negated rather than the assist declining. Declined when the success branch returns anything other than the parameter, since that is a transform rather than a filter.
+
+### Convert to `sequenceListSeq`
+
+Put the cursor on a `reduce` that chains each element onto the accumulator.
+
+```dart
+tasks.reduce((acc, t) => acc.flatMap((_) => t))
+```
+
+becomes
+
+```dart
+TaskEither.sequenceListSeq(tasks)
+```
+
+Always the `Seq` variant. `sequenceList` runs its tasks concurrently, and a `reduce` is inherently sequential — element two cannot start until element one finishes — so the concurrent version would change when effects run and in what order.
+
+The hand-rolled form also needs an empty-list guard, because `reduce` throws on an empty iterable. `sequenceListSeq` does not, and that missing guard is usually the bug the long form ships with.
+
+### Convert to `chainFirst`
+
+Put the cursor on a `flatMap((v) => effect(v).map((_) => v))` — the "run an effect, keep the original value" shape.
+
+```dart
+pipeline.flatMap((user) => audit(user).map((_) => user))
+```
+
+becomes
+
+```dart
+pipeline.chainFirst(audit)
+```
+
+:::caution[This one changes error handling]
+Unlike the other four, this is **not** an exact translation. fpdart declares:
+
+```dart
+TaskEither<L, R> chainFirst<C>(TaskEither<L, C> Function(R b) chain) =>
+    flatMap((b) => chain(b).map((c) => b).orElse((l) => TaskEither.right(b)));
+```
+
+That trailing `orElse` means `chainFirst` **swallows a failure in the effect**: if `audit` fails, the pipeline carries on with the original value. The hand-written long form propagates the failure instead, which is usually what its author intended.
+
+The lightbulb entry names the difference — "Convert to 'chainFirst' (ignores the effect's failure)" — because that is the only place a reader learns error handling is about to change. The two forms look equivalent, which is exactly why the difference is easy to miss on review.
+:::
+
+## Expand to `flatMap`
+
+Put the cursor on an `andThen`, `map` or `filterOrElse` call. The inverse of the three exact narrowings above.
+
+| Before | After |
+|--------|-------|
+| `p.andThen(logout)` | `p.flatMap((_) => logout())` |
+| `p.map(transform)` | `p.flatMap((value) => TaskEither.of(transform(value)))` |
+| `p.filterOrElse((v) => v.isValid, onBad)` | `p.flatMap((v) => v.isValid ? TaskEither.of(v) : TaskEither.left(onBad(v)))` |
+
+The wrapper is read from what the call *returns*, not from the receiver, so a `map` that changes the value type still names the right constructor. `.of` exists on every fpdart type, so the expansion works the same for `Option`, `Either`, `Task`, `IO` and their variants.
+
+A closure whose parameter is already the name being bound has its body inlined, so `map((raw) => transform(raw))` expands to `flatMap((raw) => TaskEither.of(transform(raw)))` rather than to an immediately-invoked lambda. A tear-off gets a `value` parameter, suffixed if that name is already taken in scope.
+
+### Why go backwards at all
+
+Because the narrow forms hide the previous value, and sometimes you need it again. You write `andThen(logout)`, then the next step turns out to depend on what came before — the first edit is always expanding back to a `flatMap` whose callback names that value.
+
+### The two with no inverse
+
+`chainFirst` and `sequenceListSeq` are deliberately not offered.
+
+Expanding `chainFirst` honestly means emitting its `orElse` too:
+
+```dart
+TaskEither<String, String> expanded(TaskEither<String, String> p) =>
+    p.flatMap(
+      (b) => audit(b).map((_) => b).orElse((l) => TaskEither.right(b)),
+    );
+```
+
+which nobody wants to read — while the shorter form people expect silently drops the failure-swallowing, which is the very trap the forward assist warns about. Either output is worse than no assist.
+
+`sequenceListSeq` would expand to a hand-rolled fold needing an empty-list guard that `reduce` does not supply. That is a downgrade in every case.
+
 ## Expand `tryCatch` into `try`/`catch`
 
 Put the cursor on a `tryCatch` constructor. Related rule: [`prefer_task_either_over_try_catch`](/many_lints/docs/rules/fpdart/prefer-task-either-over-try-catch/).

@@ -92,6 +92,7 @@ import 'package:many_lints/src/rules/prefer_correct_setter_parameter_name.dart';
 import 'package:many_lints/src/rules/prefer_correct_identifier_length.dart';
 import 'package:many_lints/src/rules/prefer_prefixed_global_constants.dart';
 import 'package:many_lints/src/rules/match_class_name_pattern.dart';
+import 'package:many_lints/src/rules/match_pattern.dart';
 import 'package:many_lints/src/rules/prefer_correct_type_name.dart';
 import 'package:many_lints/src/rules/prefer_match_file_name.dart';
 import 'package:many_lints/src/rules/prefer_correct_test_file_name.dart';
@@ -262,6 +263,7 @@ import 'package:many_lints/src/rules/use_class_prefix.dart';
 import 'package:many_lints/src/rules/use_class_suffix.dart';
 import 'package:many_lints/src/rules/use_dedicated_media_query_methods.dart';
 import 'package:many_lints/src/rules/use_gap.dart';
+import 'package:many_lints/src/rules/prefer_and_then.dart';
 import 'package:many_lints/src/rules/prefer_chain_either.dart';
 import 'package:many_lints/src/rules/prefer_chaining_over_intermediate_run.dart';
 import 'package:many_lints/src/rules/prefer_class_destructuring.dart';
@@ -290,6 +292,8 @@ import 'package:many_lints/src/rules/never_discard_build_context.dart';
 // Fixes
 import 'package:many_lints/src/fixes/always_remove_listener_fix.dart';
 import 'package:many_lints/src/fixes/dispose_fields_fix.dart';
+import 'package:many_lints/src/fixes/match_pattern_fix.dart';
+import 'package:many_lints/src/fixes/prefer_and_then_fix.dart';
 import 'package:many_lints/src/fixes/dispose_provided_instances_fix.dart';
 import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
 import 'package:many_lints/src/fixes/avoid_border_all_fix.dart';
@@ -395,7 +399,13 @@ import 'package:many_lints/src/assists/convert_do_notation_to_flat_map.dart';
 import 'package:many_lints/src/assists/convert_flat_map_to_do_notation.dart';
 import 'package:many_lints/src/assists/convert_iterable_map_to_collection_for.dart';
 import 'package:many_lints/src/assists/convert_null_check_to_pattern.dart';
+import 'package:many_lints/src/assists/convert_flat_map_to_and_then.dart';
+import 'package:many_lints/src/assists/convert_flat_map_to_chain_first.dart';
+import 'package:many_lints/src/assists/convert_flat_map_to_filter_or_else.dart';
+import 'package:many_lints/src/assists/convert_flat_map_to_map.dart';
+import 'package:many_lints/src/assists/convert_reduce_to_sequence_list.dart';
 import 'package:many_lints/src/assists/convert_to_lazy_fpdart_type.dart';
+import 'package:many_lints/src/assists/expand_to_flat_map.dart';
 import 'package:many_lints/src/assists/convert_try_catch_constructor_to_try_statement.dart';
 import 'package:many_lints/src/assists/inline_null_check_into_pattern.dart';
 
@@ -548,6 +558,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, PreferCorrectIdentifierLength());
     _registerWarningRule(registry, PreferPrefixedGlobalConstants());
     _registerWarningRule(registry, MatchClassNamePattern());
+    _registerWarningRule(registry, MatchPattern());
     _registerWarningRule(registry, PreferCorrectTypeName());
     _registerWarningRule(registry, PreferMatchFileName());
     _registerWarningRule(registry, PreferCorrectTestFileName());
@@ -607,6 +618,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidNonNullAssertion());
     _registerWarningRule(registry, PreferSwitchWithEnums());
     _registerWarningRule(registry, PreferAddAll());
+    _registerWarningRule(registry, PreferAndThen());
     _registerWarningRule(registry, PreferChainEither());
     _registerWarningRule(registry, PreferChainingOverIntermediateRun());
     _registerWarningRule(registry, PreferDoNotation());
@@ -708,6 +720,8 @@ class ManyLintsPlugin extends Plugin {
       AvoidCascadeAfterIfNull.code,
       AvoidCascadeAfterIfNullFix.new,
     );
+    registry.registerFixForRule(MatchPattern.code, MatchPatternFix.new);
+    registry.registerFixForRule(PreferAndThen.code, PreferAndThenFix.new);
     registry.registerFixForRule(DisposeFields.code, DisposeFieldsFix.new);
     registry.registerFixForRule(
       PreferUnitOverVoid.code,
@@ -1077,6 +1091,12 @@ class ManyLintsPlugin extends Plugin {
     registry.registerAssist(ConvertNullCheckToPattern.new);
     registry.registerAssist(InlineNullCheckIntoPattern.new);
     registry.registerAssist(ConvertToLazyFpdartType.new);
+    registry.registerAssist(ConvertFlatMapToAndThen.new);
+    registry.registerAssist(ConvertFlatMapToMap.new);
+    registry.registerAssist(ConvertFlatMapToChainFirst.new);
+    registry.registerAssist(ConvertFlatMapToFilterOrElse.new);
+    registry.registerAssist(ConvertReduceToSequenceList.new);
+    registry.registerAssist(ExpandToFlatMap.new);
     registry.registerAssist(ConvertTryCatchConstructorToTryStatement.new);
   }
 }

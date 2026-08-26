@@ -111,8 +111,8 @@ of every tier and lists the exact rules each one adds.
 | `none` | 0 | Nothing. The default, and the explicit way to opt out. |
 | `core` | 35 | Near-certain bugs only. |
 | `recommended` | 97 | `core` plus likely defects and concrete runtime risks. |
-| `opinionated` | 184 | `recommended` plus this package's own style preferences. |
-| `pedantic` | 241 | `opinionated` plus strict naming, structure, complexity and ordering. |
+| `opinionated` | 185 | `recommended` plus this package's own style preferences. |
+| `pedantic` | 242 | `opinionated` plus strict naming, structure, complexity and ordering. |
 
 Each preset builds on the one above it, the same way `package:lints/recommended.yaml`
 includes `core.yaml` — moving up a tier only ever adds rules.
@@ -464,7 +464,7 @@ Both `include` and `message` work on **every** rule, exactly like `exclude`.
 
 ## Per-rule options
 
-Beyond `exclude`, `include` and `message`, **120 rules** accept options that change *what*
+Beyond `exclude`, `include` and `message`, **122 rules** accept options that change *what*
 they report. Those rules carry a <span class="rule-badge rule-badge--config">Configurable</span>
 badge on their page, and every option is documented there with its type and default.
 
@@ -558,6 +558,7 @@ options never changes results until you set one.
 | [`prefer_do_notation`](/many_lints/docs/rules/fpdart/prefer-do-notation/) | `max_flat_map_depth`, `max_flatmap_depth` (deprecated alias) |
 | [`prefer_class_destructuring`](/many_lints/docs/rules/collection-type/prefer-class-destructuring/) | `min_occurrences`, `ignored_types` |
 | [`prefer_container`](/many_lints/docs/rules/widget-replacement/prefer-container/) | `min_sequence` |
+| [`prefer_overriding_parent_equality`](/many_lints/docs/rules/collection-type/prefer-overriding-parent-equality/) | `ignored_types`, `additional_ignored_types` |
 | [`prefer_from_predicate`](/many_lints/docs/rules/fpdart/prefer-from-predicate/) | `max_condition_complexity` |
 | [`prefer_immutable_state`](/many_lints/docs/rules/state-management/prefer-immutable-state/) | `name_pattern` |
 | [`member_ordering`](/many_lints/docs/rules/code-organization/member-ordering/) | `order` |
@@ -597,6 +598,7 @@ options never changes results until you set one.
 | [`use_sliver_prefix`](/many_lints/docs/rules/widget-best-practices/use-sliver-prefix/) | `state_base_classes` |
 | [`use_setstate_synchronously`](/many_lints/docs/rules/async-safety/use-setstate-synchronously/) | `state_base_classes` |
 | [`match_class_name_pattern`](/many_lints/docs/rules/class-naming/match-class-name-pattern/) | `pattern` |
+| [`match_pattern`](/many_lints/docs/rules/code-quality/match-pattern/) | `patterns` |
 | [`prefer_correct_error_name`](/many_lints/docs/rules/class-naming/prefer-correct-error-name/) | `exception_suffix`, `error_suffix`, `allow_suffixes` |
 | [`prefer_correct_handler_name`](/many_lints/docs/rules/class-naming/prefer-correct-handler-name/) | `prefixes`, `additional_prefixes`, `require_private` |
 | [`prefer_correct_identifier_length`](/many_lints/docs/rules/class-naming/prefer-correct-identifier-length/) | `min_length`, `max_length`, `allow_names`, `additional_allow_names` |

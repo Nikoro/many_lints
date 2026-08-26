@@ -1102,4 +1102,358 @@ void f(List<int> values) {
       expect(result.source, isNot(contains('.map(')));
     });
   });
+
+  group('convert_flat_map_to_and_then', () {
+    Future<String> applyAssist(String content) async {
+      final result = await harness.applyAssist(
+        content,
+        'many_lints.assist.convertFlatMapToAndThen',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+      return result.source;
+    }
+
+    test('emits a tear-off for a bare no-argument call', () async {
+      final source = await applyAssist(r'''
+import 'package:fpdart/fpdart.dart';
+
+class Repo {
+  TaskEither<String, int> logout() => throw '';
+}
+
+TaskEither<String, int> f(TaskEither<String, String> p, Repo repo) =>
+    p.flat^Map((_) => repo.logout());
+''');
+
+      expect(source, contains('p.andThen(repo.logout)'));
+      expect(source, isNot(contains('flatMap')));
+    });
+
+    test('keeps a thunk when the call takes arguments', () async {
+      final source = await applyAssist(r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> seed(int count) => throw '';
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.flat^Map((_) => seed(3));
+''');
+
+      expect(source, contains('p.andThen(() => seed(3))'));
+    });
+
+    test('is not offered when the parameter is used', () async {
+      final offered = await harness.assistIds(
+        r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> parse(String raw) => throw '';
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.flat^Map((value) => parse(value));
+''',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+
+      expect(
+        offered,
+        isNot(contains('many_lints.assist.convertFlatMapToAndThen')),
+      );
+    });
+  });
+
+  group('convert_flat_map_to_map', () {
+    Future<String> applyAssist(String content) async {
+      final result = await harness.applyAssist(
+        content,
+        'many_lints.assist.convertFlatMapToMap',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+      return result.source;
+    }
+
+    test('emits a tear-off when the body is exactly f(v)', () async {
+      final source = await applyAssist(r'''
+import 'package:fpdart/fpdart.dart';
+
+int transform(String value) => throw '';
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.flat^Map((v) => TaskEither.right(transform(v)));
+''');
+
+      expect(source, contains('p.map(transform)'));
+    });
+
+    test('is not offered when the body branches', () async {
+      final offered = await harness.assistIds(
+        r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, String> f(TaskEither<String, String> p) =>
+    p.flat^Map((v) => v.isEmpty ? TaskEither.left('e') : TaskEither.right(v));
+''',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+
+      expect(offered, isNot(contains('many_lints.assist.convertFlatMapToMap')));
+    });
+  });
+
+  group('convert_flat_map_to_filter_or_else', () {
+    Future<String> applyAssist(String content) async {
+      final result = await harness.applyAssist(
+        content,
+        'many_lints.assist.convertFlatMapToFilterOrElse',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+      return result.source;
+    }
+
+    test('converts the keep-on-true form', () async {
+      final source = await applyAssist(r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, String> f(TaskEither<String, String> p) =>
+    p.flat^Map((v) => v.isEmpty ? TaskEither.right(v) : TaskEither.left('bad'));
+''');
+
+      expect(
+        source,
+        contains("p.filterOrElse((v) => v.isEmpty, (v) => 'bad')"),
+      );
+    });
+
+    test('negates the predicate when the branches are reversed', () async {
+      final source = await applyAssist(r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, String> f(TaskEither<String, String> p) =>
+    p.flat^Map((v) => v.isEmpty ? TaskEither.left('bad') : TaskEither.right(v));
+''');
+
+      expect(
+        source,
+        contains("p.filterOrElse((v) => !v.isEmpty, (v) => 'bad')"),
+      );
+    });
+  });
+
+  group('convert_flat_map_to_chain_first', () {
+    test('converts the run-effect-keep-value shape', () async {
+      final result = await harness.applyAssist(
+        r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> audit(String user) => throw '';
+
+TaskEither<String, String> f(TaskEither<String, String> p) =>
+    p.flat^Map((user) => audit(user).map((_) => user));
+''',
+        'many_lints.assist.convertFlatMapToChainFirst',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+
+      expect(result.source, contains('p.chainFirst(audit)'));
+    });
+
+    test('is not offered when the inner map returns something else', () async {
+      final offered = await harness.assistIds(
+        r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> audit(String user) => throw '';
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.flat^Map((user) => audit(user).map((count) => count));
+''',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+
+      expect(
+        offered,
+        isNot(contains('many_lints.assist.convertFlatMapToChainFirst')),
+      );
+    });
+  });
+
+  group('convert_reduce_to_sequence_list', () {
+    test('converts a sequential reduce to sequenceListSeq', () async {
+      final result = await harness.applyAssist(
+        r'''
+import 'package:fpdart/fpdart.dart';
+
+extension <E> on Iterable<E> {
+  E reduce(E Function(E value, E element) combine) => throw '';
+}
+
+TaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>
+    tasks.reduce^((acc, t) => acc.flatMap((_) => t));
+''',
+        'many_lints.assist.convertReduceToSequenceList',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+
+      // Always the Seq variant: the reduce is inherently sequential.
+      expect(result.source, contains('TaskEither.sequenceListSeq(tasks)'));
+      expect(result.source, isNot(contains('sequenceList(')));
+    });
+
+    test('is not offered for an unrelated reduce', () async {
+      final offered = await harness.assistIds(r'''
+extension <E> on Iterable<E> {
+  E reduce(E Function(E value, E element) combine) => throw '';
+}
+
+int f(List<int> values) => values.re^duce((a, b) => a + b);
+''');
+
+      expect(
+        offered,
+        isNot(contains('many_lints.assist.convertReduceToSequenceList')),
+      );
+    });
+  });
+
+  group('expand_to_flat_map', () {
+    Future<String> applyAssist(String content) async {
+      final result = await harness.applyAssist(
+        content,
+        'many_lints.assist.expandToFlatMap',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+      return result.source;
+    }
+
+    test('expands a tear-off andThen', () async {
+      final source = await applyAssist(r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> logout() => throw UnimplementedError();
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.and^Then(logout);
+''');
+
+      expect(source, contains('p.flatMap((_) => logout())'));
+    });
+
+    test('inlines the body of a thunk andThen', () async {
+      final source = await applyAssist(r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> seed(int count) => throw UnimplementedError();
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.and^Then(() => seed(3));
+''');
+
+      expect(source, contains('p.flatMap((_) => seed(3))'));
+    });
+
+    test('expands map with the wrapper the call returns', () async {
+      final source = await applyAssist(r'''
+import 'package:fpdart/fpdart.dart';
+
+int transform(String raw) => throw UnimplementedError();
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.m^ap(transform);
+''');
+
+      expect(
+        source,
+        contains('p.flatMap((value) => TaskEither.of(transform(value)))'),
+      );
+    });
+
+    test('keeps the closure parameter name when expanding map', () async {
+      final source = await applyAssist(r'''
+import 'package:fpdart/fpdart.dart';
+
+int transform(String raw) => throw UnimplementedError();
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.m^ap((raw) => transform(raw));
+''');
+
+      expect(
+        source,
+        contains('p.flatMap((raw) => TaskEither.of(transform(raw)))'),
+      );
+    });
+
+    test('expands filterOrElse into the ternary it is defined as', () async {
+      final source = await applyAssist(r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, String> f(TaskEither<String, String> p) =>
+    p.filterOr^Else((v) => v.isEmpty, (v) => 'bad');
+''');
+
+      expect(
+        source,
+        contains(
+          "p.flatMap((v) => v.isEmpty "
+          "? TaskEither.of(v) "
+          ": TaskEither.left('bad'))",
+        ),
+      );
+    });
+
+    test('round-trips the andThen narrowing assist', () async {
+      // The two directions must agree, the way the Do-notation pair does.
+      final narrowed = await harness.applyAssist(
+        r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> logout() => throw UnimplementedError();
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.flat^Map((_) => logout());
+''',
+        'many_lints.assist.convertFlatMapToAndThen',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+
+      expect(narrowed.source, contains('p.andThen(logout)'));
+
+      final expanded = await applyAssist(r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> logout() => throw UnimplementedError();
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.and^Then(logout);
+''');
+
+      expect(expanded, contains('p.flatMap((_) => logout())'));
+    });
+
+    test('is not offered for chainFirst', () async {
+      // Expanding it honestly needs the orElse, and the short form silently
+      // drops the failure-swallowing. Neither output is worth offering.
+      final offered = await harness.assistIds(
+        r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> audit(String user) => throw UnimplementedError();
+
+TaskEither<String, String> f(TaskEither<String, String> p) =>
+    p.chainFir^st(audit);
+''',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+
+      expect(offered, isNot(contains('many_lints.assist.expandToFlatMap')));
+    });
+
+    test('is not offered for a non-fpdart map', () async {
+      final offered = await harness.assistIds(r'''
+List<int> f(List<String> values) => values.m^ap(int.parse).toList();
+''');
+
+      expect(offered, isNot(contains('many_lints.assist.expandToFlatMap')));
+    });
+  });
 }

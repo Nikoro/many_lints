@@ -1,6 +1,7 @@
 import 'package:test/test.dart';
 
 import 'fix_harness.dart';
+import 'fpdart_stub.dart';
 
 /// End-to-end tests for the text these quick fixes actually produce.
 ///
@@ -15,6 +16,121 @@ void main() {
 
   tearDown(() async {
     await harness.tearDown();
+  });
+
+  group('prefer_and_then', () {
+    test('rewrites a bare call to a tear-off', () async {
+      final fixed = await harness.applyFix(
+        r'''
+import 'package:fpdart/fpdart.dart';
+
+class Repo {
+  TaskEither<String, int> logout() => throw UnimplementedError();
+}
+
+TaskEither<String, int> f(TaskEither<String, String> p, Repo repo) =>
+    p.flatMap((_) => repo.logout());
+''',
+        'prefer_and_then',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+
+      expect(fixed, contains('p.andThen(repo.logout)'));
+      expect(fixed, isNot(contains('flatMap')));
+    });
+
+    test('keeps a thunk when the call takes arguments', () async {
+      final fixed = await harness.applyFix(
+        r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> seed(int count) => throw UnimplementedError();
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.flatMap((_) => seed(3));
+''',
+        'prefer_and_then',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+
+      expect(fixed, contains('p.andThen(() => seed(3))'));
+    });
+  });
+
+  group('match_pattern', () {
+    const unawaitedConfig = '''
+rules:
+  match_pattern:
+    patterns:
+      - find: '^unawaited\\((.+)\\)\$'
+        replace: '\$1.unawaited()'
+        message: 'Prefer the trailing form.'
+''';
+
+    test('applies the configured replacement', () async {
+      final fixed = await harness.applyFix(
+        r'''
+void unawaited(Object? f) {}
+
+void run() {
+  unawaited(refresh());
+}
+
+Object? refresh() => null;
+''',
+        'match_pattern',
+        manyLintsConfig: unawaitedConfig,
+      );
+
+      expect(fixed, contains('refresh().unawaited();'));
+      expect(fixed, isNot(contains('unawaited(refresh())')));
+    });
+
+    test('offers nothing when the entry has no replace', () async {
+      const reportOnly = '''
+rules:
+  match_pattern:
+    patterns:
+      - find: '^unawaited\\((.+)\\)\$'
+        message: 'Report only.'
+''';
+
+      // The diagnostic still stands; nothing is offered to rewrite it.
+      await harness.expectNoFix(
+        r'''
+void unawaited(Object? f) {}
+
+void run() {
+  unawaited(1);
+}
+''',
+        'match_pattern',
+        manyLintsConfig: reportOnly,
+      );
+    });
+
+    test('declines a replacement that would not parse', () async {
+      const brokenTemplate = '''
+rules:
+  match_pattern:
+    patterns:
+      - find: '^unawaited\\((.+)\\)\$'
+        replace: '\$1.unawaited((('
+''';
+
+      // A wrong pattern must not turn working code into a syntax error.
+      await harness.expectNoFix(
+        r'''
+void unawaited(Object? f) {}
+
+void run() {
+  unawaited(1);
+}
+''',
+        'match_pattern',
+        manyLintsConfig: brokenTemplate,
+      );
+    });
   });
 
   group('prefer_add_all', () {

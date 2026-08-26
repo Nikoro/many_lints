@@ -114,8 +114,8 @@ rules with `preset:` in `many_lints.yaml` (or the top-level `many_lints:` sectio
 | `none` | 0 | Nothing. The default. |
 | `core` | 35 | Near-certain bugs only. |
 | `recommended` | 97 | `core` plus likely defects and concrete runtime risks. |
-| `opinionated` | 184 | `recommended` plus this package's preferred style. |
-| `pedantic` | 241 | `opinionated` plus strict naming, structure, complexity and ordering. |
+| `opinionated` | 185 | `recommended` plus this package's preferred style. |
+| `pedantic` | 242 | `opinionated` plus strict naming, structure, complexity and ordering. |
 
 There is deliberately **no** preset enabling every rule: some rules contradict each other
 (`prefer_container` vs `prefer_padding_over_container`, `use_gap` vs `prefer_spacing`).

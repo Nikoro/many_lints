@@ -2,6 +2,88 @@
 
 ## [Unreleased]
 
+### Added
+
+- Five assists narrowing a `flatMap` to the combinator that says what it does,
+  offered on the `flatMap` under the cursor. Four are exact — fpdart declares
+  the narrower combinator *as* the `flatMap` they replace:
+  **`andThen`** (callback ignores its argument), **`map`** (callback only
+  re-wraps), **`filterOrElse`** (a `right`/`left` ternary, negating the
+  predicate when the branches are reversed) and **`sequenceListSeq`** (a
+  `reduce` chaining tasks onto an accumulator; always the `Seq` variant, since
+  the fold is sequential and `sequenceList` is concurrent). The fifth,
+  **`chainFirst`**, is not exact: fpdart's version swallows the effect's
+  failure where the hand-written form propagates it, so the lightbulb names the
+  difference rather than hiding it. Each resolves the receiver's type, so an
+  unrelated class with a `flatMap` is never offered an fpdart combinator.
+- An **`Expand to 'flatMap'`** assist, the inverse of the three exact
+  narrowings: `andThen`, `map` and `filterOrElse` expand back into the
+  `flatMap` each is defined as, for when the next step needs the value the
+  narrow form hides. The wrapper is read from what the call returns, so a `map`
+  that changes the value type still names the right constructor, and `.of`
+  exists on every fpdart type. `chainFirst` and `sequenceListSeq` are
+  deliberately not offered: expanding the first honestly needs its `orElse`
+  (and the short form people expect silently drops the failure-swallowing),
+  and the second would produce a hand-rolled fold needing an empty-list guard.
+- `prefer_and_then` (**opinionated**) — reports `flatMap` whose callback never
+  reads the value it is handed, which is what `andThen` expresses. Not a
+  behaviour change: `andThen` is declared as exactly `flatMap((_) => then())`.
+  The check is by element rather than by the `_` spelling, so a named-but-unused
+  parameter reports and a used one does not. Ships with a fix.
+
+- `match_pattern` (**no preset**, config-only) — reports code matching a
+  pattern the project supplies, and offers the project's own replacement as a
+  quick fix. Conventions like "use our `Clock` seam, not `DateTime.now()`" or
+  "use our trailing `.unawaited()`" live in a pre-commit `grep` today, with no
+  fix, no IDE integration and no `// ignore:` support; this gives them the
+  ergonomics of a built-in lint. The pattern matches the source text of one AST
+  node — `methodInvocation` or `propertyAccess` — so it cannot run past the
+  expression it was written for. `replace:` is optional and omitting it reports
+  only; a replacement is offered as a fix only when the result parses, and is
+  `singleLocation` so `dart fix --apply` cannot sweep a hand-written regex
+  across a project.
+
+- `prefer_overriding_parent_equality` gains `ignored_types`, defaulting to
+  `[Widget, Mock, Fake]`. A widget's identity is its `runtimeType` and `key` — that is what
+  `Widget ==` compares and what element reuse depends on — so the override this
+  rule asked for is one no widget should have. Matching is by supertype, so a
+  project's own widget bases are covered without naming each one. Use
+  `additional_ignored_types` to extend the default set, or `ignored_types` to
+  replace it. Previously the only way out was a path glob over the whole
+  presentation layer, standing in for a fact about types.
+
+  `Mock` and `Fake` are exempt for the same reason: a mock's identity is the
+  instance, which is what `verify()` matches on, and a `Fake` implements an
+  interface it holds no data for. Excluding `test/**` instead would be strictly
+  weaker — it also drops a real equality bug in a test helper that is neither.
+  Each default is pinned to its declaring package (`flutter`, `mocktail` /
+  `mockito`, `test_api`), so a project class named `Mock` or `Fake` — ordinary
+  English words — cannot silently switch the rule off for its subtree.
+
+### Fixed
+
+- `use_setstate_synchronously` no longer reports two correctly guarded shapes.
+  `if (mounted) setState(...)` — the wrapper form, written when there is
+  nothing to do after the guard so an early return would be noise — is now
+  recognised alongside `if (!mounted) return;`. A disjunction in the
+  early-return form (`if (!mounted || failed) return;`) is recognised too: the
+  return fires whenever `mounted` is false, so reaching the line below proves
+  it. The overshoot cases still report — an `else` branch, an `await` inside
+  the guard, `if (mounted || other)`, and `if (!mounted && other) return;`.
+  `use_ref_read_synchronously` and `use_ref_and_state_synchronously` share the
+  widened early-return guard.
+- `prefer_immutable_state` no longer reports classes that already inherit
+  `@immutable`. Widget names ending in `State` are idiomatic Flutter —
+  `EmptyState`, `ErrorState`, `LoadingState` describe what is rendered — and
+  `StatelessWidget` inherits the annotation from `Widget`, so the rule was
+  asking for something the class already had. Any project base class annotated
+  `@immutable` passes it down the same way.
+- `require_atomic_async_updates` no longer treats a field named inside the
+  callback being installed as a dependency on the pre-await read. The shape
+  `_timer?.cancel(); _timer = Timer(d, () { _timer?.cancel(); });` is ordinary
+  and correct: the callback runs later, on its own timeline, and is not part of
+  the value being written.
+
 ## [1.1.0] - 2026-08-19
 
 ### Added

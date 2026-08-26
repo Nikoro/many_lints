@@ -1,7 +1,7 @@
 # Assists for the narrower fpdart combinators
 
 **Proposed:** 2026-08-26 (from adopting the plugin in a Flutter app and refactoring its fpdart pipelines)
-**Status:** OPEN — proposal, nothing implemented
+**Status:** IMPLEMENTED 2026-08-26 — all five assists plus `prefer_and_then`
 **Affects:** `lib/src/assists/`, and one optional rule
 
 ## The gap
@@ -172,3 +172,69 @@ repeated across unrelated features, which is exactly what an assist is for.
   must not be offered these.
 - `AssistKind.message` supports `{0}`; name the concrete combinator in the
   lightbulb ("Convert to 'andThen'") rather than a generic phrase.
+
+## Implemented 2026-08-26 — all five assists plus `prefer_and_then`
+
+- `lib/src/fpdart_chain_call.dart` — `readFpdartFlatMap()`, `parameterIsUnused()`
+  and `andThenArgumentFor()`, so the five assists, the rule and the fix ask the
+  same three questions once instead of each growing a copy that can drift.
+- `lib/src/assists/convert_flat_map_to_and_then.dart`
+- `lib/src/assists/convert_flat_map_to_map.dart`
+- `lib/src/assists/convert_flat_map_to_filter_or_else.dart`
+- `lib/src/assists/convert_reduce_to_sequence_list.dart`
+- `lib/src/assists/convert_flat_map_to_chain_first.dart`
+- `lib/src/rules/prefer_and_then.dart` + `lib/src/fixes/prefer_and_then_fix.dart`,
+  in `opinionated` alongside `prefer_chain_either`.
+
+### Every claim in this file was verified against fpdart 1.2.0
+
+Rather than trusted from the proposal. All four "exact" conversions are exact:
+
+```dart
+andThen(then)        => flatMap((_) => then());
+filterOrElse(f, on)  => flatMap((r) => f(r) ? TaskEither.of(r) : TaskEither.left(on(r)));
+chainFirst(chain)    => flatMap((b) => chain(b).map((c) => b).orElse((l) => TaskEither.right(b)));
+```
+
+The `chainFirst` warning in this file is **correct** — that trailing `orElse`
+is really there, and it really does swallow the effect's failure.
+
+### Open question resolved: `chainFirst` ships, with the difference in the label
+
+The assist is offered, but its lightbulb reads **"Convert to 'chainFirst'
+(ignores the effect's failure)"** rather than a generic "convert to", and its
+priority sits one below the exact conversions so it never outranks them. The
+reasoning: the label is the only place a reader learns error handling is about
+to change, and the two forms look equivalent — which is exactly why the
+difference is easy to miss on review. Documented with the source of
+`chainFirst` in a `:::caution` block on the assists page.
+
+### The optional rule ships too
+
+`prefer_and_then`, limited to the `flatMap((_) => …)` case as proposed, with a
+fix. The parameter check is **by element, not by the `_` spelling**: a
+named-but-unused parameter is the same situation and reports, while a used one
+is declined whatever it is called.
+
+### Verified against the reporting project
+
+`prefer_and_then` is live there (confirmed by probe on a real
+`TaskEither<Failure, _>` pipeline) and reports **zero** findings across the
+app's 13 `flatMap` call sites — every one of them uses its parameter, so all
+thirteen are correctly declined. The five `flatMap((_) => …)` hits this file
+counted were evidently written before the migration and no longer exist in the
+tree; the shape `flatMap((_)` appears nowhere in `lib/` today.
+
+### One gotcha for the next assist that touches collections
+
+The test SDK's minimal `Iterable` declares **no `reduce`**, so a fixture using
+it does not resolve and a type-based assist declines for the wrong reason —
+with `Got: []` from the harness, which looks like a registration failure. The
+`sequenceListSeq` fixtures declare a local `extension on Iterable<E>` supplying
+`reduce`. `test/avoid_unsafe_collection_methods_test.dart` hit the same wall
+and worked around it differently (asserting the `undefinedMethod` error),
+because that rule matches by name.
+
+Tests: 10 end-to-end assist tests in `test/assist_output/assists_test.dart`
+(each assist's positive shape plus a declined one), 5 rule tests, and 2 fix
+output tests.

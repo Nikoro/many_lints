@@ -252,6 +252,73 @@ class FixHarness with ResourceProviderMixin {
   /// Writes the analysed package: options, config, dependencies and the file
   /// under test.
   ///
+  /// Asserts that [ruleName] reports on [content] but offers **no** fix.
+  ///
+  /// The mirror of [applyFix], for a rule whose fix is deliberately withheld:
+  /// `match_pattern` offers nothing when an entry has no `replace:`, and drops
+  /// a replacement whose result would not parse. Both are guard rails, and a
+  /// guard rail nothing asserts on is one nobody notices breaking.
+  ///
+  /// Still requires the diagnostic, so this cannot pass by the rule having
+  /// gone silent — that would make it a much weaker test than it looks.
+  Future<void> expectNoFix(
+    String content,
+    String ruleName, {
+    Map<String, String> packages = const {},
+    Map<String, Map<String, String>> multiFilePackages = const {},
+    String? manyLintsConfig,
+  }) async {
+    _writePackage(
+      content,
+      packages: packages,
+      multiFilePackages: multiFilePackages,
+      manyLintsConfig: manyLintsConfig,
+      ruleName: ruleName,
+    );
+
+    final errors = channel.notifications
+        .where(
+          (notification) =>
+              notification.event == protocol.ANALYSIS_NOTIFICATION_ERRORS,
+        )
+        .map(protocol.AnalysisErrorsParams.fromNotification)
+        .where((params) => params.file == filePath)
+        .map((params) => params.errors)
+        .first;
+
+    await channel.sendRequest(
+      protocol.AnalysisSetAnalysisRootsParams([packagePath], []),
+    );
+
+    final reported = await errors.timeout(const Duration(seconds: 30));
+    final diagnostic = reported.where((e) => e.code == ruleName).firstOrNull;
+    if (diagnostic == null) {
+      fail(
+        'No $ruleName diagnostic was reported. '
+        'Got: ${reported.map((e) => e.code).toList()}',
+      );
+    }
+
+    final response = await channel.sendRequest(
+      protocol.EditGetFixesParams(filePath, diagnostic.location.offset),
+    );
+    final result = protocol.EditGetFixesResult.fromResponse(response);
+
+    final candidates = result.fixes
+        .where((errorFixes) => errorFixes.error.code == ruleName)
+        .expand((errorFixes) => errorFixes.fixes)
+        .where((fix) => !fix.change.message.startsWith('Ignore '))
+        .toList();
+
+    expect(
+      candidates,
+      isEmpty,
+      reason:
+          'Expected no $ruleName fix, but one was offered: '
+          '${candidates.map((f) => f.change.message).toList()}',
+    );
+  }
+
   /// Shared by [applyFix] and [applyAssist] so the two cannot drift on how a
   /// package is laid out — a difference there would show up as one of them
   /// mysteriously resolving a dependency the other does not.

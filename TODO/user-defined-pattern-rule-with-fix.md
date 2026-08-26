@@ -1,7 +1,7 @@
 # A user-defined rule: match a pattern, offer the project's own fix
 
 **Proposed:** 2026-08-26 (from wanting to enforce a project-local helper no built-in rule can reach)
-**Status:** OPEN — proposal
+**Status:** IMPLEMENTED 2026-08-26 as `match_pattern`
 **Affects:** a new rule, probably `match_pattern` / `banned_pattern`
 
 ## The idea
@@ -150,3 +150,78 @@ Worth stating the case against, since this rule is unusually powerful:
 The counter is that projects are *already* doing this with bash hooks, with
 none of the guard rails above. Bringing it inside gives it AST boundaries,
 parse validation, `// ignore:` support and IDE feedback.
+
+## Implemented 2026-08-26 — `match_pattern`
+
+Shipped as design **A**, scoped to AST nodes, with the fix included.
+
+- `lib/src/pattern_entry.dart` — `PatternEntry`, `PatternNode`, template
+  expansion, mirroring `BannedEntry`'s `in:`/`message:` shape.
+- `lib/src/rules/match_pattern.dart` — the rule.
+- `lib/src/fixes/match_pattern_fix.dart` — the quick fix.
+- No preset. Silent until `patterns:` is configured.
+
+### Decisions taken
+
+**Name: `match_pattern`.** `banned_pattern` was rejected for the reason the
+proposal anticipated: not every pattern is a ban, and half the motivating cases
+are "we prefer X" with a rewrite.
+
+**Node kinds: `methodInvocation` (default) and `propertyAccess`.** Two, not
+one, and not the full set. `methodInvocation` alone cannot express the
+`Theme.of(context).textTheme` → `context.theme.textTheme` case: the matched
+node stops at the call and the trailing `.textTheme` sits outside it. The wider
+kinds (`expression`, `statement`, `argument`) were left out because a pattern
+tested at every nesting level is far easier to point somewhere unintended.
+`node:` is in the config from day one, so adding kinds later is additive.
+
+**Capture syntax: `$0`..`$9`, `$$` for a literal.** One escape, and it reads
+the way it does in a shell. A group that did not participate expands empty; a
+`$` followed by anything else is left alone rather than swallowed.
+
+**Fix, not assist.** The open question resolved toward a fix because it
+attaches to the diagnostic, which is what makes the lightbulb appear where the
+squiggle is. An assist for the softer "we prefer X" case is still available
+later, as a per-entry key.
+
+### Guard rails, all four implemented and tested
+
+1. **Opt-in per pattern.** No `replace:` means report-only.
+2. **Parsed before offering.** The expanded template is parsed; if it does not
+   parse the fix is dropped and the diagnostic stands, so a wrong pattern
+   cannot turn working code into a syntax error.
+3. **Never bulk-applied.** `CorrectionApplicability.singleLocation`.
+4. **Invalid config is ignored, not thrown.** A bad regex, or a `node:` naming
+   no known kind, drops that entry. A `node:` typo deliberately drops the entry
+   rather than defaulting to calls, which would silently retarget the pattern.
+
+Guard rails 1 and 2 needed a way to assert that **no** fix is offered, which
+the fix harness had no API for. `FixHarness.expectNoFix` is new and additive:
+it still requires the diagnostic, so it cannot pass by the rule having gone
+silent.
+
+### The unimplemented open question
+
+**Imports.** A replacement naming a symbol that is not in scope produces code
+that parses but does not compile. Left to the author and documented as such;
+the optional `import:` key is still a reasonable future addition.
+
+### Verified against the reporting project
+
+Configured in that Flutter app for the case that prompted the whole thread:
+
+```yaml
+match_pattern:
+  patterns:
+    - find: '^unawaited\((.+)\)$'
+      replace: '$1.unawaited()'
+      message: 'Prefer the trailing .unawaited() from many_extensions.'
+      in: ['lib/**']
+```
+
+**87 findings across the repo**, each carrying a working fix. The config was
+not left enabled there — taking on 87 rewrites is that project's call, not this
+one's.
+
+This closes the "banning plus a replacement" half of
+[banned-usage-misses-top-level-functions.md](banned-usage-misses-top-level-functions.md).

@@ -174,6 +174,15 @@ rules:
     pattern: '[A-Z][A-Za-z0-9]*Page'
     include: ["lib/match_class_name_pattern_example.dart"]
 
+  # Reports nothing until `patterns:` is supplied, so the example configures
+  # the one pattern it demonstrates, scoped to its own file.
+  match_pattern:
+    patterns:
+      - find: '^unawaited\((.+)\)$'
+        replace: '$1.unawaited()'
+        message: 'Prefer the trailing form from many_extensions.'
+    include: ["lib/match_pattern_example.dart"]
+
   # The naming batch that judges a file's PATH rather than its AST. Every file
   # in this package is named `<rule>_example.dart` and sits flat in `lib/`, so
   # each of these is scoped to the one file that demonstrates it — otherwise

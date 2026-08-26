@@ -204,6 +204,19 @@ final class TaskEither<L, R> {
   TaskEither<L, B> map<B>(B Function(R r) f) => throw '';
   TaskEither<C, R> mapLeft<C>(C Function(L l) f) => throw '';
   TaskEither<L, B> flatMap<B>(TaskEither<L, B> Function(R r) f) => throw '';
+  TaskEither<L, C> andThen<C>(TaskEither<L, C> Function() then) => throw '';
+  TaskEither<L, R> chainFirst<C>(TaskEither<L, C> Function(R b) chain) =>
+      throw '';
+  TaskEither<L, R> filterOrElse(
+    bool Function(R r) f,
+    L Function(R r) onFalse,
+  ) => throw '';
+  static TaskEither<E, List<A>> sequenceList<E, A>(
+    List<TaskEither<E, A>> list,
+  ) => throw '';
+  static TaskEither<E, List<A>> sequenceListSeq<E, A>(
+    List<TaskEither<E, A>> list,
+  ) => throw '';
   TaskEither<L, B> chainEither<B>(Either<L, B> Function(R r) f) => throw '';
   TaskEither<L, R> alt(TaskEither<L, R> Function() orElse) => throw '';
   TaskEither<L, R> orElse<C>(TaskEither<L, R> Function(L l) onLeft) => throw '';

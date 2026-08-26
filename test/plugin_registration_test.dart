@@ -57,7 +57,7 @@ void main() {
   test('expected number of active and removed rules are registered', () {
     plugin.register(registry);
     final totalRules = registry.warningRules.length + registry.lintRules.length;
-    expect(totalRules, equals(261));
+    expect(totalRules, equals(263));
     expect(
       registry.warningRules.values.whereType<RemovedAnalysisRule>().map(
         (rule) => rule.name,
@@ -679,7 +679,7 @@ void main() {
       0,
       (sum, v) => sum + v.length,
     );
-    expect(totalFixes, equals(104));
+    expect(totalFixes, equals(106));
   });
 
   test('assists are registered', () {
@@ -697,6 +697,12 @@ void main() {
         'many_lints.assist.convertNullCheckToPattern',
         'many_lints.assist.inlineNullCheckIntoPattern',
         'many_lints.assist.convertToLazyFpdartType',
+        'many_lints.assist.convertFlatMapToAndThen',
+        'many_lints.assist.convertFlatMapToMap',
+        'many_lints.assist.convertFlatMapToChainFirst',
+        'many_lints.assist.convertFlatMapToFilterOrElse',
+        'many_lints.assist.convertReduceToSequenceList',
+        'many_lints.assist.expandToFlatMap',
         'many_lints.assist.convertTryCatchConstructorToTryStatement',
       ]),
     );

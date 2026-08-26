@@ -216,6 +216,7 @@ const _opinionatedOnlyRules = <String>{
   'check_is_not_closed_after_async_gap',
   'prefer_abstract_final_static_class',
   'prefer_align_over_container',
+  'prefer_and_then',
   'prefer_async_callback',
   'prefer_bloc_extensions',
   'prefer_center_over_align',
