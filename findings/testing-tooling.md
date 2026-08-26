@@ -67,3 +67,69 @@ for m in re.finditer(r"LintCode\(", src):
 Filter by `state` before comparing: only `stable` and `deprecated` rules can displace ours. A `removed` rule is not competition, and an `experimental` one is not a reason to deprecate a shipped rule.
 
 `flutter_lints` (`packages/flutter_lints/lib/flutter.yaml` in `flutter/packages`) only *enables* SDK rules and defines none of its own, so it adds no names beyond `rules.json`.
+
+---
+
+### [GOTCHA] [CRITICAL] `dart analyze <dir>` drops plugin diagnostics on a cache hit
+**Area:** verifying any rule against a real project; CI gates
+**Tags:** `#gotcha` `#tooling` `#testing`
+**Verified:** 2026-08-26 (Dart 3.13.1, analyzer 14.1.0, many_lints 1.1.0)
+
+**Symptom:** the same `dart analyze --fatal-infos` alternates between reporting 1002 findings and `No issues found!` on an unchanged project. Exit code is 0 in the silent case. The only tell is wall-clock: ~113s when the plugin runs, ~18s when it does not.
+
+**This is not a race, a timeout, or a size limit.** It is fully deterministic once the trigger is known, and it is not about scale — a twelve-file directory fails exactly like a 731-file `lib/`.
+
+**The rule:** invoked with a **directory** (or no argument), `dart analyze` reports plugin diagnostics **only on the first run after the analysis-driver cache is invalidated**. Every run after that serves the file's cached result with the plugin's contribution missing. Invoked with **explicit file arguments**, the plugin runs every time.
+
+| Invocation | Plugin diagnostics |
+|---|---|
+| `dart analyze path/to/file.dart` | every run |
+| `dart analyze a.dart b.dart` | every run |
+| `dart analyze lib/core/presentation` (12 files) | first run only |
+| `dart analyze` (package root) | first run only |
+
+**The control that proves it** — one probe file carrying an SDK diagnostic *and* two plugin diagnostics, three consecutive no-arg runs, nothing edited between them:
+
+```
+run 1: unused_local_variable   prefer_overriding_parent_equality   prefer_type_over_var
+run 2: unused_local_variable
+run 3: unused_local_variable
+```
+
+The SDK warning survives; both plugin diagnostics vanish after the first run. The file is still analyzed and its cache entry still read — only the plugin's output is absent from the cached result.
+
+**What invalidates:** only a change to the *set of files*. Creating a file makes the next run report it; after that, another run is silent, `touch` is silent, and **editing the file's contents is still silent**. Deleting `~/.dartServer/.analysis-driver` resets it, which is what makes cold-vs-warm timing (93s vs 18s) look like an attachment race. The timing is cache population; it correlates without causing.
+
+**Upstream, not ours.** Nothing in this package can fix it — the plugin is never asked. Needs a `dart-lang/sdk` issue against the analysis-driver caching path.
+
+**Consequences for this repo's workflow, and they are the point:**
+
+1. **Never verify a rule against a real project with a bare `dart analyze`.** Pass explicit files: `git ls-files -z '*.dart' | xargs -0 dart analyze --fatal-infos`. A 69 KB file list is one invocation, well under the 1 MB `ARG_MAX`.
+2. **Never trust a clean run as evidence.** Drop in a probe file that *must* report, confirm it does, then remove it. Three separate investigations here concluded "the codebase is clean" when the run had silently skipped every rule.
+3. **A bug report saying "the rule reports nothing in my project" is suspect until re-checked with explicit files.** `banned-usage-misses-top-level-functions.md` was filed on exactly this symptom; the rule worked fine and gave 14 findings once verified properly.
+
+---
+
+### [GOTCHA] [GOTCHA] The mock SDK's `Iterable` declares no `reduce`
+**Area:** any rule/assist fixture calling a collection method
+**Tags:** `#gotcha` `#testing`
+**Verified:** 2026-08-26 (analyzer 14.1.0)
+
+`createMockSdk` ships a deliberately minimal `Iterable`: `fold`, `where`, `map`, `firstWhere`, `expand` and friends are there, **`reduce` is not**.
+
+A fixture calling `values.reduce(...)` therefore does not resolve. A **type**-matching rule or assist then declines — correctly, but for a reason unrelated to what is being tested. Through `FixHarness` the symptom is `Got: []` (no assists at all at that offset), which reads like a missing `registerAssist`.
+
+Two workarounds, and the right one depends on how the producer matches:
+
+- **Type-based** — declare the member in the fixture:
+  ```dart
+  extension <E> on Iterable<E> {
+    E reduce(E Function(E value, E element) combine) => throw '';
+  }
+  ```
+- **Name-based** — assert the resulting error and move on, as `test/avoid_unsafe_collection_methods_test.dart` does:
+  ```dart
+  [lint(42, 29), error(diag.undefinedMethod, 48, 6)]
+  ```
+
+Before concluding a type-based producer is broken, confirm every member the fixture calls actually resolves under the mock SDK.

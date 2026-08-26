@@ -1233,6 +1233,63 @@ limitations".
 
 ---
 
+## A Fix Built From User Configuration Needs Guard Rails
+
+`match_pattern` lets a project supply a regex **and its replacement**, so the fix applies a template nobody reviewed. That is unlike every hand-written fix here, and it needs four rails the others do not. If you ever add another config-driven fix, copy all four.
+
+**1. Opt in per entry.** An entry with no `replace:` reports only. Nothing rewrites unless the author asked.
+
+**2. Parse the result before offering it.** A template that produces unparsable source is dropped and the diagnostic left standing, so a wrong pattern cannot turn working code into a syntax error:
+
+```dart
+static bool _parses(String replacement) {
+  final result = parseString(
+    content: 'void _p() { $replacement; }',
+    throwIfDiagnostics: false,
+  );
+  return result.errors.isEmpty;
+}
+```
+
+The wrapper is needed because the analyzer parses compilation units, not bare expressions; syntax errors inside a trivial wrapper can only come from the replacement.
+
+**3. Never bulk-apply.** Use `CorrectionApplicability.singleLocation` so `dart fix --apply` cannot sweep a hand-written regex across a project.
+
+**4. Degrade quietly on bad config.** An invalid regex, or an enum-valued key naming nothing known, drops *that entry* — a plugin cannot report diagnostics against a YAML file. Note the asymmetry worth thinking about per key: `match_pattern` drops an entry whose `node:` is unrecognised rather than defaulting it, because silently retargeting a pattern at a different node kind could match code the author never looked at.
+
+**Reading config from inside a fix.** A fix has no rule instance, so re-resolve through `ResolvedRuleConfig.forPath` using the unit under repair:
+
+```dart
+final resolved = ResolvedRuleConfig.forPath(
+  packageRoot: unitResult.session.analysisContext.contextRoot.root,
+  path: unitResult.path,
+  ruleName: 'match_pattern',
+);
+```
+
+**Finding the reported node.** Prefer the built-in `coveringNode` over walking up from `node` and comparing offsets by hand — it already resolves the most deeply nested node covering the diagnostic's highlight range.
+
+**Reference:** [match_pattern_fix.dart](../../../lib/src/fixes/match_pattern_fix.dart)
+
+---
+
+## Asserting That a Fix Is *Not* Offered
+
+`FixHarness.applyFix` fails the test when the fix it names is missing, which is right for positive cases but makes a withheld fix awkward to state. Rails 1 and 2 above are exactly that shape — and a guard rail nothing asserts on is one nobody notices breaking.
+
+`FixHarness.expectNoFix(content, ruleName)` is the mirror. It still **requires the diagnostic**, so it cannot pass by the rule having gone silent — which would make it a much weaker test than it looks:
+
+```dart
+await harness.expectNoFix(r'''
+void unawaited(Object? f) {}
+void run() { unawaited(1); }
+''', 'match_pattern', manyLintsConfig: reportOnly);
+```
+
+(The assist equivalent already existed as `FixHarness.assistIds`, which returns every id offered at the cursor.)
+
+---
+
 ## Quick Fix Implementation Checklist
 
 1. Import standard packages (analysis_server_plugin, analyzer, analyzer_plugin)

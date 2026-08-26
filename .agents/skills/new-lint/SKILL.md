@@ -35,6 +35,44 @@ Before writing any code:
 
 5. Read `lib/src/type_checker.dart` and `lib/src/ast_node_analysis.dart` for reusable utilities.
 
+## Step 2b: If this comes from a bug report, reproduce before believing it
+
+A report that a rule misfires arrives with a diagnosis attached, and the
+diagnosis is frequently wrong even when the symptom is real. Of seven such
+reports worked through on 2026-08-26, **three** had the cause misidentified
+and one had no bug at all. Reproduce first; the reproduction tells you what to
+fix, and it becomes the regression test.
+
+Cheapest first: **write a failing test from the report's own snippet.** If it
+passes, the report is either not-a-bug or the snippet is not the real shape.
+
+The three ways a report went wrong, all worth checking explicitly:
+
+1. **The symptom is real, the cause is not.** `require_atomic_async_updates`
+   was reported as pairing a read in `dispose()` with a write in another
+   method. Deleting `dispose()` left the false positive exactly where it was —
+   the real cause was one visitor missing a `visitFunctionExpression` override,
+   so a field named inside the *callback being installed* looked like a
+   dependency. **Falsify the stated cause directly**: delete the thing it
+   blames and see whether the symptom survives.
+
+2. **The rule works; the verification was broken.** `banned_usage` was reported
+   as unable to ban a top-level function. It bans them fine — 14 findings on
+   the reporter's own project once re-checked with explicit file arguments. The
+   original run hit the plugin-cache bug in Step 11.5b and reported nothing.
+   **A "the rule is silent" report is suspect until re-verified properly.**
+
+3. **A supporting claim was checked carelessly — including by you.** While
+   closing that same report I searched `~/Projects/many_extensions/lib/` for an
+   extension, found nothing, and wrote that it did not exist. The package is a
+   monorepo; `lib/` is a four-line barrel and the extension lives in a
+   sub-package. That mistake nearly closed a real bug as invented. **Search the
+   whole tree, not the directory you expect.**
+
+When a report turns out to be wrong, **correct the file rather than deleting
+it** — record what the symptom really was, since the next person will hit the
+same symptom and reach for the same wrong explanation.
+
 ## Step 3: Ask clarifying questions
 
 Before implementing, use the input mechanism available in the current
@@ -533,11 +571,26 @@ class GoodExamples {
 
 Run the following commands from the project root to ensure everything works:
 
-1. Synchronize the registered-rule total and indexes in `README.md`,
-   `example/README.md`, `docs/src/content/docs/docs/configuration.md`, and
-   `docs/src/content/docs/docs/getting-started.mdx`. Verify exact set equality
-   among registered rules, rule sources, examples, docs pages, the example README
-   table, and the generator category map.
+1. Synchronize every count and index. `test/plugin_registration_test.dart`
+   enforces these, but it reports **one failure at a time**, so working from
+   the list below is far faster than re-running it ten times. Adding one rule
+   with a fix touches all of these:
+
+   | Where | What |
+   |---|---|
+   | `test/plugin_registration_test.dart` | `expect(totalRules, equals(N))`, `expect(totalFixes, equals(N))`, and the literal list of assist ids |
+   | `README.md` | the lint/fix totals sentence, the **per-category** count table, the preset table, and the assist table |
+   | `docs/.../getting-started.mdx` | the rule total in front-matter `description:` **and** the inline preset counts in prose |
+   | `docs/.../presets.md` | the preset size table (rules **and** the per-tier delta column) plus the "outside every preset" bullet list, by category |
+   | `docs/.../configuration.mdx` | the preset table, the configurable-rule catalog row, and the "**N rules** accept options" sentence |
+   | `example/README.md` | the rule catalog row (with its "has fix" column) |
+   | `example/many_lints.yaml` | a config block if the rule is config-only, scoped with `include:` to its own example file |
+   | `AGENTS.md` (= `CLAUDE.md`, a symlink) | the preset size table and any new shared helper under Key Helpers |
+
+   Two traps: a rule page's **introduction version badge may not exceed the
+   current `pubspec.yaml` version** (use the current version; bumping is
+   `/release`'s job), and a doc page carrying an options table must also carry
+   the `rule-badge--config` badge — the test enforces both directions.
 2. `dart format --output=none --set-exit-if-changed .` - Ensure all Dart files are formatted.
 3. `dart analyze` - Ensure there are **no issues at all** (errors, warnings, or infos). Fix any that appear before proceeding.
 4. `dart test` - Ensure all tests pass
@@ -547,12 +600,30 @@ Run the following commands from the project root to ensure everything works:
    This is the step that catches what tests cannot — every rule shipped so far
    gained an exclusion from it. Put a file with a *known* violation into the
    sweep and confirm it appears in the output before trusting a zero: a run
-   that analyzed nothing looks exactly like a clean one. Two ways that has
-   silently happened: `dart analyze <dir>` returned nothing while per-file
-   analysis worked, and BSD `xargs` on macOS has no `-a` flag, so
-   `xargs -a list.txt dart analyze` failed without running anything (use
-   `< list.txt xargs -n 60 dart analyze`). Enable the rule with a temporary
-   `many_lints.yaml` at the target package root, and delete it afterwards.
+   that analyzed nothing looks exactly like a clean one.
+
+   **Always sweep with explicit file arguments**, never a bare `dart analyze`
+   or a directory:
+
+   ```bash
+   git ls-files -z '*.dart' | xargs -0 dart analyze --fatal-infos
+   ```
+
+   The reason is now pinned down (2026-08-26, see
+   `findings/testing-tooling.md`): with a **directory or no argument**, the
+   analysis server serves cached results that **omit plugin diagnostics** on
+   every run after the first. It is not a race and not size-dependent — a
+   twelve-file directory behaves like a 731-file `lib/`, editing a file does
+   not even reset it, and the run exits 0 while checking nothing. Explicit
+   file arguments run the plugin every time. (A 69 KB file list is one
+   invocation, well under the 1 MB `ARG_MAX`.)
+
+   Other ways the sweep has silently analyzed nothing: BSD `xargs` on macOS
+   has no `-a` flag, so `xargs -a list.txt dart analyze` fails without running
+   (use `< list.txt xargs -n 60 dart analyze`).
+
+   Enable the rule with a temporary `many_lints.yaml` at the target package
+   root, and delete it afterwards.
 6. Run `bun run build` from `docs/` as the final gate.
 
 If any check fails or reports issues, fix it and re-run the affected checks until all are fully clean.

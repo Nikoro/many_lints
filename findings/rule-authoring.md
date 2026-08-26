@@ -144,3 +144,63 @@ The mirror image of the finding above: a plausible option list — a rule catalo
 **Rule:** every option needs a fixture where the rule's output differs with and without it. If you cannot construct one, the option is not real. This is the vacuous-test trap one level up — there, a rule that never fires makes assertions meaningless; here, an option that gates nothing does, even though the rule fires correctly.
 
 **Corollary for planning documents:** a proposed-options table is worth exactly as much as the reading behind it. Read the visitor before wiring, and note in the doc which rows were checked against source.
+
+---
+
+### [GOTCHA] [CRITICAL] `Metadata.hasImmutable` resolves through `package:meta` — a fake annotation is invisible to it
+**Area:** `lib/src/immutable_state_rule.dart`, any rule reading `element.metadata.has*`
+**Tags:** `#gotcha` `#testing`
+**Verified:** 2026-08-26 (analyzer 14.1.0)
+
+**Symptom:** a rule change that skips classes already carrying `@immutable` appears to do nothing. `element.metadata.hasImmutable` returns `false` for a test fixture that visibly has the annotation.
+
+**Cause:** the analyzer's `has*` getters are **semantic**, not syntactic. `isImmutable` is
+
+```dart
+_isPackageMetaGetter(_immutableVariableName) || _isPackageMetaConstructor(_immutableClassName)
+```
+
+and `_isPackageMetaGetter` requires a top-level getter named `immutable` **in a library whose `name` is `meta`** (or a class named `Immutable`, capital I). This package's test fixtures had declared a stand-in:
+
+```dart
+// Invisible to hasImmutable: lowercase class, no library name.
+class immutable { const immutable(); }
+const immutable = immutable();
+```
+
+which satisfies a *syntactic* check (`annotation.name.name == 'immutable'`, which the rule's own `_hasImmutableAnnotation` uses) while being unrecognisable to the semantic one. The two checks silently disagreed.
+
+**Fix:** make the fake faithful to the real package.
+
+```dart
+newPackage('meta').addFile('lib/meta.dart', r'''
+library meta;
+
+class Immutable {
+  const Immutable([this.reason]);
+  final String? reason;
+}
+const Immutable immutable = Immutable();
+''');
+```
+
+**General lesson:** before using any `metadata.hasX` getter, check how the analyzer resolves it (`analyzer/lib/src/dart/element/element.dart`). Most pin `package:meta` by **library name**, so a minimal fixture that "looks right" fails. If a rule mixes a syntactic annotation check with a semantic one, expect them to disagree on fixtures until the fake carries a `library` directive and the real class name.
+
+---
+
+### [NOTE] [GOTCHA] `ExtensionElement` is not an `InterfaceElement`
+**Area:** `lib/src/rules/banned_usage.dart`, any rule walking `element.enclosingElement`
+**Tags:** `#gotcha`
+**Verified:** 2026-08-26 (analyzer 14.1.0)
+
+A member declared on an `extension` has an enclosing element that is an `InstanceElement` but **not** an `InterfaceElement`. Code shaped like
+
+```dart
+final enclosing = element.enclosingElement;
+if (enclosing is! InterfaceElement) return const [];
+```
+
+therefore declines for extension members exactly as it does for top-level functions — silently, and for a reason that is easy to misread as "top-level functions are unmatchable".
+
+The user-visible consequence in `banned_usage`: with `deny: ['unawaited']` configured, both `unawaited(f())` **and** a project's own `f.unawaited()` extension member are reported, because only the bare-name lookup can reach either and by bare name they are indistinguishable. Reaching `ExtensionElement.extendedType` would allow `Future.unawaited` to be denied precisely; a library-qualified deny form (`dart:async/unawaited`) would separate the SDK function from a same-named local declaration. Neither is implemented — see `TODO/banned-usage-misses-top-level-functions.md`.
+

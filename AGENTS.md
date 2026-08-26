@@ -35,7 +35,10 @@ lib/
     declaration_group.dart      # Per-category file budgets (kinds/types/groups config)
     state_class_pairing.dart    # Match a StatefulWidget to its State class
     set_state_collection.dart   # SetStateCollector (shared rule + fix visitor)
-    async_guard_utils.dart # Async helpers (containsAwait, isMountedGuardWithReturn)
+    async_guard_utils.dart # Async helpers (containsAwait, isMountedGuardWithReturn, isPositiveMountedGuard)
+    fpdart_chain_call.dart # Shared flatMap reader for the fpdart combinator assists + prefer_and_then
+    pattern_entry.dart    # PatternEntry/PatternNode + template expansion, for match_pattern
+    test_double_type_checkers.dart # Pinned Mock (mocktail/mockito) and Fake (test_api) checkers
     async_builder_utils.dart # Async builder source-allocation detection
     test_invocation.dart  # Match test/group/setUp invocations by name (skip/solo rules)
     date_time_arithmetic.dart # Read a day-granularity DateTime.add/subtract shift
@@ -170,7 +173,10 @@ disabled rule a null-listener reporter. Resolution order in
 - `lib/src/declaration_group.dart` - `readDeclarationGroups()` + `DeclarationKind`/`DeclarationGroup`. Backs `prefer_single_declaration_per_file`, which subsumes the general *and* Riverpod-specific \"single X per file\" cases: each configured group holds its own one-per-file budget, so one bloc plus one notifier passes. Flat `kinds:`/`types:` are read as the groups' defaults; a declaration counts in the **first** matching group only
 - `lib/src/state_class_pairing.dart` - `findStateClassFor()` matches a StatefulWidget to its State via the `extends State<Widget>` type argument
 - `lib/src/set_state_collection.dart` - `SetStateCollector`, shared by the prefer_single_setstate rule and its fix
-- `lib/src/async_guard_utils.dart` - Async helpers (containsAwait, isMountedGuardWithReturn)
+- `lib/src/async_guard_utils.dart` - Async helpers. `isMountedGuardWithReturn` reads the condition **structurally**, so a disjunction counts (`if (!mounted || failed) return;` returns whenever mounted is false) while a conjunction does not; `isPositiveMountedGuard` is its mirror for the wrapper form `if (mounted) …`, where a *conjunction* counts and a disjunction does not
+- `lib/src/fpdart_chain_call.dart` - `readFpdartFlatMap()` / `parameterIsUnused()` / `andThenArgumentFor()`, shared by the five flatMap-narrowing assists, `expand_to_flat_map` and `prefer_and_then` + its fix, so none can disagree about what counts as a convertible `flatMap`. Matches the receiver by resolved type, never by the name `flatMap`
+- `lib/src/pattern_entry.dart` - `PatternEntry` / `PatternNode` / `expandTemplate()` for `match_pattern`. Mirrors `BannedEntry`'s `in:`/`message:` shape so a project writes one familiar entry form
+- `lib/src/test_double_type_checkers.dart` - `mockChecker` (mocktail **or** mockito) and `fakeChecker` (declared in `package:test_api`, re-exported by mocktail). Pinned because `Mock` and `Fake` are ordinary English words: a bare-name match would let a domain class silently exempt its whole subtree
 - `lib/src/async_builder_utils.dart` - Detect newly allocated Future/Stream sources passed to async builders
 - `lib/src/test_invocation.dart` - `testInvocationKind()` / `isTestOrGroupInvocation()` / `namedArgument()`, shared by `avoid_skipped_tests` + `avoid_focused_tests`. Matches by **name**, not resolved element: `package:test` is a dev dependency, so an element-keyed rule goes silent in a project that has not resolved it
 - `lib/src/date_time_arithmetic.dart` - `DateTimeShift.tryRead()`, shared by `avoid_dst_unsafe_date_arithmetic` + its fix so the two cannot disagree about what counts as day-granularity arithmetic. Returns `null` for sub-day durations (`Duration(hours: 2)` is genuinely absolute elapsed time), and carries `literalDays: null` when the amount is not a plain integer literal — the rule still reports, but the fix declines

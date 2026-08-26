@@ -7,8 +7,8 @@ Review before making changes to unfamiliar areas.
 |------|------|----------|--------------|
 | [config-constraints.md](config-constraints.md) | What the analyzer cannot do | 3 | 2026-08-08 |
 | [config-mechanism.md](config-mechanism.md) | How config is reached at runtime | 6 | 2026-08-09 |
-| [rule-authoring.md](rule-authoring.md) | Writing configurable rules | 8 | 2026-08-09 |
-| [testing-tooling.md](testing-tooling.md) | Test harness & CLI quirks | 4 | 2026-08-09 |
+| [rule-authoring.md](rule-authoring.md) | Writing configurable rules | 10 | 2026-08-26 |
+| [testing-tooling.md](testing-tooling.md) | Test harness & CLI quirks | 6 | 2026-08-26 |
 
 ## All Finding Titles
 
@@ -34,9 +34,13 @@ Review before making changes to unfamiliar areas.
 - [NOTE] [NOTE] A shared rule base class makes a whole family configurable in one edit
 - [GOTCHA] [CRITICAL] "The rule already does that" argues *for* an option, not against it
 - [GOTCHA] [GOTCHA] An option that gates nothing still compiles and still tests green
+- [GOTCHA] [CRITICAL] `Metadata.hasImmutable` resolves through `package:meta` — a fake annotation is invisible to it
+- [NOTE] [GOTCHA] `ExtensionElement` is not an `InterfaceElement`
 
 ### testing-tooling.md
 - [NOTE] [GOTCHA] Config-dependent rule behavior is testable via the PluginServer harness
 - [NOTE] [NOTE] `dart analyze <file>.yaml` does not validate analysis options
 - [GOTCHA] [CRITICAL] A regex over `LintCode(` silently captures a third of the rules
 - [NOTE] [NOTE] The SDK publishes its lint catalogue as machine-readable JSON
+- [GOTCHA] [CRITICAL] `dart analyze <dir>` drops plugin diagnostics on a cache hit
+- [GOTCHA] [GOTCHA] The mock SDK's `Iterable` declares no `reduce`

@@ -49,6 +49,8 @@ This cookbook covers **making a lint rule configurable** in the `many_lints` pac
 - [Recipe: Adding `exclude` to a Rule](#recipe-adding-exclude-to-a-rule)
 - [Recipe: Adding a Mode Option](#recipe-adding-a-mode-option)
 - [Recipe: A Policy Rule That Ships With No Policy](#recipe-a-policy-rule-that-ships-with-no-policy)
+- [Recipe: Package-Pinned Default Types](#recipe-package-pinned-default-types)
+- [Prefer an Exempt-Type Option Over Telling Users to `exclude:`](#prefer-an-exempt-type-option-over-telling-users-to-exclude)
 - [Naming Conventions](#naming-conventions-decide-nothing-per-rule)
 - [Reading Options: Typed Accessors](#reading-options-typed-accessors)
 - [Prefer Configuration Over a Hardcoded Constructor Argument](#prefer-configuration-over-a-hardcoded-constructor-argument)
@@ -532,6 +534,72 @@ both or tear-offs are missed.
 first so a `Type.member`-style entry wins over a bare one when both could
 match. Match on the **declared** name (`element.name`), not the written one, or
 an import prefix hides the usage.
+
+## Recipe: Package-Pinned Default Types
+
+When a rule exempts types by name (`ignored_types`, `state_base_classes`, …), the defaults and the user's additions want **different** matching:
+
+- a **default** should be pinned to the package that declares it, so a project class of the same name cannot silently switch the rule off;
+- a **user addition** must be matched bare, because a type declared in the analyzed package has no `package:` URI to pin against.
+
+Model the defaults as a `Map<String, TypeChecker>` rather than a `Set<String>`, and fall back to `TypeChecker.fromName` for anything not in it:
+
+```dart
+static const Map<String, TypeChecker> defaultIgnoredTypes = {
+  'Widget': widgetChecker,   // package:flutter
+  'Mock': mockChecker,       // package:mocktail | package:mockito
+  'Fake': fakeChecker,       // package:test_api
+};
+
+bool _isIgnoredType(ClassElement element) {
+  final ignored = rule.config.nameSetOption(
+    'ignored_types',
+    defaultValue: MyRule.defaultIgnoredTypes.keys.toSet(),
+  );
+
+  for (final name in ignored) {
+    final checker =
+        MyRule.defaultIgnoredTypes[name] ?? TypeChecker.fromName(name);
+    if (checker.isSuperOf(element)) return true;
+  }
+
+  return false;
+}
+```
+
+Passing `.keys.toSet()` as the default keeps `nameSetOption`'s semantics intact: `ignored_types` replaces the set outright, `additional_ignored_types` extends it, and a replaced default loses its pin along with its place in the list — which is correct, since the user asked for that name specifically.
+
+**Pinning matters most for ordinary words.** `Widget` is unlikely to collide; `Mock` and `Fake` are plain English, and a domain class called `Fake` is entirely plausible. Without the pin it would exempt its whole subtree in silence. Add a test that asserts exactly this:
+
+```dart
+Future<void> test_aProjectClassNamedMockDoesNotSwitchTheRuleOff() async {
+  await assertDiagnostics(r'''
+class Mock { /* overrides == and hashCode */ }
+class Child extends Mock { final String value; }
+''', [lint(122, 5)]);
+}
+```
+
+**Reference:** [prefer_overriding_parent_equality.dart](../../../lib/src/rules/prefer_overriding_parent_equality.dart), [test_double_type_checkers.dart](../../../lib/src/test_double_type_checkers.dart).
+
+---
+
+## Prefer an Exempt-Type Option Over Telling Users to `exclude:`
+
+When a rule fires on a whole category of legitimate code, the temptation is to document `exclude: ['lib/**/presentation/**', 'test/**']`. **A path glob standing in for a fact about types is strictly weaker**, and it is worth recognising the shape before shipping the advice.
+
+One real case: `prefer_overriding_parent_equality` reported every `StatelessWidget` and every mock. The project's config needed eight path globs. Replacing them with `ignored_types: [Widget, Mock, Fake]` removed the configuration entirely — the defaults now cover it.
+
+The test that settles it: **drop a genuine violation into the excluded path** and see which config still catches it.
+
+| | real equality bug in `test/` | mocks silent |
+|---|---|---|
+| `exclude: ['test/**']` | ❌ missed | ✅ |
+| `ignored_types: [Mock, Fake]` | ✅ reported | ✅ |
+
+Both look identical on a codebase that has no such bug *yet*; they differ on the code the user has not written. Prefer the type-based option, and reach for `exclude:` only when the exemption really is about location — `avoid_unsafe_collection_methods` excluding `test/**` is honest, because the same unguarded `.first` is a bug in `lib/` and *is the assertion* in a test, and no type distinguishes them.
+
+---
 
 ## Prefer Configuration Over a Hardcoded Constructor Argument
 

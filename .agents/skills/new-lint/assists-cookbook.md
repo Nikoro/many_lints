@@ -52,6 +52,8 @@ Quick navigation:
 - [Code Transformations](#code-transformation-patterns)
 - [ChangeBuilder for Assists](#changebuilder-for-assists)
 - [Helper Utilities](#helper-utilities)
+- [Bidirectional Assist Pairs](#bidirectional-assist-pairs)
+- [Emitting a Tear-Off vs a Closure](#emitting-a-tear-off-vs-a-closure)
 - [Registration](#registration)
 - [Testing](#testing)
 
@@ -558,6 +560,99 @@ if (_iterableChecker.isAssignableFromType(type)) {
 
 ---
 
+## Bidirectional Assist Pairs
+
+An assist that narrows a shape (`flatMap` → `andThen`) invites the inverse. `Do` notation ↔ `flatMap` was the first pair here; the fpdart combinator family added a second. The inverse is worth writing **only when both conditions hold**:
+
+1. **The transformation is exact in both directions.** If the narrow form is defined as the wide one, expanding it cannot change meaning.
+2. **There is a real reason to go back.** Usually: *the narrow form hides a value the next edit needs.* You write `andThen(logout)`, then the next step turns out to depend on the previous result — the first edit is always expanding back to a `flatMap` whose callback names it.
+
+Both conditions failed for two of the five fpdart combinators, and saying why is more useful than the pattern itself:
+
+- **`chainFirst`** — expanding it honestly requires emitting its `.orElse((l) => right(b))` too, which nobody wants to read; the shorter form people expect **silently changes error handling**. Either output is worse than no assist.
+- **`sequenceListSeq`** — the expansion is a hand-rolled fold needing an empty-list guard the library version does not. A downgrade in every case.
+
+**Prefer one assist over N when the inverse covers several shapes.** `ExpandToFlatMap` handles `andThen`, `map` *and* `filterOrElse` behind one `AssistKind`: one lightbulb entry at the cursor, one code path, one set of tests. Three separate assists would put three entries on the same cursor for what a reader thinks of as one action.
+
+```dart
+enum _Combinator {
+  andThen(name: 'andThen', arity: 1),
+  map(name: 'map', arity: 1),
+  filterOrElse(name: 'filterOrElse', arity: 2);
+  // ...
+  static _Combinator? byName(String name) { /* ... */ }
+}
+
+// One compute(), dispatching on which combinator the cursor sits on.
+final replacement = switch (combinator) {
+  _Combinator.andThen => _expandAndThen(arguments),
+  _Combinator.map => _expandMap(arguments, wrapper),
+  _Combinator.filterOrElse => _expandFilterOrElse(arguments, wrapper),
+};
+```
+
+**Always add a round-trip test.** Narrow, then expand, and assert you are back where you started. It is the cheapest way to catch the two directions drifting apart.
+
+**Reference:** [expand_to_flat_map.dart](../../../lib/src/assists/expand_to_flat_map.dart), and the `round-trips` tests in [assists_test.dart](../../../test/assist_output/assists_test.dart).
+
+### When a transformation is *not* exact, say so in the label
+
+`AssistKind.message` is the only place a reader learns that a refactoring changes behaviour — nobody opens the source before clicking a lightbulb. When an assist is worth offering but is not semantics-preserving, put the difference **in the message** and drop its priority below the exact conversions:
+
+```dart
+static const _assistKind = AssistKind(
+  'many_lints.assist.convertFlatMapToChainFirst',
+  // Below the exact conversions: this one asks the author to accept a
+  // change in behaviour, so it should not sit above assists that do not.
+  29,
+  "Convert to 'chainFirst' (ignores the effect's failure)",
+);
+```
+
+The alternative — a neutral label plus a doc-comment warning — hides the cost exactly where the decision is made.
+
+---
+
+## Emitting a Tear-Off vs a Closure
+
+An assist that moves a callback between shapes has to decide whether to emit `andThen(repo.logout)` or `andThen(() => repo.logout())`. The rule that held up across five assists:
+
+**Emit a tear-off only for a bare invocation that needs nothing from the closure** — no arguments, no type arguments:
+
+```dart
+String andThenArgumentFor(Expression body) {
+  if (body is MethodInvocation &&
+      body.argumentList.arguments.isEmpty &&
+      body.typeArguments == null) {
+    final target = body.realTarget;
+    final receiver = target == null ? '' : '${target.toSource()}.';
+    return '$receiver${body.methodName.name}';
+  }
+
+  return '() => ${body.toSource()}';
+}
+```
+
+Anything else keeps a closure, because tearing it off is either impossible (arguments) or changes *when* it is evaluated (a constructor call, a property read).
+
+**Going the other way, inline the closure body when the names already match.** Expanding `map((raw) => transform(raw))` should produce `flatMap((raw) => Wrapper.of(transform(raw)))`, not an immediately-invoked lambda. Inline **only** when the closure's own parameter names are the ones the expansion binds — otherwise the body references a name that no longer exists:
+
+```dart
+if (body is ExpressionFunctionBody &&
+    parameters != null &&
+    parameters.length == arguments.length &&
+    _namesMatch(parameters, arguments)) {
+  return body.expression.toSource();
+}
+return '${callback.toSource()}(${arguments.join(', ')})';
+```
+
+A tear-off brought no parameter name of its own, so synthesise one (`value`) and suffix it if something in an enclosing closure already uses it, rather than shadowing.
+
+**Read the wrapper from what the call *returns*, not from the receiver.** A `map` changes the value type, so `p.map(f)` on a `TaskEither<L, A>` returns `TaskEither<L, B>` — building from the receiver would still be right here, but only by luck. `invocation.staticType` is the honest source. Every fpdart type declares `.of`, so one code path covers `Option`, `Either`, `Task`, `IO` and their variants; only the failable three have `.left`.
+
+---
+
 ## Registration
 
 ### In lib/many_lints.dart
@@ -602,6 +697,43 @@ class ManyLintsPlugin extends Plugin {
 - returns **`linkedEditGroups`**, letting a test assert which names the assist made renameable.
 
 Reach for route 2 when the assist offers linked renames, or when you want the same end-to-end guarantee the fix output tests give. Batches live under `test/assist_output/`; see [assists_test.dart](../../../test/assist_output/assists_test.dart).
+
+**Asserting an assist is NOT offered.** `applyAssist` fails the test when the assist it names is missing, which is right for positive cases but makes "this must not be offered here" awkward. Use `FixHarness.assistIds(content)`, which returns every id offered at the `^` cursor:
+
+```dart
+final offered = await harness.assistIds(r'''
+...p.chainFir^st(audit);
+''', multiFilePackages: {'fpdart': fpdartStubFiles});
+
+expect(offered, isNot(contains('many_lints.assist.expandToFlatMap')));
+```
+
+An assist declining a shape it cannot safely transform is part of its contract, so it deserves a first-class assertion rather than a caught failure.
+
+### GOTCHA: the mock SDK's `Iterable` has no `reduce`
+
+**Symptom:** a type-based assist over a collection is never offered, and the harness reports `Got: []` — no assists at all at that offset, which reads like a registration failure.
+
+**Cause:** `createMockSdk` ships a deliberately minimal `Iterable`. It declares `fold`, `where`, `map`, `firstWhere` and friends, but **not `reduce`**. A fixture calling `values.reduce(...)` therefore does not resolve, so any assist resolving types declines — correctly, but for a reason that has nothing to do with the code under test.
+
+**Fix:** supply the missing member in the fixture itself.
+
+```dart
+// The test SDK's minimal `Iterable` declares no `reduce`, so the fixture
+// supplies one. The assist resolves types rather than names, so an
+// unresolved call would make it decline for the wrong reason.
+extension <E> on Iterable<E> {
+  E reduce(E Function(E value, E element) combine) => throw '';
+}
+```
+
+A **name**-matching rule can instead assert the resulting `undefinedMethod` error and carry on — see `test/avoid_unsafe_collection_methods_test.dart`, which does exactly that. A **type**-matching rule or assist cannot, so it needs the declaration.
+
+The general lesson: before concluding a type-based producer is broken, confirm every member the fixture calls actually resolves under `createMockSdk`.
+
+### GOTCHA: `^` must sit at a token boundary
+
+Marking the cursor mid-identifier (`re^duce`) does not reliably resolve to the enclosing node. Put it at the end of the method name or on the receiver (`reduce^(`, `p.flat^Map`), and check the parent-chain walk starts from a node the assist recognises.
 
 **Reference:** [convert_iterable_map_to_collection_for_test.dart](../../../test/convert_iterable_map_to_collection_for_test.dart)
 
