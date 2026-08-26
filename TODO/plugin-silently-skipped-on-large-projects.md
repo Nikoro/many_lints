@@ -1,7 +1,7 @@
-# `dart analyze` drops plugin diagnostics on a cache hit (directory scope)
+# `dart analyze` drops plugin diagnostics on a cache hit, and again past ~800 file arguments
 
 **Reported:** 2026-08-26 (found while migrating a Flutter app's bash quality gates to lints)
-**Status:** OPEN — diagnosed, upstream (see Diagnosis 2026-08-26)
+**Status:** OPEN — two independent triggers, both upstream (see Diagnosis 2026-08-26 and Correction 2026-08-27)
 **Affects:** every rule — an upstream analysis-server cache bug, not this package
 
 ## What happens
@@ -172,3 +172,116 @@ nothing.
 
 Environment for this diagnosis: same as above, plus many_lints at HEAD
 (2026-08-26). Verified on a 12-file directory as well as the full project.
+
+
+## Correction 2026-08-27 — explicit file arguments are NOT a reliable workaround
+
+The 2026-08-26 diagnosis is right about the cache trigger and wrong about the
+cure. Two of its claims do not survive measurement:
+
+> Invoked with **explicit file arguments**, the plugin runs every time.
+
+> Scale is irrelevant — a twelve-file directory fails exactly like the 731-file
+> `lib/`.
+
+Both are false. There is a **second, independent trigger** that is purely about
+scale, and it defeats the recommended workaround on any project big enough to
+need it.
+
+### What happens
+
+Passing every Dart file explicitly, on a project of 1279 files:
+
+```
+$ git ls-files -z '*.dart' | xargs -0 dart analyze --fatal-infos
+No issues found!            # plugin contributed nothing
+```
+
+The same files, in batches of 400:
+
+```
+$ git ls-files -z '*.dart' | xargs -0 -n 400 dart analyze --fatal-infos
+45 issues found.
+```
+
+Same files, same config, same invocation form. Only the batch size differs.
+
+### The canary that proves it
+
+Counting findings cannot distinguish "clean" from "plugin never ran", which is
+what made the first investigation cost a day. So the control is a file that
+**must** produce a diagnostic — a class named `CanaryManager` against a
+configured `avoid_banned_names` — appended to the file list:
+
+| Invocation | Canary reported |
+|---|---|
+| `dart analyze canary.dart` | yes |
+| canary + 200 files | yes |
+| canary + 700 files | yes |
+| canary + 750 files | yes |
+| canary + 800 files | yes |
+| canary + 850 files | **no** |
+| canary + 900 files | **no** |
+| canary + 1278 files | **no** |
+
+The cliff sits between **800 and 850 file arguments**. Below it the plugin runs
+on every invocation, as the earlier diagnosis says. Above it the plugin
+contributes nothing at all, on the first run and every run after, with a cold
+cache or a warm one. Deleting `~/.dartServer/.analysis-driver` does not help,
+which is what separates this from the cache-hit trigger.
+
+Note the asymmetry that makes this so easy to misread: the run that skips the
+plugin reports **fewer** findings, never more. On this project the full-tree run
+said "No issues found" while a batched run over the identical file set reported
+45. An earlier measurement in the same session recorded 280 from one full-tree
+invocation and 0 from the next, so the two triggers can also stack.
+
+### Why it matters more than the first trigger
+
+The first trigger has a documented cure. This one breaks that cure precisely
+where it is needed: a project small enough to analyze in one call is small
+enough not to care, and any project past ~800 files silently gets nothing. The
+workaround section below said "batched to stay under the argument limit" for
+`ARG_MAX` reasons; that parenthetical turns out to be load-bearing for
+correctness, not just for exec limits.
+
+### Revised workaround
+
+Batch **and** keep each batch well under the cliff:
+
+```sh
+git ls-files -z '*.dart' | xargs -0 -n 400 dart analyze --fatal-infos
+```
+
+`-n 400` leaves headroom; 800 is the measured edge, not a safe target.
+
+Better, because both triggers are silent and exit 0: keep a canary file in the
+repo whose diagnostic is guaranteed, and fail the build when it is **absent**.
+That converts either failure mode from a green build into a red one, which is
+ask 2 from the original report implemented on the consumer side while the
+upstream fix is pending.
+
+### Where this leaves the asks
+
+Ask 2 — *never proceed silently* — is now the whole report. Two unrelated code
+paths drop plugin diagnostics, both exit 0, and both are indistinguishable from
+a clean run. Whatever the mechanism of either, a configured-but-inactive plugin
+must be a build error.
+
+Ask 1 gains a second half: alongside the cache-result fix, find why an
+invocation past ~800 file arguments never asks the plugin. Worth checking
+whether the analysis server is falling back to a different driver path, or
+batching internally, once the file count crosses a threshold.
+
+### Environment
+
+Dart 3.13.1, Flutter 3.47.1, macOS x64 (Intel), many_lints at HEAD (2026-08-27),
+local checkout via `path:`. Project: 1279 tracked Dart files (726 under `lib/`).
+Each row of the canary table verified in a single session, nothing edited
+between runs.
+
+### Acceptance test
+
+Alongside the directory-argument test above: build a fixture of ~1000 files
+where exactly one carries a guaranteed diagnostic, pass every file explicitly in
+one invocation, and assert the diagnostic is reported. It fails today.
