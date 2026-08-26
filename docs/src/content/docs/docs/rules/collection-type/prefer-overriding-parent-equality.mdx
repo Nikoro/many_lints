@@ -8,9 +8,12 @@ sidebar:
   label: prefer_overriding_parent_equality
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 <span class="rule-badge rule-badge--version">v0.4.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Collection & Type</span>
 
 When a parent class overrides `==` and `hashCode`, child classes that add new fields should also override both operators. Otherwise, the inherited equality ignores the child's fields, meaning two child instances with different field values may be considered equal.
@@ -20,6 +23,32 @@ When a parent class overrides `==` and `hashCode`, child classes that add new fi
 Inheriting a parent's `==` without overriding it in the child means the child's own fields are excluded from equality checks. This causes silent bugs in collections, state comparison, and testing where logically different objects appear identical.
 
 **See also:** [Dart operator == and hashCode](https://dart.dev/effective-dart/design#equality) | [Dart lint: hash_and_equals](https://dart.dev/tools/linter-rules/hash_and_equals)
+
+## Widgets and test doubles are never reported
+
+Three types are exempt by default, each because its identity is deliberately *not* its fields:
+
+| Type | Why | Where it is declared |
+|------|-----|----------------------|
+| `Widget` | Identity is `runtimeType` + `key`, which is what element reuse depends on. One comparing fields would break `canUpdate` | `package:flutter` |
+| `Mock` | Identity is the instance, which is what `verify()` matches on. One comparing fields would break verification | `package:mocktail`, `package:mockito` |
+| `Fake` | Implements an interface it does not hold the data for, so it inherits that interface's `==` with no fields to compare | `package:test_api` (re-exported by `mocktail`) |
+
+In each case the override this rule asks for is one the class should not have, and without the exclusion the report is unavoidable: every `StatelessWidget` in a Flutter project, and every mock in its test tree.
+
+The match is by supertype, so a project's own widget bases and mock bases are covered without naming each one.
+
+### Why these are types, not paths
+
+It is tempting to write `exclude: ['test/**']` instead of exempting `Mock` and `Fake`. That is strictly weaker. The exemption is a fact about *those two base classes*, not about the `test/` directory — so a path excludes more than it means to.
+
+A real equality bug in a test helper — a value class, a fixture builder, a DTO that is not a `Fake` — is still caught with the type-based default and silently missed under a path exclusion. The two look identical on a codebase that has no such bug yet; they differ on the code you have not written.
+
+### Each default is pinned to its package
+
+`Mock` and `Fake` are ordinary English words, and a domain class called `Fake` is far from unthinkable. Each default is matched against the package that declares it, so a project class of the same name cannot silently switch the rule off for its whole subtree.
+
+Names a project adds through `additional_ignored_types` are matched by bare name, since a type declared in your own package has no `package:` URI to pin against.
 
 ## Don't
 
@@ -115,6 +144,39 @@ rules:
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_overriding_parent_equality:
+      additional_ignored_types: [Entity]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_overriding_parent_equality:
+    additional_ignored_types: [Entity]
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ignored_types` | list of strings | `[Widget, Mock, Fake]` | Replaces the set of types whose subtypes are never reported. Setting it drops the defaults, so widgets and mocks report again |
+| `additional_ignored_types` | list of strings | `[]` | Extends the default set instead of replacing it, so `Widget`, `Mock` and `Fake` stay excluded |
+
+Types are matched by supertype: naming a base class covers everything that extends or implements it. Each default is pinned to its declaring package; names you add are matched by bare name, since a type declared in your own package has no `package:` URI to pin against.
 
 ## Related rules
 

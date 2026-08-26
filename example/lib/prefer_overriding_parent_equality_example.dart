@@ -1,5 +1,7 @@
 // ignore_for_file: unused_local_variable, unused_element
 
+import 'package:flutter/widgets.dart';
+
 // prefer_overriding_parent_equality
 //
 // Warns when a class extends a parent that overrides == and hashCode
@@ -70,6 +72,18 @@ class SimpleParent {
 class SimpleChild extends SimpleParent {
   final int y;
   SimpleChild(this.y, int x) : super(x);
+}
+
+// ✅ Edge case: a widget's identity is its runtimeType and key, never its
+// fields — `Widget` is in `ignored_types` by default, and the match is by
+// supertype, so project widget bases are covered too.
+class Greeting extends StatelessWidget {
+  const Greeting(this.name, {super.key});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }
 // ignore_for_file: many_lints/member_ordering
 // ignore_for_file: many_lints/prefer_declaring_const_constructor
