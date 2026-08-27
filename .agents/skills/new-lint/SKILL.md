@@ -492,6 +492,40 @@ If no existing category fits, create a new directory AND add a matching `autogen
 Add `<lint_name>` exactly once to the matching category in
 `docs/scripts/generate-rule-pages.mjs`, even when the category already exists.
 
+### Write it plainly
+
+The reader is a programmer looking up why a warning fired and how to clear it.
+Answer that, then stop.
+
+- **Short sentences, concrete words.** State what the rule reports, why it is a
+  bug, and what to write instead. One paragraph of rationale is usually enough;
+  three is an essay.
+- **No rhetoric.** "A repository's failures are part of its contract, not
+  exceptions" says nothing a reader can act on. "A method that throws does not
+  say so in its signature, so callers cannot see the failure coming" does.
+- **Cut every sentence that only restates the previous one.** If deleting a
+  sentence loses no information, it was padding.
+- **Examples must be real code, not descriptions of code.** A body commented
+  `// 30 statements` demonstrates nothing and — since the rule counts
+  statements — would not even be reported. Write the statements.
+- **Examples must compile and be self-contained.** No calls to helpers that are
+  defined nowhere (`retry()`, `doWork()`, a bare `repository`), no
+  `=> throw UnimplementedError()` standing in for the pipeline the page is
+  about. If the reader cannot follow it, neither can the test harness.
+- **Neutral domains.** A user repository, a shopping cart, an HTTP client,
+  config parsing. Not entities lifted from a particular app.
+- **Keep the Don't and Do a matched pair.** The Do block must fix the Don't
+  block, not answer a different question or quietly drop behaviour.
+- **Check the Do block against the other rules.** Advice that trips a sibling
+  rule is a bug: `handle_bloc_event_subclasses` once recommended `emit(state)`,
+  which `emit_new_bloc_state_instances` reports under the `core` preset.
+
+`test/docs_rule_examples_test.dart` runs the Don't block of every rule page
+through a real `PluginServer` and fails if the rule does not report on it, so a
+described-rather-than-written example will not pass CI. When the example needs a
+non-default option to be reported, say so in prose beside it — "With
+`max_imports: 5`" — and the harness will run that value.
+
 **Use this template** (match the format of existing pages):
 
 ```markdown

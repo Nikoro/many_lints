@@ -104,7 +104,7 @@ Quick summary:
 6. Assign the rule to a preset in `lib/src/presets.dart` (`coreRules`, `_recommendedOnlyRules`, or neither) — registering a rule does **not** switch it on
 7. Optionally create a fix in `lib/src/fixes/` extending `ResolvedCorrectionProducer`
 8. Create `test/<rule_name>_test.dart` extending `ManyLintsRuleTest` (from `test/many_lints_rule_test_base.dart`), **not** `AnalysisRuleTest`
-9. Create a documentation page in `docs/src/content/docs/docs/rules/<category>/`, stating which preset the rule belongs to
+9. Create a documentation page in `docs/src/content/docs/docs/rules/<category>/`, stating which preset the rule belongs to. Write it plainly — short sentences, real compiling examples, no rhetoric and no code described in comments; see [Write plainly](docs/AGENTS.md#write-plainly). The `## Don't` block is executed against the rule by `test/docs_rule_examples_test.dart`, so an example the rule does not report fails CI
 10. Create `example/lib/<lint_name>_example.dart` with bad/good/edge-case examples
 
 ## Rule Enablement (1.0.0)
