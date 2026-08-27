@@ -22,8 +22,8 @@ import '../ast_node_analysis.dart';
 ///
 /// ```dart
 /// final iterable = [1, 2, 3];
-/// final someList = [for(final e in iterable) e * 2];
-/// final someSet = {for(final e in iterable) e / 2};
+/// final someList = [for (final e in iterable) e * 2];
+/// final someSet = {for (final e in iterable) e / 2};
 /// ```
 class ConvertIterableMapToCollectionFor extends ResolvedCorrectionProducer {
   static const _assistKind = AssistKind(
@@ -99,7 +99,7 @@ class ConvertIterableMapToCollectionFor extends ResolvedCorrectionProducer {
               nodeWithCollect.offset,
               targetOffset - nodeWithCollect.offset,
             ),
-            '${collectKind.startDelimiter}for(final $parameter in ',
+            '${collectKind.startDelimiter}for (final $parameter in ',
           )
           ..addSimpleReplacement(
             SourceRange(targetEnd, nodeWithCollect.end - targetEnd),

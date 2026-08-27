@@ -61,7 +61,7 @@ void f() {
   final result = list.map((e) => e * 2).toList();
 }
 ''', 'map');
-    expect(result, contains('[for(final e in list) e * 2]'));
+    expect(result, contains('[for (final e in list) e * 2]'));
   }
 
   Future<void> test_mapToSet_arrowBody() async {
@@ -71,7 +71,7 @@ void f() {
   final result = list.map((e) => e * 2).toSet();
 }
 ''', 'map');
-    expect(result, contains('{for(final e in list) e * 2}'));
+    expect(result, contains('{for (final e in list) e * 2}'));
   }
 
   Future<void> test_mapWithoutCollect_defaultsToList() async {
@@ -81,7 +81,7 @@ void f() {
   final result = list.map((e) => e * 2);
 }
 ''', 'map');
-    expect(result, contains('[for(final e in list) e * 2]'));
+    expect(result, contains('[for (final e in list) e * 2]'));
   }
 
   Future<void> test_mapWithBlockBody() async {
@@ -91,7 +91,7 @@ void f() {
   final result = list.map((e) { return e * 2; }).toList();
 }
 ''', 'map');
-    expect(result, contains('[for(final e in list) e * 2]'));
+    expect(result, contains('[for (final e in list) e * 2]'));
   }
 
   Future<void> test_notApplicable_multipleStatements() async {
@@ -135,7 +135,7 @@ void f() {
   final result = list.map((e) => e * 2).toList();
 }
 ''', 'list.map');
-    expect(result, contains('[for(final e in list) e * 2]'));
+    expect(result, contains('[for (final e in list) e * 2]'));
   }
 
   Future<void> test_mapWithNamedParameter() async {
@@ -145,7 +145,7 @@ void f() {
   final result = items.map((item) => item.toString()).toList();
 }
 ''', 'map');
-    expect(result, contains('[for(final item in items) item.toString()]'));
+    expect(result, contains('[for (final item in items) item.toString()]'));
   }
 
   Future<void> test_notApplicable_noMethodInvocation() async {
