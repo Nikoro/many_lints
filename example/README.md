@@ -8,7 +8,7 @@ Add to your `analysis_options.yaml`:
 
 ```yaml
 plugins:
-  many_lints: ^1.1.0
+  many_lints: ^1.2.0
 ```
 
 ## Excluding paths per rule

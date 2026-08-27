@@ -71,10 +71,10 @@ void elapsedTimeIsFine(DateTime start) {
 enum LeadTime {
   oneMonthBefore;
 
-  Duration get offsetFromEvent => const Duration(days: 30);
+  Duration get offsetFromEvent => const .new(days: 30);
 }
 
-class Retention {
+abstract final class Retention {
   static const Duration window = Duration(days: 30);
 }
 

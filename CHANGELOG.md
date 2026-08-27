@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-08-27
+
 ### Added
 
 - Five assists narrowing a `flatMap` to the combinator that says what it does,
