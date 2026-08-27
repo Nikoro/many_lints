@@ -42,5 +42,5 @@ Review before making changes to unfamiliar areas.
 - [NOTE] [NOTE] `dart analyze <file>.yaml` does not validate analysis options
 - [GOTCHA] [CRITICAL] A regex over `LintCode(` silently captures a third of the rules
 - [NOTE] [NOTE] The SDK publishes its lint catalogue as machine-readable JSON
-- [GOTCHA] [CRITICAL] `dart analyze <dir>` drops plugin diagnostics on a cache hit
+- [GOTCHA] [CRITICAL] Dart 3.13.1 can exit before plugin diagnostics arrive
 - [GOTCHA] [GOTCHA] The mock SDK's `Iterable` declares no `reduce`

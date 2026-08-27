@@ -8,7 +8,7 @@ sidebar:
   label: prefer_and_then
 ---
 
-<span class="rule-badge rule-badge--version">v1.1.0</span>
+<span class="rule-badge rule-badge--version">v1.2.0</span>
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">fpdart</span>

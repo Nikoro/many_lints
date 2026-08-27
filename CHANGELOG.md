@@ -59,6 +59,11 @@
   Each default is pinned to its declaring package (`flutter`, `mocktail` /
   `mockito`, `test_api`), so a project class named `Mock` or `Fake` — ordinary
   English words — cannot silently switch the rule off for its subtree.
+- `avoid_dst_unsafe_date_arithmetic` now follows a `Duration` through constants,
+  local variables and getters declared in the analyzed library. Calendar-day
+  shifts hidden behind names such as `leadTime.offsetFromEvent` are therefore
+  checked just like an inline `Duration(days: ...)`; unresolved or dependency
+  getters stay silent rather than being guessed at.
 
 ### Fixed
 

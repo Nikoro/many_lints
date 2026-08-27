@@ -72,6 +72,13 @@ rules:
 
 > **Important**: After any change to the `plugins` section, you must restart the Dart Analysis Server.
 
+> **Known issue — Dart 3.13.1:** `dart analyze` can finish before plugin
+> diagnostics arrive. Until using a Dart SDK containing the upstream fix, batch
+> explicit files and include a canary that must produce a Many Lints diagnostic
+> in every batch; batching alone only reduces the race window. IDE diagnostics
+> are not affected by this CLI completion race. See the
+> [upstream fix](https://github.com/dart-lang/sdk/commit/f0c0ab967e9d3f85d73b3fcd13da29a0277daa01).
+
 ### Presets
 
 Presets are cumulative: moving right only adds rules.

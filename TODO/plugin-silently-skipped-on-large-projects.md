@@ -1,8 +1,101 @@
-# `dart analyze` drops plugin diagnostics on a cache hit, and again past ~800 file arguments
+# Dart 3.13.1 `dart analyze` can exit before plugin diagnostics arrive
 
 **Reported:** 2026-08-26 (found while migrating a Flutter app's bash quality gates to lints)
-**Status:** OPEN — two independent triggers, both upstream (see Diagnosis 2026-08-26 and Correction 2026-08-27)
-**Affects:** every rule — an upstream analysis-server cache bug, not this package
+**Status:** CLOSED — fixed on Dart SDK `main`; Dart 3.13.1 remains affected
+**Affects:** every rule — an upstream `dart analyze` completion race, not this package
+
+## Final diagnosis 2026-08-27 — one race explains every observation
+
+The cache-hit theory and the ~800-file theory below are both wrong. They are
+useful records of the measurements that exposed the problem, but neither names
+the mechanism. There is one underlying bug in Dart 3.13.1:
+
+> `dart analyze` shuts down the analysis server when the server's own analysis
+> becomes idle, without waiting for analyzer-plugin analysis to become idle.
+
+The plugin is not skipped, detached, evicted, or served from a cache that lost
+its diagnostics. It is still working when the CLI closes its process. Whether
+its diagnostics appear is a race between the analyzer and the plugin.
+
+### Source proof in the exact shipped SDK
+
+The local Dart 3.13.1 SDK reports revision
+`852b3e3608906afbe6102573cfd4407aeedd1b78`. At that revision:
+
+1. `pkg/dartdev/lib/src/commands/analyze.dart` awaits
+   `server.analysisFinished` and immediately calls `server.shutdown()`.
+2. `pkg/dartdev/lib/src/analysis_server.dart` completes `analysisFinished`
+   solely from `server.status` notifications.
+3. Plugins publish their work state separately as `plugin.status`. The
+   `analysis_server_plugin` server emits `isAnalyzing: true/false`, but the
+   Dart 3.13.1 CLI never waits for that stream.
+
+This is the completion-semantics bug already described by
+[`dart-lang/sdk#38407`](https://github.com/dart-lang/sdk/issues/38407). It also
+explains why every apparent trigger changed with the fixture:
+
+- A warm analysis-driver cache makes the analyzer finish sooner, widening the
+  window in which the plugin loses the race. The cache does not omit plugin
+  diagnostics; it changes the timing.
+- A large file list gives the plugin more work. The observed 800–850 cliff was
+  the crossing point on one real Flutter project, not a file-count limit.
+- Small batches give each plugin invocation less work, so they usually win.
+  That is why explicit files and `-n 400` looked like deterministic fixes.
+- The synthetic 4002-file fixture was cheaper for the plugin than the real
+  Flutter project, so the plugin won every run despite having more files.
+
+This also resolves the apparent contradiction between “twelve files fail” and
+“4002 files pass”: neither count determines correctness. Relative completion
+time does.
+
+### Upstream fix
+
+Dart SDK commit
+[`f0c0ab967e`](https://github.com/dart-lang/sdk/commit/f0c0ab967e9d3f85d73b3fcd13da29a0277daa01)
+(`2026-08-10`, `[dartdev] Switch 'dart analyze' to use LSP instead of the legacy
+protocol`) replaces the racy wait with `workspaceAnalysisComplete()`.
+
+That LSP handler waits for all of the following, in order:
+
+1. analysis-context rebuilds;
+2. the analyzer driver scheduler to become idle;
+3. plugin initialization to complete;
+4. `plugin.status` to report that plugin analysis is no longer running.
+
+The SDK has integration coverage for both the normal call and the worst-case
+call made immediately after initialization; each asserts that a plugin's
+diagnostic is present after `workspaceAnalysisComplete()` returns.
+
+The commit is on Dart SDK `main` but is **not an ancestor of the Dart 3.13.1
+revision**, despite its earlier calendar date. Dart 3.13.1 therefore remains
+affected. Do not claim a released fixed version until that version is verified
+directly.
+
+### Workaround for Dart 3.13.1
+
+Keep the batching workaround, but describe it honestly: it reduces the chance
+of losing the race; it does not create a protocol guarantee.
+
+```sh
+git ls-files -z '*.dart' | xargs -0 -n 400 dart analyze --fatal-infos
+```
+
+A CI gate must also include the canary file in **every batch** and fail that
+batch when the canary diagnostic is absent. Prove the canary in a one-file
+invocation first. Checking it only once does not protect later batches. The
+canary is the only part that turns this silent race into a deterministic
+failure on affected SDKs.
+
+### Acceptance test
+
+The upstream acceptance test must use a deliberately slow plugin, call the
+completion request immediately after initialization, and assert that the
+plugin diagnostic arrives before the request completes. Repeating real-world
+`dart analyze` invocations is useful as a smoke test, but timing-dependent by
+construction and cannot prove the race is closed.
+
+The rest of this file is the investigation log. Its intermediate diagnoses are
+retained to show which measurements were misleading and why.
 
 ## What happens
 
@@ -387,8 +480,9 @@ canary method: drop `class Manager` into it, confirm it fires on a one-file
 invocation, then re-run the exact failing command and check whether the canary
 survives. That distinguishes the three candidates above in a few minutes and, if
 it fails there, gives a repro against something the SDK team can be pointed at.
-Until then this stays OPEN and unreproduced, and the batched workaround stays in
-place because it costs nothing.
+At that stage the report remained open and unreproduced, and the batched
+workaround stayed in place because it cost nothing. The final diagnosis at the
+top of this file supersedes that conclusion.
 
 Environment: Dart 3.13.1, macOS x64 (Intel), many_lints at HEAD, plugin resolved
 to analysis_server_plugin 0.3.20. Fixture is disposable and was not committed.

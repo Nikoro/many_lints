@@ -70,43 +70,25 @@ Filter by `state` before comparing: only `stable` and `deprecated` rules can dis
 
 ---
 
-### [GOTCHA] [CRITICAL] `dart analyze <dir>` drops plugin diagnostics on a cache hit
+### [GOTCHA] [CRITICAL] Dart 3.13.1 can exit before plugin diagnostics arrive
 **Area:** verifying any rule against a real project; CI gates
 **Tags:** `#gotcha` `#tooling` `#testing`
-**Verified:** 2026-08-26 (Dart 3.13.1, analyzer 14.1.0, many_lints 1.1.0)
+**Verified:** 2026-08-27 (Dart 3.13.1 revision `852b3e3608`)
 
 **Symptom:** the same `dart analyze --fatal-infos` alternates between reporting 1002 findings and `No issues found!` on an unchanged project. Exit code is 0 in the silent case. The only tell is wall-clock: ~113s when the plugin runs, ~18s when it does not.
 
-**This is not a race, a timeout, or a size limit.** It is fully deterministic once the trigger is known, and it is not about scale — a twelve-file directory fails exactly like a 731-file `lib/`.
+**Cause:** this is a completion race, not a cache bug or a file-count limit. Dart 3.13.1's `AnalyzeCommand` awaits `AnalysisServer.analysisFinished`, which is driven only by the analyzer's `server.status`, then immediately shuts the server down. Plugin work reports its lifecycle separately through `plugin.status`; the CLI does not wait for it. If the analyzer becomes idle first, pending plugin diagnostics die with the process.
 
-**The rule:** invoked with a **directory** (or no argument), `dart analyze` reports plugin diagnostics **only on the first run after the analysis-driver cache is invalidated**. Every run after that serves the file's cached result with the plugin's contribution missing. Invoked with **explicit file arguments**, the plugin runs every time.
+A warm cache and a large real project make the race easier to lose: the first makes analyzer work faster, while the second makes plugin work slower. That produced two convincing but false diagnoses during investigation — “directory cache hits always fail” and “explicit argument lists fail above ~800 files.” A 4002-file synthetic fixture disproved both. File count and invocation shape affect timing, not correctness.
 
-| Invocation | Plugin diagnostics |
-|---|---|
-| `dart analyze path/to/file.dart` | every run |
-| `dart analyze a.dart b.dart` | every run |
-| `dart analyze lib/core/presentation` (12 files) | first run only |
-| `dart analyze` (package root) | first run only |
+**Upstream fix:** Dart SDK commit `f0c0ab967e` switches `dart analyze` to LSP `workspaceAnalysisComplete()`. That handler waits for context rebuilds, analyzer-driver idle, plugin initialization, and finally `plugin.status == false`. Integration tests cover a plugin diagnostic even when the completion request is sent immediately after initialization. The commit is on SDK `main`, but is not part of Dart 3.13.1; verify the first released fixed version before documenting one.
 
-**The control that proves it** — one probe file carrying an SDK diagnostic *and* two plugin diagnostics, three consecutive no-arg runs, nothing edited between them:
+**Consequences for this repo's workflow:**
 
-```
-run 1: unused_local_variable   prefer_overriding_parent_equality   prefer_type_over_var
-run 2: unused_local_variable
-run 3: unused_local_variable
-```
-
-The SDK warning survives; both plugin diagnostics vanish after the first run. The file is still analyzed and its cache entry still read — only the plugin's output is absent from the cached result.
-
-**What invalidates:** only a change to the *set of files*. Creating a file makes the next run report it; after that, another run is silent, `touch` is silent, and **editing the file's contents is still silent**. Deleting `~/.dartServer/.analysis-driver` resets it, which is what makes cold-vs-warm timing (93s vs 18s) look like an attachment race. The timing is cache population; it correlates without causing.
-
-**Upstream, not ours.** Nothing in this package can fix it — the plugin is never asked. Needs a `dart-lang/sdk` issue against the analysis-driver caching path.
-
-**Consequences for this repo's workflow, and they are the point:**
-
-1. **Never verify a rule against a real project with a bare `dart analyze`.** Pass explicit files: `git ls-files -z '*.dart' | xargs -0 dart analyze --fatal-infos`. A 69 KB file list is one invocation, well under the 1 MB `ARG_MAX`.
-2. **Never trust a clean run as evidence.** Drop in a probe file that *must* report, confirm it does, then remove it. Three separate investigations here concluded "the codebase is clean" when the run had silently skipped every rule.
-3. **A bug report saying "the rule reports nothing in my project" is suspect until re-checked with explicit files.** `banned-usage-misses-top-level-functions.md` was filed on exactly this symptom; the rule worked fine and gave 14 findings once verified properly.
+1. On Dart 3.13.1, batch explicit files well below the observed slow-project cliff: `git ls-files -z '*.dart' | xargs -0 -n 400 dart analyze --fatal-infos`. Batching reduces the race window but is not a correctness guarantee.
+2. **Never trust a clean run without a canary.** Keep a file that must produce a plugin diagnostic, prove it fires alone, include it in every batch, and fail that batch when it is absent. Checking the canary once does not protect later invocations. This is the only deterministic consumer-side guard on an affected SDK.
+3. **Do not diagnose from file count, cache state, or command shape.** Re-check with the canary and inspect the SDK version. The same race can make any of those correlations look absolute on one project and disappear on another.
+4. Once using an SDK that contains `f0c0ab967e`, validate both a deliberately slow plugin and an immediate completion request before removing the canary.
 
 ---
 
