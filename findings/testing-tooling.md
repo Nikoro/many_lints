@@ -70,22 +70,22 @@ Filter by `state` before comparing: only `stable` and `deprecated` rules can dis
 
 ---
 
-### [GOTCHA] [CRITICAL] Dart 3.13.1 can exit before plugin diagnostics arrive
+### [GOTCHA] [CRITICAL] Dart 3.13.1–3.13.2 can exit before plugin diagnostics arrive
 **Area:** verifying any rule against a real project; CI gates
 **Tags:** `#gotcha` `#tooling` `#testing`
-**Verified:** 2026-08-27 (Dart 3.13.1 revision `852b3e3608`)
+**Verified:** 2026-08-27 (Dart 3.13.1 revision `852b3e3608`; Dart 3.13.2 revision `60a57cd42d`)
 
 **Symptom:** the same `dart analyze --fatal-infos` alternates between reporting 1002 findings and `No issues found!` on an unchanged project. Exit code is 0 in the silent case. The only tell is wall-clock: ~113s when the plugin runs, ~18s when it does not.
 
-**Cause:** this is a completion race, not a cache bug or a file-count limit. Dart 3.13.1's `AnalyzeCommand` awaits `AnalysisServer.analysisFinished`, which is driven only by the analyzer's `server.status`, then immediately shuts the server down. Plugin work reports its lifecycle separately through `plugin.status`; the CLI does not wait for it. If the analyzer becomes idle first, pending plugin diagnostics die with the process.
+**Cause:** this is a completion race, not a cache bug or a file-count limit. Dart 3.13.1 and 3.13.2's `AnalyzeCommand` awaits `AnalysisServer.analysisFinished`, which is driven only by the analyzer's `server.status`, then immediately shuts the server down. Plugin work reports its lifecycle separately through `plugin.status`; the CLI does not wait for it. If the analyzer becomes idle first, pending plugin diagnostics die with the process.
 
 A warm cache and a large real project make the race easier to lose: the first makes analyzer work faster, while the second makes plugin work slower. That produced two convincing but false diagnoses during investigation — “directory cache hits always fail” and “explicit argument lists fail above ~800 files.” A 4002-file synthetic fixture disproved both. File count and invocation shape affect timing, not correctness.
 
-**Upstream fix:** Dart SDK commit `f0c0ab967e` switches `dart analyze` to LSP `workspaceAnalysisComplete()`. That handler waits for context rebuilds, analyzer-driver idle, plugin initialization, and finally `plugin.status == false`. Integration tests cover a plugin diagnostic even when the completion request is sent immediately after initialization. The commit is on SDK `main`, but is not part of Dart 3.13.1; verify the first released fixed version before documenting one.
+**Upstream fix:** Dart SDK commit `f0c0ab967e` switches `dart analyze` to LSP `workspaceAnalysisComplete()`. That handler waits for context rebuilds, analyzer-driver idle, plugin initialization, and finally `plugin.status == false`. Integration tests cover a plugin diagnostic even when the completion request is sent immediately after initialization. The commit is on SDK `main`, but is not part of Dart 3.13.1 or 3.13.2; verify the first released fixed version before documenting one. Four consecutive analyses on 3.13.2 happened to return the same 702 diagnostics, but the exact shipped source still contains the race, so successful repetitions are only a smoke test.
 
 **Consequences for this repo's workflow:**
 
-1. On Dart 3.13.1, batch explicit files well below the observed slow-project cliff: `git ls-files -z '*.dart' | xargs -0 -n 400 dart analyze --fatal-infos`. Batching reduces the race window but is not a correctness guarantee.
+1. On Dart 3.13.1 or 3.13.2, batch explicit files well below the observed slow-project cliff: `git ls-files -z '*.dart' | xargs -0 -n 400 dart analyze --fatal-infos`. Batching reduces the race window but is not a correctness guarantee.
 2. **Never trust a clean run without a canary.** Keep a file that must produce a plugin diagnostic, prove it fires alone, include it in every batch, and fail that batch when it is absent. Checking the canary once does not protect later invocations. This is the only deterministic consumer-side guard on an affected SDK.
 3. **Do not diagnose from file count, cache state, or command shape.** Re-check with the canary and inspect the SDK version. The same race can make any of those correlations look absolute on one project and disappear on another.
 4. Once using an SDK that contains `f0c0ab967e`, validate both a deliberately slow plugin and an immediate completion request before removing the canary.

@@ -1,14 +1,14 @@
-# Dart 3.13.1 `dart analyze` can exit before plugin diagnostics arrive
+# Dart 3.13.1–3.13.2 `dart analyze` can exit before plugin diagnostics arrive
 
 **Reported:** 2026-08-26 (found while migrating a Flutter app's bash quality gates to lints)
-**Status:** CLOSED — fixed on Dart SDK `main`; Dart 3.13.1 remains affected
+**Status:** CLOSED — fixed on Dart SDK `main`; Dart 3.13.1 and 3.13.2 remain affected
 **Affects:** every rule — an upstream `dart analyze` completion race, not this package
 
 ## Final diagnosis 2026-08-27 — one race explains every observation
 
 The cache-hit theory and the ~800-file theory below are both wrong. They are
 useful records of the measurements that exposed the problem, but neither names
-the mechanism. There is one underlying bug in Dart 3.13.1:
+the mechanism. There is one underlying bug in Dart 3.13.1 and 3.13.2:
 
 > `dart analyze` shuts down the analysis server when the server's own analysis
 > becomes idle, without waiting for analyzer-plugin analysis to become idle.
@@ -20,7 +20,8 @@ its diagnostics appear is a race between the analyzer and the plugin.
 ### Source proof in the exact shipped SDK
 
 The local Dart 3.13.1 SDK reports revision
-`852b3e3608906afbe6102573cfd4407aeedd1b78`. At that revision:
+`852b3e3608906afbe6102573cfd4407aeedd1b78`. Dart 3.13.2 reports revision
+`60a57cd42d64dc03e9f07aa60a2e250755c1ef28`. At both revisions:
 
 1. `pkg/dartdev/lib/src/commands/analyze.dart` awaits
    `server.analysisFinished` and immediately calls `server.shutdown()`.
@@ -28,7 +29,7 @@ The local Dart 3.13.1 SDK reports revision
    solely from `server.status` notifications.
 3. Plugins publish their work state separately as `plugin.status`. The
    `analysis_server_plugin` server emits `isAnalyzing: true/false`, but the
-   Dart 3.13.1 CLI never waits for that stream.
+   The CLI never waits for that stream.
 
 This is the completion-semantics bug already described by
 [`dart-lang/sdk#38407`](https://github.com/dart-lang/sdk/issues/38407). It also
@@ -66,12 +67,25 @@ The SDK has integration coverage for both the normal call and the worst-case
 call made immediately after initialization; each asserts that a plugin's
 diagnostic is present after `workspaceAnalysisComplete()` returns.
 
-The commit is on Dart SDK `main` but is **not an ancestor of the Dart 3.13.1
-revision**, despite its earlier calendar date. Dart 3.13.1 therefore remains
+The commit is on Dart SDK `main` but is absent from both released revisions,
+despite its earlier calendar date. Dart 3.13.1 and 3.13.2 therefore remain
 affected. Do not claim a released fixed version until that version is verified
 directly.
 
-### Workaround for Dart 3.13.1
+### Dart 3.13.2 verification
+
+Flutter 3.47.2 ships Dart 3.13.2 revision `60a57cd42d64dc03e9f07aa60a2e250755c1ef28`.
+The exact revision's `pkg/dartdev/lib/src/commands/analyze.dart` still awaits
+`server.analysisFinished` and then immediately calls `server.shutdown()`. It
+does not use `workspaceAnalysisComplete()`.
+
+Four consecutive warm-cache analyses of this repository's Flutter example all
+reported the same 702 diagnostics, including eight `prefer_type_over_var`
+canaries. That is a useful smoke test, but it does not close a timing race. The
+source still has the faulty completion semantics, so 3.13.2 must be treated as
+affected even when repeated local runs happen to pass.
+
+### Workaround for Dart 3.13.1 and 3.13.2
 
 Keep the batching workaround, but describe it honestly: it reduces the chance
 of losing the race; it does not create a protocol guarantee.
