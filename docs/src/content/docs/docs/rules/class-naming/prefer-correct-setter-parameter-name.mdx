@@ -23,13 +23,21 @@ This rule is in the **`pedantic`** preset.
 ## Don't
 
 ```dart
-set width(int newValue) => _width = newValue;
+class TableColumn {
+  int _width = 0;
+
+  set width(int newValue) => _width = newValue;
+}
 ```
 
 ## Do
 
 ```dart
-set width(int value) => _width = value;
+class TableColumn {
+  int _width = 0;
+
+  set width(int value) => _width = value;
+}
 ```
 
 ## Enabling this rule

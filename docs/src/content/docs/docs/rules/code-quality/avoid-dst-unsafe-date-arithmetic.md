@@ -43,30 +43,31 @@ The `DateTime` constructor normalises out-of-range components against the calend
 ## Don't
 
 ```dart
-// Shifts by 24 absolute hours, not by a calendar day
-final tomorrow = today.add(const Duration(days: 1));
-
-// Same bug written differently
-final inTwoDays = today.add(const Duration(hours: 48));
-
-// A week filter that is an hour short twice a year
-final weekAgo = now.subtract(const Duration(days: 7));
-
-// A name is not a defence: this is the shape the defect survives in
 enum LeadTime {
   oneMonthBefore;
 
   Duration get offsetFromEvent => const Duration(days: 30);
 }
 
-final fireAt = occurrence.subtract(leadTime.offsetFromEvent);
+// Shifts by 24 absolute hours, not by a calendar day.
+DateTime nextDue(DateTime today) => today.add(const Duration(days: 1));
+
+// The same bug written differently.
+DateTime inTwoDays(DateTime today) => today.add(const Duration(hours: 48));
+
+// A week filter that is an hour short twice a year.
+DateTime windowStart(DateTime now) => now.subtract(const Duration(days: 7));
+
+// A name is not a defence: this is the shape the defect survives in.
+DateTime reminderFor(DateTime occurrence, LeadTime leadTime) =>
+    occurrence.subtract(leadTime.offsetFromEvent);
 ```
 
 ## Do
 
 ```dart
-// Calendar arithmetic: the constructor normalises against real days
-final tomorrow = DateTime(
+// Calendar arithmetic: the constructor normalises against real days.
+DateTime nextDue(DateTime today) => DateTime(
   today.year,
   today.month,
   today.day + 1,
@@ -74,8 +75,25 @@ final tomorrow = DateTime(
   today.minute,
 );
 
-// Or work in UTC, which has no transitions
-final weekAgo = now.toUtc().subtract(const Duration(days: 7));
+DateTime inTwoDays(DateTime today) => DateTime(
+  today.year,
+  today.month,
+  today.day + 2,
+  today.hour,
+  today.minute,
+);
+
+DateTime windowStart(DateTime now) => DateTime(
+  now.year,
+  now.month,
+  now.day - 7,
+  now.hour,
+  now.minute,
+);
+
+// Or work in UTC, which has no transitions.
+DateTime reminderFor(DateTime occurrence) =>
+    occurrence.toUtc().subtract(const Duration(days: 30));
 ```
 
 For anything more involved than shifting a day, use [`package:timezone`](https://pub.dev/packages/timezone), which models real zone rules.

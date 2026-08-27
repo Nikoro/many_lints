@@ -28,11 +28,13 @@ A type matches whether it is reached by `extends`, `implements`, `with`, or an i
 
 ## Don't
 
+With `entries: [{type: Repository, prefix: Db}]`:
+
 ```dart
 abstract class Repository {}
 
-// With an entry requiring the 'Db' prefix for implementations of Repository:
-class UserRepository implements Repository {}  // LINT
+// Implements Repository, but the name does not start with `Db`.
+class UserRepository implements Repository {}
 ```
 
 ## Do

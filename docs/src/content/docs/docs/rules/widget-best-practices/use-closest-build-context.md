@@ -24,32 +24,40 @@ Using the wrong `BuildContext` can cause lookups like `Theme.of(context)` or `Na
 ## Don't
 
 ```dart
-class MyWidget extends StatelessWidget {
+class OrderPage extends StatelessWidget {
+  const OrderPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Builder(
       builder: (_) {
-        // Uses the outer context instead of the Builder's own context
-        return _buildChild(context);
+        // Uses the outer context instead of the Builder's own
+        return _label(context);
       },
     );
   }
+
+  Widget _label(BuildContext context) => const Text('Order');
 }
 ```
 
 ## Do
 
 ```dart
-class MyWidget extends StatelessWidget {
+class OrderPage extends StatelessWidget {
+  const OrderPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Builder(
-      builder: (context) {
+      builder: (innerContext) {
         // Uses the Builder's own context
-        return _buildChild(context);
+        return _label(innerContext);
       },
     );
   }
+
+  Widget _label(BuildContext context) => const Text('Order');
 }
 ```
 

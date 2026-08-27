@@ -31,37 +31,57 @@ Not to be confused with `avoid_returning_widgets`, which is about a function *re
 ## Don't
 
 ```dart
-final button = ElevatedButton(
-  onPressed: () {
-    print('validating');
-    print('saving');
-    print('closing');
-    print('done');
-  },
-  child: const Text('Save'),
-);
+class CheckoutForm extends StatelessWidget {
+  const CheckoutForm({super.key, required this.cart});
+
+  final List<String> cart;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: () {
+        final total = cart.length;
+        final code = cart.isEmpty ? 'EMPTY' : cart.first;
+        final receipt = 'order $code x$total';
+        print(receipt);
+      },
+      child: const Text('Place order'),
+    );
+  }
+}
 ```
 
 ## Do
 
 ```dart
-void _save() {
-  print('validating');
-  print('saving');
-  print('closing');
-  print('done');
+class CheckoutForm extends StatelessWidget {
+  const CheckoutForm({super.key, required this.cart});
+
+  final List<String> cart;
+
+  void _placeOrder() {
+    final total = cart.length;
+    final code = cart.isEmpty ? 'EMPTY' : cart.first;
+    final receipt = 'order $code x$total';
+    print(receipt);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: _placeOrder,
+      child: const Text('Place order'),
+    );
+  }
 }
+```
 
-// The tree stays readable and the behaviour has a name.
-final button = ElevatedButton(
-  onPressed: _save,
-  child: const Text('Save'),
-);
+A short closure is a tear-off in all but spelling, so it is never reported:
 
-// A short closure is a tear-off in all but spelling — never reported.
-final shortButton = ElevatedButton(
-  onPressed: () => print('save'),
-  child: const Text('Save'),
+```dart
+TextButton(
+  onPressed: () => print('order placed'),
+  child: const Text('Place order'),
 );
 ```
 

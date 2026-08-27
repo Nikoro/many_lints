@@ -28,19 +28,21 @@ Only the provably-ignored case is reported. A callback that reads its parameter 
 ## Don't
 
 ```dart
+TaskEither<String, Unit> clearSession() => TaskEither.of(unit);
+TaskEither<String, Unit> logout() => TaskEither.of(unit);
+
 // The callback ignores its argument, so the name says less than it could.
-resetter.reset().flatMap((_) => authRepository.logout());
+TaskEither<String, Unit> reset() => clearSession().flatMap((_) => logout());
 
 // A named parameter nothing reads is the same situation.
-catalog.clear().flatMap((value) => catalog.seed());
+TaskEither<String, Unit> resetNamed() =>
+    clearSession().flatMap((value) => logout());
 ```
 
 ## Do
 
 ```dart
-resetter.reset().andThen(authRepository.logout);
-
-catalog.clear().andThen(catalog.seed);
+TaskEither<String, Unit> reset() => clearSession().andThen(logout);
 ```
 
 ## Not reported
@@ -48,14 +50,17 @@ catalog.clear().andThen(catalog.seed);
 A callback that uses its parameter is a real `flatMap`, and converting it would discard a value the next step depends on:
 
 ```dart
-pipeline.flatMap((value) => parse(value));
+TaskEither<String, int> parse(String raw) => TaskEither.of(raw.length);
+
+TaskEither<String, int> parsed(TaskEither<String, String> pipeline) =>
+    pipeline.flatMap((value) => parse(value));
 ```
 
 A block-bodied callback is a real function and is left alone:
 
 ```dart
-pipeline.flatMap((_) {
-  return next();
+TaskEither<String, Unit> reset() => clearSession().flatMap((_) {
+  return logout();
 });
 ```
 

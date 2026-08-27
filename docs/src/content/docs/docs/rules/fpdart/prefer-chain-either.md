@@ -22,26 +22,33 @@ In a decoding pipeline these steps come in runs — status check, decode, cast, 
 ## Don't
 
 ```dart
-pipeline.flatMap((body) => decode(body).toTaskEither());
+TaskEither<String, String> fetchBody() => TaskEither.of('{"id":1}');
+
+Either<String, int> decode(String body) => Either.of(body.length);
+
+TaskEither<String, int> load() =>
+    fetchBody().flatMap((body) => decode(body).toTaskEither());
 ```
 
 ## Do
 
 ```dart
-pipeline.chainEither(decode);
+TaskEither<String, int> load() => fetchBody().chainEither(decode);
 ```
 
-The full ladder reads as a sequence of validators, each one an ordinary `Either`:
+A run of validators reads as a ladder, each rung an ordinary `Either`:
 
 ```dart
-TaskEither<Failure, Location> locationSearch(String query) =>
-    TaskEither<Failure, http.Response>.tryCatch(
-      () => _httpClient.get(uri),
-      (e, s) => Failure.from(e),
-    )
-        .chainEither(checkStatus)
-        .chainEither(decodeJson)
-        .chainEither(toLocation);
+Either<String, String> checkStatus(String body) => Either.of(body);
+
+Either<String, int> decodeJson(String body) => Either.of(body.length);
+
+Either<String, int> toId(int raw) => Either.of(raw);
+
+TaskEither<String, int> load() => fetchBody()
+    .chainEither(checkStatus)
+    .chainEither(decodeJson)
+    .chainEither(toId);
 ```
 
 ## Known limitations

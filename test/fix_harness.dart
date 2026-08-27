@@ -530,4 +530,95 @@ class ListView extends Widget {
     List<Widget> children = const [],
   });
 }
+
+abstract class BuildContext {}
+
+abstract class StatelessWidget extends Widget {
+  const StatelessWidget({super.key});
+  Widget build(BuildContext context);
+}
+
+abstract class StatefulWidget extends Widget {
+  const StatefulWidget({super.key});
+  State<StatefulWidget> createState();
+}
+
+abstract class State<T extends StatefulWidget> {
+  T get widget => throw '';
+  BuildContext get context => throw '';
+  bool get mounted => true;
+  void initState() {}
+  void didUpdateWidget(covariant T oldWidget) {}
+  void didChangeDependencies() {}
+  void dispose() {}
+  void setState(void Function() fn) {}
+  Widget build(BuildContext context);
+}
+
+class Builder extends Widget {
+  const Builder({super.key, required Widget Function(BuildContext) builder});
+}
+
+class TextButton extends Widget {
+  const TextButton({
+    super.key,
+    required void Function()? onPressed,
+    required Widget child,
+  });
+}
+
+class Checkbox extends Widget {
+  const Checkbox({
+    super.key,
+    required bool value,
+    required void Function(bool?)? onChanged,
+  });
+}
+
+void runApp(Widget app) {}
+
+class Color {
+  const Color(int value);
+}
+
+class Radius {
+  const Radius.circular(double radius);
+}
+
+class BorderRadius {
+  const BorderRadius.all(Radius radius);
+  const BorderRadius.circular(double radius);
+}
+
+class Border {
+  const Border.all({Color color = const Color(0xFF000000), double width = 1.0});
+}
+
+class EdgeInsets {
+  const EdgeInsets.all(double value);
+  const EdgeInsets.symmetric({double vertical = 0, double horizontal = 0});
+  const EdgeInsets.only({
+    double left = 0,
+    double top = 0,
+    double right = 0,
+    double bottom = 0,
+  });
+}
+
+class BoxDecoration {
+  const BoxDecoration({BorderRadius? borderRadius, Border? border});
+}
+
+class Padding extends Widget {
+  const Padding({super.key, required EdgeInsets padding, Widget? child});
+}
+
+class Container extends Widget {
+  const Container({
+    super.key,
+    EdgeInsets? padding,
+    BoxDecoration? decoration,
+    Widget? child,
+  });
+}
 ''';

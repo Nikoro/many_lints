@@ -26,14 +26,16 @@ The type-scoped form matters most for state management, where a file holding two
 
 ## Don't
 
+With `kinds: [class, mixin, enum, extension, extension_type]` (the default):
+
 ```dart
 // user.dart — three unrelated declarations in one file
 class User {}
 
-// This triggers the lint
-class UserRepository {}
+// The second declaration reports.
+class UserAccount {}
 
-// So does this
+// So does the third.
 enum UserRole { admin, guest }
 ```
 

@@ -28,21 +28,38 @@ The operator form of this mistake (`a == a`, `a < a`) is reported by [`avoid_equ
 ## Don't
 
 ```dart
-// Always 0 — the list keeps its original order.
-people.sort((a, b) => a.surname.compareTo(a.surname));
+class Person {
+  const Person(this.surname);
 
-if (current.compareTo(current) > 0) {
-  // unreachable
+  final String surname;
+}
+
+// Always 0, so the list keeps its original order.
+void sortBySurname(List<Person> people) {
+  people.sort((a, b) => a.surname.compareTo(a.surname));
+}
+
+// Always 0, so the branch is never taken.
+bool isLater(DateTime current, DateTime previous) {
+  return current.compareTo(current) > 0;
 }
 ```
 
 ## Do
 
 ```dart
-people.sort((a, b) => a.surname.compareTo(b.surname));
+class Person {
+  const Person(this.surname);
 
-if (current.compareTo(previous) > 0) {
-  advance();
+  final String surname;
+}
+
+void sortBySurname(List<Person> people) {
+  people.sort((a, b) => a.surname.compareTo(b.surname));
+}
+
+bool isLater(DateTime current, DateTime previous) {
+  return current.compareTo(previous) > 0;
 }
 ```
 

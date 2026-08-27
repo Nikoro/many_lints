@@ -24,21 +24,15 @@ When you write `return asyncOp()` inside a try-catch, the Future is returned to 
 ## Don't
 
 ```dart
-Future<String> badReturnInTry() async {
-  try {
-    // Exception from asyncOp() won't be caught
-    return asyncOp();
-  } catch (e) {
-    return 'fallback';
-  }
-}
+Future<String> fetchToken() async => 'token';
 
-Future<String> badReturnInCatch() async {
+Future<String> token() async {
   try {
-    throw Exception();
+    // fetchToken() completes after this function has already returned, so
+    // its exception never reaches the catch below.
+    return fetchToken();
   } catch (e) {
-    // Exception from asyncOp() won't be caught
-    return asyncOp();
+    return 'anonymous';
   }
 }
 ```
@@ -46,36 +40,24 @@ Future<String> badReturnInCatch() async {
 ## Do
 
 ```dart
-Future<String> goodReturnAwaitInTry() async {
-  try {
-    return await asyncOp();
-  } catch (e) {
-    return 'fallback';
-  }
-}
+Future<String> fetchToken() async => 'token';
 
-Future<String> goodReturnAwaitInCatch() async {
+Future<String> token() async {
   try {
-    throw Exception();
+    return await fetchToken();
   } catch (e) {
-    return await asyncOp();
-  }
-}
-
-// Returning Future outside try-catch is fine
-Future<String> goodReturnOutsideTryCatch() async {
-  return asyncOp();
-}
-
-// Non-async function returning Future in try-catch is fine
-Future<String> goodNonAsync() {
-  try {
-    return asyncOp();
-  } catch (e) {
-    return Future.value('fallback');
+    return 'anonymous';
   }
 }
 ```
+
+The same applies inside a `catch` clause: `return retry();` there escapes an
+outer try just as easily, so it needs the `await` too.
+
+Two shapes are deliberately not reported. Returning a Future outside any
+try-catch needs no `await` — the caller owns the error. And a non-`async`
+function has no try-catch scope to keep the Future inside, so returning it
+unawaited is the only option.
 
 ## Configuration
 

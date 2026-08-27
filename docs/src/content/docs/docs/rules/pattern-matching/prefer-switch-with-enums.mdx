@@ -27,6 +27,8 @@ The same blind spot applies to a condition that `||`-chains comparisons, and to 
 ## Don't
 
 ```dart
+enum Status { active, inactive, pending, archived }
+
 String describe(Status status) {
   if (status == Status.active) {
     return 'Active';
@@ -37,17 +39,21 @@ String describe(Status status) {
   }
   return '';
 }
+```
 
-// Comparisons combined with ||
-if (status == Status.active ||
-    status == Status.inactive ||
-    status == Status.pending) {
-  handle();
+Add `archived` to the enum and this function silently returns `''` for it. The
+same blind spot applies to comparisons joined by `||`, and to a membership test
+over a set literal:
+
+```dart
+bool isOpen(Status status) {
+  return status == Status.active ||
+      status == Status.inactive ||
+      status == Status.pending;
 }
 
-// Membership test over a literal set of constants
-if ({Status.active, Status.inactive, Status.pending}.contains(status)) {
-  handle();
+bool isKnown(Status status) {
+  return {Status.active, Status.inactive, Status.pending}.contains(status);
 }
 ```
 
@@ -58,10 +64,12 @@ String describe(Status status) => switch (status) {
   Status.active => 'Active',
   Status.inactive => 'Inactive',
   Status.pending => 'Pending',
+  Status.archived => '',
 };
 
-final handled = switch (status) {
+bool isOpen(Status status) => switch (status) {
   Status.active || Status.inactive || Status.pending => true,
+  Status.archived => false,
 };
 ```
 

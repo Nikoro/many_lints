@@ -34,11 +34,23 @@ This rule is in the **`pedantic`** preset: where to draw the line between a guar
 ## Don't
 
 ```dart
-void save(User user) {
-  if (user.isValid) {
-    normalize(user);
-    persist(user);
-    notify(user);
+class Order {
+  Order({required this.isPaid});
+
+  final bool isPaid;
+
+  void reserveStock() {}
+  void printLabel() {}
+  void dispatch() {}
+  void notifyCustomer() {}
+}
+
+void ship(Order order) {
+  if (order.isPaid) {
+    order.reserveStock();
+    order.printLabel();
+    order.dispatch();
+    order.notifyCustomer();
   }
 }
 ```
@@ -46,12 +58,13 @@ void save(User user) {
 ## Do
 
 ```dart
-void save(User user) {
-  if (!user.isValid) return;
+void ship(Order order) {
+  if (!order.isPaid) return;
 
-  normalize(user);
-  persist(user);
-  notify(user);
+  order.reserveStock();
+  order.printLabel();
+  order.dispatch();
+  order.notifyCustomer();
 }
 ```
 

@@ -22,16 +22,16 @@ Every relational operator has an exact opposite. Negating the comparison instead
 ## Don't
 
 ```dart
-if (!(count > limit)) {
-  accept();
+bool withinBudget(int lineCount, int limit) {
+  return !(lineCount > limit);
 }
 ```
 
 ## Do
 
 ```dart
-if (count <= limit) {
-  accept();
+bool withinBudget(int lineCount, int limit) {
+  return lineCount <= limit;
 }
 ```
 

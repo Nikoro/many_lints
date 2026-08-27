@@ -26,29 +26,42 @@ The win grows with the length of the chain: `context.dependOnInheritedWidgetOfEx
 
 ## Don't
 
+With `max_extra_occurrences: 0` (the default), the second occurrence reports:
+
 ```dart
-return Container(
-  // LINT: 'Theme.of(context)' is repeated 2 times in this block.
-  color: Theme.of(context).colorScheme.secondary,
-  child: Text(
-    'Text with a background color',
-    style: Theme.of(context).textTheme.bodyMedium,
-  ),
-);
+class Settings {
+  const Settings(this.timeoutSeconds, this.retries);
+
+  final int timeoutSeconds;
+  final int retries;
+}
+
+class Config {
+  static Config load(String path) => Config();
+
+  Settings get network => const Settings(30, 3);
+}
+
+class HttpClient {
+  int timeoutSeconds = 0;
+  int retries = 0;
+}
+
+void configure(HttpClient http, String path) {
+  http.timeoutSeconds = Config.load(path).network.timeoutSeconds;
+  http.retries = Config.load(path).network.retries;
+}
 ```
 
 ## Do
 
 ```dart
-final theme = Theme.of(context);
+void configure(HttpClient http, String path) {
+  final network = Config.load(path).network;
 
-return Container(
-  color: theme.colorScheme.secondary,
-  child: Text(
-    'Text with a background color',
-    style: theme.textTheme.bodyMedium,
-  ),
-);
+  http.timeoutSeconds = network.timeoutSeconds;
+  http.retries = network.retries;
+}
 ```
 
 ## What is not reported

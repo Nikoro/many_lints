@@ -27,8 +27,11 @@ Sometimes that is exactly right — a cached value, a display fallback, a genuin
 ## Don't
 
 ```dart
-final count = result.getOrElse((_) => 0);
-final other = result.getOrElse((failure) => 0);   // named, still discarded
+int retryCount(Either<String, int> result) => result.getOrElse((_) => 0);
+
+// Naming the parameter and then not reading it is the same discard.
+int otherCount(Either<String, int> result) =>
+    result.getOrElse((failure) => 0);
 ```
 
 ## Do
@@ -36,14 +39,15 @@ final other = result.getOrElse((failure) => 0);   // named, still discarded
 Use what you were given:
 
 ```dart
-final count = result.getOrElse((failure) => failure.fallbackCount);
+int retryCount(Either<String, int> result) =>
+    result.getOrElse((failure) => failure.length);
 ```
 
 Or fold explicitly, so the discard is on the page:
 
 ```dart
-final count = result.match((failure) {
-  log(failure);
+int retryCount(Either<String, int> result) => result.match((failure) {
+  print('load failed: $failure');
   return 0;
 }, (value) => value);
 ```

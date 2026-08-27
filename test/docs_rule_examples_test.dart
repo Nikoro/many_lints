@@ -114,13 +114,13 @@ void main() {
 
 /// The floor for how many pages this suite drives, raised as stubs grow.
 ///
-/// 151 of 261 pages are checked today. The rest are skipped for reasons
+/// 152 of 261 pages are checked today. The rest are skipped for reasons
 /// [_skipReason] names out loud, and the `coverage` test prints every one, so
 /// the gap is visible rather than implied. Most are rules keyed to Flutter,
 /// Riverpod, Bloc or hooks types the stubs do not carry: widening a stub moves
 /// pages from skipped to checked and this number goes up. Lowering it means
 /// coverage shrank, and needs a reason.
-const _minimumCheckedPages = 151;
+const _minimumCheckedPages = 152;
 
 /// Why [page] cannot be driven through the harness, or null when it can.
 String? _skipReason(_Page page) {
@@ -147,7 +147,7 @@ String? _skipReason(_Page page) {
     return 'rule keys on package:flutter types the stub does not carry';
   }
 
-  final ghost = _ghostIdentifiers.firstMatch(snippet)?.group(1);
+  final ghost = _undeclaredStandIn(snippet);
   if (ghost != null) return 'uses undeclared `$ghost`';
 
   final missing = _beyondMockSdk.firstMatch(snippet)?.group(1);
@@ -335,8 +335,12 @@ bool _mentionsFpdart(String? snippet) =>
 /// page. Those pages are skipped loudly rather than failed quietly — see the
 /// `unverifiable` test, which prints the list so it cannot grow unnoticed.
 const _unstubbed = <String, String>{
+  // `\w*Notifier` rather than `\bNotifier\b`: a page naming its own
+  // `MyNotifier` still needs the real `Notifier` supertype for
+  // `notifierChecker` to match, and matching only the bare word let such a
+  // page through to fail for a missing stub rather than be skipped.
   'riverpod':
-      r'@riverpod|\bNotifier\b|\bAsyncNotifier\b|\bRef\b|\bWidgetRef\b|'
+      r'@riverpod|\w*Notifier\b|\bRef\b|\bWidgetRef\b|'
       r'ConsumerWidget|ConsumerState|ProviderScope|\bref\.|\bAsyncValue\b|'
       r'\bAsyncData\b|\bAsyncLoading\b|\bAsyncError\b|\w+Provider\b',
   'bloc':
@@ -357,24 +361,65 @@ String? _unstubbedPackage(String? snippet) {
   return null;
 }
 
-/// Identifiers a snippet uses without declaring them.
+/// The first identifier a snippet leans on without declaring it, or null.
 ///
 /// This matters more than it looks. Most rules gate on a resolved type —
 /// `avoid_catch_error` checks `node.realTarget?.staticType` against
 /// `dart:async#Future` — so a receiver that resolves to nothing makes the rule
-/// correctly stay silent, and an assertion here would be blaming the page for
-/// the snippet's missing context rather than for its content.
+/// correctly stay silent, and an assertion would be blaming the page for
+/// missing context rather than for its content.
 ///
 /// It is also the machine-checkable form of the "ghost helper" complaint: a
 /// snippet calling `repository.fetch()` with no `repository` in sight is
-/// exactly what a reader cannot follow either. Pages listed here are the
-/// backlog for the rewrite; as ghosts are replaced with real declarations, the
-/// pages leave this list and start being verified.
-final _ghostIdentifiers = RegExp(
-  r'(?<![.\w$])(repository|logger|client|api|db|database|service|'
-  r'controller|notifier|bloc|cubit|store|cache|'
-  r'someProvider|myProvider|testOption|market)(?![\w$])',
-);
+/// exactly what a reader cannot follow either.
+///
+/// Declaration is read from the snippet itself rather than matched against a
+/// list of suspicious names. A fixed page that declares its own `client` must
+/// start being checked again — a name-based list would keep skipping it, and
+/// the skip is silent, so the page would look repaired while nothing verified
+/// it.
+String? _undeclaredStandIn(String snippet) {
+  const seeds = {
+    'repository',
+    'logger',
+    'client',
+    'api',
+    'db',
+    'database',
+    'service',
+    'controller',
+    'notifier',
+    'bloc',
+    'cubit',
+    'store',
+    'cache',
+    'someProvider',
+    'myProvider',
+    'testOption',
+    'market',
+  };
+
+  for (final seed in seeds) {
+    if (!RegExp('(?<![.\\w\$])$seed(?![\\w\$])').hasMatch(snippet)) continue;
+    // Declared as a variable, parameter, field, function or class in the
+    // snippet? Then it resolves, and the page is checkable.
+    final declared = RegExp(
+      '(?:'
+      r'(?:final|var|const|late)\s+(?:[\w<>,?\[\] ]+\s+)?'
+      '$seed\\b'
+      '|'
+      r'\b[A-Z][\w<>,?\[\]]*\??\s+'
+      '$seed\\s*[,)=;{]'
+      '|'
+      'class\\s+$seed\\b'
+      '|'
+      '$seed\\s*\\([^)]*\\)\\s*(?:async\\s*)?[{=]'
+      ')',
+    );
+    if (!declared.hasMatch(snippet)) return seed;
+  }
+  return null;
+}
 
 /// Whether the rule's own source pins `package:flutter` types.
 ///

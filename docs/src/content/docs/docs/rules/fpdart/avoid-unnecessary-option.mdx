@@ -25,8 +25,10 @@ fpdart's own author makes the same point: `Option<T>` and `T?` are not mutually 
 ## Don't
 
 ```dart
-final option = Option.fromNullable(name);
-final value = option.toNullable() ?? 'unknown';
+String _displayName(String? name) {
+  final option = Option.fromNullable(name);
+  return option.toNullable() ?? 'unknown';
+}
 ```
 
 ## Do
@@ -34,16 +36,16 @@ final value = option.toNullable() ?? 'unknown';
 Either drop the wrapper:
 
 ```dart
-final value = name ?? 'unknown';
+String _displayName(String? name) => name ?? 'unknown';
 ```
 
 Or earn it, by actually composing:
 
 ```dart
-final value = Option.fromNullable(name)
-    .map(deriveDisplayName)
-    .alt(() => some(defaultName))
-    .getOrElse(() => 'unknown');
+String _displayName(String? name) {
+  final option = Option.fromNullable(name);
+  return option.map((n) => n.toUpperCase()).getOrElse(() => 'unknown');
+}
 ```
 
 ## Known limitations

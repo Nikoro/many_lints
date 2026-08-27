@@ -24,26 +24,35 @@ The common shape is a copy-paste slip — two similarly named variables, one che
 ## Don't
 
 ```dart
-if (user != null) {
-  print(fallbackUser.name);   // `user` was checked, `fallbackUser` is used
+void greet(String? name, String fallbackName) {
+  // `name` was checked, `fallbackName` is used
+  if (name != null) {
+    print(fallbackName);
+  }
 }
 ```
 
-The inverted form has the same problem:
+The inverted form has the same problem — the `else` branch is the guarded one:
 
 ```dart
-if (user == null) {
-  return;
-} else {
-  print(fallbackUser.name);   // the else branch is the guarded one
+void greet(String? name, String fallbackName) {
+  if (name == null) {
+    print('anonymous');
+  } else {
+    print(fallbackName);
+  }
 }
 ```
 
 ## Do
 
 ```dart
-if (user != null) {
-  print(user.name);
+void greet(String? name, String fallbackName) {
+  if (name != null) {
+    print(name);
+  } else {
+    print(fallbackName);
+  }
 }
 ```
 

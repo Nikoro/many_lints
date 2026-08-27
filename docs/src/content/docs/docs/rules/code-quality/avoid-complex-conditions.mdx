@@ -26,20 +26,25 @@ This rule is in the **`pedantic`** preset: an operand budget is a house style.
 
 ## Don't
 
+With `max_operands: 3` (the default), this combines four:
+
 ```dart
-if (user.isActive && user.hasPaid && !user.isBanned && user.age > 18) {
-  grantAccess();
+bool canCheckOut(Account account) {
+  return account.isActive &&
+      account.hasPaidBalance &&
+      !account.isSuspended &&
+      account.age >= 18;
 }
 ```
 
 ## Do
 
 ```dart
-final isEligible = user.isActive && user.hasPaid;
-final isPermitted = !user.isBanned && user.age > 18;
+bool canCheckOut(Account account) {
+  final isInGoodStanding = account.isActive && account.hasPaidBalance;
+  final isPermitted = !account.isSuspended && account.age >= 18;
 
-if (isEligible && isPermitted) {
-  grantAccess();
+  return isInGoodStanding && isPermitted;
 }
 ```
 

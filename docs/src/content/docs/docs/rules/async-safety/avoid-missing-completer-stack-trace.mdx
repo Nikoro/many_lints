@@ -27,20 +27,28 @@ By default the rule only reports inside a catch clause that binds a stack-trace 
 ## Don't
 
 ```dart
-try {
-  await doWork();
-} catch (e, st) {
-  completer.completeError(e);   // `st` is discarded
+import 'dart:async';
+
+void parsePort(Completer<int> completer, String raw) {
+  try {
+    completer.complete(int.parse(raw));
+  } catch (e, st) {
+    completer.completeError(e); // `st` is discarded
+  }
 }
 ```
 
 ## Do
 
 ```dart
-try {
-  await doWork();
-} catch (e, st) {
-  completer.completeError(e, st);
+import 'dart:async';
+
+void parsePort(Completer<int> completer, String raw) {
+  try {
+    completer.complete(int.parse(raw));
+  } catch (e, st) {
+    completer.completeError(e, st);
+  }
 }
 ```
 

@@ -36,15 +36,34 @@ A call that resolves to no type parameters is never reported — asking for type
 
 ## Don't
 
+Assuming `showDialog` is in the configured `methods` list, it infers its type
+argument from what the builder pops — so a cancel path that pops without a value
+makes the whole call `Future<Null>`.
+
 ```dart
-// Infers Future<Null> if the builder pops without a value.
-final result = await showDialog((_) => const MyDialog());
+// package:flutter/material.dart, simplified to the signature that matters.
+Future<T?> showDialog<T>({required Object builder}) async => null;
+
+Future<void> confirmDelete() async {
+  final confirmed = await showDialog(builder: (Object? _) => 'Delete?');
+  if (confirmed == true) {
+    // Never reached: `confirmed` is statically Null.
+  }
+}
 ```
 
 ## Do
 
 ```dart
-final result = await showDialog<bool>((_) => const MyDialog());
+// package:flutter/material.dart, simplified to the signature that matters.
+Future<T?> showDialog<T>({required Object builder}) async => null;
+
+Future<void> confirmDelete() async {
+  final confirmed = await showDialog<bool>(builder: (Object? _) => 'Delete?');
+  if (confirmed == true) {
+    // Reached when the dialog pops `true`.
+  }
+}
 ```
 
 ## Options

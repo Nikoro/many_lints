@@ -24,6 +24,13 @@ Nothing about a missing `ProviderScope` fails to compile. The app builds, launch
 ## Don't
 
 ```dart
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) => const Text('Orders');
+}
+
 void main() {
   runApp(MyApp());
 }

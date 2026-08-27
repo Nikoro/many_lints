@@ -25,15 +25,27 @@ The value is the *message*. "Undefined name `Tuple2`" tells you something is wro
 ## Don't
 
 ```dart
-final pair = Tuple2(1, 'a');
-final isOdd = Predicate<int>((n) => n % 2 == 1);
+import 'package:fpdart/fpdart.dart';
+
+bool isEven(int n) => n % 2 == 0;
+
+void main() {
+  final pair = Tuple2(1, 'a');
+  final isOdd = Predicate<int>((n) => n % 2 == 1);
+}
 ```
 
 ## Do
 
 ```dart
-final pair = (1, 'a');           // Dart records replaced Tuple2
-final isOdd = isEven.negate;     // function extensions replaced Predicate
+import 'package:fpdart/fpdart.dart';
+
+bool isEven(int n) => n % 2 == 0;
+
+void main() {
+  final pair = (1, 'a');       // Dart records replaced Tuple2
+  final isOdd = isEven.negate; // function extensions replaced Predicate
+}
 ```
 
 The full 1.0.0 removals: `Tuple2`/`Tuple3` → records, `Predicate` → the function extensions (`negate`, `and`, `or`, `contramap`), `id`/`idFuture` → `identity`, `concatMap`/`bind`/`bindWithIndex` → `flatMap`, `plus` → `concat`, and the old `concat` → `flatten`.

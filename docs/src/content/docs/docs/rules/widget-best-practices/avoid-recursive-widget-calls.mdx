@@ -23,11 +23,13 @@ It is an easy mistake to make during a rename or a copy-paste: `return MyWidget(
 ## Don't
 
 ```dart
-class MyWidget extends StatelessWidget {
+class InvoiceCard extends StatelessWidget {
+  const InvoiceCard({super.key});
+
   @override
   Widget build(BuildContext context) {
     // Infinite recursion — crashes on mount
-    return MyWidget();
+    return const InvoiceCard();
   }
 }
 ```
@@ -35,21 +37,24 @@ class MyWidget extends StatelessWidget {
 ## Do
 
 ```dart
-class MyWidget extends StatelessWidget {
+class InvoiceCard extends StatelessWidget {
+  const InvoiceCard({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return const Text('Hello');
+    return const Text('Invoice');
   }
 }
 
 // Recursion with a terminating condition is fine
 class TreeNode extends StatelessWidget {
-  const TreeNode(this.depth);
+  const TreeNode(this.depth, {super.key});
+
   final int depth;
 
   @override
   Widget build(BuildContext context) {
-    if (depth == 0) return const SizedBox();
+    if (depth == 0) return const Text('leaf');
     return TreeNode(depth - 1);
   }
 }

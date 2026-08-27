@@ -26,28 +26,37 @@ That imperative shape is the exact thing `TaskEither` exists to delete. A body w
 
 ## Don't
 
+Each step is run on its own, so every result is unwrapped by hand and every
+failure branch rebuilt:
+
 ```dart
-Future<Either<Failure, Deal>> best() async {
-  final area = await getArea().run();
+TaskEither<String, int> currentUserId() => TaskEither.of(7);
 
-  if (area case Right(value: final a)) {
-    final restaurant = await getRestaurant(a.id).run();
+TaskEither<String, int> latestOrderId(int userId) => TaskEither.of(42);
 
-    return switch (restaurant) {
-      Right(value: final r) => await getDeal(r.id).run(),
-      Left() => Left(const RestaurantFailure()),  // original failure lost
+TaskEither<String, double> invoiceTotal(int orderId) => TaskEither.of(19.99);
+
+Future<Either<String, double>> total() async {
+  final userId = await currentUserId().run();
+
+  if (userId case Right(value: final id)) {
+    final orderId = await latestOrderId(id).run();
+
+    return switch (orderId) {
+      Right(value: final order) => await invoiceTotal(order).run(),
+      Left() => Left('no order'), // the original failure is lost
     };
   }
-  return Left(const AreaFailure());
+  return Left('no user');
 }
 ```
 
 ## Do
 
 ```dart
-TaskEither<Failure, Deal> best() => getArea()
-    .flatMap((area) => getRestaurant(area.id))
-    .flatMap((restaurant) => getDeal(restaurant.id));
+TaskEither<String, double> total() => currentUserId()
+    .flatMap(latestOrderId)
+    .flatMap(invoiceTotal);
 ```
 
 Flat regardless of step count, no manual unwrapping, and the original failure propagates untouched. Run it once at the boundary that renders the outcome.

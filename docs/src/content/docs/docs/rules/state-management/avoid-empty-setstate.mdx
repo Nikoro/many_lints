@@ -29,20 +29,48 @@ Putting the mutation inside the callback fixes all three and costs nothing.
 ## Don't
 
 ```dart
-void increment() {
-  _counter++;
-  // The rebuild request is detached from the change
-  setState(() {});
+class Counter extends StatefulWidget {
+  const Counter({super.key});
+
+  @override
+  State<Counter> createState() => _CounterState();
+}
+
+class _CounterState extends State<Counter> {
+  int _count = 0;
+
+  void _increment() {
+    _count++;
+    // The rebuild request is detached from the change
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) => Text('$_count');
 }
 ```
 
 ## Do
 
 ```dart
-void increment() {
-  setState(() {
-    _counter++;
-  });
+class Counter extends StatefulWidget {
+  const Counter({super.key});
+
+  @override
+  State<Counter> createState() => _CounterState();
+}
+
+class _CounterState extends State<Counter> {
+  int _count = 0;
+
+  void _increment() {
+    setState(() {
+      _count++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => Text('$_count');
 }
 ```
 

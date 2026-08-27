@@ -25,15 +25,30 @@ This rule is in the **`pedantic`** preset.
 ## Don't
 
 ```dart
-Button(onTap: _submit);
+class Button {
+  Button({this.onTap});
+
+  final void Function()? onTap;
+}
+
+class CheckoutForm {
+  void _submit() {}
+
+  Button buildButton() => Button(onTap: _submit);
+}
 ```
 
 ## Do
 
 ```dart
-Button(onTap: _onTap);
-Button(onTap: _handleTap);
+class CheckoutForm {
+  void _onTap() {}
+
+  Button buildButton() => Button(onTap: _onTap);
+}
 ```
+
+`_handleTap` is accepted too — `handle` is the second default prefix.
 
 ## Enabling this rule
 

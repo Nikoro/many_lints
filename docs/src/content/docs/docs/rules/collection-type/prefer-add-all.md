@@ -26,20 +26,31 @@ The same applies to `target.add(a); target.add(b);` — one `addAll([a, b])` sta
 ## Don't
 
 ```dart
-for (final item in newItems) {
-  selected.add(item);
-}
+List<String> merge(List<String> newItems) {
+  final selected = <String>[];
 
-selected.add('first');
-selected.add('second');
+  for (final item in newItems) {
+    selected.add(item);
+  }
+
+  selected.add('first');
+  selected.add('second');
+
+  return selected;
+}
 ```
 
 ## Do
 
 ```dart
-selected.addAll(newItems);
+List<String> merge(List<String> newItems) {
+  final selected = <String>[];
 
-selected.addAll(['first', 'second']);
+  selected.addAll(newItems);
+  selected.addAll(['first', 'second']);
+
+  return selected;
+}
 ```
 
 ## Known limitations

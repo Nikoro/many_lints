@@ -27,37 +27,31 @@ These Flutter classes appear frequently in widget trees, and their constructors 
 ## Don't
 
 ```dart
-Padding(
+Widget priceTag() => Padding(
   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-  child: Text('Hello'),
-);
-
-Container(
-  decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(10),
-    border: Border.all(color: Colors.blue, width: 3),
+  child: Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: Color(0xFF2196F3), width: 3),
+    ),
+    child: Text('12.99'),
   ),
 );
-
-Padding(padding: EdgeInsets.all(8), child: Text('World'));
 ```
 
 ## Do
 
 ```dart
-Padding(
+Widget priceTag() => Padding(
   padding: .symmetric(horizontal: 20, vertical: 6),
-  child: Text('Hello'),
-);
-
-Container(
-  decoration: BoxDecoration(
-    borderRadius: .circular(10),
-    border: .all(color: Colors.blue, width: 3),
+  child: Container(
+    decoration: BoxDecoration(
+      borderRadius: .circular(10),
+      border: .all(color: Color(0xFF2196F3), width: 3),
+    ),
+    child: Text('12.99'),
   ),
 );
-
-Padding(padding: .all(8), child: Text('World'));
 ```
 
 ## Known limitations

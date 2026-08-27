@@ -33,22 +33,69 @@ rules:
       - test/**
 ```
 
+The examples below use a small budget so the difference fits on a page. The
+default is 50.
+
 ## Don't
+
+With `max_lines: 10`, this body is 16 lines, and it validates, prices,
+persists and notifies in one scope:
 
 ```dart
 void handleOrder(Order order) {
-  // ... 80 lines validating, pricing, persisting and notifying
+  if (order.lines.isEmpty) {
+    throw ArgumentError.value(order, 'order', 'has no lines');
+  }
+  if (order.customerId.isEmpty) {
+    throw ArgumentError.value(order, 'order', 'has no customer');
+  }
+
+  var total = 0;
+  for (final line in order.lines) {
+    total += line.unitPrice * line.quantity;
+  }
+  order.total = total - order.discount;
+
+  orders[order.id] = order;
+  outbox.add('order-placed:${order.id}');
+  outbox.add('invoice-due:${order.id}');
 }
 ```
 
 ## Do
 
+Each step is named, and each can be read and tested on its own:
+
 ```dart
 void handleOrder(Order order) {
   _validate(order);
-  _price(order);
+  order.total = _priceOf(order);
   _persist(order);
   _notify(order);
+}
+
+void _validate(Order order) {
+  if (order.lines.isEmpty) {
+    throw ArgumentError.value(order, 'order', 'has no lines');
+  }
+  if (order.customerId.isEmpty) {
+    throw ArgumentError.value(order, 'order', 'has no customer');
+  }
+}
+
+int _priceOf(Order order) {
+  var total = 0;
+  for (final line in order.lines) {
+    total += line.unitPrice * line.quantity;
+  }
+  return total - order.discount;
+}
+
+void _persist(Order order) => orders[order.id] = order;
+
+void _notify(Order order) {
+  outbox.add('order-placed:${order.id}');
+  outbox.add('invoice-due:${order.id}');
 }
 ```
 

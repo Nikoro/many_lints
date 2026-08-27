@@ -33,48 +33,33 @@ class UserProfile {
   final String name;
   final String email;
   final int age;
-  final String address;
+  final String city;
 
   const UserProfile({
     required this.name,
     required this.email,
     required this.age,
-    required this.address,
+    required this.city,
   });
 }
 
-// Accessing 3+ properties separately on the same variable
-void displayUser(UserProfile user) {
-  final greeting = 'Hello, ${user.name}';
-  final contact = user.email;
-  print('Age: ${user.age}');
+String describe(UserProfile user) {
+  return 'Hello, ${user.name} <${user.email}>, '
+      '${user.age}, from ${user.city}';
 }
 ```
 
 ## Do
 
 ```dart
-// Using class destructuring
-void displayUser(UserProfile user) {
-  final UserProfile(:name, :email, :age) = user;
-  final greeting = 'Hello, $name';
-  final contact = email;
-  print('Age: $age');
-}
-
-// Only 2 property accesses (below threshold) — no warning
-void showBasicInfo(UserProfile user) {
-  print(user.name);
-  print(user.email);
-}
-
-// Method calls are not counted as property accesses
-void interactWithUser(UserProfile user) {
-  print(user.name);
-  print(user.email);
-  user.toString();
+String describe(UserProfile user) {
+  final UserProfile(:name, :email, :age, :city) = user;
+  return 'Hello, $name <$email>, $age, from $city';
 }
 ```
+
+Two accesses stay below the threshold and are not reported, and a method call
+such as `user.toString()` is not a property access at all.
 
 ## Turning this rule off
 

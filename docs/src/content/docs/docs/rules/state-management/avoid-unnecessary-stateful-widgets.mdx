@@ -96,42 +96,44 @@ class _CounterWidgetState extends State<CounterWidget> {
   }
 }
 
-// StatefulWidget with lifecycle methods — justified
-class LifecycleWidget extends StatefulWidget {
-  const LifecycleWidget({super.key});
+// StatefulWidget with a lifecycle to manage — justified
+class SessionTimer extends StatefulWidget {
+  const SessionTimer({super.key});
 
   @override
-  State<LifecycleWidget> createState() => _LifecycleWidgetState();
+  State<SessionTimer> createState() => _SessionTimerState();
 }
 
-class _LifecycleWidgetState extends State<LifecycleWidget> {
+class _SessionTimerState extends State<SessionTimer> {
+  late final Stopwatch _elapsed;
+
   @override
   void initState() {
     super.initState();
+    _elapsed = Stopwatch()..start();
   }
 
   @override
   void dispose() {
+    _elapsed.stop();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Text('With lifecycle');
+    return Text('${_elapsed.elapsed.inSeconds}s');
   }
 }
 ```
 
-```dart
-// State kept by a mixin still counts: the State body looks empty, but the
-// widget is genuinely stateful.
-mixin UnsavedChangesGuard<T extends StatefulWidget> on State<T> {
-  bool allowPop = false;
+State kept by a mixin counts too. The `State` body looks empty, but the
+widget is genuinely stateful and the rule stays quiet:
 
-  Future<void> allowNextPop() async {
-    setState(() => allowPop = true);
-    await WidgetsBinding.instance.endOfFrame;
-  }
+```dart
+mixin UnsavedChangesGuard<T extends StatefulWidget> on State<T> {
+  bool hasUnsavedChanges = false;
+
+  void markDirty() => setState(() => hasUnsavedChanges = true);
 }
 
 class EditPage extends StatefulWidget {
@@ -144,7 +146,7 @@ class EditPage extends StatefulWidget {
 class _EditPageState extends State<EditPage> with UnsavedChangesGuard {
   @override
   Widget build(BuildContext context) {
-    return PopScope(canPop: allowPop, child: const Text('Edit'));
+    return Text(hasUnsavedChanges ? 'Unsaved' : 'Saved');
   }
 }
 ```

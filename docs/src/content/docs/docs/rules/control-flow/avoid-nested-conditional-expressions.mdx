@@ -24,6 +24,8 @@ The outermost conditional carries the diagnostic, so one nested chain produces o
 
 ## Don't
 
+With `max_depth: 1`, the default, one nesting level is already over the limit:
+
 ```dart
 String label(int score) =>
     score > 100 ? 'high' : (score > 50 ? 'medium' : 'low');
