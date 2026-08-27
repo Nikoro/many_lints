@@ -24,19 +24,36 @@ This rule is in the **`pedantic`** preset.
 
 ## Don't
 
+With `max_methods: 4`, one class carrying four unrelated jobs:
+
 ```dart
 class UserManager {
-  // 25 methods: authentication, profile editing, avatar upload,
-  // notification preferences and CSV export, all in one class.
+  void signIn(String email, String password) {}
+  void signOut() {}
+  void updateDisplayName(String name) {}
+  void uploadAvatar(List<int> bytes) {}
+  String exportCsv() => ''; // LINT: 5 methods exceeds the budget of 4
 }
 ```
 
 ## Do
 
+Split along the jobs the method names already name:
+
 ```dart
-class UserAuthentication { /* ... */ }
-class UserProfile { /* ... */ }
-class UserAvatars { /* ... */ }
+class UserAuthentication {
+  void signIn(String email, String password) {}
+  void signOut() {}
+}
+
+class UserProfile {
+  void updateDisplayName(String name) {}
+  void uploadAvatar(List<int> bytes) {}
+}
+
+class UserExport {
+  String exportCsv() => '';
+}
 ```
 
 ## Enabling this rule

@@ -280,7 +280,21 @@ String? _documentedConfig(String source, String rule) {
     if (!block.contains('$rule:')) continue;
     // Skip the `false` blocks that show how to turn the rule back off.
     if (RegExp('$rule:\\s*false').hasMatch(block)) continue;
+    // Prefer the richest block: one setting an option exercises more of the
+    // rule than a bare `enabled: true`.
     if (best == null || block.length > best.length) best = block;
+  }
+
+  // A page whose example only makes sense under a particular setting says so
+  // in prose beside it — "With `max_imports: 5`". That inline value wins over
+  // the Options section, so the printed number and the checked behaviour are
+  // the same thing rather than two claims that can drift apart.
+  final inline = RegExp(
+    r'With\s+`([a-z_]+):\s*([^`]+)`',
+  ).firstMatch(_dontPreamble(source));
+  if (inline != null) {
+    return 'rules:\n  $rule:\n    enabled: true\n'
+        '    ${inline.group(1)}: ${inline.group(2)!.trim()}\n';
   }
 
   if (best == null) return null;
@@ -291,6 +305,13 @@ String? _documentedConfig(String source, String rule) {
   if (best.contains('enabled:')) return best;
 
   return best.replaceFirst('$rule:\n', '$rule:\n    enabled: true\n');
+}
+
+/// The prose between the `## Don't` heading and its first code fence.
+String _dontPreamble(String source) {
+  final section = _dontSection.firstMatch(source)?.group(1) ?? '';
+  final fence = section.indexOf('```');
+  return fence == -1 ? section : section.substring(0, fence);
 }
 
 bool _mentionsFlutter(String? snippet) =>
@@ -447,7 +468,18 @@ String? _wrap(String snippet, _Page page) {
   }
   if (page.needsFpdart) imports.writeln("import 'package:fpdart/fpdart.dart';");
 
-  final body = snippet.trimRight();
+  // A snippet may carry its own imports — `max_imports` is about nothing else.
+  // They have to lead the library, ahead of the preamble's declarations, so
+  // they are lifted out rather than left where they would be a syntax error.
+  final own = <String>[];
+  final rest = <String>[];
+  for (final line in snippet.trimRight().split('\n')) {
+    (line.trimLeft().startsWith('import ') ? own : rest).add(line);
+  }
+  imports.writeAll(own, '\n');
+  if (own.isNotEmpty) imports.writeln();
+
+  final body = rest.join('\n').trim();
   final candidates = <String>[
     body,
     'void _snippet() {\n$body\n}',

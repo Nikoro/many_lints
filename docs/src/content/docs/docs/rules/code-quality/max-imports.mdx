@@ -16,24 +16,45 @@ This rule flags a file that imports more libraries than the configured budget.
 
 ## Why use this rule
 
-The import list is the cheapest available measure of how much a file depends on. A file reaching for twenty libraries is coupled to twenty things that can change under it, and it is usually one that has taken on several jobs.
+The import count measures how much a file depends on. A file importing twenty libraries is coupled to twenty things that can change under it, and usually has taken on more than one job.
 
-`export` directives are not counted by default: a barrel file is exports by definition, and counting them would report every barrel in the project.
+`export` directives are not counted by default — a barrel file is exports by definition.
 
-This rule is in the **`pedantic`** preset: a budget is a house style, and the right number differs per codebase.
+This rule is in the **`pedantic`** preset.
 
 ## Don't
 
+With `max_imports: 5`:
+
 ```dart
-// One file importing the router, the theme, four repositories,
-// three notifiers, and the whole widget catalogue.
+import 'dart:async';
+import 'dart:collection';
+import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
+import 'dart:developer'; // LINT: 6 imports exceeds the budget of 5
+
+class ReportGenerator {}
 ```
 
 ## Do
 
+Split the file so each part imports what it needs:
+
 ```dart
-// Split along the seams the imports already reveal: the widget file
-// imports widgets, the repository file imports the client.
+// report_generator.dart
+import 'dart:convert';
+import 'dart:io';
+
+class ReportGenerator {}
+```
+
+```dart
+// report_statistics.dart
+import 'dart:math';
+import 'dart:typed_data';
+
+class ReportStatistics {}
 ```
 
 ## Enabling this rule

@@ -24,22 +24,38 @@ This rule is in the **`pedantic`** preset: a budget is a house style, and the ri
 
 ## Don't
 
+With `max_statements: 5`:
+
 ```dart
-void handleSubmit() {
-  // 30 statements: validation, mapping, the request, error handling,
-  // analytics, and navigation, all in one scope.
+void handleSubmit(String email, String password) {
+  final trimmedEmail = email.trim();
+  final trimmedPassword = password.trim();
+  final emailValid = trimmedEmail.contains('@');
+  final passwordValid = trimmedPassword.length >= 8;
+  final ready = emailValid && passwordValid;
+  print(ready); // LINT: 6 statements exceeds the budget of 5
 }
 ```
 
 ## Do
 
-```dart
-void handleSubmit() {
-  final input = _validate();
-  if (input == null) return;
+Give each step a name and the caller reads as a summary:
 
-  _submit(input);
+```dart
+void handleSubmit(String email, String password) {
+  final credentials = _validate(email, password);
+  if (credentials == null) return;
+  _submit(credentials);
 }
+
+({String email, String password})? _validate(String email, String password) {
+  final trimmedEmail = email.trim();
+  if (!trimmedEmail.contains('@')) return null;
+  if (password.length < 8) return null;
+  return (email: trimmedEmail, password: password);
+}
+
+void _submit(({String email, String password}) credentials) {}
 ```
 
 ## Enabling this rule

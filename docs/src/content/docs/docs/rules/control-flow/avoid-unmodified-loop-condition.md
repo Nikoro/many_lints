@@ -13,46 +13,54 @@ This rule flags a `while` or `do`/`while` loop whose condition reads only variab
 
 ## Why use this rule
 
-An infinite loop is not a subtle failure — it hangs the isolate, freezes the UI, and in a Flutter app looks like a crash. But the *cause* is subtle: a forgotten `i++`, or an increment applied to the wrong variable in a loop that reads a different one.
+An infinite loop hangs the isolate and freezes the UI. The cause is usually a forgotten `i++`, or an increment applied to the wrong variable.
 
-Static detection is possible because the condition and the body are right next to each other. If no variable the condition reads is ever written in the body, no execution can change the outcome.
+If no variable the condition reads is ever written in the body, no execution can change the outcome — which is what makes this detectable.
 
 **See also:** [Dart: loops](https://dart.dev/language/loops)
 
 ## Don't
 
 ```dart
-var i = 0;
-while (i < items.length) {
-  print(items[i]);   // `i` is never advanced
+void countdown(int total) {
+  var remaining = total;
+  while (remaining > 0) {
+    print(remaining);   // LINT: `remaining` is never decremented
+  }
 }
 ```
 
 Advancing the wrong variable is the same bug wearing a disguise:
 
 ```dart
-var i = 0;
-var j = 0;
-while (i < limit) {
-  j++;               // `i` still never changes
+void countdown(int total) {
+  var remaining = total;
+  var printed = 0;
+  while (remaining > 0) {
+    printed++;          // LINT: `remaining` still never changes
+  }
 }
 ```
 
 ## Do
 
 ```dart
-var i = 0;
-while (i < items.length) {
-  print(items[i]);
-  i++;
+void countdown(int total) {
+  var remaining = total;
+  while (remaining > 0) {
+    print(remaining);
+    remaining--;
+  }
 }
 ```
 
 Or use a construct that advances for you:
 
 ```dart
-for (final item in items) {
-  print(item);
+void countdown(int total) {
+  for (var remaining = total; remaining > 0; remaining--) {
+    print(remaining);
+  }
 }
 ```
 
