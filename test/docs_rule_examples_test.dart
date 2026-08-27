@@ -114,13 +114,13 @@ void main() {
 
 /// The floor for how many pages this suite drives, raised as stubs grow.
 ///
-/// 153 of 261 pages are checked today. The rest are skipped for reasons
+/// 154 of 261 pages are checked today. The rest are skipped for reasons
 /// [_skipReason] names out loud, and the `coverage` test prints every one, so
 /// the gap is visible rather than implied. Most are rules keyed to Flutter,
 /// Riverpod, Bloc or hooks types the stubs do not carry: widening a stub moves
 /// pages from skipped to checked and this number goes up. Lowering it means
 /// coverage shrank, and needs a reason.
-const _minimumCheckedPages = 153;
+const _minimumCheckedPages = 154;
 
 /// Why [page] cannot be driven through the harness, or null when it can.
 String? _skipReason(_Page page) {
@@ -145,7 +145,8 @@ String? _skipReason(_Page page) {
   final ghost = _undeclaredStandIn(snippet);
   if (ghost != null) return 'uses undeclared `$ghost`';
 
-  final missing = _beyondMockSdk.firstMatch(snippet)?.group(1);
+  final match = _beyondMockSdk.firstMatch(_codeOnly(snippet));
+  final missing = match?.group(1) ?? match?.group(2);
   if (missing != null) return '`$missing` is absent from the mock SDK';
 
   if (_wrap(snippet, page) == null) {
@@ -373,7 +374,28 @@ String? _unstubbedPackage(String? snippet) {
 /// start being checked again — a name-based list would keep skipping it, and
 /// the skip is silent, so the page would look repaired while nothing verified
 /// it.
-String? _undeclaredStandIn(String snippet) {
+/// [source] with string literals and comments blanked out.
+///
+/// Identifier heuristics must not read prose. A URL in a string —
+/// `'https://api.example.com'` — contains `api`, and matching it skipped a
+/// page whose Dart was perfectly well formed. The skip is silent, so the page
+/// looked verified while nothing ran it, and the author "fixed" it by changing
+/// the documentation to suit the harness. Blanking rather than deleting keeps
+/// every offset intact.
+String _codeOnly(String source) => source
+    .replaceAll(RegExp(r'//[^\n]*'), '')
+    .replaceAll(
+      RegExp(
+        r"'''[\s\S]*?'''|"
+        r'"""[\s\S]*?"""',
+      ),
+      "''",
+    )
+    .replaceAll(RegExp(r"'(?:\\.|[^'\\\n])*'"), "''")
+    .replaceAll(RegExp(r'"(?:\\.|[^"\\\n])*"'), '""');
+
+String? _undeclaredStandIn(String rawSnippet) {
+  final snippet = _codeOnly(rawSnippet);
   const seeds = {
     'repository',
     'logger',

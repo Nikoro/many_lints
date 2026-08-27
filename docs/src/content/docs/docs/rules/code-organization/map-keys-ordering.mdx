@@ -12,52 +12,13 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
 
-This rule flags a map literal whose keys are not in the configured order.
+Flags a map literal whose keys are not in the order you configure.
 
 A long map literal is a lookup table, and an unordered one has to be read end to end to answer "is this key here?". Ordering keeps a diff honest too: a new key lands in the middle where it can be seen, rather than appended at the end beside a duplicate nobody noticed.
 
-Outside `preset: pedantic`, **this rule reports nothing until configured.** Many map literals are deliberately ordered by meaning — a config map mirroring a form's field order, a theme map going from lightest to darkest. The pedantic preset chooses alphabetical order.
+This rule is in the **`pedantic`** preset, which sets `order: alphabetical`. Under any other preset **it reports nothing until you set `order:`** — many map literals are deliberately ordered by meaning, and alphabetising a theme map that runs lightest to darkest is a regression.
 
-A literal containing a **computed key**, a spread, an `if` or a `for` is skipped entirely rather than partially ordered: ordering the rest around an unsortable entry would produce an arrangement the user cannot reach.
-
-This rule is in the **`pedantic`** preset.
-
-## Don't
-
-```dart
-const labels = {
-  'banana': 'Banana',
-  'apple': 'Apple',
-  'cherry': 'Cherry',
-  'date': 'Date',
-  'elder': 'Elderberry',
-};
-```
-
-## Do
-
-```dart
-const labels = {
-  'apple': 'Apple',
-  'banana': 'Banana',
-  'cherry': 'Cherry',
-  'date': 'Date',
-  'elder': 'Elderberry',
-};
-```
-
-## Enabling this rule
-
-Outside `preset: pedantic`, enabling it by name is not enough — set `order:`:
-
-```yaml
-# many_lints.yaml
-rules:
-  map_keys_ordering:
-    order: alphabetical
-```
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -85,10 +46,195 @@ rules:
 </TabItem>
 </Tabs>
 
+## Don't
+
+With `order: alphabetical`:
+
+```dart
+const labels = {
+  'banana': 'Banana',
+  'apple': 'Apple',
+  'cherry': 'Cherry',
+  'date': 'Date',
+  'elder': 'Elderberry',
+};
+```
+
+## Do
+
+```dart
+const labels = {
+  'apple': 'Apple',
+  'banana': 'Banana',
+  'cherry': 'Cherry',
+  'date': 'Date',
+  'elder': 'Elderberry',
+};
+```
+
+## Examples
+
+### `min_entries` keeps short maps out of it
+
+Below the threshold a reader takes in the whole literal at once and order costs nothing. The default is 5, so a four-entry map is never reported:
+
+```yaml
+rules:
+  map_keys_ordering:
+    order: alphabetical
+```
+
+```dart
+// Not reported — four entries, under the default min_entries: 5
+const shortcuts = {
+  'save': 'Ctrl+S',
+  'copy': 'Ctrl+C',
+  'cut': 'Ctrl+X',
+  'undo': 'Ctrl+Z',
+};
+```
+
+Lower it if you want short maps checked too:
+
+```yaml
+rules:
+  map_keys_ordering:
+    order: alphabetical
+    min_entries: 3
+```
+
+```dart
+// Don't — now reported at three entries
+const shortcuts = {
+  'save': 'Ctrl+S',
+  'copy': 'Ctrl+C',
+  'undo': 'Ctrl+Z',
+};
+
+// Do
+const shortcuts = {
+  'copy': 'Ctrl+C',
+  'save': 'Ctrl+S',
+  'undo': 'Ctrl+Z',
+};
+```
+
+### Identifier and enum keys sort by their name
+
+Keys do not have to be strings. A plain identifier, an enum constant or any dotted access sorts on the final name:
+
+```yaml
+rules:
+  map_keys_ordering:
+    order: alphabetical
+```
+
+```dart
+enum Status { active, archived, closed, draft, pending }
+
+// Don't — sorted on `closed`, `active`, ... not on `Status.`
+const badges = {
+  Status.closed: 'Closed',
+  Status.active: 'Active',      // LINT
+  Status.archived: 'Archived',
+  Status.draft: 'Draft',
+  Status.pending: 'Pending',
+};
+
+// Do
+const badges = {
+  Status.active: 'Active',
+  Status.archived: 'Archived',
+  Status.closed: 'Closed',
+  Status.draft: 'Draft',
+  Status.pending: 'Pending',
+};
+```
+
+### `by_length`
+
+```yaml
+rules:
+  map_keys_ordering:
+    order: by_length
+```
+
+```dart
+// Don't
+const units = {
+  'kilometre': 'km',
+  'metre': 'm',       // LINT
+  'foot': 'ft',
+  'inch': 'in',
+  'yard': 'yd',
+};
+
+// Do
+const units = {
+  'foot': 'ft',
+  'inch': 'in',
+  'yard': 'yd',
+  'metre': 'm',
+  'kilometre': 'km',
+};
+```
+
+### Scope it where the order carries meaning
+
+```yaml
+rules:
+  map_keys_ordering:
+    order: alphabetical
+    exclude: ['lib/**/theme/**']
+```
+
+```dart
+// lib/design/theme/shades.dart — not reported, the order is the point
+const grey = {
+  'lightest': 0xFFF5F5F5,
+  'light': 0xFFE0E0E0,
+  'mid': 0xFF9E9E9E,
+  'dark': 0xFF616161,
+  'darkest': 0xFF212121,
+};
+```
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `order` | string | `—` | `alphabetical`, `alphabetical_case_sensitive` or `by_length`. Unset means the rule is silent |
 | `min_entries` | int | `5` | How many entries a literal needs before order is checked |
+
+## Known limitations
+
+**One computed key skips the whole literal.** A key that is a function call, an interpolated string or any other expression has no name to sort by. Rather than order the rest around an entry it cannot place, the rule leaves the literal alone entirely.
+
+```dart
+// Not reported — `resolveKey()` has no sortable name
+final config = {
+  'zebra': 1,
+  resolveKey(): 2,
+  'apple': 3,
+  'mango': 4,
+  'kiwi': 5,
+};
+```
+
+**A spread, `if` or `for` element skips it too.** The literal's contents are not statically ordered at all, so there is nothing to check:
+
+```dart
+// Not reported
+final merged = {
+  'zebra': 1,
+  ...defaults,
+  'apple': 2,
+  'mango': 3,
+  'kiwi': 4,
+};
+```
+
+**Only the first out-of-order key is reported**, so one misplaced entry does not produce a wall of diagnostics. **No quick fix** is offered — reordering entries is a mechanical edit, but a map literal frequently carries comments tied to particular lines, and moving keys past them silently mismatches the two.
 
 ## Turning this rule off
 

@@ -144,6 +144,24 @@ pages.
 Short is not a defect. A rule about one line gets a one-line example; padding it
 out makes the page worse.
 
+**Configuration goes above the example it produces.** A rule that reports
+nothing until configured — the `banned_*` family, `match_pattern`, the affix and
+ordering rules — must show real, copy-pasteable YAML immediately before the
+Don't/Do pair. Describing it in a code comment (`// With an entry banning
+'data':`) fails twice: the reader cannot copy it, and never sees the actual
+entry shape. Where an example depends on a non-default option, state it in prose
+beside the fence — "With `max_imports: 5`" — which the gate also runs.
+
+**Prefer several small examples to one large one.** A `### scenario` heading, its
+YAML, then its Don't/Do reads better than a single block trying to carry every
+case, and it lets a reader find the one that matches their situation.
+
+**Do not narrate the implementation.** Sections titled "How matching works", or
+prose explaining internal guard rails and why an option is parsed a certain way,
+belong in the source. Document what a user writes and what they get back. A
+"Known limitations" section is worth keeping when it answers "why didn't mine
+fire" — that is user-visible behaviour, not internals.
+
 ### Rule Examples Are Executed
 
 `test/docs_rule_examples_test.dart` takes the `## Don't` block from every rule

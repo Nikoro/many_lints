@@ -14,68 +14,11 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 Flags annotations you ban, optionally only inside the directories you name. The motivating case is scope: `@visibleForTesting` is reasonable on a helper and wrong in a production directory.
 
-**This rule reports nothing until you configure it.**
+`@visibleForTesting` says "this is private, except to tests". That is a fair trade in a utility, but in a core production type it is how encapsulation erodes — the annotation makes each widening explicit without making it rare.
 
-## Why use this rule
+This rule is in **no preset** and reports nothing until you add `banned:`. Every example below shows the configuration that produces it.
 
-`@visibleForTesting` is a way of saying "this is private, except to tests". That is a fair trade in a utility, but in a core production type it is how encapsulation erodes: the annotation makes the widening explicit without making it rare, and nothing pushes back when the next test wants one more member.
-
-Banning it in the directories that hold your most-depended-on code forces the alternative — inject the seam the test needs rather than opening the type — while leaving it available everywhere else.
-
-**See also:** [`package:meta` annotations](https://pub.dev/documentation/meta/latest/meta/meta-library.html), [`visibleForTesting` API docs](https://pub.dev/documentation/meta/latest/meta/visibleForTesting-constant.html)
-
-## Don't
-
-```dart
-// in lib/production/payment_service.dart
-//
-// With an entry banning 'visibleForTesting' in lib/production/**:
-class PaymentService {
-  @visibleForTesting  // LINT: widens visibility in production code
-  void resetLedger() {}
-}
-```
-
-## Do
-
-```dart
-// in lib/production/payment_service.dart
-//
-// Inject what the test needs to control instead of exposing internals.
-abstract class Ledger {
-  void reset();
-}
-
-class PaymentService {
-  const PaymentService(this._ledger);
-
-  final Ledger _ledger;
-
-  void refundAll() => _ledger.reset();
-}
-```
-
-## Turning this rule off
-
-This rule is in **no preset**, so it is off unless you enable it by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_banned_annotations: true
-```
-
-To turn it off again:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_banned_annotations: false
-```
-
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -107,11 +50,110 @@ rules:
 </TabItem>
 </Tabs>
 
+Write the annotation name **without** the `@`. Both `@visibleForTesting` and the prefixed `@meta.visibleForTesting` match a single `visibleForTesting` entry.
+
+## Examples
+
+### Stop production code opening itself up for tests
+
+```yaml
+- deny: ['visibleForTesting']
+  in: ['lib/production/**']
+  message: 'Production code must not widen visibility for tests.'
+```
+
+```dart
+// Don't  — in lib/production/payment_service.dart
+class PaymentService {
+  @visibleForTesting  // LINT: widens visibility in production code
+  void resetLedger() {}
+}
+```
+
+```dart
+// Do  — in lib/production/payment_service.dart: inject the seam instead
+abstract class Ledger {
+  void reset();
+}
+
+class PaymentService {
+  const PaymentService(this._ledger);
+
+  final Ledger _ledger;
+
+  void refundAll() => _ledger.reset();
+}
+```
+
+The same annotation under `lib/testing/**` is left alone — only the directories
+named in `in:` are checked.
+
+### Keep new code off a deprecated API surface
+
+```yaml
+- deny: ['deprecated']
+  in: ['lib/features/**']
+  message: 'Delete it or promote it; a feature module keeps no deprecations.'
+```
+
+```dart
+// Don't  — in lib/features/checkout/coupon.dart
+class Coupon {
+  @deprecated  // LINT
+  String get label => code;
+
+  final String code = '';
+}
+```
+
+```dart
+// Do
+class Coupon {
+  const Coupon(this.code);
+
+  final String code;
+}
+```
+
+### Ban an annotation family with a pattern
+
+`deny_pattern` is anchored to the whole name, so `.*Override` matches
+`JsonKeyOverride` but not `OverrideBehaviour`:
+
+```yaml
+- deny_pattern: ['.*Override']
+  in: ['lib/domain/**']
+  message: 'Codegen overrides belong on the DTO, not the entity.'
+```
+
+```dart
+// Don't  — in lib/domain/order.dart
+class JsonKeyOverride {
+  const JsonKeyOverride();
+}
+
+class Order {
+  @JsonKeyOverride()  // LINT
+  final int total = 0;
+}
+```
+
+### Ban an experimental annotation everywhere
+
+Omit `in:` and the entry applies to the whole package:
+
+```yaml
+- deny: ['experimental']
+  message: 'Experimental APIs must not be used outside a spike branch.'
+```
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `banned` | list of maps | `[]` | The entries to enforce. With none, the rule reports nothing |
+| `banned` | list of entries | `[]` | The entries to enforce. With none, the rule reports nothing |
 
-Each entry accepts:
+Per entry:
 
 | Key | Type | Required | Description |
 |-----|------|----------|-------------|
@@ -120,7 +162,13 @@ Each entry accepts:
 | `in` | list of globs | no | Paths, relative to the package root, where the entry applies. Omit to apply everywhere |
 | `message` | string | no | A project-specific explanation appended to the diagnostic |
 
-Write the annotation name without the `@`. Both `@visibleForTesting` and the prefixed `@meta.visibleForTesting` match a single `visibleForTesting` entry, so an import prefix cannot slip past the rule.
+## Known limitations
+
+**Names, not libraries.** An entry matches by annotation name alone, so banning `deprecated` also catches an unrelated `@deprecated` you declared yourself. There is no `package:uri#Name` form here as there is on [`avoid_banned_types`](/many_lints/docs/rules/architecture/avoid-banned-types/).
+
+**Constructor arguments are ignored.** `@Deprecated('use X')` matches a `Deprecated` entry whatever it is passed; you cannot ban only some of its arguments.
+
+**A malformed entry is skipped silently.** An invalid regular expression costs you that pattern and nothing else — a plugin cannot report problems against a YAML file.
 
 ## Related rules
 

@@ -14,56 +14,13 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 Flags `export` directives for libraries you ban, optionally only inside the directories you name. Barrel-file hygiene: it keeps internal libraries out of a package's public API.
 
-**This rule reports nothing until you configure it.**
-
-## Why use this rule
-
 A barrel file decides what a package promises. An `export` added there for convenience — to save one import in a test, say — silently makes everything in that library public, and removing it later is a breaking change for every consumer.
 
-This is kept separate from [`avoid_banned_imports`](/many_lints/docs/rules/architecture/avoid-banned-imports/) on purpose: depending on a library internally and re-exporting it to consumers are different decisions. A package is often perfectly free to use something it must not expose.
+This is kept separate from [`avoid_banned_imports`](/many_lints/docs/rules/architecture/avoid-banned-imports/) on purpose: depending on a library internally and re-exporting it to consumers are different decisions. A package is often free to use something it must not expose.
 
-**See also:** [Effective Dart: libraries](https://dart.dev/effective-dart/usage#libraries), [Dart package layout conventions](https://dart.dev/tools/pub/package-layout#public-libraries)
+This rule is in **no preset** and reports nothing until you add `banned:`. Every example below shows the configuration that produces it.
 
-## Don't
-
-```dart
-// in lib/my_package.dart
-//
-// With an entry banning 'src/internal/.*' in lib/*.dart:
-export 'src/internal/cache.dart';  // LINT: makes the cache public API
-```
-
-## Do
-
-```dart
-// in lib/my_package.dart
-//
-// Export only what consumers are meant to depend on.
-export 'src/api/client.dart';
-export 'src/api/models.dart';
-```
-
-## Turning this rule off
-
-This rule is in **no preset**, so it is off unless you enable it by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_banned_exports: true
-```
-
-To turn it off again:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_banned_exports: false
-```
-
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -95,11 +52,92 @@ rules:
 </TabItem>
 </Tabs>
 
+The URI is matched as written in the `export` directive. `in: ['lib/*.dart']` is the useful default: a single `*` matches only top-level barrel files, so everything under `lib/src/**` stays free to export internally.
+
+## Examples
+
+### Keep internal libraries out of the barrel
+
+```yaml
+- deny_pattern: ['src/internal/.*']
+  in: ['lib/*.dart']
+  message: 'Internal libraries must not be part of the public API.'
+```
+
+```dart
+// Don't  — in lib/my_package.dart
+export 'src/internal/cache.dart';  // LINT: makes the cache public API
+```
+
+```dart
+// Do  — in lib/my_package.dart: export only what consumers depend on
+export 'src/api/client.dart';
+export 'src/api/models.dart';
+```
+
+### Stop a dependency leaking through your API
+
+Re-exporting a package makes its types part of *your* signature, so its next
+major version becomes your breaking change:
+
+```yaml
+- deny: ['package:dio/dio.dart', 'package:http/http.dart']
+  in: ['lib/*.dart']
+  message: 'Wrap the HTTP client; do not re-export it.'
+```
+
+```dart
+// Don't  — in lib/api_client.dart
+export 'package:dio/dio.dart';  // LINT
+
+// Do  — expose your own types only
+export 'src/api/api_client.dart';
+export 'src/api/api_failure.dart';
+```
+
+### Ban `export` entirely below the barrel
+
+Omit `deny` in favour of a pattern that matches everything, scoped to the
+directories where a re-export is never right:
+
+```yaml
+- deny_pattern: ['.*']
+  in: ['lib/src/features/**']
+  message: 'Feature libraries import what they need; they re-export nothing.'
+```
+
+```dart
+// Don't  — in lib/src/features/cart/cart.dart
+export 'cart_controller.dart';  // LINT
+
+// Do
+import 'cart_controller.dart';
+
+CartController build() => CartController();
+```
+
+### Keep a generated part out of the public surface
+
+```yaml
+- deny_pattern: ['.*\.g\.dart']
+  message: 'Generated code is an implementation detail.'
+```
+
+```dart
+// Don't
+export 'models/user.g.dart';  // LINT
+
+// Do
+export 'models/user.dart';
+```
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `banned` | list of maps | `[]` | The entries to enforce. With none, the rule reports nothing |
+| `banned` | list of entries | `[]` | The entries to enforce. With none, the rule reports nothing |
 
-Each entry accepts:
+Per entry:
 
 | Key | Type | Required | Description |
 |-----|------|----------|-------------|
@@ -108,9 +146,15 @@ Each entry accepts:
 | `in` | list of globs | no | Paths, relative to the package root, where the entry applies. Omit to apply everywhere |
 | `message` | string | no | A project-specific explanation appended to the diagnostic |
 
-The URI is matched as written in the `export` directive, so a relative export is matched as the relative path you typed.
+## Known limitations
 
-Scoping with `in: ['lib/*.dart']` is the useful default here: a single `*` matches only top-level barrel files, leaving everything under `lib/src/**` free to export internally.
+**The URI is matched as written.** A relative `export 'src/internal/cache.dart';` is matched as that relative path, not as a resolved `package:` URI — so an entry written one way does not catch the other. Write the spelling your codebase uses, or cover both.
+
+**`show` / `hide` are ignored.** `export 'src/internal/cache.dart' show Cache;` is reported exactly like a bare export; the rule bans the library, not the symbols taken from it.
+
+**Chained exports are invisible.** If a barrel exports a permitted library that itself exports a banned one, only the file with the banned line is reported.
+
+**A malformed entry is skipped silently.** An invalid regular expression costs you that pattern and nothing else — a plugin cannot report problems against a YAML file.
 
 ## Related rules
 

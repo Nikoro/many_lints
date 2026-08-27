@@ -32,18 +32,55 @@ This rule is in the **`pedantic`** preset: a budget is a house style, and the ri
 
 ## Don't
 
+With `max_lines: 10`, one file carrying the model, its formatting and its
+transport:
+
 ```dart
-// user_page.dart — 800 lines holding the page, its three dialogs,
-// a formatter, and the API client it calls.
+class Invoice {
+  const Invoice(this.id, this.cents);
+  final String id;
+  final int cents;
+}
+
+String formatInvoice(Invoice invoice) {
+  final major = invoice.cents ~/ 100;
+  final minor = invoice.cents % 100;
+  return '\$$major.${minor.toString().padLeft(2, '0')}';
+}
+
+Future<Invoice> fetchInvoice(String id) async {
+  return Invoice(id, 0);
+}
 ```
 
 ## Do
 
+Split on the subjects the file already has — `invoice.dart`,
+`invoice_formatting.dart`, `invoice_api.dart`:
+
 ```dart
-// user_page.dart          — the page
-// user_page_dialogs.dart   — its dialogs
-// user_formatting.dart     — the formatter
-// user_api.dart            — the client
+// invoice.dart
+class Invoice {
+  const Invoice(this.id, this.cents);
+  final String id;
+  final int cents;
+}
+```
+
+```dart
+// invoice_formatting.dart
+String formatInvoice(Invoice invoice) {
+  final major = invoice.cents ~/ 100;
+  final minor = invoice.cents % 100;
+  return '\$$major.${minor.toString().padLeft(2, '0')}';
+}
+```
+
+```dart
+// invoice_api.dart
+Future<Invoice> fetchInvoice(String id) async {
+  return Invoice(id, 0);
+}
 ```
 
 ## Enabling this rule

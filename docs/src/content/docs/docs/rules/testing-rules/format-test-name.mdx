@@ -12,48 +12,13 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Testing Rules</span>
 
-This rule flags a test description that does not match the configured pattern.
+Holds every `test(...)` and `testWidgets(...)` description to a regular expression you choose.
 
-This rule is in **no preset**, and reports **nothing until you set a pattern** — the right one is a house style with no defensible default.
+A test name is read without the code beside it — in CI output, in a failure report, in a bisect log — so it has to carry the expectation on its own.
 
-## Why use this rule
+This rule is in **no preset** and reports **nothing until you set `pattern:`**. There is no defensible default house style, so every example below shows the configuration that produces it.
 
-A test name is read far more often than it is written: in CI output, in a failure report, in a bisect log. It is read *without the code beside it*, so it has to carry the expectation on its own. A house pattern (`should ...`, `given ... when ... then ...`) makes that output scannable, and makes a test whose name no longer describes its body visible in review.
-
-`group(...)` names are exempt by default. A group names a *subject* (`UserRepository`, `when offline`) rather than an expectation, so holding it to the same sentence pattern fights the convention it is meant to enforce. Set `check_groups: true` to include them.
-
-A non-literal description — an interpolation, a constant, a variable — is never reported, since it cannot be read without evaluating it. That keeps parameterised tests silent.
-
-**See also:** [package:test](https://pub.dev/packages/test), [Effective Dart: testing](https://dart.dev/guides/testing)
-
-## Don't
-
-```dart
-// With pattern 'should .*'
-test('works fine', () {});
-```
-
-## Do
-
-```dart
-test('should load a user from the cache', () {});
-
-// A group names a subject, so it is exempt by default.
-group('UserRepository', () {});
-```
-
-## Enabling this rule
-
-This rule reports **nothing until you set a pattern**:
-
-```yaml
-# many_lints.yaml
-rules:
-  format_test_name:
-    pattern: 'should .*'
-```
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -64,7 +29,6 @@ many_lints:
   rules:
     format_test_name:
       pattern: 'should .*'
-      check_groups: false
 ```
 
 </TabItem>
@@ -75,20 +39,172 @@ many_lints:
 rules:
   format_test_name:
     pattern: 'should .*'
-    check_groups: false
 ```
 
 </TabItem>
 </Tabs>
+
+`pattern` must match the **whole** description, not merely appear in it.
+
+## Don't
+
+With `pattern: 'should .*'`:
+
+```dart
+void main() {
+  test('works fine', () {}); // LINT
+  test('user cache', () {}); // LINT
+}
+```
+
+## Do
+
+```dart
+void main() {
+  test('should load a user from the cache', () {});
+  test('should return null when the key is missing', () {});
+}
+```
+
+## Examples
+
+### The `should ...` style
+
+```yaml
+pattern: 'should .*'
+```
+
+```dart
+// Don't
+test('caches the user', () {});
+test('Should load a user', () {});  // capital S is not `should`
+
+// Do
+test('should cache the user', () {});
+test('should load a user', () {});
+```
+
+### Given / when / then
+
+```yaml
+pattern: 'given .+ when .+ then .+'
+```
+
+```dart
+// Don't
+test('offline load fails', () {});
+
+// Do
+test('given no network when loading then it throws', () {});
+```
+
+### Allow either of two styles
+
+`pattern` is a plain Dart regular expression, so alternation works:
+
+```yaml
+pattern: '(should|must) .*'
+```
+
+```dart
+// Don't
+test('returns the cached user', () {});
+
+// Do
+test('should return the cached user', () {});
+test('must reject an expired token', () {});
+```
+
+### Groups are exempt by default
+
+A group names a *subject*, not an expectation, so it is not held to the pattern
+unless you ask:
+
+```yaml
+pattern: 'should .*'
+check_groups: false      # the default
+```
+
+```dart
+group('UserRepository', () {
+  test('should return the cached user', () {});
+});
+```
+
+### Holding groups to a pattern too
+
+```yaml
+pattern: '(should|when|given) .*'
+check_groups: true
+```
+
+```dart
+// Don't
+group('UserRepository', () {          // now reported
+  test('should return the cached user', () {});
+});
+
+// Do
+group('when the cache is warm', () {
+  test('should return the cached user', () {});
+});
+```
+
+### Scoping the pattern to part of the tree
+
+`exclude` takes globs, so a legacy suite can keep its old names while new code
+is held to the convention:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    format_test_name:
+      pattern: 'should .*'
+      exclude:
+        - 'test/legacy/**'
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  format_test_name:
+    pattern: 'should .*'
+    exclude:
+      - 'test/legacy/**'
+```
+
+</TabItem>
+</Tabs>
+
+## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `pattern` | string | `—` | A regular expression the whole description must match. Unset means the rule is silent |
 | `check_groups` | bool | `false` | Also hold `group(...)` names to the pattern |
 
-## Turning this rule off
+## Known limitations
 
-To disable this rule:
+**Only string literals are checked.** An interpolated or computed description —
+`test('should load $name', ...)`, `test(kCacheCase, ...)` — is never reported,
+because it cannot be read without evaluating it. That keeps parameterised tests
+silent.
+
+**Only `test`, `testWidgets` and (opt-in) `group`.** A description passed to a
+custom helper of your own is not checked.
+
+**An invalid pattern is ignored, not reported.** A plugin cannot report against
+a YAML file, so a `pattern` that is not valid regex leaves the rule silent
+rather than failing loudly.
+
+## Turning this rule off
 
 ```yaml
 # many_lints.yaml

@@ -12,38 +12,13 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Class Naming</span>
 
-This rule flags a public top-level constant that does not carry the configured prefix.
+Flags a public top-level constant that does not carry the prefix you configure.
 
 A top-level constant is in scope everywhere the library is imported, under a name that competes with every local. `defaultTimeout` at the top level reads identically to a local of the same name at the point of use, so a prefix — `kDefaultTimeout`, Flutter's own convention — makes the origin visible without a jump to the declaration.
 
-Only **public** constants are checked: a private one cannot collide outside its own library, which is the problem the prefix solves.
+This rule is in **no preset** and reports nothing until you set `prefix:`. Every example below shows the configuration that produces it.
 
-This rule is in **no preset**.
-
-## Don't
-
-```dart
-const defaultTimeout = Duration(seconds: 30);
-```
-
-## Do
-
-```dart
-const kDefaultTimeout = Duration(seconds: 30);
-```
-
-## Enabling this rule
-
-This rule reports **nothing until you choose a prefix**, since there is no defensible default:
-
-```yaml
-# many_lints.yaml
-rules:
-  prefer_prefixed_global_constants:
-    prefix: k
-```
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -69,9 +44,95 @@ rules:
 </TabItem>
 </Tabs>
 
+## Don't
+
+With `prefix: k`:
+
+```dart
+const defaultTimeout = Duration(seconds: 30);  // LINT
+const maxRetries = 3;                          // LINT
+const serviceHost = 'example.com';             // LINT
+```
+
+## Do
+
+```dart
+const kDefaultTimeout = Duration(seconds: 30);
+const kMaxRetries = 3;
+const kServiceHost = 'example.com';
+```
+
+## Examples
+
+### Every declaration in one statement is checked
+
+```yaml
+rules:
+  prefer_prefixed_global_constants:
+    prefix: k
+```
+
+```dart
+// Don't — two constants, two diagnostics
+const minPort = 1024, maxPort = 65535;
+
+// Do
+const kMinPort = 1024, kMaxPort = 65535;
+```
+
+### Private constants and non-constants are left alone
+
+```dart
+// Not reported — private, so it cannot collide outside this library
+const _retryBackoff = Duration(milliseconds: 200);
+
+// Not reported — `final`, not `const`
+final sessionId = generateId();
+
+// Reported
+const timeout = Duration(seconds: 5);   // LINT
+```
+
+### A different house prefix
+
+The prefix is a plain string, so a project with its own vocabulary spells it out:
+
+```yaml
+rules:
+  prefer_prefixed_global_constants:
+    prefix: app
+```
+
+```dart
+// Don't
+const primaryColorHex = 0xFF0468D7;   // LINT
+
+// Do
+const appPrimaryColorHex = 0xFF0468D7;
+```
+
+### Scope it to one layer
+
+Design tokens may want the prefix while generated code does not:
+
+```yaml
+rules:
+  prefer_prefixed_global_constants:
+    prefix: k
+    exclude: ['lib/**/*.g.dart', 'lib/**/*.freezed.dart']
+```
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `prefix` | string | `—` | The required prefix. Unset means the rule is silent |
+
+## Known limitations
+
+**Constants only.** A top-level `final` or `var` is not reported, even though it shares the same scope problem. Only `const` declarations are checked.
+
+**Case is not enforced.** The check is a plain `startsWith`, so `ktimeout` satisfies `prefix: k` as readily as `kTimeout` does. Pair this with [`prefer_correct_type_name`](/many_lints/docs/rules/class-naming/prefer-correct-type-name/) and the SDK's `constant_identifier_names` if casing matters.
 
 ## Turning this rule off
 

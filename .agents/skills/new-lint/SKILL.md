@@ -519,6 +519,16 @@ Answer that, then stop.
 - **Check the Do block against the other rules.** Advice that trips a sibling
   rule is a bug: `handle_bloc_event_subclasses` once recommended `emit(state)`,
   which `emit_new_bloc_state_instances` reports under the `core` preset.
+- **Configuration goes above the example it produces.** If the rule reports
+  nothing until configured, show the real YAML immediately before the Don't/Do
+  pair. A comment describing it (`// With an entry banning 'data':`) cannot be
+  copied and never shows the entry shape.
+- **Several small examples beat one large one.** A `### scenario` heading, its
+  config, then its Don't/Do — repeated per case — lets a reader find the one
+  that matches their situation.
+- **Do not narrate the implementation.** No "How matching works". Document what
+  the user writes and what they get back; anyone who wants the algorithm opens
+  the source.
 
 `test/docs_rule_examples_test.dart` runs the Don't block of every rule page
 through a real `PluginServer` and fails if the rule does not report on it, so a

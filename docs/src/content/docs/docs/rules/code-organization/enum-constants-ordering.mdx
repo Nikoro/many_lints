@@ -12,44 +12,13 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
 
-This rule flags an enum whose constants are not in the configured order.
+Flags an enum whose constants are not in the order you configure.
 
 An enum is a list a reader scans rather than reads, and finding a constant in an unordered list of twenty means checking all twenty. Ordering also makes an addition show up in a diff as one line in the middle rather than one appended at the end, which is where duplicates hide.
 
-Outside `preset: pedantic`, **this rule reports nothing until configured**, because the useful order for an enum is often semantic rather than alphabetical — `small, medium, large` is correctly ordered and alphabetising it would be a regression. The pedantic preset deliberately chooses alphabetical order for mechanical consistency.
+This rule is in the **`pedantic`** preset, which sets `order: alphabetical`. Under any other preset **it reports nothing until you set `order:`** — the useful order for an enum is often semantic, and `small, medium, large` is correctly ordered exactly as it stands.
 
-Only the **first** out-of-order constant is reported: one misplaced name makes every later name look wrong too, and reporting them all would turn one edit into a wall of diagnostics.
-
-This rule is in the **`pedantic`** preset.
-
-## Don't
-
-```dart
-enum Fruit { banana, apple, cherry }
-```
-
-## Do
-
-```dart
-enum Fruit { apple, banana, cherry }
-
-// Still correct with no `order:` configured — a semantic order is
-// exactly why less strict presets leave this rule disabled.
-enum Size { small, medium, large }
-```
-
-## Enabling this rule
-
-Outside `preset: pedantic`, enabling it by name is not enough — set `order:`:
-
-```yaml
-# many_lints.yaml
-rules:
-  enum_constants_ordering:
-    order: alphabetical
-```
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -75,9 +44,105 @@ rules:
 </TabItem>
 </Tabs>
 
+## Don't
+
+With `order: alphabetical`:
+
+```dart
+enum Fruit { banana, apple, cherry }
+```
+
+## Do
+
+```dart
+enum Fruit { apple, banana, cherry }
+```
+
+## Examples
+
+### `alphabetical` — case-insensitive
+
+The default, and what a reader scanning for a name expects. Case-sensitive sorting puts every capitalised name in a block before the lowercase ones, which reads as two lists rather than one.
+
+```yaml
+rules:
+  enum_constants_ordering:
+    order: alphabetical
+```
+
+```dart
+// Don't
+enum LogLevel { warn, Debug, error }   // LINT on `Debug`
+
+// Do
+enum LogLevel { Debug, error, warn }
+```
+
+### `alphabetical_case_sensitive`
+
+Compares the raw strings, so every uppercase name sorts before every lowercase one:
+
+```yaml
+rules:
+  enum_constants_ordering:
+    order: alphabetical_case_sensitive
+```
+
+```dart
+// Don't
+enum LogLevel { Debug, error, Warn }   // LINT on `Warn`
+
+// Do
+enum LogLevel { Debug, Warn, error }
+```
+
+### `by_length`
+
+Longest name last. Purely visual, but it is a real house style for enum bodies. Names of equal length fall back to alphabetical, so the order is total:
+
+```yaml
+rules:
+  enum_constants_ordering:
+    order: by_length
+```
+
+```dart
+// Don't
+enum Size { extraLarge, small, medium }   // LINT on `small`
+
+// Do
+enum Size { small, medium, extraLarge }
+```
+
+### Scope it where a semantic order is the point
+
+Some enums are ordered by meaning and alphabetising them is a regression. Scope the rule rather than annotating each one:
+
+```yaml
+rules:
+  enum_constants_ordering:
+    order: alphabetical
+    exclude: ['lib/**/domain/**']
+```
+
+```dart
+// lib/checkout/domain/order_stage.dart — not reported
+enum OrderStage { created, paid, shipped, delivered }
+```
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `order` | string | `—` | `alphabetical`, `alphabetical_case_sensitive` or `by_length`. Unset means the rule is silent |
+
+## Known limitations
+
+**Only the first out-of-order constant is reported.** One misplaced name makes every later name look wrong too, and reporting them all would turn one edit into a wall of diagnostics. Fix the reported one and re-run to see the next.
+
+**No quick fix.** Reordering enum constants changes their `index`, which is not always inert — a persisted or serialised index would shift under the rewrite. The move is left to you.
+
+**An unrecognised `order:` falls back to `alphabetical`** rather than throwing, because a plugin cannot report a diagnostic against a YAML file. Check the spelling if the order you get is not the one you asked for.
 
 ## Turning this rule off
 

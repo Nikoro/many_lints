@@ -14,72 +14,11 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 Flags uses of a member you ban — one method, getter or constructor of a type rather than the whole type. The common need is `DateTime.now()` and `Random()` in code that should take an injected clock or seed.
 
-**This rule reports nothing until you configure it.**
+`DateTime.now()` is a hidden input: a type that calls it cannot be tested at a chosen moment. Banning it inside the domain layer while leaving it available in the composition root puts the constraint where it belongs — the code that decides *when* may know the time; the code that decides *what* may not.
 
-## Why use this rule
+This rule is in **no preset** and reports nothing until you add `banned:`. Every example below shows the configuration that produces it.
 
-`DateTime.now()` is a hidden input. A type that calls it cannot be tested at a chosen moment: you cannot check that a session expires at midnight without either waiting or mocking global state. The same is true of `Random()` — the test that fails once in fifty runs is usually a seed nobody controls.
-
-Injecting a clock fixes both, and this rule is what keeps it fixed. Banning `DateTime.now` inside your domain layer while leaving it available in the composition root puts the constraint exactly where it belongs: the code that decides *when* is allowed to know the time; the code that decides *what* is not.
-
-**See also:** [`package:clock`](https://pub.dev/packages/clock), [Flutter testing guidance](https://docs.flutter.dev/testing/overview)
-
-## Don't
-
-```dart
-// in lib/domain/session.dart
-//
-// With an entry banning 'DateTime.now' in lib/domain/**:
-class Session {
-  const Session(this.expiresAt);
-
-  final DateTime expiresAt;
-
-  // LINT: cannot be tested without waiting for real time to pass.
-  bool get isExpired => DateTime.now().isAfter(expiresAt);
-}
-```
-
-## Do
-
-```dart
-// in lib/domain/session.dart
-abstract class Clock {
-  DateTime now();
-}
-
-class Session {
-  const Session({required this.expiresAt, required Clock clock})
-      : _clock = clock;
-
-  final DateTime expiresAt;
-  final Clock _clock;
-
-  bool get isExpired => _clock.now().isAfter(expiresAt);
-}
-```
-
-## Turning this rule off
-
-This rule is in **no preset**, so it is off unless you enable it by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  banned_usage: true
-```
-
-To turn it off again:
-
-```yaml
-# many_lints.yaml
-rules:
-  banned_usage: false
-```
-
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -111,34 +50,112 @@ rules:
 </TabItem>
 </Tabs>
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `banned` | list of maps | `[]` | The entries to enforce. With none, the rule reports nothing |
+Members are written `Type.member`, matched on the type that **declares** the member. The unnamed constructor is spelled `new`.
 
-Each entry accepts:
+## Examples
 
-| Key | Type | Required | Description |
-|-----|------|----------|-------------|
-| `deny` | string or list | one of `deny` / `deny_pattern` | Members banned by **exact** match, written `Type.member` or as a bare `member` |
-| `deny_pattern` | string or list | one of `deny` / `deny_pattern` | Regular expressions, anchored to the whole member name |
-| `in` | list of globs | no | Paths, relative to the package root, where the entry applies. Omit to apply everywhere |
-| `message` | string | no | A project-specific explanation appended to the diagnostic |
+### Force an injected clock
 
-### Writing member names
+```yaml
+- deny: ['DateTime.now']
+  in: ['lib/domain/**']
+  message: 'Inject a clock so this stays testable.'
+```
 
-`Type.member` matches on the type that **declares** the member, so a subclass cannot slip past: with `Iterable.first` banned, a `List` receiver still reports.
+```dart
+// Don't  — in lib/domain/session.dart
+class Session {
+  const Session(this.expiresAt);
 
-The unnamed constructor is spelled `new`, so `Random.new` bans `Random()` while leaving `Random.secure()` alone.
+  final DateTime expiresAt;
 
-A bare `member` name bans it on every type. `deny: ['now']` catches `DateTime.now()` and anything else named `now` — prefer the qualified form unless that is really what you mean.
+  // LINT: cannot be tested without waiting for real time to pass.
+  bool get isExpired => DateTime.now().isAfter(expiresAt);
+}
+```
 
-### Worked example: scope a layer, then carve out one exception
+```dart
+// Do  — in lib/domain/session.dart
+abstract class Clock {
+  DateTime now();
+}
+
+class Session {
+  const Session({required this.expiresAt, required Clock clock})
+    : _clock = clock;
+
+  final DateTime expiresAt;
+  final Clock _clock;
+
+  bool get isExpired => _clock.now().isAfter(expiresAt);
+}
+```
+
+### Ban the unnamed constructor, keep the named one
+
+`Type.new` names the unnamed constructor, so `Random()` is reported while
+`Random.secure()` is left alone:
+
+```yaml
+- deny: ['Random.new']
+  message: 'Pass a seeded Random so failures reproduce.'
+```
+
+```dart
+// Don't
+int roll() => Random().nextInt(6);  // LINT
+
+// Do
+int roll(Random random) => random.nextInt(6);
+```
+
+### Ban a member declared on a supertype
+
+The declaring type is what matches, so an `Iterable.first` entry also catches a
+`List` receiver — a subclass cannot slip past:
+
+```yaml
+- deny: ['Iterable.first']
+  message: 'first throws on empty; use firstOrNull and handle the null.'
+```
+
+```dart
+// Don't
+int? firstScore(List<int> scores) => scores.first;  // LINT
+
+// Do
+int? firstScore(List<int> scores) => scores.firstOrNull;
+```
+
+Writing `List.first` instead would report nothing here: `first` is declared on
+`Iterable`, not on `List`.
+
+### Ban a member on every type
+
+A bare `member` name, with no `Type.` prefix, bans it wherever it appears:
+
+```yaml
+- deny: ['toString']
+  in: ['lib/api/**']
+  message: 'Serialize through toJson; toString is for debugging.'
+```
+
+```dart
+// Don't  — in lib/api/payload.dart
+String encode(Object value) => value.toString();  // LINT
+
+// Do
+String encode(Map<String, Object?> json) => jsonEncode(json);
+```
+
+Prefer the qualified form unless you really mean every type — `deny: ['now']`
+catches `DateTime.now()` and anything else named `now`.
+
+### Scope a layer, then carve out one exception
 
 `in:` and `exclude:` do different jobs and compose. `in:` scopes a **banned
 entry** to the paths where the policy applies; `exclude:` (available on every
-rule) skips paths for the **whole rule**. Together they express "banned across
-this layer, except in the one place that legitimately does it" — which is
-otherwise a shell script:
+rule) skips paths for the **whole rule**:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -172,9 +189,33 @@ rules:
 </TabItem>
 </Tabs>
 
-Writing to stdout is now an error everywhere under `lib/` except the one
-renderer that owns the terminal. Domain code returns a value; a single layer
-decides how it is displayed, which is what makes the output testable.
+Writing to stdout is now reported everywhere under `lib/` except the one
+renderer that owns the terminal.
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `banned` | list of entries | `[]` | The entries to enforce. With none, the rule reports nothing |
+
+Per entry:
+
+| Key | Type | Required | Description |
+|-----|------|----------|-------------|
+| `deny` | string or list | one of `deny` / `deny_pattern` | Members banned by **exact** match, written `Type.member` or as a bare `member` |
+| `deny_pattern` | string or list | one of `deny` / `deny_pattern` | Regular expressions, anchored to the whole value and tried against both `Type.member` and the bare `member` |
+| `in` | list of globs | no | Paths, relative to the package root, where the entry applies. Omit to apply everywhere |
+| `message` | string | no | A project-specific explanation appended to the diagnostic |
+
+## Known limitations
+
+**Write the declaring type.** `Iterable.first` catches a `List` receiver, but `List.first` catches nothing — the member is declared once, on `Iterable`. When an entry unexpectedly reports nothing, this is usually why.
+
+**A pattern is tested against both spellings.** `deny_pattern` is tried against the qualified `Type.member` and against the bare `member`, so `DateTime\.now` and `now` both report `DateTime.now()` — and an unanchored-looking pattern like `.*` bans every member it reaches.
+
+**Calls, reads and tear-offs, not declarations.** The rule reports where a member is *used*. Declaring a method named `now` is [`avoid_banned_names`](/many_lints/docs/rules/architecture/avoid-banned-names/)'s job.
+
+**A malformed entry is skipped silently.** An invalid regular expression costs you that pattern and nothing else — a plugin cannot report problems against a YAML file.
 
 ## Related rules
 

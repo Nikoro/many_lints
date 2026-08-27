@@ -14,56 +14,11 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 Flags declarations named with an identifier you ban, optionally only inside the directories you name. Enforces a project's vocabulary: ban `data`, `temp` and `manager` as meaningless, or reserve a domain term for the one thing it should mean.
 
-**This rule reports nothing until you configure it.**
+Names like `data`, `info`, `temp` and `manager` survive because they are never wrong — every value is data and every class manages something. That is exactly what makes them useless: they tell the next reader nothing the type did not already say.
 
-## Why use this rule
+This rule is in **no preset** and reports nothing until you add `banned:`. Every example below shows the configuration that produces it.
 
-Names like `data`, `info`, `temp` and `manager` survive because they are never wrong — every value is data and every class manages something. That is exactly what makes them useless: they tell the next reader nothing the type did not already say, and they cluster, so a file ends up with `data`, `userData` and `dataList` in one scope.
-
-A banned-name list is also how a team keeps a domain term precise. If `Order` means a customer purchase, banning it as a variable name for a sort order stops the two senses from mixing in the same codebase.
-
-**See also:** [Effective Dart: naming](https://dart.dev/effective-dart/design#names), [Dart style guide: do use terms consistently](https://dart.dev/effective-dart/design#do-use-terms-consistently)
-
-## Don't
-
-```dart
-// With an entry banning 'data', 'temp', 'manager':
-final data = fetchUsers();      // LINT: says nothing the type didn't
-void process(int temp) {}       // LINT
-class Manager {}                // LINT
-```
-
-## Do
-
-```dart
-final users = fetchUsers();
-
-void process(int celsius) {}
-
-class UserDirectory {}
-```
-
-## Turning this rule off
-
-This rule is in **no preset**, so it is off unless you enable it by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_banned_names: true
-```
-
-To turn it off again:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_banned_names: false
-```
-
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -76,8 +31,6 @@ many_lints:
       banned:
         - deny: ['data', 'temp', 'info', 'manager']
           message: 'Name it for what it holds.'
-        - deny_pattern: ['.*Impl']
-          message: 'Name the implementation for how it differs.'
 ```
 
 </TabItem>
@@ -90,18 +43,98 @@ rules:
     banned:
       - deny: ['data', 'temp', 'info', 'manager']
         message: 'Name it for what it holds.'
-      - deny_pattern: ['.*Impl']
-        message: 'Name the implementation for how it differs.'
 ```
 
 </TabItem>
 </Tabs>
 
+`deny` matches **exactly**. Use `deny_pattern` to match by shape, and `in:` to limit an entry to part of the tree.
+
+## Examples
+
+### Ban meaningless names
+
+```yaml
+- deny: ['data', 'temp', 'manager']
+  message: 'Name it for what it holds.'
+```
+
+```dart
+// Don't
+final data = fetchUsers();  // LINT
+void process(int temp) {}   // LINT
+class Manager {}            // LINT
+
+// Do
+final users = fetchUsers();
+void process(int celsius) {}
+class UserDirectory {}
+```
+
+Exact matching means `userData` and `dataSource` are left alone — only the bare
+name `data` is reported.
+
+### Ban a naming convention with a pattern
+
+`deny_pattern` is anchored to the whole name, so `.*Impl` matches `UserImpl`
+but not `ImplementationDetail`:
+
+```yaml
+- deny_pattern: ['.*Impl']
+  message: 'Name the implementation for how it differs.'
+```
+
+```dart
+// Don't
+class UserImpl {}  // LINT
+
+// Do
+class InMemoryUserRepository {}
+```
+
+### Reserve a domain term
+
+If `Order` means a customer purchase, keep it from also meaning a sort
+direction:
+
+```yaml
+- deny: ['Order']
+  in: ['lib/ui/**']
+  message: 'Order is the purchase entity; call a sort direction SortDirection.'
+```
+
+```dart
+// Don't  — in lib/ui/product_list.dart
+enum Order { ascending, descending }  // LINT
+
+// Do
+enum SortDirection { ascending, descending }
+```
+
+### Ban single-letter type parameters
+
+Type parameters are declarations too, so the same list reaches them:
+
+```yaml
+- deny: ['T1', 'T2', 'X']
+  message: 'Name the type parameter after what it stands for.'
+```
+
+```dart
+// Don't
+class Cache<T1, T2> {}  // LINT on both
+
+// Do
+class Cache<Key, Value> {}
+```
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `banned` | list of maps | `[]` | The entries to enforce. With none, the rule reports nothing |
+| `banned` | list of entries | `[]` | The entries to enforce. With none, the rule reports nothing |
 
-Each entry accepts:
+Per entry:
 
 | Key | Type | Required | Description |
 |-----|------|----------|-------------|
@@ -110,13 +143,13 @@ Each entry accepts:
 | `in` | list of globs | no | Paths, relative to the package root, where the entry applies. Omit to apply everywhere |
 | `message` | string | no | A project-specific explanation appended to the diagnostic |
 
-### What is checked
+## Known limitations
 
-Variables, parameters, methods, functions, classes, mixins, enums, extension types, and type parameters — every place a name is **chosen**.
+**Declarations only.** Variables, parameters, methods, functions, classes, mixins, enums, extension types and type parameters are checked — every place a name is *chosen*. Uses of a banned name are not reported, because renaming the declaration fixes them all at once.
 
-References are deliberately *not* reported. A reference is not separately fixable (renaming the declaration fixes every use), so reporting them would bury the one line you can act on under diagnostics you cannot.
+**Exact unless you ask otherwise.** `deny: ['data']` does not report `userData`. Reach for `deny_pattern` when you want the shape rather than the word.
 
-Because `deny` matches exactly, banning `data` leaves `userData` and `dataSource` alone. Use `deny_pattern` to match by shape — and note it anchors to the whole name, so `.*Impl` matches `UserImpl` but not `ImplementationDetail`.
+**A malformed entry is skipped silently.** An entry denying nothing, or an invalid regular expression, costs you that entry and nothing else — a plugin cannot report problems against a YAML file.
 
 ## Related rules
 

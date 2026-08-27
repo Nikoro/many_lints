@@ -16,68 +16,13 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Quality</span>
 
-Reports code matching a pattern the project supplies, and offers the project's own replacement as a quick fix.
+Write your own lint as a regular expression, with a quick fix, in `many_lints.yaml`.
 
-This rule is in **no preset**. It reports nothing until you configure `patterns:`.
+Use it for the conventions no published lint will ever ship: "call our `Clock`, not `DateTime.now()`", "use `context.theme`, not `Theme.of(context)`", "that helper moved".
 
-## Why use this rule
+This rule is in **no preset** and reports nothing until you add `patterns:`. Every example below shows the configuration that produces it.
 
-Every project accumulates conventions that no general-purpose lint will ever ship:
-
-- "use our `Clock` seam, not `DateTime.now()`"
-- "use our trailing `.unawaited()`, not the SDK free function"
-- "use `context.theme`, not `Theme.of(context)`"
-- "this deprecated helper moved, call the new one"
-
-Today each of those lives in a `grep` in a pre-commit hook: no fix, no IDE integration, no `// ignore:` support, and no idea where an expression begins or ends. This rule gives a one-off convention the same ergonomics as a built-in lint, a squiggle where the problem is and a lightbulb that fixes it.
-
-It also relieves pressure on this package. Several `banned_*` rules exist only because the vocabulary is project-specific; a generic matcher covers the long tail without a new rule per idea.
-
-## Don't
-
-```dart
-unawaited(repository.refresh());
-```
-
-## Do
-
-```dart
-repository.refresh().unawaited();
-```
-
-## How matching works
-
-The pattern is matched against the **source text of one AST node**, named by `node:`. Matching a node rather than a raw line is what bounds the match: a pattern cannot run past the end of the expression it was written for.
-
-| `node:` | Matches | Example |
-|---------|---------|---------|
-| `methodInvocation` (default) | A call | `unawaited(x)`, `DateTime.now()`, `Theme.of(context)` |
-| `propertyAccess` | A property read with no argument list | `Theme.of(context).textTheme` |
-
-`propertyAccess` exists for replacements whose right-hand end is a property rather than a call. With `methodInvocation` alone the matched node stops at `Theme.of(context)` and the trailing `.textTheme` cannot be rewritten with it.
-
-Patterns are anchored to the whole node, so `find: 'awaited\(1\)'` does **not** match `unawaited(1)`. A `$` inside a `find:` needs escaping in YAML the same as anywhere else.
-
-Two consequences of matching text follow from the design, and both are deliberate:
-
-- **No type information.** `unawaited` from any library looks the same, so a pattern cannot tell the SDK's function from your own helper of that name.
-- **Formatting matters.** A call split across lines will not match a pattern written on one.
-
-## The replacement
-
-`replace:` is a template over the capture groups of `find:`. `$1`..`$9` expand to groups, `$0` to the whole match, and `$$` is a literal `$`. A group that did not participate expands to the empty string.
-
-`replace:` is optional. **Omitting it is how an entry says "report only"** — nothing is ever rewritten unless you asked for it.
-
-Because the template is unreviewed configuration rather than a shape this package understands, the fix is held to guard rails the hand-written fixes do not need:
-
-1. **Parsed before offering.** If applying the template produces source that does not parse, the fix is dropped and the diagnostic is left alone. A wrong pattern cannot turn working code into a syntax error.
-2. **Never bulk-applied.** The fix is `singleLocation`, so `dart fix --apply` will not sweep a hand-written regex across your project.
-3. **Nothing checks scope.** A replacement naming a symbol that is not imported produces code that parses but does not compile. That one is yours to get right.
-
-An invalid regex, or a `node:` naming no known kind, drops that entry rather than throwing — the same as every other malformed option, because a plugin cannot report diagnostics against a YAML file.
-
-## Configuration
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -90,8 +35,6 @@ many_lints:
       patterns:
         - find: '^unawaited\((.+)\)$'
           replace: '$1.unawaited()'
-          message: 'Prefer the trailing form from many_extensions.'
-          in: ['lib/**']
 ```
 
 </TabItem>
@@ -104,28 +47,133 @@ rules:
     patterns:
       - find: '^unawaited\((.+)\)$'
         replace: '$1.unawaited()'
-        message: 'Prefer the trailing form from many_extensions.'
-        in: ['lib/**']
 ```
 
 </TabItem>
 </Tabs>
 
+`replace` is optional — omit it to report without offering a rewrite.
+
+`find` is matched against the source text of one call, anchored end to end. `$1`…`$9` in `replace` are its capture groups.
+
+## Examples
+
+### Swap a free function for your extension
+
+```yaml
+- find: '^unawaited\((.+)\)$'
+  replace: '$1.unawaited()'
+  message: 'Use the trailing form from lib/src/extensions.'
+```
+
+```dart
+// Don't
+unawaited(cart.refresh());
+
+// Do  — offered as a quick fix
+cart.refresh().unawaited();
+```
+
+### Force a testable clock
+
+```yaml
+- find: '^DateTime\.now\(\)$'
+  replace: 'clock.now()'
+  message: 'Inject the Clock seam so tests can freeze time.'
+```
+
+```dart
+// Don't
+final startedAt = DateTime.now();
+
+// Do
+final startedAt = clock.now();
+```
+
+### Report without rewriting
+
+Omit `replace` when the fix needs a human decision:
+
+```yaml
+- find: '^jsonDecode\(.+\)$'
+  message: 'Parse through ApiCodec so errors are typed.'
+```
+
+```dart
+// Reported, but nothing is auto-applied
+final data = jsonDecode(body);
+```
+
+### Rewrite a trailing property
+
+A call match ends at the closing bracket. To reach `.textTheme`, match the
+property instead:
+
+```yaml
+- node: propertyAccess
+  find: '^Theme\.of\(context\)\.textTheme$'
+  replace: 'context.textTheme'
+```
+
+```dart
+// Don't
+final titleStyle = Theme.of(context).textTheme;
+
+// Do
+final titleStyle = context.textTheme;
+```
+
+### Apply a rule to part of the tree
+
+`in:` takes globs, so a convention can be scoped to the layer it belongs to:
+
+```yaml
+- find: '^print\((.+)\)$'
+  replace: 'logger.debug($1)'
+  in: ['lib/**']          # leave tool/ and test/ alone
+```
+
+### Migrate a renamed helper
+
+```yaml
+- find: '^formatMoney\((.+), (.+)\)$'
+  replace: 'Money($1).format($2)'
+  message: 'formatMoney moved to Money.format in 2.0.'
+```
+
+```dart
+// Don't
+final label = formatMoney(total, locale);
+
+// Do
+final label = Money(total).format(locale);
+```
+
 ## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `patterns` | list of entries | `[]` | The patterns to match. Each entry takes `find`, and optionally `replace`, `node`, `message` and `in` |
+| `patterns` | list of entries | `[]` | The patterns to match |
 
 Per entry:
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `find` | string | required | Regular expression, anchored to the whole node's source text |
-| `replace` | string | — | Template for the quick fix. Omit it to report only |
-| `node` | string | `methodInvocation` | Which node kind to match: `methodInvocation` or `propertyAccess` |
-| `message` | string | — | Project-specific explanation appended to the diagnostic |
+| `replace` | string | — | Quick-fix template. `$1`…`$9` are capture groups, `$0` the whole match, `$$` a literal `$`. Omit to report only |
+| `node` | string | `methodInvocation` | `methodInvocation` (a call) or `propertyAccess` (a property read) |
+| `message` | string | — | Appended to the diagnostic |
 | `in` | list of globs | everywhere | Limits where the entry applies |
+
+## Known limitations
+
+**Text, not types.** `unawaited` from any library looks identical, so a pattern cannot tell the SDK function from your own helper of the same name.
+
+**Formatting counts.** A call split across lines will not match a pattern written on one.
+
+**Imports are yours.** A replacement naming a symbol that is not imported produces code that parses but does not compile.
+
+The fix is never bulk-applied — `dart fix --apply` will not sweep a hand-written regex across the project — and a replacement that would not parse is dropped rather than offered. A malformed entry (bad regex, unknown `node:`) is skipped silently, since a plugin cannot report against a YAML file.
 
 ## Related rules
 

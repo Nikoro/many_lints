@@ -14,68 +14,11 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 Flags imports of libraries you ban, optionally only inside the directories you name. This is architecture enforcement: it keeps a Clean Architecture domain layer free of Flutter, stops `dart:io` reaching code that also targets the web, and confines a legacy package to the module still using it.
 
-**This rule reports nothing until you configure it.** Installing this package never restricts an import on its own.
+Layering rules are the easiest architectural decision to make and the hardest to keep. A domain layer stays platform-independent only as long as nobody types `import 'package:flutter/material.dart'` — and code review catches that in the pull request it appears in, not in the fifty that follow.
 
-## Why use this rule
+This rule is in **no preset** and reports nothing until you add `banned:`. Every example below shows the configuration that produces it.
 
-Layering rules are the easiest architectural decision to make and the hardest to keep. A domain layer stays platform-independent only as long as nobody types `import 'package:flutter/material.dart'` — and code review catches that in the pull request it appears in, not in the fifty that follow. A lint makes the boundary mechanical, so the constraint outlives the person who set it.
-
-The payoff shows up when it is needed most. A domain layer with no Flutter import can be tested without a widget binding and reused in a CLI or server; one that has drifted takes a refactor to get back.
-
-**See also:** [Clean Architecture: the dependency rule](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html), [Flutter's guide to app architecture](https://docs.flutter.dev/app-architecture)
-
-## Don't
-
-```dart
-// in lib/domain/user_repository.dart
-//
-// With an entry banning 'dart:io' in lib/domain/**:
-import 'dart:io';  // LINT: the domain layer can no longer target the web
-
-Future<String> readConfig(File file) => file.readAsString();
-```
-
-## Do
-
-```dart
-// in lib/domain/user_repository.dart
-//
-// Depend on an abstraction the domain layer owns; let the data layer import
-// 'dart:io' and implement it.
-abstract class ConfigSource {
-  Future<String> read();
-}
-
-class UserRepository {
-  const UserRepository(this._config);
-
-  final ConfigSource _config;
-
-  Future<String> load() => _config.read();
-}
-```
-
-## Turning this rule off
-
-This rule is in **no preset**, so it is off unless you enable it by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_banned_imports: true
-```
-
-To turn it off again:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_banned_imports: false
-```
-
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -87,10 +30,8 @@ many_lints:
     avoid_banned_imports:
       banned:
         - deny: ['package:flutter/material.dart']
-          in: ['lib/domain/**', 'lib/data/**']
+          in: ['lib/domain/**']
           message: 'The domain layer must not depend on Flutter.'
-        - deny_pattern: ['package:legacy_.*']
-          message: 'Legacy packages are being removed; see ADR-014.'
 ```
 
 </TabItem>
@@ -102,20 +43,153 @@ rules:
   avoid_banned_imports:
     banned:
       - deny: ['package:flutter/material.dart']
-        in: ['lib/domain/**', 'lib/data/**']
+        in: ['lib/domain/**']
         message: 'The domain layer must not depend on Flutter.'
-      - deny_pattern: ['package:legacy_.*']
-        message: 'Legacy packages are being removed; see ADR-014.'
 ```
 
 </TabItem>
 </Tabs>
 
+Write the URI exactly as it appears in the import line, not as a file path. `in:` takes globs relative to the package root; omit it to ban everywhere.
+
+## Examples
+
+### Keep Flutter out of the domain layer
+
+```yaml
+- deny: ['package:flutter/material.dart', 'package:flutter/widgets.dart']
+  in: ['lib/domain/**']
+  message: 'The domain layer must not depend on Flutter.'
+```
+
+```dart
+// Don't  — in lib/domain/cart.dart
+import 'package:flutter/material.dart';  // LINT
+
+Color badgeColor(int items) => items > 0 ? Colors.red : Colors.grey;
+```
+
+```dart
+// Do  — in lib/domain/cart.dart: return a value the UI layer maps to a Color
+enum CartBadge { empty, filled }
+
+CartBadge badgeFor(int items) =>
+    items > 0 ? CartBadge.filled : CartBadge.empty;
+```
+
+The same import inside `lib/ui/**` is untouched — only the directories named in
+`in:` are checked.
+
+### Keep `dart:io` out of code that also targets the web
+
+```yaml
+- deny: ['dart:io']
+  in: ['lib/shared/**']
+  message: 'Shared code also runs on the web; use an injected abstraction.'
+```
+
+```dart
+// Don't  — in lib/shared/config_loader.dart
+import 'dart:io';  // LINT
+
+Future<String> readConfig(File file) => file.readAsString();
+```
+
+```dart
+// Do  — in lib/shared/config_loader.dart
+abstract class ConfigSource {
+  Future<String> read();
+}
+
+class ConfigLoader {
+  const ConfigLoader(this._source);
+
+  final ConfigSource _source;
+
+  Future<String> load() => _source.read();
+}
+```
+
+### Retire a package across the whole repo
+
+`deny_pattern` is anchored to the whole URI, so `package:legacy_.*` matches
+every library in every package whose name starts with `legacy_`:
+
+```yaml
+- deny_pattern: ['package:legacy_.*']
+  message: 'Legacy packages are being removed; see ADR-014.'
+```
+
+```dart
+// Don't
+import 'package:legacy_http/legacy_http.dart';  // LINT
+
+// Do
+import 'package:http/http.dart';
+```
+
+### Force one entry point for a package
+
+Ban the deep paths and leave the barrel, so consumers depend on the public API
+rather than internals:
+
+```yaml
+- deny_pattern: ['package:design_system/src/.*']
+  message: 'Import package:design_system/design_system.dart instead.'
+```
+
+```dart
+// Don't
+import 'package:design_system/src/buttons/primary_button.dart';  // LINT
+
+// Do
+import 'package:design_system/design_system.dart';
+```
+
+### Ban one library everywhere except its owner
+
+`in:` scopes an entry; the rule-wide `exclude:` skips paths for the whole rule.
+They compose into "banned across the app, except in the module that owns it":
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_banned_imports:
+      exclude: ['lib/infrastructure/analytics/**']
+      banned:
+        - deny: ['package:firebase_analytics/firebase_analytics.dart']
+          in: ['lib/**']
+          message: 'Log through AnalyticsService, not the vendor SDK.'
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_banned_imports:
+    exclude: ['lib/infrastructure/analytics/**']
+    banned:
+      - deny: ['package:firebase_analytics/firebase_analytics.dart']
+        in: ['lib/**']
+        message: 'Log through AnalyticsService, not the vendor SDK.'
+```
+
+</TabItem>
+</Tabs>
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `banned` | list of maps | `[]` | The entries to enforce. With none, the rule reports nothing |
+| `banned` | list of entries | `[]` | The entries to enforce. With none, the rule reports nothing |
 
-Each entry accepts:
+Per entry:
 
 | Key | Type | Required | Description |
 |-----|------|----------|-------------|
@@ -124,13 +198,15 @@ Each entry accepts:
 | `in` | list of globs | no | Paths, relative to the package root, where the entry applies. Omit to apply everywhere |
 | `message` | string | no | A project-specific explanation appended to the diagnostic |
 
-Match the URI exactly as you write it in the import: `package:flutter/material.dart`, not a file path.
+## Known limitations
 
-`deny` is **exact** by default, so banning `async` does not also ban `dart:async`. Opt into patterns explicitly with `deny_pattern`, which is anchored to the whole URI — `dart:.*` matches every `dart:` library, and `legacy` matches only a library named exactly `legacy`.
+**The URI is matched as written.** `deny: ['package:flutter/material.dart']` does not also ban `package:flutter/widgets.dart`, and a relative import is matched as the relative path you typed. List each URI, or use `deny_pattern`.
 
-`in` takes globs, the same syntax as `exclude`, so path semantics are identical across the whole config file and Windows separators are normalized for you.
+**Exact unless you ask otherwise.** Banning `async` does not ban `dart:async` — `deny` never matches a substring. `deny_pattern` opts into matching by shape and anchors to the whole URI, so `dart:.*` catches every `dart:` library while `legacy` matches only a library named exactly `legacy`.
 
-An entry denying nothing is skipped, and an invalid regular expression costs you that pattern and nothing else. Because a plugin cannot report problems against a YAML file, malformed configuration degrades quietly rather than failing analysis.
+**Transitive imports are invisible.** A file importing a permitted library that itself imports a banned one is not reported; the rule reads the import lines in the file it is analysing.
+
+**A malformed entry is skipped silently.** An entry denying nothing is dropped and an invalid regular expression costs you that pattern only — a plugin cannot report problems against a YAML file, so bad configuration degrades quietly rather than failing analysis.
 
 ## Related rules
 

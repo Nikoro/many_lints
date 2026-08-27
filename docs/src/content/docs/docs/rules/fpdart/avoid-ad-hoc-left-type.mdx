@@ -12,60 +12,13 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">fpdart</span>
 
-This rule flags an `Either`, `TaskEither` or `IOEither` whose error channel carries a type outside the project's configured failure hierarchy.
+Flags an `Either`, `TaskEither` or `IOEither` whose error channel carries a type outside the failure hierarchy you configure.
 
-**It reports nothing until you configure `error_types`.** What belongs in the error channel is a project decision, so the rule ships with no policy at all.
+`flatMap` only composes when every step shares one left type. A step that returns `TaskEither<String, T>` does not chain onto one returning `TaskEither<Failure, T>` — it has to be bridged with `mapLeft` at the junction, and the usual bridge is `(e) => e.toString()`. That is where the damage is done: once the left side is a `String`, the fold at the boundary can no longer `switch` on what went wrong.
 
-## Why use this rule
+This rule is in **no preset** and reports nothing until you set `error_types:`. Every example below shows the configuration that produces it.
 
-`flatMap` only composes when every step shares one left type. A pipeline that starts `TaskEither<String, T>` and meets a `TaskEither<Failure, T>` does not chain — it has to be bridged with `mapLeft` at every junction.
-
-The usual bridge is `(e) => e.toString()`, and that is where the damage is done: once the left side is a `String`, the fold at the boundary can no longer `switch` on what went wrong. The sealed hierarchy that made failures exhaustive becomes a message, and the UI that wanted to retry on a network error but log out on an auth error has nothing left to branch on.
-
-Naming the hierarchy makes an ad-hoc left type visible where it is introduced, rather than three layers later where someone has to reconcile it.
-
-**See also:** [fpdart: Either](https://pub.dev/documentation/fpdart/latest/fpdart/Either-class.html)
-
-## Don't
-
-```dart
-// with error_types: [Failure]
-TaskEither<String, User> load(String id) => throw UnimplementedError();
-```
-
-## Do
-
-```dart
-TaskEither<Failure, User> load(String id) => throw UnimplementedError();
-```
-
-Model the hierarchy as a sealed class so the fold can be exhaustive:
-
-```dart
-sealed class Failure {}
-class NetworkFailure extends Failure {}
-class AuthFailure extends Failure {}
-
-void handle(Either<Failure, User> result) {
-  result.match(
-    (failure) => switch (failure) {
-      NetworkFailure() => retry(),
-      AuthFailure() => signOut(),
-    },
-    (user) => show(user),
-  );
-}
-```
-
-## Known limitations
-
-`Option` and `Task` have no error channel and are never reported.
-
-By default a subtype of a named type is accepted, so a sealed hierarchy works by naming only its root. Set `allow_subtypes: false` to require the exact type — useful when the point is that every signature spells the same name.
-
-No quick fix is offered: replacing the type means deciding which failure this step produces, which is the design work the rule is asking for.
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -95,22 +48,201 @@ rules:
 </TabItem>
 </Tabs>
 
+## Examples
+
+### One odd step breaks the chain
+
+```yaml
+rules:
+  avoid_ad_hoc_left_type:
+    error_types:
+      - Failure
+```
+
+```dart
+import 'package:fpdart/fpdart.dart';
+
+sealed class Failure {}
+
+class NetworkFailure extends Failure {}
+
+class ParseFailure extends Failure {}
+
+class User {
+  const User(this.id);
+
+  final String id;
+}
+
+// Don't — `fetch` reports a String, so `loadUser` cannot chain onto `parse`
+// without flattening `ParseFailure` into a message first.
+TaskEither<String, String> fetch(String id) =>       // LINT on `String`
+    TaskEither.right('{"id":"$id"}');
+
+TaskEither<Failure, User> parse(String body) =>
+    TaskEither.right(User(body));
+
+TaskEither<String, User> loadUser(String id) =>      // LINT on `String`
+    fetch(id).flatMap((body) => parse(body).mapLeft((f) => f.toString()));
+```
+
+```dart
+import 'package:fpdart/fpdart.dart';
+
+sealed class Failure {}
+
+class NetworkFailure extends Failure {}
+
+class ParseFailure extends Failure {}
+
+class User {
+  const User(this.id);
+
+  final String id;
+}
+
+// Do — one left type end to end, so flatMap composes with no bridge.
+TaskEither<Failure, String> fetch(String id) =>
+    TaskEither.right('{"id":"$id"}');
+
+TaskEither<Failure, User> parse(String body) =>
+    TaskEither.right(User(body));
+
+TaskEither<Failure, User> loadUser(String id) =>
+    fetch(id).flatMap(parse);
+```
+
+### The fold stays exhaustive
+
+Keeping the hierarchy in the error channel is what lets the boundary branch on the failure instead of printing it:
+
+```dart
+import 'package:fpdart/fpdart.dart';
+
+sealed class Failure {}
+
+class NetworkFailure extends Failure {}
+
+class AuthFailure extends Failure {}
+
+class User {
+  const User(this.id);
+
+  final String id;
+}
+
+String describe(Either<Failure, User> result) => result.match(
+  (failure) => switch (failure) {
+    NetworkFailure() => 'Offline — retrying.',
+    AuthFailure() => 'Session expired — sign in again.',
+  },
+  (user) => 'Signed in as ${user.id}',
+);
+```
+
+Had `fetch` flattened its failure to a `String`, that `switch` would have been a string comparison.
+
+### Subtypes are accepted by default
+
+`allow_subtypes: true` — the default — means naming the sealed root covers the whole hierarchy:
+
+```yaml
+rules:
+  avoid_ad_hoc_left_type:
+    error_types:
+      - Failure
+```
+
+```dart
+import 'package:fpdart/fpdart.dart';
+
+sealed class Failure {}
+
+class NetworkFailure extends Failure {}
+
+// Accepted — NetworkFailure is a Failure
+TaskEither<NetworkFailure, int> ping() => TaskEither.right(1);
+```
+
+Set it to `false` when the point is that every signature spells the same name:
+
+```yaml
+rules:
+  avoid_ad_hoc_left_type:
+    error_types:
+      - Failure
+    allow_subtypes: false
+```
+
+```dart
+import 'package:fpdart/fpdart.dart';
+
+sealed class Failure {}
+
+class NetworkFailure extends Failure {}
+
+// Don't — exact match required
+TaskEither<NetworkFailure, int> ping() =>   // LINT
+    TaskEither.right(1);
+
+// Do
+TaskEither<Failure, int> pingChecked() => TaskEither.right(1);
+```
+
+### Naming more than one allowed type
+
+A project that keeps domain failures separate from transport ones lists both roots:
+
+```yaml
+rules:
+  avoid_ad_hoc_left_type:
+    error_types:
+      - Failure
+      - HttpError
+```
+
+```dart
+import 'package:fpdart/fpdart.dart';
+
+sealed class Failure {}
+
+sealed class HttpError {}
+
+// Both accepted
+TaskEither<Failure, int> readSetting() => TaskEither.right(1);
+
+IOEither<HttpError, int> statusCode() => IOEither.right(200);
+
+// Don't — Exception is neither
+TaskEither<Exception, int> refresh() =>   // LINT
+    TaskEither.right(1);
+```
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `error_types` | list of strings | *(none)* | The type names allowed in the error channel. **Required** — the rule is silent without it |
 | `allow_subtypes` | bool | `true` | Accept a subtype of a named type, so a sealed hierarchy works by naming only its root |
 
-## Configuration
+## Known limitations
 
-This rule is in **no preset**, since it does nothing without configuration.
-Turn it on by giving it one:
+**Only the two-parameter wrappers are checked.** `Either`, `TaskEither` and `IOEither` have an error channel; `Option`, `Task` and `IO` do not and are never reported.
+
+**Types are matched by name, not by package.** A project's own failure hierarchy is declared in the analysed package and has no `package:` URI to pin against, so an unrelated class of the same name from a dependency would also be accepted.
+
+**No quick fix.** Replacing the type means deciding which failure this step produces, which is the design work the rule is asking for.
+
+**See also:** [fpdart: Either](https://pub.dev/documentation/fpdart/latest/fpdart/Either-class.html)
+
+## Turning this rule off
+
+To disable this rule:
 
 ```yaml
 # many_lints.yaml
 rules:
-  avoid_ad_hoc_left_type:
-    error_types:
-      - Failure
+  avoid_ad_hoc_left_type: false
 ```
 
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).

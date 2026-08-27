@@ -14,56 +14,11 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 Flags any mention of a type you ban, optionally only inside the directories you name. Useful for retiring a deprecated model, keeping a platform type out of shared code, or confining a design-system widget to the layer that owns it.
 
-**This rule reports nothing until you configure it.**
+Deprecation annotations tell you a type is going away; they do not stop new code from reaching for it. A lint turns "remaining usages" into a number CI reports instead of a grep somebody remembers to run.
 
-## Why use this rule
+This rule is in **no preset** and reports nothing until you add `banned:`. Every example below shows the configuration that produces it.
 
-Deprecation annotations tell you a type is going away; they do not stop new code from reaching for it. During a migration the count of remaining usages is the thing you actually want to drive to zero, and a lint turns that into a number your CI reports instead of a grep somebody remembers to run.
-
-The second use is layering. A design system where atoms must not depend on page-level layout has no way to express that in the type system — `Scaffold` is importable from anywhere. Banning it inside `lib/design_system/atoms/**` states the constraint where it can be checked.
-
-**See also:** [Effective Dart: deprecation](https://dart.dev/tools/linter-rules/deprecated_member_use_from_same_package), [Atomic Design](https://bradfrost.com/blog/post/atomic-web-design/)
-
-## Don't
-
-```dart
-// With an entry banning 'LegacyUser':
-void greet(LegacyUser user) {}          // LINT: parameter type
-LegacyUser find() => LegacyUser('a');   // LINT: return type, and the call
-List<LegacyUser> all = [];              // LINT: as a type argument
-```
-
-## Do
-
-```dart
-void greet(User user) {}
-
-User find() => const User('ada');
-
-List<User> all = [];
-```
-
-## Turning this rule off
-
-This rule is in **no preset**, so it is off unless you enable it by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_banned_types: true
-```
-
-To turn it off again:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_banned_types: false
-```
-
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -76,9 +31,6 @@ many_lints:
       banned:
         - deny: ['LegacyUser']
           message: 'Use User instead; LegacyUser is removed in v3.'
-        - deny: ['Scaffold']
-          in: ['lib/design_system/atoms/**']
-          message: 'Atoms must not depend on page-level layout.'
 ```
 
 </TabItem>
@@ -91,38 +43,95 @@ rules:
     banned:
       - deny: ['LegacyUser']
         message: 'Use User instead; LegacyUser is removed in v3.'
-      - deny: ['Scaffold']
-        in: ['lib/design_system/atoms/**']
-        message: 'Atoms must not depend on page-level layout.'
 ```
 
 </TabItem>
 </Tabs>
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `banned` | list of maps | `[]` | The entries to enforce. With none, the rule reports nothing |
+`deny` takes a bare `Name` or a qualified `package:uri#Name`. Add `in:` to limit an entry to part of the tree.
 
-Each entry accepts:
+## Examples
 
-| Key | Type | Required | Description |
-|-----|------|----------|-------------|
-| `deny` | string or list | one of `deny` / `deny_pattern` | Type names banned by **exact** match. Accepts a bare `Name` or a qualified `package:uri#Name` |
-| `deny_pattern` | string or list | one of `deny` / `deny_pattern` | Regular expressions, anchored to the whole name |
-| `in` | list of globs | no | Paths, relative to the package root, where the entry applies. Omit to apply everywhere |
-| `message` | string | no | A project-specific explanation appended to the diagnostic |
+### Retire a deprecated model
 
-Matching is on the type's **declared** name rather than the name as written, so an import prefix cannot hide a usage — `p.LegacyUser` matches a `LegacyUser` entry.
+```yaml
+- deny: ['LegacyUser']
+  message: 'Use User instead; LegacyUser is removed in v3.'
+```
 
-Qualify with `package:uri#Name` when a bare name is ambiguous. Banning `Border` outright would also catch a local class of that name; `package:flutter/src/painting/border.dart#Border` bans only Flutter's.
+Every written mention of the type is reported — parameter types, return types,
+type arguments, and constructor calls:
 
-## Recipe: keeping heavy FP machinery out of an fpdart codebase
+```dart
+// Don't
+void greet(LegacyUser user) {}          // LINT: parameter type
+LegacyUser find() => LegacyUser('a');   // LINT: return type, and the call
+List<LegacyUser> all = [];              // LINT: as a type argument
+
+// Do
+void greet(User user) {}
+User find() => const User('ada');
+List<User> all = [];
+```
+
+An import prefix does not hide a usage: matching is on the type's **declared**
+name, so `p.LegacyUser` still matches a `LegacyUser` entry.
+
+### Keep a layout widget out of the atoms layer
+
+```yaml
+- deny: ['Scaffold']
+  in: ['lib/design_system/atoms/**']
+  message: 'Atoms must not depend on page-level layout.'
+```
+
+```dart
+// Don't  — in lib/design_system/atoms/primary_button.dart
+Widget wrap(Widget child) => Scaffold(body: child);  // LINT
+
+// Do  — an atom returns itself; the page decides the frame
+Widget wrap(Widget child) => Padding(
+  padding: const EdgeInsets.all(8),
+  child: child,
+);
+```
+
+The same `Scaffold` outside `lib/design_system/atoms/**` is untouched.
+
+### Disambiguate a common name
+
+Banning `Border` outright would also catch a local class of that name. Qualify
+with `package:uri#Name` to ban only one library's:
+
+```yaml
+- deny: ['package:flutter/src/painting/border.dart#Border']
+  message: 'Use the design-system Border token.'
+```
+
+### Ban a whole family with a pattern
+
+`deny_pattern` is anchored to the whole name:
+
+```yaml
+- deny_pattern: ['.*Dto']
+  in: ['lib/domain/**']
+  message: 'Transport types belong in lib/data; the domain holds entities.'
+```
+
+```dart
+// Don't  — in lib/domain/checkout.dart
+void apply(OrderDto order) {}  // LINT
+
+// Do
+void apply(Order order) {}
+```
+
+### Recipe: keeping heavy FP machinery out of an fpdart codebase
 
 A common house rule is that a project uses fpdart's `Option` / `Either` /
 `TaskEither` but deliberately not `Reader`, `State` or the `IO*` family —
 dependency injection goes through the DI mechanism the app already has, and
-plain sync code covers the rest. This rule enforces that without needing one of
-its own:
+plain sync code covers the rest:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -160,6 +169,29 @@ rules:
 
 Qualify these with the `package:uri#Name` form. `State` in particular is a name
 Flutter also uses, and a bare entry would ban every `State` subclass in the app.
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `banned` | list of entries | `[]` | The entries to enforce. With none, the rule reports nothing |
+
+Per entry:
+
+| Key | Type | Required | Description |
+|-----|------|----------|-------------|
+| `deny` | string or list | one of `deny` / `deny_pattern` | Type names banned by **exact** match. Accepts a bare `Name` or a qualified `package:uri#Name` |
+| `deny_pattern` | string or list | one of `deny` / `deny_pattern` | Regular expressions, anchored to the whole name |
+| `in` | list of globs | no | Paths, relative to the package root, where the entry applies. Omit to apply everywhere |
+| `message` | string | no | A project-specific explanation appended to the diagnostic |
+
+## Known limitations
+
+**Written types only.** The rule fires where a type is *named*. A value whose type is only inferred — `final user = find();` returning a banned type — is not reported, because there is nothing on the line to point at.
+
+**Bare names are ambiguous.** A bare `deny: ['State']` matches every type named `State` from any library. Use `package:uri#Name` when the name is not yours alone.
+
+**A malformed entry is skipped silently.** An invalid regular expression costs you that pattern and nothing else — a plugin cannot report problems against a YAML file.
 
 ## Related rules
 

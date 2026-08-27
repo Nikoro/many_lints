@@ -16,13 +16,55 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule suggests replacing `SizedBox` and `Padding` spacers inside multi-child widgets (`Column`, `Row`, etc.) with the `Gap` widget from the `gap` package. `Gap` automatically picks the right axis based on its parent, so you never accidentally use `width` in a `Column` or `height` in a `Row`.
+Replaces a `SizedBox` or single-direction `Padding` used as a spacer inside a
+multi-child widget (`Column`, `Row`, `Wrap`, `Flex`, `ListView`) with `Gap` from
+the [`gap`](https://pub.dev/packages/gap) package. `Gap` picks its axis from the
+parent, so flipping a `Column` to a `Row` cannot leave a `height:` behind.
 
-## Why use this rule
+:::caution[Opt-in by name, and it conflicts with `prefer_spacing`]
+This rule is in **no preset** — not even `pedantic` — for two reasons: it
+requires the third-party `gap` package, and it contradicts
+[`prefer_spacing`](/many_lints/docs/rules/widget-best-practices/prefer-spacing/),
+which replaces the same `SizedBox` with `Row`/`Column`'s built-in `spacing:`
+argument.
 
-Using `SizedBox(height: 16)` for spacing works, but it is error-prone in `Row` (where you need `width` instead) and verbose in either case. `Gap(16)` is axis-aware, shorter, and makes the intent clearer: this is a spacer, not a box with specific dimensions. It also reduces bugs when refactoring a `Column` to a `Row` or vice versa.
+Both match the same code. If you enable `use_gap`, **`prefer_spacing` must stay
+off**, or one line carries two warnings whose fixes undo each other. `prefer_spacing`
+is in the `opinionated` and `pedantic` presets, so a project on either preset
+that wants `use_gap` has to switch `prefer_spacing` off explicitly.
+:::
 
-**See also:** [gap package](https://pub.dev/packages/gap)
+## Setup
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    use_gap: true
+    prefer_spacing: false    # the opposing rule; leave it off
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  use_gap: true
+  prefer_spacing: false    # the opposing rule; leave it off
+```
+
+</TabItem>
+</Tabs>
+
+Add the package too:
+
+```bash
+dart pub add gap
+```
 
 ## Don't
 
@@ -31,14 +73,14 @@ final widgets = <Widget>[
   Column(
     children: const [
       Text('First'),
-      SizedBox(height: 16),
+      SizedBox(height: 16), // LINT
       Text('Second'),
     ],
   ),
   Row(
     children: const [
       Text('Left'),
-      SizedBox(width: 8),
+      SizedBox(width: 8), // LINT
       Text('Right'),
     ],
   ),
@@ -58,27 +100,52 @@ final widgets = <Widget>[
 ];
 ```
 
-## Turning this rule off
+## Examples
 
-This rule is in **no preset**, so it is off unless you enable it by name:
+### A `SizedBox` spacer in a `Column`
 
-```yaml
-# many_lints.yaml
-rules:
-  use_gap: true
+```dart
+// Don't
+Column(
+  children: const [
+    Text('Total'),
+    SizedBox(height: 12), // LINT
+    Text('12.00 EUR'),
+  ],
+);
+
+// Do
+Column(
+  children: const [Text('Total'), Gap(12), Text('12.00 EUR')],
+);
 ```
 
-To turn it off again:
+### A single-direction `Padding` used as a spacer
 
-```yaml
-# many_lints.yaml
-rules:
-  use_gap: false
+`Padding` is reported only when its `EdgeInsets.only` sets exactly one direction
+and that direction matches the parent's axis:
+
+```dart
+// Don't
+Row(
+  children: const [
+    Text('Name'),
+    Padding(padding: EdgeInsets.only(left: 8)), // LINT
+    Text('Ada'),
+  ],
+);
+
+// Do
+Row(
+  children: const [Text('Name'), Gap(8), Text('Ada')],
+);
 ```
 
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+### Skipping short lists
 
-## Options
+`min_children` is the number of entries the `children:` list must have before a
+spacer inside it is reported. With `min_children: 3`, a two-element list is left
+alone:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -104,9 +171,67 @@ rules:
 </TabItem>
 </Tabs>
 
+```dart
+// Not reported: only 2 children
+Column(
+  children: const [Text('Header'), SizedBox(height: 8)],
+);
+
+// Reported: 3 children
+Column(
+  children: const [
+    Text('Header'),
+    SizedBox(height: 8), // LINT
+    Text('Body'),
+  ],
+);
+```
+
+### Cases the rule leaves alone
+
+A `SizedBox` that is not a pure spacer is never reported — it is doing real
+layout work that `Gap` cannot express:
+
+```dart
+Column(
+  children: [
+    // Has a child: it is a box, not a spacer.
+    const SizedBox(height: 40, child: Text('Fixed row')),
+    // Sets both dimensions.
+    const SizedBox(width: 100, height: 100),
+    // Wrong axis for a Column: a Gap here would change the layout.
+    const SizedBox(width: 16),
+  ],
+);
+```
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `min_children` | int | `1` | Minimum number of children in the list before spacers are reported |
+
+## Known limitations
+
+**The `Gap` import is yours.** The quick fix writes `Gap(...)`; if `package:gap`
+is not imported the result parses but does not compile.
+
+**Only direct children.** A spacer wrapped in anything — a `Visibility`, a
+conditional helper, a `...[]` spread whose elements are built elsewhere — is not
+seen as a child of the flex.
+
+**`Wrap` and `Flex` have no fixed axis**, so a spacer inside either is reported
+whichever dimension it sets.
+
+## Turning this rule off
+
+```yaml
+# many_lints.yaml
+rules:
+  use_gap: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Related rules
 

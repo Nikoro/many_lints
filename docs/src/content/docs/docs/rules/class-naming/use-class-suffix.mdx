@@ -16,26 +16,57 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Class Naming</span>
 
-Flags classes that derive from a type you configure but don't carry the name suffix you require. The type can be anything — a class from a dependency, or one declared in your own package.
+Flags a class that derives from a type you name but does not carry the suffix you require. A quick fix appends it.
 
-**This rule reports nothing until you configure it.** It enforces your naming convention, not a built-in one.
+When a class extends `Bloc` but is called `CounterManager`, a reader has to follow the inheritance chain to learn its role. A consistent suffix puts the role in the name, and makes the codebase greppable by layer.
 
-## Why use this rule
+This rule is in **no preset** and reports nothing until you add `entries:`. Every example below shows the configuration that produces it.
 
-When a class extends `Bloc` but is named `CounterManager`, or implements `Repository` but is named `UserData`, other developers have to check the inheritance chain to understand its role. A consistent suffix makes the architectural role obvious at a glance, and makes the codebase greppable by layer.
+## Setup
 
-Because both the base type and the suffix are configuration, this works for `...Bloc`, `...Cubit`, `...Notifier`, `...Repository`, `...UseCase`, `...Store` — whatever vocabulary your project actually uses.
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    use_class_suffix:
+      entries:
+        - type: Bloc
+          package: bloc
+          suffix: Bloc
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  use_class_suffix:
+    entries:
+      - type: Bloc
+        package: bloc
+        suffix: Bloc
+```
+
+</TabItem>
+</Tabs>
+
+`package:` is optional. Omit it for a type you declare yourself — a local type has no `package:` URI to pin against. Add it when the name is ambiguous, so an unrelated `Bloc` from another dependency does not match.
 
 A type matches whether it is reached by `extends`, `implements`, `with`, or an indirect ancestor. The configured base type is never reported against itself.
 
 ## Don't
+
+With `entries: [{type: Bloc, package: bloc, suffix: Bloc}]`:
 
 ```dart
 import 'package:bloc/bloc.dart';
 
 sealed class CounterEvent {}
 
-// With an entry requiring the 'Bloc' suffix for subtypes of Bloc:
 class CounterManager extends Bloc<CounterEvent, int> {  // LINT
   CounterManager() : super(0);
 }
@@ -53,73 +84,105 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 }
 ```
 
+## Examples
+
+### A type from your own package
+
+Omit `package:` — the type is declared in the code being analysed:
+
+```yaml
+- type: Repository
+  suffix: Repository
+```
+
+```dart
+abstract class Repository {}
+
+// Don't
+class UserData implements Repository {}   // LINT
+
+// Do
+class UserRepository implements Repository {}
+```
+
+`Repository` itself is not reported: requiring the base type to be named `RepositoryRepository` is nonsense, and for a type owned by a dependency you could not act on it anyway.
+
+### Several conventions at once
+
+```yaml
+entries:
+  - type: Bloc
+    package: bloc
+    suffix: Bloc
+  - type: Cubit
+    package: bloc
+    suffix: Cubit
+  - type: UseCase
+    suffix: UseCase
+```
+
+```dart
+abstract class UseCase {}
+
+// Don't
+class PlaceOrder implements UseCase {}    // LINT
+
+// Do
+class PlaceOrderUseCase implements UseCase {}
+```
+
+When a class matches several entries, the **first** one wins and it is reported once.
+
+### Leaving private classes alone
+
+`ignore_private: true` skips classes whose name starts with `_`. A private class cannot be referenced outside its library, so the naming convention buys less there.
+
+```yaml
+rules:
+  use_class_suffix:
+    ignore_private: true          # rule-wide default
+    entries:
+      - type: Repository
+        suffix: Repository
+      - type: UseCase
+        suffix: UseCase
+        ignore_private: false     # this one checks private classes too
+```
+
+```dart
+abstract class Repository {}
+abstract class UseCase {}
+
+// Not reported — private, and this entry ignores private classes
+class _CachedUsers implements Repository {}
+
+// Reported — this entry overrides the rule-wide default
+class _PlaceOrder implements UseCase {}   // LINT
+```
+
+### An indirect ancestor still matches
+
+```yaml
+- type: Repository
+  suffix: Repository
+```
+
+```dart
+abstract class Repository {}
+abstract class CachingRepository implements Repository {}
+
+// Don't — reaches Repository through CachingRepository
+class UserStore extends CachingRepository {}   // LINT
+
+// Do
+class UserCachingRepository extends CachingRepository {}
+```
+
 ## Quick fix
 
 The fix appends the required suffix, and repairs a near-miss rather than stacking onto it — `CounterBlok` becomes `CounterBloc`, not `CounterBlokBloc`. A same-named unnamed constructor is renamed along with the class, so the result still compiles.
 
-## Turning this rule off
-
-This rule is in **no preset**, so it is off unless you enable it by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  use_class_suffix: true
-```
-
-To turn it off again:
-
-```yaml
-# many_lints.yaml
-rules:
-  use_class_suffix: false
-```
-
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
-
 ## Options
-
-<Tabs syncKey="many-lints-config-file">
-<TabItem label="analysis_options.yaml">
-
-```yaml
-# analysis_options.yaml
-many_lints:
-  rules:
-    use_class_suffix:
-      ignore_private: true          # rule-wide default, optional
-      entries:
-        - type: Bloc
-          package: bloc             # optional; omit to match any package
-          suffix: Bloc
-        - type: Repository          # a type from your own package
-          suffix: Repository
-        - type: UseCase
-          suffix: UseCase
-          ignore_private: false     # per-entry override
-```
-
-</TabItem>
-<TabItem label="many_lints.yaml">
-
-```yaml
-# many_lints.yaml
-rules:
-  use_class_suffix:
-    ignore_private: true          # rule-wide default, optional
-    entries:
-      - type: Bloc
-        package: bloc             # optional; omit to match any package
-        suffix: Bloc
-      - type: Repository          # a type from your own package
-        suffix: Repository
-      - type: UseCase
-        suffix: UseCase
-        ignore_private: false     # per-entry override
-```
-
-</TabItem>
-</Tabs>
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
@@ -135,9 +198,11 @@ Each entry accepts:
 | `package` | string | no | Package declaring `type`. Omit to match a type of that name from **any** library, including your own package |
 | `ignore_private` | bool | no | Overrides the rule-wide `ignore_private` for this entry |
 
-Omit `package` for types you declare yourself — a local type has no `package:` URI to pin against. Add it when a name is ambiguous, so an unrelated `Bloc` from another dependency doesn't match.
+## Known limitations
 
-When a class matches several entries, the **first** one wins and it is reported once. An entry missing `type` or `suffix` is skipped; because a plugin cannot report problems against a YAML file, a malformed entry degrades quietly rather than failing analysis.
+**Classes only.** A mixin, enum or extension type is not checked, even when it implements a configured type. For those, reach for [`match_class_name_pattern`](/many_lints/docs/rules/class-naming/match-class-name-pattern/).
+
+**A malformed entry is silent.** An entry missing `type` or `suffix` is skipped, because a plugin cannot report problems against a YAML file. If an entry never fires, check both keys are present and non-empty.
 
 ## Migration from `use_bloc_suffix` / `use_cubit_suffix` / `use_notifier_suffix`
 
@@ -184,6 +249,18 @@ rules:
 
 </TabItem>
 </Tabs>
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+# many_lints.yaml
+rules:
+  use_class_suffix: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Related rules
 
