@@ -22,19 +22,43 @@ The variable adds a name but no information — the return statement already say
 ## Don't
 
 ```dart
-Future<User> loadUser(String id) async {
-  final user = await repository.fetchUser(id);
-  return user;
+class Cart {
+  const Cart(this.lines);
+  final List<CartLine> lines;
+
+  int subtotal() {
+    final total = lines.fold(0, (sum, line) => sum + line.amount);
+    return total;
+  }
+}
+
+class CartLine {
+  const CartLine(this.amount);
+  final int amount;
 }
 ```
 
 ## Do
 
 ```dart
-Future<User> loadUser(String id) async {
-  return repository.fetchUser(id);
+class Cart {
+  const Cart(this.lines);
+  final List<CartLine> lines;
+
+  int subtotal() {
+    return lines.fold(0, (sum, line) => sum + line.amount);
+  }
+}
+
+class CartLine {
+  const CartLine(this.amount);
+  final int amount;
 }
 ```
+
+In an `async` method, keep the `await` when you inline:
+`return await repository.fetchUser(id);`. Dropping it leaves an `async`
+method with no `await`, which [`avoid_redundant_async`](/many_lints/docs/rules/async-safety/avoid-redundant-async/) reports — both rules are in `opinionated`.
 
 ## Known limitations
 

@@ -9,7 +9,9 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-This rule flags public properties (fields, getters, and setters) on `Notifier` and `AsyncNotifier` subclasses, except for the built-in `state` property. Public methods, private properties, static properties, and overrides are all allowed.
+This rule flags public **mutable** properties (fields, getters, and setters) on `Notifier` and `AsyncNotifier` subclasses.
+
+Not reported: the built-in `state`, `final` and `const` fields, public methods, private and static properties, and anything marked `@override`, `@protected`, `@visibleForOverriding` or `@visibleForTesting`. So `final Logger logger;` on a notifier is left alone — only state a caller can reassign is the target.
 
 ## Why use this rule
 

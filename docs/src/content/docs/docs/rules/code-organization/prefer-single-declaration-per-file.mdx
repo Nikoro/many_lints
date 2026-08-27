@@ -12,7 +12,8 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
 
-This rule warns when a file declares more than one top-level declaration. Classes, mixins, enums, extensions and extension types are counted; the first is fine, and the second and any subsequent ones report. Private declarations are skipped by default.
+This rule warns when a file declares more than one top-level declaration. Classes, mixins, enums, extensions and extension types are counted; the first is fine, and the second and any subsequent ones report. Private declarations are skipped by default — but **not** under `pedantic`, the
+only preset that enables this rule, which sets `ignore_private: false`.
 
 Through the `groups:` option the same rule also covers the type-specific conventions — one bloc per file, one notifier per file — with each group carrying its own budget, so a file holding one of each satisfies both.
 

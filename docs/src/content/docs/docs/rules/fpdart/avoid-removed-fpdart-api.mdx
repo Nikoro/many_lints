@@ -48,7 +48,17 @@ void main() {
 }
 ```
 
-The full 1.0.0 removals: `Tuple2`/`Tuple3` → records, `Predicate` → the function extensions (`negate`, `and`, `or`, `contramap`), `id`/`idFuture` → `identity`, `concatMap`/`bind`/`bindWithIndex` → `flatMap`, `plus` → `concat`, and the old `concat` → `flatten`.
+Every name the rule reports, with the replacement it names:
+
+| Removed | Use instead |
+|---------|-------------|
+| `Tuple2` | a Dart record, `(a, b)` |
+| `Tuple3` | a Dart record, `(a, b, c)` |
+| `Predicate` | the function extensions (`negate`, `and`, `or`, `contramap`) |
+| `idFuture` | `identity` |
+| `concatMap` | `flatMap` |
+| `bindWithIndex` | `flatMapWithIndex` |
+| `plus` | `concat` |
 
 ## Known limitations
 

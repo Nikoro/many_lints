@@ -24,28 +24,40 @@ Using `expect()` with a Future is almost always a bug. The test framework cannot
 ## Don't
 
 ```dart
-Future<void> bad() async {
-  expect(Future.value(1), completion);
+void main() {
+  test('loads the cart', () {
+    expect(loadCart(), completion(isNotNull));
 
-  final future = Future.value(42);
-  expect(future, completion);
-
-  expect(fetchData(), completion);
+    final total = cartTotal();
+    expect(total, completion(equals(240)));
+  });
 }
 ```
+
+Nothing awaits the assertion, so the test ends before the future resolves and
+passes whatever the future produces.
 
 ## Do
 
 ```dart
-Future<void> good() async {
-  await expectLater(Future.value(1), completion);
+void main() {
+  test('loads the cart', () async {
+    await expectLater(loadCart(), completion(isNotNull));
 
-  final future = Future.value(42);
-  await expectLater(future, completion);
+    final total = cartTotal();
+    await expectLater(total, completion(equals(240)));
+  });
+}
+```
 
-  // expect with non-Future values is fine:
-  expect(42, completion);
-  expect('hello', completion);
+Matching a plain value needs no change — `expect` is only a problem when the
+actual value is a `Future`:
+
+```dart
+void main() {
+  test('sums the lines', () {
+    expect(subtotal(), equals(240));
+  });
 }
 ```
 

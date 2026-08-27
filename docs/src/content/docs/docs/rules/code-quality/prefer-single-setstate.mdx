@@ -16,7 +16,9 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Quality</span>
 
-Flags methods in `State` subclasses that contain multiple `setState()` calls at the same scope level. Each `setState()` call schedules a rebuild, so calling it multiple times in the same synchronous method triggers redundant rebuilds that can be avoided by merging all state mutations into a single call.
+Flags methods in `State` subclasses that call `setState()` more than once. Every call anywhere in the method counts — including calls in separate `if` branches or inside a loop — except calls inside a closure or a nested function, which run later and belong to their own scope.
+
+Each `setState()` schedules a rebuild, so calling it twice in one synchronous method rebuilds twice for one logical change.
 
 ## Why use this rule
 
@@ -52,8 +54,9 @@ class _CartViewState extends State<CartView> {
 }
 ```
 
-Code between the two calls makes no difference: they are still at the same
-scope level in the same method, so the second still reports.
+Code between the two calls makes no difference, and neither does nesting: two
+calls in opposite `if` branches, or one inside a loop, are both counted. Only a
+closure or nested function stops the search.
 
 ## Do
 

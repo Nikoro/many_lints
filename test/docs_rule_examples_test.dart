@@ -114,13 +114,13 @@ void main() {
 
 /// The floor for how many pages this suite drives, raised as stubs grow.
 ///
-/// 152 of 261 pages are checked today. The rest are skipped for reasons
+/// 153 of 261 pages are checked today. The rest are skipped for reasons
 /// [_skipReason] names out loud, and the `coverage` test prints every one, so
 /// the gap is visible rather than implied. Most are rules keyed to Flutter,
 /// Riverpod, Bloc or hooks types the stubs do not carry: widening a stub moves
 /// pages from skipped to checked and this number goes up. Lowering it means
 /// coverage shrank, and needs a reason.
-const _minimumCheckedPages = 152;
+const _minimumCheckedPages = 153;
 
 /// Why [page] cannot be driven through the harness, or null when it can.
 String? _skipReason(_Page page) {
@@ -132,11 +132,6 @@ String? _skipReason(_Page page) {
   final unstubbed = _unstubbedPackage(snippet);
   if (unstubbed != null) return 'needs a package:$unstubbed stub';
 
-  // Decided from the rule's own source rather than from the snippet: a rule
-  // keyed to `package:flutter` types cannot fire against the minimal stub no
-  // matter how the example is written, and reading the snippet for widget
-  // names misses rules like `prefer_padding_over_container` whose Don't block
-  // never spells a stubbed type.
   // Two conditions, because either alone is wrong. Rule-source alone skips
   // pages that resolve fine against the stub (`avoid_catch_error` keys on
   // `dart:async#Future`, and merely imports a helper that mentions Flutter).
