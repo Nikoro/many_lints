@@ -44,14 +44,20 @@ Option<String> f() => a().flat^Map(
     );
 ''');
 
-      expect(result.source, contains(r'Option.Do(($) {'));
-      expect(result.source, contains(r"final first = $(a());"));
-      expect(result.source, contains(r"final second = $(b());"));
-      expect(result.source, contains(r"final third = $(c());"));
-      // The innermost `Option.of(x)` unwraps to a plain return, since `Do`
-      // wraps the block's result itself.
-      expect(result.source, contains(r"return '$first$second$third';"));
-      expect(result.source, isNot(contains('flatMap')));
+      expect(result.source, r'''
+import 'package:fpdart/fpdart.dart';
+
+Option<String> a() => Option.of('a');
+Option<String> b() => Option.of('b');
+Option<String> c() => Option.of('c');
+
+Option<String> f() => Option.Do(($) {
+  final first = $(a());
+  final second = $(b());
+  final third = $(c());
+  return '$first$second$third';
+});
+''');
     });
 
     test('offers every generated name as a linked edit position', () async {
@@ -85,7 +91,19 @@ Option<String> f() => a().flat^Map(
     );
 ''');
 
-      expect(result.source, contains(r'return $(c());'));
+      expect(result.source, r'''
+import 'package:fpdart/fpdart.dart';
+
+Option<String> a() => Option.of('a');
+Option<String> b() => Option.of('b');
+Option<String> c() => Option.of('c');
+
+Option<String> f() => Option.Do(($) {
+  final first = $(a());
+  final second = $(b());
+  return $(c());
+});
+''');
     });
 
     test('works on TaskEither too', () async {
@@ -100,8 +118,18 @@ TaskEither<String, int> f() => a().flat^Map(
     );
 ''');
 
-      expect(result.source, contains(r'TaskEither.Do(($) {'));
-      expect(result.source, contains(r'return first + second;'));
+      expect(result.source, r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> a() => TaskEither.of(1);
+TaskEither<String, int> b() => TaskEither.of(2);
+
+TaskEither<String, int> f() => TaskEither.Do(($) {
+  final first = $(a());
+  final second = $(b());
+  return first + second;
+});
+''');
     });
 
     test('handles the README shopping example end to end', () async {
@@ -131,20 +159,25 @@ String goShopping() => goToShoppingCenter()
     .getOrElse(() => 'nothing bought');
 ''');
 
-      expect(
-        result.source,
-        contains(
-          r"final market = $(goToShoppingCenter().alt(goToLocalMarket));",
-        ),
-      );
-      expect(result.source, contains(r"final banana = $(market.buyBanana());"));
-      expect(result.source, contains(r"final apple = $(market.buyApple());"));
-      expect(result.source, contains(r"return 'Shopping: $banana, $apple';"));
-      // The tail of the chain survives the rewrite.
-      expect(result.source, contains(".getOrElse(() => 'nothing bought')"));
-      // Generated lines are indented from the line's own leading whitespace,
-      // not from everything preceding the call on that line.
-      expect(result.source, isNot(contains('String goShopping() =>   final')));
+      expect(result.source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class Market {
+  Option<String> buyBanana() => Option.of('banana');
+  Option<String> buyApple() => Option.of('apple');
+}
+
+Option<Market> goToShoppingCenter() => Option.of(Market());
+Option<Market> goToLocalMarket() => Option.of(Market());
+
+String goShopping() => Option.Do(($) {
+  final market = $(goToShoppingCenter().alt(goToLocalMarket));
+  final banana = $(market.buyBanana());
+  final apple = $(market.buyApple());
+  return 'Shopping: $banana, $apple';
+})
+    .getOrElse(() => 'nothing bought');
+''');
     });
 
     test('is offered from anywhere in the nest', () async {
@@ -161,8 +194,18 @@ Option<String> f() => a().flatMap(
     );
 ''');
 
-      expect(result.source, contains(r'Option.Do(($) {'));
-      expect(result.source, contains(r"final first = $(a());"));
+      expect(result.source, r'''
+import 'package:fpdart/fpdart.dart';
+
+Option<String> a() => Option.of('a');
+Option<String> b() => Option.of('b');
+
+Option<String> f() => Option.Do(($) {
+  final first = $(a());
+  final second = $(b());
+  return '$first$second';
+});
+''');
     });
   });
 
@@ -194,13 +237,23 @@ Option<String> f() => Option.Do(($) {
     });
 ''');
 
-      expect(source, contains('a().flatMap('));
-      expect(source, contains('(first) => b().flatMap('));
-      expect(source, contains('(second) => c().flatMap('));
       // `Do` lifts its own result, so a plain `return x` has to be re-wrapped
       // to keep the chain well-typed.
-      expect(source, contains(r"(third) => Option.of('$first$second$third')"));
-      expect(source, isNot(contains('Option.Do')));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+Option<String> a() => Option.of('a');
+Option<String> b() => Option.of('b');
+Option<String> c() => Option.of('c');
+
+Option<String> f() => a().flatMap(
+  (first) => b().flatMap(
+    (second) => c().flatMap(
+      (third) => Option.of('$first$second$third'),
+    ),
+  ),
+);
+''');
     });
 
     test('round-trips the forward assist output', () async {
@@ -223,13 +276,24 @@ Option<String> goShopping() => Option.Do(($) {
     });
 ''');
 
-      expect(source, contains('goToShoppingCenter().flatMap('));
-      expect(source, contains('(market) => market.buyBanana().flatMap('));
-      expect(source, contains('(banana) => market.buyApple().flatMap('));
-      expect(
-        source,
-        contains(r"(apple) => Option.of('Shopping: $banana, $apple')"),
-      );
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class Market {
+  Option<String> buyBanana() => Option.of('banana');
+  Option<String> buyApple() => Option.of('apple');
+}
+
+Option<Market> goToShoppingCenter() => Option.of(Market());
+
+Option<String> goShopping() => goToShoppingCenter().flatMap(
+  (market) => market.buyBanana().flatMap(
+    (banana) => market.buyApple().flatMap(
+      (apple) => Option.of('Shopping: $banana, $apple'),
+    ),
+  ),
+);
+''');
     });
 
     test('strips the await of an async block', () async {
@@ -248,10 +312,18 @@ TaskEither<String, int> f() => TaskEither.Do(($) async {
     });
 ''');
 
-      expect(source, contains('a().flatMap('));
-      expect(source, contains('(first) => b().flatMap('));
-      expect(source, contains('(second) => TaskEither.of(first + second)'));
-      expect(source, isNot(contains('await')));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> a() => TaskEither.of(1);
+TaskEither<String, int> b() => TaskEither.of(2);
+
+TaskEither<String, int> f() => a().flatMap(
+  (first) => b().flatMap(
+    (second) => TaskEither.of(first + second),
+  ),
+);
+''');
     });
 
     test('keeps a returned extraction unwrapped', () async {
@@ -271,9 +343,21 @@ Option<String> f() => Option.Do(($) {
     });
 ''');
 
-      expect(source, contains('(second) => c(),'));
-      // Not `Option.of(c())` — the returned pipeline is already wrapped.
-      expect(source, isNot(contains('Option.of(c())')));
+      // The last step stays `c()`, not `Option.of(c())` — the returned
+      // pipeline is already wrapped.
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+Option<String> a() => Option.of('a');
+Option<String> b() => Option.of('b');
+Option<String> c() => Option.of('c');
+
+Option<String> f() => a().flatMap(
+  (first) => b().flatMap(
+    (second) => c(),
+  ),
+);
+''');
     });
 
     test('is offered from anywhere in the block', () async {
@@ -290,7 +374,18 @@ Option<String> f() => Option.Do(($) {
     });
 ''');
 
-      expect(source, contains('a().flatMap('));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+Option<String> a() => Option.of('a');
+Option<String> b() => Option.of('b');
+
+Option<String> f() => a().flatMap(
+  (first) => b().flatMap(
+    (second) => Option.of('$first$second'),
+  ),
+);
+''');
     });
 
     test('declines a block that is not straight-line bindings', () async {
@@ -398,14 +493,25 @@ Either<Failure, User> parseUser(String json) => Either.tryC^atch(
     );
 ''');
 
-      expect(source, contains('  try {'));
-      expect(source, contains('return right(User.fromJson(json));'));
-      expect(source, contains('} catch (error, stackTrace) {'));
-      expect(
-        source,
-        contains('return left(Failure.parse(error, stackTrace));'),
-      );
-      expect(source, isNot(contains('tryCatch')));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class Failure {
+  Failure.parse(Object e, StackTrace s);
+}
+
+class User {
+  static User fromJson(String json) => User();
+}
+
+Either<Failure, User> parseUser(String json) {
+  try {
+    return right(User.fromJson(json));
+  } catch (error, stackTrace) {
+    return left(Failure.parse(error, stackTrace));
+  }
+}
+''');
     });
 
     test('expands TaskEither.tryCatch inside a lazy TaskEither', () async {
@@ -428,9 +534,25 @@ TaskEither<Failure, User> fetchUser(String id) => TaskEither.tryC^atch(
     );
 ''');
 
-      expect(source, contains('TaskEither(() async {'));
-      expect(source, contains('return right(await getUser(id));'));
-      expect(source, contains('return left(Failure.from(error));'));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class Failure {
+  Failure.from(Object e);
+}
+
+class User {}
+
+Future<User> getUser(String id) async => User();
+
+TaskEither<Failure, User> fetchUser(String id) => TaskEither(() async {
+      try {
+        return right(await getUser(id));
+      } catch (error) {
+        return left(Failure.from(error));
+      }
+    });
+''');
     });
 
     test('drops an unused stack trace from the catch clause', () async {
@@ -454,8 +576,25 @@ TaskEither<Failure, User> fetchUser(String id) => TaskEither.tryC^atch(
     );
 ''');
 
-      expect(source, contains('} catch (error) {'));
-      expect(source, isNot(contains('catch (error, stackTrace)')));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class Failure {
+  Failure.from(Object e);
+}
+
+class User {}
+
+Future<User> getUser(String id) async => User();
+
+TaskEither<Failure, User> fetchUser(String id) => TaskEither(() async {
+      try {
+        return right(await getUser(id));
+      } catch (error) {
+        return left(Failure.from(error));
+      }
+    });
+''');
     });
 
     test('expands Option.tryCatch with a parameterless catch', () async {
@@ -472,9 +611,21 @@ Option<User> tryParse(String json) =>
     Option.tryC^atch(() => User.fromJson(json));
 ''');
 
-      expect(source, contains('return some(User.fromJson(json));'));
-      expect(source, contains('} catch (_) {'));
-      expect(source, contains('return none();'));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class User {
+  static User fromJson(String json) => User();
+}
+
+Option<User> tryParse(String json) {
+  try {
+    return some(User.fromJson(json));
+  } catch (_) {
+    return none();
+  }
+}
+''');
     });
 
     test('expands a block body that only returns the tryCatch', () async {
@@ -499,10 +650,25 @@ Either<Failure, User> parseUser(String json) {
 }
 ''');
 
-      expect(source, contains('return right(User.fromJson(json));'));
-      expect(source, contains('} catch (error) {'));
-      // Not a block nested in the block it replaced.
-      expect(source, isNot(contains('{\n  {')));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class Failure {
+  Failure.from(Object e);
+}
+
+class User {
+  static User fromJson(String json) => User();
+}
+
+Either<Failure, User> parseUser(String json) {
+  try {
+    return right(User.fromJson(json));
+  } catch (error) {
+    return left(Failure.from(error));
+  }
+}
+''');
     });
 
     test('declines mid-pipeline, where a statement has nowhere to go', () async {
@@ -545,6 +711,28 @@ User parse(String json) => User();
 
 Either<Failure, User> parseUser(String json) =>
     Either.tryC^atch(() => parse(json), Failure.of);
+''');
+
+      expect(ids, isNot(contains(assistId)));
+    });
+
+    test('declines a cursor inside an unrelated nested closure', () async {
+      // `_enclosingTryCatch` walks up from the cursor. Without a function
+      // boundary it sails out of this inner closure and offers to expand the
+      // enclosing `tryCatch`, which is not the code the cursor is in.
+      final ids = await idsAt(r'''
+import 'package:fpdart/fpdart.dart';
+
+class Failure {
+  Failure.from(Object e);
+}
+
+int apply(int Function() f) => f();
+
+Either<Failure, int> outer() => Either.tryCatch(
+      () => apply(() => 4^2),
+      (error, stackTrace) => Failure.from(error),
+    );
 ''');
 
       expect(ids, isNot(contains(assistId)));
@@ -601,9 +789,18 @@ Future<Either<Failure, User>> get^User(String id) async {
           'TaskEither<Failure, User> getUser(String id) => TaskEither(() async {',
         ),
       );
-      expect(source, contains('      return right(await api(id));'));
-      expect(source, contains('    });'));
-      expect(source, isNot(contains('Future<Either')));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class Failure {}
+class User {}
+
+Future<User> api(String id) async => User();
+
+TaskEither<Failure, User> getUser(String id) => TaskEither(() async {
+      return right(await api(id));
+    });
+''');
     });
 
     test('converts an Either method so it can host an await', () async {
@@ -622,17 +819,17 @@ Either<Failure, User> par^se(String raw) {
 }
 ''');
 
-      expect(
-        source,
-        contains(
-          'TaskEither<Failure, User> parse(String raw) => TaskEither(() async {',
-        ),
-      );
-      expect(
-        source,
-        contains('      if (raw.isEmpty) return left(Failure());'),
-      );
-      expect(source, contains('      return right(User());'));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class Failure {}
+class User {}
+
+TaskEither<Failure, User> parse(String raw) => TaskEither(() async {
+      if (raw.isEmpty) return left(Failure());
+      return right(User());
+    });
+''');
     });
 
     test('keeps a multi-statement block on separate lines', () async {
@@ -652,11 +849,18 @@ Either<Failure, User> par^se(String raw) {
 }
 ''');
 
-      expect(source, contains('      final trimmed = raw.trim();\n'));
-      expect(
-        source,
-        contains('      if (trimmed.isEmpty) return left(Failure());\n'),
-      );
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class Failure {}
+class User {}
+
+TaskEither<Failure, User> parse(String raw) => TaskEither(() async {
+      final trimmed = raw.trim();
+      if (trimmed.isEmpty) return left(Failure());
+      return right(User());
+    });
+''');
     });
 
     test('does not add a redundant async to a delegating body', () async {
@@ -673,14 +877,16 @@ Future<Either<Failure, User>> src(String id) async => right(User());
 Future<Either<Failure, User>> deleg^ate(String id) => src(id);
 ''');
 
-      expect(
-        source,
-        contains(
-          'TaskEither<Failure, User> delegate(String id) => '
-          'TaskEither(() => src(id));',
-        ),
-      );
-      expect(source, isNot(contains('() async => src(id)')));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class Failure {}
+class User {}
+
+Future<Either<Failure, User>> src(String id) async => right(User());
+
+TaskEither<Failure, User> delegate(String id) => TaskEither(() => src(id));
+''');
     });
 
     test('converts a method on a class', () async {
@@ -697,10 +903,18 @@ class Repository {
 }
 ''');
 
-      expect(
-        source,
-        contains('TaskEither<Failure, User> getUser(String id) =>'),
-      );
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class Failure {}
+class User {}
+
+class Repository {
+  TaskEither<Failure, User> getUser(String id) => TaskEither(() async {
+          return right(User());
+        });
+}
+''');
     });
 
     test('keeps the written type arguments verbatim', () async {
@@ -716,7 +930,15 @@ class User {}
 Either<AppFailure, User> par^se(String raw) => right(User());
 ''');
 
-      expect(source, contains('TaskEither<AppFailure, User> parse'));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+typedef AppFailure = String;
+
+class User {}
+
+TaskEither<AppFailure, User> parse(String raw) => TaskEither(() async => right(User()));
+''');
     });
 
     test('declines a plain Future that holds no Either', () async {
@@ -774,12 +996,15 @@ Future<Option<User>> src(String id) async => none();
 Future<Option<User>> fin^d(String id) => src(id);
 ''');
 
-      expect(
-        source,
-        contains(
-          'TaskOption<User> find(String id) => TaskOption(() => src(id));',
-        ),
-      );
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class User {}
+
+Future<Option<User>> src(String id) async => none();
+
+TaskOption<User> find(String id) => TaskOption(() => src(id));
+''');
     });
 
     test('converts an Option method to TaskOption', () async {
@@ -794,11 +1019,16 @@ Option<User> fin^d(String raw) {
 }
 ''');
 
-      expect(
-        source,
-        contains('TaskOption<User> find(String raw) => TaskOption(() async {'),
-      );
-      expect(source, contains('      if (raw.isEmpty) return none();'));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class User {}
+
+TaskOption<User> find(String raw) => TaskOption(() async {
+      if (raw.isEmpty) return none();
+      return some(User());
+    });
+''');
     });
 
     test('declines a generator, which yields many values', () async {
@@ -840,9 +1070,17 @@ class Test {
 }
 ''');
 
-      expect(source, contains('if (field case final field_?)'));
-      expect(source, contains("field_.contains('other')"));
-      expect(source, isNot(contains('!')));
+      expect(source, r'''
+class Test {
+  String? field;
+
+  void method() {
+    if (field case final field_?) {
+      field_.contains('other');
+    }
+  }
+}
+''');
     });
 
     test('rewrites plain reads alongside the bangs', () async {
@@ -861,8 +1099,18 @@ class Test {
 }
 ''');
 
-      expect(source, contains('print(field_)'));
-      expect(source, contains('print(field_.length)'));
+      expect(source, r'''
+class Test {
+  String? field;
+
+  void method() {
+    if (field case final field_?) {
+      print(field_);
+      print(field_.length);
+    }
+  }
+}
+''');
     });
 
     test('preserves the else branch', () async {
@@ -880,9 +1128,19 @@ class Test {
 }
 ''');
 
-      expect(source, contains('if (field case final field_?)'));
-      expect(source, contains("} else {"));
-      expect(source, contains("print('none')"));
+      expect(source, r'''
+class Test {
+  String? field;
+
+  void method() {
+    if (field case final field_?) {
+      print(field_);
+    } else {
+      print('none');
+    }
+  }
+}
+''');
     });
 
     test('offers the bound name as a linked edit position', () async {
@@ -984,9 +1242,23 @@ class Holder {
 }
 ''');
 
-      expect(source, contains('if (userData case UserData(:final name?))'));
-      expect(source, contains('sendEvent(name)'));
-      expect(source, isNot(contains('!')));
+      expect(source, r'''
+class UserData {
+  String? name;
+}
+
+void sendEvent(String value) {}
+
+class Holder {
+  UserData? userData;
+
+  void method() {
+    if (userData case UserData(:final name?)) {
+      sendEvent(name);
+    }
+  }
+}
+''');
     });
 
     test('offers the destructured name as a linked edit position', () async {
@@ -1098,8 +1370,11 @@ void f(List<int> values) {
 }
 ''', 'many_lints.assist.convertIterableMapToCollectionFor');
 
-      expect(result.source, contains('[for(final e in values) e * 2]'));
-      expect(result.source, isNot(contains('.map(')));
+      expect(result.source, r'''
+void f(List<int> values) {
+  final doubled = [for (final e in values) e * 2];
+}
+''');
     });
   });
 
@@ -1125,8 +1400,16 @@ TaskEither<String, int> f(TaskEither<String, String> p, Repo repo) =>
     p.flat^Map((_) => repo.logout());
 ''');
 
-      expect(source, contains('p.andThen(repo.logout)'));
-      expect(source, isNot(contains('flatMap')));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+class Repo {
+  TaskEither<String, int> logout() => throw '';
+}
+
+TaskEither<String, int> f(TaskEither<String, String> p, Repo repo) =>
+    p.andThen(repo.logout);
+''');
     });
 
     test('keeps a thunk when the call takes arguments', () async {
@@ -1139,7 +1422,14 @@ TaskEither<String, int> f(TaskEither<String, String> p) =>
     p.flat^Map((_) => seed(3));
 ''');
 
-      expect(source, contains('p.andThen(() => seed(3))'));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> seed(int count) => throw '';
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.andThen(() => seed(3));
+''');
     });
 
     test('is not offered when the parameter is used', () async {
@@ -1182,7 +1472,14 @@ TaskEither<String, int> f(TaskEither<String, String> p) =>
     p.flat^Map((v) => TaskEither.right(transform(v)));
 ''');
 
-      expect(source, contains('p.map(transform)'));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+int transform(String value) => throw '';
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.map(transform);
+''');
     });
 
     test('is not offered when the body branches', () async {
@@ -1218,10 +1515,12 @@ TaskEither<String, String> f(TaskEither<String, String> p) =>
     p.flat^Map((v) => v.isEmpty ? TaskEither.right(v) : TaskEither.left('bad'));
 ''');
 
-      expect(
-        source,
-        contains("p.filterOrElse((v) => v.isEmpty, (v) => 'bad')"),
-      );
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, String> f(TaskEither<String, String> p) =>
+    p.filterOrElse((v) => v.isEmpty, (v) => 'bad');
+''');
     });
 
     test('negates the predicate when the branches are reversed', () async {
@@ -1232,10 +1531,12 @@ TaskEither<String, String> f(TaskEither<String, String> p) =>
     p.flat^Map((v) => v.isEmpty ? TaskEither.left('bad') : TaskEither.right(v));
 ''');
 
-      expect(
-        source,
-        contains("p.filterOrElse((v) => !v.isEmpty, (v) => 'bad')"),
-      );
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, String> f(TaskEither<String, String> p) =>
+    p.filterOrElse((v) => !v.isEmpty, (v) => 'bad');
+''');
     });
   });
 
@@ -1254,7 +1555,14 @@ TaskEither<String, String> f(TaskEither<String, String> p) =>
         multiFilePackages: {'fpdart': fpdartStubFiles},
       );
 
-      expect(result.source, contains('p.chainFirst(audit)'));
+      expect(result.source, r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> audit(String user) => throw '';
+
+TaskEither<String, String> f(TaskEither<String, String> p) =>
+    p.chainFirst(audit);
+''');
     });
 
     test('is not offered when the inner map returns something else', () async {
@@ -1295,7 +1603,16 @@ TaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>
       );
 
       // Always the Seq variant: the reduce is inherently sequential.
-      expect(result.source, contains('TaskEither.sequenceListSeq(tasks)'));
+      expect(result.source, r'''
+import 'package:fpdart/fpdart.dart';
+
+extension <E> on Iterable<E> {
+  E reduce(E Function(E value, E element) combine) => throw '';
+}
+
+TaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>
+    TaskEither.sequenceListSeq(tasks);
+''');
       expect(result.source, isNot(contains('sequenceList(')));
     });
 
@@ -1335,7 +1652,14 @@ TaskEither<String, int> f(TaskEither<String, String> p) =>
     p.and^Then(logout);
 ''');
 
-      expect(source, contains('p.flatMap((_) => logout())'));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> logout() => throw UnimplementedError();
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.flatMap((_) => logout());
+''');
     });
 
     test('inlines the body of a thunk andThen', () async {
@@ -1348,7 +1672,14 @@ TaskEither<String, int> f(TaskEither<String, String> p) =>
     p.and^Then(() => seed(3));
 ''');
 
-      expect(source, contains('p.flatMap((_) => seed(3))'));
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> seed(int count) => throw UnimplementedError();
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.flatMap((_) => seed(3));
+''');
     });
 
     test('expands map with the wrapper the call returns', () async {
@@ -1361,10 +1692,14 @@ TaskEither<String, int> f(TaskEither<String, String> p) =>
     p.m^ap(transform);
 ''');
 
-      expect(
-        source,
-        contains('p.flatMap((value) => TaskEither.of(transform(value)))'),
-      );
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+int transform(String raw) => throw UnimplementedError();
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.flatMap((value) => TaskEither.of(transform(value)));
+''');
     });
 
     test('keeps the closure parameter name when expanding map', () async {
@@ -1377,10 +1712,14 @@ TaskEither<String, int> f(TaskEither<String, String> p) =>
     p.m^ap((raw) => transform(raw));
 ''');
 
-      expect(
-        source,
-        contains('p.flatMap((raw) => TaskEither.of(transform(raw)))'),
-      );
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+int transform(String raw) => throw UnimplementedError();
+
+TaskEither<String, int> f(TaskEither<String, String> p) =>
+    p.flatMap((raw) => TaskEither.of(transform(raw)));
+''');
     });
 
     test('expands filterOrElse into the ternary it is defined as', () async {
@@ -1391,14 +1730,12 @@ TaskEither<String, String> f(TaskEither<String, String> p) =>
     p.filterOr^Else((v) => v.isEmpty, (v) => 'bad');
 ''');
 
-      expect(
-        source,
-        contains(
-          "p.flatMap((v) => v.isEmpty "
-          "? TaskEither.of(v) "
-          ": TaskEither.left('bad'))",
-        ),
-      );
+      expect(source, r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, String> f(TaskEither<String, String> p) =>
+    p.flatMap((v) => v.isEmpty ? TaskEither.of(v) : TaskEither.left('bad'));
+''');
     });
 
     test('round-trips the andThen narrowing assist', () async {
