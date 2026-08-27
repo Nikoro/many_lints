@@ -249,6 +249,58 @@ class FixHarness with ResourceProviderMixin {
     return [for (final assist in result.assists) ?assist.change.id];
   }
 
+  /// Analyses [content] with [ruleName] enabled and returns the codes of every
+  /// diagnostic reported on it.
+  ///
+  /// Unlike [applyFix] and [expectNoFix] this never fails on its own: a caller
+  /// that wants "the rule reported" asserts on the result. That is what lets it
+  /// answer the opposite question too — whether a snippet a documentation page
+  /// presents as *bad* is in fact reported at all.
+  ///
+  /// [enabledRules] switches on additional rules, for asking whether a snippet
+  /// trips a rule other than the one whose page it appears on.
+  ///
+  /// [manyLintsConfig] supplies the whole `many_lints.yaml`, for rules that
+  /// stay silent until configured — several ordering rules return early unless
+  /// an `order:` is set, so a bare `enabled: true` would report nothing and
+  /// make the assertion vacuous.
+  Future<List<String>> diagnosticsFor(
+    String content,
+    String ruleName, {
+    Map<String, String> packages = const {},
+    Map<String, Map<String, String>> multiFilePackages = const {},
+    List<String> enabledRules = const [],
+    String? manyLintsConfig,
+  }) async {
+    final rules = {ruleName, ...enabledRules};
+    _writePackage(
+      content,
+      packages: packages,
+      multiFilePackages: multiFilePackages,
+      manyLintsConfig:
+          manyLintsConfig ??
+          'rules:\n${rules.map((r) => '  $r: true\n').join()}',
+      ruleName: ruleName,
+    );
+
+    final errors = channel.notifications
+        .where(
+          (notification) =>
+              notification.event == protocol.ANALYSIS_NOTIFICATION_ERRORS,
+        )
+        .map(protocol.AnalysisErrorsParams.fromNotification)
+        .where((params) => params.file == filePath)
+        .map((params) => params.errors)
+        .first;
+
+    await channel.sendRequest(
+      protocol.AnalysisSetAnalysisRootsParams([packagePath], []),
+    );
+
+    final reported = await errors.timeout(const Duration(seconds: 30));
+    return [for (final e in reported) e.code];
+  }
+
   /// Writes the analysed package: options, config, dependencies and the file
   /// under test.
   ///
