@@ -285,3 +285,110 @@ between runs.
 Alongside the directory-argument test above: build a fixture of ~1000 files
 where exactly one carries a guaranteed diagnostic, pass every file explicitly in
 one invocation, and assert the diagnostic is reported. It fails today.
+
+## Verification 2026-08-27 — neither trigger reproduces on a synthetic fixture
+
+Attempted to reproduce both triggers locally, on the same Dart (3.13.1) and the
+same host (macOS x64) as every report above. **Neither reproduced.** This does
+not refute the field reports — it narrows where the cause can live.
+
+### The canary, and a correction to how it was built
+
+First attempt used `class CanaryManager` against a `deny: ['manager']` entry and
+reported nothing — which for twenty minutes looked exactly like the bug. It was
+not. `deny:` is **exact match** by design (see `BannedEntry.deny`), so
+`CanaryManager` never matched `manager` and `Manager` never matched `manager`
+either. The working canary is `class Manager` against `deny: ['Manager']`.
+
+Worth stating plainly because it is the same trap the report warns about: a
+silent run and a misconfigured rule are indistinguishable from the output. Any
+canary must be proven to fire **alone** before it is trusted at scale — that
+single baseline run is what separates "plugin skipped" from "my config is
+wrong", and it is cheap.
+
+### Fixture
+
+Purpose-built package, `preset: none` plus one configured `avoid_banned_names`
+entry, so the canary is the only possible diagnostic and its absence is
+unambiguous. Grown across three shapes to chase the size hypothesis:
+
+- 1400 flat, trivial files (`lib/filler`, ~22-byte paths)
+- 1400 deeply-nested files (`lib/deep`, ~100-byte paths, mimicking a real
+  Flutter feature tree) — to test whether the trigger is command-line **bytes**
+  rather than file count
+- 1200 resolution-heavy files (`lib/heavy`, 12 classes each with async/streams/
+  generics/jsonDecode, 9.4 MB) — to test whether it is **memory** rather than
+  count
+
+4002 files, 20 MB of source in total.
+
+### Results
+
+Canary reported in **every** configuration tried:
+
+| Invocation | Canary |
+|---|---|
+| `dart analyze lib/canary.dart` | yes |
+| canary + 200 / 400 / 600 / 800 trivial files | yes |
+| canary + **850 / 900 / 1000 / 1200 / 1399** trivial files | yes |
+| canary + 800 / 1000 / 1399 deep-path files | yes |
+| canary + 400 / 800 / **1200 resolution-heavy** files | yes |
+| canary last in argv (1201 args) | yes |
+| canary mid-list (1201 args) | yes |
+| `dart analyze lib/canary.dart lib/filler` (directory arg) ×3 | yes ×3 |
+| bare `dart analyze` ×4, nothing edited | yes ×4 |
+| `example/` (real Flutter deps), bare `dart analyze` ×3 | 643 plugin diags ×3 |
+
+The 850-row is the direct contradiction of the 2026-08-27 canary table, which
+records **no** at 850 and above. The directory-argument and bare-`dart analyze`
+rows contradict the 2026-08-26 "first run only" rule just as directly: three and
+four consecutive runs with nothing edited, identical output every time.
+
+### What this rules out
+
+The two mechanisms that were easiest to believe:
+
+- **Not a bare file-argument count.** 1399 explicit file arguments works. If a
+  cliff existed at 800 arguments as such, this fixture would hit it.
+- **Not command-line byte length.** 141 KB of argv (deep paths) works;
+  `ARG_MAX` here is 1 MB, so the reporter's ~1279 real paths were nowhere near
+  the exec limit either.
+- **Not source volume or resolution cost per se.** 20 MB across 4002 files, and
+  1200 genuinely expensive files in one invocation, both fine.
+
+Also checked the obvious suspect in the plugin package: the only size constant
+in `analysis_server_plugin-0.3.20` is a 256 MB `MemoryCachingByteStore` cap
+(`plugin_server.dart:77`). There is **no file-count threshold anywhere in the
+package**, which is consistent with a count-based cliff not existing at this
+layer. A memory-bound eviction remains possible but did not trigger at 20 MB of
+input.
+
+### What this leaves
+
+The difference is in the environment, not the file count. The reports come from
+a real Flutter app; the fixture is a plain Dart package with one dependency.
+Candidates, in the order worth testing:
+
+1. **Flutter's own analysis setup** — a Flutter app resolves against the Flutter
+   SDK and pulls a far larger transitive graph. That is the single biggest
+   uncontrolled variable between the two setups, and it is where the 256 MB
+   byte-store cap could plausibly start evicting.
+2. **Multiple analysis contexts** — the real project spans `lib/` **and**
+   `test/`, plus possibly nested packages with their own `pubspec.yaml`. Every
+   run above stayed inside one context root. A per-context plugin attachment
+   that silently drops for the second-and-later root would match every symptom.
+3. **Machine state** — memory pressure or a `~/.dartServer` grown large from
+   months of real work, neither of which a fresh fixture has.
+
+### Next step
+
+Reproduce **on the reporting project itself**, not a synthetic one, with the
+canary method: drop `class Manager` into it, confirm it fires on a one-file
+invocation, then re-run the exact failing command and check whether the canary
+survives. That distinguishes the three candidates above in a few minutes and, if
+it fails there, gives a repro against something the SDK team can be pointed at.
+Until then this stays OPEN and unreproduced, and the batched workaround stays in
+place because it costs nothing.
+
+Environment: Dart 3.13.1, macOS x64 (Intel), many_lints at HEAD, plugin resolved
+to analysis_server_plugin 0.3.20. Fixture is disposable and was not committed.
