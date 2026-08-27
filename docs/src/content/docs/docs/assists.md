@@ -47,11 +47,11 @@ Option<String> goShopping() => goToShoppingCenter().flatMap(
 
 // After
 Option<String> goShopping() => Option.Do(($) {
-      final market = $(goToShoppingCenter());
-      final banana = $(market.buyBanana());
-      final apple = $(market.buyApple());
-      return '$banana, $apple';
-    });
+  final market = $(goToShoppingCenter());
+  final banana = $(market.buyBanana());
+  final apple = $(market.buyApple());
+  return '$banana, $apple';
+});
 ```
 
 Each step's name comes from that callback's own parameter, and every generated name is offered as a **linked edit position** — accepting the assist drops the cursor on the first name with the rest reachable by <kbd>Tab</kbd>, so renaming is part of applying it rather than a follow-up chore.
@@ -74,10 +74,10 @@ Option<String> goShopping() => Option.Do(($) {
 
 // After
 Option<String> goShopping() => goToShoppingCenter().flatMap(
-      (market) => market.buyBanana().flatMap(
-        (banana) => Option.of('$banana'),
-      ),
-    );
+  (market) => market.buyBanana().flatMap(
+    (banana) => Option.of('$banana'),
+  ),
+);
 ```
 
 A plain `return x` becomes `Type.of(x)` on the way out, since `Do` lifts its own result and a chain does not. In an async block, `await $(...)` loses the `await` — it belonged to the block rather than to the step.
@@ -88,7 +88,7 @@ A plain `return x` becomes `Type.of(x)` on the way out, since `Do` lifts its own
 
 Put the cursor on a function that returns `Future<Either<L, R>>`, `Either<L, R>`, `Future<Option<T>>` or `Option<T>`. The lightbulb entry names the concrete target — "Convert to `TaskEither`" or "Convert to `TaskOption`".
 
-Related rules: [`avoid_future_of_either`](/many_lints/docs/rules/fpdart/avoid-future-of-either/), [`avoid_future_of_option`](/many_lints/docs/rules/fpdart/avoid-future-of-option/).
+Related rules: [`avoid_future_of_either`](/many_lints/docs/rules/fpdart/avoid-future-of-either/), [`avoid_future_of_option`](/many_lints/docs/rules/fpdart/avoid-future-of-option/) — but only for the two `Future<...>` shapes. Both rules require a `Future` wrapper, so a bare `Either` or `Option` is never reported; those two conversions are offered on their own.
 
 **From `Future<Either<L, R>>`** — `TaskEither` is the same thing with the laziness and the combinators kept:
 
@@ -284,10 +284,41 @@ which nobody wants to read — while the shorter form people expect silently dro
 
 ## Expand `tryCatch` into `try`/`catch`
 
-Put the cursor on a `tryCatch` constructor. Related rule: [`prefer_task_either_over_try_catch`](/many_lints/docs/rules/fpdart/prefer-task-either-over-try-catch/).
+Put the cursor on a `tryCatch` constructor. It handles `TaskEither.tryCatch`, `Either.tryCatch` and `Option.tryCatch`.
+
+Related rule: [`prefer_task_either_over_try_catch`](/many_lints/docs/rules/fpdart/prefer-task-either-over-try-catch/) — but only for the `TaskEither` case below. That rule fires on `Future`-returning methods, so a synchronous `Either` or `Option` is outside its scope and is never reported; those two shapes are covered here on their own.
+
+**`TaskEither.tryCatch`** — the `try` stays *inside* the lazy constructor, because hoisting it into the enclosing function would run the effect eagerly and defeat the point of the type. The callback's value is awaited before it is wrapped:
 
 ```dart
-// Either.tryCatch
+// Before
+TaskEither<Failure, User> fetchUser(String id) => TaskEither.tryCatch(
+      () => getUser(id),
+      (error, stackTrace) => Failure.from(error),
+    );
+
+// After
+TaskEither<Failure, User> fetchUser(String id) => TaskEither(() async {
+      try {
+        return right(await getUser(id));
+      } catch (error) {
+        return left(Failure.from(error));
+      }
+    });
+```
+
+Note the `catch (error)`: the `onError` above declares a `stackTrace` it never reads. An `onError` may carry an unused parameter, but a `catch` clause may not — keeping it would hand back code with a fresh `unused_catch_stack` warning the original could not have had, so it is dropped.
+
+**`Either.tryCatch`** — synchronous, so there is no lazy constructor to preserve and the enclosing function simply grows a block:
+
+```dart
+// Before
+Either<Failure, User> parseUser(String json) => Either.tryCatch(
+      () => User.fromJson(json),
+      (error, stackTrace) => Failure.parse(error, stackTrace),
+    );
+
+// After
 Either<Failure, User> parseUser(String json) {
   try {
     return right(User.fromJson(json));
@@ -295,18 +326,18 @@ Either<Failure, User> parseUser(String json) {
     return left(Failure.parse(error, stackTrace));
   }
 }
+```
 
-// TaskEither.tryCatch — the try stays inside the lazy constructor, because
-// hoisting it into the enclosing function would run the effect eagerly.
-TaskEither<Failure, User> fetchUser(String id) => TaskEither(() async {
-      try {
-        return right(await api.getUser(id));
-      } catch (error) {
-        return left(Failure.from(error));
-      }
-    });
+Here the `onError` *does* read its `stackTrace`, so the parameter survives into the `catch`.
 
-// Option.tryCatch — no onError, so there is no error to carry.
+**`Option.tryCatch`** takes no `onError`, so there is no error to carry — the clause takes nothing and the failure branch is `none()`:
+
+```dart
+// Before
+Option<User> tryParse(String json) =>
+    Option.tryCatch(() => User.fromJson(json));
+
+// After
 Option<User> tryParse(String json) {
   try {
     return some(User.fromJson(json));
@@ -318,9 +349,7 @@ Option<User> tryParse(String json) {
 
 `tryCatch` remains the better form nearly always — it is shorter, cannot forget to wrap a branch, and composes. This assist is for the cases it cannot express: adding logging, retries, or handling per exception type, where a single `onError` callback is not enough.
 
-Because `try` is a *statement*, the assist is offered only when the `tryCatch` makes up a whole function body (either `=> ...` or `{ return ...; }`). Mid-pipeline — `Either.tryCatch(...).flatMap(f)` — there is nowhere to put a statement, and the only expression-level equivalent is an immediately-invoked closure, which is worse than what it replaces. A tear-off `onError` such as `Failure.from` is declined too, since it has no parameter names or body to move into the `catch`.
-
-A stack-trace parameter that `onError` declares but never reads is dropped from the generated clause: `onError` may carry an unused parameter, but `catch` may not, and keeping it would hand back code with a fresh `unused_catch_stack` warning the original could not have had.
+Because `try` is a *statement*, the assist is offered only when the `tryCatch` makes up a whole function body (either `=> ...` or `{ return ...; }`). Mid-pipeline — `Either.tryCatch(...).flatMap(f)` — there is nowhere to put a statement, and the only expression-level equivalent is an immediately-invoked closure, which is worse than what it replaces. A cursor sitting inside an unrelated closure nested in the arguments is declined for the same reason: it is not in the code the assist would rewrite. A tear-off `onError` such as `Failure.from` is declined too, since it has no parameter names or body to move into the `catch`.
 
 ## Convert null check to pattern
 
