@@ -260,10 +260,7 @@ _DayAmount? _readDayAmountFromConstant(Element element) {
 
 /// Reads the `Duration` literal a getter returns, for a getter declared in
 /// the library under analysis.
-_DayAmount? _readDayAmountFromGetterBody(
-  Element element,
-  RuleContext context,
-) {
+_DayAmount? _readDayAmountFromGetterBody(Element element, RuleContext context) {
   if (element is! GetterElement) return null;
 
   final declaration = _findDeclaration(element, context);
