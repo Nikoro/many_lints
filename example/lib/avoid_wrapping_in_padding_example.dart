@@ -22,10 +22,10 @@ class AvoidWrappingInPaddingExample extends StatelessWidget {
         // LINT: Container with no arguments, still supports padding
         Padding(padding: EdgeInsets.all(8), child: Container()),
 
-        // LINT: Card supports padding
+        // LINT: ListView takes its own padding, inherited from BoxScrollView
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Card(child: Text('Card content')),
+          child: ListView(children: [Text('Item')]),
         ),
       ],
     );
@@ -48,6 +48,9 @@ class GoodExamples extends StatelessWidget {
 
         // Good: Padding wrapping an Icon (no padding parameter)
         Padding(padding: EdgeInsets.all(8), child: Icon(Icons.star)),
+
+        // Good: Card has no padding parameter, only margin
+        Padding(padding: EdgeInsets.all(8), child: Card(child: Text('Hello'))),
 
         // Good: Container already has its own padding set
         Padding(

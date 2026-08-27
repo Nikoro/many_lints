@@ -27,8 +27,11 @@ class Padding extends Widget {
 class Container extends Widget {
   Container({Key? key, EdgeInsets? padding, EdgeInsets? margin, Widget? child, double? width, double? height});
 }
-class Card extends Widget {
-  Card({Key? key, EdgeInsets? padding, Widget? child});
+class BoxScrollView extends Widget {
+  BoxScrollView({Key? key, EdgeInsets? padding});
+}
+class ListView extends BoxScrollView {
+  ListView({super.key, super.padding, List<Widget> children = const []});
 }
 class Text extends Widget {
   Text(String data);
@@ -73,14 +76,17 @@ Widget f() {
     );
   }
 
-  Future<void> test_paddingWrappingCard() async {
+  /// `ListView` takes its `padding` as a super-parameter forwarded to
+  /// `BoxScrollView`, which is still a named formal parameter on its own
+  /// constructor. This mirrors the real Flutter signature.
+  Future<void> test_paddingWrappingListViewWithInheritedPaddingParam() async {
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
 Widget f() {
   return Padding(
     padding: EdgeInsets.all(8),
-    child: Card(),
+    child: ListView(),
   );
 }
 ''',

@@ -27,7 +27,7 @@ class BorderSide {
 }
 
 class Border {
-  const Border({BorderSide side = const BorderSide()});
+  const Border({BorderSide top = const BorderSide(), BorderSide right = const BorderSide(), BorderSide bottom = const BorderSide(), BorderSide left = const BorderSide()});
   const Border.fromBorderSide(BorderSide side);
   factory Border.all({
     Color color = const Color(0xFF000000),

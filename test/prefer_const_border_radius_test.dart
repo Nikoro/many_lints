@@ -20,8 +20,7 @@ class Radius {
 
 class BorderRadius {
   const BorderRadius.all(Radius radius);
-  static BorderRadius circular(double radius) =>
-      BorderRadius.all(Radius.circular(radius));
+  BorderRadius.circular(double radius) : this.all(const Radius.circular(0));
 }
 ''');
     super.setUp();
@@ -81,7 +80,7 @@ class Radius {
 
 class BorderRadius {
   const BorderRadius.all(Radius radius);
-  const BorderRadius.circular(double radius);
+  BorderRadius.circular(double radius) : this.all(const Radius.circular(0));
 }
 ''');
     await assertDiagnostics(
