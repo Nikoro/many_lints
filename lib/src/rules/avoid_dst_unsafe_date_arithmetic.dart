@@ -56,19 +56,20 @@ class AvoidDstUnsafeDateArithmetic extends ManyLintsRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final visitor = _Visitor(this);
+    final visitor = _Visitor(this, context);
     registry.addMethodInvocation(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AvoidDstUnsafeDateArithmetic rule;
+  final RuleContext context;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.context);
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    final shift = DateTimeShift.tryRead(node);
+    final shift = DateTimeShift.tryRead(node, context: context);
     if (shift == null) return;
     if (shift.isUtcReceiver) return;
 

@@ -70,6 +70,7 @@ Quick navigation to common patterns:
 - [Type Inference & Context](#-type-inference--context)
 - [Visitor Patterns](#-visitor-patterns)
 - [Reporting Issues & Quick Fixes](#-reporting--quick-fixes)
+- [Resolving a Name to Its Declaration](#-resolving-a-name-to-its-declaration)
 - [Utility Functions](#-utility-functions)
 - [Analyzer 14.1.0 APIs](#-analyzer-1410-specific-apis)
 - [Quick Reference Cards](#-quick-reference-cards)
@@ -720,6 +721,96 @@ range.token(token)
 ```
 
 **Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart)
+
+---
+
+## 🔗 Resolving a Name to Its Declaration
+
+A rule that only matches literals written at the call site will pass a codebase
+clean while the defect it hunts sits one identifier away. `Duration(days: 30)`
+inline is caught; the same value behind `leadTime.offsetFromEvent` is not — and
+a name is exactly how such code survives review.
+
+There is **no single API** that goes from a name to its declaration. Which one
+works depends on what the name is, and the three cases have different reach:
+
+| Shape | How to resolve | Reach |
+|---|---|---|
+| `static const` / top-level const | `element.computeConstantValue()` | **any library**, including dependencies |
+| getter (`T get x => ...`) | AST via `RuleContext.allUnits` | **library under analysis only** |
+| local variable | `RecursiveAstVisitor` over the enclosing `FunctionBody` | the function |
+
+**A getter never evaluates.** `computeConstantValue()` returns `null` for it —
+a getter is code, not a constant, even when its body is a single `const`
+literal. This is the case most likely to matter, because an enum or a policy
+class exposing `Duration get` is idiomatic Dart. Reaching it needs the AST.
+
+**`RuleContext.allUnits` is the route from an element to AST.** `Fragment` has
+no `node` getter, and there is no element→AST hop across libraries, so a rule
+that needs a declaration's *body* must search the units it was handed:
+
+```dart
+/// The AST node declaring [element], searched across the library's units.
+AstNode? _findDeclaration(Element element, RuleContext context) {
+  for (final unit in context.allUnits) {
+    final finder = _DeclarationFinder(element);
+    unit.unit.accept(finder);
+    if (finder.declaration != null) return finder.declaration;
+  }
+  return null;
+}
+
+class _DeclarationFinder extends RecursiveAstVisitor<void> {
+  final Element _target;
+  AstNode? declaration;
+
+  _DeclarationFinder(this._target);
+
+  @override
+  void visitMethodDeclaration(MethodDeclaration node) {
+    if (node.declaredFragment?.element == _target) declaration = node;
+    super.visitMethodDeclaration(node);
+  }
+}
+```
+
+To use it, the visitor needs the context, so pass it in at registration:
+
+```dart
+final visitor = _Visitor(this, context);   // registerManyLintsProcessors
+```
+
+**Read a constant through `constructorInvocation`, not its private fields.**
+`DartObject` exposes no `fields` getter, and reaching for `_duration` couples
+the rule to an SDK implementation detail that a rename would silently disable.
+The recorded invocation carries the arguments already:
+
+```dart
+final invocation = variable?.computeConstantValue()?.constructorInvocation;
+for (final MapEntry(key: name, value: argument)
+    in invocation.namedArguments.entries) {
+  final literal = argument.toIntValue();
+  // classify exactly as you would a literal at the call site
+}
+```
+
+**A local variable needs neither.** Its initializer is in the enclosing
+function, and `computeConstantValue()` does not reach a non-const `final`
+anyway — so walk the body instead. `date_time_arithmetic.dart` already had
+such a finder for its UTC check and reuses it.
+
+**When a name cannot be resolved, stay silent.** A parameter, a computed
+value, a getter from a dependency: report nothing rather than guess. The
+alternative — flagging every `Duration`-typed argument — was measured on a real
+codebase and produced 7 findings of which **6 were false** (`Duration(minutes:
+15)` cooldowns, `Duration(hours: 1)` backoff). Those are genuinely absolute
+elapsed time. A rule that buries one real finding under six false ones is worse
+than one that misses the indirect case, so resolve-or-stay-quiet is the
+trade to make.
+
+**When to use:** any rule whose subject is a *value* rather than a syntax
+shape — durations, magic numbers, thresholds, flags.
+**Reference:** [`lib/src/date_time_arithmetic.dart`](../../../lib/src/date_time_arithmetic.dart), used by `avoid_dst_unsafe_date_arithmetic`.
 
 ---
 

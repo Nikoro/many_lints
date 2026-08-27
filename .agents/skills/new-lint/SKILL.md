@@ -153,6 +153,30 @@ Key conventions:
 - Use helpers from `lib/src/ast_node_analysis.dart` when applicable
 - `correctionMessage` is required by the docs generator; always provide it
 
+### Measure the false-positive rate on a real codebase before widening
+
+A rule whose subject is a **value** (a duration, a threshold, a magic number)
+has an obvious temptation: match the type instead of the literal, so a value
+reached through a name is caught too. It is two lines and it works.
+
+It is also how a rule becomes noise. Widening
+`avoid_dst_unsafe_date_arithmetic` to report every `Duration`-typed argument
+caught the real bug it was written for — along with **6 false positives out of
+7 findings** on the first real project: `Duration(minutes: 15)` cooldowns,
+`Duration(hours: 1)` backoff, a bounce window. All genuinely absolute elapsed
+time, all correct code.
+
+One real finding under six false ones is worse than a rule that misses the
+indirect case: the next person adds `// ignore:` six times and stops reading
+the seventh. **Resolve the name to its declaration and check the value** (see
+[rules-patterns.md](rules-patterns.md#-resolving-a-name-to-its-declaration)),
+and where it cannot be resolved, stay silent.
+
+Run the candidate rule over an actual project before deciding it is done —
+`dart analyze` on a repo that uses the plugin, then read every finding and
+classify it. The count is the design feedback; a rule that is right in the
+test file and noisy in the wild has not been finished.
+
 ## Step 4b: Add a mode option only when it earns its place
 
 **Per-rule `exclude` is already handled.** Because the rule extends
@@ -394,6 +418,24 @@ See [config-cookbook.md](config-cookbook.md#testing-a-configurable-rule) for the
 full coverage checklist.
 - `lint(offset, length)` — offset is the character position, length is the length of the reported node/token
 - Method names start with `test_` and use camelCase
+
+🚨 **Never hand-count an offset.** Write `lint(0, 0)`, run the test, and copy the
+number from the failure — it prints `To accept the current state, expect:
+lint(107, 21)`. Counting characters by hand fails on a correct rule and sends
+you debugging code that already works.
+
+🚨 **Read the raw test output, not a grep of it.** A `dart test` run that dies
+on a *compile* error still exits non-zero and still lists the test as failing,
+so `grep`-ing for your assertion or a debug `print` shows nothing and looks
+exactly like "the code was never reached". Check `head -30` of the unfiltered
+output first: `Failed to load "test/..."` means the rule does not compile, and
+no amount of instrumenting the logic will help. This bites hardest when the
+instrumenting itself broke the build (a `throw` replacing a null-guard the
+next line needed).
+
+`print()` from inside a rule does not reach the test's stdout at all. To
+inspect rule state, `throw StateError('DBG ...')` — the message surfaces in the
+failure. Remove it before committing.
 
 ## Step 8: Update the Cookbooks (MANDATORY when discovering new patterns)
 

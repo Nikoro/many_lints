@@ -1,3 +1,4 @@
+import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
@@ -38,7 +39,12 @@ class DateTimeShift {
   ///
   /// Returns `null` for sub-day durations: `Duration(hours: 2)` is genuinely
   /// absolute elapsed time, so applying it with a `Duration` is correct.
-  static DateTimeShift? tryRead(MethodInvocation node) {
+  ///
+  /// [context] lets a `Duration` reached through a name be resolved back to
+  /// the declaration it came from. Without it only a literal at the call site
+  /// is read, which is all the fix needs: there is no literal to rewrite in
+  /// the indirect case anyway.
+  static DateTimeShift? tryRead(MethodInvocation node, {RuleContext? context}) {
     final isSubtraction = switch (node.methodName.name) {
       'add' => false,
       'subtract' => true,
@@ -57,7 +63,7 @@ class DateTimeShift {
     final argument = arguments.single;
     if (argument is! Expression) return null;
 
-    final amount = _readDayAmount(argument);
+    final amount = _readDayAmount(argument, context);
     if (amount == null) return null;
 
     return DateTimeShift(
@@ -134,7 +140,7 @@ class _DayAmount {
 }
 
 /// Reads a `Duration` argument as a whole-day amount, or returns `null`.
-_DayAmount? _readDayAmount(Expression argument) {
+_DayAmount? _readDayAmount(Expression argument, [RuleContext? context]) {
   final unwrapped = argument.unParenthesized;
 
   // `const Duration(days: 1)` and `Duration(days: 1)`.
@@ -148,7 +154,160 @@ _DayAmount? _readDayAmount(Expression argument) {
     return _readDayArguments(argumentList);
   }
 
+  // A `Duration` reached through a name — `leadTime.offsetFromEvent`, a
+  // constant, a local — carries the same defect as a literal, and a name is
+  // how it survives review. Resolving it needs the library's elements, which
+  // only a rule has, so the fix (which passes no context) keeps seeing just
+  // literals.
+  if (context == null) return null;
+
+  return _readDayAmountFromName(argument.unParenthesized, context);
+}
+
+/// Follows a `Duration`-typed name back to the declaration it came from.
+///
+/// Only a declaration that is itself day-granularity reports: most named
+/// durations really are absolute (a 15-minute cooldown, an hour of backoff),
+/// and reporting those on sight would bury the calendar bug in noise. A name
+/// that cannot be resolved stays silent rather than being guessed at.
+_DayAmount? _readDayAmountFromName(Expression expression, RuleContext context) {
+  final type = expression.staticType;
+  if (type == null || !_durationChecker.isExactlyType(type)) return null;
+
+  final element = switch (expression) {
+    PropertyAccess(propertyName: SimpleIdentifier(element: final element?)) =>
+      element,
+    Identifier(element: final element?) => element,
+    _ => null,
+  };
+  if (element == null) return null;
+
+  // A local variable's initializer is right there in the enclosing function,
+  // and `computeConstantValue` does not reach a non-const one, so read the
+  // AST first.
+  if (element is LocalVariableElement) {
+    final initializer = _localInitializer(element, expression);
+    return initializer == null ? null : _readDayAmount(initializer);
+  }
+
+  // A constant field or variable evaluates, and does so even when it is
+  // declared in another library.
+  if (_readDayAmountFromConstant(element) case final amount?) return amount;
+
+  // A getter is code, not a constant, so nothing evaluates: its body has to
+  // be read from the AST. That reaches only the library under analysis, which
+  // is where the getters worth catching live — an enum's `Duration get`
+  // beside the call site that misuses it.
+  return _readDayAmountFromGetterBody(element, context);
+}
+
+/// The initializer of a local [element], found in the enclosing function.
+Expression? _localInitializer(Element element, AstNode reference) {
+  final body = reference.thisOrAncestorOfType<FunctionBody>();
+  if (body == null) return null;
+
+  final finder = _InitializerFinder(element);
+  body.accept(finder);
+
+  return finder.initializer;
+}
+
+/// Reads a `Duration` constant's value, across library boundaries.
+_DayAmount? _readDayAmountFromConstant(Element element) {
+  final variable = switch (element) {
+    PropertyAccessorElement(variable: final variable) => variable,
+    VariableElement() => element,
+    _ => null,
+  };
+
+  final invocation = variable?.computeConstantValue()?.constructorInvocation;
+  if (invocation == null) return null;
+
+  var days = 0;
+  var sawDayComponent = false;
+
+  for (final MapEntry(key: name, value: argument)
+      in invocation.namedArguments.entries) {
+    switch (name) {
+      case 'days':
+        final literal = argument.toIntValue();
+        if (literal == null) return null;
+        if (literal != 0) sawDayComponent = true;
+        days += literal;
+
+      // `Duration(hours: 24)` is the same bug written differently.
+      case 'hours':
+        final literal = argument.toIntValue();
+        if (literal == null || literal % 24 != 0) return null;
+        if (literal != 0) sawDayComponent = true;
+        days += literal ~/ 24;
+
+      // Any sub-day component makes the duration genuinely absolute.
+      case 'minutes' || 'seconds' || 'milliseconds' || 'microseconds':
+        if (argument.toIntValue() != 0) return null;
+
+      default:
+        return null;
+    }
+  }
+
+  if (!sawDayComponent || days == 0) return null;
+
+  // The amount is deliberately not propagated: the fix rewrites a literal at
+  // the call site, and there is no literal there to rewrite.
+  return const _DayAmount(null);
+}
+
+/// Reads the `Duration` literal a getter returns, for a getter declared in
+/// the library under analysis.
+_DayAmount? _readDayAmountFromGetterBody(
+  Element element,
+  RuleContext context,
+) {
+  if (element is! GetterElement) return null;
+
+  final declaration = _findDeclaration(element, context);
+  if (declaration is! MethodDeclaration) return null;
+
+  final body = declaration.body;
+  if (body is! ExpressionFunctionBody) return null;
+
+  final returned = body.expression.unParenthesized;
+  if (returned is! InstanceCreationExpression) return null;
+
+  final constructedType = returned.constructorName.type.element;
+  if (constructedType == null) return null;
+  if (!_durationChecker.isExactly(constructedType)) return null;
+
+  final amount = _readDayArguments(returned.argumentList);
+  if (amount == null) return null;
+
+  return const _DayAmount(null);
+}
+
+/// The AST node declaring [element], searched across the library's units.
+AstNode? _findDeclaration(Element element, RuleContext context) {
+  for (final unit in context.allUnits) {
+    final finder = _DeclarationFinder(element);
+    unit.unit.accept(finder);
+    if (finder.declaration != null) return finder.declaration;
+  }
   return null;
+}
+
+/// Finds the declaration of a specific element within a compilation unit.
+class _DeclarationFinder extends RecursiveAstVisitor<void> {
+  final Element _target;
+
+  AstNode? declaration;
+
+  _DeclarationFinder(this._target);
+
+  @override
+  void visitMethodDeclaration(MethodDeclaration node) {
+    if (node.declaredFragment?.element == _target) declaration = node;
+    super.visitMethodDeclaration(node);
+  }
 }
 
 /// Classifies the named arguments of a `Duration` constructor call.

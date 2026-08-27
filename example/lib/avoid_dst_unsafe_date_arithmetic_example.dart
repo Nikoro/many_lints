@@ -65,3 +65,47 @@ void elapsedTimeIsFine(DateTime start) {
   // A mixed duration carries a sub-day component the day field cannot express
   final mixed = start.add(const Duration(days: 1, hours: 2));
 }
+
+// ❌ Bad: a name is not a defence — the duration is resolved back to where it
+// was declared, whether that is a getter, a constant or a local.
+enum LeadTime {
+  oneMonthBefore;
+
+  Duration get offsetFromEvent => const Duration(days: 30);
+}
+
+class Retention {
+  static const Duration window = Duration(days: 30);
+}
+
+void badNamedDurations(DateTime occurrence, LeadTime leadTime) {
+  // LINT: the shape a real bug shipped in — reminders drifted an hour across
+  // a DST transition because the lead time was a Duration
+  final fireAt = occurrence.subtract(leadTime.offsetFromEvent);
+
+  // LINT: a constant resolves too, even from another library
+  final cutoff = occurrence.subtract(Retention.window);
+
+  // LINT: so does a local
+  final span = const Duration(days: 7);
+  final weekOut = occurrence.add(span);
+}
+
+// ✅ Good: a named duration that is genuinely absolute stays silent, or every
+// timeout and backoff would report and bury the calendar bug in noise.
+class Policy {
+  static const Duration cooldown = Duration(minutes: 15);
+
+  Duration get backoff => const .new(hours: 1);
+}
+
+void namedElapsedTimeIsFine(DateTime start, Policy policy) {
+  final retryAt = start.add(Policy.cooldown);
+  final giveUpAt = start.add(policy.backoff);
+}
+
+// ✅ Edge case: a duration the rule cannot resolve stays silent rather than
+// being guessed at.
+void unresolvableIsFine(DateTime start, Duration span) {
+  final later = start.add(span);
+}

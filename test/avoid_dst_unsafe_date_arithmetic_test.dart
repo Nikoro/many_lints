@@ -137,6 +137,80 @@ void f() {
     );
   }
 
+  /// The Duration need not be written at the call site. Hiding a
+  /// `Duration(days: 30)` behind a getter is the same defect, and is how it
+  /// escaped this rule in a real codebase: a notification lead time
+  /// subtracted from an event date shifted every reminder that straddled a
+  /// DST boundary by an hour.
+  Future<void> test_subtractDays_fromGetter() async {
+    await assertDiagnostics(
+      r'''
+class LeadTime {
+  Duration get offset => const Duration(days: 30);
+}
+
+void f(DateTime d, LeadTime lt) {
+  d.subtract(lt.offset);
+}
+''',
+      [lint(107, 21)],
+    );
+  }
+
+  Future<void> test_addDays_fromLocalVariable() async {
+    await assertDiagnostics(
+      r'''
+void f(DateTime d) {
+  final offset = const Duration(days: 7);
+  d.add(offset);
+}
+''',
+      [lint(65, 13)],
+    );
+  }
+
+  Future<void> test_subtractDays_fromStaticConstField() async {
+    await assertDiagnostics(
+      r'''
+class Policy {
+  static const Duration retention = Duration(days: 30);
+}
+
+void f(DateTime d) {
+  d.subtract(Policy.retention);
+}
+''',
+      [lint(97, 28)],
+    );
+  }
+
+  /// The counterweight to the three above: a named duration that is genuinely
+  /// absolute must stay silent, or every timeout and backoff in a codebase
+  /// reports and buries the calendar bug in noise.
+  Future<void> test_subDayDurationBehindAName_isNotReported() async {
+    await assertNoDiagnostics(r'''
+class Policy {
+  static const Duration cooldown = Duration(minutes: 15);
+  Duration get bounce => const Duration(hours: 1);
+}
+
+void f(DateTime d, Policy p) {
+  d.subtract(Policy.cooldown);
+  d.add(p.bounce);
+}
+''');
+  }
+
+  /// A duration this rule cannot resolve — a parameter, a computed value —
+  /// stays silent rather than guessing.
+  Future<void> test_unresolvableDuration_isNotReported() async {
+    await assertNoDiagnostics(r'''
+void f(DateTime d, Duration span) {
+  d.add(span);
+}
+''');
+  }
+
   Future<void> test_addHours_isNotReported() async {
     await assertNoDiagnostics(r'''
 void f(DateTime d) {
