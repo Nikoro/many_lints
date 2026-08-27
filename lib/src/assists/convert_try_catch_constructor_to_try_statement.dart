@@ -213,15 +213,37 @@ class ConvertTryCatchConstructorToTryStatement
   }
 
   /// The `tryCatch` invocation the cursor sits in.
+  ///
+  /// Stops at a function boundary that is not itself an argument of the
+  /// `tryCatch` being sought. Without that, a cursor inside the `run` or
+  /// `onError` callback of an *inner* call would keep walking out to an
+  /// enclosing `tryCatch` and expand the wrong one.
   InstanceCreationExpression? _enclosingTryCatch() {
     for (AstNode? current = node; current != null; current = current.parent) {
       if (current is InstanceCreationExpression &&
           current.constructorName.name?.name == 'tryCatch') {
         return current;
       }
+
+      // A closure the cursor sits inside ends the search unless it is an
+      // argument of the very call being looked for, which the next iterations
+      // will reach.
+      if (current is FunctionExpression && !_isArgumentOfTryCatch(current)) {
+        return null;
+      }
     }
 
     return null;
+  }
+
+  /// Whether [expression] is written directly as an argument of a `tryCatch`.
+  bool _isArgumentOfTryCatch(FunctionExpression expression) {
+    final argumentList = expression.parent;
+    if (argumentList is! ArgumentList) return false;
+
+    final invocation = argumentList.parent;
+    return invocation is InstanceCreationExpression &&
+        invocation.constructorName.name?.name == 'tryCatch';
   }
 
   /// Which fpdart wrapper [invocation] constructs, or null when it is not an
