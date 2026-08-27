@@ -84,7 +84,7 @@ control-flow forms, shorthand syntax, and type-annotation habits. Adopt it when
 consistency is worth occasionally disabling a preference that does not fit the
 project.
 
-### Rules added by `opinionated` (87)
+### Rules added by `opinionated` (88)
 
 - **Async safety:** [`avoid_catch_error`](/many_lints/docs/rules/async-safety/avoid-catch-error/), [`avoid_passing_async_when_sync_expected`](/many_lints/docs/rules/async-safety/avoid-passing-async-when-sync-expected/), [`avoid_redundant_async`](/many_lints/docs/rules/async-safety/avoid-redundant-async/), [`check_is_not_closed_after_async_gap`](/many_lints/docs/rules/async-safety/check-is-not-closed-after-async-gap/), [`prefer_correct_future_return_type`](/many_lints/docs/rules/async-safety/prefer-correct-future-return-type/), [`require_atomic_async_updates`](/many_lints/docs/rules/async-safety/require-atomic-async-updates/), [`use_ref_and_state_synchronously`](/many_lints/docs/rules/async-safety/use-ref-and-state-synchronously/), [`use_ref_read_synchronously`](/many_lints/docs/rules/async-safety/use-ref-read-synchronously/)
 - **Bloc / Riverpod:** [`avoid_bloc_public_methods`](/many_lints/docs/rules/bloc-riverpod/avoid-bloc-public-methods/), [`avoid_passing_bloc_to_bloc`](/many_lints/docs/rules/bloc-riverpod/avoid-passing-bloc-to-bloc/), [`avoid_public_notifier_properties`](/many_lints/docs/rules/bloc-riverpod/avoid-public-notifier-properties/), [`prefer_bloc_extensions`](/many_lints/docs/rules/bloc-riverpod/prefer-bloc-extensions/), [`prefer_immutable_bloc_state`](/many_lints/docs/rules/bloc-riverpod/prefer-immutable-bloc-state/), [`prefer_multi_bloc_provider`](/many_lints/docs/rules/bloc-riverpod/prefer-multi-bloc-provider/)
@@ -134,7 +134,7 @@ constructor-first checks overlap.
 - **Type annotations:** [`prefer_explicit_parameter_names`](/many_lints/docs/rules/type-annotations/prefer-explicit-parameter-names/), [`prefer_typedefs_for_callbacks`](/many_lints/docs/rules/type-annotations/prefer-typedefs-for-callbacks/)
 - **Widget best practices:** [`avoid_deep_widget_nesting`](/many_lints/docs/rules/widget-best-practices/avoid-deep-widget-nesting/), [`avoid_too_many_widgets_per_build`](/many_lints/docs/rules/widget-best-practices/avoid-too-many-widgets-per-build/), [`never_discard_build_context`](/many_lints/docs/rules/widget-best-practices/never-discard-build-context/), [`prefer_extracting_callbacks`](/many_lints/docs/rules/widget-best-practices/prefer-extracting-callbacks/), [`prefer_widget_private_members`](/many_lints/docs/rules/widget-best-practices/prefer-widget-private-members/), [`use_sliver_prefix`](/many_lints/docs/rules/widget-best-practices/use-sliver-prefix/)
 
-## Rules outside every preset (18)
+## Rules outside every preset (19)
 
 Some rules need project-specific vocabulary, assume an optional dependency,
 enforce the opposite of a convention selected by `opinionated`, or are
