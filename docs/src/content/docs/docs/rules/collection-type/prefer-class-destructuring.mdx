@@ -18,29 +18,25 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule is in the **`pedantic`** preset.
 
-When you access three or more properties on the same object within a scope, Dart 3 class destructuring can consolidate those accesses into a single declaration. This makes the code more concise and groups related property extractions together.
-
-## Why use this rule
-
-Repeated `object.property` accesses are verbose and scatter related logic across multiple lines. A single destructuring declaration like `final MyClass(:name, :email, :age) = object;` extracts all needed values at once, making it clear which properties are used in the current scope.
-
-**See also:** [Dart patterns](https://dart.dev/language/patterns) | [Destructuring](https://dart.dev/language/patterns#destructuring)
+Flags a block that reads three or more distinct properties from the same local variable or parameter. A single Dart 3 destructuring declaration extracts them all at once. The quick fix writes it.
 
 ## Don't
 
+Four `user.` prefixes carrying no information — the reader parses the same receiver four times to find the four values that matter:
+
 ```dart
 class UserProfile {
-  final String name;
-  final String email;
-  final int age;
-  final String city;
-
   const UserProfile({
     required this.name,
     required this.email,
     required this.age,
     required this.city,
   });
+
+  final String name;
+  final String email;
+  final int age;
+  final String city;
 }
 
 String describe(UserProfile user) {
@@ -52,14 +48,68 @@ String describe(UserProfile user) {
 ## Do
 
 ```dart
+class UserProfile {
+  const UserProfile({
+    required this.name,
+    required this.email,
+    required this.age,
+    required this.city,
+  });
+
+  final String name;
+  final String email;
+  final int age;
+  final String city;
+}
+
 String describe(UserProfile user) {
   final UserProfile(:name, :email, :age, :city) = user;
   return 'Hello, $name <$email>, $age, from $city';
 }
 ```
 
-Two accesses stay below the threshold and are not reported, and a method call
-such as `user.toString()` is not a property access at all.
+The declaration also states, in one line, exactly which properties this function depends on.
+
+### Raising the threshold
+
+Three accesses is the default trigger. A codebase that finds that eager can require four or more before the rule reports:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_class_destructuring:
+    min_occurrences: 4
+```
+
+```dart
+// Reported at the default of 3, accepted with min_occurrences: 4
+String summarise(UserProfile user) {
+  return '${user.name} (${user.age}) — ${user.city}';
+}
+```
+
+### Exempting types where destructuring reads worse
+
+A theme or context object is usually read for a handful of unrelated properties, and pulling them into bare names loses the thing that told you where they came from:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_class_destructuring:
+    ignored_types: [BuildContext, ThemeData]
+```
+
+## Known limitations
+
+**Only locals and parameters are tracked.** A field or a top-level variable is never reported — `this.config.host` and friends stay as they are.
+
+**Distinct properties, not total reads.** Reading `user.name` five times counts as one property, so it does not reach the threshold on its own.
+
+**Method calls are not property accesses.** `user.toString()` and `user.copyWith(...)` do not count toward the total.
+
+**Each block is counted separately.** Accesses split across a body and a nested closure are not pooled, since the collector stops at function boundaries.
+
+**See also:** [Dart patterns](https://dart.dev/language/patterns)
 
 ## Turning this rule off
 

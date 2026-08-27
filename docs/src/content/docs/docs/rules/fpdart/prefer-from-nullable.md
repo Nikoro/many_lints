@@ -23,19 +23,21 @@ The manual form is not just longer — it names the value twice, once in the con
 ## Don't
 
 ```dart
-final option = name != null ? Option.of(name) : Option<String>.none();
+Option<String> displayName(String? name) =>
+    name != null ? Option.of(name) : Option<String>.none();
 ```
 
 The inverted spelling is the same thing:
 
 ```dart
-final option = name == null ? Option<String>.none() : Option.of(name);
+Option<String> displayName(String? name) =>
+    name == null ? Option<String>.none() : Option.of(name);
 ```
 
 ## Do
 
 ```dart
-final option = Option.fromNullable(name);
+Option<String> displayName(String? name) => Option.fromNullable(name);
 ```
 
 `optionOf(name)` is the shorthand for the same constructor.
@@ -46,7 +48,15 @@ A quick fix replaces the whole conditional with `Option.fromNullable(value)`, re
 
 ## Known limitations
 
-The `Some` branch must wrap the *same* expression the condition tested — compared by source text. When it wraps something else, the conditional is doing a different job and rewriting it would change behaviour, so the rule stays silent.
+The `Some` branch must wrap the *same* expression the condition tested — compared by source text. When it wraps something else the rule stays silent, because rewriting it would change behaviour:
+
+```dart
+// Not reported — tests `name`, wraps `nickname`. This is the copy-paste bug
+// the constructor form makes impossible, but the rule cannot tell it from a
+// deliberate choice.
+Option<String> displayName(String? name, String? nickname) =>
+    name != null ? Option.of(nickname) : Option<String>.none();
+```
 
 Only `Option` is covered. `Either.fromNullable` takes an `onNull` callback, so the equivalent conditional carries a value the rewrite would have to invent.
 

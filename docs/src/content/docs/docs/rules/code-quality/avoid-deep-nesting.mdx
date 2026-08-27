@@ -12,19 +12,15 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Quality</span>
 
-This rule flags control flow nested more deeply than the configured budget.
+This rule flags control flow nested more deeply than the configured budget. Each level of `if`, `for`, `while`, `do`, `try` or `switch` counts.
 
-Each level of `if`, `for`, `while`, `try` or `switch` is another condition the reader has to hold to know why a line runs at all. The innermost statement of a five-level nest is reachable only through a path nobody can state out loud.
+Each level is another condition the reader has to hold to know why a line runs at all. Depth is also more actionable than a complexity score: an early return, a guard clause or an extracted method removes a whole level, where a complexity count only says something is wrong.
 
-Depth is usually more actionable than complexity: an early return, a guard clause or an extracted method removes a whole level, where a high complexity count says only that something is wrong.
-
-An `else if` is a **sibling branch, not another level** — it is written flat and reads flat, so a long dispatch chain is never reported. A nested function starts its own count, since its body is not reached through the enclosing nest.
-
-One diagnostic per function, anchored at the statement that first crosses the limit.
-
-This rule is in the **`pedantic`** preset.
+This rule is in the **`pedantic`** preset. The default budget is `max_depth: 4`, and one diagnostic is reported per function, anchored at the statement that first crosses the limit.
 
 ## Don't
+
+Five levels. Nothing on the `handle(cell)` line says why it runs:
 
 ```dart
 void process(List<List<int>> rows, bool enabled) {
@@ -32,7 +28,7 @@ void process(List<List<int>> rows, bool enabled) {
     for (final row in rows) {
       for (final cell in row) {
         if (cell > 0) {
-          while (cell > 1) {     // 5 levels in
+          while (cell > 1) {     // reported here — level 5
             handle(cell);
           }
         }
@@ -40,9 +36,14 @@ void process(List<List<int>> rows, bool enabled) {
     }
   }
 }
+
+void handle(int cell) {}
 ```
 
 ## Do
+
+Invert the outer guard, `continue` past the filter, and lift the inner loop
+into its own function. Same behaviour, two levels each:
 
 ```dart
 void process(List<List<int>> rows, bool enabled) {
@@ -59,7 +60,81 @@ void _processRow(List<int> row) {
     _handleRepeatedly(cell);
   }
 }
+
+void _handleRepeatedly(int cell) {
+  while (cell > 1) {
+    handle(cell);
+  }
+}
+
+void handle(int cell) {}
 ```
+
+## More examples
+
+### `else if` is a sibling, not another level
+
+A dispatch chain reads flat and is counted flat, however long it grows:
+
+```dart
+// Not reported — this is one level, not five.
+String label(int code) {
+  if (code < 100) {
+    return 'informational';
+  } else if (code < 200) {
+    return 'success';
+  } else if (code < 300) {
+    return 'redirect';
+  } else if (code < 400) {
+    return 'client error';
+  } else if (code < 500) {
+    return 'server error';
+  } else {
+    return 'unknown';
+  }
+}
+```
+
+### A nested function starts its own count
+
+A callback's body is not reached through the enclosing nest, so it is measured
+against the budget on its own:
+
+```dart
+// Not reported — the outer function has one level, the callback three.
+void install(List<int> rows) {
+  rows.forEach((row) {
+    if (row > 0) {
+      for (var i = 0; i < row; i++) {
+        if (i.isEven) {
+          print(i);
+        }
+      }
+    }
+  });
+}
+```
+
+### Tightening the budget
+
+Four is a guard, a loop, a branch and the work. Drop it to three if you want
+the work itself at the shallowest level:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_deep_nesting:
+    max_depth: 3
+```
+
+## Known limitations
+
+Only block bodies are examined. A function written with an expression body
+(`=>`) is skipped entirely, however much nesting a conditional expression hides
+in it.
+
+`else if` never adds a level, but an `else { if (...) }` written with braces
+does.
 
 ## Enabling this rule
 

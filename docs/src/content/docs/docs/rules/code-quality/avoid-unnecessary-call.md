@@ -11,27 +11,86 @@ sidebar:
 
 This rule flags a function invoked through an explicit `.call()`.
 
-## Why use this rule
-
 `callback.call()` and `callback()` do the same thing, and the shorter one is how a function is invoked everywhere else in the language. Spelling out `.call` makes a plain invocation look like a method on an object, so a reader stops to check whether the receiver is a callable class.
 
-Two cases are left alone. A null-aware invocation (`callback?.call()`) has no shorthand — `callback?()` does not parse. And a class defining `call` as a real method is invoking *that* method, where `.call` is part of its name rather than the implicit function interface; the rule checks the receiver's type to tell the two apart.
+This rule is in the **`opinionated`** preset and takes no configuration.
 
 ## Don't
 
 ```dart
-void submit(void Function() onDone) {
-  onDone.call();
+class Uploader {
+  const Uploader({required this.onDone});
+
+  final void Function(int) onDone;
+
+  void finish(int count) {
+    onDone.call(count);
+  }
 }
 ```
 
 ## Do
 
 ```dart
-void submit(void Function() onDone) {
-  onDone();
+class Uploader {
+  const Uploader({required this.onDone});
+
+  final void Function(int) onDone;
+
+  void finish(int count) {
+    onDone(count);
+  }
 }
 ```
+
+## More examples
+
+### A null-aware invocation is left alone
+
+`callback?()` does not parse, so `.call` is the only spelling and is never reported:
+
+```dart
+class Uploader {
+  const Uploader({this.onDone});
+
+  final void Function(int)? onDone;
+
+  // Not reported — there is no shorter form.
+  void finish(int count) => onDone?.call(count);
+}
+```
+
+If you want the shorter form anyway, promote first:
+
+```dart
+void finish(int count) {
+  final onDone = this.onDone;
+  if (onDone != null) onDone(count);
+}
+```
+
+### A class with its own `call` method is not a function
+
+The rule reads the receiver's static type: only a value whose type is a
+function type has an implicit `call`. On a callable class, `.call` is the
+method's real name:
+
+```dart
+class Formatter {
+  String call(String input) => input.trim();
+}
+
+// Not reported — this is Formatter.call, spelled out.
+String tidy(Formatter formatter, String input) => formatter.call(input);
+```
+
+Both spellings work there; `formatter(input)` is usually the point of writing a
+callable class, but the rule does not insist.
+
+## Known limitations
+
+Only an invocation with an explicit target is reported. A bare `call()` inside a
+callable class — invoking its own `call` — has no target and is left alone.
 
 ## Turning this rule off
 

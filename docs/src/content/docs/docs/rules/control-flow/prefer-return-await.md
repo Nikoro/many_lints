@@ -51,13 +51,53 @@ Future<String> token() async {
 }
 ```
 
-The same applies inside a `catch` clause: `return retry();` there escapes an
-outer try just as easily, so it needs the `await` too.
+A `return` inside a `catch` clause escapes an outer `try` just as easily, so it needs the `await` too:
 
-Two shapes are deliberately not reported. Returning a Future outside any
-try-catch needs no `await` — the caller owns the error. And a non-`async`
-function has no try-catch scope to keep the Future inside, so returning it
-unawaited is the only option.
+```dart
+Future<String> fetchToken() async => 'token';
+Future<String> retryToken() async => 'token';
+
+Future<String> token() async {
+  try {
+    return await fetchToken();
+  } catch (e) {
+    // Don't — this Future escapes any enclosing try as well.
+    return retryToken();
+  }
+}
+```
+
+## Known limitations
+
+Three shapes are deliberately not reported:
+
+**Outside any try-catch.** There is no local scope to keep the Future inside, and the caller owns the error:
+
+```dart
+Future<String> fetchToken() async => 'token';
+
+Future<String> token() async => fetchToken();
+```
+
+**A non-`async` function.** It has no try-catch scope for the Future to complete in, so returning it unawaited is the only option:
+
+```dart
+Future<String> fetchToken() async => 'token';
+
+Future<String> token() {
+  try {
+    return fetchToken();
+  } catch (e) {
+    return Future.value('anonymous');
+  }
+}
+```
+
+**A `finally` block.** A `return` there is already outside the guarded region.
+
+Recent Dart SDKs ship a built-in `unawaited_return_in_try_block` warning that
+covers the **try body** case, so you may see two diagnostics on the same line
+there. The `catch` clause is this rule's alone.
 
 ## Configuration
 

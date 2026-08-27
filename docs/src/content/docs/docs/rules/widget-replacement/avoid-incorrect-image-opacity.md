@@ -17,40 +17,96 @@ Flags `Opacity` widgets that wrap an `Image` widget as their child. The `Image` 
 
 ## Why use this rule
 
-Wrapping an `Image` in an `Opacity` widget creates an additional layer in the rendering pipeline, which triggers an offscreen buffer (saveLayer). The `Image` widget's built-in `opacity` parameter applies opacity directly during painting, avoiding the extra compositing pass. This is both more performant and produces a flatter widget tree.
+`Opacity` forces the compositor to paint its subtree into an offscreen buffer
+(`saveLayer`) and blend that buffer back — expensive, and worse the larger the
+image. `Image` takes an `opacity` animation of its own and applies it while
+painting the pixels, with no extra layer.
 
-**See also:** [Image](https://api.flutter.dev/flutter/widgets/Image-class.html) | [Opacity](https://api.flutter.dev/flutter/widgets/Opacity-class.html)
+The quick fix moves the value inward, wrapping it in an
+`AlwaysStoppedAnimation` because `Image.opacity` takes an
+`Animation<double>`, not a plain double.
+
+**See also:** [Image.opacity](https://api.flutter.dev/flutter/widgets/Image/opacity.html) | [Opacity](https://api.flutter.dev/flutter/widgets/Opacity-class.html)
 
 ## Don't
 
 ```dart
-// Image wrapped in Opacity
-Opacity(opacity: 0.5, child: Image.asset('assets/logo.png'));
-
-// Image.network wrapped in Opacity
+// A watermark faded behind the page content.
 Opacity(
-  opacity: 0.8,
-  child: Image.network('https://example.com/image.png'),
+  opacity: 0.15,
+  child: Image.asset('assets/watermark.png'),
 );
 ```
 
 ## Do
 
 ```dart
-// Use Image's opacity parameter directly
 Image.asset(
-  'assets/logo.png',
-  opacity: const AlwaysStoppedAnimation(0.5),
+  'assets/watermark.png',
+  opacity: const AlwaysStoppedAnimation(0.15),
+);
+```
+
+## Examples
+
+### Every `Image` constructor counts
+
+`Image.network`, `Image.file`, `Image.memory` and the unnamed `Image(...)` all
+take `opacity`:
+
+```dart
+// Don't
+Opacity(
+  opacity: 0.8,
+  child: Image.network('https://example.com/avatar.png'),
 );
 
+// Do
 Image.network(
-  'https://example.com/image.png',
+  'https://example.com/avatar.png',
   opacity: const AlwaysStoppedAnimation(0.8),
 );
-
-// Opacity wrapping a non-Image widget is fine
-Opacity(opacity: 0.5, child: Text('Hello'));
 ```
+
+### An animated fade goes in directly
+
+If the value already comes from an `Animation<double>`, there is no wrapper to
+add — pass it straight through:
+
+```dart
+// Don't — Opacity forces a layer on every frame of the fade
+Opacity(
+  opacity: fadeController.value,
+  child: Image.asset('assets/logo.png'),
+);
+
+// Do — no saveLayer, and the Image repaints without rebuilding
+Image.asset('assets/logo.png', opacity: fadeController);
+```
+
+The quick fix would write `AlwaysStoppedAnimation(fadeController.value)` here,
+which is correct but freezes the fade at the current frame. Passing the
+animation itself is the better hand edit.
+
+### Anything but an `Image` is fine
+
+```dart
+// Not reported — Text has no opacity parameter
+Opacity(opacity: 0.5, child: const Text('Dimmed'));
+```
+
+## Known limitations
+
+**The `Image` must be the direct child.** `Opacity > Padding > Image` is not
+reported, because the padding would have to move too.
+
+**A subclass of `Image` is reported as well.** The child is matched by
+assignability, so your own `class CachedImage extends Image` is caught — and it
+does inherit `opacity`, so the rewrite holds.
+
+**An `Image` that already sets `opacity` is skipped by the fix.** The rule still
+reports the redundant `Opacity`, but combining two opacity sources is a
+decision, so nothing is offered automatically.
 
 ## Configuration
 

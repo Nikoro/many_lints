@@ -13,11 +13,11 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule catches cases where an outer `BuildContext` is used inside a nested builder callback (`Builder`, `LayoutBuilder`, etc.) that provides its own context. This commonly happens when the inner parameter is renamed to `_` because it was previously unused, and then the outer `context` is accidentally referenced.
+Flags a reference to an **outer** `BuildContext` inside a nested callback that has its own.
 
-## Why use this rule
+`Theme.of`, `MediaQuery.of` and `Navigator.of` all walk *up* from the element they are handed. A `Builder` exists precisely to introduce a new element below the widgets around it, so reaching past its context to the enclosing `build`'s one resolves the lookup against a different subtree — skipping whatever the `Builder` was there to see. The code compiles and usually looks right. The quick fix rewrites the reference to the inner name.
 
-Using the wrong `BuildContext` can cause lookups like `Theme.of(context)` or `Navigator.of(context)` to find the wrong ancestor widget. For example, inside a `Builder` the outer context does not reflect widgets introduced by the `Builder` itself. This leads to subtle bugs where your theme, navigator, or scaffold operations target the wrong part of the widget tree.
+This rule is in the **`recommended`** preset, so it is on with `preset: recommended` and every preset above it. No configuration.
 
 **See also:** [BuildContext](https://api.flutter.dev/flutter/widgets/BuildContext-class.html)
 
@@ -61,11 +61,49 @@ class OrderPage extends StatelessWidget {
 }
 ```
 
-## Configuration
+### Why it matters: the Scaffold case
 
-This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
-`use_closest_build_context: true`.
+The commonest real bug this catches is `ScaffoldMessenger.of(context)` reaching above the `Scaffold` that was just built:
+
+```dart
+// Don't — the outer context is above the Scaffold, so the lookup throws
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: Builder(
+      builder: (inner) => TextButton(
+        onPressed: () =>
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hi'))),
+        child: const Text('Show'),
+      ),
+    ),
+  );
+}
+
+// Do — the Builder's context sits below the Scaffold
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: Builder(
+      builder: (inner) => TextButton(
+        onPressed: () =>
+            ScaffoldMessenger.of(inner).showSnackBar(const SnackBar(content: Text('Hi'))),
+        child: const Text('Show'),
+      ),
+    ),
+  );
+}
+```
+
+## Known limitations
+
+**Shadowing is not reported.** When the inner parameter is also called `context`, the outer one is simply out of scope and the reference already resolves to the closest context. That is the reason the idiomatic spelling — `builder: (context) => ...` — never trips this rule.
+
+**Only methods are examined.** The rule starts from a method with a `BuildContext` parameter, so an outer context captured by a top-level function or a field initialiser is not tracked.
+
+**Only an exact `BuildContext` parameter counts** on both sides — a callback whose parameter is a subclass is not treated as providing a closer context.
+
+## Turning this rule off
 
 To turn it off:
 

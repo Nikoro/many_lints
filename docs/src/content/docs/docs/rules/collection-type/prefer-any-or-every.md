@@ -13,43 +13,69 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Collection & Type</span>
 
-Using `.where(predicate).isNotEmpty` can be replaced with `.any(predicate)`, and `.where(predicate).isEmpty` can be replaced with `.every(negatedPredicate)`. The dedicated methods are more readable and can short-circuit evaluation, avoiding the creation of an intermediate lazy iterable.
-
-## Why use this rule
-
-`.any()` and `.every()` express intent more clearly and stop iterating as soon as the result is determined. `.where()` creates an intermediate `Iterable` that is unnecessary when you only need a boolean check.
-
-**See also:** [Iterable.any](https://api.dart.dev/stable/dart-core/Iterable/any.html) | [Iterable.every](https://api.dart.dev/stable/dart-core/Iterable/every.html) | [Dart lint: prefer_iterable_whereType](https://dart.dev/tools/linter-rules/prefer_iterable_whereType)
+Flags `.where(predicate).isNotEmpty` and `.where(predicate).isEmpty`. Both build a lazy `Iterable` only to ask a yes/no question that `any` and `every` answer directly, stopping at the first decisive element. The quick fix rewrites it.
 
 ## Don't
 
+`isNotEmpty` after a `where` is `any` written out:
+
 ```dart
-class Example {
-  final List<int> numbers = [1, 2, 3, 4, 5];
+class Invoice {
+  const Invoice({required this.isOverdue, required this.isPaid});
 
-  void checkNumbers() {
-    // Use .any() instead of .where().isNotEmpty
-    final hasEven = numbers.where((n) => n.isEven).isNotEmpty;
+  final bool isOverdue;
+  final bool isPaid;
+}
 
-    // Use .every() instead of .where().isEmpty
-    final allPositive = numbers.where((n) => n < 0).isEmpty;
-  }
+bool hasOverdueInvoice(List<Invoice> invoices) {
+  return invoices.where((invoice) => invoice.isOverdue).isNotEmpty;
 }
 ```
 
 ## Do
 
 ```dart
-class Example {
-  final List<int> numbers = [1, 2, 3, 4, 5];
+class Invoice {
+  const Invoice({required this.isOverdue, required this.isPaid});
 
-  void checkNumbers() {
-    final hasEven = numbers.any((n) => n.isEven);
+  final bool isOverdue;
+  final bool isPaid;
+}
 
-    final allPositive = numbers.every((n) => n >= 0);
-  }
+bool hasOverdueInvoice(List<Invoice> invoices) {
+  return invoices.any((invoice) => invoice.isOverdue);
 }
 ```
+
+`any` returns as soon as one invoice matches. The `where` form still has to build the iterable and ask it whether it produced anything.
+
+### `isEmpty` is `every`, with the predicate flipped
+
+This is where the rewrite needs care: "nothing matches `p`" is "everything matches `not p`", so the predicate has to be negated, not copied.
+
+```dart
+// Don't — no invoice is unpaid
+bool isFullySettled(List<Invoice> invoices) {
+  return invoices.where((invoice) => !invoice.isPaid).isEmpty;
+}
+```
+
+```dart
+// Do
+bool isFullySettled(List<Invoice> invoices) {
+  return invoices.every((invoice) => invoice.isPaid);
+}
+```
+
+## Known limitations
+
+**Only `where` is matched.** `.map(...).isNotEmpty` and `.whereType<T>().isNotEmpty` are not reported, since neither has an `any`/`every` equivalent that keeps the same meaning.
+
+**The `where` must take exactly one argument**, and its receiver must resolve to an `Iterable`. A `dynamic` receiver is left alone.
+
+**`length > 0` is not matched.** Only the `isEmpty` and `isNotEmpty` getters are, so `items.where(p).length > 0` passes — though `any` is the better call there too.
+
+**See also:** [Iterable.any](https://api.dart.dev/stable/dart-core/Iterable/any.html) | [Iterable.every](https://api.dart.dev/stable/dart-core/Iterable/every.html)
 
 ## Configuration
 

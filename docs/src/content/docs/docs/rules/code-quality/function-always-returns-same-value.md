@@ -15,29 +15,56 @@ This rule flags a function where every `return` yields the same constant, so the
 
 Whatever the caller passes, the answer is fixed. Either a branch was meant to return something else and does not — the usual case, and a silent one — or the function should be a constant and its parameters dropped.
 
-Only literal constants are compared, and only when there are at least two returns; one return of a constant is an ordinary function. A `return;` with no value, or a return inside a nested closure, means the rule cannot prove one fixed answer and stays quiet.
-
-## Protocol callbacks are never reported
-
-Some callbacks are *supposed* to return the same value on every path, because the value is a signal to a framework rather than an answer. `onNotification` must return `false` throughout to let a notification keep bubbling; the method exists for its side effect.
-
-Two checks cover them: a set of known names (`onNotification`, `shouldRepaint`, …) plus any `on...` method, and — because a protocol callback can be given a descriptive name — the shape, where any parameter typed `...Notification` marks the method as a listener.
-
 ## Don't
 
+A permission check where one branch was never filled in:
+
 ```dart
-int scoreFor(Player player) {
-  if (player.isWinner) return 3;
-  return 3; // the branch changes nothing
+class Document {
+  const Document({required this.ownerId, required this.isPublic});
+
+  final String ownerId;
+  final bool isPublic;
+}
+
+bool canEdit(Document document, String userId) {
+  if (document.ownerId == userId) return true;
+  if (document.isPublic) return true;
+  return true; // meant to be false — every caller is now an editor
 }
 ```
 
 ## Do
 
 ```dart
-int scoreFor(Player player) {
-  if (player.isWinner) return 3;
-  return 0;
+bool canEdit(Document document, String userId) {
+  if (document.ownerId == userId) return true;
+  if (document.isPublic) return true;
+  return false;
+}
+```
+
+## Known limitations
+
+**Only literal constants are compared.** `true`, `3`, `'draft'`, `null` and doubles. A function whose returns are variables, calls or `const` names is not reported, even when they happen to be equal.
+
+**At least two returns are needed.** One return of a constant is an ordinary function.
+
+**A bare `return;` silences it.** So does any return the rule cannot read as a literal — either means it cannot prove one fixed answer. Returns inside a nested closure belong to that closure, not to the enclosing function.
+
+**Expression bodies are not checked.** `bool canEdit(...) => true;` has one obvious answer already; only block bodies are visited.
+
+**`@override` methods are skipped.** A one-value implementation is a normal way to satisfy an interface.
+
+**Protocol callbacks are skipped.** Some callbacks are *supposed* to return the same value everywhere, because the value is a signal to a framework rather than an answer — `onNotification` must return `false` throughout to let a notification keep bubbling. Never reported: `onNotification`, `shouldRepaint`, `shouldRebuild`, `shouldReclip`, `moveTo`, `visitChildren`, any `on...` method, and any method taking a parameter whose type name ends in `Notification`:
+
+```dart
+class ScrollLogger {
+  // Not reported: the constant false is the contract.
+  bool onScroll(ScrollNotification notification) {
+    if (notification.depth == 0) return false;
+    return false;
+  }
 }
 ```
 

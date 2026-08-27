@@ -13,46 +13,74 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Type Annotations</span>
 
-Flags uses of `Future<void> Function()` that can be replaced with the `AsyncCallback` typedef from `package:flutter/foundation.dart`. The typedef is shorter, more readable, and is the standard Flutter convention for no-argument async void callbacks.
+Flags `Future<void> Function()` written where the `AsyncCallback` typedef from `package:flutter/foundation.dart` would say the same thing. The quick fix replaces the type and adds the import.
 
-## Why use this rule
-
-`AsyncCallback` is a well-known typedef in the Flutter framework. Using it instead of the verbose `Future<void> Function()` makes code more concise and consistent with the rest of the Flutter ecosystem. The quick fix automatically replaces the type and adds the necessary import.
-
-**See also:** [AsyncCallback typedef](https://api.flutter.dev/flutter/foundation/AsyncCallback.html)
+Only the exact shape is reported: no parameters, and a `Future<void>` return. `Future<int> Function()` and `Future<void> Function(int)` are left alone — there is no typedef for them.
 
 ## Don't
 
+A callback field on a widget, spelled out longhand:
+
 ```dart
-class BadWidget {
-  final Future<void> Function() onTap;
-  final Future<void> Function()? onLongPress;
+class UploadButton {
+  const UploadButton({required this.onPressed, this.onCancel});
 
-  const BadWidget(this.onTap, this.onLongPress);
+  final Future<void> Function() onPressed;
+  final Future<void> Function()? onCancel;
 }
+```
 
-void badParameter(Future<void> Function() callback) {}
+The same type in a function signature and a return type:
 
-Future<void> Function() badReturnType() => () async {};
+```dart
+void retryOnFailure(Future<void> Function() action) {}
 
-List<Future<void> Function()> callbacks = [];
+Future<void> Function() saveDraftAction(String draftId) =>
+    () async {};
+```
+
+And in a collection of pending work:
+
+```dart
+final List<Future<void> Function()> pendingUploads = [];
 ```
 
 ## Do
 
 ```dart
-class GoodWidget {
-  final AsyncCallback onTap;
-  final AsyncCallback? onLongPress;
+import 'package:flutter/foundation.dart';
 
-  const GoodWidget(this.onTap, this.onLongPress);
+class UploadButton {
+  const UploadButton({required this.onPressed, this.onCancel});
+
+  final AsyncCallback onPressed;
+  final AsyncCallback? onCancel;
 }
 
-// Function types with different return types or parameters are fine:
-Future<int> Function() goodFutureInt = () async => 0;
-Future<void> Function(int value) goodWithParams = (_) async {};
-void Function() goodVoidCallback = () {};
+void retryOnFailure(AsyncCallback action) {}
+
+AsyncCallback saveDraftAction(String draftId) => () async {};
+
+final List<AsyncCallback> pendingUploads = [];
 ```
+
+### Shapes that are never reported
+
+`AsyncCallback` is exactly `Future<void> Function()`, so anything with a
+parameter or a different return type has no typedef to swap in:
+
+```dart
+// A result to await, not just completion.
+Future<int> Function() fetchCount = () async => 0;
+
+// Takes an argument.
+Future<void> Function(int index) removeAt = (_) async {};
+
+// Synchronous — that one is `VoidCallback`; see prefer_void_callback.
+void Function() dismiss = () {};
+```
+
+**See also:** [AsyncCallback typedef](https://api.flutter.dev/flutter/foundation/AsyncCallback.html)
 
 ## Configuration
 

@@ -13,55 +13,99 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-Warns when a cascade expression contains duplicate sections — identical property assignments, method calls, or index operations repeated with the same arguments. Duplicate cascades are usually the result of a copy-paste error.
-
-## Why use this rule
-
-When the same cascade section appears twice (e.g., `..name = 'test'` repeated), the second one overwrites the first with the same value, making it redundant. For method calls, the duplicate invocation may cause unintended side effects. Either way, it signals a copy-paste mistake that should be fixed.
+Flags a cascade section that repeats an earlier one exactly — the same assignment with the same value, or the same call with the same arguments.
 
 **See also:** [Cascade notation](https://dart.dev/language/operators#cascade-notation)
 
 ## Don't
 
+A long cascade is built by copying the line above and editing it, and one edit gets missed:
+
 ```dart
-void bad() {
-  // Same property assigned with same value twice
-  final config = Config()
-    ..name = 'test'
-    ..name = 'test';
+class RequestBuilder {
+  String url = '';
+  String method = '';
+  int timeoutMs = 0;
 
-  // Same method called twice
-  final config2 = Config()
-    ..reset()
-    ..reset();
+  void header(String name, String value) {}
+}
 
-  // Same index assigned with same value twice
-  final list = [1, 2, 3]
-    ..[1] = 5
-    ..[1] = 5;
+RequestBuilder build() {
+  return RequestBuilder()
+    ..url = '/orders'
+    ..method = 'POST'
+    ..header('accept', 'application/json')
+    ..header('accept', 'application/json')
+    ..timeoutMs = 5000;
 }
 ```
 
 ## Do
 
+Either drop the repeat, or supply the value that was meant:
+
 ```dart
-void good() {
-  // Different properties
-  final config = Config()
-    ..name = 'test'
-    ..value = 42;
+class RequestBuilder {
+  String url = '';
+  String method = '';
+  int timeoutMs = 0;
 
-  // Same property but different values
-  final config2 = Config()
-    ..name = 'first'
-    ..name = 'second';
+  void header(String name, String value) {}
+}
 
-  // Different indices
-  final list = [1, 2, 3]
-    ..[0] = 10
-    ..[1] = 20;
+RequestBuilder build() {
+  return RequestBuilder()
+    ..url = '/orders'
+    ..method = 'POST'
+    ..header('accept', 'application/json')
+    ..header('content-type', 'application/json')
+    ..timeoutMs = 5000;
 }
 ```
+
+### Assigning the same field twice
+
+A repeated assignment with the *same* value is dead. A repeated assignment with a *different* value is legal and never reported, so the rule does not stop you from overwriting on purpose:
+
+```dart
+class Config {
+  String name = '';
+}
+
+void demo() {
+  // Don't — the second write changes nothing
+  final a = Config()
+    ..name = 'test'
+    ..name = 'test';
+
+  // Fine — the second write is the one that matters
+  final b = Config()
+    ..name = 'draft'
+    ..name = 'final';
+}
+```
+
+### Repeated calls can have side effects
+
+For a method the duplicate is worse than dead code: it runs twice. Two `add` calls on a list mean two elements:
+
+```dart
+void demo() {
+  final numbers = <int>[]
+    ..add(1)
+    ..add(1);   // LINT — and `numbers` really does hold [1, 1]
+}
+```
+
+If the repetition is deliberate, write it in a way that says so — a loop, or two distinct calls — rather than relying on the reader to notice.
+
+## Known limitations
+
+Duplicates are matched on **source text**, not on meaning. `..name = 'a'` and `..name = "a"` are different keys and neither is reported; so are `..header('x', y)` and `..header('x', y as String)`.
+
+The comparison is per cascade expression. Two identical sections in two separate cascades on the same object are not compared with each other.
+
+The report lands on the *second* occurrence, and the quick fix removes that section. When the same section appears three times, the second and third are each reported.
 
 ## Configuration
 

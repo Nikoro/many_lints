@@ -13,51 +13,80 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Type Annotations</span>
 
-Flags uses of the bare `Function` type that do not specify a return type or parameter list. Using the unparameterized `Function` type effectively makes the declaration dynamic and disables type checking on calls, which can hide bugs.
+Flags the bare `Function` type from `dart:core` — the one written with no return type and no parameter list.
 
-## Why use this rule
-
-The bare `Function` type accepts any number and type of arguments and returns `dynamic`, bypassing Dart's type system entirely. Specifying the return type and parameter list catches mismatched signatures at compile time rather than at runtime.
-
-**See also:** [Dart language - Function type](https://dart.dev/language/functions#the-function-type)
+`Function` accepts any number of arguments of any type and returns `dynamic`, so a call through it is unchecked. The compiler will not tell you that the callback you passed takes two arguments and you supplied one; you find out at runtime.
 
 ## Don't
 
-```dart
-class BadWidget {
-  final Function onTap;
-  final Function? onLongPress;
+A callback field typed `Function` accepts anything, so the wrong callback
+compiles and the wrong call compiles with it:
 
-  const BadWidget(this.onTap, this.onLongPress);
+```dart
+class ConfirmDialog {
+  const ConfirmDialog({required this.onConfirm});
+
+  final Function onConfirm;
 }
 
-void badFunction(Function callback) {}
+void show(ConfirmDialog dialog) {
+  // Compiles. Blows up at runtime if `onConfirm` takes no argument,
+  // or takes two, or takes a String.
+  dialog.onConfirm(42);
+}
+```
 
-Function badReturnType() => () {};
+The same hole in a parameter, a return type and a collection:
 
-List<Function> callbacks = [];
+```dart
+void onEachRow(Function visit) {}
+
+Function rowVisitor() => (int index) {};
+
+final List<Function> validators = [];
 ```
 
 ## Do
 
-```dart
-class GoodWidget {
-  final void Function() onTap;
-  final void Function()? onLongPress;
+Write the signature out. Every one of the mistakes above is now a compile
+error:
 
-  const GoodWidget(this.onTap, this.onLongPress);
+```dart
+class ConfirmDialog {
+  const ConfirmDialog({required this.onConfirm});
+
+  final void Function(bool confirmed) onConfirm;
 }
 
-void goodFunction(void Function() callback) {}
+void show(ConfirmDialog dialog) {
+  dialog.onConfirm(true);
+}
 
-void Function() goodReturnType() => () {};
+void onEachRow(void Function(int index) visit) {}
 
-List<void Function()> callbacks = [];
+void Function(int index) rowVisitor() => (int index) {};
 
-// Function types with parameters and return types
-final void Function(int value) onValueChanged = (_) {};
-final int Function(String input) processInput = (_) => 0;
+final List<bool Function(String value)> validators = [];
 ```
+
+### What counts as explicit
+
+Anything that names the shape is fine — an inline function type, or a typedef:
+
+```dart
+typedef Validator = bool Function(String value);
+
+final Validator notEmpty = (value) => value.isNotEmpty;
+final int Function(String input) parse = int.parse;
+final void Function() dismiss = () {};
+```
+
+### Not reported
+
+The rule matches `dart:core`'s `Function` specifically, so a class of your own
+named `Function` is never reported.
+
+**See also:** [Dart language - Function type](https://dart.dev/language/functions#the-function-type)
 
 ## Configuration
 

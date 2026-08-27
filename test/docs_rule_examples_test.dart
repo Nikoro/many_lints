@@ -114,13 +114,13 @@ void main() {
 
 /// The floor for how many pages this suite drives, raised as stubs grow.
 ///
-/// 154 of 261 pages are checked today. The rest are skipped for reasons
+/// 170 of 261 pages are checked today. The rest are skipped for reasons
 /// [_skipReason] names out loud, and the `coverage` test prints every one, so
 /// the gap is visible rather than implied. Most are rules keyed to Flutter,
 /// Riverpod, Bloc or hooks types the stubs do not carry: widening a stub moves
 /// pages from skipped to checked and this number goes up. Lowering it means
 /// coverage shrank, and needs a reason.
-const _minimumCheckedPages = 154;
+const _minimumCheckedPages = 170;
 
 /// Why [page] cannot be driven through the harness, or null when it can.
 String? _skipReason(_Page page) {
@@ -335,10 +335,19 @@ const _unstubbed = <String, String>{
   // `MyNotifier` still needs the real `Notifier` supertype for
   // `notifierChecker` to match, and matching only the bare word let such a
   // page through to fail for a missing stub rather than be skipped.
+  // Anchored on Riverpod's own constructors rather than on any identifier
+  // ending in "Provider": the loose spelling matched a local named
+  // `networkDataProvider` in an unrelated page and skipped it silently, so the
+  // page looked verified while nothing ran it — and its author renamed a
+  // perfectly good identifier to get back into coverage. The harness must not
+  // dictate what documentation may call things.
   'riverpod':
       r'@riverpod|\w*Notifier\b|\bRef\b|\bWidgetRef\b|'
       r'ConsumerWidget|ConsumerState|ProviderScope|\bref\.|\bAsyncValue\b|'
-      r'\bAsyncData\b|\bAsyncLoading\b|\bAsyncError\b|\w+Provider\b',
+      r'\bAsyncData\b|\bAsyncLoading\b|\bAsyncError\b|'
+      r'\b(?:Provider|FutureProvider|StreamProvider|StateProvider|'
+      r'NotifierProvider|AsyncNotifierProvider|ChangeNotifierProvider|'
+      r'StateNotifierProvider)\s*[(<.]',
   'bloc':
       r'\bBloc\b|\bCubit\b|\bemit\(|BlocProvider|BlocBuilder|'
       r'RepositoryProvider',

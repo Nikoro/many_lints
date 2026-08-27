@@ -9,21 +9,11 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Class Naming</span>
 
-This rule flags a callback field or parameter named `somethingCallback`, `somethingHandler`, `somethingListener` or `somethingAction` rather than `onSomething`.
+Flags a function-typed field or parameter named `somethingCallback`, `somethingHandler`, `somethingListener` or `somethingAction` rather than `onSomething`.
 
-## Why use this rule
+`onTap`, `onChanged` and `onPressed` run through the whole Flutter API, so `on...` is what a reader recognises as "this fires when something happens". At the call site `MyWidget(tapCallback: ...)` reads as a value where `onTap:` reads as an event.
 
-`onTap`, `onChanged` and `onPressed` run through the whole Flutter API, so `on...` is what a reader recognises as "this fires when something happens". A field called `tapCallback` carries the same meaning in a spelling every codebase invents differently, and at the call site `MyWidget(tapCallback: ...)` reads as a value where `onTap:` reads as an event.
-
-This rule is in the **`pedantic`** preset, because naming conventions are a house style rather than a correctness question.
-
-**See also:** [Effective Dart: naming](https://dart.dev/effective-dart/design#naming)
-
-## What is never reported
-
-- **A function named for what it computes.** `builder`, `comparator` and `parse` say what they produce, not when they fire; renaming any of them to `on...` would be wrong. Only a name that positively ends in a callback word is considered.
-- **A bare framework noun.** A parameter named exactly `handler`, `listener` or `action` is the thing itself rather than a callback for an event — `Handler middleware(Handler handler)` in dart_frog is the request handler, and `onHandler` would be nonsense. The suffix has to follow something.
-- **An `@override`**, whose name belongs to the base declaration, and a **field-initialising parameter** (`this.onTap`), which takes its name from the field the rule already checks.
+This rule is in the **`pedantic`** preset, and takes no configuration.
 
 ## Don't
 
@@ -31,7 +21,7 @@ This rule is in the **`pedantic`** preset, because naming conventions are a hous
 class ConfirmButton extends StatelessWidget {
   const ConfirmButton({super.key, required this.tapCallback});
 
-  final void Function() tapCallback;
+  final void Function() tapCallback;   // LINT
 }
 ```
 
@@ -44,6 +34,108 @@ class ConfirmButton extends StatelessWidget {
   final void Function() onTap;
 }
 ```
+
+## Examples
+
+### All four callback words are flagged
+
+`callback`, `handler`, `listener` and `action` all describe *what* the value is instead of *when* it fires:
+
+```dart
+class Form {
+  // Don't
+  final void Function() submitHandler;      // LINT
+  final void Function() changeListener;     // LINT
+  final void Function() resetAction;        // LINT
+  final void Function() saveCallback;       // LINT
+
+  // Do
+  final void Function() onSubmit;
+  final void Function() onChange;
+  final void Function() onReset;
+  final void Function() onSave;
+
+  const Form({
+    required this.submitHandler,
+    required this.changeListener,
+    required this.resetAction,
+    required this.saveCallback,
+    required this.onSubmit,
+    required this.onChange,
+    required this.onReset,
+    required this.onSave,
+  });
+}
+```
+
+### Plain parameters are checked too
+
+Not just fields — any function-typed parameter:
+
+```dart
+// Don't
+void register(void Function() errorHandler) {}   // LINT
+
+// Do
+void register(void Function() onError) {}
+```
+
+### A function named for what it computes is left alone
+
+Only a name that *positively ends* in a callback word is considered. `builder`, `comparator` and `parse` say what they produce, not when they fire — renaming any of them to `on...` would be wrong:
+
+```dart
+class ListConfig {
+  // All accepted
+  final Widget Function(int) builder;
+  final int Function(String, String) comparator;
+  final int Function(String) parse;
+
+  const ListConfig({
+    required this.builder,
+    required this.comparator,
+    required this.parse,
+  });
+}
+```
+
+### A bare framework noun is left alone
+
+The suffix has to *follow* something. A parameter named exactly `handler`, `listener` or `action` is the thing itself, not a callback for an event — `Handler middleware(Handler handler)` in dart_frog is the request handler, and `onHandler` would be nonsense:
+
+```dart
+// Accepted — the whole name is the noun
+void use(void Function() handler) {}
+void attach(void Function() listener) {}
+```
+
+### An override and a field-initialising parameter are skipped
+
+An `@override` takes its name from the base declaration; `this.tapCallback` takes its name from the field the rule already checks, so reporting both would double up:
+
+```dart
+class Base {
+  final void Function() tapCallback;
+
+  const Base({required this.tapCallback});   // `this.tapCallback` not reported here
+}
+
+class Child extends Base {
+  // Not reported — the name belongs to the base declaration
+  @override
+  final void Function() tapCallback;
+
+  const Child({required this.tapCallback}) : super(tapCallback: tapCallback);
+}
+```
+
+## Known limitations
+
+**The type must resolve to a function.** An inline `void Function()`, a named typedef and an inferred parameter type all work. A field declared `dynamic` or `Object` does not, even when it holds a closure.
+
+**No quick fix.** Turning `tapCallback` into `onTap` is not a mechanical transformation — the right event name is rarely the callback word with `on` bolted on the front.
+
+**See also:** [Effective Dart: naming](https://dart.dev/effective-dart/design#naming)
 
 ## Enabling this rule
 

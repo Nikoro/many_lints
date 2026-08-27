@@ -9,41 +9,23 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Collection & Type</span>
 
-Accessing a collection with a constant index (like `list[0]`) inside a loop is suspicious because the index never changes with the loop iteration. This usually means the access should be moved outside the loop, or the index should depend on the loop variable.
-
-## Why use this rule
-
-A constant index inside a loop always reads the same element on every iteration. This is either redundant work that belongs before the loop, or a bug where the developer forgot to use the loop variable as the index.
-
-**See also:** [Dart collections](https://dart.dev/language/collections)
+Flags a collection read with a constant index — `list[0]`, or `list[kFirst]` where `kFirst` is a `const` — inside a loop body. The index never changes with the iteration, so either the read belongs outside the loop, or it was meant to use the loop variable.
 
 ## Don't
 
+The classic form is a forgotten loop variable: the loop runs `n` times and every iteration reads the same row.
+
 ```dart
-const array = [1, 2, 3, 4, 5];
+class Order {
+  const Order(this.id, this.total);
 
-void example() {
-  // Constant index inside for-in loop
-  for (final element in array) {
-    array[0];
-  }
+  final String id;
+  final double total;
+}
 
-  // Constant index inside for loop
-  for (var i = 0; i < array.length; i++) {
-    array[0];
-  }
-
-  // Const variable index inside loop
-  const idx = 2;
-  for (final element in array) {
-    array[idx];
-  }
-
-  // Constant index inside while loop
-  var j = 0;
-  while (j < array.length) {
-    array[0];
-    j++;
+void printTotals(List<Order> orders) {
+  for (var i = 0; i < orders.length; i++) {
+    print('${orders[0].id}: ${orders[0].total}');
   }
 }
 ```
@@ -51,30 +33,72 @@ void example() {
 ## Do
 
 ```dart
-const array = [1, 2, 3, 4, 5];
+class Order {
+  const Order(this.id, this.total);
 
-void example() {
-  // Access outside of a loop
-  final first = array[0];
+  final String id;
+  final double total;
+}
 
-  // Loop variable used as index
-  for (var i = 0; i < array.length; i++) {
-    array[i];
-  }
-
-  // Mutable variable used as index
-  var idx = 0;
-  for (final element in array) {
-    array[idx];
-    idx++;
-  }
-
-  // Expression-based index
-  for (var i = 0; i < array.length; i++) {
-    array[i + 1];
+void printTotals(List<Order> orders) {
+  for (var i = 0; i < orders.length; i++) {
+    print('${orders[i].id}: ${orders[i].total}');
   }
 }
 ```
+
+A `for-in` loop sidesteps the index entirely, which is why it is the usual fix:
+
+```dart
+void printTotals(List<Order> orders) {
+  for (final order in orders) {
+    print('${order.id}: ${order.total}');
+  }
+}
+```
+
+### The read really is loop-invariant
+
+Sometimes the constant index is deliberate — a header row, a base currency, a default. Hoist it above the loop so it is read once and the intent is on the page:
+
+```dart
+// Don't — re-read on every iteration, and it reads like a bug
+for (final row in rows) {
+  applyFormat(row, columns[0].format);
+}
+
+// Do
+final headerFormat = columns[0].format;
+for (final row in rows) {
+  applyFormat(row, headerFormat);
+}
+```
+
+### A `const` index counts as constant
+
+A named constant is no less fixed than a literal, so this reports too:
+
+```dart
+const kSelectedTab = 0;
+
+// Don't
+for (final event in events) {
+  refresh(tabs[kSelectedTab]);
+}
+
+// Do — a mutable variable the loop advances is fine
+var cursor = 0;
+for (final event in events) {
+  refresh(tabs[cursor]);
+  cursor++;
+}
+```
+
+## Known limitations
+
+**Only a literal or a constant identifier is treated as constant.** Any computed index — `list[i + 1]`, `list[offset]`, `list[values.length - 1]` — is left alone, even when it happens to be invariant.
+
+**Nested functions are their own scope.** A closure declared inside a loop body is not reported for its constant index, since the loop above it says nothing about how the closure is called.
 
 ## Configuration
 

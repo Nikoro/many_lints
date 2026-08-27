@@ -26,31 +26,40 @@ This is one of four `Do` pitfalls that fpdart documents in its own `do_construct
 
 ## Don't
 
+The signature promises the only failure is a `String`, but the `throw` leaves
+the error channel entirely — a caller that folds every `Left` still crashes:
+
 ```dart
-Option.Do(($) {
-  if ($(testOption) == 'test') {
-    throw Exception('Error');
-  }
-  return 'success';
-});
+TaskEither<String, int> parseAge(TaskEither<String, String> raw) =>
+    raw.map((value) {
+      final age = int.tryParse(value);
+      if (age == null) {
+        throw FormatException('not a number: $value'); // escapes the pipeline
+      }
+      return age;
+    });
 ```
 
 ## Do
 
+Put the failure in the value, where the signature already says it is:
+
 ```dart
-Option.Do(($) {
-  final value = $(testOption);
-  return $(value == 'test' ? Option<String>.none() : Option.of('success'));
-});
+TaskEither<String, int> parseAge(TaskEither<String, String> raw) =>
+    raw.flatMap(
+      (value) => switch (int.tryParse(value)) {
+        final age? => TaskEither.of(age),
+        _ => TaskEither.left('not a number: $value'),
+      },
+    );
 ```
 
-In a `TaskEither` pipeline, map the thrown error into the left channel once, at the boundary:
+When the throwing code is someone else's, catch it at the boundary and map it
+in once:
 
 ```dart
-TaskEither.tryCatch(
-  () => api.load(),
-  (error, stackTrace) => Failure.from(error),
-);
+TaskEither<String, String> load(Future<String> Function() request) =>
+    TaskEither.tryCatch(request, (error, stackTrace) => '$error');
 ```
 
 ## Known limitations

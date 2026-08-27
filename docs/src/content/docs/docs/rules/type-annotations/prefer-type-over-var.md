@@ -13,7 +13,7 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Type Annotations</span>
 
-Flags variables declared with the `var` keyword instead of an explicit type annotation. Using `var` can make it harder to understand the type of a nickname, especially when the initializer is complex or the nullability is not obvious. This rule does not flag `final` or `const` declarations.
+Flags a variable declared with `var` instead of an explicit type annotation. `final` and `const` declarations are never reported — only the `var` keyword is.
 
 :::caution[Conflicts with an SDK rule you probably have enabled]
 The SDK rule [`omit_local_variable_types`](https://dart.dev/tools/linter-rules/omit_local_variable_types) mandates the **opposite** of this rule — it asks you to remove type annotations that inference can supply. It ships in `package:lints/recommended.yaml`, so most projects have it on by default.
@@ -30,45 +30,71 @@ linter:
 If you want explicit types but find this rule too strict, the SDK offers softer alternatives: [`specify_nonobvious_local_variable_types`](https://dart.dev/tools/linter-rules/specify_nonobvious_local_variable_types) flags only declarations whose type is not obvious from the initializer, while [`always_specify_types`](https://dart.dev/tools/linter-rules/always_specify_types) is the strict equivalent. Note that all three SDK rules are mutually incompatible with `omit_local_variable_types`.
 :::
 
-## Why use this rule
-
-Explicit type annotations improve code readability and make the type system work for you. When a nickname is declared with `var`, readers must mentally resolve the initializer to understand the type, which slows down code review and increases the chance of subtle bugs around nullability or unexpected inference.
-
-**See also:** [Effective Dart - Type annotations](https://dart.dev/effective-dart/design#types)
-
 ## Don't
 
+The type of a `var` is whatever the initializer happened to return, and the
+reader has to go and look — which matters most where it is easiest to get
+wrong, around nullability:
+
 ```dart
-var nickname = lookupNickname();
-var anotherVar = 'string';
-var number = 42;
-var list = [1, 2, 3];
+String? findNickname(int userId) => null;
 
-for (var i = 0; i < 10; i++) {
-  print(i);
+void greet(int userId) {
+  var nickname = findNickname(userId);
+  // `nickname` is String?, not String — nothing on this line says so.
+  print(nickname.length);
 }
+```
 
-var cachedNickname = lookupNickname();
+Top-level and for-loop declarations are reported too:
+
+```dart
+var retryCount = 3;
+var pendingIds = <int>[];
+
+void retryAll() {
+  for (var i = 0; i < retryCount; i++) {
+    print(pendingIds[i]);
+  }
+}
 ```
 
 ## Do
 
-```dart
-String? nickname = lookupNickname();
-String anotherVar = 'string';
-int number = 42;
-List<int> list = [1, 2, 3];
+Write the type. The nullability is now visible at the declaration:
 
-for (int i = 0; i < 10; i++) {
-  print(i);
+```dart
+String? findNickname(int userId) => null;
+
+void greet(int userId) {
+  String? nickname = findNickname(userId);
+  print(nickname?.length);
 }
 
-String? cachedNickname = lookupNickname();
+int retryCount = 3;
+List<int> pendingIds = <int>[];
 
-// final and const are allowed:
-final inferred = lookupNickname();
-const text = 'hello';
+void retryAll() {
+  for (int i = 0; i < retryCount; i++) {
+    print(pendingIds[i]);
+  }
+}
 ```
+
+### `final` and `const` are never reported
+
+The rule keys on the `var` keyword alone, so an immutable declaration with an
+inferred type passes as it is:
+
+```dart
+final resolved = findNickname(7);
+const greeting = 'hello';
+
+// `final` with a type is also fine, of course.
+final String? explicit = findNickname(7);
+```
+
+**See also:** [Effective Dart - Type annotations](https://dart.dev/effective-dart/design#types)
 
 ## Configuration
 

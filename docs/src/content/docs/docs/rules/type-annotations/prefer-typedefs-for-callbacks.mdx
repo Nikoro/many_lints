@@ -12,26 +12,81 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Type Annotations</span>
 
-This rule flags an inline function type written where a typedef would name it.
+This rule flags an inline function type with two or more parameters, written where a typedef would name it.
 
 `void Function(String, int, bool)` tells the reader the shape and nothing else — what the `String` is, what the `bool` means, and whether two such parameters are the same concept. A typedef gives the signature a name that can be reused, documented and searched for.
 
-Only function types with at least `min_parameters` parameters are reported. `void Function()` and `void Function(String)` are already readable, and naming them adds indirection without adding information — which is why Flutter's own `VoidCallback` and `ValueChanged<T>` exist for exactly the shapes that clear this bar.
-
-This rule is in the **`pedantic`** preset.
+This rule is in the **`pedantic`** preset. `min_parameters` is the threshold at which reporting starts: at the default `2`, a two-parameter inline type is already reported, while `void Function()` and `void Function(String)` are not. That is why Flutter ships `VoidCallback` and `ValueChanged<T>` for those shapes and stops there.
 
 ## Don't
 
+An event callback carried through a signature, spelled out inline at every hop:
+
 ```dart
 void listen(void Function(String, int) onEvent) {}
+
+class EventBus {
+  EventBus(this.onEvent);
+
+  final void Function(String, int) onEvent;
+}
 ```
 
 ## Do
+
+Name it once, then use the name:
 
 ```dart
 typedef EventHandler = void Function(String name, int code);
 
 void listen(EventHandler onEvent) {}
+
+class EventBus {
+  EventBus(this.onEvent);
+
+  final EventHandler onEvent;
+}
+```
+
+### One parameter or none is never reported
+
+At the default `min_parameters: 2`, these are below the threshold and pass as
+written:
+
+```dart
+void onTap(void Function() callback) {}
+
+void onChanged(void Function(String value) callback) {}
+```
+
+### The typedef's own body is exempt
+
+Declaring the typedef is the fix, so the function type inside it is never
+reported however many parameters it has:
+
+```dart
+typedef ProgressReport = void Function(int sent, int total, bool done);
+```
+
+### Reporting single-parameter types too
+
+With `min_parameters: 1`, a one-parameter inline type is reported as well:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_typedefs_for_callbacks:
+    min_parameters: 1
+```
+
+```dart
+// Don't
+void onChanged(void Function(String value) callback) {}
+
+// Do
+typedef TextChanged = void Function(String value);
+
+void onChanged(TextChanged callback) {}
 ```
 
 ## Enabling this rule
@@ -73,7 +128,7 @@ rules:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `min_parameters` | int | `2` | How many parameters an inline function type may have |
+| `min_parameters` | int | `2` | Fewest parameters an inline function type must have before it is reported. At `2`, a two-parameter type *is* reported |
 
 ## Turning this rule off
 

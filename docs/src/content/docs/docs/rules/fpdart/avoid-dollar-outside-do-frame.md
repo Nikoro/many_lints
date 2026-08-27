@@ -23,21 +23,29 @@ This is one of four `Do` pitfalls that fpdart documents in its own `do_construct
 
 ## Don't
 
+`$` is called from inside a `map` callback, so its short-circuit unwinds
+through fpdart's combinator machinery instead of the block:
+
 ```dart
-Option.Do(($) => $(testOption).map(
-      (value) => $(optionOf(value)), // `$` outside the Do's own frame
-    ));
+Option<String> hostname(Option<String> rawUrl, Option<String> fallback) =>
+    Option.Do(
+      ($) => $(rawUrl).map(
+        (url) => $(fallback), // `$` outside the Do's own frame
+      ),
+    );
 ```
 
 ## Do
 
-Extract in the block itself, then use the plain value in the callback:
+Extract in the block itself, then use the plain values in the callback:
 
 ```dart
-Option.Do(($) {
-  final value = $(testOption);
-  return $(optionOf(value));
-});
+Option<String> hostname(Option<String> rawUrl, Option<String> fallback) =>
+    Option.Do(($) {
+      final url = $(rawUrl);
+      final host = $(fallback);
+      return url.isEmpty ? host : url;
+    });
 ```
 
 ## Known limitations

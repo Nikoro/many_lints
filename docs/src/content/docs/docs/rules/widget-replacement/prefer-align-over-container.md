@@ -25,28 +25,110 @@ The SDK's [`avoid_unnecessary_containers`](https://dart.dev/tools/linter-rules/a
 
 ## Why use this rule
 
-`Container` is a convenience widget that composes many lower-level widgets internally. When you only need alignment, using `Align` directly avoids the overhead and makes the intent clearer. It also makes the widget tree easier to understand at a glance.
+A `Container` builds up to seven render objects depending on which arguments it
+got. With only `alignment` set, exactly one of them does anything, and that one
+is `Align`. Naming it directly says what the widget is for. The quick fix is a
+rename — `Container` becomes `Align` and the arguments stay put.
 
 **See also:** [Align](https://api.flutter.dev/flutter/widgets/Align-class.html) | [Container](https://api.flutter.dev/flutter/widgets/Container-class.html)
 
 ## Don't
 
 ```dart
-// Container with only alignment parameter
-Container(alignment: Alignment.topLeft, child: Text('Hello'));
-
-// Container with only alignment, no child
-Container(alignment: Alignment.bottomRight);
+// A badge pinned to the corner of a card.
+Container(
+  alignment: Alignment.topRight,
+  child: const Icon(Icons.star),
+);
 ```
 
 ## Do
 
 ```dart
-// Use Align directly
-Align(alignment: Alignment.topLeft, child: Text('Hello'));
-
-Align(alignment: Alignment.bottomRight);
+Align(
+  alignment: Alignment.topRight,
+  child: const Icon(Icons.star),
+);
 ```
+
+## Examples
+
+### Aligning inside a fixed-size parent
+
+`Align` expands to fill its parent and places the child within it, exactly as
+the `Container` did:
+
+```dart
+// Don't
+SizedBox(
+  height: 120,
+  child: Container(
+    alignment: Alignment.bottomCenter,
+    child: const Text('Caption'),
+  ),
+);
+
+// Do
+SizedBox(
+  height: 120,
+  child: Align(
+    alignment: Alignment.bottomCenter,
+    child: const Text('Caption'),
+  ),
+);
+```
+
+### `key` and `child` do not count
+
+They exist on both widgets, so a `Container` carrying them plus `alignment` is
+still reported:
+
+```dart
+// Don't
+Container(
+  key: const ValueKey('badge'),
+  alignment: Alignment.centerLeft,
+  child: const Text('New'),
+);
+
+// Do
+Align(
+  key: const ValueKey('badge'),
+  alignment: Alignment.centerLeft,
+  child: const Text('New'),
+);
+```
+
+### Centre alignment chains into another rule
+
+Rewriting to `Align(alignment: Alignment.center, …)` is then reported by
+[`prefer_center_over_align`](/many_lints/docs/rules/widget-replacement/prefer-center-over-align/),
+which wants `Center`. Go straight there:
+
+```dart
+// Don't
+Container(alignment: Alignment.center, child: const Text('Hi'));
+
+// Do — skip the intermediate Align
+Center(child: const Text('Hi'));
+```
+
+## Known limitations
+
+**Any other argument silences it.** One `padding`, `color`, `width` or
+`decoration` and the `Container` is doing work `Align` cannot:
+
+```dart
+// Not reported — the colour has nowhere to go on an Align
+Container(
+  alignment: Alignment.topLeft,
+  color: const Color(0xFFEEEEEE),
+  child: const Text('Hello'),
+);
+```
+
+**Only a direct `Container(...)` is matched.** A factory or helper that returns
+a `Container` is not looked through.
 
 ## Configuration
 

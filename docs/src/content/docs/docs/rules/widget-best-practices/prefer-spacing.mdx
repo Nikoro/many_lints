@@ -12,13 +12,13 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule detects `SizedBox` widgets used as uniform spacers between children in a `Row`, `Column`, or `Flex`, and suggests using the built-in `spacing` argument instead. It also catches `separatedBy()` and `.expand()` patterns that insert SizedBox spacers. Requires Flutter 3.27+.
+Flags `SizedBox` widgets used as uniform spacers between the children of a `Row`, `Column` or `Flex`, where the built-in `spacing` argument says the same thing in one place. Requires Flutter 3.27+.
 
-## Why use this rule
+Scattering `SizedBox(height: 10)` between every child is easy to get wrong — miss one, or type `12` in the middle — and it puts non-semantic widgets in a list that is supposed to describe content.
 
-Scattering `SizedBox(height: 10)` between every child is verbose and easy to get wrong (miss one, use a different value, etc.). The `spacing` parameter on `Row`, `Column`, and `Flex` applies uniform spacing declaratively with a single property, making the intent clear and the code shorter. It also avoids polluting the `children` list with non-semantic spacer widgets.
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and `preset: pedantic`.
 
-**See also:** [Column spacing](https://api.flutter.dev/flutter/widgets/Flex/spacing.html)
+**See also:** [Flex.spacing](https://api.flutter.dev/flutter/widgets/Flex/spacing.html)
 
 ## Don't
 
@@ -43,28 +43,45 @@ Column(
 )
 ```
 
-## Turning this rule off
+### The separator patterns too
 
-This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
+`separatedBy()` and an `expand()` that yields a spacer are the same thing written differently, and are reported the same way:
 
-```yaml
-# many_lints.yaml
-rules:
-  prefer_spacing: true
+```dart
+// Don't
+final bad = Row(
+  children: items.separatedBy(const SizedBox(width: 8)),
+);
+
+// Do
+final good = Row(
+  spacing: 8,
+  children: items,
+);
 ```
 
-To turn it off again:
+### Non-uniform gaps are left alone
 
-```yaml
-# many_lints.yaml
-rules:
-  prefer_spacing: false
+The `spacing` argument applies one value everywhere, so a list with deliberately different gaps has no single replacement and is not reported:
+
+```dart
+// Not reported — 4 and 24 are different gaps
+final mixed = Column(
+  children: [
+    Text('Label'),
+    SizedBox(height: 4),
+    Text('Value'),
+    SizedBox(height: 24),
+    Divider(),
+  ],
+);
 ```
 
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+Likewise a spacer on the *wrong axis* — `SizedBox(width: 10)` inside a `Column` — is not a gap between children and is ignored. A `SizedBox` carrying a `child`, or both a width and a height, is not a pure spacer either.
 
-## Options
+### Raising the threshold
+
+Below `min_children` (default `3`) a spacer reads fine inline. Three is the smallest list that can hold two widgets with one gap between them; raise it if you would rather only see the long lists:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -90,9 +107,29 @@ rules:
 </TabItem>
 </Tabs>
 
+## Known limitations
+
+A `Row` or `Column` that **already** passes `spacing:` is never reported, even if it also holds SizedBox spacers.
+
+Only a `children:` list literal is examined. `Column(children: buildRows())` is opaque and left alone.
+
+This rule and [`use_gap`](/many_lints/docs/rules/widget-best-practices/use-gap/) are **opposing conventions** — one removes the spacer widget, the other replaces it with a `Gap`. `opinionated` picks this one; `use_gap` is opt-in by name. Enabling both means every spacer gets two contradictory diagnostics.
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `min_children` | int | `3` | Minimum number of children in the list before spacers are reported |
+
+## Turning this rule off
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_spacing: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Related rules
 

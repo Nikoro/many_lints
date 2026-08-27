@@ -9,25 +9,24 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule flags a `StreamBuilder` whose `stream:` argument creates a new `Stream` inline — a method call, a `Stream` constructor, or an immediately invoked generator.
+Flags a `StreamBuilder` whose `stream:` argument creates a new `Stream` — a method call, a `Stream` constructor, or an immediately invoked generator.
 
-## Why use this rule
+Every `build()` re-evaluates the argument. When it creates a stream, the `StreamBuilder` cancels its old subscription and opens a new one.
 
-Every `build()` re-evaluates the `stream:` argument. When that argument creates a stream, the `StreamBuilder` cancels its old subscription and opens a new one on each rebuild.
+For a single-subscription stream this is worse than the `FutureBuilder` case: events buffered before the resubscription are lost outright, the snapshot resets to its initial state, and the discarded subscription may keep its source alive. With a socket or a database watcher this means reconnecting on every frame.
 
-For a single-subscription stream this is worse than the `FutureBuilder` equivalent: events buffered before the resubscription are lost outright, the snapshot resets to its initial state, and the discarded subscription may keep its source alive. With a socket or a database watcher, this means reconnecting on every frame.
-
-Create the stream once and pass the same instance — a field assigned in `initState`, or a value held by your state manager.
+This rule is in the **`recommended`** preset, so it is on with `preset: recommended` and every preset above it. No configuration.
 
 **See also:** [StreamBuilder API docs](https://api.flutter.dev/flutter/widgets/StreamBuilder-class.html)
 
 ## Don't
 
 ```dart
+@override
 Widget build(BuildContext context) {
   return StreamBuilder<int>(
-    // A new subscription on every rebuild — drops events
-    stream: repository.watchCounter(),
+    // A new subscription on every rebuild — drops buffered events
+    stream: watchCounter(),
     builder: (context, snapshot) => Text('${snapshot.data}'),
   );
 }
@@ -35,15 +34,16 @@ Widget build(BuildContext context) {
 
 ## Do
 
+Open it once in `initState` and pass the same instance:
+
 ```dart
-class _MyWidgetState extends State<MyWidget> {
+class _CounterPageState extends State<CounterPage> {
   late final Stream<int> _counter;
 
   @override
   void initState() {
     super.initState();
-    // Subscribed once, kept across rebuilds
-    _counter = repository.watchCounter();
+    _counter = watchCounter();
   }
 
   @override
@@ -56,17 +56,50 @@ class _MyWidgetState extends State<MyWidget> {
 }
 ```
 
+### Broadcast streams still lose events
+
+Making the stream a broadcast stream stops the "already listened to" error, but does not fix this — a broadcast stream does not replay what it emitted before the new subscription arrived. Cache the stream itself, not just its type:
+
+```dart
+// Don't — still resubscribes, still misses everything emitted in between
+StreamBuilder<int>(
+  stream: watchCounter().asBroadcastStream(),
+  builder: (context, snapshot) => Text('${snapshot.data}'),
+);
+```
+
+### The other shapes that allocate
+
+```dart
+// Don't
+StreamBuilder<int>(
+  stream: Stream.periodic(const Duration(seconds: 1), (i) => i),
+  builder: (context, snapshot) => const SizedBox(),
+);
+
+StreamBuilder<int>(
+  stream: Stream.fromIterable(const [1, 2, 3]),
+  builder: (context, snapshot) => const SizedBox(),
+);
+```
+
 ## Known limitations
 
-The rule reports only expressions that certainly allocate: constructor calls, method invocations, and invoked closures. A bare identifier, a property access, or anything it cannot resolve is treated as an existing instance and left alone. A getter that creates a new stream on each access will therefore not be flagged.
+Only expressions that certainly allocate are reported: constructor calls, method invocations, and invoked closures. A bare identifier, a property access, a ternary, or anything unresolved is treated as an existing instance and left alone.
 
-## Configuration
+A getter that creates a new stream on each access is therefore not flagged, though it has the same problem:
 
-This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
-`pass_existing_stream_to_stream_builder: true`.
+```dart
+// Not reported, but resubscribes on every rebuild all the same
+Stream<int> get counter => watchCounter();
 
-To turn it off:
+Widget build(BuildContext context) => StreamBuilder<int>(
+      stream: counter,
+      builder: (context, snapshot) => Text('${snapshot.data}'),
+    );
+```
+
+## Turning this rule off
 
 ```yaml
 # many_lints.yaml

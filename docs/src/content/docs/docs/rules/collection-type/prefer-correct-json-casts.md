@@ -9,35 +9,70 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Collection &amp; Type</span>
 
-This rule flags a value indexed out of a `Map<String, dynamic>` and cast to a non-nullable type. A missing key yields `null`, and casting `null` to a non-nullable type throws.
-
-## Why use this rule
-
-`jsonDecode` returns `Map<String, dynamic>`, where a missing key gives `null` rather than an error. Casting straight to `String` or `int` therefore turns a benign absent field into a `TypeError`.
-
-The error message names only the types involved — "type 'Null' is not a subtype of type 'String'" — and never the key. In a model with twenty fields that leaves nothing to go on. Casting to the nullable type and supplying a fallback makes the absence explicit and keeps the failure where you can read it.
-
-**See also:** [dart:convert jsonDecode](https://api.dart.dev/stable/dart-convert/jsonDecode.html)
+Flags a value indexed out of a `Map<String, dynamic>` and cast to a non-nullable type. A missing key yields `null`, and casting `null` to a non-nullable type throws.
 
 ## Don't
 
+`jsonDecode` returns `Map<String, dynamic>`, where an absent key is `null` rather than an error. The cast turns a benign missing field into a `TypeError`:
+
 ```dart
-User.fromJson(Map<String, dynamic> json)
-  : name = json['name'] as String;   // throws if 'name' is absent
+class User {
+  User.fromJson(Map<String, dynamic> json)
+    : name = json['name'] as String,
+      email = json['email'] as String;
+
+  final String name;
+  final String email;
+}
 ```
+
+The message names only the types — "type 'Null' is not a subtype of type 'String'" — never the key. In a model with twenty fields, that leaves nothing to go on.
 
 ## Do
 
+Cast to the nullable type and say what an absent field means:
+
 ```dart
-User.fromJson(Map<String, dynamic> json)
-  : name = json['name'] as String? ?? '';
+class User {
+  User.fromJson(Map<String, dynamic> json)
+    : name = json['name'] as String? ?? '',
+      email = json['email'] as String? ?? '';
+
+  final String name;
+  final String email;
+}
+```
+
+### When the field really is required
+
+A nullable cast is not an invitation to paper over a broken payload. When absence is a genuine error, make it one that names the key:
+
+```dart
+class User {
+  User.fromJson(Map<String, dynamic> json)
+    : name = _required(json, 'name'),
+      email = _required(json, 'email');
+
+  final String name;
+  final String email;
+
+  static String _required(Map<String, dynamic> json, String key) {
+    final value = json[key] as String?;
+    if (value == null) throw FormatException('Missing field: $key');
+    return value;
+  }
+}
 ```
 
 ## Known limitations
 
-Only index reads on a map whose value type is `dynamic` are checked. A `Map<String, String>` cannot silently produce `null` for a present key, and a non-index expression such as `json.length` cannot be absent.
+**Only index reads on a `dynamic`-valued map are checked.** A `Map<String, String>` cannot silently produce `null` for a present key, and a non-index expression such as `json.length` cannot be absent.
 
-Casts to `dynamic` and `Object` are not reported, since both accept `null`.
+**Casts to `dynamic` and `Object` are not reported**, since both accept `null`.
+
+**A nested read is not reported.** In `json['user']['name'] as String` the inner index yields `dynamic`, not a `Map`, so the outer cast has no map-typed receiver to check. Cast each level as you go — `(json['user'] as Map<String, dynamic>?)?['name'] as String?` — and both steps are visible.
+
+**See also:** [dart:convert jsonDecode](https://api.dart.dev/stable/dart-convert/jsonDecode.html)
 
 ## Configuration
 

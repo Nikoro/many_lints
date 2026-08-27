@@ -13,117 +13,123 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Pattern Matching</span>
 
-When an expression duplicates the initializer of an existing `final` or `const` variable in the same scope, you should reference the variable instead. Repeating the expression creates a maintenance risk where only one copy gets updated during refactoring.
+This rule flags an expression that repeats, character for character, the initializer of a `final` or `const` variable declared earlier in the same block. The quick fix replaces the expression with the variable's name.
 
 ## Why use this rule
 
-Duplicated expressions are easy to introduce and hard to spot during code review. If the expression changes, you need to update every occurrence. Using the existing variable avoids this inconsistency and makes refactoring safer.
+The repeated copy is the one that gets missed. Change the rule for what counts as a valid order and you update the guard clause, ship it, and leave the same expression in the log line saying something else — a discrepancy nothing in the type system can catch.
 
 **See also:** [Dart patterns](https://dart.dev/language/patterns)
 
 ## Don't
 
 ```dart
-// Repeating an expression that is already stored in a variable
-void badPropertyAccess(String value) {
-  final isOdd = value.length.isOdd;
-  print(value.length.isOdd);
+class Order {
+  Order(this.items, this.discount);
+
+  final List<String> items;
+  final double discount;
+
+  double total() => items.length * 10.0;
 }
 
-// Repeating a method call
-void badMethodCall(List<int> list) {
-  final copy = list.toList();
-  print(list.toList());
-}
+void submit(Order order) {
+  final isEmpty = order.items.isEmpty;
 
-// Duplicate in a second variable initializer
-void badSecondVariable(String value) {
-  final a = value.length.isOdd;
-  final b = value.length.isOdd;
-  print(b);
+  if (order.items.isEmpty) {                  // LINT: use isEmpty
+    print('nothing to submit');
+    return;
+  }
+
+  final label = 'Order of ${order.items.length}';
+  print('Order of ${order.items.length}');    // LINT: use label
 }
 ```
 
 ## Do
 
 ```dart
-// Using the existing variable
-void goodReuse(String value) {
-  final isOdd = value.length.isOdd;
-  print(isOdd);
-}
+void submit(Order order) {
+  final isEmpty = order.items.isEmpty;
 
-// No variable exists for the expression (no lint)
-void goodNoVariable(String value) {
-  print(value.length.isOdd);
-  print(value.length.isOdd);
-}
-
-// Different expression (isEven vs isOdd) — no lint
-void goodDifferentExpression(String value) {
-  final isOdd = value.length.isOdd;
-  print(value.length.isEven);
-}
-
-// Non-final variable — value may have changed
-void goodNonFinal(String value) {
-  var isOdd = value.length.isOdd;
-  print(value.length.isOdd);
-  isOdd = false;
-}
-
-// Expression appears before the variable declaration
-void goodBeforeDeclaration(String value) {
-  print(value.length.isOdd);
-  final isOdd = value.length.isOdd;
-  print(isOdd);
-}
-
-// Inside a nested function (different execution context)
-void goodNestedFunction(String value) {
-  final isOdd = value.length.isOdd;
-  void inner() {
-    print(value.length.isOdd);
+  if (isEmpty) {
+    print('nothing to submit');
+    return;
   }
-  inner();
+
+  final label = 'Order of ${order.items.length}';
+  print(label);
+}
+```
+
+## More places it fires
+
+### A second variable with the same initializer
+
+```dart
+// Don't — the second declaration recomputes what the first already holds
+void report(Order order) {
+  final subtotal = order.total() - order.discount;
+  final displayed = order.total() - order.discount;   // LINT: use subtotal
+  print('$subtotal / $displayed');
 }
 
-// Trivial expressions (literals, identifiers) are not flagged
-void goodTrivial() {
-  final x = 42;
-  print(42);
+// Do
+void report(Order order) {
+  final subtotal = order.total() - order.discount;
+  final displayed = subtotal;
+  print('$subtotal / $displayed');
+}
+```
+
+### Inside a return, a condition, or an argument
+
+The scan covers the whole statement, not just top-level expressions:
+
+```dart
+// Don't
+bool isDiscounted(Order order) {
+  final rate = order.discount / order.total();
+  return order.discount / order.total() > 0.1;   // LINT: use rate
 }
 
-// Re-allocating a resource on purpose — no lint
-void goodReallocation(String file) async {
+// Do
+bool isDiscounted(Order order) {
+  final rate = order.discount / order.total();
+  return rate > 0.1;
+}
+```
+
+## Known limitations
+
+The rule compares **source text**, so it cannot tell a value that was already computed from one that is deliberately produced afresh. It stays deliberately silent in these cases:
+
+| Not reported | Why |
+|--------------|-----|
+| `var` variables | The value may have been reassigned between the declaration and the repeat, so the two are not interchangeable. |
+| Constructor calls — `Database(file)`, `List<int>.filled(10, 0)` | Each evaluation allocates a new instance. Reusing the variable could hand back an already-closed or already-consumed resource. |
+| `await` expressions | Re-running async work is a separate operation, and the earlier result may be single-use. |
+| Cascades — `[]..add(1)` | Each evaluation builds and mutates a distinct object. |
+| Literals and bare identifiers | `final x = 42; print(42);` is not worth a diagnostic. |
+| A repeat that appears *before* the declaration | The variable does not exist yet at that point. |
+| A repeat inside a nested function or closure | Different execution context; the value may be stale by the time it runs. |
+| A repeat in a different block | Each block is scanned on its own. |
+
+That first constructor exemption is what makes acquire-release-reacquire safe to write:
+
+```dart
+// Not reported — the second Database is a new connection, not the old one
+void migrate(String file) async {
   final old = Database(file);
   await old.close();
   final upgraded = Database(file);
   print(upgraded);
 }
-
-// Re-running async work — no lint
-void goodRepeatedAwait() async {
-  final first = await fetchValue();
-  final second = await fetchValue();
-  print(first + second);
-}
 ```
 
-## Expressions that are never flagged
-
-Source-text equality cannot distinguish "this value was already computed" from
-"this deliberately produces a fresh one", so the rule skips expressions whose
-re-evaluation is observable:
-
-| Expression | Why it is skipped |
-|------------|-------------------|
-| Constructor calls (`Database(file)`, `List<int>.filled(10, 0)`) | Each evaluation allocates a new instance. Reusing the variable could hand back a closed or already-consumed resource. |
-| `await` expressions | Re-running async work is a separate operation, and the earlier result may be single-use. |
-| Cascades (`[]..add(1)`) | Each evaluation builds and mutates a distinct object. |
-
-This matters most in tests that acquire, release, then re-acquire a resource —
-suggesting reuse there would be semantically wrong, not merely noisy.
+An ordinary method call is still reported: `order.total()` is assumed to be a
+computation you would rather do once. If yours is not — if calling it twice is
+the point — silence the line with `// ignore: many_lints/use_existing_variable`.
 
 ## Configuration
 

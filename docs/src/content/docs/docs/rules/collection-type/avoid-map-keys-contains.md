@@ -13,43 +13,59 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Collection & Type</span>
 
-Using `map.keys.contains(key)` iterates through all keys to check for existence, while `map.containsKey(key)` performs a direct hash lookup. This rule catches the slower pattern and suggests the more efficient alternative.
-
-## Why use this rule
-
-`Map.keys` returns an `Iterable` that must be traversed linearly to check for a key, making it O(n). `Map.containsKey()` uses the map's hash table directly and runs in O(1). For large maps, the performance difference is significant.
-
-**See also:** [Map.containsKey](https://api.dart.dev/stable/dart-core/Map/containsKey.html)
+Flags `map.keys.contains(key)`, which walks every key in order. `map.containsKey(key)` asks the hash table directly. The quick fix rewrites it.
 
 ## Don't
 
+`Map.keys` is an `Iterable`, so `contains` on it is a linear scan — O(n) per call, and this one runs once per row:
+
 ```dart
-void example() {
-  final map = {'lat': 52.2, 'lon': 21.0};
-
-  // Use containsKey() instead
-  final exists = map.keys.contains('lat');
-
-  // Also in conditions
-  if (map.keys.contains('foo')) {
-    print('found');
-  }
+List<String> missingTranslations(
+  Map<String, String> translations,
+  List<String> requiredKeys,
+) {
+  return requiredKeys
+      .where((key) => !translations.keys.contains(key))
+      .toList();
 }
 ```
 
 ## Do
 
 ```dart
-void example() {
-  final map = {'lat': 52.2, 'lon': 21.0};
-
-  final exists = map.containsKey('lat');
-
-  if (map.containsKey('foo')) {
-    print('found');
-  }
+List<String> missingTranslations(
+  Map<String, String> translations,
+  List<String> requiredKeys,
+) {
+  return requiredKeys.where((key) => !translations.containsKey(key)).toList();
 }
 ```
+
+### Any map-typed expression counts
+
+The receiver does not have to be a plain variable — a field or any map-typed expression is matched just the same:
+
+```dart
+class Response {
+  const Response(this.headers);
+
+  final Map<String, String> headers;
+
+  // Don't
+  bool get isCached => headers.keys.contains('etag');
+
+  // Do
+  bool get isCachedFixed => headers.containsKey('etag');
+}
+```
+
+## Known limitations
+
+**Only `.keys` is checked.** `map.values.contains(x)` genuinely has no hash-backed equivalent — `containsValue` is linear too — so it is never reported.
+
+**The receiver's static type must resolve to a `Map`.** A `dynamic` receiver, or one whose type the analyzer cannot infer, is left alone.
+
+**See also:** [Map.containsKey](https://api.dart.dev/stable/dart-core/Map/containsKey.html)
 
 ## Configuration
 

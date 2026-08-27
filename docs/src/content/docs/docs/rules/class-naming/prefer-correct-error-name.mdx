@@ -12,26 +12,127 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Class Naming</span>
 
-This rule flags a class implementing `Exception` or extending `Error` that is not named with the matching suffix.
+Flags a class implementing `Exception` or extending `Error` that is not named with the matching suffix.
 
-Dart draws a real line between the two: an `Exception` is a condition the caller is expected to handle, an `Error` is a bug the caller should not catch. The name is where that distinction is visible at the call site — a reader deciding whether to write a `catch` should not have to open the declaration to find out which kind it is.
+Dart draws a real line between the two: an `Exception` is a condition the caller is expected to handle, an `Error` is a bug the caller should not catch. The name is where that distinction shows up at the `catch` site.
 
-A class that is neither is never reported. When a class is both, `Error` wins: the stricter reading of "do not catch this" is the one worth naming for.
-
-This rule is in the **`pedantic`** preset.
+This rule is in the **`pedantic`** preset, and works with its defaults — no configuration needed.
 
 ## Don't
 
 ```dart
-class NotFound implements Exception {}
-class BadState extends Error {}
+class NotFound implements Exception {   // LINT: implements Exception, does not end in `Exception`
+  const NotFound(this.id);
+
+  final String id;
+}
+
+class BadState extends Error {}         // LINT: extends Error, does not end in `Error`
 ```
 
 ## Do
 
 ```dart
-class NotFoundException implements Exception {}
+class NotFoundException implements Exception {
+  const NotFoundException(this.id);
+
+  final String id;
+}
+
 class BadStateError extends Error {}
+```
+
+## Examples
+
+### An indirect ancestor still counts
+
+A class that reaches `Exception` through your own base class is checked the same way:
+
+```dart
+class ApiException implements Exception {}
+
+// Don't
+class RateLimited extends ApiException {}          // LINT
+
+// Do
+class RateLimitedException extends ApiException {}
+```
+
+### A class that is neither is left alone
+
+The rule only looks at classes that actually reach `Exception` or `Error`. A plain result type is never reported, however it is named:
+
+```dart
+// Not reported — implements neither
+class NotFound {
+  const NotFound(this.id);
+
+  final String id;
+}
+```
+
+### `Error` wins when a class is both
+
+A class can implement `Exception` and extend `Error`. The rule asks for the `Error` suffix, because "do not catch this" is the stricter reading:
+
+```dart
+// Accepted
+class WeirdError extends Error implements Exception {}
+```
+
+### Accepting a house vocabulary
+
+Many codebases name their handled conditions `Failure` rather than `Exception`. Add it to `allow_suffixes` and both spellings pass, without giving up the check on classes that end in neither:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_correct_error_name:
+      allow_suffixes: [Failure]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_correct_error_name:
+    allow_suffixes: [Failure]
+```
+
+</TabItem>
+</Tabs>
+
+```dart
+// Both accepted
+class NetworkFailure implements Exception {}
+class NotFoundException implements Exception {}
+
+// Still reported — ends in neither
+class Timeout implements Exception {}   // LINT
+```
+
+### Replacing the suffix outright
+
+Set `exception_suffix` when the house word is the *only* one you want:
+
+```yaml
+rules:
+  prefer_correct_error_name:
+    exception_suffix: Failure
+```
+
+```dart
+// Don't — `Exception` is no longer the accepted ending
+class NotFoundException implements Exception {}   // LINT
+
+// Do
+class NotFoundFailure implements Exception {}
 ```
 
 ## Enabling this rule
@@ -47,39 +148,17 @@ rules:
 
 ## Options
 
-<Tabs syncKey="many-lints-config-file">
-<TabItem label="analysis_options.yaml">
-
-```yaml
-# analysis_options.yaml
-many_lints:
-  rules:
-    prefer_correct_error_name:
-      exception_suffix: Exception
-      error_suffix: Error
-      allow_suffixes: []
-```
-
-</TabItem>
-<TabItem label="many_lints.yaml">
-
-```yaml
-# many_lints.yaml
-rules:
-  prefer_correct_error_name:
-    exception_suffix: Exception
-    error_suffix: Error
-    allow_suffixes: []
-```
-
-</TabItem>
-</Tabs>
-
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `exception_suffix` | string | `Exception` | Required ending for an `Exception` class |
 | `error_suffix` | string | `Error` | Required ending for an `Error` class |
-| `allow_suffixes` | list | `[]` | Additional endings accepted alongside the default (`Failure` is the common one) |
+| `allow_suffixes` | list | `[]` | Additional endings accepted alongside the required one, for both kinds |
+
+## Known limitations
+
+**Classes only.** A mixin or extension type implementing `Exception` is not checked.
+
+**No quick fix.** Renaming a thrown type touches every `catch` and every `on` clause that names it, which is a rename refactoring rather than a one-file edit.
 
 ## Turning this rule off
 

@@ -78,6 +78,8 @@ class _CounterState extends State<Counter> {
 
 Only a genuinely empty block is reported. A callback containing any statement is left alone, even if that statement has no effect — proving a statement is a no-op is outside this rule's scope.
 
+Only an inline callback is inspected. `setState(_noop)` passes a method reference, and the rule does not follow it.
+
 ## Turning this rule off
 
 This rule is in the **`opinionated`** preset, so it is on with

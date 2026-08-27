@@ -9,60 +9,99 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-Warns when a logical AND (`&&`) expression contains contradictory comparisons on the same variable, resulting in a condition that always evaluates to `false`. For example, `x == 3 && x == 4` can never be true because `x` cannot equal both values simultaneously.
-
-## Why use this rule
-
-Contradictory conditions create unreachable code that silently does nothing. These are almost always bugs — typically from copy-paste errors where one operand was not updated, or from refactoring that accidentally introduced conflicting constraints. Catching them at analysis time prevents hard-to-debug logic errors.
-
-**See also:** [Effective Dart: Usage](https://dart.dev/effective-dart/usage)
+Flags an `&&` chain containing two comparisons that cannot both hold, so the whole condition is always `false` and the branch is dead.
 
 ## Don't
 
+Copy-pasting a bound and changing only the operator gives a range that nothing can be inside. The author meant `>=` on one side, or a second variable:
+
 ```dart
-void bad(int x, int y) {
-  // x cannot equal both 3 and 4
-  if (x == 3 && x == 4) {
-    print('unreachable');
-  }
-
-  // Impossible range — x can't be less than 4 AND greater than 4
-  if (x < 4 && x > 4) {
-    print('unreachable');
-  }
-
-  // Equality contradicts inequality
-  if (x == 2 && x != 2) {
-    print('unreachable');
-  }
-
-  // Same comparison with variable, opposite operators
-  if (x == y && x != y) {
-    print('unreachable');
+void filter(int score) {
+  if (score > 80 && score < 80) {
+    highlight();
   }
 }
+
+void highlight() {}
 ```
 
 ## Do
 
 ```dart
-void good(int x, int y) {
-  // Uses OR — x can be 3 or 4
-  if (x == 3 || x == 4) {
-    print('ok');
-  }
-
-  // Consistent range — x between 2 and 4
-  if (x < 4 && x > 2) {
-    print('ok');
-  }
-
-  // Different variables
-  if (x == 3 && y == 4) {
-    print('ok');
+void filter(int score) {
+  if (score >= 80 && score < 100) {
+    highlight();
   }
 }
+
+void highlight() {}
 ```
+
+### Two values for the same variable
+
+Copy-pasting an equality check and forgetting to change the literal gives a condition nothing satisfies. `||` is almost always what was meant:
+
+```dart
+void route(int statusCode) {
+  // Don't — no code is both 301 and 302
+  if (statusCode == 301 && statusCode == 302) {
+    followRedirect();
+  }
+
+  // Do
+  if (statusCode == 301 || statusCode == 302) {
+    followRedirect();
+  }
+}
+
+void followRedirect() {}
+```
+
+### A guard that cancels itself out
+
+Adding a defensive check next to an existing one can contradict it. This shows up after a merge, where each side added its own guard:
+
+```dart
+void submit(String? token) {
+  // Don't — `token` cannot be both null and non-null
+  if (token != null && token == null) {
+    send(token);
+  }
+}
+
+void send(String token) {}
+```
+
+### Longer chains are flattened
+
+The rule flattens the whole `&&` chain and checks every pair, so a contradiction between non-adjacent terms is still found:
+
+```dart
+void process(int size, bool ready, int retries) {
+  // Don't — `size < 10` and `size > 10` are three terms apart
+  if (size < 10 && ready && retries == 0 && size > 10) {
+    run();
+  }
+}
+
+void run() {}
+```
+
+## Known limitations
+
+Only comparisons joined by `&&` are examined. `||` is never reported, and neither is a contradiction spread across nested `if` statements.
+
+Not every impossible pair is detected. The rule finds:
+
+- the same operand pair with contradictory operators (`==`/`!=`, `==`/`<`, `==`/`>`, `<`/`>`);
+- two `==` checks that share an operand and compare it against different literals.
+
+Two consequences worth knowing, because they are the cases people expect to be caught:
+
+- **`<=` and `>=` are not in that table.** `x <= 4 && x >= 6` is not reported.
+- **Relational operators must share *both* operands.** `x < 4 && x > 4` reports; `x > 80 && x < 50` does not, because the literals differ and the rule does no arithmetic. An impossible range written with two different bounds slips through.
+
+Operands are matched by resolved element, so `this.count` and `count` are recognised as the same variable, while two different variables that happen to share a name are not. There is no quick fix — which half of the contradiction is the bug is not something the analyser can tell.
 
 ## Configuration
 

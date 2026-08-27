@@ -12,20 +12,18 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Collection &amp; Type</span>
 
-This rule flags a value in a `toJson` map that `jsonEncode` cannot serialize — a `DateTime`, an enum, or a nested model with no `toJson` of its own.
+Flags a value in a `toJson` map that `jsonEncode` cannot serialize — a `DateTime`, an enum, or a nested model with no `toJson` of its own. The diagnostic names the offending type.
 
-## Why use this rule
-
-`jsonEncode` accepts only `num`, `String`, `bool`, `null`, `List` and `Map`. Anything else throws `JsonUnsupportedObjectError`.
-
-The type system does not help here, because `Map<String, dynamic>` accepts every value. The mistake compiles cleanly and only fails when the map is actually encoded — often in a different layer, on a code path that tests do not cover. What should have been a type error becomes a production stack trace.
-
-**See also:** [dart:convert jsonEncode](https://api.dart.dev/stable/dart-convert/jsonEncode.html), [JsonUnsupportedObjectError](https://api.dart.dev/stable/dart-convert/JsonUnsupportedObjectError-class.html)
+`jsonEncode` accepts only `num`, `String`, `bool`, `null`, `List` and `Map`; anything else throws `JsonUnsupportedObjectError`. The type system does not help, because `Map<String, dynamic>` accepts every value — so the mistake compiles cleanly and fails only when the map is actually encoded, usually in another layer on a path the tests do not cover.
 
 ## Don't
 
 ```dart
+enum Status { draft, published }
+
 class Event {
+  const Event(this.createdAt, this.status);
+
   final DateTime createdAt;
   final Status status;
 
@@ -41,21 +39,75 @@ class Event {
 Convert each value to something `jsonEncode` understands:
 
 ```dart
-Map<String, dynamic> toJson() => {
-  'createdAt': createdAt.toIso8601String(),
-  'status': status.name,
-};
+enum Status { draft, published }
+
+class Event {
+  const Event(this.createdAt, this.status);
+
+  final DateTime createdAt;
+  final Status status;
+
+  Map<String, dynamic> toJson() => {
+    'createdAt': createdAt.toIso8601String(),
+    'status': status.name,
+  };
+}
 ```
 
-A nested model is fine as long as it declares its own `toJson` — `jsonEncode` reaches it through the `toEncodable` hook:
+### A nested model needs its own `toJson`
+
+`jsonEncode` reaches a nested object through its `toEncodable` hook, so a model that declares `toJson` is accepted as a value:
 
 ```dart
 class Address {
+  const Address(this.city);
+
+  final String city;
+
   Map<String, dynamic> toJson() => {'city': city};
 }
 
-Map<String, dynamic> toJson() => {'address': address};   // accepted
+class Order {
+  const Order(this.address);
+
+  final Address address;
+
+  // Accepted — Address declares toJson
+  Map<String, dynamic> toJson() => {'address': address};
+}
 ```
+
+A model without one is reported, which is the useful part: it catches the class you forgot to give a `toJson` before the encode does.
+
+### Collections are checked through their element type
+
+```dart
+// Don't — List<DateTime> is reported
+Map<String, dynamic> toJson() => {'reminders': reminders};
+
+// Do
+Map<String, dynamic> toJson() => {
+  'reminders': [for (final r in reminders) r.toIso8601String()],
+};
+```
+
+### Allowing a type your serializer handles
+
+A project with a `JsonConverter` for a value type can name it, so the rule stops reporting what the serializer already knows how to write:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_not_encodable_in_to_json:
+    allowed_types: [Decimal, Uint8List]
+```
+
+```dart
+// Accepted with the config above
+Map<String, dynamic> toJson() => {'amount': amount};   // amount is a Decimal
+```
+
+**See also:** [dart:convert jsonEncode](https://api.dart.dev/stable/dart-convert/jsonEncode.html), [JsonUnsupportedObjectError](https://api.dart.dev/stable/dart-convert/JsonUnsupportedObjectError-class.html)
 
 ## Known limitations
 

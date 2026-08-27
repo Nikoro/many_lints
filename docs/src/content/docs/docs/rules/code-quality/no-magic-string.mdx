@@ -14,35 +14,105 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule flags the same string literal repeated without a name.
 
-This rule is in the **`pedantic`** preset: the threshold is a house style.
-
 ## Why use this rule
 
 Unlike its [numeric sibling](/many_lints/docs/rules/code-quality/no-magic-number/), this rule reports only **repetition** — the case where a string is genuinely dangerous. A route path, a storage key or a header name written out at three call sites will eventually be changed at two of them, and the third failure is silent.
 
 A single occurrence is left alone. It is usually a message or a label, and naming it moves the text away from the code that uses it for no gain.
 
-The diagnostic appears at **every** occurrence rather than only the first: each one is separately editable, and showing one would hide the duplication the rule is about.
-
-Exempt by default: a literal that initialises a declaration, anything inside a `const` declaration, an enum or an annotation, strings shorter than `min_length` (separators and punctuation rather than identifiers), and tests, where a repeated fixture string is the test data.
+This rule is in the **`pedantic`** preset: the threshold is a house style.
 
 ## Don't
 
+A storage key spelled out at each call site — rename it once and one of these is left behind:
+
 ```dart
-void get_() => send('x-request-id');
-void post() => send('x-request-id');
-void put() => send('x-request-id');
+class SessionCache {
+  final Map<String, String> _box = {};
+
+  String? read() => _box['auth.refresh_token'];
+
+  void write(String token) => _box['auth.refresh_token'] = token;
+
+  void clear() => _box.remove('auth.refresh_token');
+}
 ```
 
 ## Do
 
 ```dart
-const requestIdHeader = 'x-request-id';
+const refreshTokenKey = 'auth.refresh_token';
 
-void get_() => send(requestIdHeader);
-void post() => send(requestIdHeader);
-void put() => send(requestIdHeader);
+class SessionCache {
+  final Map<String, String> _box = {};
+
+  String? read() => _box[refreshTokenKey];
+
+  void write(String token) => _box[refreshTokenKey] = token;
+
+  void clear() => _box.remove(refreshTokenKey);
+}
 ```
+
+The diagnostic appears at **every** occurrence rather than only the first: each one is separately editable, and showing one would hide the duplication the rule is about.
+
+### Exempting a wrapper that takes strings by design
+
+A translation or logging helper is called with a literal key everywhere on purpose. Name it rather than turning the rule off:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    no_magic_string:
+      additional_ignored_invocations: [translate, featureFlag]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  no_magic_string:
+    additional_ignored_invocations: [translate, featureFlag]
+```
+
+</TabItem>
+</Tabs>
+
+```dart
+String translate(String key) => key;
+
+// Not reported under the configuration above.
+final a = translate('cart.checkout');
+final b = translate('cart.checkout');
+final c = translate('cart.checkout');
+```
+
+### Raising the threshold
+
+Three occurrences is the default. Wait for a fourth with:
+
+```yaml
+# many_lints.yaml
+rules:
+  no_magic_string:
+    min_occurrences: 4
+```
+
+## Known limitations
+
+**Two occurrences never report** at the default `min_occurrences: 3`.
+
+**Strings shorter than `min_length` (3) are ignored** — separators and punctuation rather than identifiers.
+
+**A literal that initialises a declaration is exempt**, along with anything inside a `const` declaration, an enum, or an annotation. That is the shape the rule asks you to move towards.
+
+**Tests are exempt** by default, where a repeated fixture string is the test data. Set `ignore_tests: false` to include them.
 
 ## Options
 

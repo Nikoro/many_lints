@@ -19,23 +19,18 @@ This rule is in the **`pedantic`** preset, because where the line falls between 
 
 **See also:** [Effective Dart: prefer a getter](https://dart.dev/effective-dart/design#prefer-making-declarations-private)
 
-## What is never reported
-
-The empirical run against a production codebase turned up three classes of member that must keep their parentheses, and all three are excluded:
-
-- **A body that calls anything.** `Clock.now()` and `sixDigitCode()` answer differently on each call, and a getter promises a stable property. Only a body built from field reads and operators qualifies.
-- **A conventional name.** `toJson` is what every serialiser looks for, `call` is the invocation operator in all but name, and `copyWith`/`toList` are established shapes a reader expects invoked.
-- **A `Stream` or `Future` return.** A stream is something you subscribe to, not a property you read, so `watchUser()` keeps its parentheses.
-
-Also skipped: a `void` method (called for an effect), an `@override` (which must keep the supertype's shape), a generic method (a getter cannot take type arguments), and a block body, which may be doing the work the parentheses promise.
-
 ## Don't
 
 ```dart
 class Order {
-  final int amount;
+  const Order(this.lineTotal, this.taxRate);
 
-  int total() => amount * 2;
+  final int lineTotal;
+  final double taxRate;
+
+  int tax() => (lineTotal * taxRate).round();
+
+  bool isEmpty() => lineTotal == 0;
 }
 ```
 
@@ -43,11 +38,48 @@ class Order {
 
 ```dart
 class Order {
-  final int amount;
+  const Order(this.lineTotal, this.taxRate);
 
-  int get total => amount * 2;
+  final int lineTotal;
+  final double taxRate;
+
+  int get tax => (lineTotal * taxRate).round();
+
+  bool get isEmpty => lineTotal == 0;
 }
 ```
+
+Call sites lose the parentheses: `order.tax`, `order.isEmpty`.
+
+## Known limitations
+
+Only an **expression body built from field reads and operators** is reported. Everything below keeps its parentheses:
+
+**A body that calls anything.** `Clock.now()` answers differently on each call, and a getter promises a stable property. This includes constructing an object:
+
+```dart
+class Session {
+  const Session(this.startedAt);
+
+  final DateTime startedAt;
+
+  // Not reported: the body calls something.
+  Duration age() => DateTime.now().difference(startedAt);
+
+  // Not reported: the body allocates.
+  List<String> tags() => <String>['a', 'b'];
+}
+```
+
+**A conventional name.** `toJson`, `toMap`, `toString`, `noSuchMethod`, `call`, `copyWith`, `toList` and `toSet` are shapes a reader expects invoked.
+
+**A `Stream` or `Future` return type**, and any `async` or generator body. A stream is something you subscribe to, not a property you read, so `watchUser()` keeps its parentheses.
+
+**A block body.** It may be doing the work the parentheses promise, so `int total() { return _amount; }` is left alone.
+
+**A `void` method** (called for an effect), an **`@override`** (which must keep the supertype's shape), a **generic method** (a getter cannot take type arguments), an **operator**, and any method with a **missing return type annotation**.
+
+Top-level functions are never reported — only methods on a class, mixin or extension.
 
 ## Enabling this rule
 

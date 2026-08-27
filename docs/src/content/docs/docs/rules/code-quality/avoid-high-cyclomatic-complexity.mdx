@@ -12,23 +12,15 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Quality</span>
 
-This rule flags a function with more independent paths through it than the configured budget.
+This rule flags a function with more independent paths through it than the configured budget — every branch, loop, `catch`, `&&`, `||`, `?:` and `??` adds one.
 
-## Why use this rule
+It measures what the line and statement budgets miss: twenty sequential statements are easy, six nested conditions in five lines are not.
 
-Cyclomatic complexity counts decisions: every branch, loop, `catch`, `&&`, `||`, `?:` and `??` adds one path a reader has to keep straight and a test has to cover. It measures something the line and statement budgets miss — twenty sequential statements are easy, while six nested conditions in five lines are not.
-
-Three exclusions keep the rule pointed at real decisions, each of which came from running it against a production codebase:
-
-- **An exhaustive `switch` over an enum or sealed type counts as one.** The compiler proves every case is handled, so the cases are not paths the reader has to verify — counting them would report exactly the exhaustive pattern matching Dart 3 encourages.
-- **`operator ==` is never reported.** It is one `&&` per field by construction.
-- **`copyWith` is never reported.** It is one `??` per parameter.
-
-The last two grow with the field count rather than with any decision, and neither can be split. A *validating* constructor, by contrast, still reports: its checks are genuine independent decisions.
-
-This rule is in the **`pedantic`** preset: a budget is a house style, and the right number differs per codebase.
+This rule is in the **`pedantic`** preset. The default budget is `max_complexity: 10`.
 
 ## Don't
+
+This `describe` has eleven paths — five `if`s (two of them with a second operand), a loop with a branch inside it, a `??` and a `catch`:
 
 ```dart
 String describe(int n, bool flag, String? label) {
@@ -52,16 +44,125 @@ String describe(int n, bool flag, String? label) {
 
 ## Do
 
-```dart
-String describe(int n, String? label) {
-  if (_isSpecialCase(n)) return _specialCase(n);
+Split the decisions across functions. Every branch still exists — each one now
+lives somewhere small enough to test on its own:
 
-  return label ?? 'unknown';
+```dart
+String describe(int n, bool flag, String? label) {
+  final size = _size(n, flag);
+  if (size != null) return size;
+
+  return _fromLabel(n, label);
 }
 
-bool _isSpecialCase(int n) => n <= 0 || n > 100;
+String? _size(int n, bool flag) {
+  if (n < 0) return 'negative';
+  if (n == 0) return 'zero';
+  if (n > 100 && flag) return 'large and flagged';
+  if (n > 100 || flag) return 'large or flagged';
+  return null;
+}
 
-String _specialCase(int n) => n <= 0 ? 'small' : 'large';
+String _fromLabel(int n, String? label) {
+  if (label != null && label.isNotEmpty) return label;
+
+  _printEvensBelow(n);
+
+  try {
+    return int.parse(label ?? '').toString();
+  } on FormatException {
+    return 'bad format';
+  }
+}
+
+void _printEvensBelow(int n) {
+  for (var i = 0; i < n; i++) {
+    if (i.isEven) print(i);
+  }
+}
+```
+
+## More examples
+
+### An exhaustive switch counts as one
+
+The compiler proves every case is handled, so the cases are not paths the
+reader has to verify. Counting them would report exactly the exhaustive
+pattern matching Dart 3 encourages:
+
+```dart
+enum Stage { queued, running, retrying, failed, done, cancelled }
+
+// Not reported, however many cases it grows to.
+String label(Stage stage) => switch (stage) {
+  Stage.queued => 'Queued',
+  Stage.running => 'Running',
+  Stage.retrying => 'Retrying',
+  Stage.failed => 'Failed',
+  Stage.done => 'Done',
+  Stage.cancelled => 'Cancelled',
+};
+```
+
+Exhaustibility is read from the switched value's static type, not from the
+patterns — an enum or a `sealed` class is exhaustible, anything else is not. A
+switch over a `String` or an `int` therefore still counts case by case. To
+count every switch that way, set `count_exhaustive_switches: true`.
+
+### `operator ==` and `copyWith` are never reported
+
+Both grow with the field count rather than with any decision, and neither can
+be split:
+
+```dart
+class Booking {
+  const Booking(this.id, this.court, this.start, this.end, this.notes);
+
+  final String id;
+  final int court;
+  final DateTime start;
+  final DateTime end;
+  final String? notes;
+
+  // Not reported — one `&&` per field by construction.
+  @override
+  bool operator ==(Object other) =>
+      other is Booking &&
+      other.id == id &&
+      other.court == court &&
+      other.start == start &&
+      other.end == end &&
+      other.notes == notes;
+
+  @override
+  int get hashCode => Object.hash(id, court, start, end, notes);
+
+  // Not reported — one `??` per parameter.
+  Booking copyWith({String? id, int? court, DateTime? start, DateTime? end}) =>
+      Booking(
+        id ?? this.id,
+        court ?? this.court,
+        start ?? this.start,
+        end ?? this.end,
+        notes,
+      );
+}
+```
+
+The exemption is by member name, so it covers exactly `==` and `copyWith`. A
+*validating* constructor still reports: its checks are genuine independent
+decisions.
+
+### Tightening the budget
+
+Ten is the threshold most complexity tools have converged on. Drop it if you
+want functions split sooner:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_high_cyclomatic_complexity:
+    max_complexity: 6
 ```
 
 ## Enabling this rule
@@ -85,7 +186,7 @@ rules:
 many_lints:
   rules:
     avoid_high_cyclomatic_complexity:
-      max_complexity: 10
+      max_complexity: 6
       count_exhaustive_switches: false
 ```
 
@@ -96,7 +197,7 @@ many_lints:
 # many_lints.yaml
 rules:
   avoid_high_cyclomatic_complexity:
-    max_complexity: 10
+    max_complexity: 6
     count_exhaustive_switches: false
 ```
 

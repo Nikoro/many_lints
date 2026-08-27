@@ -16,13 +16,43 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Class Naming</span>
 
-Flags classes that derive from a type you configure but don't carry the name prefix you require. The mirror image of [`use_class_suffix`](/many_lints/docs/rules/class-naming/use-class-suffix/).
+Flags a class that derives from a type you name but does not carry the prefix you require. A quick fix prepends it. The mirror image of [`use_class_suffix`](/many_lints/docs/rules/class-naming/use-class-suffix/).
 
-**This rule reports nothing until you configure it.** It enforces your naming convention, not a built-in one.
+Some conventions read better at the front: `DbUserRepository` and `MockPaymentGateway` put the distinguishing quality first, so every implementation of one interface sorts together and the variant is visible before the noun.
 
-## Why use this rule
+This rule is in **no preset** and reports nothing until you add `entries:`. Every example below shows the configuration that produces it.
 
-Some conventions read better as a prefix than a suffix: `DbUserRepository` and `MockPaymentGateway` put the distinguishing quality first, so implementations of the same interface sort together alphabetically and the variant is visible before the noun.
+## Setup
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    use_class_prefix:
+      entries:
+        - type: Repository
+          prefix: Db
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  use_class_prefix:
+    entries:
+      - type: Repository
+        prefix: Db
+```
+
+</TabItem>
+</Tabs>
+
+`package:` is optional. Omit it for a type you declare yourself — a local type has no `package:` URI to pin against. Add it when the name is ambiguous, so an unrelated `Repository` from another dependency does not match.
 
 A type matches whether it is reached by `extends`, `implements`, `with`, or an indirect ancestor. The configured base type is never reported against itself.
 
@@ -33,8 +63,7 @@ With `entries: [{type: Repository, prefix: Db}]`:
 ```dart
 abstract class Repository {}
 
-// Implements Repository, but the name does not start with `Db`.
-class UserRepository implements Repository {}
+class UserRepository implements Repository {}   // LINT
 ```
 
 ## Do
@@ -45,29 +74,100 @@ abstract class Repository {}
 class DbUserRepository implements Repository {}
 ```
 
+## Examples
+
+### Sort implementations of one interface together
+
+The point of a prefix is that the backing store leads. Three implementations of
+`Repository` land next to each other in a file listing, and the call site says
+which one it got:
+
+```yaml
+- type: Repository
+  prefix: Db
+```
+
+```dart
+abstract class Repository {}
+
+// Don't — the variant is buried at the end, or missing
+class UserRepository implements Repository {}      // LINT
+class RepositoryInMemory implements Repository {}   // LINT
+
+// Do
+class DbUserRepository implements Repository {}
+class DbCachedUserRepository implements Repository {}
+```
+
+### Mark test doubles
+
+A prefix on a fake makes it obvious in a test file which collaborator is real:
+
+```yaml
+- type: PaymentGateway
+  prefix: Mock
+```
+
+```dart
+abstract class PaymentGateway {}
+
+// Don't
+class FakePaymentGateway implements PaymentGateway {}   // LINT
+
+// Do
+class MockPaymentGateway implements PaymentGateway {}
+```
+
+### Leaving private classes alone
+
+`ignore_private: true` skips classes whose name starts with `_`. A private class cannot be referenced outside its library, so the naming convention buys less there.
+
+```yaml
+rules:
+  use_class_prefix:
+    ignore_private: true          # rule-wide default
+    entries:
+      - type: Repository
+        prefix: Db
+      - type: PaymentGateway
+        prefix: Mock
+        ignore_private: false     # this one checks private classes too
+```
+
+```dart
+abstract class Repository {}
+abstract class PaymentGateway {}
+
+// Not reported — private, and this entry ignores private classes
+class _CachedUsers implements Repository {}
+
+// Reported — this entry overrides the rule-wide default
+class _StripeGateway implements PaymentGateway {}   // LINT
+```
+
+### An indirect ancestor still matches
+
+```yaml
+- type: Repository
+  prefix: Db
+```
+
+```dart
+abstract class Repository {}
+abstract class CachingRepository implements Repository {}
+
+// Don't — reaches Repository through CachingRepository
+class UserStore extends CachingRepository {}   // LINT
+
+// Do
+class DbUserStore extends CachingRepository {}
+```
+
+When a class matches several entries, the **first** one wins and it is reported once.
+
 ## Quick fix
 
 The fix prepends the required prefix, and repairs a near-miss rather than stacking onto it. A same-named unnamed constructor is renamed along with the class, so the result still compiles.
-
-## Turning this rule off
-
-This rule is in **no preset**, so it is off unless you enable it by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  use_class_prefix: true
-```
-
-To turn it off again:
-
-```yaml
-# many_lints.yaml
-rules:
-  use_class_prefix: false
-```
-
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Options
 
@@ -117,9 +217,25 @@ Each entry accepts:
 | `package` | string | no | Package declaring `type`. Omit to match a type of that name from **any** library, including your own package |
 | `ignore_private` | bool | no | Overrides the rule-wide `ignore_private` for this entry |
 
-The two rules read different per-entry keys, so an entry carrying only `suffix:` gives this rule nothing to enforce, and vice versa. Configure each rule with its own entries.
+## Known limitations
 
-When a class matches several entries, the **first** one wins and it is reported once. An entry missing `type` or `prefix` is skipped; because a plugin cannot report problems against a YAML file, a malformed entry degrades quietly rather than failing analysis.
+**Classes only.** A mixin, enum or extension type is not checked, even when it implements a configured type. For those, reach for [`match_class_name_pattern`](/many_lints/docs/rules/class-naming/match-class-name-pattern/).
+
+**This rule reads only `prefix:`.** An entry carrying only `suffix:` gives it nothing to enforce — that key belongs to [`use_class_suffix`](/many_lints/docs/rules/class-naming/use-class-suffix/). Configure each rule with its own entries.
+
+**A malformed entry is silent.** An entry missing `type` or `prefix` is skipped, because a plugin cannot report problems against a YAML file. If an entry never fires, check both keys are present and non-empty.
+
+## Turning this rule off
+
+This rule is in **no preset**, so it is off unless you enable it by name. To turn it off again:
+
+```yaml
+# many_lints.yaml
+rules:
+  use_class_prefix: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Related rules
 

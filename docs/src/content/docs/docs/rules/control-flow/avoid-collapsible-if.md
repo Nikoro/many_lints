@@ -13,30 +13,81 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-This rule flags an `if` statement whose body is nothing but another `if`, where neither has an `else`.
-
-## Why use this rule
-
-Two nested conditions with no `else` on either level are a conjunction written across two blocks. Merging them with `&&` states the real condition in one place and removes a level of indentation from everything inside.
-
-The nested form also hides the relationship: a reader has to scan to the end of the outer block to confirm nothing else happens there.
+Flags an `if` whose body is nothing but another `if`, where neither has an `else`. Two nested conditions with no `else` are a conjunction written across two blocks.
 
 ## Don't
 
 ```dart
-if (user != null) {
-  if (user.isActive) {
-    sendNotification(user);
+class User {
+  bool isActive = true;
+}
+
+void notify(User? user) {
+  if (user != null) {
+    if (user.isActive) {
+      sendNotification(user);
+    }
   }
 }
+
+void sendNotification(User user) {}
 ```
 
 ## Do
 
 ```dart
-if (user != null && user.isActive) {
-  sendNotification(user);
+class User {
+  bool isActive = true;
 }
+
+void notify(User? user) {
+  if (user != null && user.isActive) {
+    sendNotification(user);
+  }
+}
+
+void sendNotification(User user) {}
+```
+
+### Braces are optional on either level
+
+The rule matches the inner `if` whether it is the sole statement of a block or written bare:
+
+```dart
+void log(String? message, bool verbose) {
+  if (verbose)
+    if (message != null) print(message);
+}
+```
+
+That collapses the same way:
+
+```dart
+void log(String? message, bool verbose) {
+  if (verbose && message != null) print(message);
+}
+```
+
+### A condition with `||` keeps its parentheses
+
+The quick fix parenthesises an operand when merging would otherwise change precedence, so the meaning is preserved:
+
+```dart
+void handle(bool retryable, int status, bool offline) {
+  // Don't
+  if (retryable) {
+    if (status >= 500 || offline) {
+      scheduleRetry();
+    }
+  }
+
+  // Do — the fix writes this, not `retryable && status >= 500 || offline`
+  if (retryable && (status >= 500 || offline)) {
+    scheduleRetry();
+  }
+}
+
+void scheduleRetry() {}
 ```
 
 ## Known limitations
@@ -47,7 +98,7 @@ The rule stays silent whenever the nesting could carry meaning:
 - Any other statement in the outer block, before or after the inner `if`.
 - A pattern `if (x case P)` on either level, which cannot be joined with `&&`.
 
-The quick fix parenthesises an operand when needed, so merging a condition containing `||` does not change precedence.
+Three collapsible levels produce two reports — one per mergeable pair — and merging them all gives a single `&&` chain.
 
 ## Configuration
 

@@ -26,68 +26,52 @@ State that can be mutated in place changes without anything observing the change
 
 `@immutable` moves that failure to analysis time. The analyzer reports a non-final field where it is declared, instead of leaving the bug to surface as a screen that will not refresh.
 
-This rule is deliberately state-management-agnostic: it covers Riverpod, a hand-rolled store, and any plain `...State` value object equally. For Bloc and Cubit, [`prefer_immutable_bloc_state`](/many_lints/docs/rules/bloc-riverpod/prefer-immutable-bloc-state/) recognises the state class through the `Bloc<E, S>` type argument instead, which is exact rather than a name match.
+This rule is deliberately state-management-agnostic: it covers Riverpod, a hand-rolled store, and any plain `...State` value object equally.
 
 **See also:** [`@immutable`](https://api.flutter.dev/flutter/meta/immutable-constant.html)
 
-## Flutter `State` classes are never reported
-
-Every Flutter `State<T>` subclass is named `...State`, and every one of them is *meant* to hold mutable fields — controllers, `setState` values, subscriptions. Annotating one `@immutable` would be wrong, so they are excluded by type, not by name.
-
-Which base classes count as a Flutter `State` follows the shared [`state_base_classes`](/many_lints/docs/configuration/) option, so a project with its own state-like base can point the exclusion at it.
-
-## Classes that already inherit `@immutable` are never reported
-
-Widget names ending in `State` are idiomatic Flutter — `EmptyState`, `ErrorState`, `LoadingState` describe what is rendered, not a state object. Flutter annotates `Widget` `@immutable`, so every `StatelessWidget` already has the annotation this rule asks for, and reporting one would be asking for something it inherits.
-
-The check is on the supertypes, so it is not Flutter-specific: any base class annotated `@immutable` passes it down to its subclasses.
-
-```dart
-// Not reported: StatelessWidget inherits @immutable from Widget.
-class PersonPickerEmptyState extends StatelessWidget {
-  const PersonPickerEmptyState({super.key});
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
-}
-```
-
 ## Don't
 
-```dart
-class LoginEmailState {
-  LoginEmailState({this.isSubmitting = false});
+A notifier's state object with a mutable field. Assigning to it changes the
+value in place, so the reference never changes and nothing rebuilds:
 
+```dart
+class LoginFormState {
+  LoginFormState({this.email = '', this.isSubmitting = false});
+
+  String email;
   bool isSubmitting;
 }
 ```
 
 ## Do
 
+`@immutable` makes the analyzer report the non-final field where it is
+declared, instead of leaving the bug to surface as a screen that will not
+refresh:
+
 ```dart
 import 'package:meta/meta.dart';
 
 @immutable
-class LoginEmailState {
-  const LoginEmailState({this.isSubmitting = false});
+class LoginFormState {
+  const LoginFormState({this.email = '', this.isSubmitting = false});
 
+  final String email;
   final bool isSubmitting;
+
+  LoginFormState copyWith({String? email, bool? isSubmitting}) =>
+      LoginFormState(
+        email: email ?? this.email,
+        isSubmitting: isSubmitting ?? this.isSubmitting,
+      );
 }
 ```
 
-## Turning this rule off
+### Naming other suffixes
 
-To disable this rule:
-
-```yaml
-# many_lints.yaml
-rules:
-  prefer_immutable_state: false
-```
-
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
-
-## Options
+`name_pattern` decides which names count. A project whose value objects end in
+`Status` as well:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -112,6 +96,60 @@ rules:
 
 </TabItem>
 </Tabs>
+
+```dart
+class UploadStatus { // reported under the pattern above
+  UploadStatus({this.progress = 0});
+
+  double progress;
+}
+```
+
+## Known limitations
+
+**Flutter `State` subclasses are never reported.** Every `State<T>` is named
+`...State` and every one of them is *meant* to hold mutable fields —
+controllers, `setState` values, subscriptions. They are excluded by type, not
+by name, and which base classes count follows the shared
+[`state_base_classes`](/many_lints/docs/configuration/) option.
+
+**Classes that already inherit `@immutable` are never reported.** Flutter
+annotates `Widget` `@immutable`, so widget names ending in `State` —
+`EmptyState`, `ErrorState`, `LoadingState` — already carry what this rule asks
+for. The check is on supertypes, so it is not Flutter-specific: any base class
+annotated `@immutable` passes it down.
+
+```dart
+// Not reported: StatelessWidget inherits @immutable from Widget.
+class PersonPickerEmptyState extends StatelessWidget {
+  const PersonPickerEmptyState({super.key});
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+```
+
+**A name matched in its entirety is not reported**, so a class named exactly
+`State` — the bare affix — is never flagged.
+
+For Bloc and Cubit,
+[`prefer_immutable_bloc_state`](/many_lints/docs/rules/bloc-riverpod/prefer-immutable-bloc-state/)
+recognises the state class through the `Bloc<E, S>` type argument instead,
+which is exact rather than a name match.
+
+## Turning this rule off
+
+To disable this rule:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_immutable_state: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|

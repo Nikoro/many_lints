@@ -9,31 +9,50 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
 
-This rule flags a class that explicitly extends `Object`.
-
-## Why use this rule
+Flags a class that explicitly extends `dart:core`'s `Object`.
 
 Every Dart class extends `Object` already, so the clause states the default while looking like a decision. A reader who sees an `extends` expects the superclass to matter, and has to recall that this one does not.
 
-A class extending a *user-declared* `Object` that shadows `dart:core`'s is making a real choice, and is left alone.
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` or `preset: pedantic`.
 
 **See also:** [`Object`](https://api.dart.dev/stable/dart-core/Object-class.html)
 
 ## Don't
 
 ```dart
-class Repository extends Object {}
+class UserRepository extends Object {
+  Future<void> refresh() async {}
+}
 ```
 
 ## Do
 
 ```dart
-class Repository {}
+class UserRepository {
+  Future<void> refresh() async {}
+}
 ```
 
-## Turning this rule off
+## Examples
 
-This rule is in the **`opinionated`** preset.
+### A shadowing `Object` is a real superclass
+
+The rule resolves the type rather than matching the name, so a class extending a locally declared `Object` is making a genuine choice and is left alone:
+
+```dart
+// Accepted — this `Object` is not dart:core's
+class Object {
+  void describe() {}
+}
+
+class Node extends Object {}
+```
+
+## Known limitations
+
+**No quick fix.** Deleting the clause is safe, but the rename that introduced it is often mid-migration, and the author is better placed to say whether the base class is coming back.
+
+## Turning this rule off
 
 To disable this rule:
 

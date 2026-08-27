@@ -14,46 +14,162 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule flags every use of the null-assertion operator `!`.
 
-## Why use this rule
+`!` is not a check — it is an unchecked assertion. It tells the compiler a value is non-null and throws a `TypeError` at runtime when that turns out to be wrong, at exactly the point the value is most likely to be null.
 
-`!` is not a check — it is an unchecked assertion. It tells the compiler a value is non-null and throws a `TypeError` at runtime when that turns out to be wrong.
-
-The type system stops helping at exactly the point the value is most likely to be null. Every other tool Dart gives you for nullability — `?.`, `??`, a null check, pattern matching — either handles the null case or makes the compiler prove it cannot happen. `!` alone converts a question the analyser could have answered into a production crash.
-
-**See also:** [Understanding null safety](https://dart.dev/null-safety/understanding-null-safety), [Sound null safety](https://dart.dev/null-safety)
+This rule is in the **`opinionated`** preset and works out of the box.
 
 ## Don't
 
 ```dart
-// Throws if `user` is null — nothing checked it.
-user!.name;
+class Session {
+  Session(this.user);
 
-// Chained bangs compound the risk: either one can throw.
-config.timeout!.inSeconds;
+  final User? user;
 
-fetchAccount()!.close();
+  String greeting() => 'Welcome, ${user!.name}';   // throws when signed out
+}
+
+class User {
+  const User(this.name);
+
+  final String name;
+}
 ```
 
 ## Do
 
+Pick whichever of these matches what should happen when the value *is* null.
+
+Short-circuit and carry the null forward:
+
 ```dart
-// Short-circuit instead of throwing.
-user?.name;
+class Session {
+  Session(this.user);
 
-// Supply a fallback.
-final seconds = config.timeout?.inSeconds ?? 0;
+  final User? user;
 
-// Or narrow with a check, so the compiler proves it.
-if (user != null) {
-  print(user.name);
+  String? greeting() => user == null ? null : 'Welcome, ${user!.name}';
 }
 ```
 
-Reading a known-present entry out of a `Map` is exempt by default, because `Map`'s index operator is declared nullable no matter what the map holds. The `pedantic` preset disables this exception and therefore bans every postfix `!`:
+Supply a fallback:
 
 ```dart
-// Not reported.
-translations['title']!.toUpperCase();
+class Session {
+  Session(this.user);
+
+  final User? user;
+
+  String greeting() => 'Welcome, ${user?.name ?? 'guest'}';
+}
+```
+
+Or promote to a local, so the compiler proves it and no bang is needed:
+
+```dart
+class Session {
+  Session(this.user);
+
+  final User? user;
+
+  String greeting() {
+    final user = this.user;
+    if (user == null) return 'Welcome, guest';
+
+    return 'Welcome, ${user.name}';
+  }
+}
+```
+
+## More examples
+
+### Chained bangs
+
+Each one is reported separately, and each can throw on its own:
+
+```dart
+class Config {
+  const Config(this.timeout);
+
+  final Duration? timeout;
+}
+
+// Two bangs, two crash sites.
+int seconds(Config? config) => config!.timeout!.inSeconds;
+```
+
+```dart
+int seconds(Config? config) => config?.timeout?.inSeconds ?? 0;
+```
+
+### A bang on a nullable return value
+
+```dart
+class Store {
+  Account? find(String id) => null;
+}
+
+class Account {
+  void close() {}
+}
+
+// Reported — `find` returns null for an unknown id, by design.
+void closeAccount(Store store, String id) => store.find(id)!.close();
+```
+
+```dart
+void closeAccount(Store store, String id) => store.find(id)?.close();
+```
+
+### Map lookups are exempt by default
+
+`Map`'s index operator is declared nullable no matter what the map holds, so
+`map[key]!` is the idiomatic spelling for a key you know is there:
+
+```dart
+// Not reported with the default `ignore_map_indexes: true`.
+String shout(Map<String, String> translations) =>
+    translations['title']!.toUpperCase();
+```
+
+The `pedantic` preset sets `ignore_map_indexes: false`, which bans every
+postfix `!` including this one. Set it yourself to get the same:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_non_null_assertion:
+    ignore_map_indexes: false
+```
+
+### Bangs inside a null check
+
+A bang on a *field* inside `if (field != null)` is reported by default,
+because promotion does not apply to fields — the bang is genuinely what makes
+the code compile, and the field can change between the check and the use:
+
+```dart
+class Session {
+  Session(this.user);
+
+  final User? user;
+
+  String greeting() {
+    if (user != null) {
+      return 'Welcome, ${user!.name}';   // still reported
+    }
+    return 'Welcome, guest';
+  }
+}
+```
+
+If your codebase treats that shape as acceptable, silence just it:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_non_null_assertion:
+    ignore_checked_fields: true
 ```
 
 ## Relationship to the official Dart lints
@@ -74,27 +190,6 @@ There is deliberately **no quick fix**. Rewriting `!` to `?.` changes behaviour:
 For the common case of a `!` on a field inside an `if (field != null)` guard, two [assists](/many_lints/docs/assists/) do the rewrite for you — [Convert null check to pattern](/many_lints/docs/assists/#convert-null-check-to-pattern) (semantics-preserving) and [Convert null check to destructuring pattern](/many_lints/docs/assists/#convert-null-check-to-destructuring-pattern) (narrows the condition). They are assists rather than fixes because both restructure the whole `if`, above the node this rule reports on.
 
 A `!` inside a pattern (`case var x!`) is a `NullAssertPattern`, not the postfix operator, and is not reported.
-
-## Turning this rule off
-
-This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_non_null_assertion: true
-```
-
-To turn it off again:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_non_null_assertion: false
-```
-
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Options
 
@@ -128,6 +223,27 @@ rules:
 |--------|------|---------|-------------|
 | `ignore_checked_fields` | bool | `false` | Don't report a `!` on a field an enclosing `if (field != null)` already checked. Off by default because type promotion does not apply to fields — the bang is genuinely what makes the code compile, and the field can still change between the check and the use |
 | `ignore_map_indexes` | bool | `true` | Allow the idiomatic `map[key]!` spelling. The `pedantic` preset changes this default to `false` |
+
+## Turning this rule off
+
+This rule is in the **`opinionated`** preset, so it is on with
+`preset: opinionated`, or by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_non_null_assertion: true
+```
+
+To turn it off again:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_non_null_assertion: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Related rules
 

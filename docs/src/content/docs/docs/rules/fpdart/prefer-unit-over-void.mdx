@@ -25,26 +25,58 @@ This rule flags an fpdart type parameterised with `void` — `TaskEither<Failure
 
 ## Don't
 
+`void` is not a value, so this signature has nothing for the next step to bind
+— `flatMap` on it is a dead end:
+
 ```dart
-TaskEither<Failure, void> save(User user) => throw UnimplementedError();
+class Failure {
+  const Failure(this.message);
+
+  final String message;
+}
+
+class User {
+  const User(this.id);
+
+  final String id;
+}
+
+class UserRepository {
+  TaskEither<Failure, void> save(User user) => TaskEither.of(null);
+}
 ```
+
+Callers end up unwrapping to `null` and re-deriving "did it succeed" from that
+— the manual result handling fpdart exists to delete.
 
 ## Do
 
+`Unit` is a real type with exactly one value, so the pipeline can carry it:
+
 ```dart
-TaskEither<Failure, Unit> save(User user) => throw UnimplementedError();
+class UserRepository {
+  TaskEither<Failure, Unit> save(User user) => TaskEither.of(unit);
+}
 ```
 
 The value to return is the `unit` constant:
 
 ```dart
-TaskEither<Failure, Unit> save(User user) => TaskEither.tryCatch(
-  () async {
-    await _db.save(user);
+class UserRepository {
+  TaskEither<Failure, Unit> save(User user) => TaskEither.tryCatch(() async {
+    await _write(user);
     return unit;
-  },
-  (error, stackTrace) => Failure.from(error),
-);
+  }, (error, stackTrace) => Failure('$error'));
+
+  Future<void> _write(User user) async {}
+}
+```
+
+And the chain now composes, because `save` hands the next step a value:
+
+```dart
+TaskEither<Failure, String> saveAndConfirm(UserRepository repo, User user) =>
+    repo.save(user).map((_) => 'saved ${user.id}');
 ```
 
 ## Quick fix

@@ -13,33 +13,73 @@ This rule flags a getter and setter pair that does not read and write the same b
 
 This is the copy-paste bug that type checking cannot catch: both members compile, both have the right signature, and the mismatch only shows up as a value that will not stick. It is most common where a class has several similar pairs, which is exactly where it is hardest to spot by reading.
 
-Only a pair whose bodies are a **single field reference** is compared. A getter that computes, or a setter that validates before assigning, has no single field to compare and is skipped rather than guessed at. A compound assignment (`+=`, `??=`) reads the field too, so its asymmetry can be deliberate and is also skipped.
-
 This rule is in the **`recommended`** preset.
 
 ## Don't
 
-```dart
-class Box {
-  int _width = 0;
-  int _height = 0;
+A settings object with four near-identical pairs — the third one was pasted and half-edited:
 
-  int get width => _width;
-  set width(int value) => _height = value;   // writes the wrong field
+```dart
+class LayoutSettings {
+  double _paddingTop = 0;
+  double _paddingBottom = 0;
+  double _marginTop = 0;
+  double _marginBottom = 0;
+
+  double get paddingTop => _paddingTop;
+  set paddingTop(double value) => _paddingTop = value;
+
+  double get paddingBottom => _paddingBottom;
+  set paddingBottom(double value) => _paddingBottom = value;
+
+  double get marginTop => _marginTop;
+  set marginTop(double value) => _marginBottom = value; // writes the wrong field
+
+  double get marginBottom => _marginBottom;
+  set marginBottom(double value) => _marginBottom = value;
 }
 ```
 
 ## Do
 
 ```dart
-class Box {
-  int _width = 0;
-  int _height = 0;
+class LayoutSettings {
+  double _marginTop = 0;
+  double _marginBottom = 0;
 
-  int get width => _width;
-  set width(int value) => _width = value;
+  double get marginTop => _marginTop;
+  set marginTop(double value) => _marginTop = value;
+
+  double get marginBottom => _marginBottom;
+  set marginBottom(double value) => _marginBottom = value;
 }
 ```
+
+The rule reads pairs in classes, mixins and extension types alike.
+
+## Known limitations
+
+Only a pair whose bodies are a **single field reference** is compared, so several deliberate shapes are skipped rather than guessed at:
+
+```dart
+class Temperature {
+  double _celsius = 0;
+  double _fahrenheit = 0;
+
+  // Skipped: the getter computes, so there is no single field to compare.
+  double get celsius => (_fahrenheit - 32) / 1.8;
+  set celsius(double value) => _fahrenheit = value * 1.8 + 32;
+
+  // Skipped: the setter runs more than one statement.
+  double get fahrenheit => _fahrenheit;
+  set fahrenheit(double value) {
+    assert(value > -459.67);
+    _fahrenheit = value;
+  }
+}
+```
+
+A compound assignment (`+=`, `??=`) reads the field too, so its asymmetry with the getter can be deliberate and is skipped as well. A getter with no matching setter, or the reverse, is never reported — there is nothing to compare it against.
 
 ## Configuration
 

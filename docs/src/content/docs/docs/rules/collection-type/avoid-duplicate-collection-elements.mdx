@@ -18,53 +18,97 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule is in the **`pedantic`** preset.
 
-This rule flags a collection literal that contains the same element more than once. The quick fix removes the duplicate, keeping the first occurrence.
-
-## Why use this rule
-
-A hand-written literal listing the same value twice is almost always a mistake — one entry was meant to be a different constant, enum value, or field. Nothing fails: the list simply carries a duplicate, and whatever consumes it does the work twice or shows the entry twice.
-
-Repeated spreads and repeated `if` elements are reported too. Writing `...items` twice either duplicates every value or is dead weight, and the same holds for two identical `if` elements.
-
-Plain values in sets and maps are deliberately out of scope. The analyzer already reports duplicate set elements and duplicate map keys natively, so covering them here would double-report. Spreads inside a set or map *are* checked, since the analyzer does not catch those.
+Flags a list literal that contains the same element twice, and a spread or `if` element repeated in any literal. The quick fix removes the duplicate, keeping the first occurrence.
 
 ## Don't
 
+A repeated constant in a hand-written list is almost always a typo for a third value — nothing fails, the list just carries the entry twice:
+
 ```dart
-const supportedLocales = [
-  Locale('en'),
-  Locale('de'),
-  Locale('en'),
-];
+enum Permission { read, write, delete }
 
-final combined = [...base, ...base];
-
-final entries = [
-  if (items.isNotEmpty) 'value',
-  if (items.isNotEmpty) 'value',
+const defaultPermissions = <Permission>[
+  Permission.read,
+  Permission.write,
+  Permission.read,
 ];
 ```
 
 ## Do
 
 ```dart
-const supportedLocales = [
-  Locale('en'),
-  Locale('de'),
-  Locale('fr'),
+enum Permission { read, write, delete }
+
+const defaultPermissions = <Permission>[
+  Permission.read,
+  Permission.write,
+  Permission.delete,
+];
+```
+
+### A spread written twice
+
+Spreading the same source twice either duplicates every value or is dead weight. This is the shape a merge conflict resolution leaves behind:
+
+```dart
+// Don't
+final visible = [...pinnedItems, ...pinnedItems, ...recentItems];
+
+// Do
+final visible = [...pinnedItems, ...recentItems];
+```
+
+Spreads are checked inside sets and maps too, since the analyzer does not catch those:
+
+```dart
+// Don't
+final allFlags = {...baseFlags, ...baseFlags};
+
+// Do
+final allFlags = {...baseFlags, ...overrideFlags};
+```
+
+### An `if` element copy-pasted
+
+Two identical `if` elements guard on the same condition and emit the same value — usually the second was meant to test the other branch:
+
+```dart
+// Don't
+final rows = [
+  if (isAdmin) 'Manage users',
+  if (isAdmin) 'Manage users',
 ];
 
-final combined = [...base, ...extra];
-
-final entries = [
-  if (items.isNotEmpty) 'value',
-  if (items.isEmpty) 'empty',
+// Do
+final rows = [
+  if (isAdmin) 'Manage users',
+  if (!isAdmin) 'Request access',
 ];
+```
+
+### Skipping repeated literals only
+
+Padding lists and gradient stops legitimately repeat plain values. `ignore_literals: true` exempts them while still reporting a duplicated identifier or property access:
+
+```yaml
+rules:
+  avoid_duplicate_collection_elements:
+    ignore_literals: true
+```
+
+```dart
+// Accepted — plain literals
+const padding = [0, 0, 0, 0];
+
+// Still reported — a repeated named constant
+const sizes = [Spacing.small, Spacing.small];
 ```
 
 ## Known limitations
 
-Elements are compared by source text, which is only sound for expressions that always evaluate the same way. The rule therefore compares only literals, identifiers, and property accesses — `[next(), next()]` is never reported, since two calls may legitimately produce different values. The same applies to spreads: `[...fetch(), ...fetch()]` is left alone.
+**Only stable elements are compared.** Elements are matched by source text, which is sound only for a literal, an identifier, or a property access. A constructor call is never compared, so `[Locale('en'), Locale('en')]` is **not** reported — nor is `[next(), next()]`, since two calls may legitimately return different values. The same holds for spreads: `[...fetch(), ...fetch()]` is left alone.
+
+**Plain values in sets and maps are out of scope.** The analyzer already reports duplicate set elements and duplicate map keys natively, so covering them here would double-report. Only spreads and `if` elements are checked in those literals.
 
 ## Turning this rule off
 

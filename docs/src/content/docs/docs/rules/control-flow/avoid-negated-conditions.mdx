@@ -67,6 +67,58 @@ if (token != null) {
 }
 ```
 
+### `!=` against a real value counts as a negation
+
+Comparing against anything other than `null` or `0` reads as "not this one", so the `else` is again the positive branch:
+
+```dart
+// Don't
+if (order.status != Status.paid) {
+  showPaymentPrompt();
+} else {
+  showReceipt();
+}
+```
+
+```dart
+// Do
+if (order.status == Status.paid) {
+  showReceipt();
+} else {
+  showPaymentPrompt();
+}
+```
+
+Set `report_not_equal: false` to leave every `!=` alone and report only `!`:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_negated_conditions:
+      enabled: true
+      report_not_equal: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_negated_conditions:
+    enabled: true
+    report_not_equal: false
+```
+
+</TabItem>
+</Tabs>
+
+`!= null` and `!= 0` are never reported either way.
+
 ## Enabling this rule
 
 This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
@@ -79,30 +131,6 @@ rules:
 ```
 
 ## Options
-
-<Tabs syncKey="many-lints-config-file">
-<TabItem label="analysis_options.yaml">
-
-```yaml
-# analysis_options.yaml
-many_lints:
-  rules:
-    avoid_negated_conditions:
-      report_not_equal: false
-```
-
-</TabItem>
-<TabItem label="many_lints.yaml">
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_negated_conditions:
-    report_not_equal: false
-```
-
-</TabItem>
-</Tabs>
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|

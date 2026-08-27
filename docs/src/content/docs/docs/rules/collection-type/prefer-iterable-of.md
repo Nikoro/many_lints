@@ -13,56 +13,71 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Collection & Type</span>
 
-`List.from()` and `Set.from()` accept `Iterable<dynamic>` and perform a runtime cast, while `List.of()` and `Set.of()` are statically typed. When the source element type is already assignable to the target type, `.of()` provides compile-time type safety with no runtime overhead.
-
-## Why use this rule
-
-`.from()` silently casts elements at runtime, which can hide type errors until the code is executed. `.of()` catches type mismatches at compile time, making your code safer. Only use `.from()` when you intentionally need to downcast (e.g., `List<int>.from(numList)`).
-
-**See also:** [List.of](https://api.dart.dev/stable/dart-core/List/List.of.html) | [Set.of](https://api.dart.dev/stable/dart-core/Set/Set.of.html)
+Flags `List.from()` and `Set.from()` where the source element type already fits the target. `.from()` takes `Iterable<dynamic>` and casts at runtime; `.of()` is statically typed, so a mismatch is a compile error instead of a crash. The quick fix rewrites it.
 
 ## Don't
 
+Copying a list to make it mutable is the everyday case, and `.from()` throws away the element type on the way through:
+
 ```dart
-void example() {
-  final intList = [1, 2, 3];
-
-  // source is List<int>, target is List<int> — same type
-  final copy = List<int>.from(intList);
-
-  // source is List<int>, target is List<num> — int is subtype of num
-  final numList = List<num>.from(intList);
-
-  // without explicit type arg — inferred as List<int>
-  final inferred = List.from(intList);
-
-  final intSet = <int>{1, 2, 3};
-
-  // source is Set<int>, target is Set<int> — same type
-  final setCopy = Set<int>.from(intSet);
+List<String> editableCopy(List<String> tags) {
+  return List<String>.from(tags);
 }
 ```
 
 ## Do
 
 ```dart
-void example() {
-  final intList = [1, 2, 3];
-
-  final copy = List<int>.of(intList);
-  final numList = List<num>.of(intList);
-  final inferred = List.of(intList);
-
-  final intSet = <int>{1, 2, 3};
-
-  final setCopy = Set<int>.of(intSet);
-  final setInferred = Set.of(intSet);
-
-  // .from() is appropriate for downcasting
-  final numSource = <num>[1, 2, 3];
-  final intCast = List<int>.from(numSource); // runtime cast needed
+List<String> editableCopy(List<String> tags) {
+  return List<String>.of(tags);
 }
 ```
+
+Same result, but the compiler now checks that `tags` really holds `String`s. Under `.from()` a `List<Object>` slips in and fails later, at the first read.
+
+### Widening to a supertype
+
+`.of()` accepts a subtype source, so an upcast copy needs no runtime check either:
+
+```dart
+// Don't
+final scores = <int>[90, 85];
+final asNums = List<num>.from(scores);
+
+// Do
+final asNums = List<num>.of(scores);
+```
+
+### Sets behave the same way
+
+```dart
+// Don't
+final unique = Set<String>.from(tags);
+
+// Do
+final unique = Set<String>.of(tags);
+```
+
+### When `.from()` is the right call
+
+`.from()` earns its runtime cast when you are genuinely narrowing — the source holds a supertype and you are asserting the contents are narrower. That is not reported:
+
+```dart
+final mixed = <num>[1, 2, 3];
+
+// Accepted: int is not guaranteed by the source type, so the cast is the point
+final ints = List<int>.from(mixed);
+```
+
+## Known limitations
+
+**Only `List` and `Set` are checked.** `Map.from()` has no `.of()` counterpart with the same signature and is never reported.
+
+**A `dynamic` target always reports.** `List.from(source)` with no type argument infers `List<dynamic>`, where `.from()` and `.of()` are equivalent — so `.of()` is preferred as the clearer default.
+
+**The source must have a resolvable element type.** A `dynamic` source, or one the analyzer cannot infer, is left alone.
+
+**See also:** [List.of](https://api.dart.dev/stable/dart-core/List/List.of.html) | [Set.of](https://api.dart.dev/stable/dart-core/Set/Set.of.html)
 
 ## Configuration
 

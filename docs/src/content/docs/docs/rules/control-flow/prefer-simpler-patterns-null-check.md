@@ -13,47 +13,109 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-Warns when an if-case pattern uses `!= null && final field` instead of the simpler `final field?` syntax, or when a typed binding already guarantees non-nullability making the `!= null` check redundant. Dart 3 patterns offer concise null-checking syntax that should be preferred.
+This rule flags an if-case pattern that spells a null check as `!= null && final x` where Dart has a shorter form that means the same thing.
 
-## Why use this rule
+Two shapes are reported:
 
-The `!= null && final field` pattern is verbose and can be replaced with `final field?` which does the same thing in fewer characters. When a type annotation is already present (e.g., `final String field`), the `!= null` check is doubly redundant since the non-nullable type already excludes null. Using the simpler pattern makes the code more idiomatic and easier to read.
+- `!= null && final x` — the postfix `?` in `final x?` already binds only when the value is non-null.
+- `!= null && final String x` — the type annotation is non-nullable, so the `!= null` was already implied.
 
 **See also:** [Patterns](https://dart.dev/language/patterns)
 
 ## Don't
 
-```dart
-void bad(WithField object) {
-  // Use `final field?` instead
-  if (object.field case != null && final field) {
-    print(field);
-  }
+Reading a nullable field through an if-case, then testing it for null on the way in:
 
-  // Type annotation already guarantees non-null
-  if (object.field case != null && final String field) {
-    print(field);
+```dart
+class Session {
+  const Session(this.token);
+
+  final String? token;
+}
+
+void authorize(Session session) {
+  if (session.token case != null && final token) {
+    print('Bearer $token');
+  }
+}
+```
+
+The typed form has the same redundancy — `String` already excludes null:
+
+```dart
+class Session {
+  const Session(this.token);
+
+  final String? token;
+}
+
+void authorize(Session session) {
+  if (session.token case != null && final String token) {
+    print('Bearer $token');
   }
 }
 ```
 
 ## Do
 
+The quick fix rewrites both. `final token?` binds only when the value is non-null:
+
 ```dart
-void good(WithField object) {
-  // Nullable binding with postfix ?
-  if (object.field case final field?) {
-    print(field);
+class Session {
+  const Session(this.token);
+
+  final String? token;
+}
+
+void authorize(Session session) {
+  if (session.token case final token?) {
+    print('Bearer $token');
+  }
+}
+```
+
+And the typed form drops the check, keeping the annotation:
+
+```dart
+class Session {
+  const Session(this.token);
+
+  final String? token;
+}
+
+void authorize(Session session) {
+  if (session.token case final String token) {
+    print('Bearer $token');
+  }
+}
+```
+
+## Known limitations
+
+Only `!= null && <binding>` is reported, and only when the right operand binds a
+variable. These stay as they are:
+
+```dart
+class Session {
+  const Session(this.token);
+
+  final String? token;
+}
+
+void checks(Session session, int value) {
+  // Nothing is bound, so there is no shorter form.
+  if (session.token case != null) {
+    print('signed in');
   }
 
-  // Typed binding (type already excludes null)
-  if (object.field case final String field) {
-    print(field);
+  // An `||` is not the same test, and is left alone.
+  if (session.token case != null || '') {
+    print('either');
   }
 
-  // Plain null check only
-  if (object.field case != null) {
-    print('not null');
+  // No null check involved.
+  if (value case > 0 && < 10) {
+    print('in range');
   }
 }
 ```

@@ -9,36 +9,111 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Testing Rules</span>
 
-Flags `expect()` and `expectLater()` calls where the second argument is a raw literal value instead of a `Matcher` subclass. Using raw literals like `expect(x, 1)` produces less informative failure messages than using matchers like `expect(x, equals(1))`.
+Flags an `expect()` or `expectLater()` call whose second argument is a plain value rather than a `Matcher`.
 
-## Why use this rule
-
-When a test fails, matchers provide descriptive output such as "Expected: has length of 3 / Actual: [1, 2]" instead of just "Expected: 3 / Actual: 2". This makes debugging faster. Using matchers also enables richer assertions like `hasLength()`, `contains()`, and `isA<T>()` that raw values cannot express.
-
-**See also:** [test package - Matchers](https://pub.dev/packages/test#matchers)
+`expect(x, 1)` passes and fails correctly, but when it fails all it can say is `Expected: <1> Actual: <2>`. A matcher describes the assertion, so the failure names it.
 
 ## Don't
 
+Each of these asserts the right thing and reports it badly:
+
 ```dart
-expect(scores.length, 1);
-expect(value, 'hello');
-expect(true, true);
-expect(scores, [7, 8, 9]);
-expect(maybeNull, null);
-expectLater(scores.length, 1);
+void main() {
+  test('keeps three scores', () {
+    final scores = [7, 8, 9];
+
+    expect(scores.length, 3);
+    expect(scores, [7, 8, 9]);
+    expect(scores.isEmpty, false);
+  });
+}
 ```
+
+`expect(scores.length, 3)` failing prints `Expected: <3> Actual: <2>` — the
+count, not the list. You then go and print the list by hand.
 
 ## Do
 
+The same three assertions, said with matchers:
+
 ```dart
-expect(scores, hasLength(1));
-expect(value, equals('hello'));
-expect(true, isTrue);
-expect(scores, equals([7, 8, 9]));
-expect(maybeNull, isNull);
-expect(value, isA<String>());
-expectLater(scores, hasLength(3));
+void main() {
+  test('keeps three scores', () {
+    final scores = [7, 8, 9];
+
+    expect(scores, hasLength(3));
+    expect(scores, equals([7, 8, 9]));
+    expect(scores, isNotEmpty);
+  });
+}
 ```
+
+Now the first one failing prints
+`Expected: an object with length of <3> Actual: [7, 8]  Which: has length of <2>`.
+
+### The everyday swaps
+
+| Instead of | Write |
+|------------|-------|
+| `expect(value, 'hello')` | `expect(value, equals('hello'))` |
+| `expect(flag, true)` | `expect(flag, isTrue)` |
+| `expect(flag, false)` | `expect(flag, isFalse)` |
+| `expect(result, null)` | `expect(result, isNull)` |
+| `expect(items.length, 3)` | `expect(items, hasLength(3))` |
+| `expect(items, [1, 2])` | `expect(items, equals([1, 2]))` |
+
+```dart
+void main() {
+  test('parses a greeting', () {
+    final value = 'hello';
+    final result = null;
+    final flag = true;
+
+    expect(value, equals('hello'));
+    expect(flag, isTrue);
+    expect(result, isNull);
+  });
+}
+```
+
+### `expectLater` too
+
+The rule reads the second argument of both functions:
+
+```dart
+void main() {
+  test('resolves to three scores', () async {
+    // Don't
+    await expectLater(loadScores(), completion([7, 8, 9]));
+
+    // Do
+    await expectLater(loadScores(), completion(equals([7, 8, 9])));
+  });
+}
+
+Future<List<int>> loadScores() async => [7, 8, 9];
+```
+
+### Never reported
+
+A `Matcher` in any form satisfies the rule — including one held in a variable,
+and `isA<T>()`:
+
+```dart
+void main() {
+  test('accepts a matcher from a variable', () {
+    final expected = equals(42);
+
+    expect(1 + 41, expected);
+    expect('hello', isA<String>());
+  });
+}
+```
+
+A `reason:` named argument is ignored, since the rule only reads the second
+positional argument.
+
+**See also:** [test package - Matchers](https://pub.dev/packages/test#matchers)
 
 ## Configuration
 

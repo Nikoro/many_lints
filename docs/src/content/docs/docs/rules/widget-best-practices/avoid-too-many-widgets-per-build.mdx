@@ -12,59 +12,15 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule flags a `build` method that creates more widgets than the configured budget.
-
-## Why use this rule
+Flags a build method that creates more than `max_widgets` widgets (default `20`).
 
 This is the breadth counterpart to [`avoid_deep_widget_nesting`](/many_lints/docs/rules/widget-best-practices/avoid-deep-widget-nesting/). A tree can be shallow and still be too much for one method: thirty widgets in one `build` is a screen, a card, a header and a footer sharing a single scope, where nothing has a name and nothing can be reused or tested on its own.
 
-The two metrics catch different problems, and a build can fail either without the other. Depth is about how far right the code runs; this is about how much of the screen one method owns.
-
-Build methods are matched on their **return type**, not their name, so `build`, `buildHeader` and a `Widget _row()` helper are all measured — an extracted helper does not escape the budget just by being called something else. A `build` that returns something other than a widget is never measured.
-
-Widgets built inside a `builder:` closure are counted separately, since that closure is its own build function.
+Methods are matched on their **return type**, not their name — `build`, `buildHeader` and a `Widget _row()` helper are all measured, so an extracted helper does not escape the budget just by being called something else.
 
 This rule is in the **`pedantic`** preset: a widget budget is a house style.
 
-## Don't
-
-```dart
-@override
-Widget build(BuildContext context) => Column(
-      children: [
-        // the header: 6 widgets
-        // the form: 12 widgets
-        // the footer: 8 widgets
-        // ... 30 in one method, none of them named
-      ],
-    );
-```
-
-## Do
-
-```dart
-@override
-Widget build(BuildContext context) => const Column(
-      children: [
-        _SettingsHeader(),
-        _SettingsForm(),
-        _SettingsFooter(),
-      ],
-    );
-```
-
 ## Enabling this rule
-
-This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_too_many_widgets_per_build:
-    enabled: true
-```
-
-## Options
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -74,7 +30,8 @@ rules:
 many_lints:
   rules:
     avoid_too_many_widgets_per_build:
-      max_widgets: 25
+      enabled: true
+      max_widgets: 20
 ```
 
 </TabItem>
@@ -84,11 +41,89 @@ many_lints:
 # many_lints.yaml
 rules:
   avoid_too_many_widgets_per_build:
-    max_widgets: 25
+    enabled: true
+    max_widgets: 20
 ```
 
 </TabItem>
 </Tabs>
+
+## Don't
+
+With `max_widgets: 6`, this build creates 9 and is reported. The diagnostic names both numbers, so you always know how far over you are:
+
+```dart
+@override
+Widget build(BuildContext context) => Column(
+      children: [
+        Text('Settings'),
+        Divider(),
+        Row(children: [Icon(Icons.person), Text('Account')]),
+        Row(children: [Icon(Icons.lock), Text('Privacy')]),
+      ],
+    );
+```
+
+## Do
+
+Give each group a name. The outer build is now 4 widgets, and each part can be `const`, reused, and tested on its own:
+
+```dart
+@override
+Widget build(BuildContext context) => const Column(
+      children: [
+        Text('Settings'),
+        Divider(),
+        _AccountRow(),
+        _PrivacyRow(),
+      ],
+    );
+
+class _AccountRow extends StatelessWidget {
+  const _AccountRow();
+
+  @override
+  Widget build(BuildContext context) =>
+      Row(children: [Icon(Icons.person), Text('Account')]);
+}
+
+class _PrivacyRow extends StatelessWidget {
+  const _PrivacyRow();
+
+  @override
+  Widget build(BuildContext context) =>
+      Row(children: [Icon(Icons.lock), Text('Privacy')]);
+}
+```
+
+### A builder closure has its own budget
+
+Widgets built inside a `builder:` are counted separately, because that closure is its own build function. A list with a rich item template does not blow the page's budget:
+
+```dart
+@override
+Widget build(BuildContext context) => ListView.builder(
+      itemCount: 100,
+      // These widgets count towards the closure, not towards build()
+      itemBuilder: (context, index) => Card(
+        child: Row(
+          children: [Icon(Icons.star), Text('$index'), Icon(Icons.chevron_right)],
+        ),
+      ),
+    );
+```
+
+### Renaming the method does not help
+
+The budget follows the return type, so splitting a long `build` into `Widget _buildForm()` in the same class buys nothing — each helper is measured on its own, and [`avoid_returning_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-returning-widgets/) reports the helper besides. Extract a widget class instead.
+
+## Known limitations
+
+Only methods are measured. A top-level `Widget page() => ...` function is not.
+
+Widgets built through a factory or returned by a helper you call are attributed to wherever the constructor literally appears, not to the call site.
+
+## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|

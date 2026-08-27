@@ -23,21 +23,46 @@ This is one of four `Do` pitfalls that fpdart documents in its own `do_construct
 
 ## Don't
 
+The inner block short-circuits on its own, so a missing `port` produces a
+`None` that the *outer* block receives as an ordinary value and carries on
+with:
+
 ```dart
-Option.Do(($) => $(Option.Do(($) => $(testOption))));
+Option<String> endpoint(Option<String> host, Option<int> port) =>
+    Option.Do(($) {
+      final address = $(
+        Option.Do(($) {
+          final h = $(host);
+          final p = $(port);
+          return '$h:$p';
+        }),
+      );
+      return 'https://$address';
+    });
 ```
 
 ## Do
 
+Extract every step in the same frame, so any failure aborts the whole
+pipeline:
+
 ```dart
-Option.Do(($) => $(testOption));
+Option<String> endpoint(Option<String> host, Option<int> port) =>
+    Option.Do(($) {
+      final h = $(host);
+      final p = $(port);
+      return 'https://$h:$p';
+    });
 ```
 
-With several steps, extract each one in the same frame:
+An async pipeline is the same, awaiting each extraction:
 
 ```dart
-TaskEither.Do(($) async {
-  final file = await $(fileAt(path));
+TaskEither<String, String> load(
+  TaskEither<String, String> path,
+  TaskEither<String, String> Function(String) readAsString,
+) => TaskEither.Do(($) async {
+  final file = await $(path);
   final content = await $(readAsString(file));
   return content;
 });

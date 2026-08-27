@@ -18,8 +18,6 @@ This rule flags a function that executes more statements than the configured bud
 
 This is the counterpart to [`avoid_long_functions`](/many_lints/docs/rules/code-quality/avoid-long-functions/), measuring what a function *does* rather than how much room it takes. The two disagree in exactly the useful cases: a function of twenty short statements is long by both measures, while one holding a single wide widget tree is long by lines only, and splitting it would help nobody.
 
-Statements are counted through nested blocks, so a loop body counts toward the function that owns it. A nested function expression is counted on its own — a callback is separate work, not more of the enclosing function's.
-
 This rule is in the **`pedantic`** preset: a budget is a house style, and the right number differs per codebase.
 
 ## Don't
@@ -33,7 +31,7 @@ void handleSubmit(String email, String password) {
   final emailValid = trimmedEmail.contains('@');
   final passwordValid = trimmedPassword.length >= 8;
   final ready = emailValid && passwordValid;
-  print(ready); // LINT: 6 statements exceeds the budget of 5
+  print(ready); // LINT: 6 statements, over the limit of 5
 }
 ```
 
@@ -57,6 +55,45 @@ void handleSubmit(String email, String password) {
 
 void _submit(({String email, String password}) credentials) {}
 ```
+
+### Nesting does not hide statements
+
+Statements are counted through blocks, so a loop body counts toward the function that owns it. The `for`, the `if` and the `continue` each count as one on top of what they contain — this is 6:
+
+```dart
+void report(List<String> lines) {
+  var total = 0;                       // 1
+  for (final line in lines) {          // 2
+    if (line.isEmpty) {                // 3
+      continue;                        // 4
+    }
+    total += line.length;              // 5
+  }
+  print(total);                        // 6
+}
+```
+
+### A callback is measured on its own
+
+A nested function expression is separate work, not more of the enclosing function's, so it is not counted into the caller:
+
+```dart
+void install(List<String> names) {
+  names.forEach((name) {
+    final trimmed = name.trim();
+    print(trimmed);
+    print(trimmed.length);
+  });
+}
+```
+
+`install` counts **1** statement — the `forEach` call.
+
+## Known limitations
+
+**Only block bodies are counted.** An expression body (`=>`) has one expression and is never reported, however wide it is.
+
+**Constructors are checked too**, alongside functions and methods; a constructor with a long body is reported at its name.
 
 ## Enabling this rule
 

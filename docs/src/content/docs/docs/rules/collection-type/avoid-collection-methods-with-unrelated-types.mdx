@@ -12,80 +12,111 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Collection & Type</span>
 
-Calling collection methods like `contains()`, `remove()`, or `containsKey()` with an argument whose type is unrelated to the collection's type parameter will always return `null`, `false`, or `-1`. This indicates a logical error since Dart's type system allows it due to these methods accepting `Object?`.
-
-:::note[Related Dart SDK rule]
-The SDK rule [`collection_methods_unrelated_type`](https://dart.dev/tools/linter-rules/collection_methods_unrelated_type) has broader default coverage, including `Queue.remove()` and additional type-parameter reasoning. This rule adds two things the SDK rule does not provide: a diagnostic that names both involved types and the optional `strict: true` mode, which reports a `dynamic` argument passed to a collection with a known element type.
-
-Use the SDK rule for the broadest conservative check. Keep this rule when the type-rich diagnostic or strict handling of `dynamic` is valuable. Enabling both can produce duplicate diagnostics for their shared cases.
-
-If you are migrating from the older `iterable_contains_unrelated_type` or `list_remove_unrelated_type` lints, note that both were **removed in Dart 3.3** and replaced by `collection_methods_unrelated_type`.
-:::
-
-## Why use this rule
-
-Methods like `List.contains()` and `Map.containsKey()` accept `Object?` for historical reasons, so the compiler won't catch type mismatches. Passing a `String` to `List<int>.contains()` compiles fine but always returns `false`, hiding a bug.
-
-**See also:** [Dart generics](https://dart.dev/language/generics) | [Dart lint: collection_methods_unrelated_type](https://dart.dev/tools/linter-rules/collection_methods_unrelated_type)
+Flags `contains`, `remove`, `lookup`, `containsKey`, `containsValue` and map indexing called with an argument whose type is unrelated to the collection's element or key type. These methods take `Object?`, so the compiler accepts the call — and it silently answers `false`, `null` or nothing at all.
 
 ## Don't
 
+The usual cause is an id whose type changed. The lookup compiles, returns `false` forever, and the feature quietly stops working:
+
 ```dart
-void example() {
-  final list = <int>[1, 2, 3];
-
-  // String argument on int list
-  list.contains('a');
-  list.remove('a');
-
-  final set = <int>{1, 2, 3};
-
-  // String argument on int set
-  set.contains('a');
-  set.lookup('a');
-
-  final map = <int, String>{};
-
-  // String key on int-keyed map
-  map.containsKey('a');
-
-  // int value on String-valued map
-  map.containsValue(42);
-
-  // String key on int-keyed map
-  final value = map['a'];
-  map.remove('a');
+bool isSelected(List<int> selectedIds, String id) {
+  return selectedIds.contains(id);
 }
 ```
 
 ## Do
 
+Convert at the boundary so the types line up:
+
 ```dart
-void example() {
-  final list = <int>[1, 2, 3];
-  list.contains(1);
-  list.remove(2);
-  list.indexOf(3);
-
-  final set = <int>{1, 2, 3};
-  set.contains(1);
-
-  final map = <int, String>{};
-  map.containsKey(1);
-  map.containsValue('hello');
-  final value = map[1];
-  map.remove(1);
-
-  // Subtypes are fine
-  final numList = <num>[1, 2, 3];
-  numList.contains(42); // int is subtype of num
-
-  // Dynamic is allowed with the default configuration.
-  // It is reported when strict: true is enabled.
-  dynamic unknown = 42;
-  list.contains(unknown);
+bool isSelected(List<int> selectedIds, String id) {
+  final parsed = int.tryParse(id);
+  return parsed != null && selectedIds.contains(parsed);
 }
 ```
+
+### Map keys and values
+
+`containsKey` and `remove` are checked against the key type, `containsValue` against the value type:
+
+```dart
+// Don't
+final labels = <int, String>{1: 'One'};
+
+labels.containsKey('1');     // key type is int
+labels.containsValue(42);    // value type is String
+labels.remove('1');
+```
+
+```dart
+// Do
+final labels = <int, String>{1: 'One'};
+
+labels.containsKey(1);
+labels.containsValue('One');
+labels.remove(1);
+```
+
+Indexing a map is checked the same way, which catches the commonest form of the mistake:
+
+```dart
+// Don't
+final label = labels['1'];   // always null
+
+// Do
+final label = labels[1];
+```
+
+### Subtypes are fine
+
+Relatedness runs in both directions, so a subtype argument is accepted:
+
+```dart
+final measurements = <num>[1, 2, 3];
+
+measurements.contains(42);      // int is a num — accepted
+measurements.contains(1.5);     // double is a num — accepted
+```
+
+### Reporting `dynamic` arguments
+
+A `dynamic` argument is not reported by default — its runtime value may well be the right type. Turn `strict` on in a codebase that has eliminated `dynamic` and wants the stragglers surfaced:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_collection_methods_with_unrelated_types:
+    strict: true
+```
+
+```dart
+final ids = <int>[1, 2, 3];
+dynamic raw = readFromCache();
+
+// Reported only with strict: true
+ids.contains(raw);
+
+// Do — narrow before the lookup
+if (raw is int) {
+  ids.contains(raw);
+}
+```
+
+## Known limitations
+
+**Type parameters are never reported**, in strict mode or not: `List<T>.contains(value)` cannot be judged until `T` is chosen at the call site.
+
+**A `dynamic` collection tells you nothing.** `List<dynamic>.contains(anything)` is always accepted, since the element type carries no constraint to violate.
+
+**Two unrelated classes are compared by hierarchy only.** Neither being a subtype of the other is enough to report — unlike [`avoid_unrelated_type_casts`](/many_lints/docs/rules/collection-type/avoid-unrelated-type-casts/), this rule does not first ask whether a third class could implement both.
+
+:::note[Related Dart SDK rule]
+The SDK rule [`collection_methods_unrelated_type`](https://dart.dev/tools/linter-rules/collection_methods_unrelated_type) has broader default coverage, including `Queue.remove()` and additional type-parameter reasoning. This rule adds two things the SDK rule does not: a diagnostic that names both involved types, and the optional `strict: true` mode above.
+
+Use the SDK rule for the broadest conservative check. Keep this one when the type-rich diagnostic or strict handling of `dynamic` is valuable. Enabling both produces duplicate diagnostics for their shared cases.
+
+Migrating from `iterable_contains_unrelated_type` or `list_remove_unrelated_type`? Both were **removed in Dart 3.3** and replaced by `collection_methods_unrelated_type`.
+:::
 
 ## Turning this rule off
 

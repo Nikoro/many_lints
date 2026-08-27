@@ -28,13 +28,42 @@ Only boundary classes are checked. This is a statement about architecture, not a
 
 ## Don't
 
+The signature says `Future<User>`, which promises there is nothing to handle.
+The caller finds out otherwise at runtime:
+
 ```dart
+class Failure {
+  const Failure(this.message);
+
+  final String message;
+}
+
+class User {
+  const User(this.id);
+
+  final String id;
+}
+
+class UserLoadException implements Exception {
+  const UserLoadException(this.cause);
+
+  final Object cause;
+}
+
+class Api {
+  Future<User> getUser(String id) async => User(id);
+}
+
 class UserRepository {
+  UserRepository(this._api);
+
+  final Api _api;
+
   Future<User> load(String id) async {
     try {
       return await _api.getUser(id);
     } catch (e) {
-      throw UserLoadException(e);   // the caller still cannot see this coming
+      throw UserLoadException(e); // the caller still cannot see this coming
     }
   }
 }
@@ -42,26 +71,71 @@ class UserRepository {
 
 ## Do
 
+Put the failure in the type, so the compiler enforces what the docstring used
+to ask for:
+
 ```dart
 class UserRepository {
+  UserRepository(this._api);
+
+  final Api _api;
+
   TaskEither<Failure, User> load(String id) => TaskEither.tryCatch(
-        () => _api.getUser(id),
-        (error, stackTrace) => Failure.from(error),
-      );
+    () => _api.getUser(id),
+    (error, stackTrace) => Failure('$error'),
+  );
 }
 ```
 
 Discriminating known exceptions belongs in the error mapper:
 
 ```dart
-TaskEither.tryCatch(
-  () => authClient.signIn(email, password),
+class AuthException implements Exception {
+  const AuthException(this.message);
+
+  final String message;
+}
+
+TaskEither<Failure, User> signIn(Api api, String id) => TaskEither.tryCatch(
+  () => api.getUser(id),
   (error, stackTrace) => switch (error) {
-    AuthException(:final message) => AuthFailure(message),
-    _ => Failure.from(error),
+    AuthException(:final message) => Failure(message),
+    _ => Failure('$error'),
   },
 );
 ```
+
+### Private methods
+
+Private methods are skipped by default — they are implementation details, not
+the contract callers see:
+
+```dart
+class UserRepository {
+  UserRepository(this._api);
+
+  final Api _api;
+
+  Future<User?> _tryLoad(String id) async {
+    try {
+      return await _api.getUser(id);
+    } catch (e) {
+      return null; // not reported
+    }
+  }
+}
+```
+
+With `ignore_private: false`:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_task_either_over_try_catch:
+    ignore_private: false
+```
+
+those are reported too.
 
 ## Known limitations
 
@@ -71,8 +145,6 @@ A `try`/`finally` with no `catch` is cleanup, not failure handling, and is never
 
 A `try` inside a closure belongs to that closure's own control flow — often a genuinely best-effort adapter — and is not what the method's signature promises, so it does not count.
 
-Private methods are skipped by default: they are implementation details of the class rather than part of the contract callers see. Set `ignore_private: false` to report them too.
-
 No quick fix is offered. Converting means choosing the failure type, writing the error mapper, and updating every call site — a change to make deliberately.
 
 ## Going the other way
@@ -81,25 +153,24 @@ This rule asks you to replace a hand-written `try`/`catch` with `TaskEither.tryC
 Once you have, the **"Expand `tryCatch` into `try`/`catch`"** assist takes you back —
 put the cursor on the `tryCatch` and pick it from the lightbulb menu.
 
-That is deliberately the opposite of what this rule prefers, so it is a
-deliberate gesture rather than a quick fix. Reach for it when a single `onError`
-callback cannot express what you need: logging, retries, or handling per
-exception type.
+Reach for it when a single `onError` callback cannot express what you need:
+logging, retries, or handling per exception type.
 
 ```dart
 // Before — what this rule asked you to write.
-TaskEither<Failure, User> fetchUser(String id) => TaskEither.tryCatch(
-      () => api.getUser(id),
-      (error, stackTrace) => Failure.from(error),
-    );
+TaskEither<Failure, User> fetchUser(Api api, String id) => TaskEither.tryCatch(
+  () => api.getUser(id),
+  (error, stackTrace) => Failure('$error'),
+);
 
 // After — the try stays inside the lazy constructor, because hoisting it into
 // the enclosing function would run the effect eagerly.
-TaskEither<Failure, User> fetchUser(String id) => TaskEither(() async {
+TaskEither<Failure, User> fetchUser(Api api, String id) =>
+    TaskEither(() async {
       try {
         return right(await api.getUser(id));
       } catch (error) {
-        return left(Failure.from(error));
+        return left(Failure('$error'));
       }
     });
 ```
@@ -110,9 +181,9 @@ methods, so a synchronous `Either` or `Option` is outside its scope. The two are
 listed on the [assists page](/many_lints/docs/assists/#expand-trycatch-into-trycatch)
 with their own before/after examples.
 
-Because `try` is a *statement*, the assist is offered only when the `tryCatch` is a whole function body. Mid-pipeline — `Either.tryCatch(...).flatMap(f)` — there is nowhere to put a statement, and the only expression-level equivalent is an immediately-invoked closure, which is worse than what it replaces; those are declined. A tear-off `onError` (`Failure.from`) is declined too, as it has no parameter names or body to move into the `catch`.
+The assist is offered only when the `tryCatch` is a whole function body — `try` is a statement, so mid-pipeline (`Either.tryCatch(...).flatMap(f)`) there is nowhere to put one. A tear-off `onError` (`Failure.from`) is declined too, having no parameter names or body to move into the `catch`.
 
-A stack-trace parameter that `onError` declares but never reads is dropped from the generated clause. `onError` may carry an unused parameter, but `catch` may not — keeping it would hand back code with a fresh `unused_catch_stack` warning that the original could not have had.
+A stack-trace parameter that `onError` declares but never reads is dropped from the generated clause, since `catch` may not carry an unused parameter.
 
 ## Options
 

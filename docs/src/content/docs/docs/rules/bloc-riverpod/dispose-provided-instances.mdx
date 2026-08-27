@@ -16,76 +16,152 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-This rule flags instances created inside Riverpod provider callbacks or Notifier `build()` methods that have a `dispose()`, `close()`, or `cancel()` method but are not cleaned up via `ref.onDispose()`. It recognizes tear-off, lambda, and block body cleanup patterns.
+This rule flags a local variable created inside a Riverpod provider callback or a Notifier `build()` whose type declares `dispose()`, `close()` or `cancel()`, when no matching `ref.onDispose(...)` registers its cleanup. A quick fix inserts the `ref.onDispose` call.
 
 ## Why use this rule
 
-When a provider creates a disposable resource (like a controller, stream subscription, or service with a `close()` method) without registering cleanup, the resource leaks when the provider is destroyed. This leads to memory leaks and resource exhaustion over time. The `ref.onDispose()` callback ensures proper cleanup regardless of how or when the provider is disposed.
+A provider is torn down when nothing watches it any more — an `autoDispose` provider on every navigation, a family entry when its argument goes out of use. Anything the provider allocated goes with it *only if* it was registered: Riverpod has no way to know that the `StreamSubscription` you opened belongs to this provider unless `ref.onDispose` says so.
+
+Without it the subscription keeps firing, the timer keeps ticking and the controller keeps its listeners — against a provider that no longer exists. The symptom is usually a callback running after the screen is gone, not an obvious leak.
 
 **See also:** [Riverpod automatic disposal](https://riverpod.dev/docs/concepts2/auto_dispose)
 
-## Don't
+## Examples
+
+### A subscription opened in a provider
 
 ```dart
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+// Don't — the subscription outlives the provider
 import 'package:riverpod/riverpod.dart';
 
-class DisposableService {
-  void dispose() {}
-  String get value => 'hello';
-}
-
-// Instance has dispose() but ref.onDispose is not called
-final badProvider = Provider<DisposableService>((ref) {
-  final instance = DisposableService();
-  return instance;
+final locationProvider = Provider<StreamSubscription<Position>>((ref) {
+  final subscription = positionStream().listen(handlePosition);   // LINT
+  return subscription;
 });
+```
 
-// Notifier build() creates disposable without ref.onDispose
-class BadNotifier extends Notifier<DisposableService> {
+```dart
+// Do
+import 'package:riverpod/riverpod.dart';
+
+final locationProvider = Provider<StreamSubscription<Position>>((ref) {
+  final subscription = positionStream().listen(handlePosition);
+  ref.onDispose(subscription.cancel);
+  return subscription;
+});
+```
+
+### The same thing in a Notifier's build()
+
+`build()` re-runs on every invalidation, so an unregistered allocation is created again each time and none of the old ones ever stop:
+
+```dart
+// Don't
+import 'package:riverpod/riverpod.dart';
+
+class ClockNotifier extends Notifier<int> {
   @override
-  DisposableService build() {
-    final instance = DisposableService();
-    return instance;
+  int build() {
+    final timer = Timer.periodic(const Duration(seconds: 1), _tick);  // LINT
+    return 0;
   }
+
+  void _tick(Timer timer) => state++;
 }
 ```
 
-## Do
-
 ```dart
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+// Do
 import 'package:riverpod/riverpod.dart';
 
-class DisposableService {
-  void dispose() {}
-  String get value => 'hello';
-}
-
-// Using ref.onDispose with tear-off
-final goodProvider = Provider<DisposableService>((ref) {
-  final instance = DisposableService();
-  ref.onDispose(instance.dispose);
-  return instance;
-});
-
-// Using ref.onDispose with lambda
-final goodLambdaProvider = Provider<DisposableService>((ref) {
-  final instance = DisposableService();
-  ref.onDispose(() => instance.dispose());
-  return instance;
-});
-
-// Notifier build() with ref.onDispose
-class GoodNotifier extends Notifier<DisposableService> {
+class ClockNotifier extends Notifier<int> {
   @override
-  DisposableService build() {
-    final instance = DisposableService();
-    ref.onDispose(instance.dispose);
-    return instance;
+  int build() {
+    final timer = Timer.periodic(const Duration(seconds: 1), _tick);
+    ref.onDispose(timer.cancel);
+    return 0;
   }
+
+  void _tick(Timer timer) => state++;
 }
 ```
+
+### Three accepted forms of registration
+
+A tear-off, an arrow lambda and a block body all count:
+
+```dart
+// All accepted
+import 'package:riverpod/riverpod.dart';
+
+final aProvider = Provider<HttpClient>((ref) {
+  final client = HttpClient();
+  ref.onDispose(client.close);                    // tear-off
+  return client;
+});
+
+final bProvider = Provider<HttpClient>((ref) {
+  final client = HttpClient();
+  ref.onDispose(() => client.close());            // arrow lambda
+  return client;
+});
+
+final cProvider = Provider<HttpClient>((ref) {
+  final client = HttpClient();
+  ref.onDispose(() {                              // block body
+    client.close();
+  });
+  return client;
+});
+```
+
+### A project's own cleanup method
+
+If your types shut down through a name Riverpod does not know, add it. `additional_cleanup_methods` extends the standard list rather than replacing it:
+
+```yaml
+# many_lints.yaml
+rules:
+  dispose_provided_instances:
+    additional_cleanup_methods: [shutdown]
+```
+
+```dart
+// Don't
+import 'package:riverpod/riverpod.dart';
+
+class Worker {
+  void shutdown() {}
+}
+
+final workerProvider = Provider<Worker>((ref) {
+  final worker = Worker();                        // LINT
+  return worker;
+});
+```
+
+```dart
+// Do
+import 'package:riverpod/riverpod.dart';
+
+class Worker {
+  void shutdown() {}
+}
+
+final workerProvider = Provider<Worker>((ref) {
+  final worker = Worker();
+  ref.onDispose(worker.shutdown);
+  return worker;
+});
+```
+
+Names added this way are **appended**, so a type declaring both `close()` and your `shutdown()` is still expected to be closed — the standard names win.
+
+## Known limitations
+
+Only a local variable declared inside the callback is tracked. An instance created and returned in one expression (`Provider((ref) => HttpClient())`) has no name to register, so it is not reported.
+
+Registration is matched by the variable's name and cleanup method, textually: `ref.onDispose(client.close)` disposes `client`, but a helper that takes the instance and registers it internally (`registerCleanup(ref, client)`) is not recognised, and the variable is reported as undisposed.
 
 ## Turning this rule off
 

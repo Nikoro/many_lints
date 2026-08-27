@@ -13,45 +13,140 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Widget Replacement</span>
 
-Flags `Padding` widgets whose child already supports a `padding` parameter (such as `Container`, `Card`, `ListView`, etc.). Instead of wrapping in `Padding`, you should pass padding directly to the child widget.
+Flags a `Padding` whose child already takes a `padding` argument of its own —
+`Container`, `ListView`, `GridView`, `SingleChildScrollView`,
+`ReorderableListView`, `Chip`, and any of your own widgets that expose one. The
+wrapper is a whole extra render object doing what the child would have done for
+free.
+
+The check is structural, not a fixed list: the rule looks at the child's
+constructors and reports if any of them declares a named `padding` parameter.
 
 ## Why use this rule
 
-Many Flutter widgets accept a `padding` parameter in their constructor. Wrapping them in a `Padding` widget adds an unnecessary layer to the widget tree when the same effect can be achieved by passing `padding` directly to the child. This keeps the tree flatter, reduces nesting, and makes the code easier to read.
+Each `Padding` in the tree is a `RenderPadding` to lay out and paint. When the
+child already accepts `padding:`, moving the value inward removes a level of
+nesting and a render object, and puts the inset next to the widget it belongs
+to. The quick fix does the move, carrying the `key` across if the `Padding` had
+one.
 
-**See also:** [Padding](https://api.flutter.dev/flutter/widgets/Padding-class.html) | [Container](https://api.flutter.dev/flutter/widgets/Container-class.html) | [Dart lint: avoid_unnecessary_containers](https://dart.dev/tools/linter-rules/avoid_unnecessary_containers)
+**See also:** [Padding](https://api.flutter.dev/flutter/widgets/Padding-class.html) | [ScrollView.padding](https://api.flutter.dev/flutter/widgets/ScrollView/padding.html)
 
 ## Don't
 
 ```dart
-// Container supports padding, no need to wrap in Padding
+// ListView takes its own padding. Wrapping it insets the whole viewport, so
+// the scrollbar and the overscroll glow move inward with the content.
 Padding(
   padding: EdgeInsets.all(16),
-  child: Container(child: Text('Hello')),
-);
-
-// Card supports padding
-Padding(
-  padding: EdgeInsets.symmetric(horizontal: 12),
-  child: Card(child: Text('Card content')),
+  child: ListView(children: items),
 );
 ```
 
 ## Do
 
 ```dart
-// Pass padding directly to Container
-Container(padding: EdgeInsets.all(16), child: Text('Hello'));
+// The inset now applies to the content; the viewport still fills the space.
+ListView(padding: EdgeInsets.all(16), children: items);
+```
 
-// Padding wrapping a widget that doesn't support padding is fine
-Padding(padding: EdgeInsets.all(8), child: Text('Hello'));
+## Examples
 
-// Container already has its own padding set -- wrapping is acceptable
+### Your own widget counts too
+
+Nothing here is hard-coded to Flutter's widgets. Give a widget a `padding`
+parameter and the rule starts reporting `Padding` around it:
+
+```dart
+class Panel extends StatelessWidget {
+  const Panel({super.key, this.padding, required this.child});
+
+  final EdgeInsetsGeometry? padding;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    color: const Color(0xFFEEEEEE),
+    padding: padding,
+    child: child,
+  );
+}
+```
+
+```dart
+// Don't — Panel declares `padding`, so the wrapper is redundant
+Padding(padding: const EdgeInsets.all(8), child: Panel(child: body));
+
+// Do
+Panel(padding: const EdgeInsets.all(8), child: body);
+```
+
+Note that a `padding` parameter your widget then ignores will still make the
+rule report — it reads the constructor signature, not what `build` does with the
+value.
+
+### Wrapping a Container
+
+:::caution[The obvious rewrite trips a sibling rule]
+`Padding(padding: p, child: Container(child: x))` is reported here, and the
+mechanical fix — `Container(padding: p, child: x)` — is then reported by
+[`prefer_padding_over_container`](/many_lints/docs/rules/widget-replacement/prefer-padding-over-container/),
+which wants a bare `Container` carrying only `padding` turned back into a
+`Padding`. Both ship in `opinionated`.
+
+For a `Container` with nothing else set, the answer is neither: **drop the
+`Container`.**
+
+```dart
+// Don't
+Padding(padding: EdgeInsets.all(16), child: Container(child: Text('Hello')));
+
+// Do — the Container was doing nothing
+Padding(padding: EdgeInsets.all(16), child: Text('Hello'));
+```
+
+The two rules only collide on a `Container` that is otherwise empty. Once it is
+carrying a `color` or a `decoration`, `prefer_padding_over_container` is silent
+and moving the padding in is the right move:
+
+```dart
+// Don't
+Padding(
+  padding: EdgeInsets.all(16),
+  child: Container(
+    color: const Color(0xFFEEEEEE),
+    child: const Text('Hello'),
+  ),
+);
+
+// Do — reported by nothing
+Container(
+  color: const Color(0xFFEEEEEE),
+  padding: EdgeInsets.all(16),
+  child: const Text('Hello'),
+);
+```
+:::
+
+## Known limitations
+
+**A child that already sets `padding` is left alone.** Merging two insets is a
+decision, not a rewrite:
+
+```dart
+// Not reported
 Padding(
   padding: EdgeInsets.all(8),
   child: Container(padding: EdgeInsets.all(4), child: Text('Hello')),
 );
 ```
+
+**A `Padding` with no child is never reported** — there is nothing to move the
+value into.
+
+**Only the immediate child is examined.** `Padding > Center > ListView` is not
+reported, even though the `ListView` could still take the inset, because moving
+it across the `Center` would change the layout.
 
 ## Configuration
 

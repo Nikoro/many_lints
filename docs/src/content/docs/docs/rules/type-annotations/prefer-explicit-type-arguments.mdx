@@ -12,33 +12,41 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Type Annotations</span>
 
-This rule flags a configured generic call written without explicit type arguments.
+This rule flags a call to one of the methods you name, written without explicit type arguments.
 
-This rule is in **no preset**, and reports **nothing until configured** — for most generic calls inference is right and explicit arguments are noise.
+This rule is in **no preset** and reports **nothing until you set `methods:`** — for most generic calls inference is right and explicit arguments are noise. The list is the handful of APIs your project has decided are worth pinning.
 
-## Why use this rule
+## Setup
 
-Inference is usually correct and usually invisible, which is exactly the problem for a handful of APIs.
-
-`showDialog(...)` infers its return type from the builder's `Navigator.pop(value)`. A `pop()` with no argument silently makes it `Future<Null>`, and the `await` at the call site yields a null the code did not plan for — at runtime, far from the `pop()` that caused it. Writing `showDialog<bool>(...)` moves that decision into the signature, where a mismatch is a compile error.
-
-The rule is a list of the APIs your project has decided are worth pinning:
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
 
 ```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_explicit_type_arguments:
+      methods: [showDialog, showModalBottomSheet, push, pushNamed]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
 rules:
   prefer_explicit_type_arguments:
     methods: [showDialog, showModalBottomSheet, push, pushNamed]
 ```
 
-A call that resolves to no type parameters is never reported — asking for type arguments there would be asking for a compile error.
-
-**See also:** [Dart: type inference](https://dart.dev/language/type-system#type-inference)
+</TabItem>
+</Tabs>
 
 ## Don't
 
-Assuming `showDialog` is in the configured `methods` list, it infers its type
-argument from what the builder pops — so a cancel path that pops without a value
-makes the whole call `Future<Null>`.
+With `showDialog` in the list. It infers its type argument from what the
+builder pops, so a cancel path that pops without a value makes the whole call
+`Future<Null>` — and the `await` yields a null the code did not plan for:
 
 ```dart
 // package:flutter/material.dart, simplified to the signature that matters.
@@ -54,6 +62,9 @@ Future<void> confirmDelete() async {
 
 ## Do
 
+Pin it. A builder that pops the wrong type is now a compile error, not a silent
+null at runtime:
+
 ```dart
 // package:flutter/material.dart, simplified to the signature that matters.
 Future<T?> showDialog<T>({required Object builder}) async => null;
@@ -65,6 +76,36 @@ Future<void> confirmDelete() async {
   }
 }
 ```
+
+### Adding to a shared list
+
+`additional_methods` extends whatever `methods` holds, so a package-level
+config can add its own names without restating the shared ones:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_explicit_type_arguments:
+    methods: [showDialog, showModalBottomSheet]
+    additional_methods: [pushRoute]
+```
+
+### Never reported
+
+A call that resolves to a method with **no type parameters** is never reported,
+whatever the name — asking for type arguments there would be asking for a
+compile error:
+
+```dart
+// Same name, no type parameters: not reported.
+void push(String route) {}
+
+void go() {
+  push('/settings');
+}
+```
+
+**See also:** [Dart: type inference](https://dart.dev/language/type-system#type-inference)
 
 ## Options
 

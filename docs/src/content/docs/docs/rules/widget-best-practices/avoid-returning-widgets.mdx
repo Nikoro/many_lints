@@ -12,46 +12,29 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule warns when a function, method, or getter returns a `Widget`. Building widgets inside helper methods is a common Flutter anti-pattern because the framework cannot optimize rebuilds for code that lives outside of a proper widget class.
+Flags a function, method or getter whose return type is a `Widget`.
 
-## Why use this rule
+A `_buildHeader()` helper builds its subtree *inside* the caller's `build`, so Flutter sees one element where you wrote two. It cannot skip the header when only the footer changed, cannot give it a `const` constructor, and cannot show it separately in the devtools tree. A `_Header` widget class costs the same lines and gets all three.
 
-When you extract UI into a `_buildHeader()` method instead of a `_Header` widget class, Flutter treats the entire parent widget as a single unit. It cannot skip rebuilding the header when only something else changed. Proper widget classes give Flutter the information it needs to do fine-grained rebuilds, which directly improves performance in complex UIs.
+This rule is in the **`recommended`** preset, so it is on with `preset: recommended` and every preset above it.
 
 **See also:** [Flutter performance best practices](https://docs.flutter.dev/perf/best-practices)
 
-## What is not reported
-
-Three shapes are exempt, because none of them collapses a subtree into the
-caller's rebuild:
-
-- **`build()` overrides** — the standard way to build a widget.
-- **A declaration passed as a callback** rather than called, such as
-  `Builder(builder: _row)`. The framework invokes it at its own point in the
-  tree, so it behaves like a widget class rather than an inlined helper. A
-  declaration that is *called* to build inline is still reported.
-- **Functions annotated for a functional-widget generator** — `@FunctionalWidget`,
-  `@swidget`, `@hwidget`, `@hcwidget` — which generate a real widget class, so
-  the rewrite this rule asks for has already happened. Configurable through
-  `ignored_annotations`.
-
-A getter is never treated as a callback: `=> _body` reads it rather than tearing
-it off, so a bare reference to a `Widget`-returning getter is the inline build
-this rule targets.
-
 ## Don't
+
+Methods and getters that return a widget are both reported:
 
 ```dart
 class MyScreen extends StatelessWidget {
+  const MyScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Column(children: [_buildHeader(), _body]);
   }
 
-  // Helper method returning a widget
   Widget _buildHeader() => const Text('Header');
 
-  // Getter returning a widget
   Widget get _body => const Text('Body');
 }
 ```
@@ -60,6 +43,8 @@ class MyScreen extends StatelessWidget {
 
 ```dart
 class MyScreen extends StatelessWidget {
+  const MyScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return const Column(children: [_Header(), _Body()]);
@@ -81,26 +66,64 @@ class _Body extends StatelessWidget {
 }
 ```
 
-## Turning this rule off
+### A tear-off passed to a builder is exempt
 
-This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` (and with `opinionated`, which builds on it), or by name:
+Handing the declaration to a `builder:` rather than calling it means the framework invokes it at its own point in the tree — that is a widget class in all but spelling, so it is not reported:
+
+```dart
+class Page extends StatelessWidget {
+  const Page({super.key});
+
+  @override
+  Widget build(BuildContext context) => Builder(builder: _row);   // not reported
+
+  Widget _row(BuildContext context) => const Text('Row');
+}
+```
+
+The exemption is for tear-offs only. `Column(children: [_row(context)])` calls the same method inline and is still reported.
+
+A **getter** is never treated as a tear-off: `=> _body` reads it rather than tearing it off, so a bare reference to a `Widget`-returning getter is the inline build this rule targets.
+
+### Generated functional widgets are exempt
+
+`@swidget`, `@hwidget`, `@hcwidget` and `@FunctionalWidget` generate a real widget class, so the rewrite this rule asks for has already happened:
+
+```dart
+@swidget
+Widget productTile(BuildContext context, String name) => Text(name);   // not reported
+```
+
+Add your own generator's annotation with `additional_ignored_annotations`:
 
 ```yaml
 # many_lints.yaml
 rules:
-  avoid_returning_widgets: true
+  avoid_returning_widgets:
+    additional_ignored_annotations: [widgetFactory]
 ```
 
-To turn it off again:
+### Nullable returns
+
+`Widget?` usually means "render nothing", which is not the helper-method pattern. It is reported by default; opt out with `allow_nullable`:
 
 ```yaml
 # many_lints.yaml
 rules:
-  avoid_returning_widgets: false
+  avoid_returning_widgets:
+    allow_nullable: true
 ```
 
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+```dart
+// Not reported under `allow_nullable: true`
+Widget? _badgeOrNothing() => count == 0 ? null : Text('$count');
+```
+
+## Known limitations
+
+A `build()` override is never reported — it is the standard way to build a widget.
+
+The tear-off exemption matches on the **name**, not the resolved element. Two declarations in one file sharing a name means torn off one exempts both. That is deliberate: a false exemption is far cheaper than falsely reporting a legitimate builder callback.
 
 ## Options
 
@@ -138,6 +161,16 @@ rules:
 | `ignored_annotations` | list of strings | `[FunctionalWidget, swidget, hwidget, hcwidget]` | Annotation names that exempt a member (written without `@`). **Replaces** the defaults; use `additional_ignored_annotations` to extend them |
 | `additional_ignored_annotations` | list of strings | `[]` | Annotation names to exempt **in addition** to the defaults |
 | `allow_nullable` | bool | `false` | Exempt nullable returns (`Widget?`), where null usually means "render nothing" |
+
+## Turning this rule off
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_returning_widgets: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Related rules
 

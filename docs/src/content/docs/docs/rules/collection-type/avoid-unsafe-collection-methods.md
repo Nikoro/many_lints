@@ -9,42 +9,55 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Collection Type</span>
 
-This rule flags `first`, `last`, `single` and `reduce` used on a collection that has no emptiness check anywhere in the enclosing function.
-
-## Why use this rule
-
-All four throw a `StateError` on an empty iterable. Because the throw originates in `dart:core`, the stack trace points at framework code rather than the line that made the assumption — and the failure only appears once real data happens to be empty, which is usually in production rather than in tests.
-
-Dart offers direct replacements: `firstOrNull`, `lastOrNull` and `singleOrNull` from `package:collection`, or `fold` instead of `reduce` when a seed value makes sense.
+Flags `first`, `last`, `single` and `reduce` on a named collection that has no emptiness check anywhere in the enclosing function. All four throw a `StateError` on an empty iterable.
 
 ## Don't
 
-```dart
-String firstName(List<User> users) {
-  // Throws when the list is empty
-  return users.first.name;
-}
+The list is non-empty in every test and every demo, so this ships and crashes on the first user whose account has no activity:
 
-int total(List<int> amounts) {
+```dart
+String latestActivityLabel(List<String> entries) {
+  return entries.last;
+}
+```
+
+Because the throw comes from `dart:core`, the stack trace points at framework code rather than at the line that assumed a value was there.
+
+## Do
+
+Guard the access and say what happens when there is nothing:
+
+```dart
+String latestActivityLabel(List<String> entries) {
+  if (entries.isEmpty) return 'No activity yet';
+  return entries.last;
+}
+```
+
+Or take the null-returning variant and handle the absence at the call site:
+
+```dart
+String latestActivityLabel(List<String> entries) {
+  return entries.lastOrNull ?? 'No activity yet';
+}
+```
+
+`firstOrNull`, `lastOrNull` and `singleOrNull` come from [`package:collection`](https://pub.dev/packages/collection).
+
+### `reduce` needs a seed, not a guard
+
+`reduce` throws for the same reason, but the fix is usually `fold` — a seed value makes the empty case meaningful instead of exceptional:
+
+```dart
+// Don't
+int totalCents(List<int> amounts) {
   return amounts.reduce((a, b) => a + b);
 }
 ```
 
-## Do
-
 ```dart
-String? firstName(List<User> users) {
-  if (users.isEmpty) return null;
-  return users.first.name;
-}
-
-// Or use the null-returning variant
-String? firstNameOrNull(List<User> users) {
-  return users.firstOrNull?.name;
-}
-
-// fold supplies a seed, so an empty list is fine
-int total(List<int> amounts) {
+// Do — an empty basket costs zero
+int totalCents(List<int> amounts) {
   return amounts.fold(0, (a, b) => a + b);
 }
 ```
@@ -53,10 +66,10 @@ int total(List<int> amounts) {
 
 Detection is deliberately narrow, to keep false positives near zero:
 
-- Only a directly named receiver is checked — a local, parameter, or field. A chained expression like `items.where(...).first` has no name to match a guard against and is never reported.
-- Any emptiness check on that name anywhere in the function counts as a guard, even one in an unrelated branch. This over-accepts on purpose.
-- A collection literal with elements (`[1, 2, 3].first`) is treated as provably non-empty.
-- `singleWhere` is excluded: it throws when no element *matches*, which an emptiness check would not prevent.
+- **Only a directly named receiver is checked** — a local, parameter, or field. A chained expression like `items.where(...).first` has no name to match a guard against and is never reported.
+- **Any emptiness check on that name anywhere in the function counts as a guard**, even one in an unrelated branch. Reading `.length`, or calling `firstOrNull`/`lastOrNull`/`singleOrNull` on it, counts too. This over-accepts on purpose.
+- **A collection literal with elements** (`[1, 2, 3].first`) is treated as provably non-empty.
+- **`singleWhere` is excluded**: it throws when no element *matches*, which an emptiness check would not prevent.
 
 ## Configuration
 

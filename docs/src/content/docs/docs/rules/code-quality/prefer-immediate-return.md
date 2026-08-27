@@ -56,9 +56,32 @@ class CartLine {
 }
 ```
 
-In an `async` method, keep the `await` when you inline:
-`return await repository.fetchUser(id);`. Dropping it leaves an `async`
-method with no `await`, which [`avoid_redundant_async`](/many_lints/docs/rules/async-safety/avoid-redundant-async/) reports — both rules are in `opinionated`.
+### In an `async` method, keep the `await`
+
+The rule reports the same shape inside an `async` body. Inline the initializer *with* its `await` — dropping it leaves an `async` method with no `await`, which [`avoid_redundant_async`](/many_lints/docs/rules/async-safety/avoid-redundant-async/) then reports, and both rules are in `opinionated`:
+
+```dart
+class Api {
+  Future<String> fetchUser(String id) async => id;
+}
+
+class Screen {
+  Screen(this.api);
+
+  final Api api;
+
+  // Don't
+  Future<String> loadBad(String id) async {
+    final user = await api.fetchUser(id);
+    return user;
+  }
+
+  // Do
+  Future<String> loadGood(String id) async {
+    return await api.fetchUser(id);
+  }
+}
+```
 
 ## Known limitations
 

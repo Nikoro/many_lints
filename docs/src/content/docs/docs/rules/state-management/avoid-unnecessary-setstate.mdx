@@ -26,85 +26,142 @@ In `initState` and `didUpdateWidget`, the framework will call `build` automatica
 
 ## Don't
 
+Wrapping initial setup in `setState`. The framework builds this widget as soon
+as `initState` returns, so the `setState` buys nothing and only adds a frame's
+worth of bookkeeping:
+
 ```dart
-class _BadInitStateState extends State<BadInitState> {
-  String _data = '';
+class _ProfilePageState extends State<ProfilePage> {
+  String _title = '';
 
   @override
   void initState() {
     super.initState();
-    // Unnecessary — framework rebuilds after initState anyway
-    setState(() {
-      _data = 'Hello';
+    setState(() { // LINT
+      _title = widget.user.displayName;
     });
   }
 
   @override
-  Widget build(BuildContext context) => const SizedBox();
+  Widget build(BuildContext context) => Text(_title);
 }
+```
 
-class _BadBuildState extends State<BadBuild> {
-  String _data = '';
+`didUpdateWidget` is the same — it is already part of a build:
+
+```dart
+class _ProfilePageState extends State<ProfilePage> {
+  String _title = '';
+
+  @override
+  void didUpdateWidget(ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    setState(() { // LINT
+      _title = widget.user.displayName;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => Text(_title);
+}
+```
+
+In `build` it is worse than redundant: it schedules another build from inside a
+build, which at best wastes a frame and at worst never settles.
+
+```dart
+class _ProfilePageState extends State<ProfilePage> {
+  int _renderCount = 0;
 
   @override
   Widget build(BuildContext context) {
-    // Triggers an unnecessary rebuild during build
-    setState(() {
-      _data = 'Hello';
+    setState(() { // LINT
+      _renderCount++;
     });
-    return const SizedBox();
+    return Text('$_renderCount');
   }
 }
 ```
 
 ## Do
 
+Assign directly in the lifecycle methods:
+
 ```dart
-class _GoodInitStateState extends State<GoodInitState> {
-  String _data = '';
+class _ProfilePageState extends State<ProfilePage> {
+  String _title = '';
 
   @override
   void initState() {
     super.initState();
-    _data = 'Hello'; // Assign directly — no setState needed
+    _title = widget.user.displayName;
   }
 
   @override
-  Widget build(BuildContext context) => const SizedBox();
+  void didUpdateWidget(ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _title = widget.user.displayName;
+  }
+
+  @override
+  Widget build(BuildContext context) => Text(_title);
 }
+```
 
-// setState in an async method is fine
-class _GoodAsyncState extends State<GoodAsync> {
-  String _data = '';
+### setState after an await is still required
 
-  Future<void> _loadData() async {
-    final data = await Future.value('Hello');
+An async method resumes long after its lifecycle method returned, so nothing
+has scheduled a build for it:
+
+```dart
+class _ProfilePageState extends State<ProfilePage> {
+  String _title = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final user = await fetchUser();
+    if (!mounted) return;
     setState(() {
-      _data = data; // Async method needs setState to trigger rebuild
+      _title = user.displayName;
     });
   }
 
   @override
-  Widget build(BuildContext context) => const SizedBox();
-}
-
-// setState in event handler callbacks inside build is fine
-class _GoodCallbackState extends State<GoodCallback> {
-  String _data = '';
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _data = 'tapped'; // Event handler runs asynchronously
-        });
-      },
-      child: const SizedBox(),
-    );
-  }
+  Widget build(BuildContext context) => Text(_title);
 }
 ```
+
+### setState in an event handler is fine
+
+A tap handler written inside `build` runs after the build finished, so it does
+need `setState` — and the rule leaves it alone:
+
+```dart
+class _CounterState extends State<Counter> {
+  int _count = 0;
+
+  @override
+  Widget build(BuildContext context) => ElevatedButton(
+    onPressed: () => setState(() => _count++),
+    child: Text('$_count'),
+  );
+}
+```
+
+## Known limitations
+
+The event-handler exemption keys on the closure being a **named** argument —
+`onPressed:`, `onTap:`, `onChanged:`. A callback passed positionally is
+reported even though it behaves the same way.
+
+Only `initState`, `didUpdateWidget` and `build` are checked. A `setState` in
+`didChangeDependencies` is not reported, though the framework rebuilds after
+that too.
 
 ## Turning this rule off
 

@@ -9,19 +9,11 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Class Naming</span>
 
-This rule flags an enum constant that repeats the name of its own enum.
-
-This rule is in the **`opinionated`** preset.
-
-## Why use this rule
+Flags an enum constant that repeats the name of its own enum.
 
 `enum Status { statusActive }` reads as `Status.statusActive` at every call site, where the type already says `Status`. The prefix is a habit carried over from languages whose enum constants share one namespace; Dart scopes them to the enum, so it buys nothing and lengthens every use.
 
-Dropping it also makes dot shorthands read properly: `.active` rather than `.statusActive`.
-
-Two shapes are deliberately not reported: a constant named exactly like its enum (`Status.status` is the whole word, not a prefix), and one that merely starts with the same letters (`statusable`), since the prefix has to end at a word boundary.
-
-**See also:** [Enumerated types](https://dart.dev/language/enums)
+This rule is in the **`opinionated`** preset, and takes no configuration.
 
 ## Don't
 
@@ -45,6 +37,52 @@ enum Status {
 
 final state = Status.active;
 ```
+
+## Examples
+
+### Dot shorthands read properly once the prefix is gone
+
+Dropping it is what makes Dart 3.10's shorthand usable — `.active` rather than `.statusActive`:
+
+```dart
+enum Status { active, archived }
+
+void setStatus(Status status) {}
+
+void main() {
+  setStatus(.active);
+}
+```
+
+### A constant named exactly like its enum is left alone
+
+`Status.status` is the whole word, not a prefix, so there is nothing to strip:
+
+```dart
+enum Status {
+  status,   // Accepted
+  active,
+}
+```
+
+### The prefix has to end at a word boundary
+
+A constant that merely *starts* with the same letters is not prefixed by them:
+
+```dart
+enum Status {
+  statusable,   // Accepted — `able` does not begin a new word
+  statusActive, // LINT — `Active` does
+}
+```
+
+## Known limitations
+
+**Enums only.** A class of `static const` values used as an enum substitute is not checked.
+
+**No quick fix.** Renaming a constant touches every call site and every `switch` arm that names it, which is a rename refactoring rather than a one-file edit.
+
+**See also:** [Enumerated types](https://dart.dev/language/enums)
 
 ## Turning this rule off
 

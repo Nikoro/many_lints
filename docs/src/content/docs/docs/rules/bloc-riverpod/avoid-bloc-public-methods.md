@@ -9,70 +9,132 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-This rule flags public methods, getters, and setters declared in Bloc classes (but not Cubits). Blocs should only expose state changes through events via the `add` method, not through custom public members.
+This rule flags public methods, getters, and setters declared on a `Bloc`. Cubits are exempt — a Cubit's public methods *are* its API.
+
+Not reported: private members, `static` members, and anything marked `@override`.
 
 ## Why use this rule
 
-The whole point of the Bloc pattern is that state changes are driven by events. When you add public methods like `increment()` or `reset()` to a Bloc, you bypass the event-driven architecture and lose the ability to trace, replay, and log state transitions. If you need public methods, you probably want a Cubit instead. Private members, overrides, and static members are all allowed.
+A Bloc's whole point is that every state change enters through `add(event)`, where it can be logged, replayed and observed by `BlocObserver`. A public method is a second, untracked entrance: it changes state without producing an event, so the transition never appears in the observer log and cannot be reproduced from a recorded event sequence.
+
+If the class genuinely wants a method-shaped API, it wants to be a Cubit — that is exactly the difference between the two.
 
 **See also:** [Bloc best practices](https://bloclibrary.dev/bloc-concepts/) | [When to use Cubit vs Bloc](https://bloclibrary.dev/bloc-concepts/#cubit-vs-bloc)
 
-## Don't
+## Examples
+
+### A convenience method that bypasses the event log
+
+The method works, but `BlocObserver.onEvent` never fires for it, so the transition is invisible to logging and to replay:
 
 ```dart
+// Don't
 import 'package:bloc/bloc.dart';
 
-abstract class CounterEvent {}
+sealed class CounterEvent {}
 
 class Increment extends CounterEvent {}
-
-class Decrement extends CounterEvent {}
 
 class CounterBloc extends Bloc<CounterEvent, int> {
   CounterBloc() : super(0) {
     on<Increment>((event, emit) => emit(state + 1));
-    on<Decrement>((event, emit) => emit(state - 1));
   }
 
-  // Public method bypasses event-driven pattern
-  void increment() {}
-
-  // Public getter exposes internal state
-  int get currentValue => state;
-
-  // Public setter allows direct mutation
-  set currentValue(int value) {}
+  // LINT — changes state without an event
+  void increment() => emit(state + 1);
 }
 ```
 
-## Do
+Add the event instead. The caller writes one more character and gets the whole observer pipeline:
 
 ```dart
+// Do
 import 'package:bloc/bloc.dart';
 
-abstract class CounterEvent {}
+sealed class CounterEvent {}
 
 class Increment extends CounterEvent {}
-
-class Decrement extends CounterEvent {}
 
 class CounterBloc extends Bloc<CounterEvent, int> {
   CounterBloc() : super(0) {
     on<Increment>((event, emit) => emit(state + 1));
-    on<Decrement>((event, emit) => emit(state - 1));
+  }
+}
+
+// At the call site: counterBloc.add(Increment());
+```
+
+### A getter that duplicates the state
+
+`isEmpty` reads fine, but a widget calling it is not subscribed to anything, so it never rebuilds when the answer changes:
+
+```dart
+// Don't
+import 'package:bloc/bloc.dart';
+
+sealed class CartEvent {}
+
+class CartBloc extends Bloc<CartEvent, List<String>> {
+  CartBloc() : super(const []);
+
+  bool get isEmpty => state.isEmpty;         // LINT
+}
+```
+
+```dart
+// Do — derive it where the state is already being watched
+import 'package:bloc/bloc.dart';
+
+sealed class CartEvent {}
+
+class CartBloc extends Bloc<CartEvent, List<String>> {
+  CartBloc() : super(const []);
+}
+
+// In the widget:
+// final isEmpty = context.watch<CartBloc>().state.isEmpty;
+```
+
+### Cubits are not reported
+
+The same members on a Cubit are exactly right — that is what a Cubit is for:
+
+```dart
+// Not reported
+import 'package:bloc/bloc.dart';
+
+class CounterCubit extends Cubit<int> {
+  CounterCubit() : super(0);
+
+  void increment() => emit(state + 1);
+
+  void reset() => emit(0);
+}
+```
+
+### Overrides, privates and statics are allowed
+
+```dart
+import 'package:bloc/bloc.dart';
+
+sealed class CounterEvent {}
+
+class Increment extends CounterEvent {}
+
+class CounterBloc extends Bloc<CounterEvent, int> {
+  CounterBloc() : super(0) {
+    on<Increment>(_onIncrement);
   }
 
-  // Private methods are fine
-  void _handleReset() {}
+  // Private: fine
+  void _onIncrement(Increment event, Emitter<int> emit) => emit(state + 1);
 
-  // Overrides are fine
+  // Override: fine
   @override
-  void onChange(Change<int> change) {
-    super.onChange(change);
-  }
+  void onChange(Change<int> change) => super.onChange(change);
 
-  // Static methods are fine
-  static CounterEvent createIncrement() => Increment();
+  // Static: fine
+  static CounterEvent increment() => Increment();
 }
 ```
 

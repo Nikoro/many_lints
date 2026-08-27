@@ -9,17 +9,13 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
 
-This rule flags a `with` clause that lists the same mixin more than once, where every application after the first contributes nothing.
-
-## Why use this rule
+Flags a `with` clause that lists the same mixin more than once.
 
 `class A with M, M {}` compiles, and the second `M` adds no members — they are already there. What it does add is a false signal: a reader counting the behaviours mixed into `A` sees one more than exists, and has to check whether the two entries differ before concluding they do not.
 
 Duplicates arrive through merges, and through a rename that collapses two once-distinct names onto one.
 
-The rule compares resolved types, not source text, so an aliased import (`M` and `alias.M`) still counts as one mixin. Type arguments are kept, so a genuinely different instantiation is not reported.
-
-Re-applying a mixin that a superclass already has is a different question — it does change the linearization order — so it is not reported.
+This rule is in the **`recommended`** preset, so it is on with `preset: recommended`, `preset: opinionated` or `preset: pedantic`.
 
 **See also:** [Mixins](https://dart.dev/language/mixins)
 
@@ -28,22 +24,91 @@ Re-applying a mixin that a superclass already has is a different question — it
 ```dart
 mixin Loggable {}
 
-class Report with Loggable, Loggable {}
+mixin Cacheable {}
+
+class Report with Loggable, Cacheable, Loggable {}
 ```
 
 ## Do
 
 ```dart
 mixin Loggable {}
+
 mixin Cacheable {}
 
 class Report with Loggable, Cacheable {}
 ```
 
-## Turning this rule off
+## Examples
 
-This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`.
+### An import alias is still the same mixin
+
+The comparison is on resolved types, not on the text you wrote, so aliasing does not hide a duplicate:
+
+```dart
+// analytics.dart
+import 'package:my_app/tracking.dart';
+import 'package:my_app/tracking.dart' as tracking;
+
+class Session with Trackable, tracking.Trackable {}
+```
+
+Drop one of the two:
+
+```dart
+import 'package:my_app/tracking.dart';
+
+class Session with Trackable {}
+```
+
+### Different type arguments are different mixins
+
+Type arguments are kept, so a genuinely distinct instantiation is not reported:
+
+```dart
+mixin Serializes<T> {}
+
+// Accepted — two different instantiations
+class Envelope with Serializes<int>, Serializes<String> {}
+
+// Reported — the same one twice
+class Payload with Serializes<int>, Serializes<int> {}
+```
+
+### Enums and class type aliases are checked too
+
+Any `with` clause counts, not just a class's:
+
+```dart
+mixin Describable {}
+
+// Reported — an enum's with clause
+enum Status with Describable, Describable { open, closed }
+
+// Reported — a class type alias
+class Base {}
+
+class Composed = Base with Describable, Describable;
+```
+
+## Known limitations
+
+**Re-applying a mixin a superclass already has is not reported.** That is a different question and it is not inert: repeating a mixin further down changes the linearization order, so which override wins can genuinely change.
+
+```dart
+mixin Loggable {}
+
+class Base with Loggable {}
+
+// Not reported — this re-application moves Loggable in the chain
+class Report extends Base with Loggable {}
+```
+
+**Each `with` clause is compared on its own.** A mixin listed on a class and again on a different class in the same file is two clauses, not a duplicate.
+
+**No quick fix.** Removing an entry is safe for a plain duplicate, but the two spellings may differ in ways only the author can judge — an alias may be a leftover from a migration that is not finished.
+
+## Turning this rule off
 
 To disable this rule:
 

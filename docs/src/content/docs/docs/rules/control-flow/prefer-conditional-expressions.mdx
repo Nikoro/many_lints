@@ -15,40 +15,103 @@ This rule flags an `if`/`else` that does nothing but assign or return two values
 
 Six lines to choose between two strings buries the one thing that varies. A conditional expression puts the choice and both outcomes on one line, and makes it obvious that every path assigns exactly once — which the block form only implies.
 
-Only the two shapes where the rewrite is **exact** are reported: both branches return, or both assign to the same target with the same operator. A branch with two statements, different targets, different operators, a missing `else` or an `else if` chain is left alone, since collapsing it would change what the code does.
-
-This rule is in the **`pedantic`** preset.
-
 ## Don't
 
+Both branches assign the same target:
+
 ```dart
-if (isActive) {
-  label = 'On';
-} else {
-  label = 'Off';
+String describe({required bool isActive}) {
+  String label;
+  if (isActive) {
+    label = 'On';
+  } else {
+    label = 'Off';
+  }
+  return label;
+}
+```
+
+Both branches return:
+
+```dart
+String greeting({required bool isMorning}) {
+  if (isMorning) {
+    return 'Good morning';
+  } else {
+    return 'Good evening';
+  }
 }
 ```
 
 ## Do
 
 ```dart
-label = isActive ? 'On' : 'Off';
+String describe({required bool isActive}) {
+  final label = isActive ? 'On' : 'Off';
+  return label;
+}
+
+String greeting({required bool isMorning}) =>
+    isMorning ? 'Good morning' : 'Good evening';
 ```
 
-## Enabling this rule
+## Known limitations
 
-This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
+Only the two shapes where the rewrite is **exact** are reported. These are all
+left alone, because collapsing them would change what the code does:
+
+```dart
+String describe({required bool isActive}) {
+  String label;
+  String tone;
+
+  // Two statements in a branch.
+  if (isActive) {
+    label = 'On';
+    tone = 'green';
+  } else {
+    label = 'Off';
+    tone = 'grey';
+  }
+
+  // Different targets.
+  if (isActive) {
+    label = 'On';
+  } else {
+    tone = 'grey';
+  }
+
+  // Different operators — `=` in one branch, `+=` in the other.
+  if (isActive) {
+    label = 'On';
+  } else {
+    label += 'Off';
+  }
+
+  // No `else`.
+  if (isActive) {
+    label = 'On';
+  }
+
+  return '$label$tone';
+}
+```
+
+An `else if` chain is a sequence of tests rather than a two-way choice, and a
+pattern `if` (`if (x case ...)`) binds variables a conditional expression
+cannot — both are skipped.
+
+## Configuration
+
+This rule is in the **`pedantic`** preset. Enable it by name:
 
 ```yaml
 # many_lints.yaml
 rules:
-  prefer_conditional_expressions:
-    enabled: true
+  prefer_conditional_expressions: true
 ```
 
-## Turning this rule off
-
-To disable this rule:
+To turn it off again:
 
 ```yaml
 # many_lints.yaml

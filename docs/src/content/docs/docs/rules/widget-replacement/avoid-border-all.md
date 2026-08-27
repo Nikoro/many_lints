@@ -17,34 +17,99 @@ Flags usages of `Border.all()` which should be replaced with `Border.fromBorderS
 
 ## Why use this rule
 
-`Border.all()` calls `Border.fromBorderSide()` under the hood, so using `Border.fromBorderSide(BorderSide(...))` directly allows the entire expression to be `const`. Const objects are canonicalized at compile time, which reduces allocations and improves performance — especially in build methods that run frequently.
+`Border.all()` is a *factory*, and a factory can never be `const`. It forwards
+straight to `Border.fromBorderSide(BorderSide(...))`, which can. Spelling out
+the second form lets the whole `BoxDecoration` around it become constant, so it
+is built once at compile time instead of on every `build`.
 
 **See also:** [Border](https://api.flutter.dev/flutter/painting/Border-class.html) | [Dart lint: prefer_const_constructors](https://dart.dev/tools/linter-rules/prefer_const_constructors)
 
 ## Don't
 
 ```dart
-// Border.all() cannot be const
-final border1 = Border.all();
-
-// Border.all() with arguments
-final border2 = Border.all(
-  color: const Color(0xFF3355AA),
-  width: 2.5,
-  style: BorderStyle.solid,
+// A bordered field, reallocated on every frame.
+Container(
+  decoration: BoxDecoration(
+    border: Border.all(color: const Color(0xFF3355AA), width: 2), // LINT
+  ),
+  child: const Text('Hello'),
 );
 ```
 
 ## Do
 
 ```dart
-// Border.fromBorderSide() supports const
-final border1 = const Border.fromBorderSide(BorderSide());
-
-final border2 = const Border.fromBorderSide(
-  BorderSide(color: Color(0xFF3355AA), width: 2.5, style: BorderStyle.solid),
+Container(
+  decoration: const BoxDecoration(
+    border: Border.fromBorderSide(
+      BorderSide(color: Color(0xFF3355AA), width: 2),
+    ),
+  ),
+  child: const Text('Hello'),
 );
 ```
+
+## Examples
+
+### The default border
+
+`Border.all()` with no arguments is a 1px black border. Its explicit form is
+`BorderSide()`, whose defaults are the same:
+
+```dart
+// Don't
+final border = Border.all();
+
+// Do
+const border = Border.fromBorderSide(BorderSide());
+```
+
+### Hoisting to a shared constant
+
+Once const-capable, the border can live outside `build` and be shared by every
+call site:
+
+```dart
+// Don't — a fresh Border on every call site, on every rebuild
+BoxDecoration(border: Border.all(color: const Color(0xFFCCCCCC)));
+
+// Do
+const kFieldBorder = Border.fromBorderSide(
+  BorderSide(color: Color(0xFFCCCCCC)),
+);
+
+const BoxDecoration(border: kFieldBorder);
+```
+
+### A non-constant argument is still reported
+
+```dart
+// Don't
+final border = Border.all(color: theme.dividerColor);
+
+// Do
+final border = Border.fromBorderSide(BorderSide(color: theme.dividerColor));
+```
+
+`theme.dividerColor` is not a compile-time constant, so `const` is unavailable
+here — but the explicit form is what the rule asks for, and it becomes const the
+moment the colour does.
+
+## Known limitations
+
+**The fix does not add `const` for you.** It rewrites `Border.all(args)` into
+`Border.fromBorderSide(BorderSide(args))` and stops. Adding the keyword is the
+SDK's
+[`prefer_const_constructors`](https://dart.dev/tools/linter-rules/prefer_const_constructors)
+job — turn that on to collect the other half of the win.
+
+**Only `Border.all` is matched,** because it is the only `Border` constructor
+that is a factory. `Border.fromBorderSide`, `Border.symmetric` and the default
+`Border(...)` are all already `const`, so there is nothing to report.
+
+**`Border.all` on a subclass is not matched.** The check is for an expression
+whose static type is exactly `Border`; a `Border` subclass of your own with its
+own `all` factory is left alone.
 
 ## Configuration
 

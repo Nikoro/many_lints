@@ -25,22 +25,65 @@ An `async` declaration always completes through a `Future`, even when its body i
 
 ## Don't
 
+`FutureOr<T>` on an `async` body is the common one. It reads as "maybe synchronous", but an `async` function never is — so every caller has to handle a branch that cannot happen:
+
 ```dart
-Object loadCount() async => 1;
+import 'dart:async';
 
-FutureOr<int> loadOtherCount() async => 2;
+class Inbox {
+  final List<String> _messages = [];
 
-Future<int>? loadNullableCount() async => 3;
+  FutureOr<int> unreadCount() async => _messages.length;
+}
 ```
 
 ## Do
 
 ```dart
-Future<Object> loadCount() async => 1;
+class Inbox {
+  final List<String> _messages = [];
 
-Future<int> loadOtherCount() async => 2;
+  Future<int> unreadCount() async => _messages.length;
+}
+```
 
-Future<int> loadNullableCount() async => 3;
+### A nullable Future
+
+`Future<int>?` says the call might not return a future at all. An `async` body always does; only the `int` inside can be null.
+
+```dart
+// Don't
+Future<int>? unreadCount() async => 0;
+
+// Do — the future is always there
+Future<int> unreadCount() async => 0;
+
+// Do — when the *result* is genuinely optional
+Future<int?> lastReadIndex() async => null;
+```
+
+### A broad type hiding the future
+
+`dynamic` and `Object` accept the future silently, so nothing at the call site suggests it needs awaiting:
+
+```dart
+// Don't
+dynamic loadSettings() async => <String, Object?>{};
+
+// Do
+Future<Map<String, Object?>> loadSettings() async => <String, Object?>{};
+```
+
+### What is left alone
+
+An `async` callback returning `void` is a legitimate shape and is not reported, nor is a declaration with no written return type:
+
+```dart
+void onSaved() async {                   // not reported
+  await Future<void>.delayed(Duration.zero);
+}
+
+loadAll() async => <String, Object?>{};  // not reported: return type is inferred
 ```
 
 ## Turning this rule off

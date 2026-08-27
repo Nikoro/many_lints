@@ -12,15 +12,20 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
 
-This rule flags a class member declared before one that the configured order puts earlier — a field after a method, a constructor after a getter.
+Flags a class member declared before one the configured order puts earlier — a field after a method, a constructor after a getter.
 
-## Why use this rule
+A class read top to bottom should answer the same questions in the same sequence every time: how is it built, what does it hold, what can it do. When the order varies between files, finding a field means scanning the whole class rather than glancing at the top of it.
 
-A class read top to bottom should answer the same questions in the same sequence every time: how is it built, what does it hold, what can it do. When the order varies between files, finding a field means scanning the whole class rather than glancing at the top of it, and a diff that adds a method lands in whichever spot happened to be free.
+This rule is in the **`pedantic`** preset. It works out of the box with the default order below; enable it in any other preset by name:
 
-This rule is in the **`pedantic`** preset, and deliberately so. Measured against a production Flutter app that already follows a consistent house style, it still reported 227 members — every one a real deviation, none of them a bug. That is exactly the kind of mechanical uniformity the strictest tier chooses to enforce.
+```yaml
+# many_lints.yaml
+rules:
+  member_ordering:
+    enabled: true
+```
 
-## The default order puts the constructor first
+## The default order
 
 ```
 public_static_fields, private_static_fields,
@@ -31,14 +36,7 @@ public_methods, private_methods,
 build_method
 ```
 
-The constructor leads because that is how modern Dart and Flutter code is written: `flutter create`, the framework's own widgets, and the samples in the Flutter docs all put the constructor directly under the class header with the `final` fields it initialises below. Ordering fields first is the older Java-influenced convention; shipping it as the default reported 615 extra members on the same app, all of them idiomatic.
-
-## What is never reported
-
-- **`==`, `hashCode` and `toString`** — a conventional trio written as one block. Dart forces `hashCode` to be a getter and `==` to be an operator, so any getters-before-methods order would split them.
-- **Operators**, for the same reason.
-- **A Riverpod `Notifier.build`** — that is the state initialiser and idiomatically comes first. Only a widget's `build` renders, so only a `Widget` subclass has its `build` ordered last.
-- **Any category you leave out of `order:`** — a member the project does not order is skipped rather than forced somewhere.
+Constructor-first, matching how `flutter create`, the framework's own widgets and the Flutter samples are written: the constructor sits directly under the class header with the `final` fields it initialises below. Fields-first is the older Java-influenced convention — pick it explicitly with `order:` if that is your house style.
 
 ## Don't
 
@@ -46,7 +44,7 @@ The constructor leads because that is how modern Dart and Flutter code is writte
 class Order {
   void submit() {}
 
-  final int id; // a field, below a method
+  final int id = 0; // a field, below a method
 }
 ```
 
@@ -62,18 +60,11 @@ class Order {
 }
 ```
 
-## Enabling this rule
+## Examples
 
-This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
+### Choosing fields-first instead
 
-```yaml
-# many_lints.yaml
-rules:
-  member_ordering:
-    enabled: true
-```
-
-## Options
+List the categories in the order you want, earliest first:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -88,6 +79,7 @@ many_lints:
         - private_fields
         - constructors
         - public_methods
+        - private_methods
 ```
 
 </TabItem>
@@ -102,16 +94,134 @@ rules:
       - private_fields
       - constructors
       - public_methods
+      - private_methods
 ```
 
 </TabItem>
 </Tabs>
 
+```dart
+// Don't — under this order the constructor comes after the fields
+class Order {
+  Order(this.id);
+
+  final int id;
+}
+```
+
+```dart
+// Do
+class Order {
+  final int id;
+
+  Order(this.id);
+}
+```
+
+### A category you leave out is not ordered at all
+
+Only the categories you list are placed. Anything else is skipped rather than pushed somewhere, which is how you order part of a class and leave the rest to taste:
+
+```yaml
+rules:
+  member_ordering:
+    order:
+      - constructors
+      - public_methods
+```
+
+```dart
+// Accepted — getters and static fields are unlisted, so their position is
+// not this rule's business; only `constructors` before `public_methods` is.
+class Session {
+  Session(this.token);
+
+  static const timeout = Duration(minutes: 30);
+
+  void refresh() {}
+
+  String get isValid => token;
+
+  final String token;
+}
+```
+
+### A widget's `build` goes last
+
+`build_method` only applies to a `Widget` subclass — that is the one whose `build` renders. Put it last in your order and it stays at the bottom:
+
+```yaml
+rules:
+  member_ordering:
+    order:
+      - constructors
+      - public_fields
+      - public_methods
+      - build_method
+```
+
+### Ordering by override rather than by visibility
+
+`overridden_methods` and `static_methods` are more specific than the plain method categories, so listing one pulls those members out into their own block:
+
+```yaml
+rules:
+  member_ordering:
+    order:
+      - constructors
+      - public_fields
+      - overridden_methods
+      - public_methods
+      - private_methods
+```
+
+```dart
+// Don't — `dispose` is annotated @override, so it belongs before `refresh`
+class Controller {
+  Controller();
+
+  void refresh() {}
+
+  @override
+  void dispose() {}
+}
+```
+
+```dart
+// Do
+class Controller {
+  Controller();
+
+  @override
+  void dispose() {}
+
+  void refresh() {}
+}
+```
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `order` | list of strings | constructor-first order shown above | The member categories, earliest first. A category left out is not ordered at all, and an unrecognised name is ignored rather than silently matching nothing |
+| `order` | list of strings | the constructor-first order above | The member categories, earliest first. A category left out is not ordered at all, and an unrecognised name is ignored |
 
 Recognised categories: `public_static_fields`, `private_static_fields`, `public_fields`, `private_fields`, `constructors`, `named_constructors`, `factory_constructors`, `public_getters`, `private_getters`, `public_setters`, `private_setters`, `public_methods`, `private_methods`, `static_methods`, `overridden_methods`, `build_method`.
+
+## Known limitations
+
+**`==`, `hashCode` and `toString` are never reported.** They are a conventional trio written as one block, and Dart forces `hashCode` to be a getter while `==` is an operator — so any getters-before-methods order would split them.
+
+**Operators are never reported**, for the same reason.
+
+**A Riverpod `Notifier.build` is never treated as `build_method`.** That is the state initialiser and idiomatically comes first. Only a `Widget` subclass has its `build` ordered last.
+
+**A field declaring several variables is private if any of them is.** `int a, _b;` counts as a private field.
+
+**A member matches its most specific listed category.** A static private method is `static_methods` if you listed that, otherwise `private_methods` — so listing both puts every static method in the static block, private ones included.
+
+**A primary constructor's body has no category.** It is part of the class header, not a member that can be moved.
+
+**No quick fix.** Moving members is a large mechanical edit that frequently drags doc comments and `// region` markers out of place.
 
 ## Turning this rule off
 

@@ -13,56 +13,101 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-Warns when a cascade expression (`..`) follows an if-null (`??`) operator without parentheses. The precedence is not what it looks like: the cascade applies to the *entire* if-null expression, not to the right-hand side of `??`.
+Flags a cascade (`..`) whose target is an if-null (`??`) expression that is not parenthesised.
 
-## Why use this rule
-
-The cascade operator binds *looser* than `??`, so `a ?? B()..method()` parses as `(a ?? B())..method()`. The cascade takes the whole if-null expression as its target.
-
-That is the opposite of how the line reads. The natural reading is "if `a` is null, build a `B` and configure it" — but when `a` is non-null, the cascade runs against `a` itself:
-
-```dart
-final sb = StringBuffer('LHS');
-StringBuffer? maybe = sb;
-final out = maybe ?? StringBuffer('RHS')..write('-MUTATED');
-// sb is now "LHS-MUTATED": the pre-existing buffer was mutated,
-// the fresh StringBuffer('RHS') was discarded untouched,
-// and `out` is identical to `sb`.
-```
-
-Adding explicit parentheses makes the intent clear and prevents subtle bugs.
+`??` binds *tighter* than `..`, so `a ?? B()..m()` parses as `(a ?? B())..m()`. The cascade runs against whichever side `??` produced — including `a` itself when `a` is non-null. That is the opposite of how the line reads.
 
 **See also:** [Cascade notation](https://dart.dev/language/operators#cascade-notation)
 
 ## Don't
 
-```dart
-void bad(Kettle? spareKettle) {
-  // Unclear whether ..boil() applies to the result of ?? or just Kettle()
-  final kettle = spareKettle ?? Kettle()
-    ..boil();
+The intent here is "reuse the spare kettle if there is one, otherwise build one and boil it". What the code does is boil whichever kettle `??` returned — including the caller's spare:
 
-  // Multiple cascades after if-null
-  final kettle2 = spareKettle ?? Kettle()
-    ..boil()
-    ..litres = 5;
+```dart
+class Kettle {
+  int litres = 1;
+
+  void boil() {}
+}
+
+Kettle heat(Kettle? spare) {
+  return spare ?? Kettle()..boil();
 }
 ```
 
 ## Do
 
+Two readings, two sets of parentheses. Pick the one you meant.
+
+Boil whichever kettle you ended up with:
+
 ```dart
-void good(Kettle? spareKettle) {
-  // Cascade applies to the entire if-null expression
-  final kettle = (spareKettle ?? Kettle())..boil();
+class Kettle {
+  int litres = 1;
 
-  // Cascade applies only to the new instance
-  final kettle2 = spareKettle ?? (Kettle()..boil());
+  void boil() {}
+}
 
-  // No if-null involved, cascade is unambiguous
-  final kettle3 = Kettle()..boil();
+Kettle heat(Kettle? spare) {
+  return (spare ?? Kettle())..boil();
 }
 ```
+
+Boil only the fresh one, and leave the caller's spare untouched:
+
+```dart
+class Kettle {
+  int litres = 1;
+
+  void boil() {}
+}
+
+Kettle heat(Kettle? spare) {
+  return spare ?? (Kettle()..boil());
+}
+```
+
+### Seeing the difference
+
+The two forms are not interchangeable — they mutate different objects:
+
+```dart
+void demo() {
+  StringBuffer? spare = StringBuffer('spare');
+
+  final a = spare ?? StringBuffer('fresh')..write('!');
+  // The cascade hit `spare`: it now reads 'spare!', the fresh buffer was
+  // built, never written to, and thrown away. `a` is `spare`.
+
+  final b = spare ?? (StringBuffer('fresh')..write('!'));
+  // `spare` is untouched, and `b` is `spare` — the fresh buffer was never
+  // built at all.
+}
+```
+
+### Multiple sections behave the same way
+
+Every section of the cascade lands on the same mis-chosen target:
+
+```dart
+class Kettle {
+  int litres = 1;
+
+  void boil() {}
+}
+
+Kettle heat(Kettle? spare) {
+  return (spare ?? Kettle())
+    ..litres = 5
+    ..boil();
+}
+```
+
+## Known limitations
+
+Only a bare `??` target is reported. A cascade with no `??` in sight (`Kettle()..boil()`) and one already parenthesised on either side are both left alone — the parentheses are exactly what the rule is asking for, so once they are there the report goes away.
+
+The quick fix wraps the if-null expression, producing `(a ?? B())..m()`. That is the more common intent, but it is not always the one you want; check the result against the "Do" forms above before accepting it.
 
 ## Configuration
 

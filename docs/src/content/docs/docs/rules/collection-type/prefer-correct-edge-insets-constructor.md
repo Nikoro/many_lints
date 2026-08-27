@@ -13,62 +13,125 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Collection & Type</span>
 
-Flutter's `EdgeInsets` provides several constructors for different use cases: `all()`, `symmetric()`, `only()`, `zero`, and `fromLTRB()`. This rule detects when a more verbose constructor is used where a simpler one would suffice, such as using `EdgeInsets.fromLTRB(8, 8, 8, 8)` instead of `EdgeInsets.all(8)`.
-
-## Why use this rule
-
-Using the most specific constructor makes your intent clearer at a glance. `EdgeInsets.all(8)` immediately communicates uniform padding, while `EdgeInsets.fromLTRB(8, 8, 8, 8)` requires reading all four values to understand the pattern.
-
-**See also:** [EdgeInsets](https://api.flutter.dev/flutter/painting/EdgeInsets-class.html)
+Flags an `EdgeInsets` constructor whose arguments a simpler constructor expresses exactly. The quick fix names the replacement — `EdgeInsets.fromLTRB(8, 8, 8, 8)` becomes `EdgeInsets.all(8)`.
 
 ## Don't
 
+`fromLTRB` with four equal values is uniform padding written the long way. The reader has to compare all four numbers to see it:
+
 ```dart
-import 'package:flutter/painting.dart';
-
-void example() {
-  // Use EdgeInsets.all(8) instead
-  final p1 = EdgeInsets.fromLTRB(8, 8, 8, 8);
-
-  // Use EdgeInsets.symmetric(horizontal: 8) instead
-  final p2 = EdgeInsets.fromLTRB(8, 0, 8, 0);
-
-  // Use EdgeInsets.symmetric(horizontal: 8, vertical: 4) instead
-  final p3 = EdgeInsets.fromLTRB(8, 4, 8, 4);
-
-  // Use EdgeInsets.only(left: 8) instead
-  final p4 = EdgeInsets.fromLTRB(8, 0, 0, 0);
-
-  // Use EdgeInsets.symmetric(horizontal: 16) instead
-  final p5 = EdgeInsets.only(left: 16, right: 16);
-
-  // Use EdgeInsets.all(8) instead
-  final p6 = EdgeInsets.only(left: 8, top: 8, right: 8, bottom: 8);
-
-  // Use EdgeInsets.all(8) instead
-  final p7 = EdgeInsets.symmetric(horizontal: 8, vertical: 8);
-
-  // Use EdgeInsets.zero instead
-  final p8 = EdgeInsets.all(0);
-  final p9 = EdgeInsets.fromLTRB(0, 0, 0, 0);
-}
+Padding(
+  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+  child: child,
+)
 ```
 
 ## Do
 
 ```dart
-import 'package:flutter/painting.dart';
-
-void example() {
-  final p1 = EdgeInsets.all(8);
-  final p2 = EdgeInsets.symmetric(horizontal: 8, vertical: 4);
-  final p3 = EdgeInsets.symmetric(horizontal: 16);
-  final p4 = EdgeInsets.only(left: 8);
-  final p5 = EdgeInsets.only(left: 8, top: 4);
-  final p6 = EdgeInsets.zero;
-  final p7 = EdgeInsets.fromLTRB(1, 2, 3, 4);
-}
+Padding(
+  padding: const EdgeInsets.all(16),
+  child: child,
+)
 ```
+
+### Equal opposite sides are symmetric
+
+```dart
+// Don't
+Container(
+  margin: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+  child: child,
+);
+
+// Do
+Container(
+  margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+  child: child,
+);
+```
+
+When one axis is zero, name only the other:
+
+```dart
+// Don't — vertical is 0 on both sides
+Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 0), child: child);
+
+// Do
+Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: child);
+```
+
+### `only` that is really `all` or `symmetric`
+
+Listing every side by name is no clearer than the constructor that means it:
+
+```dart
+// Don't
+Padding(
+  padding: const EdgeInsets.only(left: 12, top: 12, right: 12, bottom: 12),
+  child: child,
+);
+
+// Do
+Padding(padding: const EdgeInsets.all(12), child: child);
+```
+
+```dart
+// Don't
+Padding(padding: const EdgeInsets.only(left: 20, right: 20), child: child);
+
+// Do
+Padding(padding: const EdgeInsets.symmetric(horizontal: 20), child: child);
+```
+
+The reverse also reports — `symmetric` whose two axes are equal is `all`:
+
+```dart
+// Don't
+Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+  child: child,
+);
+
+// Do
+Padding(padding: const EdgeInsets.all(8), child: child);
+```
+
+### Everything zero is `EdgeInsets.zero`
+
+Any constructor that works out to no padding at all is reported, since `EdgeInsets.zero` is a const singleton and says so at a glance:
+
+```dart
+// Don't
+Padding(padding: const EdgeInsets.all(0), child: child);
+Padding(padding: const EdgeInsets.fromLTRB(0, 0, 0, 0), child: child);
+
+// Do
+Padding(padding: EdgeInsets.zero, child: child);
+```
+
+### `fromLTRB` with a zero side is `only`
+
+```dart
+// Don't
+Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 0), child: child);
+
+// Do
+Padding(
+  padding: const EdgeInsets.only(left: 16, top: 8, right: 16),
+  child: child,
+);
+```
+
+## Known limitations
+
+**Arguments are compared as written text, not as values.** `EdgeInsets.fromLTRB(8, 8.0, 8, 8)` is not reported, because `8` and `8.0` are different source text — even though they produce the same insets. The upside is that a named constant works: `fromLTRB(kGap, kGap, kGap, kGap)` reports and the fix suggests `EdgeInsets.all(kGap)`.
+
+**Only zero is recognised as zero.** `0` and `0.0` count; a `const` named zero does not, so `EdgeInsets.all(kNone)` is left alone.
+
+**`EdgeInsetsDirectional` is not checked.** The rule matches `EdgeInsets` exactly, so `EdgeInsetsDirectional.fromSTEB(8, 8, 8, 8)` is never reported.
+
+**Nothing simpler means no report.** `EdgeInsets.fromLTRB(1, 2, 3, 4)` and `EdgeInsets.only(left: 8, top: 4)` already use the tightest constructor for their values.
 
 ## Configuration
 

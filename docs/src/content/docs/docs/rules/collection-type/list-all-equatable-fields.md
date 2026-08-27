@@ -13,93 +13,104 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Collection & Type</span>
 
-Classes that extend `Equatable` or use `EquatableMixin` must include all declared instance fields in the `props` getter. Missing fields means two instances with different values for those fields will be considered equal, leading to hard-to-find bugs.
-
-## Why use this rule
-
-Forgetting to add a field to `props` silently breaks equality comparisons. Two objects that differ only in the missing field will appear equal, which can cause incorrect behavior in collections, state management, and testing.
-
-**See also:** [equatable package](https://pub.dev/packages/equatable)
+Flags a class extending `Equatable` or mixing in `EquatableMixin` whose `props` getter omits one of its own instance fields. The diagnostic names the missing fields, and the quick fix adds them.
 
 ## Don't
+
+A field added after the fact, with `props` left as it was. The class still compiles, and two objects that differ only in `unreadCount` now compare equal:
 
 ```dart
 import 'package:equatable/equatable.dart';
 
-// Missing 'age' from props
-class BadPerson extends Equatable {
-  const BadPerson(this.name, this.age);
-  final String name;
-  final int age;
+class InboxState extends Equatable {
+  const InboxState(this.messages, this.unreadCount);
+
+  final List<String> messages;
+  final int unreadCount;
 
   @override
-  List<Object?> get props => [name];
-}
-
-// Missing all fields from props
-class BadEmpty extends Equatable {
-  const BadEmpty(this.x, this.y);
-  final double x;
-  final double y;
-
-  @override
-  List<Object?> get props => [];
-}
-
-// Using EquatableMixin with missing field
-class BadMixinPerson with EquatableMixin {
-  BadMixinPerson(this.name, this.email);
-  final String name;
-  final String email;
-
-  @override
-  List<Object?> get props => [name];
+  List<Object?> get props => [messages];
 }
 ```
+
+This is worse than a plain bug in a state class: a state-management layer that skips rebuilds when the old and new state are equal will now skip the rebuild that was supposed to show the new badge.
 
 ## Do
 
 ```dart
 import 'package:equatable/equatable.dart';
 
-// All fields are listed in props
-class GoodPerson extends Equatable {
-  const GoodPerson(this.name, this.age);
-  final String name;
-  final int age;
+class InboxState extends Equatable {
+  const InboxState(this.messages, this.unreadCount);
+
+  final List<String> messages;
+  final int unreadCount;
 
   @override
-  List<Object?> get props => [name, age];
-}
-
-// All fields listed with EquatableMixin
-class GoodMixinPerson with EquatableMixin {
-  GoodMixinPerson(this.name, this.email);
-  final String name;
-  final String email;
-
-  @override
-  List<Object?> get props => [name, email];
-}
-
-// Static fields are correctly excluded
-class PersonWithStatic extends Equatable {
-  const PersonWithStatic(this.name);
-  final String name;
-  static const maxNameLength = 100;
-
-  @override
-  List<Object?> get props => [name];
-}
-
-// No fields means empty props is fine
-class EmptyEquatable extends Equatable {
-  const EmptyEquatable();
-
-  @override
-  List<Object?> get props => [];
+  List<Object?> get props => [messages, unreadCount];
 }
 ```
+
+### `EquatableMixin` is checked the same way
+
+```dart
+import 'package:equatable/equatable.dart';
+
+// Don't
+class Session with EquatableMixin {
+  Session(this.userId, this.expiresAt);
+
+  final String userId;
+  final DateTime expiresAt;
+
+  @override
+  List<Object?> get props => [userId];
+}
+```
+
+```dart
+import 'package:equatable/equatable.dart';
+
+// Do
+class Session with EquatableMixin {
+  Session(this.userId, this.expiresAt);
+
+  final String userId;
+  final DateTime expiresAt;
+
+  @override
+  List<Object?> get props => [userId, expiresAt];
+}
+```
+
+### Static fields are not instance state
+
+Only the class's own instance fields are required. A `static const` is shared, not per-instance, so it is never expected in `props`:
+
+```dart
+import 'package:equatable/equatable.dart';
+
+// No warning
+class Username extends Equatable {
+  const Username(this.value);
+
+  final String value;
+  static const maxLength = 100;
+
+  @override
+  List<Object?> get props => [value];
+}
+```
+
+## Known limitations
+
+**Only fields declared on the class itself are checked.** Inherited fields are the parent's business, and it lists them in its own `props`.
+
+**`props` must return a list literal directly.** A getter that delegates — `=> _buildProps()` — cannot be read statically, and the class is skipped entirely. A literal containing a spread (`=> [...super.props, name]`) is still read.
+
+**Names are matched as identifiers anywhere inside the literal**, not as bare entries. `props => [name.toLowerCase()]` counts as listing `name`, so a field that only appears inside an expression satisfies the check.
+
+**See also:** [equatable package](https://pub.dev/packages/equatable)
 
 ## Configuration
 

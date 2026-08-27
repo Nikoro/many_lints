@@ -9,32 +9,34 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule flags a public method or getter declared on a widget class.
+Flags a public **instance method or getter** declared on a widget class.
 
-This rule is in the **`pedantic`** preset: it imposes an architecture rather than catching a defect.
-
-## Why use this rule
-
-A widget's public surface is its constructor — the parameters a parent passes in. Everything else exists to serve `build`, and making it public invites a caller to reach into the widget and invoke part of its rendering out of band, which is exactly the coupling a widget class prevents.
+A widget's public surface is its constructor — the parameters a parent passes in. Everything else exists to serve `build`, and making it public invites a caller to reach in and drive part of the rendering out of band.
 
 This matters more in Flutter than the general encapsulation argument suggests, because a widget instance is **rebuilt constantly**. A public method sits on an object the framework may discard on the next frame, so whatever a caller does with it cannot be relied upon.
 
-Three things are deliberately not reported:
-
-- **Fields.** A widget's fields are its constructor parameters, and public `final` fields are the idiom the framework itself uses.
-- **Static members.** A static is not reachable on a widget instance, so the rebuild argument does not apply. `static Future<T> show(context)` is the documented way to open a dialog or a sheet — on a real app this accounted for 14 of 16 reports.
-- **`@override` and `@visibleForTesting`.** The first belongs to the supertype; the second is a deliberate widening.
+This rule is in the **`pedantic`** preset: it imposes an architecture rather than catching a defect. No configuration.
 
 **See also:** [Flutter: widget classes over helper methods](https://docs.flutter.dev/perf/best-practices)
+
+## Enabling this rule
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_widget_private_members: true
+```
 
 ## Don't
 
 ```dart
-class BadWidget extends StatelessWidget {
-  const BadWidget({super.key});
+class SearchBar extends StatelessWidget {
+  const SearchBar({super.key});
 
   // A caller can reach in and drive part of the rendering.
-  void refresh() {}
+  void clear() {}
+
+  String get query => '';
 
   @override
   Widget build(BuildContext context) => const SizedBox.shrink();
@@ -43,33 +45,68 @@ class BadWidget extends StatelessWidget {
 
 ## Do
 
+Make it private, and move anything a parent genuinely needs into the constructor:
+
 ```dart
-class GoodWidget extends StatelessWidget {
-  const GoodWidget({required this.title, super.key});
+class SearchBar extends StatelessWidget {
+  const SearchBar({required this.query, required this.onClear, super.key});
 
   // Fields are the constructor's parameters — never reported.
-  final String title;
+  final String query;
+  final VoidCallback onClear;
 
-  void _refresh() {}
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
-}
-
-class GoodDialog extends StatelessWidget {
-  const GoodDialog({super.key});
-
-  // A static entry point is exempt.
-  static Future<void> show(BuildContext context) async {}
+  void _handleSubmit() {}
 
   @override
   Widget build(BuildContext context) => const SizedBox.shrink();
 }
 ```
 
-## Turning this rule off
+### Statics are exempt
 
-To disable this rule:
+A static is not reachable on a widget *instance*, so the rebuild argument does not apply to it. `static Future<T> show(context)` is the documented way to open a dialog or a sheet — on a real app this accounted for 14 of 16 reports:
+
+```dart
+class ConfirmDialog extends StatelessWidget {
+  const ConfirmDialog({super.key});
+
+  // Not reported
+  static Future<bool?> show(BuildContext context) =>
+      showDialog<bool>(context: context, builder: (_) => const ConfirmDialog());
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+```
+
+### Overrides and test seams are exempt
+
+`@override` names belong to the supertype, and `@visibleForTesting` is a deliberate widening — neither is reported:
+
+```dart
+class Chip extends StatelessWidget {
+  const Chip({super.key});
+
+  @override
+  String toStringShort() => 'Chip';        // not reported: the name is the supertype's
+
+  @visibleForTesting
+  int computeWidth() => 0;                 // not reported: a deliberate widening
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+```
+
+## Known limitations
+
+**Fields are never reported.** A widget's fields are its constructor parameters, and public `final` fields are the idiom the framework itself uses.
+
+**State classes are not checked.** Only classes that are themselves widgets are examined — a `State` subclass and its `initState`/`dispose` are out of scope.
+
+The framework's own hooks — `build`, `createState`, `createElement`, `debugFillProperties`, `debugDescribeChildren`, `toStringShort`, `toString`, `noSuchMethod` — cannot be private and are always exempt. Operators are skipped too.
+
+## Turning this rule off
 
 ```yaml
 # many_lints.yaml

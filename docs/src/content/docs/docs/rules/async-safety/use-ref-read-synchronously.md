@@ -57,6 +57,45 @@ class MyWidget extends ConsumerWidget {
 }
 ```
 
+A guard resets the tracking, so a second `await` after it needs its own guard:
+
+```dart
+onPressed: () async {
+  await ref.read(saveProvider.future);
+  if (!context.mounted) return;
+  ref.read(analyticsProvider).saved();
+
+  await Future<void>.delayed(const Duration(seconds: 1));
+  if (!context.mounted) return;   // needed again
+  ref.read(routerProvider).pop();
+},
+```
+
+## Known limitations
+
+**Only callbacks inside a `build` method are scanned.** This is the biggest thing to know about the rule. A `ref.read` after an `await` in a separate handler method is the same hazard but is not reported:
+
+```dart
+class MyWidget extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ElevatedButton(
+      onPressed: () => _save(context, ref),   // extracted
+      child: const Text('Save'),
+    );
+  }
+
+  Future<void> _save(BuildContext context, WidgetRef ref) async {
+    await ref.read(saveProvider.future);
+    ref.read(analyticsProvider).saved();   // not reported, still unsafe
+  }
+}
+```
+
+Extracting a handler is good practice, so guard it by hand: the rule cannot follow the call.
+
+The enclosing class must be a `ConsumerWidget`, `ConsumerState`, or a hook variant of either. A guard hidden behind a helper — `if (_stillHere()) ...` — is not recognised; the check has to be written inline.
+
 ## Configuration
 
 This rule is in the **`opinionated`** preset, so it is on with

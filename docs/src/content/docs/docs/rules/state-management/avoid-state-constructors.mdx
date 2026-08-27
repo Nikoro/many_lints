@@ -26,54 +26,92 @@ The `State` constructor runs before the framework has fully initialized the stat
 
 ## Don't
 
-```dart
-class _BadWidget1State extends State<BadWidget1> {
-  late String _data;
+A `State` doing setup in its constructor body. The constructor runs before the
+framework has attached `widget` or `context`, so anything that needs them is
+either unavailable or wrong:
 
-  // Constructor body should be empty — move logic to initState()
-  _BadWidget1State() {
-    _data = 'Hello';
+```dart
+class _SearchPageState extends State<SearchPage> {
+  late final TextEditingController _controller;
+
+  _SearchPageState() {
+    _controller = TextEditingController();
   }
 
   @override
-  Widget build(BuildContext context) => const SizedBox();
+  Widget build(BuildContext context) => TextField(controller: _controller);
 }
+```
 
-class _BadWidget2State extends State<BadWidget2> {
-  final String _data;
+An initializer list is reported for the same reason — the value is decided
+before `widget` exists, so it can never depend on it:
 
-  // Initializer list in State constructor — move logic to initState()
-  _BadWidget2State() : _data = 'Hello';
+```dart
+class _CounterState extends State<Counter> {
+  final int _start;
+
+  _CounterState() : _start = 0;
 
   @override
-  Widget build(BuildContext context) => const SizedBox();
+  Widget build(BuildContext context) => Text('$_start');
 }
 ```
 
 ## Do
 
+Do the setup in `initState`, where `widget` is available:
+
 ```dart
-class _GoodWidgetState extends State<GoodWidget> {
-  late String _data;
+class _SearchPageState extends State<SearchPage> {
+  late final TextEditingController _controller;
 
   @override
   void initState() {
     super.initState();
-    _data = 'Hello';
+    _controller = TextEditingController(text: widget.initialQuery);
   }
 
   @override
-  Widget build(BuildContext context) => const SizedBox();
-}
-
-// Empty constructor is fine
-class _GoodWidget2State extends State<GoodWidget2> {
-  _GoodWidget2State();
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
-  Widget build(BuildContext context) => const SizedBox();
+  Widget build(BuildContext context) => TextField(controller: _controller);
 }
 ```
+
+A field initializer that does not touch `widget` or `context` needs no
+constructor at all:
+
+```dart
+class _CounterState extends State<Counter> {
+  int _count = 0;
+
+  @override
+  Widget build(BuildContext context) => Text('$_count');
+}
+```
+
+## Known limitations
+
+Only a constructor with a **non-empty body or an initializer list** is
+reported. An empty declared constructor is fine:
+
+```dart
+class _CounterState extends State<Counter> {
+  _CounterState();
+
+  int _count = 0;
+
+  @override
+  Widget build(BuildContext context) => Text('$_count');
+}
+```
+
+Field initializers written on the field itself are not constructor code and are
+never reported, even when they run at the same moment.
 
 ## Turning this rule off
 

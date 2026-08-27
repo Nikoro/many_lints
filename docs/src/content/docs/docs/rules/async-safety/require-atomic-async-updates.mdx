@@ -40,14 +40,21 @@ class Counter {
 }
 ```
 
-A compound assignment has the same hazard, because it reads the field before writing it:
+A compound assignment is the same hazard written shorter, because `+=` reads the field before writing it. It is reported when the field was also read before the await — here by the log line:
 
 ```dart
-Future<void> increment() async {
-  await _repository.save();
-  _value += 1;   // reads `_value` that a concurrent call may have changed
+class Counter {
+  int _value = 0;
+
+  Future<void> increment() async {
+    log('starting from $_value');
+    await _repository.save();
+    _value += 1;   // reads `_value` that a concurrent call may have changed
+  }
 }
 ```
+
+Drop that log line and nothing is reported: with no read before the await there is no stale value for the write to be measured against. See [Known limitations](#known-limitations).
 
 ## Do
 
@@ -76,6 +83,17 @@ Future<void> load() async {
 For genuinely contended state, serialize the whole read-modify-write instead — for example with a lock or a queue — so no other call can interleave.
 
 ## Known limitations
+
+**The field must be read before the await.** That read is what the write is compared against, so a body that only writes after the await reports nothing — including a compound assignment:
+
+```dart
+Future<void> increment() async {
+  await _repository.save();
+  _value += 1;   // not reported: nothing read `_value` before the await
+}
+```
+
+This is the most common reason a hazard you expected to see is missing.
 
 Statements are scanned in source order within one function body. Only fields of the enclosing instance are tracked: `other.field` belongs to an object this method does not control, and static fields are excluded because they are not per-instance state.
 

@@ -22,56 +22,102 @@ A common misconception is that checking `mounted` inside `setState` protects aga
 
 ## Don't
 
-```dart
-class _BadExampleState extends State<BadExample> {
-  Future<void> _loadData() async {
-    final data = await Future.delayed(const Duration(seconds: 1), () => 42);
+An async handler that guards inside the callback. The guard never runs — `setState` has already thrown by then — and the state still gets assigned when the widget survives, so the code looks like it works:
 
-    // mounted check inside setState is too late
+```dart
+class _ProfilePageState extends State<ProfilePage> {
+  String _name = '';
+
+  Future<void> _load() async {
+    final name = await fetchName();
+
     setState(() {
       if (mounted) {
-        // If the widget was disposed, setState already threw
-      }
-    });
-
-    // context.mounted inside setState is also wrong
-    setState(() {
-      if (context.mounted) {
-        // Same problem
+        _name = name;
       }
     });
   }
 
   @override
-  Widget build(BuildContext context) => const SizedBox();
+  Widget build(BuildContext context) => Text(_name);
+}
+```
+
+`context.mounted` inside the callback is the same mistake:
+
+```dart
+class _ProfilePageState extends State<ProfilePage> {
+  String _name = '';
+
+  Future<void> _load() async {
+    final name = await fetchName();
+
+    setState(() {
+      if (context.mounted) {
+        _name = name;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => Text(_name);
 }
 ```
 
 ## Do
 
+Guard before the call, and let the callback do nothing but mutate:
+
 ```dart
-class _GoodExampleState extends State<GoodExample> {
-  Future<void> _loadData() async {
-    final data = await Future.delayed(const Duration(seconds: 1), () => 42);
+class _ProfilePageState extends State<ProfilePage> {
+  String _name = '';
 
-    // Check mounted BEFORE calling setState
+  Future<void> _load() async {
+    final name = await fetchName();
     if (!mounted) return;
-    setState(() {
-      // Safe — we already verified the widget is still mounted
-    });
 
-    // Or using context.mounted
-    if (context.mounted) {
-      setState(() {
-        // Also safe
-      });
-    }
+    setState(() {
+      _name = name;
+    });
   }
 
   @override
-  Widget build(BuildContext context) => const SizedBox();
+  Widget build(BuildContext context) => Text(_name);
 }
 ```
+
+When the value is needed for something that also uses the context — a snackbar,
+a route — `context.mounted` reads better, and it belongs in the same place:
+
+```dart
+class _ProfilePageState extends State<ProfilePage> {
+  String _name = '';
+
+  Future<void> _load() async {
+    final name = await fetchName();
+    if (!context.mounted) return;
+
+    setState(() {
+      _name = name;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Welcome, $name')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => Text(_name);
+}
+```
+
+## Known limitations
+
+The whole callback is searched, including nested closures. A `mounted` read
+inside a closure that `setState` merely stores for later — rare, but legal — is
+reported too.
+
+Only an inline callback is inspected. `setState(_applyName)` passes a method
+reference, and the rule does not follow it.
 
 ## Turning this rule off
 

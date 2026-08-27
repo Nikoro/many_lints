@@ -9,23 +9,11 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Class Naming</span>
 
-This rule flags a boolean field, getter or method whose name does not read as a yes-or-no question.
+Flags a boolean field, getter, method or top-level function whose name does not read as a yes-or-no question.
 
-## Why use this rule
+`if (user.admin)` reads as though `admin` might be an object, and the reader has to check. `if (user.isAdmin)` can only be a condition — which is why `isEmpty`, `hasListeners` and `canPop` read the way they do throughout the SDK.
 
-`if (user.admin)` reads as though `admin` might be an object, and the reader has to check. `if (user.isAdmin)` can only be a condition. The verb is what tells you at the call site that nothing further is needed to get a boolean out of it, and it is why `isEmpty`, `hasListeners` and `canPop` read the way they do throughout the SDK.
-
-This rule is in the **`pedantic`** preset. Naming is where reasonable codebases disagree most, and the empirical run found a legitimate style it cannot accommodate: a predicate like `screen.atLeast(Breakpoint.tablet)` reads perfectly without a question verb. Enable it by name if the convention is one you want enforced.
-
-**See also:** [Effective Dart: naming](https://dart.dev/effective-dart/design#prefer-a-non-imperative-verb-phrase-for-a-boolean-property-or-variable)
-
-## What counts as a question
-
-The verb does not have to lead. `localeIsDefault` asks the same question as `isDefaultLocale`, and naming the subject first is a normal way to keep related settings sorting together — so any of the recognised verbs appearing as a whole word satisfies the rule.
-
-A bare third-person verb (`involves`, `matches`) is already a question and needs no prefix.
-
-Three things are never reported: an `@override`, whose name belongs to the base declaration; a setter, whose name is fixed by the getter it pairs with; and a private field backing an accessor, which is named after the storage while the accessor carries the readable name.
+This rule is in the **`pedantic`** preset, and takes no configuration.
 
 ## Don't
 
@@ -33,6 +21,8 @@ Three things are never reported: an `@override`, whose name belongs to the base 
 class User {
   bool admin = false;
   bool emailSent = false;
+
+  bool profileComplete() => true;
 }
 ```
 
@@ -42,8 +32,85 @@ class User {
 class User {
   bool isAdmin = false;
   bool hasSentEmail = false;
+
+  bool isProfileComplete() => true;
 }
 ```
+
+## Examples
+
+### The verb does not have to lead
+
+Any recognised verb counts as long as it appears as a whole camelCase word. Naming the subject first is a normal way to keep related settings sorting together:
+
+```dart
+class Settings {
+  // All accepted
+  bool isDefaultLocale = false;
+  bool localeIsDefault = false;
+  bool userCanEdit = false;
+}
+```
+
+The recognised verbs are `is are was were has have had can should will would does do did must needs allows contains supports enables requires wants shows hides accepts`.
+
+### Word boundaries, not substrings
+
+Matching is on camelCase words, so a name that merely *contains* the letters is still reported:
+
+```dart
+// Don't — `island` is not `is`, and `hasty` is not `has`
+bool island = false;    // LINT
+bool hasty = false;     // LINT
+
+// Do
+bool isIsland = false;
+bool isHasty = false;
+```
+
+### A bare third-person verb is already a question
+
+A single lowercase word ending in `s` needs no prefix — it reads as a question on its own:
+
+```dart
+class Matcher {
+  // Accepted
+  bool matches() => true;
+  bool involves() => true;
+}
+```
+
+Only a single lowercase word qualifies, so `emailSent` is still reported.
+
+### Three declarations are never reported
+
+An `@override` takes its name from the base declaration, a setter from the getter it pairs with, and a private field backing an accessor from the storage rather than the question:
+
+```dart
+class Toggle {
+  // Not reported — a private field beside an accessor
+  bool _value = false;
+
+  bool get isEnabled => _value;
+
+  // Not reported — a setter's name is fixed by its getter
+  set isEnabled(bool value) => _value = value;
+}
+
+class AdminUser extends User {
+  // Not reported — the name belongs to the base declaration
+  @override
+  bool admin = true;
+}
+```
+
+## Known limitations
+
+**Only an explicit `bool` annotation.** The type has to be written out. `var isReady = false` and a getter with an inferred return type are not checked.
+
+**No configuration.** The verb list is fixed. If a legitimate house style does not fit it — a predicate like `screen.atLeast(Breakpoint.tablet)` reads perfectly without a question verb — silence it with `// ignore: many_lints/prefer_boolean_prefixes` or turn the rule off.
+
+**See also:** [Effective Dart: naming](https://dart.dev/effective-dart/design#prefer-a-non-imperative-verb-phrase-for-a-boolean-property-or-variable)
 
 ## Enabling this rule
 

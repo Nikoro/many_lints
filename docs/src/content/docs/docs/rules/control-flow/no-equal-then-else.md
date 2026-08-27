@@ -11,35 +11,67 @@ sidebar:
 
 This rule flags an `if`/`else` or conditional expression whose branches are identical. If both branches do the same thing, the condition decides nothing.
 
-## Why use this rule
-
-Two identical branches mean one of two things: a branch was meant to differ and does not — the usual case, and a real bug — or the branching is dead weight that should collapse to a single statement.
-
-The shape appears through copy-paste: the second branch is duplicated from the first with the intent to edit it, and the edit never happens. Nothing about it is a type error, so it survives review easily.
+It means one of two things: a branch was meant to differ and does not — the usual case, and a real bug — or the branching is dead weight that should collapse. The shape appears through copy-paste, and nothing about it is a type error, so it survives review easily.
 
 **See also:** [Dart: branches](https://dart.dev/language/branches)
 
 ## Don't
 
 ```dart
-if (isAdmin) {
-  showDashboard();
-} else {
-  showDashboard();   // the condition changes nothing
+void showDashboard() {}
+
+void render({required bool isAdmin}) {
+  if (isAdmin) {
+    showDashboard();
+  } else {
+    showDashboard();
+  }
 }
 ```
 
+A conditional expression is checked the same way:
+
 ```dart
-final label = isActive ? 'on' : 'on';
+String label({required bool isActive}) => isActive ? 'on' : 'on';
 ```
 
 ## Do
 
-Make the branches differ, or drop the condition:
+Make the branches differ:
 
 ```dart
-showDashboard();
+void showDashboard() {}
+void showHome() {}
+
+void render({required bool isAdmin}) {
+  if (isAdmin) {
+    showDashboard();
+  } else {
+    showHome();
+  }
+}
 ```
+
+Or drop the condition, if it really decided nothing:
+
+```dart
+void showDashboard() {}
+
+void render() {
+  showDashboard();
+}
+```
+
+## Known limitations
+
+Branches are compared by **source text**, with a single-statement block reduced
+to that statement so `{ f(); }` and `f();` compare equal. Two branches that
+compute the same result by different code are not reported — that is beyond
+what a lint can judge.
+
+An **`else if` chain** is skipped: comparing the first branch against a whole
+nested `if` says nothing useful. **Two empty branches** are skipped too, since
+that is usually code mid-way through being written.
 
 ## Known limitations
 

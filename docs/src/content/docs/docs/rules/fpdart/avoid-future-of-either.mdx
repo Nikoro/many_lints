@@ -18,41 +18,61 @@ This rule flags a function or method returning `Future<Either<L, R>>`, which `Ta
 
 `Future<Either<L, R>>` is not a bug — unlike `Either<L, Future<R>>`, which [`avoid_either_of_future`](/many_lints/docs/rules/fpdart/avoid-either-of-future/) reports. It is simply the same thing `TaskEither` is, with the composition thrown away.
 
-A caller cannot `flatMap` a `Future<Either>` without awaiting first, so every chain has to leave the fpdart world and come back:
-
-```dart
-final either = await repo.getUser(id);
-final result = await either.match(
-  (failure) async => left(failure),
-  (user) => repo.loadOrders(user.id),
-);
-```
-
-In `TaskEither` the same pipeline is one expression, because the type carries both the asynchrony and the failure channel:
-
-```dart
-final result = await repo.getUser(id).flatMap(
-      (user) => repo.loadOrders(user.id),
-    ).run();
-```
+A caller cannot `flatMap` a `Future<Either>` without awaiting first, so every chain has to leave the fpdart world and come back — see the example below.
 
 The eagerness matters too. A `Future` starts running the moment it is created, so a `Future<Either>` cannot be retried, delayed, or built up now and run later. A `TaskEither` describes the work instead of performing it.
 
 ## Don't
 
 ```dart
-Future<Either<Failure, User>> getUser(String id) async {
-  return right(await api.get(id));
+class Failure {
+  const Failure(this.message);
+
+  final String message;
 }
+
+class User {
+  const User(this.id);
+
+  final String id;
+}
+
+Future<User> getUserRaw(String id) async => User(id);
+
+Future<Either<Failure, User>> getUser(String id) async {
+  try {
+    return right(await getUserRaw(id));
+  } catch (error) {
+    return left(Failure('$error'));
+  }
+}
+```
+
+A caller cannot `flatMap` that without awaiting first, so every chain has to
+leave the fpdart world and come back:
+
+```dart
+final either = await getUser(id);
+final result = await either.match(
+  (failure) async => left<Failure, List<Order>>(failure),
+  (user) => loadOrders(user.id),
+);
 ```
 
 ## Do
 
 ```dart
 TaskEither<Failure, User> getUser(String id) => TaskEither.tryCatch(
-      () => api.get(id),
-      (error, stackTrace) => Failure.from(error),
-    );
+  () => getUserRaw(id),
+  (error, stackTrace) => Failure('$error'),
+);
+```
+
+The same pipeline is now one expression, because the type carries both the
+asynchrony and the failure channel:
+
+```dart
+final result = await getUser(id).flatMap((user) => loadOrders(user.id)).run();
 ```
 
 ## Known limitations

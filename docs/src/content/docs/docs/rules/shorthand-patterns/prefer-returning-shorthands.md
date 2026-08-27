@@ -13,54 +13,99 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Shorthand Patterns</span>
 
-Flags expression function bodies that return an instance whose type matches the declared return type. Since the return type is already explicit, the class name in the constructor call is redundant and can be replaced with a dot shorthand (e.g., `.new()` or `.symbol()`).
+This rule flags an arrow function that constructs the very type it declares as its return type. The declared type already names the class, so `.new(...)` or `.named(...)` carries the same information in fewer characters. The quick fix drops the prefix.
 
-## Why use this rule
-
-When a function already declares its return type, repeating the class name in the returned constructor call adds visual noise without extra information. Dot shorthands reduce this redundancy, making arrow functions more concise. This also applies to both branches of conditional expressions.
-
-**See also:** [Dart language - Arrow syntax](https://dart.dev/language/functions#arrow-syntax)
+**See also:** [Dart language — dot shorthands](https://dart.dev/language/dot-shorthands)
 
 ## Don't
 
 ```dart
-class Currency {
-  final String code;
-  const Currency(this.code);
-  const Currency.symbol(this.code);
+class Money {
+  const Money(this.amount);
+  const Money.zero() : amount = 0;
+
+  final int amount;
 }
 
-Currency getInstance() => Currency('USD');
+Money parsePrice(String raw) => Money(int.parse(raw));         // LINT
 
-Currency getNamedInstance() => Currency.symbol('USD');
+Money emptyCart() => Money.zero();                             // LINT
 
-Currency getConditional(bool flag) =>
-    flag ? Currency('EUR') : Currency.symbol('USD');
-
-Currency? getNullable() => Currency('USD');
+Money priceOr(String? raw, bool free) =>
+    free ? Money.zero() : Money(int.parse(raw!));              // LINT twice
 ```
 
 ## Do
 
 ```dart
-Currency getInstance() => .new('USD');
+Money parsePrice(String raw) => .new(int.parse(raw));
 
-Currency getNamedInstance() => .symbol('USD');
+Money emptyCart() => .zero();
 
-Currency getConditional(bool flag) =>
-    flag ? .new('EUR') : .symbol('USD');
+Money priceOr(String? raw, bool free) =>
+    free ? .zero() : .new(int.parse(raw!));
+```
 
-// Block function bodies are not flagged:
-Currency getWithBlock() {
-  return Currency('USD');
+Both branches of a conditional are checked independently, so a mixed expression
+reports only the branches that construct the return type.
+
+## A nullable return type still counts
+
+`Money?` accepts a `Money`, so the shorthand is available there too:
+
+```dart
+// Don't
+Money? tryParse(String raw) => Money(int.parse(raw));
+
+// Do
+Money? tryParse(String raw) => .new(int.parse(raw));
+```
+
+## Methods and factory constructors
+
+The rule reads a method's declared return type the same way, and treats a
+factory constructor's class as its return type:
+
+```dart
+// Don't
+class Money {
+  const Money(this.amount);
+  const Money._(this.amount);
+
+  factory Money.fromCents(int cents) => Money._(cents ~/ 100);   // LINT
+
+  final int amount;
+
+  Money doubled() => Money(amount * 2);                          // LINT
 }
 
-// No explicit return type — not flagged:
-getInstance() => Currency('USD');
+// Do
+class Money {
+  const Money(this.amount);
+  const Money._(this.amount);
 
-// Dynamic return type — not flagged:
-dynamic getDynamic() => Currency('USD');
+  factory Money.fromCents(int cents) => ._(cents ~/ 100);
+
+  final int amount;
+
+  Money doubled() => .new(amount * 2);
+}
 ```
+
+## Known limitations
+
+**Only arrow bodies.** A block body is not reported, even when its single `return` constructs the declared type:
+
+```dart
+// Not reported
+Money parsePrice(String raw) {
+  return Money(int.parse(raw));
+}
+```
+
+**A declared return type is required.** With no annotation, or with `dynamic` or `void`, there is no context type and the shorthand would not compile — nothing is reported.
+
+**Only the outermost expression.** `Money('1').copy()` returns a `Money` but the expression is a method call on a constructor, so it is left alone.
 
 ## Configuration
 

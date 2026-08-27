@@ -14,38 +14,125 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule flags a declaration taking more than a few positional parameters.
 
-This rule is in the **`pedantic`** preset: the budget is a house style.
-
 ## Why use this rule
 
-`move(3, 4, 5)` tells the reader nothing, and swapping two arguments of the same type compiles cleanly and fails at runtime. Named parameters put the meaning at the call site, where it is read.
+`schedule(3, 4, 5)` tells the reader nothing, and swapping two arguments of the same type compiles cleanly and fails at runtime. Named parameters put the meaning at the call site, where it is read.
 
 The threshold matters more than the principle. One or two positional parameters are usually the *subject* of the call — `substring(0, 4)`, `Point(x, y)` — and naming them is noise, so the default budget is 2.
 
-Exempt by default:
-
-- An **`@override`**, whose signature belongs to the supertype, and an **operator**, whose parameters cannot be named.
-- A **private constructor**. It is not an API: it is reached from one place in the same library, usually a factory assembling injected dependencies (`Pipeline._(this._storage, this._adapter, this._policy)`), and naming those adds ceremony at the one call site that already knows the order.
-- **`main`, `onRequest` and `middleware`**, whose positional signature a framework dictates. dart_frog passes the URL's path segments in order, so naming them is not the author's to decide.
-
-Those last two accounted for 22 of 28 reports on a real codebase.
+This rule is in the **`pedantic`** preset: the budget is a house style.
 
 **See also:** [Effective Dart: parameters](https://dart.dev/effective-dart/design#parameters)
 
 ## Don't
 
+Four `int`s in a row, all interchangeable to the compiler:
+
 ```dart
-void move(int x, int y, int z) {}
+class Reminder {
+  Reminder(this.hour, this.minute, this.repeatDays, this.snoozeMinutes);
+
+  final int hour;
+  final int minute;
+  final int repeatDays;
+  final int snoozeMinutes;
+}
+
+// Call site: Reminder(7, 30, 5, 9) — which one is which?
 ```
 
 ## Do
 
 ```dart
-void move({required int x, required int y, required int z}) {}
+class Reminder {
+  Reminder({
+    required this.hour,
+    required this.minute,
+    required this.repeatDays,
+    required this.snoozeMinutes,
+  });
 
-// One or two positional parameters are the subject of the call.
-String slice(String value, int start) => value;
+  final int hour;
+  final int minute;
+  final int repeatDays;
+  final int snoozeMinutes;
+}
+
+// Call site: Reminder(hour: 7, minute: 30, repeatDays: 5, snoozeMinutes: 9)
 ```
+
+One or two positional parameters stay positional — they are the subject of the call:
+
+```dart
+String slice(String value, int start) => value.substring(start);
+```
+
+### Raising or lowering the budget
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_named_parameters:
+      max_positional: 3
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_named_parameters:
+    max_positional: 3
+```
+
+</TabItem>
+</Tabs>
+
+### Exempting a framework signature
+
+`main`, `onRequest` and `middleware` are exempt out of the box. Add your own framework entry points rather than turning the rule off — dart_frog passes a route's path segments in order, so naming them is not the author's to decide:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_named_parameters:
+    additional_ignored_names: [handleRequest, buildRoute]
+```
+
+```dart
+// Not reported: `onRequest` is in the default ignore list.
+void onRequest(Object context, String id, String revision, String locale) {}
+```
+
+## Known limitations
+
+**Only positional parameters count.** Optional positionals count too, so `void f(int a, [int b, int c])` is 3.
+
+**`@override` is skipped.** The signature belongs to the supertype.
+
+**Operators and setters are skipped.** Their parameters cannot be named.
+
+**A private constructor is skipped by default.** It is not an API: it is reached from one place in the same library, usually a factory assembling injected dependencies. Note that this keys on the **constructor's own name** — `Pipeline._(a, b, c)` is exempt, but the unnamed constructor of a private class `_Pipeline(a, b, c)` is not:
+
+```dart
+class Pipeline {
+  // Not reported.
+  Pipeline._(this._storage, this._adapter, this._policy);
+
+  final Object _storage;
+  final Object _adapter;
+  final Object _policy;
+}
+```
+
+Set `ignore_private_constructors: false` to include them.
+
+Private constructors and framework entry points together accounted for 22 of 28 reports on a real codebase, which is why both are exempt by default.
 
 ## Options
 

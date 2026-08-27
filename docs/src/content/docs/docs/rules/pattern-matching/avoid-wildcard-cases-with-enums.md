@@ -9,17 +9,11 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Pattern Matching</span>
 
-This rule is in the **`pedantic`** preset.
-
 This rule flags a `_` or `default` case in a switch over a non-nullable enum.
 
 ## Why use this rule
 
-Switching over an enum without a catch-all gives you exhaustiveness checking for free. Add a constant to the enum and the compiler points at every switch that must now handle it — the change becomes a guided refactor rather than a hunt.
-
-A wildcard case turns that off permanently. New constants silently fall into the catch-all and inherit whatever behaviour was written for the cases nobody had in mind. The bug appears at runtime, in whichever feature forgot to update.
-
-The cost of listing constants explicitly is a few lines. The benefit is that the compiler maintains the list for you from then on.
+A switch over an enum with no catch-all is checked for exhaustiveness: add a constant and the compiler points at every switch that must now handle it. A wildcard case turns that off permanently — new constants fall into the catch-all and inherit behaviour written for cases nobody had in mind, and the bug shows up at runtime.
 
 **See also:** [Dart: exhaustiveness checking](https://dart.dev/language/branches#exhaustiveness-checking)
 
@@ -30,8 +24,8 @@ enum Status { active, inactive, pending }
 
 String describe(Status status) => switch (status) {
   Status.active => 'Active',
-  // A new constant silently becomes 'Other'
-  _ => 'Other',
+  // Add a constant to Status and it silently becomes 'Other'
+  _ => 'Other',                       // LINT
 };
 ```
 
@@ -54,9 +48,36 @@ String describe(Status status) => switch (status) {
 };
 ```
 
+## In a switch statement
+
+Both `default:` and `case _:` are reported:
+
+```dart
+// Don't
+void handle(Status status) {
+  switch (status) {
+    case Status.active:
+      start();
+    default:                          // LINT
+      stop();
+  }
+}
+
+// Do
+void handle(Status status) {
+  switch (status) {
+    case Status.active:
+      start();
+    case Status.inactive:
+    case Status.pending:
+      stop();
+  }
+}
+```
+
 ## Known limitations
 
-The rule stays silent in cases where a catch-all is legitimate:
+The rule stays silent where a catch-all is legitimate:
 
 - **Nullable enums.** `Status?` needs a case for `null`, and `_` is a reasonable way to write it.
 - **Guarded wildcards.** `_ when flag => ...` is conditional, so the compiler still checks the remaining constants.
@@ -64,9 +85,9 @@ The rule stays silent in cases where a catch-all is legitimate:
 
 ## Configuration
 
-This rule appears only in the **`pedantic`** preset because catch-all behavior is
-sometimes the contract, such as mapping every unsupported HTTP method to the
-same response.
+This rule appears only in the **`pedantic`** preset, because catch-all behaviour
+is sometimes the contract — mapping every unsupported HTTP method to one
+response, for instance.
 
 Enable it by name:
 

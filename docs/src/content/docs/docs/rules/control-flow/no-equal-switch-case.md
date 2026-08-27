@@ -11,51 +11,98 @@ sidebar:
 
 This rule flags two branches of a `switch` that produce identical bodies, where sharing the patterns would say the same thing once.
 
-## Why use this rule
-
-Repeating a body states the same outcome twice, and the two copies drift: one gets fixed and the other keeps the old behaviour, with nothing to show that they were ever meant to agree. Sharing the patterns (`case a || b`) says the outcome is deliberately the same and can only ever change in one place.
-
-This rule is in the **`pedantic`** preset. Whether two independent enum branches that happen to agree today *should* be merged is a genuine judgement call — the strictest tier deliberately resolves that judgement in favour of one canonical branch.
-
-Three shapes are deliberately not reported, because none of them can be merged into an `||` pattern:
-
-- **A guarded case** (`case int() when x > 10`) — each `when` belongs to its own pattern.
-- **The catch-all** (`_` or `default`) — it has to stay last, and folding a specific case into it would change which values it covers.
-- **An empty body** — several empty cases in a row are how a fallthrough is written.
+Two copies of a body drift: one gets fixed and the other keeps the old behaviour, with nothing to show they were ever meant to agree. `case a || b` says the outcome is deliberately the same and can only ever change in one place.
 
 ## Don't
 
+A switch expression with a body written twice:
+
 ```dart
-String label(int code) => switch (code) {
-  1 => 'ok',
-  2 => 'ok',
-  _ => 'error',
+enum DeliveryStage { packed, shipped, delivered, returned }
+
+String tracking(DeliveryStage stage) => switch (stage) {
+  DeliveryStage.packed => 'In the warehouse',
+  DeliveryStage.shipped => 'On its way',
+  DeliveryStage.delivered => 'Complete',
+  DeliveryStage.returned => 'Complete',
 };
+```
+
+Switch statements are checked the same way:
+
+```dart
+enum DeliveryStage { packed, shipped, delivered, returned }
+
+void notify(DeliveryStage stage) {
+  switch (stage) {
+    case DeliveryStage.packed:
+      print('In the warehouse');
+    case DeliveryStage.shipped:
+      print('On its way');
+    case DeliveryStage.delivered:
+      print('Complete');
+    case DeliveryStage.returned:
+      print('Complete');
+  }
+}
 ```
 
 ## Do
 
+Share the patterns with `||`:
+
 ```dart
-String label(int code) => switch (code) {
-  1 || 2 => 'ok',
-  _ => 'error',
+enum DeliveryStage { packed, shipped, delivered, returned }
+
+String tracking(DeliveryStage stage) => switch (stage) {
+  DeliveryStage.packed => 'In the warehouse',
+  DeliveryStage.shipped => 'On its way',
+  DeliveryStage.delivered || DeliveryStage.returned => 'Complete',
 };
 ```
 
-## Enabling this rule
+## Known limitations
 
-This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
+Bodies are compared by source text, so two branches that reach the same result
+by different code are not reported.
+
+Three shapes are never reported, because none of them can be merged into an
+`||` pattern:
+
+```dart
+enum DeliveryStage { packed, shipped, delivered, returned }
+
+String tracking(DeliveryStage stage, int retries) => switch (stage) {
+  // A guarded case — each `when` belongs to its own pattern.
+  DeliveryStage.packed when retries > 3 => 'Stuck',
+  DeliveryStage.shipped when retries > 3 => 'Stuck',
+  DeliveryStage.packed => 'In the warehouse',
+  DeliveryStage.shipped => 'On its way',
+  DeliveryStage.delivered => 'Complete',
+  // The catch-all has to stay last, so folding a case into it would change
+  // which values it covers.
+  _ => 'Complete',
+};
+```
+
+An **empty body** is skipped too: several empty cases in a row are how a
+fallthrough is written in a switch statement.
+
+## Configuration
+
+This rule is in the **`pedantic`** preset — whether two independent branches
+that happen to agree today *should* be merged is a genuine judgement call, and
+the strictest tier resolves it in favour of one canonical branch.
+
+Enable it by name:
 
 ```yaml
 # many_lints.yaml
 rules:
-  no_equal_switch_case:
-    enabled: true
+  no_equal_switch_case: true
 ```
 
-## Turning this rule off
-
-To disable this rule:
+To turn it off again:
 
 ```yaml
 # many_lints.yaml

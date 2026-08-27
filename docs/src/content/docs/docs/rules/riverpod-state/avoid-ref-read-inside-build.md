@@ -28,68 +28,103 @@ A one-off read in `build()` is almost always a mistake. The widget renders with 
 
 A one-off read inside a **callback** (`onPressed`) is intentional and is not reported.
 
-The two ecosystems are told apart by the **receiver's resolved type**, not by its name: Riverpod's `ref` is a `WidgetRef`/`Ref`, while provider's extensions hang off `BuildContext`. So `widgetContext.read<T>()` is caught under any receiver name, while a field of some unrelated class you happened to call `ref` is not.
-
 **See also:** [Riverpod refs](https://riverpod.dev/docs/concepts2/refs), [provider: read vs watch](https://pub.dev/packages/provider)
 
 ## Don't
 
+A cart badge that reads its count once. It renders `3`, the user adds an item,
+and the badge keeps saying `3` until some unrelated rebuild happens to refresh
+it:
+
 ```dart
-// Riverpod
-class MyWidget extends ConsumerWidget {
+final cartCountProvider = StateProvider<int>((ref) => 0);
+
+class CartBadge extends ConsumerWidget {
+  const CartBadge({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Reads once, never rebuilds on changes
-    final value = ref.read(someProvider);
-    return Text(value);
+    final count = ref.read(cartCountProvider); // LINT
+    return Text('$count');
   }
 }
+```
 
-// package:provider
-class MyOtherWidget extends StatelessWidget {
+The same mistake in `package:provider`, where the receiver is the `BuildContext`
+rather than a `ref`:
+
+```dart
+class CartBadge extends StatelessWidget {
+  const CartBadge({super.key});
+
   @override
   Widget build(BuildContext context) {
-    final value = context.read<String>();
-    return Text(value);
+    final cart = context.read<Cart>(); // LINT
+    return Text('${cart.itemCount}');
   }
 }
 ```
 
 ## Do
 
+Subscribe, so the badge is told when the count changes:
+
 ```dart
-class MyWidget extends ConsumerWidget {
+final cartCountProvider = StateProvider<int>((ref) => 0);
+
+class CartBadge extends ConsumerWidget {
+  const CartBadge({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Subscribes and rebuilds when provider changes
-    final value = ref.watch(someProvider);
-    return Text(value);
+    final count = ref.watch(cartCountProvider);
+    return Text('$count');
   }
 }
+```
 
-// package:provider
-class MyProviderWidget extends StatelessWidget {
+```dart
+class CartBadge extends StatelessWidget {
+  const CartBadge({super.key});
+
   @override
   Widget build(BuildContext context) {
-    final value = context.watch<String>();
-    return Text(value);
+    final cart = context.watch<Cart>();
+    return Text('${cart.itemCount}');
   }
 }
+```
 
-// A one-off read inside a callback is fine, in either ecosystem.
-class MyOtherWidget extends ConsumerWidget {
+### A read inside a callback is fine
+
+The callback runs on a tap, long after `build` returned, and wants the value as
+it is *then* — not a subscription:
+
+```dart
+class AddToCartButton extends ConsumerWidget {
+  const AddToCartButton({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ElevatedButton(
-      onPressed: () {
-        // Intentional one-time read triggered by user action
-        final value = ref.read(someProvider);
-      },
-      child: const Text('Tap'),
+      onPressed: () => ref.read(cartProvider.notifier).add(Item.sample),
+      child: const Text('Add to cart'),
     );
   }
 }
 ```
+
+## Known limitations
+
+Only a method literally named `build` is checked. A `build`-time helper you
+extracted — `Widget _buildHeader(WidgetRef ref)` — is not, even though its read
+is just as stale.
+
+The two ecosystems are told apart by the **receiver's resolved type**, not its
+name: Riverpod's `ref` is a `WidgetRef`/`Ref`, `package:provider`'s extensions
+hang off `BuildContext`. So `widgetContext.read<T>()` is caught under any
+receiver name, while a field of some unrelated class you happened to call `ref`
+is not.
 
 ## Configuration
 

@@ -13,61 +13,106 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-This rule flags `Notifier` and `AsyncNotifier` subclasses that have constructors with non-empty bodies or initializer lists. Empty constructors are allowed. All initialization logic should go into the `build()` method instead.
+This rule flags a `Notifier` or `AsyncNotifier` subclass whose constructor has a non-empty body or an initializer list. A quick fix deletes the constructor.
+
+Not reported: a constructor whose only initializer is a `super(...)` call, and a constructor with an empty body — though an empty unnamed constructor with no parameters is then reported by [`avoid_unnecessary_constructor`](/many_lints/docs/rules/code-organization/avoid-unnecessary-constructor/) instead, since Dart supplies that one for free. The fix for both is the same: delete it.
 
 ## Why use this rule
 
-Riverpod creates and recreates Notifiers as part of its lifecycle management. The `build()` method is the proper place for initialization because it runs at the right time in the provider lifecycle and has access to `ref`. Constructor logic runs before the Notifier is fully wired up, which means you can't use `ref` there, and the logic won't re-run when the provider is refreshed or invalidated.
+Riverpod constructs the Notifier, then calls `build()`. `ref` is not wired up until after the constructor returns, so constructor logic cannot read another provider. Worse, `build()` re-runs on every `ref.invalidate` / `ref.refresh` and on every dependency change, while the constructor does not — so anything initialized there survives a refresh that was supposed to reset it.
 
 **See also:** [Riverpod providers](https://riverpod.dev/docs/concepts2/providers)
 
-## Don't
+## Examples
+
+### Initialization that a refresh should reset
 
 ```dart
+// Don't — `_startedAt` is stamped once and never refreshed
 import 'package:riverpod/riverpod.dart';
 
-// Constructor with body
-class BadCounter extends Notifier<int> {
-  var _initial = 0;
-
-  BadCounter() {
-    _initial = 1;
+class SessionNotifier extends Notifier<Duration> {
+  SessionNotifier() {                        // LINT
+    _startedAt = DateTime.now();
   }
 
-  @override
-  int build() => _initial;
-}
-
-// Constructor with initializer list
-class BadCounter2 extends Notifier<int> {
-  final int _initial;
-
-  BadCounter2() : _initial = 1;
+  late DateTime _startedAt;
 
   @override
-  int build() => _initial;
+  Duration build() => DateTime.now().difference(_startedAt);
 }
 ```
 
-## Do
-
 ```dart
+// Do — build() re-runs on refresh, so the clock restarts with the provider
 import 'package:riverpod/riverpod.dart';
 
-// No constructor, initialization in build()
-class GoodCounter extends Notifier<int> {
+class SessionNotifier extends Notifier<Duration> {
   @override
-  int build() => 0;
-
-  void increment() => state++;
+  Duration build() {
+    final startedAt = DateTime.now();
+    return DateTime.now().difference(startedAt);
+  }
 }
+```
 
-// Empty constructor is fine
-class GoodCounter2 extends Notifier<int> {
-  GoodCounter2();
+### An initializer list is flagged too
+
+Any initializer other than `super(...)` counts, including a field initializer or an assert:
+
+```dart
+// Don't
+import 'package:riverpod/riverpod.dart';
+
+class PageNotifier extends Notifier<int> {
+  PageNotifier() : _pageSize = 20;           // LINT
+
+  final int _pageSize;
 
   @override
-  int build() => 0;
+  int build() => _pageSize;
+}
+```
+
+```dart
+// Do — a constant belongs on the class, not in a constructor
+import 'package:riverpod/riverpod.dart';
+
+class PageNotifier extends Notifier<int> {
+  static const _pageSize = 20;
+
+  @override
+  int build() => _pageSize;
+}
+```
+
+### Dependencies belong to build(), not the constructor
+
+A constructor cannot use `ref`, so an injected dependency taken there is one the Notifier can never re-read when the provider it came from changes. Read it in `build()` instead:
+
+```dart
+// Don't
+import 'package:riverpod/riverpod.dart';
+
+class ProfileNotifier extends Notifier<String> {
+  ProfileNotifier(Repository repository) {   // LINT
+    _repository = repository;
+  }
+
+  late Repository _repository;
+
+  @override
+  String build() => _repository.name;
+}
+```
+
+```dart
+// Do — `ref.watch` re-runs build() whenever the repository provider changes
+import 'package:riverpod/riverpod.dart';
+
+class ProfileNotifier extends Notifier<String> {
+  @override
+  String build() => ref.watch(repositoryProvider).name;
 }
 ```
 

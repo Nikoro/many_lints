@@ -13,52 +13,91 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule flags `GestureDetector` widgets that have no event handler callbacks (no `onTap`, `onLongPress`, `onDoubleTap`, etc.). A GestureDetector without any handlers does nothing useful but still participates in hit testing, which can interfere with gesture recognition for widgets below it.
+Flags a `GestureDetector` with no argument whose name starts with `on`.
 
-## Why use this rule
+A handler-less `GestureDetector` still takes part in hit testing, so it can quietly swallow touches meant for something underneath — especially with `behavior: HitTestBehavior.opaque`. Either the handler was deleted and the wrapper left behind, or the handler was never wired up and the tap has been dead since it shipped.
 
-A handler-less `GestureDetector` is dead code that adds clutter to the widget tree. It may also unintentionally swallow touch events from child widgets, especially when `behavior` is set to `HitTestBehavior.opaque`. Removing it or adding the intended handler makes the code correct and easier to understand.
+This rule is in the **`recommended`** preset, so it is on with `preset: recommended` and every preset above it. No configuration.
 
-**See also:** [GestureDetector](https://api.flutter.dev/flutter/widgets/GestureDetector-class.html) | [InkWell](https://api.flutter.dev/flutter/material/InkWell-class.html)
+**See also:** [GestureDetector](https://api.flutter.dev/flutter/widgets/GestureDetector-class.html)
 
 ## Don't
 
-```dart
-final widgets = <Widget>[
-  // GestureDetector without any on* callback
-  GestureDetector(child: const Text('hello')),
+The usual origin: the callback moved somewhere else and the wrapper stayed:
 
-  // Non-handler arguments like behavior don't count
-  GestureDetector(
-    behavior: HitTestBehavior.opaque,
-    child: const Text('world'),
-  ),
-];
+```dart
+class ProductTile extends StatelessWidget {
+  const ProductTile({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      child: const Text('Product'),
+    );
+  }
+}
 ```
 
 ## Do
 
+Either wire the handler back up:
+
 ```dart
-final widgets = <Widget>[
-  GestureDetector(
-    onTap: () => print('tapped'),
-    child: const Text('hello'),
-  ),
-  GestureDetector(
-    onLongPress: () => print('long pressed'),
-    onDoubleTap: () => print('double tapped'),
-    child: const Text('world'),
-  ),
-];
+class ProductTile extends StatelessWidget {
+  const ProductTile({required this.onOpen, super.key});
+
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onOpen,
+      child: const Text('Product'),
+    );
+  }
+}
 ```
 
-## Configuration
+Or drop the wrapper — the quick fix does this, replacing the `GestureDetector` with its `child`:
 
-This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
-`avoid_unnecessary_gesture_detector: true`.
+```dart
+@override
+Widget build(BuildContext context) => const Text('Product');
+```
 
-To turn it off:
+### Non-handler arguments do not count
+
+`behavior`, `excludeFromSemantics`, `dragStartBehavior` and friends configure the detector; they do not give it anything to do. Only an `on*` argument counts:
+
+```dart
+// Still reported — no on* argument
+GestureDetector(
+  behavior: HitTestBehavior.translucent,
+  excludeFromSemantics: true,
+  child: const Text('Nothing happens'),
+);
+```
+
+### Prefer InkWell when the tap is a Material one
+
+If you are adding a handler back to get a tap, `InkWell` gives you the ripple as well:
+
+```dart
+InkWell(
+  onTap: onOpen,
+  child: const Text('Product'),
+);
+```
+
+## Known limitations
+
+Any argument whose name starts with `on` satisfies the rule, so `onSomethingElse: null` — an explicitly null handler — keeps it quiet. The rule reads the argument name, not the value.
+
+`RawGestureDetector` and `Listener` are not checked.
+
+## Turning this rule off
 
 ```yaml
 # many_lints.yaml

@@ -16,68 +16,113 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Quality</span>
 
-Flags comments that look like commented-out Dart code rather than descriptive text. This includes commented-out function definitions, variable declarations, import statements, and other recognizable code patterns. The quick fix removes the flagged comment block.
+Flags comments that look like commented-out Dart code rather than descriptive text — function bodies, variable declarations, imports, calls. The quick fix removes the flagged block.
 
-## Why use this rule
+Version control already preserves the old code. A commented-out block only tells the next reader that someone was unsure, without telling them what about.
 
-Commented-out code is technical debt that clutters the codebase and confuses readers about what is intentional. Version control already preserves old code, making commented-out blocks unnecessary. Removing them keeps the codebase clean and reduces cognitive load during code review.
-
-**See also:** [Effective Dart: Documentation](https://dart.dev/effective-dart/documentation)
+This rule is in the **`opinionated`** preset and works with its defaults.
 
 ## Don't
 
 ```dart
-class BadExamples {
-  // void apply(String value) {
-  //   print(value);
-  // }
+class Uploader {
+  Future<void> upload(String path) async {
+    await _put(path);
+    // await _put(path, retries: 3);
+    // if (!ok) {
+    //   throw StateError('upload failed');
+    // }
+  }
 
-  // final x = 42;
-
-  // import 'dart:async';
-
-  void another() {}
+  Future<void> _put(String path, {int retries = 0}) async {}
 }
 ```
 
 ## Do
 
-```dart
-class GoodExamples {
-  // This method handles the main processing logic
-  // and delegates to the appropriate handler
+Delete it. `git log -p` has the version you were keeping:
 
-  // Temporarily disabled, enable in 1.0
-  void another() {}
+```dart
+class Uploader {
+  Future<void> upload(String path) async {
+    await _put(path);
+  }
+
+  Future<void> _put(String path, {int retries = 0}) async {}
 }
 ```
 
+## More examples
+
+### Prose is not reported
+
+An explanation stays. Only blocks that read as Dart are flagged:
+
+```dart
+class Uploader {
+  // Retries are handled by the transport layer, not here — see the
+  // retry policy in lib/src/net/policy.dart.
+  Future<void> upload(String path) async {}
+}
+```
+
+Doc comments (`///`) are never examined at all, whatever they contain.
+
+### Tolerate a single commented line
+
+The default `min_lines: 1` reports every block, including one-liners. Raise it
+if a lone commented line is acceptable in your codebase but a whole block is
+not:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_commented_out_code:
+    min_lines: 3
+```
+
+```dart
+class Uploader {
+  Future<void> upload(String path) async {
+    // await _put(path, retries: 3);   // not reported with min_lines: 3
+    await _put(path);
+  }
+
+  Future<void> _put(String path, {int retries = 0}) async {}
+}
+```
+
+### Blocks end at a blank line or at code
+
+A blank line ends a block, and so does any code between two comments. That
+matters for `min_lines`: these are three blocks of one line each, not one block
+of three.
+
+```dart
+void run() {
+  // final a = 1;
+
+  // final b = 2;
+  print('go');
+  // final c = 3;
+}
+```
+
+A comment trailing code (`foo(); // note`) is its own block too, since it
+annotates the line beside it.
+
 ## Known limitations
 
-Detection is a heuristic over each block of comments: a block is reported when at least half its non-empty lines look like Dart rather than prose. Blocks are formed from comments on directly consecutive lines — a blank line ends one, and so does any code between them. A comment trailing code (`foo(); // note`) is its own block, since it annotates the line beside it.
+Detection is a heuristic: a block is reported when at least half its non-empty
+lines look like Dart rather than prose.
 
-That means a single commented-out line surrounded by explanatory prose may not reach the ratio, and prose that reads like code (`// returns null;`) can be reported. Suppress those with `// ignore: many_lints/avoid_commented_out_code`.
+That cuts both ways. A single commented-out line surrounded by explanatory
+prose may not reach the ratio and stays silent. Prose that reads like code
+(`// returns null;`) can be reported — suppress it with
+`// ignore: many_lints/avoid_commented_out_code`.
 
-## Turning this rule off
-
-This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_commented_out_code: true
-```
-
-To turn it off again:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_commented_out_code: false
-```
-
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+At most 500 comment lines per file are examined, so a generated file with
+thousands of them does not stall the analysis server.
 
 ## Options
 
@@ -108,6 +153,27 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `min_lines` | int | `1` | Minimum number of consecutive commented-out lines before a block is reported |
+
+## Turning this rule off
+
+This rule is in the **`opinionated`** preset, so it is on with
+`preset: opinionated`, or by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_commented_out_code: true
+```
+
+To turn it off again:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_commented_out_code: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Related rules
 

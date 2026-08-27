@@ -26,19 +26,44 @@ It also separates the parse from its null handling by the width of the line. Ins
 ## Don't
 
 ```dart
-final parsed = Option.fromNullable(int.tryParse(input));
+Option<int> port(String input) => Option.fromNullable(int.tryParse(input));
+```
+
+In a pipeline the separation is where a mismatch hides — this reads as
+perfectly correct:
+
+```dart
+Option<(int, double)> reading(String id, String value) => Option.Do(($) {
+  final parsedId = $(Option.fromNullable(int.tryParse(id)));
+  final parsedValue = $(Option.fromNullable(double.tryParse(id)));
+  return (parsedId, parsedValue);
+});
 ```
 
 ## Do
 
 ```dart
-final parsed = input.toIntOption;
+Option<int> port(String input) => input.toIntOption;
+```
+
+The pipeline version no longer has room for the mistake:
+
+```dart
+Option<(int, double)> reading(String id, String value) => Option.Do(($) {
+  final parsedId = $(id.toIntOption);
+  final parsedValue = $(value.toDoubleOption);
+  return (parsedId, parsedValue);
+});
 ```
 
 When the failure has to reach the caller, the `Either` variant takes it:
 
 ```dart
-Either<Failure, int> parseRound(String input) =>
+class InvalidRoundNumberFailure {
+  const InvalidRoundNumberFailure();
+}
+
+Either<InvalidRoundNumberFailure, int> parseRound(String input) =>
     input.toIntEither(() => const InvalidRoundNumberFailure());
 ```
 

@@ -12,37 +12,69 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Collection &amp; Type</span>
 
-This rule flags an `as` cast or `is` check between types with no possible common subtype. The cast can only ever throw, and the check can only ever be `false`.
+Flags an `as` cast or `is` check between types with no possible common subtype. The cast can only ever throw; the check can only ever be `false`.
 
-## Why use this rule
+The analyzer accepts `value as int` on a `String` without complaint — the cast is legal Dart, it simply fails at runtime. The `is` form is quieter and worse: a check that is statically always `false` compiles, runs, and skips its branch forever, leaving dead code that looks live.
 
-The analyzer accepts `value as int` on a `String` without complaint — the cast is legal Dart, it simply fails at runtime. There is no scenario where it succeeds, so it is always a mistake: the wrong variable, a stale type after a refactor, or a misremembered API.
-
-The `is` form is quieter and worse. A check that is statically always `false` compiles, runs, and silently skips its branch forever. That branch is dead code that looks live.
-
-The SDK's [`unrelated_type_equality_checks`](https://dart.dev/tools/linter-rules/unrelated_type_equality_checks) covers the `==` version of this idea. Casts and type tests are left uncovered, which is the gap this rule fills.
-
-**See also:** [Dart: type test operators](https://dart.dev/language/operators#type-test-operators), [`unrelated_type_equality_checks`](https://dart.dev/tools/linter-rules/unrelated_type_equality_checks)
+The SDK's [`unrelated_type_equality_checks`](https://dart.dev/tools/linter-rules/unrelated_type_equality_checks) covers the `==` version of this idea; casts and type tests are the gap this rule fills.
 
 ## Don't
 
+The usual cause is a type that changed under the cast — an id that became a `String`, a field that was widened — leaving a cast nothing can satisfy:
+
 ```dart
-void f(String value) {
-  final n = value as int;   // always throws
-  if (value is int) { }     // always false — the branch is dead
+int parseCount(String raw) {
+  return raw as int;
 }
 ```
 
 ## Do
 
-Cast within a hierarchy, or fix the expression being checked:
+Convert, rather than assert, when the types are genuinely different:
 
 ```dart
-void f(Object value) {
-  if (value is int) {       // `Object` really might be an `int`
-    print(value + 1);
+int parseCount(String raw) {
+  return int.parse(raw);
+}
+```
+
+### An `is` check that can never be true
+
+```dart
+// Don't — the branch is dead code
+void report(String message) {
+  if (message is int) {
+    log('numeric: $message');
   }
 }
+```
+
+```dart
+// Do — `Object` really might be an `int`
+void report(Object message) {
+  if (message is int) {
+    log('numeric: $message');
+  }
+}
+```
+
+### Limiting the rule to `as` casts
+
+Some codebases narrow a sealed hierarchy in ways that read as unrelated to a purely syntactic check. Turn off the `is` half and keep the casts:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_unrelated_type_casts:
+    report_is_checks: false
+```
+
+```dart
+// Still reported
+final n = someString as int;
+
+// No longer reported
+if (someString is int) { }
 ```
 
 ## Known limitations

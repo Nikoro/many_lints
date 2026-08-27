@@ -13,11 +13,11 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule flags calls like `MediaQuery.of(context).size` and suggests using the dedicated aspect methods like `MediaQuery.sizeOf(context)` instead. The dedicated methods subscribe only to the specific property you need, so your widget does not rebuild when unrelated MediaQuery properties change.
+Flags `MediaQuery.of(context).<property>` where a dedicated `<property>Of(context)` accessor exists.
 
-## Why use this rule
+`MediaQuery.of(context)` subscribes to the whole `MediaQueryData`, so the widget rebuilds when *anything* changes: orientation, padding, text scale, view insets, the on-screen keyboard appearing. `MediaQuery.sizeOf(context)` subscribes to one aspect, and rebuilds only when that aspect changes. In a frequently-rebuilt subtree that is a real win. The quick fix rewrites the call.
 
-`MediaQuery.of(context)` subscribes to the entire `MediaQueryData`. That means your widget rebuilds whenever any media property changes — orientation, padding, text scale, view insets, and more. If you only need `size`, using `MediaQuery.sizeOf(context)` ensures rebuilds happen only when the size actually changes. This is a significant performance win for widgets that appear in frequently-rebuilt subtrees.
+This rule is in the **`recommended`** preset, so it is on with `preset: recommended` and every preset above it. No configuration.
 
 **See also:** [MediaQuery](https://api.flutter.dev/flutter/widgets/MediaQuery-class.html)
 
@@ -25,9 +25,11 @@ This rule flags calls like `MediaQuery.of(context).size` and suggests using the 
 
 ```dart
 class MyWidget extends StatelessWidget {
+  const MyWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
-    // Subscribes to ALL MediaQuery changes
+    // Subscribes to ALL MediaQuery changes — a keyboard opening rebuilds this
     final size = MediaQuery.of(context).size;
     final padding = MediaQuery.of(context).padding;
     return SizedBox(width: size.width, height: size.height - padding.top);
@@ -39,9 +41,11 @@ class MyWidget extends StatelessWidget {
 
 ```dart
 class MyWidget extends StatelessWidget {
+  const MyWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
-    // Only rebuilds when size or padding changes
+    // Rebuilds only when the size or the padding changes
     final size = MediaQuery.sizeOf(context);
     final padding = MediaQuery.paddingOf(context);
     return SizedBox(width: size.width, height: size.height - padding.top);
@@ -49,13 +53,46 @@ class MyWidget extends StatelessWidget {
 }
 ```
 
-## Configuration
+### The naming rule
 
-This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
-`use_dedicated_media_query_methods: true`.
+The accessor is the property name with `Of` appended, so the rewrite is mechanical:
 
-To turn it off:
+| Instead of | Use |
+|-----------|-----|
+| `MediaQuery.of(context).size` | `MediaQuery.sizeOf(context)` |
+| `MediaQuery.of(context).orientation` | `MediaQuery.orientationOf(context)` |
+| `MediaQuery.of(context).viewInsets` | `MediaQuery.viewInsetsOf(context)` |
+| `MediaQuery.of(context).textScaler` | `MediaQuery.textScalerOf(context)` |
+| `MediaQuery.of(context).platformBrightness` | `MediaQuery.platformBrightnessOf(context)` |
+| `MediaQuery.of(context).devicePixelRatio` | `MediaQuery.devicePixelRatioOf(context)` |
+
+### maybeOf keeps its null
+
+`MediaQuery.maybeOf` has a `maybe<Property>Of` counterpart, and the fix inserts the `?` where the chain needs it:
+
+```dart
+// Don't
+final width = MediaQuery.maybeOf(context)?.size.width;
+
+// Do
+final width = MediaQuery.maybeSizeOf(context)?.width;
+```
+
+## Known limitations
+
+Only a **direct** property access on the call is reported — `MediaQuery.of(context).size`. Binding the data first hides it, even though the subscription is exactly as wide:
+
+```dart
+// Not reported, but subscribes to everything all the same
+final media = MediaQuery.of(context);
+final size = media.size;
+```
+
+The receiver is matched by the literal name `MediaQuery`, so an aliased import (`as flutter`) is not recognised.
+
+Only properties with a real dedicated accessor are reported; anything else is left alone.
+
+## Turning this rule off
 
 ```yaml
 # many_lints.yaml

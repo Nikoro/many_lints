@@ -14,41 +14,109 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule flags a numeric literal used without a name to explain it.
 
-This rule is in the **`pedantic`** preset: what counts as magic is a house style, and in a Flutter codebase full of layout numbers the honest default is off.
-
 ## Why use this rule
 
 `if (retries > 3)` states a policy the reader cannot check and the next person cannot find: the same 3 appears in four other files, and changing the policy means finding all five. `if (retries > maxRetries)` says what the number is for and gives the change one place to happen.
 
-The defaults are tuned so that only numbers carrying real meaning report:
-
-- **`-1`, `0`, `1` and `2` are always allowed.** They are the vocabulary of indexing, counting and halving, and naming them makes code worse.
-- **A literal that initialises a declaration is exempt** — it is already named, and this is the shape the rule asks people to move towards. The check sees through arithmetic, so `100 * 1024 * 1024` counts as one named value.
-- **`const` declarations, enums and annotation arguments are exempt**, for the same reason.
-- **Measurements are exempt by default.** `EdgeInsets`, `Gap`, `SizedBox`, `Duration` and their siblings take numbers that are a measurement, not a policy. On a real Flutter app these accounted for **416 of 490** reports; `spacing8` is a worse name than `8`.
-- **Tests are exempt by default.** A fixture's numbers are the test data, and naming each one buries the case it describes.
-
-Two things this rule deliberately still reports: a `const` **constructor** argument (`const EdgeInsets.all(17)` still hides what 17 means, unless the type is in the ignore list), and seed or demo data. If a file *is* data, reach for `exclude` rather than weakening the rule.
-
 ## Don't
 
 ```dart
-bool tooManyRetries(int retries) => retries > 3;
+class UploadPolicy {
+  bool shouldGiveUp(int attempts) => attempts > 3;
+
+  Duration backoffFor(int attempt) => Duration(milliseconds: attempt * 250);
+}
 ```
 
 ## Do
 
+Name the policy; the `Duration` argument was never reported, because a measurement is not a policy:
+
 ```dart
 const maxRetries = 3;
+const backoffStep = 250;
 
-bool tooManyRetries(int retries) => retries > maxRetries;
+class UploadPolicy {
+  bool shouldGiveUp(int attempts) => attempts > maxRetries;
 
-// Always allowed: the vocabulary of indexing and counting.
+  Duration backoffFor(int attempt) =>
+      Duration(milliseconds: attempt * backoffStep);
+}
+```
+
+### Exempting your own measurement types
+
+If your project has its own spacing or geometry types, add them rather than turning the rule off:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    no_magic_number:
+      additional_ignored_invocations: [Insets, AppSpacing]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  no_magic_number:
+    additional_ignored_invocations: [Insets, AppSpacing]
+```
+
+</TabItem>
+</Tabs>
+
+```dart
+class Insets {
+  const Insets.all(double value);
+}
+
+// Not reported under the configuration above.
+final gutter = Insets.all(17);
+```
+
+### Allowing a number your domain uses everywhere
+
+`allowed:` replaces the defaults, so restate them unless you mean to drop them. `additional_allowed:` adds to them instead:
+
+```yaml
+# many_lints.yaml
+rules:
+  no_magic_number:
+    additional_allowed: [100, 360]
+```
+
+## Known limitations
+
+These never report, and none of them is configurable away:
+
+**`-1`, `0`, `1` and `2`.** The vocabulary of indexing, counting and halving. Naming them makes code worse:
+
+```dart
 int firstOrSentinel(List<int> xs) => xs.isEmpty ? -1 : xs.length ~/ 2;
+```
 
-// Already named — the check sees through the arithmetic.
+**A literal that initialises a declaration.** It is already named, and this is the shape the rule asks people to move towards. The check sees through arithmetic, so this counts as one named value:
+
+```dart
 const maximumStoredBytes = 100 * 1024 * 1024;
 ```
+
+**`const` declarations, enums and annotation arguments**, for the same reason.
+
+**Measurements.** `EdgeInsets`, `Gap`, `SizedBox`, `Size`, `Offset`, `Duration`, `BorderRadius`, `Radius`, `Rect`, `Alignment` and their siblings take numbers that are a measurement, not a policy. On a real Flutter app these accounted for **416 of 490** reports; `spacing8` is a worse name than `8`. See `ignored_invocations` for the full default list.
+
+**Tests.** A fixture's numbers are the test data, and naming each one buries the case it describes. Set `ignore_tests: false` to include them.
+
+Two things this rule deliberately **does** still report: a `const` **constructor** argument — `const EdgeInsets.all(17)` still hides what 17 means, unless the type is in the ignore list — and seed or demo data. If a file *is* data, reach for [`exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule) rather than weakening the rule.
+
+This rule is in the **`pedantic`** preset: what counts as magic is a house style, and in a Flutter codebase full of layout numbers the honest default is off.
 
 ## Options
 

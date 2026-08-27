@@ -25,16 +25,40 @@ The `Option` counterpart of [`avoid_future_of_either`](/many_lints/docs/rules/fp
 ## Don't
 
 ```dart
-Future<Option<User>> findUser(String id) async {
-  return Option.fromNullable(await cache.get(id));
+class User {
+  const User(this.id);
+
+  final String id;
 }
+
+Future<User?> readCache(String id) async => User(id);
+
+Future<Option<User>> findUser(String id) async =>
+    Option.fromNullable(await readCache(id));
+```
+
+The lookup starts the moment `findUser` is called, and a caller wanting to
+chain it has to await first:
+
+```dart
+final option = await findUser(id);
+final name = option.map((user) => user.id).getOrElse(() => 'anonymous');
 ```
 
 ## Do
 
 ```dart
 TaskOption<User> findUser(String id) =>
-    TaskOption(() async => Option.fromNullable(await cache.get(id)));
+    TaskOption(() async => Option.fromNullable(await readCache(id)));
+```
+
+Nothing runs until `.run()`, and the chain stays one expression:
+
+```dart
+final name = await findUser(id)
+    .map((user) => user.id)
+    .getOrElse(() => 'anonymous')
+    .run();
 ```
 
 ## Known limitations

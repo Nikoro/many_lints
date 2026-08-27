@@ -16,26 +16,30 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule warns when a widget's `build` method returns a sliver widget (like `SliverList`, `SliverAppBar`, `SliverToBoxAdapter`) but the class name does not start with `Sliver`. Slivers and non-sliver widgets are not interchangeable, so making the distinction visible in the name prevents layout errors.
+Flags a widget whose `build` returns a sliver while the class name does not start with `Sliver`.
 
-## Why use this rule
+Slivers and box widgets are not interchangeable, and the type system does not separate them — both are just `Widget`. Drop a sliver-returning widget into a `Column` and you get a runtime error about `RenderSliver` not being a `RenderBox`, from a stack that points into the framework rather than at your file. The name is the only signal at the call site, which is why Flutter's own framework uses it throughout. The quick fix renames the class.
 
-If you drop a sliver-returning widget into a `Column` or `Row`, Flutter throws a confusing runtime error about "RenderSliver" not being a "RenderBox". A `Sliver` prefix on the class name makes it immediately obvious that the widget belongs inside a `CustomScrollView`, not a regular box layout. This naming convention is used throughout the Flutter framework itself.
+This rule is in the **`pedantic`** preset.
 
-**See also:** [Slivers](https://api.flutter.dev/flutter/widgets/CustomScrollView-class.html)
+**See also:** [CustomScrollView](https://api.flutter.dev/flutter/widgets/CustomScrollView-class.html)
+
+## Enabling this rule
+
+```yaml
+# many_lints.yaml
+rules:
+  use_sliver_prefix: true
+```
 
 ## Don't
 
-```dart
-// Returns a sliver but name does not indicate it
-class MyAdapter extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return SliverToBoxAdapter(child: Text('hello'));
-  }
-}
+Nothing at the call site says `ProductList` cannot go in a `Column`:
 
+```dart
 class ProductList extends StatelessWidget {
+  const ProductList({super.key});
+
   @override
   Widget build(BuildContext context) {
     return SliverList(delegate: SliverChildListDelegate([]));
@@ -46,46 +50,54 @@ class ProductList extends StatelessWidget {
 ## Do
 
 ```dart
-// Sliver prefix makes the contract clear
-class SliverMyAdapter extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return SliverToBoxAdapter(child: Text('hello'));
-  }
-}
-
 class SliverProductList extends StatelessWidget {
+  const SliverProductList({super.key});
+
   @override
   Widget build(BuildContext context) {
     return SliverList(delegate: SliverChildListDelegate([]));
   }
 }
+
+// The name now makes the only valid parent obvious
+final scroll = CustomScrollView(slivers: const [SliverProductList()]);
 ```
 
-## Turning this rule off
+### A StatefulWidget is judged by its State
 
-This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
+The `build` lives on the `State`, but the diagnostic — and the rename — land on the **widget** class, since that is the name callers write:
 
-```yaml
-# many_lints.yaml
-rules:
-  use_sliver_prefix: true
+```dart
+// Don't
+class ProductHeader extends StatefulWidget {
+  const ProductHeader({super.key});
+
+  @override
+  State<ProductHeader> createState() => _ProductHeaderState();
+}
+
+class _ProductHeaderState extends State<ProductHeader> {
+  @override
+  Widget build(BuildContext context) => const SliverAppBar();
+}
+
+// Do — rename the widget; the private State follows for readability
+class SliverProductHeader extends StatefulWidget {
+  const SliverProductHeader({super.key});
+
+  @override
+  State<SliverProductHeader> createState() => _SliverProductHeaderState();
+}
+
+class _SliverProductHeaderState extends State<SliverProductHeader> {
+  @override
+  Widget build(BuildContext context) => const SliverAppBar();
+}
 ```
 
-To turn it off again:
+### A custom State base class
 
-```yaml
-# many_lints.yaml
-rules:
-  use_sliver_prefix: false
-```
-
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
-
-## Options
-
-Projects with a state abstraction that does not extend Flutter's `State` can
-opt that base class into this rule:
+If your project's state classes extend something of your own instead of Flutter's `State`, name that base so the pairing still works:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -111,9 +123,38 @@ rules:
 </TabItem>
 </Tabs>
 
+## Known limitations
+
+**Only a single-return `build` is examined.** A `build` that branches — an `if` with two returns, or a body building a local first — is not reported even when every path returns a sliver:
+
+```dart
+// Not reported: two return statements
+@override
+Widget build(BuildContext context) {
+  if (isEmpty) return const SliverToBoxAdapter(child: SizedBox());
+  return SliverList(delegate: SliverChildListDelegate([]));
+}
+```
+
+**Only Flutter's own slivers count.** The returned type must be declared in `package:flutter` and its name must start with `Sliver`, so a sliver from `sliver_tools` or one of your own does not trigger the rule.
+
+Renaming the class is not automatic beyond the declaration — call sites are updated by your IDE's rename refactoring, not by the quick fix.
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `state_base_classes` | list of strings | `[]` | Additional non-`State` base classes whose subclasses should be treated as state classes |
+
+## Turning this rule off
+
+```yaml
+# many_lints.yaml
+rules:
+  use_sliver_prefix: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Related rules
 

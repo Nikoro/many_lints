@@ -61,11 +61,89 @@ class MyWidget extends HookWidget {
 }
 ```
 
-If each item genuinely needs its own hook state, give each one its own hook widget and let the framework keep the contexts separate.
+If each item genuinely needs its own hook state, give each one its own hook widget and let the framework keep the contexts separate:
+
+```dart
+class ItemRow extends HookWidget {
+  const ItemRow(this.item, {super.key});
+
+  final String item;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = useTextEditingController(text: item);
+    return TextField(controller: controller);
+  }
+}
+
+class MyWidget extends HookWidget {
+  const MyWidget(this.items, {super.key});
+
+  final List<String> items;
+
+  @override
+  Widget build(BuildContext context) =>
+      Column(children: [for (final item in items) ItemRow(item)]);
+}
+```
+
+## A `for` element inside a collection literal
+
+The same shape hides inside a widget tree, where it is easier to miss:
+
+```dart
+// Don't — one hook per child, and the count follows the data
+Widget build(BuildContext context) {
+  return Column(
+    children: [
+      for (var i = 0; i < items.length; i++) Text('${useState(i).value}'),
+    ],
+  );
+}
+```
+
+## Exempting a helper that only looks like a hook
+
+A function named `useX` that allocates no hook state is reported anyway, since
+the rule matches by name. Name it in `ignored_names` rather than restructuring
+the loop:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_misused_hooks:
+    ignored_names: [useLocalHelper]
+```
+
+```dart
+// Accepted with the config above
+Widget build(BuildContext context) {
+  for (final item in items) {
+    useLocalHelper(item);
+  }
+  return const SizedBox();
+}
+```
+
+`ignored_widgets` does the same for a whole class, which is worth reaching for
+when the widget is generated and you cannot edit it:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_misused_hooks:
+    ignored_widgets: [GeneratedGrid]
+```
 
 ## Known limitations
 
-Only loops are detected. A hook placed after an early `return` is skipped on some builds and shifts positions the same way, but proving that requires flow analysis and is out of scope here.
+**Only loops are detected.** A hook placed after an early `return` shifts positions the same way, but proving that requires flow analysis and is out of scope here.
+
+**A closure inside the loop body is not a loop.** A hook in a callback allocated per iteration is left to [`avoid_hooks_outside_build`](/many_lints/docs/rules/hook-rules/avoid-hooks-outside-build/).
+
+**A qualified call is never a hook.** `controller.useSomething()` inside a loop is left alone.
+
+**Hooks are recognised by name** — `use` followed by an uppercase letter or a digit. A hook aliased to another name is not seen.
 
 ## Turning this rule off
 

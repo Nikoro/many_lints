@@ -53,23 +53,45 @@ Future<Either<String, double>> total() async {
 
 ## Do
 
+Chain the steps and run once. The signature is unchanged, so no caller has to
+move:
+
 ```dart
-TaskEither<String, double> total() => currentUserId()
+Future<Either<String, double>> total() => currentUserId()
     .flatMap(latestOrderId)
-    .flatMap(invoiceTotal);
+    .flatMap(invoiceTotal)
+    .run();
 ```
 
-Flat regardless of step count, no manual unwrapping, and the original failure propagates untouched. Run it once at the boundary that renders the outcome.
+Flat regardless of step count, no manual unwrapping, and the original failure propagates untouched.
+
+Better still, hand the caller the unrun pipeline and let the boundary that renders the outcome run it. That *does* change the return type, so it is a change to make on purpose:
+
+```dart
+TaskEither<String, double> total() =>
+    currentUserId().flatMap(latestOrderId).flatMap(invoiceTotal);
+```
 
 When the chain grows past two or three steps, [`Do` notation](https://pub.dev/packages/fpdart#-do-notation) reads better than nested `flatMap`.
 
 ## Known limitations
 
-A `.run()` inside a closure is not counted against the enclosing member. A callback passed to a widget or an event handler legitimately runs its own pipeline, and counting those would report a body that is already correct.
+A `.run()` inside a closure is not counted against the enclosing member, so two handlers each running their own pipeline are never reported:
 
-The rule reports the member's name rather than each `.run()`, because the fix is to restructure the body as one chain — a single edit at that level. Reporting every call would suggest each one is separately wrong.
+```dart
+void wire(void Function(Future<void> Function()) onTap) {
+  onTap(() async {
+    await currentUserId().run();
+  });
+  onTap(() async {
+    await latestOrderId(1).run();
+  });
+}
+```
 
-No quick fix is offered: joining the steps means rewriting the body's control flow, including deciding what each unwrapped branch was for. That is a change to read, not to apply blind.
+The diagnostic lands on the member's name, not on each `.run()` — the fix is one edit at that level.
+
+No quick fix is offered: joining the steps means rewriting the body's control flow, including deciding what each unwrapped branch was for.
 
 ## Options
 

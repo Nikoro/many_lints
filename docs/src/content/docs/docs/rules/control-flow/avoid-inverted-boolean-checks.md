@@ -35,6 +35,37 @@ bool withinBudget(int lineCount, int limit) {
 }
 ```
 
+The four rewrites the rule offers, in full:
+
+| Written | Reported as |
+|---------|-------------|
+| `!(a < b)` | `a >= b` |
+| `!(a <= b)` | `a > b` |
+| `!(a > b)` | `a <= b` |
+| `!(a >= b)` | `a < b` |
+
+The suggestion appears in the diagnostic message, and the quick fix applies it.
+
+### Inside a larger condition
+
+The negation is just as easy to miss when it is one term among several:
+
+```dart
+bool shouldPage(int errorCount, int threshold, bool muted) {
+  // Don't
+  return !muted && !(errorCount <= threshold);
+}
+```
+
+```dart
+bool shouldPage(int errorCount, int threshold, bool muted) {
+  // Do
+  return !muted && errorCount > threshold;
+}
+```
+
+`!muted` is untouched — the rule only looks at a negated *comparison*, never at a negated boolean variable.
+
 ## Known limitations
 
 Reporting is restricted to comparisons where **both operands are `int`**, for two reasons:

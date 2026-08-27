@@ -13,57 +13,118 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Shorthand Patterns</span>
 
-Flags explicit class prefixes on static field accesses (e.g., `Currency.usd`) when the type can be inferred from context and a dot shorthand (`.usd`) would suffice. This applies to switch cases, switch expressions, typed variable declarations, comparisons, default parameters, and return expressions.
+This rule flags `Currency.usd` where the expected type is already `Currency`, because `.usd` says the same thing.
 
-## Why use this rule
+It applies wherever the context supplies the type: switch cases and switch expression patterns, typed variable declarations, `==` comparisons, default parameter values, and returns from a function with a declared return type.
 
-When the expected type is already known from context, repeating the class name on a static field access adds visual noise. Dot shorthands are more concise and keep the focus on the value rather than the type. This rule skips enums, which are handled separately by `prefer_shorthands_with_enums`.
+Enums have their own rule — [`prefer_shorthands_with_enums`](/many_lints/docs/rules/shorthand-patterns/prefer-shorthands-with-enums/). This one is for value classes with `static const` instances.
+
+**See also:** [Dart language — dot shorthands](https://dart.dev/language/dot-shorthands)
 
 ## Don't
 
 ```dart
 class Currency {
-  final String code;
   const Currency(this.code);
+
+  final String code;
+
   static const usd = Currency('USD');
   static const eur = Currency('EUR');
 }
 
-void example(Currency? e) {
-  switch (e) {
-    case Currency.usd:
-      print(e);
+void example(Currency? selected) {
+  switch (selected) {
+    case Currency.usd:            // LINT
+      print('dollars');
+    default:
+      break;
   }
 
-  final Currency another = Currency.usd;
-  if (e == Currency.usd) {}
+  final Currency fallback = Currency.eur;   // LINT
+
+  if (selected == Currency.usd) {}          // LINT
 }
-
-void fn({Currency value = Currency.usd}) {}
-
-Currency getResult() => Currency.usd;
 ```
 
 ## Do
 
 ```dart
-void example(Currency? e) {
-  switch (e) {
+void example(Currency? selected) {
+  switch (selected) {
     case .usd:
-      print(e);
+      print('dollars');
+    default:
+      break;
   }
 
-  final Currency another = .usd;
-  if (e == .usd) {}
+  final Currency fallback = .eur;
+
+  if (selected == .usd) {}
+}
+```
+
+## More places the context supplies the type
+
+### A default parameter value
+
+```dart
+// Don't
+void price(double amount, {Currency in_ = Currency.usd}) {}
+
+// Do
+void price(double amount, {Currency in_ = .usd}) {}
+```
+
+### A declared return type
+
+Both the arrow body and an explicit `return` are reported:
+
+```dart
+// Don't
+Currency preferred() => Currency.usd;
+
+Currency preferredOrDefault(Currency? chosen) {
+  return chosen ?? Currency.eur;
 }
 
-void fn({Currency value = .first}) {}
+// Do
+Currency preferred() => .usd;
 
-Currency getResult() => .usd;
-
-// Explicit prefix is fine when type cannot be inferred:
-Object getObject() => Currency.usd;
+Currency preferredOrDefault(Currency? chosen) {
+  return chosen ?? .eur;
+}
 ```
+
+### A switch expression pattern
+
+```dart
+// Don't
+final symbol = switch (selected) {
+  Currency.usd => r'$',
+  Currency.eur => '€',
+  _ => '?',
+};
+
+// Do
+final symbol = switch (selected) {
+  .usd => r'$',
+  .eur => '€',
+  _ => '?',
+};
+```
+
+## Known limitations
+
+Keeping the class name is correct — and the rule stays silent — when the shorthand would not compile or would mean something else:
+
+**No context type.** `Object getObject() => Currency.usd;` is not reported: the expected type is `Object`, so `.usd` has nothing to resolve against.
+
+**The field's type differs from its class.** `static const String staticString = 'test'` on `Currency` is a `String`, not a `Currency`, so `Currency.staticString` is left alone.
+
+**Access through an import prefix.** `prefix.Currency.usd` is skipped, since the leading name is the library prefix rather than the class.
+
+**A generic type argument inferred from the argument.** In `Box(items: const [Currency.usd])` the analyzer solves `T` *from* the element, so there is no downward context and `.usd` would fail to compile. Writing `Box<Currency>(items: const [.usd])` gives a real context type and is reported.
 
 ## Configuration
 

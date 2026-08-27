@@ -12,38 +12,63 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule flags a widget tree nested more deeply than the configured budget.
+Flags a widget tree nested deeper than `max_depth` (default `8`).
 
-## Why use this rule
+A `build` can be short and still be unreadable: eight levels of `Padding` inside `Column` inside `Expanded` push the widget that matters off the right edge, and every edit has to count brackets to find its place. Extracting a subtree into a named widget removes a level and names the part in one move.
 
-Nesting depth matches how a widget tree actually goes wrong. A `build` can be short and still be unreadable: eight levels of `Padding` inside `Column` inside `Expanded` push the widget that matters off the right edge, and every edit has to count brackets to find its place.
-
-Extracting a subtree into a named widget removes a whole level and gives the part a name at the same time — which is why this rule pairs naturally with [`prefer_single_widget_per_file`](/many_lints/docs/rules/widget-best-practices/prefer-single-widget-per-file/).
-
-Only widget instantiations are counted, so the lists, closures and conditionals between them do not inflate the number.
-
-**One diagnostic per tree.** It is anchored at the root of the over-nested tree — the widget whose subtree has to be split — and the number says how far that subtree goes. Reporting each node that is itself too deep would flag a ten-deep chain at every level past the budget, and would flag two sibling leaves at the same depth twice for what is a single fix. Both showed up when the rule was run against a production codebase.
-
-A `builder:` closure starts a tree of its own, so its depth is counted separately rather than added to the caller's.
+Only widget instantiations are counted, so lists, closures and conditionals between them do not inflate the number. The diagnostic lands **once per tree**, on its root — the widget whose subtree has to be split — and the message says how far the subtree goes.
 
 This rule is in the **`pedantic`** preset: a nesting budget is a house style.
 
 **See also:** [Flutter — performance best practices](https://docs.flutter.dev/perf/best-practices)
 
+## Enabling this rule
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_deep_widget_nesting:
+      enabled: true
+      max_depth: 8
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_deep_widget_nesting:
+    enabled: true
+    max_depth: 8
+```
+
+</TabItem>
+</Tabs>
+
 ## Don't
 
+Nine widget levels, one over the default budget of `8`. The diagnostic is on `Scaffold`, the root:
+
 ```dart
-Widget build(BuildContext context) => Scaffold(
-      body: SafeArea(
-        child: Padding(
+@override
+Widget build(BuildContext context) => Scaffold(          // 1
+      body: SafeArea(                                    // 2
+        child: Padding(                                  // 3
           padding: const EdgeInsets.all(16),
-          child: Column(
+          child: Column(                                 // 4
             children: [
-              Expanded(
-                child: Center(
-                  child: Padding(
+              Expanded(                                  // 5
+                child: Center(                           // 6
+                  child: Padding(                        // 7
                     padding: const EdgeInsets.all(8),
-                    child: Text('Finally'),   // 9 levels in
+                    child: Container(                    // 8
+                      child: Text('Finally'),            // 9
+                    ),
                   ),
                 ),
               ),
@@ -56,7 +81,10 @@ Widget build(BuildContext context) => Scaffold(
 
 ## Do
 
+Cut the tree where it has a name. Each half is now well inside the budget:
+
 ```dart
+@override
 Widget build(BuildContext context) => Scaffold(
       body: SafeArea(
         child: Padding(
@@ -71,47 +99,39 @@ class _Content extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        children: [Expanded(child: Center(child: Text('Finally')))],
+        children: [
+          Expanded(child: Center(child: Text('Finally'))),
+        ],
       );
 }
 ```
 
-## Enabling this rule
+### A builder starts a fresh tree
 
-This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
+A `builder:` closure is its own build function, so its depth is counted from zero rather than added to the caller's. This tree is never over budget however long the page around it gets:
+
+```dart
+ListView.builder(
+  itemCount: 10,
+  itemBuilder: (context, index) => Padding(   // depth 1 inside the closure
+    padding: const EdgeInsets.all(8),
+    child: Text('$index'),                    // depth 2
+  ),
+);
+```
+
+### Raising the budget
+
+A screen-level widget in a design system can legitimately run deeper. Set the number once rather than annotating every file:
 
 ```yaml
 # many_lints.yaml
 rules:
   avoid_deep_widget_nesting:
-    enabled: true
+    max_depth: 12
 ```
 
 ## Options
-
-<Tabs syncKey="many-lints-config-file">
-<TabItem label="analysis_options.yaml">
-
-```yaml
-# analysis_options.yaml
-many_lints:
-  rules:
-    avoid_deep_widget_nesting:
-      max_depth: 10
-```
-
-</TabItem>
-<TabItem label="many_lints.yaml">
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_deep_widget_nesting:
-    max_depth: 10
-```
-
-</TabItem>
-</Tabs>
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|

@@ -17,50 +17,117 @@ Flags usages of `RichText` which should be replaced with `Text.rich`. `RichText`
 
 ## Why use this rule
 
-`Text.rich` inherits the default `TextStyle` from the nearest `DefaultTextStyle` ancestor and automatically applies text scaling from `MediaQuery`. `RichText` does neither — it requires you to pass these explicitly. Using `Text.rich` gives you correct accessibility behavior out of the box and is the recommended approach for rich text in Flutter.
+`RichText` is the raw widget: `textScaler` defaults to `TextScaler.noScaling`,
+and it inherits nothing from `DefaultTextStyle`. Text written with it stays the
+same size when the user raises the system font scale, and ignores whatever style
+the surrounding theme set.
+
+`Text.rich` is a thin wrapper that reads both from context. It is the same
+`InlineSpan` tree, so the change is mechanical — the quick fix moves the `text:`
+argument to the first positional slot and carries the rest.
 
 **See also:** [Text.rich](https://api.flutter.dev/flutter/widgets/Text/Text.rich.html) | [RichText](https://api.flutter.dev/flutter/widgets/RichText-class.html)
 
 ## Don't
 
 ```dart
-// RichText does not handle text scaling
+// A price line that does not grow with the user's text-size setting.
 RichText(
   text: TextSpan(
     text: 'Total: ',
     children: [
-      TextSpan(
-        text: '42 USD',
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
+      TextSpan(text: '42 USD', style: TextStyle(fontWeight: FontWeight.bold)),
       TextSpan(text: ' incl. VAT'),
     ],
   ),
 );
-
-// Even simple RichText should use Text.rich
-RichText(text: TextSpan(text: 'Simple text'));
 ```
 
 ## Do
 
 ```dart
-// Text.rich handles text scaling and inherits default style
 Text.rich(
   TextSpan(
     text: 'Total: ',
     children: [
-      TextSpan(
-        text: '42 USD',
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
+      TextSpan(text: '42 USD', style: TextStyle(fontWeight: FontWeight.bold)),
       TextSpan(text: ' incl. VAT'),
     ],
   ),
 );
-
-Text.rich(TextSpan(text: 'Simple text'));
 ```
+
+Note what the rewrite also fixes: the un-styled spans now inherit the ambient
+`DefaultTextStyle`, where under `RichText` they fell back to the framework
+default.
+
+## Examples
+
+### Other arguments carry across
+
+`textAlign`, `maxLines`, `overflow`, `softWrap`, `strutStyle` and `locale` are
+all named the same on both widgets:
+
+```dart
+// Don't
+RichText(
+  text: TextSpan(text: 'A very long line of body copy'),
+  maxLines: 2,
+  overflow: TextOverflow.ellipsis,
+  textAlign: TextAlign.center,
+);
+
+// Do
+Text.rich(
+  TextSpan(text: 'A very long line of body copy'),
+  maxLines: 2,
+  overflow: TextOverflow.ellipsis,
+  textAlign: TextAlign.center,
+);
+```
+
+### Set the base style once
+
+Because `Text.rich` inherits, the outer `TextSpan` usually stops needing a style
+at all:
+
+```dart
+// Don't — every span has to name the style RichText will not supply
+RichText(
+  text: TextSpan(
+    style: Theme.of(context).textTheme.bodyMedium,
+    text: 'Read our ',
+    children: [
+      TextSpan(text: 'terms', style: const TextStyle(decoration: TextDecoration.underline)),
+    ],
+  ),
+);
+
+// Do — bodyMedium comes from the theme via DefaultTextStyle
+Text.rich(
+  TextSpan(
+    text: 'Read our ',
+    children: [
+      TextSpan(text: 'terms', style: const TextStyle(decoration: TextDecoration.underline)),
+    ],
+  ),
+);
+```
+
+## Known limitations
+
+**`textDirection` behaves differently.** `RichText` requires either an explicit
+`textDirection` or an ambient `Directionality`. `Text.rich` always falls back to
+`Directionality`, so an explicit argument the fix carries over is usually
+redundant afterwards and can be deleted.
+
+**`selectionRegistrar` has no `Text.rich` equivalent.** It exists only on
+`RichText`; the fix will copy it and the result will not compile. Wrap a
+`Text.rich` in a `SelectionArea` instead, or keep the `RichText` and silence the
+line with `// ignore: many_lints/prefer_text_rich`.
+
+**`textScaleFactor` is deprecated on both.** If the code you are converting
+passes it, replace it with `textScaler:` at the same time.
 
 ## Configuration
 

@@ -17,11 +17,7 @@ Warns when a class consists only of final fields and a constructor that does not
 
 ## Why use this rule
 
-A value class written the old way names each field three times: once in the field declaration, once in the constructor parameter list, and once implicitly in the assignment. Dart 3.13 makes primary constructors stable, so `class Point(final int x, final int y);` declares the fields, the constructor and the assignments at once. Fewer places to edit means the three can never drift out of sync — the classic bug where a new field is added but the constructor is not updated simply stops being expressible.
-
-The rule is deliberately conservative. It only reports a class whose **entire** body is those final fields plus that one constructor, because only those collapse to the `;` form with nothing left behind. A class with a method, a getter, a static member, a second constructor, an initializer list, a constructor body, a superclass, or a mutable field is left alone.
-
-This does **not** overlap with the SDK's `use_declaring_parameters`. That rule visits primary-constructor nodes only, so it never fires on a class that has yet to adopt one — it polishes classes that already migrated, while this rule is what suggests migrating in the first place. Note that the SDK's `unnecessary_type_name_in_constructor` does fire on the same classes, suggesting the weaker `new(this.x)` form; if you adopt this rule, you will likely want that one off.
+A value class written the old way names each field three times: once in the field declaration, once in the constructor parameter list, and once implicitly in the assignment. Since Dart 3.13, a primary constructor declares all three at once, so the classic bug where a field is added but the constructor is not updated stops being expressible.
 
 **See also:** [Announcing Dart 3.13](https://dart.dev/blog/announcing-dart-3-13) | [Primary constructors feature specification](https://github.com/dart-lang/language/blob/main/accepted/3.13/primary-constructors/feature-specification.md)
 
@@ -30,28 +26,41 @@ This does **not** overlap with the SDK's `use_declaring_parameters`. That rule v
 ```dart
 // LINT: the fields, the parameters and the assignments are three copies
 // of the same list.
-class Point {
-  final int x;
-  final int y;
-  Point(this.x, this.y);
+class CartLine {
+  final String sku;
+  final int quantity;
+  final int unitPrice;
+  CartLine(this.sku, this.quantity, this.unitPrice);
 }
 ```
 
 ## Do
 
 ```dart
-class Point(final int x, final int y);
+class CartLine(final String sku, final int quantity, final int unitPrice);
 ```
 
-`const` moves onto the class header, where instances stay const-constructible:
+### Named parameters, `required` and defaults carry over
 
 ```dart
-class const Point(final int x, final int y);
+class CartLine({
+  required final String sku,
+  required final int unitPrice,
+  final int quantity = 1,
+});
 ```
 
-## Not reported
+### `const` moves onto the class header
 
-The rule stays silent whenever the class would still need a body:
+Instances stay const-constructible:
+
+```dart
+class const CartLine(final String sku, final int quantity);
+```
+
+## Known limitations
+
+The rule only reports a class whose **entire** body is those final fields plus that one constructor, because only those collapse to the `;` form with nothing left behind. It stays silent whenever the class would still need a body:
 
 ```dart
 // Has a getter, so the body survives.
@@ -68,11 +77,21 @@ class Guarded {
 }
 ```
 
-## Quick fix
+Also left alone: a static member, a second constructor, a constructor body, a superclass, and any mutable field.
+
+**The library must be on language version 3.13 or later.** A file pinned to an older version is skipped.
+
+### Quick fix
 
 The fix rewrites the header and replaces the body with `;`, keeping the **constructor's** parameter order rather than the field declaration order — reordering would silently break every positional call site. It preserves `const`, type parameters, `required`, named-parameter braces and default values.
 
-It deliberately declines when a field carries a doc comment or an annotation: neither has a home in a parameter list, and dropping documentation silently is worse than leaving the diagnostic for you to handle.
+It declines when a field carries a doc comment or an annotation: neither has a home in a parameter list, and dropping documentation silently is worse than leaving the diagnostic for you to handle.
+
+### Interaction with SDK lints
+
+This does **not** overlap with the SDK's `use_declaring_parameters`. That rule visits primary-constructor nodes only, so it never fires on a class that has yet to adopt one — it polishes classes that already migrated, while this rule is what suggests migrating in the first place.
+
+The SDK's `unnecessary_type_name_in_constructor` *does* fire on the same classes, suggesting the weaker `new(this.x)` form. If you adopt this rule, you will likely want that one off.
 
 ## Turning this rule off
 

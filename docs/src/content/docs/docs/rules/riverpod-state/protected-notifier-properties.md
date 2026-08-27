@@ -19,36 +19,97 @@ Reading `notifier.state` bypasses the provider system: the value is read once, a
 
 ## Don't
 
+A widget reaching into the notifier for the current value. It compiles, renders
+the right number once, and then never updates — `notifier.state` is a plain
+field read, not a subscription:
+
 ```dart
-void bad(MyNotifier notifier) {
-  print(notifier.state);   // LINT
-  notifier.state = 1;      // LINT
-  print(notifier.ref);     // LINT
+class CartNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void add() => state = state + 1;
+}
+
+final cartProvider = NotifierProvider<CartNotifier, int>(CartNotifier.new);
+
+class CartBadge extends ConsumerWidget {
+  const CartBadge({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.watch(cartProvider.notifier);
+    return Text('${notifier.state}'); // LINT
+  }
+}
+```
+
+Writing it from outside is worse: the transition happens somewhere no reader of
+`CartNotifier` will look for it.
+
+```dart
+void resetCart(WidgetRef ref) {
+  ref.read(cartProvider.notifier).state = 0; // LINT
 }
 ```
 
 ## Do
 
+Read the value through the provider, so the widget is subscribed:
+
 ```dart
-// Read the value through its provider so the widget rebuilds on change.
-Widget good(WidgetRef ref) {
-  final value = ref.watch(myProvider);
-  return Text('$value');
-}
+class CartBadge extends ConsumerWidget {
+  const CartBadge({super.key});
 
-// Mutate through a method the notifier exposes.
-void increment(WidgetRef ref) {
-  ref.read(myProvider.notifier).increment();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(cartProvider);
+    return Text('$count');
+  }
 }
+```
 
-// Inside the notifier itself, the members are free to use.
-class MyNotifier extends Notifier<int> {
+Mutate through a method the notifier exposes, so every transition lives in the
+notifier:
+
+```dart
+class CartNotifier extends Notifier<int> {
   @override
   int build() => 0;
 
-  void increment() => state = state + 1;
+  void add() => state = state + 1;
+
+  void reset() => state = 0;
+}
+
+void resetCart(WidgetRef ref) {
+  ref.read(cartProvider.notifier).reset();
 }
 ```
+
+Inside the notifier itself the members are free to use — that is what they are
+for:
+
+```dart
+class CartNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  Future<void> syncFromServer() async {
+    final remote = await ref.read(apiProvider).fetchCartCount();
+    state = remote;
+  }
+}
+```
+
+## Known limitations
+
+The exemption is exact: access is allowed when the target's type is the very
+class the code sits in. A helper mixin on the notifier, or a subclass reading
+`super`'s `state` through a differently-typed variable, is still reported.
+
+Reads through a variable whose type is not resolved are not reported, since the
+rule matches the receiver by resolved type rather than by name.
 
 ## Configuration
 

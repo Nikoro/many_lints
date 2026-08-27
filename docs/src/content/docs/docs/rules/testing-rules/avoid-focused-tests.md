@@ -9,58 +9,78 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Testing Rules</span>
 
-Warns when a test or group is focused with `solo:`. This is the mirror of
-[`avoid_skipped_tests`](/many_lints/docs/rules/testing-rules/avoid-skipped-tests/)
-and the more dangerous half.
+Warns when a test or group is focused with `solo: true`. A soloed test silences every sibling in the same file — they are not reported as skipped, they are never considered, and the run still exits zero.
 
-## Why use this rule
-
-A skipped test silences itself, and the runner's summary at least counts it. A
-soloed test silences *every sibling in the file* — they are not reported as
-skipped so much as never considered, and the run still exits zero. One word
-turns a file of forty assertions into a file of one.
-
-`solo` is a debugging aid: it is how you narrow a run while chasing a single
-failure. The defect is committing it, and nobody intends to, which is exactly
-why it needs a rule rather than a code-review habit. The diff looks like
-nothing.
-
-There is deliberately no option to permit it. Unlike a skip, a focus has no
-documented-and-therefore-tolerable form — a reason string would not make the
-other tests run.
-
-**See also:** [package:test — running one test](https://pub.dev/packages/test#restricting-tests-to-certain-platforms) | [eslint-plugin-jest: no-focused-tests](https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-focused-tests.md)
+`solo` is a debugging aid. The defect is committing it, and the diff looks like nothing.
 
 ## Don't
 
 ```dart
-// Every other test in this file now silently does not run.
-test('the one I am debugging', () {
-  expect(parse(input), equals(expected));
-}, solo: true);
+void main() {
+  // Every other test in this file now silently does not run.
+  test('the one I am debugging', () {
+    expect(parse(input), equals(expected));
+  }, solo: true);
 
-// Same at group level.
-group('upload', () {
-  // ...
-}, solo: true);
+  test('handles an empty manifest', () {
+    expect(parse(''), isEmpty);
+  });
+}
+```
+
+A group focus does the same thing at group scope:
+
+```dart
+void main() {
+  group('upload', () {
+    test('retries once', () {});
+  }, solo: true);
+
+  group('download', () {
+    // Never runs.
+    test('streams to disk', () {});
+  });
+}
 ```
 
 ## Do
 
-```dart
-// Narrow the run from the command line instead — it leaves no trace in the
-// source, so it cannot be committed by accident.
-//
-//   dart test --name 'the one I am debugging'
-//   dart test test/upload_test.dart
+Narrow the run from the command line. It leaves no trace in the source, so it
+cannot be committed by accident:
 
-test('the one I am debugging', () {
-  expect(parse(input), equals(expected));
-});
+```dart
+void main() {
+  test('the one I am debugging', () {
+    expect(parse(input), equals(expected));
+  });
+
+  test('handles an empty manifest', () {
+    expect(parse(''), isEmpty);
+  });
+}
 ```
 
-`solo: false` is never reported: it is the default written out, and suppresses
-nothing.
+```bash
+dart test --name 'the one I am debugging'
+dart test test/upload_test.dart
+flutter test --plain-name 'the one I am debugging'
+```
+
+### Never reported
+
+`solo: false` is the default written out, and suppresses nothing:
+
+```dart
+void main() {
+  test('runs like any other', () {}, solo: false);
+}
+```
+
+There is deliberately no option to permit a focus. Unlike a skip, it has no
+documented-and-therefore-tolerable form — a reason string would not make the
+other tests run.
+
+**See also:** [package:test](https://pub.dev/packages/test) | [eslint-plugin-jest: no-focused-tests](https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-focused-tests.md)
 
 ## Turning this rule off
 

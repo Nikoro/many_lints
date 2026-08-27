@@ -16,19 +16,22 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-Warns when a switch statement can be converted to a switch expression. This applies when all branches either return a value or assign to the same variable, with each case containing exactly one statement.
+This rule flags a `switch` statement whose every case is a single statement and where all of them do the same kind of thing: return a value, or assign to the same variable.
 
-## Why use this rule
-
-Dart 3 introduced switch expressions as a more concise alternative to switch statements for simple value-producing switches. They reduce boilerplate (`case`, `return`, `break`), make it clear that the switch produces a value, and are easier to read when each branch is a single expression. The quick fix handles the conversion automatically.
+That switch is producing a value while pretending to be control flow. A switch expression says so, drops the `case`/`return` scaffolding, and — because it is an expression — the compiler checks exhaustiveness at the point the value is needed. The quick fix does the conversion.
 
 **See also:** [Switch expressions](https://dart.dev/language/branches#switch-expressions)
 
 ## Don't
 
+Every case returns:
+
 ```dart
-// All cases return a value — use switch expression
-DeliveryIcon iconForBad(DeliveryStage stage) {
+enum DeliveryStage { packed, shipped, delivered }
+
+enum DeliveryIcon { box, truck, home }
+
+DeliveryIcon iconFor(DeliveryStage stage) {
   switch (stage) {
     case DeliveryStage.packed:
       return DeliveryIcon.box;
@@ -38,9 +41,14 @@ DeliveryIcon iconForBad(DeliveryStage stage) {
       return DeliveryIcon.home;
   }
 }
+```
 
-// All cases assign to the same variable
-String getDescriptionBad(DeliveryIcon icon) {
+Every case assigns the same variable, which then has to be declared uninitialised above:
+
+```dart
+enum DeliveryIcon { box, truck, home }
+
+String describe(DeliveryIcon icon) {
   String description;
   switch (icon) {
     case DeliveryIcon.box:
@@ -57,17 +65,23 @@ String getDescriptionBad(DeliveryIcon icon) {
 ## Do
 
 ```dart
-// Switch expression with return
-DeliveryIcon iconForGood(DeliveryStage stage) {
-  return switch (stage) {
-    DeliveryStage.packed => DeliveryIcon.box,
-    DeliveryStage.shipped => DeliveryIcon.truck,
-    DeliveryStage.delivered => DeliveryIcon.home,
-  };
-}
+enum DeliveryStage { packed, shipped, delivered }
 
-// Switch expression with assignment
-String getDescriptionGood(DeliveryIcon icon) {
+enum DeliveryIcon { box, truck, home }
+
+DeliveryIcon iconFor(DeliveryStage stage) => switch (stage) {
+  DeliveryStage.packed => DeliveryIcon.box,
+  DeliveryStage.shipped => DeliveryIcon.truck,
+  DeliveryStage.delivered => DeliveryIcon.home,
+};
+```
+
+The assigning form collapses into a `final`, so the variable is never in an unassigned state:
+
+```dart
+enum DeliveryIcon { box, truck, home }
+
+String describe(DeliveryIcon icon) {
   final description = switch (icon) {
     DeliveryIcon.box => 'Waiting in the warehouse',
     DeliveryIcon.truck => 'On the road',
@@ -75,16 +89,28 @@ String getDescriptionGood(DeliveryIcon icon) {
   };
   return description;
 }
-
-// Switch expression with default case (using wildcard)
-String getNameGood(int value) {
-  return switch (value) {
-    1 => 'one',
-    2 => 'two',
-    _ => 'unknown',
-  };
-}
 ```
+
+A `default` becomes the wildcard `_`:
+
+```dart
+String name(int value) => switch (value) {
+  1 => 'one',
+  2 => 'two',
+  _ => 'unknown',
+};
+```
+
+## Known limitations
+
+Anything that is not a clean value-producing switch is left alone, because the
+rewrite would not be exact:
+
+- A case with **more than one statement**.
+- A case that **falls through** (empty body) — unless `allow_fallthrough_cases`
+  is on, see below.
+- **Mixed** cases: some returning, some assigning.
+- Cases assigning to **different** variables.
 
 ## Turning this rule off
 
@@ -108,6 +134,11 @@ rules:
 To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Options
+
+### `allow_fallthrough_cases`
+
+Off by default. Turn it on to also report a switch where several cases share
+one body — the quick fix merges their patterns with `||`:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -133,9 +164,34 @@ rules:
 </TabItem>
 </Tabs>
 
+```dart
+enum DeliveryStage { packed, shipped, delivered }
+
+// Don't
+bool isMoving(DeliveryStage stage) {
+  switch (stage) {
+    case DeliveryStage.packed:
+    case DeliveryStage.shipped:
+      return true;
+    case DeliveryStage.delivered:
+      return false;
+  }
+}
+
+// Do
+bool isMovingExpression(DeliveryStage stage) => switch (stage) {
+  DeliveryStage.packed || DeliveryStage.shipped => true,
+  DeliveryStage.delivered => false,
+};
+```
+
+A *trailing* fallthrough — an empty last case with nothing after it to share a
+body with — has no pattern to merge into and stays unreported even with the
+option on.
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `allow_fallthrough_cases` | bool | `false` | Also report switches where labels share a body. The quick fix merges them into a single `case a || b` pattern; a *trailing* fallthrough has nothing to merge into and stays unreported |
+| `allow_fallthrough_cases` | bool | `false` | Also report switches where cases share a body. The quick fix merges them into a single `case a \|\| b` pattern; a *trailing* fallthrough has nothing to merge into and stays unreported |
 
 ## Related rules
 

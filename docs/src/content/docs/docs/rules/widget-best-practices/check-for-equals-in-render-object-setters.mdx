@@ -12,35 +12,39 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule flags a `RenderObject` setter that calls `markNeedsLayout` or `markNeedsPaint` without first checking whether the value actually changed.
+Flags a `RenderObject` setter that calls a mark-dirty method without comparing the incoming value first.
 
-## Why use this rule
+`updateRenderObject` runs on every rebuild and assigns **every** property, whether or not it differs. An unguarded setter therefore turns each rebuild into a full relayout or repaint of that subtree, even when nothing about it changed. At best that is wasted frames on a hot path; when the layout pass itself causes another rebuild, the two feed each other and the app stops rendering.
 
-`updateRenderObject` runs on every rebuild and assigns **every** property, whether or not it differs. A setter that unconditionally marks the object dirty therefore turns each rebuild into a full relayout or repaint of that subtree — even when nothing about it changed.
+Flutter's own render objects all use the same shape: compare, then assign and mark dirty.
 
-At best that is wasted frames on a hot path. When the layout pass itself causes another rebuild, the two feed each other and the app stops rendering entirely.
-
-The convention in Flutter's own render objects is an early return: compare first, and only then assign and mark dirty.
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and `preset: pedantic`.
 
 **See also:** [Flutter: RenderObject](https://api.flutter.dev/flutter/rendering/RenderObject-class.html), [RenderObjectWidget.updateRenderObject](https://api.flutter.dev/flutter/widgets/RenderObjectWidget/updateRenderObject.html)
 
 ## Don't
 
 ```dart
-class MyRender extends RenderBox {
+class RenderBadge extends RenderBox {
+  RenderBadge(this._color);
+
   Color _color;
 
   set color(Color value) {
     _color = value;
-    markNeedsPaint();   // repaints even when the color is unchanged
+    markNeedsPaint();   // repaints on every rebuild, unchanged or not
   }
 }
 ```
 
 ## Do
 
+The early return is the idiomatic form:
+
 ```dart
-class MyRender extends RenderBox {
+class RenderBadge extends RenderBox {
+  RenderBadge(this._color);
+
   Color _color;
 
   set color(Color value) {
@@ -51,7 +55,7 @@ class MyRender extends RenderBox {
 }
 ```
 
-The wrapping form works too:
+The wrapping form works just as well:
 
 ```dart
 set color(Color value) {
@@ -62,28 +66,36 @@ set color(Color value) {
 }
 ```
 
-## Known limitations
+### Layout and paint are separate decisions
 
-The guard detection is deliberately loose: **any** `==`, `!=` or `identical` call in the setter body counts. A false positive on a setter that is in fact guarded would be far more annoying than missing an exotic shape, so the rule prefers to stay quiet.
+A property that changes the object's size needs `markNeedsLayout`; one that only changes how it draws needs `markNeedsPaint`. Both need the same guard:
 
-Only setters that call a mark-dirty method are considered — a setter that merely assigns has nothing to guard against. The recognised methods are `markNeedsLayout`, `markNeedsPaint`, `markNeedsCompositingBitsUpdate`, `markNeedsSemanticsUpdate` and `markNeedsLayoutForSizedByParentChange`; a project wrapper can be added with `additional_methods`.
+```dart
+class RenderBadge extends RenderBox {
+  RenderBadge(this._padding, this._color);
 
-## Turning this rule off
+  double _padding;
+  Color _color;
 
-This rule is in the **`opinionated`** preset. With a lower preset, enable it by
-name with `check_for_equals_in_render_object_setters: true`.
+  set padding(double value) {
+    if (_padding == value) return;
+    _padding = value;
+    markNeedsLayout();      // size changed
+  }
 
-To turn it off:
-
-```yaml
-# many_lints.yaml
-rules:
-  check_for_equals_in_render_object_setters: false
+  set color(Color value) {
+    if (_color == value) return;
+    _color = value;
+    markNeedsPaint();       // only the painting changed
+  }
+}
 ```
 
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+The recognised methods are `markNeedsLayout`, `markNeedsPaint`, `markNeedsCompositingBitsUpdate`, `markNeedsSemanticsUpdate` and `markNeedsLayoutForSizedByParentChange`.
 
-## Options
+### Teaching it about a project wrapper
+
+If your render objects mark themselves dirty through a helper of your own, name it so the rule keeps working:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -109,9 +121,39 @@ rules:
 </TabItem>
 </Tabs>
 
+```dart
+// Reported under the config above
+set weight(double value) {
+  _weight = value;
+  markNeedsCustomPass();
+}
+```
+
+## Known limitations
+
+**Guard detection is deliberately loose.** *Any* `==`, `!=` or `identical` call anywhere in the setter body counts as a guard, even one comparing something else entirely. A false positive on a setter that is in fact guarded would be far more annoying than missing an exotic shape.
+
+**Only setters that mark dirty are considered.** A setter that merely assigns has nothing to guard against, and is never reported.
+
+**Only a block body is examined.** An expression-bodied setter is skipped.
+
+**No quick fix.** Which field to compare — and whether an unchanged value should really skip the work — is a decision about the render object.
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `additional_methods` | list of strings | `[]` | Extra methods treated as marking the render object dirty |
+
+## Turning this rule off
+
+```yaml
+# many_lints.yaml
+rules:
+  check_for_equals_in_render_object_setters: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Related rules
 

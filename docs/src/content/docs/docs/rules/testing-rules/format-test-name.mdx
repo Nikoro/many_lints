@@ -46,26 +46,6 @@ rules:
 
 `pattern` must match the **whole** description, not merely appear in it.
 
-## Don't
-
-With `pattern: 'should .*'`:
-
-```dart
-void main() {
-  test('works fine', () {}); // LINT
-  test('user cache', () {}); // LINT
-}
-```
-
-## Do
-
-```dart
-void main() {
-  test('should load a user from the cache', () {});
-  test('should return null when the key is missing', () {});
-}
-```
-
 ## Examples
 
 ### The `should ...` style

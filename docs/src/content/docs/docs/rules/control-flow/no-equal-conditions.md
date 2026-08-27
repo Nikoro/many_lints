@@ -11,33 +11,91 @@ sidebar:
 
 This rule flags an `if`/`else if` chain that tests the same condition twice.
 
-## Why use this rule
-
 The second test can never be reached: the first branch already took every case it would have matched. Whatever the repeated branch does is dead code, and the case it was meant to handle silently falls through to `else` — so the bug shows up as a missing behaviour rather than an error.
-
-It is a copy-paste result: a branch duplicated and its body edited while its condition was left alone.
-
-Two independent `if` statements testing the same thing are not reported — the first may have changed the state the second reads. Only one chain is compared. A pattern case (`if (x case ...)`) is skipped, since two clauses that read alike need not test the same thing.
 
 ## Don't
 
+A branch duplicated and its body edited while its condition was left alone:
+
 ```dart
-if (status.isPending) {
-  showSpinner();
-} else if (status.isPending) { // never reached
-  showRetry();
+class Status {
+  bool get isPending => true;
+  bool get isFailed => false;
+  bool get isDone => false;
+}
+
+void showSpinner() {}
+void showRetry() {}
+void showResult() {}
+
+void render(Status status) {
+  if (status.isPending) {
+    showSpinner();
+  } else if (status.isPending) {
+    showRetry();
+  } else if (status.isDone) {
+    showResult();
+  }
 }
 ```
+
+`showRetry()` never runs, and a failed status falls off the end of the chain in silence.
 
 ## Do
 
 ```dart
-if (status.isPending) {
-  showSpinner();
-} else if (status.isFailed) {
-  showRetry();
+class Status {
+  bool get isPending => true;
+  bool get isFailed => false;
+  bool get isDone => false;
+}
+
+void showSpinner() {}
+void showRetry() {}
+void showResult() {}
+
+void render(Status status) {
+  if (status.isPending) {
+    showSpinner();
+  } else if (status.isFailed) {
+    showRetry();
+  } else if (status.isDone) {
+    showResult();
+  }
 }
 ```
+
+## Known limitations
+
+Conditions are compared by source text, so two spellings of the same test
+(`a && b` and `b && a`) are not reported.
+
+Only one chain is compared at a time. **Two independent `if` statements** are
+never reported against each other, because the first may have changed the state
+the second reads:
+
+```dart
+class Cart {
+  bool get isEmpty => true;
+
+  void addDefaultItem() {}
+  void showCheckout() {}
+}
+
+void prepare(Cart cart) {
+  if (cart.isEmpty) {
+    cart.addDefaultItem();
+  }
+
+  // Not reported — the block above may have changed the answer.
+  if (cart.isEmpty) {
+    cart.showCheckout();
+  }
+}
+```
+
+A **pattern `if`** (`if (x case ...)`) is skipped entirely: two clauses that
+read alike need not test the same thing.
 
 ## Turning this rule off
 

@@ -12,39 +12,15 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
 
-This rule flags a record type whose **named** fields are not in the configured order.
+Flags a record **type annotation** whose named fields are not in the order you configure.
 
 A record is structurally typed, so its named fields are a set rather than a sequence — `({int a, int b})` and `({int b, int a})` are the same type. That makes their written order pure presentation, and an inconsistent one means the same type reads differently in every place it is spelled out.
 
 **Positional fields are never ordered**: their position *is* their identity, and reordering them makes a different type.
 
-This rule is in the **`pedantic`** preset.
+This rule is in the **`pedantic`** preset, which sets `order: alphabetical`. Under any other preset **it reports nothing until you set `order:`**.
 
-## Don't
-
-```dart
-typedef Result = ({String message, int code});
-```
-
-## Do
-
-```dart
-typedef Result = ({int code, String message});
-```
-
-## Enabling this rule
-
-Outside `preset: pedantic`, which uses alphabetical order, this rule reports
-**nothing until you choose an order**:
-
-```yaml
-# many_lints.yaml
-rules:
-  record_fields_ordering:
-    order: alphabetical
-```
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -70,9 +46,105 @@ rules:
 </TabItem>
 </Tabs>
 
+## Don't
+
+With `order: alphabetical`:
+
+```dart
+typedef ApiResult = ({String message, int code, bool retryable});
+```
+
+## Do
+
+```dart
+typedef ApiResult = ({int code, String message, bool retryable});
+```
+
+## Examples
+
+### Any record annotation is checked, not just typedefs
+
+A return type, a parameter type and a variable's declared type all carry the same annotation and are all ordered:
+
+```yaml
+rules:
+  record_fields_ordering:
+    order: alphabetical
+```
+
+```dart
+// Don't — a return type
+({String name, int age}) parseUser(String raw) => (name: raw, age: 0);
+
+// Don't — a parameter type
+void render(({String label, int width}) box) {}
+
+// Don't — a declared variable type
+({String city, int zip}) address = (city: 'Warsaw', zip: 0);
+```
+
+```dart
+// Do
+({int age, String name}) parseUser(String raw) => (age: 0, name: raw);
+
+void render(({String label, int width}) box) {}
+
+({String city, int zip}) address = (city: 'Warsaw', zip: 0);
+```
+
+### Positional fields are left alone
+
+Only the named half of a mixed record is ordered:
+
+```yaml
+rules:
+  record_fields_ordering:
+    order: alphabetical
+```
+
+```dart
+// Don't — `int, String` positional pair untouched, but `zebra` precedes `apple`
+typedef Row = (int, String, {int zebra, int apple});
+
+// Do
+typedef Row = (int, String, {int apple, int zebra});
+```
+
+### `by_length`
+
+Longest field name last. Ties fall back to alphabetical so the order is total:
+
+```yaml
+rules:
+  record_fields_ordering:
+    order: by_length
+```
+
+```dart
+// Don't
+typedef Size = ({int millimetres, int cm, int metres});
+
+// Do
+typedef Size = ({int cm, int metres, int millimetres});
+```
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `order` | string | `—` | `alphabetical`, `alphabetical_case_sensitive` or `by_length`. Unset means the rule is silent |
+
+## Known limitations
+
+**Only the type annotation is checked, never the literal.** `(name: 'a', age: 1)` is a record *expression*, and the rule does not visit it — a record literal's named fields carry no annotation to read.
+
+**Fewer than two named fields are never reported** — a single field cannot be out of order, and a record with only positional fields is skipped entirely.
+
+**Only the first out-of-order field is reported**, so one misplaced name does not produce a wall of diagnostics.
+
+**No quick fix.** Reordering named fields is type-safe, but the annotation is often mirrored by literals elsewhere that a reader will want to keep in step.
+
+**An unrecognised `order:` falls back to `alphabetical`** rather than throwing, because a plugin cannot report a diagnostic against a YAML file.
 
 ## Turning this rule off
 

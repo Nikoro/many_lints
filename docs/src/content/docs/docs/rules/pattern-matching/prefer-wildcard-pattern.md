@@ -13,68 +13,82 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Pattern Matching</span>
 
-Using `Object()` as a catch-all pattern in switch expressions, switch statements, or if-case conditions is functionally equivalent to the wildcard pattern `_`. The wildcard is more idiomatic in Dart and instantly recognizable as "match anything."
+This rule flags a bare `Object()` pattern used as a catch-all. It matches everything non-null, exactly like `_`, but reads as if it were testing for something. The quick fix replaces it with `_`.
 
-## Why use this rule
-
-`_` is the standard Dart idiom for "I don't care about the value." Using `Object()` instead adds visual noise and may confuse readers into thinking the pattern is doing something specific. The wildcard pattern is shorter, clearer, and universally understood.
+It applies in switch expressions, switch statements, and `if-case` conditions.
 
 **See also:** [Dart patterns](https://dart.dev/language/patterns)
 
 ## Don't
 
 ```dart
-// Using Object() as a catch-all pattern
-String classify(Object object) {
-  return switch (object) {
-    int() => 'int',
-    Object() => 'other',
+String describe(Object value) {
+  return switch (value) {
+    int() => 'a number',
+    String() => 'text',
+    Object() => 'something else',    // LINT
   };
 }
 
-void statement(Object object) {
-  switch (object) {
+void log(Object value) {
+  switch (value) {
     case int():
-      break;
-    case Object():
-      break;
+      print('int');
+    case Object():                   // LINT
+      print('other');
   }
 }
 
-void ifCase(Object object) {
-  if (object case Object()) {}
+void guard(Object value) {
+  if (value case Object()) {         // LINT
+    print('always runs');
+  }
 }
 ```
 
 ## Do
 
 ```dart
-// Using the wildcard pattern _
-String classify(Object object) {
-  return switch (object) {
-    int() => 'int',
-    _ => 'other',
+String describe(Object value) {
+  return switch (value) {
+    int() => 'a number',
+    String() => 'text',
+    _ => 'something else',
   };
 }
 
-void statement(Object object) {
-  switch (object) {
+void log(Object value) {
+  switch (value) {
     case int():
-      break;
+      print('int');
     case _:
-      break;
+      print('other');
   }
 }
 
-// Object() with field destructuring is fine — it extracts values
-String withFields(Object object) {
-  return switch (object) {
-    int() => 'int',
-    Object(hashCode: final h) => 'hash: $h',
-    _ => 'other',
-  };
+void guard(Object value) {
+  print('always runs');
 }
 ```
+
+That last one is the case worth noticing: `if (x case Object())` is a condition that is always true for a non-null value, so the `if` itself was doing nothing.
+
+## Known limitations
+
+**`Object()` with fields is left alone.** Once the pattern destructures something it is doing real work, and `_` cannot replace it:
+
+```dart
+// Not reported — the pattern extracts a value
+String describe(Object value) => switch (value) {
+  Object(hashCode: final h) => 'hash: $h',
+};
+```
+
+**Named types other than `Object` are not the target.** `int()`, `String()`, or your own `Response()` narrow the match and are never reported.
+
+**Nested inside `&&` and `||` still counts.** `Object() && Object()` reports both operands, since each one is independently a catch-all.
+
+**The type name is matched textually.** A class of your own named `Object` in scope would be reported as well.
 
 ## Configuration
 

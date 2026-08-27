@@ -17,35 +17,126 @@ Flags `Expanded` widgets that wrap an empty `SizedBox` or `Container` as their c
 
 ## Why use this rule
 
-Flutter provides the `Spacer` widget specifically for creating flexible space in `Row`, `Column`, and `Flex` layouts. Using `Expanded` with an empty child obscures the intent and adds an unnecessary widget to the tree. `Spacer` is clearer, more concise, and immediately communicates that the purpose is to fill available space.
+`Spacer` exists for exactly this. `Expanded(child: SizedBox())` builds two
+widgets to do what one does, and the reader has to work out that the empty box
+is deliberate rather than a leftover. The quick fix swaps the whole expression
+for a `Spacer`, carrying `flex` across.
 
 **See also:** [Spacer](https://api.flutter.dev/flutter/widgets/Spacer-class.html) | [Expanded](https://api.flutter.dev/flutter/widgets/Expanded-class.html)
 
 ## Don't
 
 ```dart
-// Expanded with empty SizedBox
-const Expanded(child: SizedBox());
-
-// Expanded with empty Container
-Expanded(child: Container());
-
-// Expanded with flex and empty SizedBox
-const Expanded(flex: 2, child: SizedBox());
+// Push the action button to the far end of the row.
+Row(
+  children: [
+    const Text('Total'),
+    const Expanded(child: SizedBox()),
+    TextButton(onPressed: onPay, child: const Text('Pay')),
+  ],
+);
 ```
 
 ## Do
 
 ```dart
-// Use Spacer directly
-const Spacer();
-
-// Use Spacer with flex parameter
-const Spacer(flex: 2);
-
-// Expanded with a non-empty child is fine
-const Expanded(child: Text('content'));
+Row(
+  children: [
+    const Text('Total'),
+    const Spacer(),
+    TextButton(onPressed: onPay, child: const Text('Pay')),
+  ],
+);
 ```
+
+## Examples
+
+### An empty `Container` counts too
+
+```dart
+// Don't
+Expanded(child: Container());
+
+// Do
+const Spacer();
+```
+
+### `flex` is carried across
+
+Use it to split the leftover space unevenly:
+
+```dart
+// Don't — the gap after the title is twice the one before it
+Row(
+  children: [
+    const Expanded(flex: 1, child: SizedBox()),
+    const Text('Title'),
+    const Expanded(flex: 2, child: SizedBox()),
+  ],
+);
+
+// Do
+Row(
+  children: [
+    const Spacer(),
+    const Text('Title'),
+    const Spacer(flex: 2),
+  ],
+);
+```
+
+`Spacer`'s `flex` defaults to `1`, so the first one can drop the argument.
+
+### A `key` on the empty child does not save it
+
+`key` is the one argument the rule tolerates on the child — a `SizedBox` that
+carries only a key is still empty:
+
+```dart
+// Don't
+const Expanded(child: SizedBox(key: ValueKey('gap')));
+
+// Do
+const Spacer();
+```
+
+The fix keeps a `key` written on the **`Expanded`**, and drops one written on
+the child, since the child is what disappears:
+
+```dart
+// Don't
+const Expanded(key: ValueKey('gap'), child: SizedBox());
+
+// Do
+const Spacer(key: ValueKey('gap'));
+```
+
+## Known limitations
+
+**The child has to be genuinely empty.** A `SizedBox` with any argument other
+than `key` is sizing something, and is left alone:
+
+```dart
+// Not reported — this is a fixed 24px gap, and `Spacer` cannot express it
+Row(children: [const Text('A'), const SizedBox(width: 24), const Text('B')]);
+
+// Not reported — the box has a size, so the Expanded is not just a spacer
+Expanded(child: SizedBox(height: 40));
+```
+
+For fixed gaps like the first one, see
+[`prefer_spacing`](/many_lints/docs/rules/widget-best-practices/prefer-spacing/)
+and [`use_gap`](/many_lints/docs/rules/widget-best-practices/use-gap/).
+
+**`Flexible` is not matched, only `Expanded`.** `Flexible(child: SizedBox())`
+uses `FlexFit.loose`, which takes no space at all — it is a different (and
+usually mistaken) thing, not a spacer.
+
+**`Spacer` only works inside a `Flex`.** `Row`, `Column` and `Flex` are the only
+valid parents; the rule does not check that, so a stray
+`Expanded(child: SizedBox())` outside one will be reported and the rewrite will
+throw at runtime. In practice `Expanded` has the same restriction, so such code
+was already broken.
 
 ## Configuration
 

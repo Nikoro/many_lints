@@ -17,42 +17,86 @@ Flags `SizedBox` constructors where `width` and `height` are set to the same val
 
 ## Why use this rule
 
-When width and height are identical, `SizedBox.square` communicates "this is a square" at a glance, whereas `SizedBox(width: 50, height: 50)` requires the reader to compare both values. The named constructor eliminates duplication and makes the code more self-documenting.
+`SizedBox(width: 48, height: 48)` makes the reader compare two numbers to work
+out it is a square, and lets one of them drift during an edit.
+`SizedBox.square(dimension: 48)` states it once. The quick fix collapses the two
+arguments into `dimension:` and keeps everything else — `child`, `key`, and the
+`const` keyword.
 
-**See also:** [SizedBox.square](https://api.flutter.dev/flutter/widgets/SizedBox/SizedBox.square.html) | [Dart lint: sized_box_shrink_expand](https://dart.dev/tools/linter-rules/sized_box_shrink_expand)
+**See also:** [SizedBox.square](https://api.flutter.dev/flutter/widgets/SizedBox/SizedBox.square.html)
 
 ## Don't
 
 ```dart
-// Both width and height are the same literal
-SizedBox(width: 10, height: 10);
-
-// Same double literal
-SizedBox(width: 24.0, height: 24.0);
-
-// Same variable reference
-const size = 48.0;
-SizedBox(width: size, height: size);
-
-// With a child widget
-SizedBox(width: 50, height: 50, child: Text('Hello'));
+// A square avatar placeholder.
+SizedBox(
+  width: 48,
+  height: 48,
+  child: const CircleAvatar(),
+);
 ```
 
 ## Do
 
 ```dart
-// Use SizedBox.square
-SizedBox.square(dimension: 10);
-
-// Different width and height is fine
-SizedBox(width: 100, height: 50);
-
-// Only width specified
-SizedBox(width: 10);
-
-// Only height specified
-SizedBox(height: 10);
+SizedBox.square(
+  dimension: 48,
+  child: const CircleAvatar(),
+);
 ```
+
+## Examples
+
+### A square gap between items
+
+```dart
+// Don't
+const SizedBox(width: 16, height: 16);
+
+// Do
+const SizedBox.square(dimension: 16);
+```
+
+### The same expression, not just the same literal
+
+The two arguments are compared as source text, so a shared constant or a
+computed value works as well as a number:
+
+```dart
+// Don't
+const iconSize = 24.0;
+SizedBox(width: iconSize, height: iconSize, child: const Icon(Icons.star));
+
+// Do
+SizedBox.square(dimension: iconSize, child: const Icon(Icons.star));
+```
+
+## Known limitations
+
+**Both arguments must be present.** A `SizedBox` with only `width` or only
+`height` is deliberately one-dimensional and is never reported:
+
+```dart
+// Not reported
+const SizedBox(width: 16);
+```
+
+**Source text, not value.** Because the comparison is textual, `48` and `48.0`
+look different and are not reported, and neither is `size` versus
+`this.size` — even though each pair is the same number:
+
+```dart
+// Not reported — the two sources differ
+SizedBox(width: 48, height: 48.0);
+```
+
+The flip side is that two *different* calls spelled identically —
+`SizedBox(width: next(), height: next())` — are reported, and collapsing them
+would call `next()` once instead of twice. Check the diff when the arguments
+are not pure.
+
+**Named constructors are skipped.** `SizedBox.square`, `SizedBox.shrink` and
+`SizedBox.expand` are already the concise form.
 
 ## Configuration
 

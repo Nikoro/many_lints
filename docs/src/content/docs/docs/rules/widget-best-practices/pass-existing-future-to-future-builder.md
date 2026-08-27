@@ -9,24 +9,23 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule flags a `FutureBuilder` whose `future:` argument creates a new `Future` inline — a method call, a `Future` constructor, or an immediately invoked async closure.
+Flags a `FutureBuilder` whose `future:` argument creates a new `Future` — a method call, a `Future` constructor, or an immediately invoked async closure.
 
-## Why use this rule
+`build()` can run many times per second: a parent rebuild, an inherited widget change, an animation tick. Every one re-evaluates the `future:` argument. If that argument *creates* a future, the builder sees a brand new object, resets to `ConnectionState.waiting`, and starts over.
 
-`build()` can run many times per second: a parent rebuild, an inherited widget change, an animation tick. Every one of those runs re-evaluates the `future:` argument. If that argument *creates* a future, the `FutureBuilder` sees a brand new object, resets to `ConnectionState.waiting`, and starts over.
+The visible symptom is a spinner that flickers forever. The invisible one is worse: the underlying work runs again each time, so a network request inside that future can fire on every frame.
 
-The visible symptom is a loading spinner that flickers forever. The invisible one is worse: the underlying work runs again each time, so a network request inside that future can fire on every frame.
-
-The fix is to create the future once and hand the builder the same instance. In a `StatefulWidget` that means a field assigned in `initState`; with a state manager it means a provider or cached value.
+This rule is in the **`recommended`** preset, so it is on with `preset: recommended` and every preset above it. No configuration.
 
 **See also:** [FutureBuilder API docs](https://api.flutter.dev/flutter/widgets/FutureBuilder-class.html)
 
 ## Don't
 
 ```dart
+@override
 Widget build(BuildContext context) {
   return FutureBuilder<String>(
-    // A new Future on every rebuild — restarts constantly
+    // A new Future on every rebuild — restarts, and re-fetches, constantly
     future: fetchUserData(),
     builder: (context, snapshot) => Text('${snapshot.data}'),
   );
@@ -35,14 +34,15 @@ Widget build(BuildContext context) {
 
 ## Do
 
+Create it once in `initState` and hand the builder the same instance:
+
 ```dart
-class _MyWidgetState extends State<MyWidget> {
+class _ProfilePageState extends State<ProfilePage> {
   late final Future<String> _userData;
 
   @override
   void initState() {
     super.initState();
-    // Created once, survives every rebuild
     _userData = fetchUserData();
   }
 
@@ -56,17 +56,74 @@ class _MyWidgetState extends State<MyWidget> {
 }
 ```
 
+### When the future depends on a widget property
+
+`initState` runs once, so a future keyed to a property has to be rebuilt when that property changes — which is exactly what `didUpdateWidget` is for:
+
+```dart
+class _ProfilePageState extends State<ProfilePage> {
+  late Future<String> _userData;
+
+  @override
+  void initState() {
+    super.initState();
+    _userData = fetchUserData(widget.userId);
+  }
+
+  @override
+  void didUpdateWidget(ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId != widget.userId) {
+      _userData = fetchUserData(widget.userId);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: _userData,
+      builder: (context, snapshot) => Text('${snapshot.data}'),
+    );
+  }
+}
+```
+
+### The other shapes that allocate
+
+All three of these are reported, for the same reason:
+
+```dart
+// Don't
+FutureBuilder<void>(
+  future: Future.delayed(const Duration(seconds: 1)),
+  builder: (context, snapshot) => const SizedBox(),
+);
+
+FutureBuilder<int>(
+  future: (() async => 1)(),
+  builder: (context, snapshot) => const SizedBox(),
+);
+```
+
+Parentheses and a `!` do not hide the call: `future: (fetchUserData())!` is still reported.
+
 ## Known limitations
 
-The rule reports only expressions that certainly allocate: constructor calls, method invocations, and invoked closures. A bare identifier, a property access, or anything it cannot resolve is treated as an existing instance and left alone. That means a getter which secretly creates a new future on each access (`Future<String> get data => fetch();`) will not be flagged.
+Only expressions that certainly allocate are reported: constructor calls, method invocations, and invoked closures. A bare identifier, a property access, a ternary, or anything unresolved is treated as an existing instance and left alone.
 
-## Configuration
+That means a getter which secretly creates a new future on each access is **not** flagged, even though it has the same problem:
 
-This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
-`pass_existing_future_to_future_builder: true`.
+```dart
+// Not reported, but restarts on every rebuild all the same
+Future<String> get data => fetchUserData();
 
-To turn it off:
+Widget build(BuildContext context) => FutureBuilder<String>(
+      future: data,
+      builder: (context, snapshot) => Text('${snapshot.data}'),
+    );
+```
+
+## Turning this rule off
 
 ```yaml
 # many_lints.yaml

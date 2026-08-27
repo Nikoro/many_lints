@@ -13,72 +13,86 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Pattern Matching</span>
 
-When an object already has a destructuring declaration in the same scope, accessing additional properties directly on that object is inconsistent. The property should be added to the existing destructuring pattern instead, keeping all extractions in one place.
+This rule flags `user.email` when a destructuring of `user` already exists earlier in the same scope. The property belongs in that pattern; the quick fix adds it there and rewrites the access to the new variable.
 
 ## Why use this rule
 
-Mixing destructuring and direct property access on the same variable is confusing. If you already have `final Config(:name) = config;`, then accessing `config.timeout` separately misses the opportunity to keep all property extractions together. Adding `:timeout` to the existing pattern is cleaner and avoids repetition of the variable name.
+Once a destructuring exists, it is the place a reader looks to see what this function uses from the object. A property read that bypasses it hides one field from that list, and the next person adding a field has to decide, for no reason, which of the two styles to follow.
 
 **See also:** [Dart patterns](https://dart.dev/language/patterns)
 
 ## Don't
 
 ```dart
-class Config {
-  final String name;
-  final int timeout;
-  final bool verbose;
-
-  const Config({
-    required this.name,
-    required this.timeout,
-    required this.verbose,
+class Session {
+  const Session({
+    required this.userId,
+    required this.token,
+    required this.expiresAt,
   });
+
+  final String userId;
+  final String token;
+  final DateTime expiresAt;
 }
 
-// Accessing property directly when destructuring already exists
-void badDirectAccess(Config config) {
-  final Config(:name) = config;
-  print(config.timeout);
-}
+void audit(Session session) {
+  final Session(:userId) = session;
 
-// Multiple undeclared property accesses
-void badMultipleAccesses(Config config) {
-  final Config(:name) = config;
-  print(config.timeout);
-  print(config.verbose);
+  print(userId);
+  print(session.token);        // LINT: add :token to the destructuring
+  print(session.expiresAt);    // LINT: add :expiresAt too
 }
 ```
 
 ## Do
 
 ```dart
-// All needed properties are destructured
-void goodFullDestructuring(Config config) {
-  final Config(:name, :timeout) = config;
-  print(name);
-  print(timeout);
-}
+void audit(Session session) {
+  final Session(:userId, :token, :expiresAt) = session;
 
-// No destructuring exists (no lint)
-void goodNoDestructuring(Config config) {
-  print(config.name);
-  print(config.timeout);
-}
-
-// Access appears before the destructuring declaration (no lint)
-void goodBeforeDestructuring(Config config) {
-  print(config.timeout);
-  final Config(:name) = config;
-  print(name);
-}
-
-// Different variable than the one being destructured
-void goodDifferentVariable(Config a, Config b) {
-  final Config(:name) = a;
-  print(b.timeout);
+  print(userId);
+  print(token);
+  print(expiresAt);
 }
 ```
+
+## Records too
+
+The same applies to a record destructuring:
+
+```dart
+// Don't
+void describe(({int width, int height}) size) {
+  final (:width) = size;
+  print('$width x ${size.height}');    // LINT
+}
+
+// Do
+void describe(({int width, int height}) size) {
+  final (:width, :height) = size;
+  print('$width x $height');
+}
+```
+
+## Known limitations
+
+The rule reports only where adding the field to the pattern would be a
+behaviour-preserving edit. It stays silent when:
+
+**No destructuring exists.** Plain `session.token` in a function that never destructures `session` is fine — this rule does not ask you to start.
+
+**The access comes first.** A read *above* the destructuring cannot use a variable that is not bound yet.
+
+**It is a method call, not a property.** `session.refresh()` is a call; patterns bind fields and getters, not invocations.
+
+**It is an assignment target.** `session.token = 'x'` writes through the object, which a destructured copy cannot do.
+
+**The receiver is not a local variable.** A top-level or field object (`globalSession.token`), or a call result (`currentSession().token`), is left alone.
+
+**The access is inside a closure.** A property read inside a `() { ... }` runs later, so the rule treats it as a separate context.
+
+**A different variable is being read.** `final Session(:userId) = a; print(b.token);` touches two objects and is not reported.
 
 ## Configuration
 

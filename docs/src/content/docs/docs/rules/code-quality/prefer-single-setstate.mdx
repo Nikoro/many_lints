@@ -16,13 +16,9 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Quality</span>
 
-Flags methods in `State` subclasses that call `setState()` more than once. Every call anywhere in the method counts — including calls in separate `if` branches or inside a loop — except calls inside a closure or a nested function, which run later and belong to their own scope.
+Flags a method in a `State` subclass that calls `setState()` more than once. Each call schedules a rebuild, so calling it twice for one logical change rebuilds twice and briefly exposes an intermediate state.
 
-Each `setState()` schedules a rebuild, so calling it twice in one synchronous method rebuilds twice for one logical change.
-
-## Why use this rule
-
-Multiple `setState()` calls in the same method cause Flutter to schedule multiple rebuilds in the same frame. While Flutter coalesces them into one actual rebuild, the pattern is misleading and fragile. Merging mutations into a single `setState()` makes the code clearer and avoids accidental intermediate states if the framework behavior changes.
+This rule is in the **`opinionated`** preset.
 
 **See also:** [State.setState()](https://api.flutter.dev/flutter/widgets/State/setState.html)
 
@@ -54,10 +50,6 @@ class _CartViewState extends State<CartView> {
 }
 ```
 
-Code between the two calls makes no difference, and neither does nesting: two
-calls in opposite `if` branches, or one inside a loop, are both counted. Only a
-closure or nested function stops the search.
-
 ## Do
 
 ```dart
@@ -84,34 +76,29 @@ class _CartViewState extends State<CartView> {
 }
 ```
 
-A `setState` in another method, or inside a closure, is a different scope and
-is never merged with this one.
+### Branches and loops still count
 
-## Turning this rule off
+Two calls in opposite `if` branches never both run, but they are still counted — the rule reads the whole method, not the paths through it. Hoist the shared `setState` around the branch:
 
-This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
+```dart
+// Reported
+void _toggleBad(bool on) {
+  if (on) {
+    setState(() => _status = 'on');
+  } else {
+    setState(() => _status = 'off');
+  }
+}
 
-```yaml
-# many_lints.yaml
-rules:
-  prefer_single_setstate: true
+// Not reported
+void _toggleGood(bool on) {
+  setState(() => _status = on ? 'on' : 'off');
+}
 ```
 
-To turn it off again:
+### A custom state base class
 
-```yaml
-# many_lints.yaml
-rules:
-  prefer_single_setstate: false
-```
-
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
-
-## Options
-
-Projects with a state abstraction that does not extend Flutter's `State` can
-opt that base class into this rule:
+Projects with a state abstraction that does not extend Flutter's `State` can opt that base class in:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -136,6 +123,49 @@ rules:
 
 </TabItem>
 </Tabs>
+
+## Known limitations
+
+**A closure or nested function stops the search.** Calls inside one run later and belong to their own scope, so they are neither counted nor merged:
+
+```dart
+// Not reported: the second call is inside a callback.
+void _load() {
+  setState(() => _status = 'loading');
+  _future.then((_) {
+    setState(() => _status = 'done');
+  });
+}
+```
+
+The same goes for two calls in **different methods** — each method is counted on its own.
+
+**In an `async` method, two calls around an `await` are still reported**, even though they genuinely happen in different frames and merging them would change behaviour. Split the work into two methods, or suppress the diagnostic on that line.
+
+**Only classes reachable from `State`** (or a class named in `state_base_classes`) are examined. A plain controller calling a method it happens to have named `setState` is left alone.
+
+## Turning this rule off
+
+This rule is in the **`opinionated`** preset, so it is on with
+`preset: opinionated`, or by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_single_setstate: true
+```
+
+To turn it off again:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_single_setstate: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|

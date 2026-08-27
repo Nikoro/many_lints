@@ -14,33 +14,128 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule flags a function taking more parameters than the configured budget.
 
-## Why use this rule
-
 A long parameter list is usually several values that belong together travelling separately, and every caller has to assemble them in the right order. Grouping them into a record or a small class names the thing they form and makes the call sites read.
 
-**Positional and named parameters are counted separately**, with a larger budget for named. Named parameters are labelled at the call site and do not depend on order, so a widget constructor with eight of them is not the problem this rule exists for — the default budgets are 4 positional and 10 named.
+**Positional and named parameters are counted separately**, with a larger budget for named — they are labelled at the call site and do not depend on order. The defaults are `max_positional: 4` and `max_named: 10`.
 
-An `@override` is never reported, since it cannot change its signature.
-
-This rule is in the **`pedantic`** preset: a parameter budget is a house style.
+This rule is in the **`pedantic`** preset.
 
 ## Don't
 
+Five positional parameters, one over the default budget. The call site is five
+bare values in an order nobody can check:
+
 ```dart
+class Court {
+  const Court(this.number, this.surface);
+
+  final int number;
+  final String surface;
+}
+
 void schedule(
   String title,
   DateTime start,
   DateTime end,
-  String venue,
   int courtNumber,
+  String surface,
 ) {}
+
+void book() {
+  schedule('Semi-final', DateTime.now(), DateTime.now(), 3, 'clay');
+}
 ```
 
 ## Do
 
+Group the values that travel together. Three parameters, and the call site says
+what each one is:
+
 ```dart
+class Court {
+  const Court(this.number, this.surface);
+
+  final int number;
+  final String surface;
+}
+
+typedef DateRange = ({DateTime start, DateTime end});
+
 void schedule(String title, DateRange when, Court court) {}
+
+void book() {
+  schedule(
+    'Semi-final',
+    (start: DateTime.now(), end: DateTime.now()),
+    const Court(3, 'clay'),
+  );
+}
 ```
+
+## More examples
+
+### Named parameters get a bigger budget
+
+A widget-style constructor with eight named parameters is not the problem this
+rule exists for, so it passes at the default `max_named: 10`. It only starts
+reporting once you lower the budget below eight:
+
+```dart
+class Booking {
+  const Booking({
+    required this.id,
+    required this.title,
+    required this.start,
+    required this.end,
+    required this.court,
+    this.notes,
+    this.cancelled = false,
+    this.reminderSent = false,
+  });
+
+  final String id;
+  final String title;
+  final DateTime start;
+  final DateTime end;
+  final int court;
+  final String? notes;
+  final bool cancelled;
+  final bool reminderSent;
+}
+```
+
+### An `@override` is never reported
+
+It cannot change its signature, so reporting it would demand an impossible fix:
+
+```dart
+abstract class Renderer {
+  void draw(int x, int y, int width, int height, double opacity);
+}
+
+class CanvasRenderer implements Renderer {
+  // Not reported — the supertype decided this list.
+  @override
+  void draw(int x, int y, int width, int height, double opacity) {}
+}
+```
+
+Note this is checked by the presence of the `@override` annotation, not by
+resolving the supertype — an unannotated override still reports.
+
+### Tightening the budget
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_long_parameter_list:
+    max_positional: 3
+    max_named: 6
+```
+
+The two budgets are independent. Only the exceeded kind is reported, and a declaration is reported once:
+positional is checked first, so a function over both budgets names the
+positional count.
 
 ## Enabling this rule
 
@@ -64,7 +159,7 @@ many_lints:
   rules:
     avoid_long_parameter_list:
       max_positional: 3
-      max_named: 12
+      max_named: 6
 ```
 
 </TabItem>
@@ -75,7 +170,7 @@ many_lints:
 rules:
   avoid_long_parameter_list:
     max_positional: 3
-    max_named: 12
+    max_named: 6
 ```
 
 </TabItem>

@@ -38,78 +38,105 @@ Overrides that only delegate to `super` add visual noise without changing behavi
 
 ## Don't
 
+Overrides left behind after the body that justified them was removed. Each one
+reads like it does something:
+
 ```dart
-class _Base {
-  void foo() {}
-  void bar(int x, String y) {}
-  int get value => 42;
-  set value(int v) {}
-  int compute(int x) => x;
-}
-
-class _BadMethodNoArgs extends _Base {
+class _CartPageState extends State<CartPage> {
   @override
-  void foo() {
-    super.foo();
+  void initState() {
+    super.initState();
   }
-}
 
-class _BadMethodWithArgs extends _Base {
   @override
-  void bar(int x, String y) {
-    super.bar(x, y);
+  void dispose() {
+    super.dispose();
   }
-}
 
-class _BadGetter extends _Base {
   @override
-  int get value => super.value;
+  Widget build(BuildContext context) => const Text('Cart');
 }
+```
 
-class _BadSetter extends _Base {
+### Getters and setters
+
+The SDK's `unnecessary_overrides` stops at methods. This rule also reports the
+accessor forms, which is where they tend to accumulate:
+
+```dart
+class TimestampedRepository extends BaseRepository {
   @override
-  set value(int v) => super.value = v;
-}
+  String get name => super.name;
 
-abstract class _AbstractBase {
-  void foo();
-}
-
-abstract class _BadAbstractRedeclaration extends _AbstractBase {
   @override
-  void foo(); // Abstract redeclaration without implementation
+  set name(String value) => super.name = value;
+}
+```
+
+### Abstract redeclarations
+
+Restating an inherited abstract member adds nothing — the subclass already has
+to implement it:
+
+```dart
+abstract class BaseRepository {
+  Future<void> refresh();
+}
+
+abstract class CachedRepository extends BaseRepository {
+  @override
+  Future<void> refresh(); // adds nothing
 }
 ```
 
 ## Do
 
+Delete the pass-throughs. Keep an override only when it changes something:
+
 ```dart
-class _GoodMethodWithExtraLogic extends _Base {
+class _CartPageState extends State<CartPage> {
   @override
-  void foo() {
-    print('before');
-    super.foo();
-  }
-}
-
-class _GoodMethodWithDifferentArgs extends _Base {
-  @override
-  void bar(int x, String y) {
-    super.bar(x + 1, y.toUpperCase());
-  }
-}
-
-class _GoodGetterWithDifferentValue extends _Base {
-  @override
-  int get value => super.value + 1;
-}
-
-// Empty override intentionally suppresses behavior
-class _GoodEmptyOverride extends _Base {
-  @override
-  void foo() {}
+  Widget build(BuildContext context) => const Text('Cart');
 }
 ```
+
+```dart
+class TimestampedRepository extends BaseRepository {
+  // Adds behaviour — kept.
+  @override
+  String get name => super.name.toUpperCase();
+
+  @override
+  Future<void> refresh() async {
+    _lastRefresh = DateTime.now();
+    await super.refresh();
+  }
+
+  DateTime? _lastRefresh;
+}
+```
+
+An override with an intentionally empty body is **not** a pass-through — it
+suppresses the inherited behaviour, and is left alone:
+
+```dart
+class SilentRepository extends BaseRepository {
+  // Deliberately does nothing — no super call.
+  @override
+  Future<void> refresh() async {}
+}
+```
+
+## Known limitations
+
+The same exemptions the SDK rule applies hold here: an override is **not**
+reported when it carries a documentation comment, an annotation other than
+`@override` (`@protected`, `@Deprecated`), or a `covariant` parameter — and
+`noSuchMethod` is never reported. Those are legitimate reasons to override a
+member without changing its body.
+
+A forwarding override only counts as a pass-through when the arguments go
+through unchanged. `super.bar(x + 1, y)` is a real override.
 
 ## Configuration
 

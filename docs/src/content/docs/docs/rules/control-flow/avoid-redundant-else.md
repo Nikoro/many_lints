@@ -13,13 +13,7 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-This rule flags an `else` branch whose matching `if` branch always exits — via `return`, `throw`, `break`, or `continue`.
-
-## Why use this rule
-
-When the then-branch cannot fall through, the `else` adds nothing: control reaching the code after the `if` already implies the condition was false. What it does add is a level of indentation for everything that follows, which compounds in methods with several guards.
-
-Removing it produces the guard-clause style: handle the exceptional cases early and let the main path stay flat.
+Flags an `else` whose matching `if` branch always exits — via `return`, `throw`, `break`, or `continue`. Reaching the code after the `if` already implies the condition was false, so the `else` only adds a level of indentation.
 
 ## Don't
 
@@ -28,7 +22,6 @@ String describe(int value) {
   if (value < 0) {
     return 'negative';
   } else {
-    // Indented for no reason — the branch above always returns
     return 'non-negative';
   }
 }
@@ -45,13 +38,79 @@ String describe(int value) {
 }
 ```
 
+### `throw` counts as exiting
+
+A validation guard is the shape this rule pays for itself on — the whole rest of the method loses a level:
+
+```dart
+// Don't
+double average(List<int> values) {
+  if (values.isEmpty) {
+    throw ArgumentError('values must not be empty');
+  } else {
+    var total = 0;
+    for (final value in values) {
+      total += value;
+    }
+    return total / values.length;
+  }
+}
+```
+
+```dart
+// Do
+double average(List<int> values) {
+  if (values.isEmpty) {
+    throw ArgumentError('values must not be empty');
+  }
+
+  var total = 0;
+  for (final value in values) {
+    total += value;
+  }
+  return total / values.length;
+}
+```
+
+### `continue` and `break` inside a loop
+
+The same applies to a loop body, where the `else` wraps everything that follows:
+
+```dart
+// Don't
+void report(List<String> lines) {
+  for (final line in lines) {
+    if (line.isEmpty) {
+      continue;
+    } else {
+      print(line.trim());
+    }
+  }
+}
+```
+
+```dart
+// Do
+void report(List<String> lines) {
+  for (final line in lines) {
+    if (line.isEmpty) {
+      continue;
+    }
+    print(line.trim());
+  }
+}
+```
+
 ## Known limitations
 
 `else if` chains are never reported. They read as a single decision, and splitting them into sequential `if` statements usually reads worse than the chain.
 
-The exit check is syntactic: a branch counts as exiting when its last statement is a `return`, `throw`, `break`, or `continue`. A branch that exits through a helper (`_fail()` returning `Never`) is not recognised.
+The exit check is **syntactic**: a branch counts as exiting when its last statement is a `return`, `throw`, `break`, or `continue`. Two consequences follow:
 
-The quick fix declines to hoist an `else` body that declares a variable, since the name could collide in the enclosing scope. Those cases report without an automatic fix.
+- A branch that exits through a helper is not recognised, so `if (bad) { _fail(); } else { ... }` is not reported even when `_fail()` returns `Never`.
+- A branch whose last statement is a `switch` or `if` where *every* path returns is not recognised either — only the last statement itself is examined.
+
+The quick fix declines to hoist an `else` body that declares a variable, since the name could collide in the enclosing scope. Those cases report without an automatic fix; unindent them by hand, renaming if needed.
 
 ## Configuration
 

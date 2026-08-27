@@ -19,40 +19,151 @@ Riverpod caches one provider instance per family argument, keyed by `==`. An arg
 
 ## Don't
 
+### A collection literal as the argument
+
+A filter screen passing the selected tags straight into a family. Every rebuild
+allocates a fresh list, so Riverpod disposes the previous provider and refetches:
+
 ```dart
-// A new list every build — never equal to the last one
-ref.watch(myProvider([1, 2, 3]));
+final searchProvider =
+    FutureProvider.family<List<Product>, List<String>>((ref, tags) => search(tags));
 
-// A new closure every build
-ref.watch(myProvider(() => 42));
+class ResultsView extends ConsumerWidget {
+  const ResultsView({super.key, required this.tags});
 
-// Foo does not override ==, so each instance is distinct
-ref.watch(myProvider(Foo()));
+  final List<String> tags;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final results = ref.watch(searchProvider(['sale', 'new'])); // LINT
+    return Text('${results.valueOrNull?.length}');
+  }
+}
+```
+
+### A closure as the argument
+
+Two closures with identical bodies are never equal, so this family is recreated
+on every single build:
+
+```dart
+final sortedProvider =
+    Provider.family<List<Product>, int Function(Product, Product)>(
+      (ref, compare) => [...ref.watch(catalogProvider)]..sort(compare),
+    );
+
+class SortedList extends ConsumerWidget {
+  const SortedList({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final items = ref.watch(
+      sortedProvider((a, b) => a.price.compareTo(b.price)), // LINT
+    );
+    return Text('${items.length}');
+  }
+}
+```
+
+### A value class that forgot `==`
+
+The most common one, because the code looks entirely reasonable:
+
+```dart
+class DateRange {
+  DateRange(this.from, this.to);
+
+  final DateTime from;
+  final DateTime to;
+}
+
+final reportProvider =
+    FutureProvider.family<Report, DateRange>((ref, range) => loadReport(range));
+
+class ReportView extends ConsumerWidget {
+  const ReportView({super.key, required this.from, required this.to});
+
+  final DateTime from;
+  final DateTime to;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final report = ref.watch(reportProvider(DateRange(from, to))); // LINT
+    return Text('${report.valueOrNull?.total}');
+  }
+}
 ```
 
 ## Do
 
+Pass something whose `==` is stable: a primitive, a `const` value, or a class
+that implements equality.
+
 ```dart
-class Foo {
-  const Foo(this.id);
-  final int id;
+// const collections and const instances are canonicalized
+ref.watch(searchProvider(const ['sale', 'new']));
+
+// primitives compare by value
+ref.watch(productProvider(productId));
+```
+
+Give the parameter class real equality — by hand, or with a `@freezed` /
+`Equatable` value type:
+
+```dart
+class DateRange {
+  const DateRange(this.from, this.to);
+
+  final DateTime from;
+  final DateTime to;
 
   @override
-  bool operator ==(Object other) => other is Foo && other.id == id;
+  bool operator ==(Object other) =>
+      other is DateRange && other.from == from && other.to == to;
 
   @override
-  int get hashCode => id.hashCode;
+  int get hashCode => Object.hash(from, to);
 }
 
-void watchStableValues(WidgetRef ref) {
-  // Const values are canonicalized, so equality holds.
-  ref.watch(myProvider(const [1, 2, 3]));
-  ref.watch(myProvider(const Foo(1)));
+final reportProvider =
+    FutureProvider.family<Report, DateRange>((ref, range) => loadReport(range));
 
-  // Primitives compare by value.
-  ref.watch(myProvider(42));
+class ReportView extends ConsumerWidget {
+  const ReportView({super.key, required this.from, required this.to});
+
+  final DateTime from;
+  final DateTime to;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final report = ref.watch(reportProvider(DateRange(from, to)));
+    return Text('${report.valueOrNull?.total}');
+  }
 }
 ```
+
+When the parameter is a record, equality comes for free — records compare
+structurally:
+
+```dart
+final reportProvider =
+    FutureProvider.family<Report, ({DateTime from, DateTime to})>(
+      (ref, range) => loadReport(range.from, range.to),
+    );
+
+// Stable: the record compares by field.
+ref.watch(reportProvider((from: from, to: to)));
+```
+
+## Known limitations
+
+Only a direct call on something typed as a family is checked —
+`myProvider(arg)`. Declaring the family (`Provider.family<T, Arg>(...)`) is
+never reported, since its argument is the create callback rather than a family
+parameter.
+
+The `==` check only asks whether an override exists, not whether it is correct.
+A class that declares `operator ==` and compares by identity anyway passes.
 
 ## Configuration
 

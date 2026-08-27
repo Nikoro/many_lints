@@ -32,32 +32,65 @@ visible beside the suppression.
 
 ## Don't
 
+Reaching for `.ignore()` to quiet an `unawaited_futures` warning. A failed save now vanishes with no trace anywhere:
+
 ```dart
-void saveInBackground(Future<void> save) {
-  save.ignore(); // failures disappear
+void saveDraft(Future<void> save) {
+  save.ignore();
 }
 ```
 
 ## Do
 
-Keep unexpected errors observable:
+Keep unexpected errors observable. `unawaited` says "I am not waiting for this" without also saying "I do not care if it fails":
 
 ```dart
 import 'dart:async';
 
-void saveInBackground(Future<void> save) {
+void saveDraft(Future<void> save) {
   unawaited(save);
 }
 ```
 
-When suppressing errors is genuinely part of the contract, document it:
+### When discarding the error really is the contract
+
+Write the reason immediately above the call and the rule accepts it:
 
 ```dart
 void discardObsoleteRequest(Future<void> request) {
-  // The response is obsolete, including any failure it produces.
+  // The user typed again, so this response is obsolete — including any
+  // failure it produces.
   request.ignore();
 }
 ```
+
+An inline block comment before the call works too, which suits a one-liner:
+
+```dart
+void pingBeacon(Future<void> ping) {
+  /* Best-effort analytics; a failure changes nothing. */ ping.ignore();
+}
+```
+
+## Known limitations
+
+**The comment must come immediately before the call.** A blank line between them breaks the exemption, and a trailing comment on the same line does not count — the rule only reads comments attached ahead of the call:
+
+```dart
+// Not exempt: a blank line separates them.
+void a(Future<void> f) {
+  // The failure is irrelevant.
+
+  f.ignore();   // still reported
+}
+
+// Not exempt: the comment trails the call.
+void b(Future<void> f) {
+  f.ignore(); // the failure is irrelevant — still reported
+}
+```
+
+Only Dart's own `FutureExtensions.ignore` is matched, resolved by declaration. A class of your own with an `ignore()` method is never flagged, and neither is a call passing arguments.
 
 ## Turning this rule off
 

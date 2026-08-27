@@ -15,71 +15,121 @@ Not reported: the built-in `state`, `final` and `const` fields, public methods, 
 
 ## Why use this rule
 
-Riverpod Notifiers are designed to expose a single reactive `state` property. When you add extra public getters or fields, consumers can read stale values that don't trigger rebuilds, leading to UI inconsistencies. Instead, consolidate all data into a model class used as the `state` type. This keeps the reactive contract intact and makes state changes predictable.
+A Notifier's contract is one reactive value: `state`. A widget that reads `ref.watch(myProvider)` is rebuilt when `state` changes and at no other time. A second public property is read *outside* that channel — the widget gets whatever the field held at build time and is never told when it changes, so the screen quietly shows a stale value.
 
 **See also:** [Riverpod providers](https://riverpod.dev/docs/concepts2/providers)
 
-## Don't
+## Examples
+
+### A second field the UI never sees change
+
+`isLoading` is set, no rebuild is scheduled, and the spinner never appears:
 
 ```dart
+// Don't
 import 'package:riverpod/riverpod.dart';
 
-// Public getter exposes state outside the reactive `state` property
-class BadNotifier extends Notifier<int> {
-  int get publicGetter => 0;
+class SearchNotifier extends Notifier<List<String>> {
+  bool isLoading = false;                    // LINT
 
   @override
-  int build() => 0;
-}
+  List<String> build() => const [];
 
-// Public field on a Notifier
-class BadNotifier2 extends Notifier<int> {
-  int publicField = 0;
+  Future<void> search(String query) async {
+    isLoading = true;                        // no rebuild — nothing watches this
+    state = await _fetch(query);
+    isLoading = false;
+  }
 
-  @override
-  int build() => 0;
-}
-
-// Public setter on a Notifier
-class BadNotifier3 extends Notifier<int> {
-  int _value = 0;
-
-  set publicSetter(int value) => _value = value;
-
-  @override
-  int build() => _value;
+  Future<List<String>> _fetch(String query) async => [query];
 }
 ```
 
-## Do
+Fold it into the state so one `ref.watch` sees both:
 
 ```dart
+// Do
 import 'package:riverpod/riverpod.dart';
 
-// Consolidate state into a model class
-class MyState {
-  final int left;
-  final int right;
-  MyState(this.left, this.right);
+class SearchState {
+  const SearchState({required this.results, required this.isLoading});
+
+  final List<String> results;
+  final bool isLoading;
 }
 
-class GoodNotifier extends Notifier<MyState> {
+class SearchNotifier extends Notifier<SearchState> {
   @override
-  MyState build() => MyState(0, 1);
-}
+  SearchState build() =>
+      const SearchState(results: [], isLoading: false);
 
-// Private properties are fine
-class GoodNotifier2 extends Notifier<int> {
-  int _privateField = 0;
-  int get _privateGetter => _privateField;
+  Future<void> search(String query) async {
+    state = SearchState(results: state.results, isLoading: true);
+    state = SearchState(results: await _fetch(query), isLoading: false);
+  }
+
+  Future<List<String>> _fetch(String query) async => [query];
+}
+```
+
+### Getters and setters count as properties
+
+Any public getter or setter other than `state` is reported, however trivial:
+
+```dart
+// Don't
+import 'package:riverpod/riverpod.dart';
+
+class CartNotifier extends Notifier<List<String>> {
+  int get itemCount => state.length;         // LINT
+  set discount(double value) => _discount = value;   // LINT
+
+  double _discount = 0;
 
   @override
-  int build() => _privateGetter;
+  List<String> build() => const [];
+}
+```
+
+A derived value belongs on the state class, or in its own provider:
+
+```dart
+// Do
+import 'package:riverpod/riverpod.dart';
+
+class CartNotifier extends Notifier<List<String>> {
+  @override
+  List<String> build() => const [];
 }
 
-// Public methods are allowed (only properties are flagged)
-class GoodNotifier3 extends Notifier<int> {
-  void increment() => state++;
+final itemCountProvider =
+    Provider<int>((ref) => ref.watch(cartProvider).length);
+```
+
+### What is left alone
+
+Methods, private members, statics, and anything a caller cannot reassign or is deliberately narrowed:
+
+```dart
+import 'package:meta/meta.dart';
+import 'package:riverpod/riverpod.dart';
+
+class OrderNotifier extends Notifier<int> {
+  // Not reported: a `final` field is injected collaboration, not leaked state
+  final Logger logger = Logger();
+
+  // Not reported: private
+  int _retries = 0;
+
+  // Not reported: static
+  static const maxRetries = 3;
+
+  // Not reported: methods are how a Notifier is meant to be driven
+  void submit() => state++;
+
+  // Not reported: deliberately exposed to a narrower audience
+  @visibleForTesting
+  int get retries => _retries;
 
   @override
   int build() => 0;

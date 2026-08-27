@@ -14,11 +14,9 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule flags string interpolation of a value whose class does not override `toString`.
 
-## Why use this rule
+`Object.toString` returns `Instance of 'Foo'` — the one thing the reader of a log already knows. It bites hardest in the error message written to diagnose a failure, or the log line captured from production, which turns out to say nothing.
 
-`Object.toString` returns `Instance of 'Foo'`. That is the one piece of information the reader of a log already has — the type — and none of the information they need.
-
-The cost lands exactly where it hurts most: an error message written to diagnose a failure, or a log line captured from production, that turns out to say nothing. By the time anyone notices, the incident is over and the data is gone.
+This rule is in the **`opinionated`** preset and works with its defaults; no configuration is needed.
 
 ## Don't
 
@@ -30,13 +28,15 @@ class User {
   final String email;
 }
 
-void logFailure(User user) {
-  // Logs: "failed for Instance of 'User'"
-  logger.severe('failed for $user');
+void logFailure(User user, void Function(String) log) {
+  // Logs: "upload failed for Instance of 'User'"
+  log('upload failed for $user');
 }
 ```
 
 ## Do
+
+Either give the class a `toString`, so every interpolation of it reads:
 
 ```dart
 class User {
@@ -49,43 +49,97 @@ class User {
   String toString() => 'User(id: $id, email: $email)';
 }
 
-void logFailure(User user) {
-  logger.severe('failed for $user');
+void logFailure(User user, void Function(String) log) {
+  // Logs: "upload failed for User(id: u_17, email: a@b.com)"
+  log('upload failed for $user');
 }
 ```
 
-Or interpolate the fields you actually need:
+...or interpolate the fields the message actually needs:
 
 ```dart
-logger.severe('failed for ${user.id}');
+void logFailure(User user, void Function(String) log) {
+  log('upload failed for ${user.id}');
+}
+```
+
+## More examples
+
+### A thrown exception, interpolated into its own message
+
+The most expensive version: the message is built precisely so a human can read it.
+
+```dart
+class ParseFailure implements Exception {
+  const ParseFailure(this.line);
+
+  final int line;
+}
+
+// Don't — the throw site says "Instance of 'ParseFailure'".
+Never rethrowWithContext(ParseFailure failure) =>
+    throw StateError('import aborted: $failure');
+```
+
+```dart
+class ParseFailure implements Exception {
+  const ParseFailure(this.line);
+
+  final int line;
+
+  @override
+  String toString() => 'ParseFailure(line $line)';
+}
+
+Never rethrowWithContext(ParseFailure failure) =>
+    throw StateError('import aborted: $failure');
+```
+
+### Inherited `toString` is enough
+
+The check walks the whole supertype chain, so a base class that overrides `toString` covers its subclasses:
+
+```dart
+abstract class Failure {
+  const Failure(this.code);
+
+  final String code;
+
+  @override
+  String toString() => '$runtimeType($code)';
+}
+
+class TimeoutFailure extends Failure {
+  const TimeoutFailure() : super('timeout');
+}
+
+// Not reported — TimeoutFailure inherits Failure.toString.
+String describe(TimeoutFailure failure) => 'failed: $failure';
+```
+
+### Enums are exempt unless you opt in
+
+`Status.active` already reads well, so enums are skipped by default. Turn `report_enums: true` on if you want them spelled out:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_default_tostring:
+    report_enums: true
+```
+
+```dart
+enum Status { active, archived }
+
+// Reported only with `report_enums: true`.
+String label(Status status) => 'status: $status';
 ```
 
 ## Known limitations
 
-Only classes declared in the analysed code are reported. A type from the SDK or a third-party package without a `toString` is not something the user can fix, so it is skipped.
+Only classes declared in the analysed code are reported. An SDK type without a `toString` override is not the user's to fix, so it is skipped.
 
-The check walks the full supertype chain, so a class inheriting `toString` from a base class is not flagged. Enums, records, and core types render usefully by default and are never reported.
-
-## Turning this rule off
-
-This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_default_tostring: true
-```
-
-To turn it off again:
-
-```yaml
-# many_lints.yaml
-rules:
-  avoid_default_tostring: false
-```
-
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+Enums, records, and core types render usefully by default and are never reported. `report_enums: true` widens the rule to enums only.
 
 ## Options
 
@@ -116,6 +170,27 @@ rules:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `report_enums` | bool | `false` | Also report interpolated enums without a `toString` override. Off by default because `Status.active` already reads well |
+
+## Turning this rule off
+
+This rule is in the **`opinionated`** preset, so it is on with
+`preset: opinionated`, or by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_default_tostring: true
+```
+
+To turn it off again:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_default_tostring: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Related rules
 

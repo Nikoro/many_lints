@@ -15,32 +15,89 @@ sidebar:
 
 This rule flags `add` and `subtract` calls that shift a local `DateTime` by a whole number of days using a `Duration` — `d.add(const Duration(days: 1))`, and the same duration reached through a name.
 
-## Why use this rule
-
-`Duration` measures *absolute elapsed time*. A calendar day is not always 24 hours long: in any zone that observes daylight saving time, one day each year is 23 hours and another is 25. Adding `Duration(days: 1)` moves by exactly 24 hours regardless, so it lands on the wrong wall-clock time whenever the span crosses a transition.
-
-The result, in `Europe/Warsaw`:
+`Duration` measures *absolute elapsed time*. A calendar day is not always 24 hours long: in any zone that observes daylight saving time, one day each year is 23 hours and another is 25. In `Europe/Warsaw`:
 
 ```dart
-DateTime(2025, 3, 29, 12).add(const Duration(days: 1));
-// 2025-03-30 13:00 — an hour later than intended
-
-DateTime(2025, 10, 25, 12).add(const Duration(days: 1));
-// 2025-10-26 11:00 — an hour earlier than intended
-
 DateTime(2025, 3, 30).add(const Duration(days: 1));
 // 2025-03-31 01:00 — midnight is no longer midnight
 ```
 
-That last one is the most damaging, because "start of day" is exactly what date arithmetic is usually computing. A daily boundary that drifts to 01:00 puts events in the wrong bucket, makes a "7 days ago" filter cover 6 days and 23 hours, and shifts a scheduled reminder by an hour twice a year.
+"Start of day" is exactly what date arithmetic usually computes, so a boundary that drifts to 01:00 puts events in the wrong bucket and makes a "7 days ago" filter cover 6 days and 23 hours. The bug reproduces on two days of the year and never in UTC, so a CI machine running in UTC is guaranteed to stay green.
 
-The bug is invisible in testing: it reproduces on two days of the year, and never in UTC — so a CI machine running in UTC is guaranteed to stay green.
+This rule is in the **`recommended`** preset and takes no configuration. It ships a quick fix.
 
-The `DateTime` constructor normalises out-of-range components against the calendar, so bumping the `day` component preserves the wall-clock time across a transition. It also handles month and year rollover: `day - 1` on the first of a month correctly lands on the last day of the previous one.
-
-**See also:** [`DateTime.add` API docs](https://api.dart.dev/stable/dart-core/DateTime/add.html), which carries this exact caveat, and the [`DateTime` class overview](https://api.dart.dev/stable/dart-core/DateTime-class.html) on local vs. UTC time.
+**See also:** [`DateTime.add` API docs](https://api.dart.dev/stable/dart-core/DateTime/add.html), which carries this exact caveat.
 
 ## Don't
+
+```dart
+// Shifts by 24 absolute hours, not by a calendar day.
+DateTime nextDue(DateTime today) => today.add(const Duration(days: 1));
+```
+
+## Do
+
+Bump the day component. The `DateTime` constructor normalises out-of-range
+values against the real calendar, so the wall-clock time survives a transition —
+and month and year rollover work for free:
+
+```dart
+DateTime nextDue(DateTime today) => DateTime(
+  today.year,
+  today.month,
+  today.day + 1,
+  today.hour,
+  today.minute,
+);
+```
+
+The quick fix writes exactly this.
+
+## More examples
+
+### A window that is an hour short twice a year
+
+```dart
+// Don't
+DateTime windowStart(DateTime now) => now.subtract(const Duration(days: 7));
+```
+
+```dart
+// Do
+DateTime windowStart(DateTime now) => DateTime(
+  now.year,
+  now.month,
+  now.day - 7,
+  now.hour,
+  now.minute,
+);
+```
+
+### Whole multiples of 24 hours count too
+
+Spelling a day as hours does not change the semantics, so it is reported the
+same way:
+
+```dart
+// Don't — 48 hours is two calendar days written the long way.
+DateTime inTwoDays(DateTime today) => today.add(const Duration(hours: 48));
+```
+
+```dart
+// Do
+DateTime inTwoDays(DateTime today) => DateTime(
+  today.year,
+  today.month,
+  today.day + 2,
+  today.hour,
+  today.minute,
+);
+```
+
+### A named duration is not a defence
+
+This is the shape the defect actually survives review in — the call site reads
+like domain language and the `Duration` is somewhere else:
 
 ```dart
 enum LeadTime {
@@ -49,66 +106,50 @@ enum LeadTime {
   Duration get offsetFromEvent => const Duration(days: 30);
 }
 
-// Shifts by 24 absolute hours, not by a calendar day.
-DateTime nextDue(DateTime today) => today.add(const Duration(days: 1));
-
-// The same bug written differently.
-DateTime inTwoDays(DateTime today) => today.add(const Duration(hours: 48));
-
-// A week filter that is an hour short twice a year.
-DateTime windowStart(DateTime now) => now.subtract(const Duration(days: 7));
-
-// A name is not a defence: this is the shape the defect survives in.
+// Don't — reported: the getter is resolved back to its declaration.
 DateTime reminderFor(DateTime occurrence, LeadTime leadTime) =>
     occurrence.subtract(leadTime.offsetFromEvent);
 ```
 
-## Do
-
 ```dart
-// Calendar arithmetic: the constructor normalises against real days.
-DateTime nextDue(DateTime today) => DateTime(
-  today.year,
-  today.month,
-  today.day + 1,
-  today.hour,
-  today.minute,
-);
-
-DateTime inTwoDays(DateTime today) => DateTime(
-  today.year,
-  today.month,
-  today.day + 2,
-  today.hour,
-  today.minute,
-);
-
-DateTime windowStart(DateTime now) => DateTime(
-  now.year,
-  now.month,
-  now.day - 7,
-  now.hour,
-  now.minute,
-);
-
-// Or work in UTC, which has no transitions.
+// Do — work in UTC, which has no transitions.
 DateTime reminderFor(DateTime occurrence) =>
     occurrence.toUtc().subtract(const Duration(days: 30));
 ```
 
-For anything more involved than shifting a day, use [`package:timezone`](https://pub.dev/packages/timezone), which models real zone rules.
+### Sub-day durations are correct as they are
+
+`Duration(hours: 2)` genuinely means two elapsed hours, and absolute arithmetic
+is the right semantics for it:
+
+```dart
+// Not reported.
+DateTime expiry(DateTime issuedAt) => issuedAt.add(const Duration(hours: 2));
+
+// Not reported either — a sub-day component day arithmetic cannot reproduce.
+DateTime odd(DateTime d) => d.add(const Duration(days: 1, hours: 2));
+```
+
+### UTC receivers are skipped
+
+```dart
+// Not reported — statically evident as UTC.
+DateTime tomorrowUtc() => DateTime.utc(2025, 3, 30).add(const Duration(days: 1));
+
+DateTime shift(DateTime d) => d.toUtc().add(const Duration(days: 1));
+```
+
+For anything more involved than shifting a day, use
+[`package:timezone`](https://pub.dev/packages/timezone), which models real zone
+rules.
 
 ## Known limitations
 
-A `Duration` reached through a name is resolved back to where it was declared, so a getter, a constant or a local variable is read the same way a literal at the call site is. This matters because a named duration is exactly how the defect survives review — a lint that only saw literals would pass a codebase clean while its notification lead times drifted an hour twice a year.
+**A named duration resolves only within the library under analysis when it is a getter.** A *constant* is evaluated, which works across package boundaries; a getter is code, so its body is read from the AST and a getter declared in a dependency stays silent rather than being guessed at. The same applies to a parameter or a value returned by a function.
 
-Resolution has two halves, with different reach. A **constant** is evaluated, which works across library boundaries. A **getter** is code, not a constant, so nothing evaluates and its body is read from the AST — which reaches only the library under analysis. A getter declared in a dependency is therefore not resolved, and stays silent rather than being guessed at. The same applies to any duration the rule cannot pin down: a parameter, or a value returned by a function.
+**UTC detection is syntactic.** `DateTime.utc(...)`, `.toUtc()`, a chain of shifts on either, and a local variable initialised from one are skipped. Anything less direct — a field, a parameter, a function's return value — is reported even when it holds a UTC `DateTime` at runtime. Silence those with `// ignore: many_lints/avoid_dst_unsafe_date_arithmetic`.
 
-The rule only reports durations of day granularity — a `days:` argument, or an `hours:` argument that is a whole multiple of 24. Sub-day units are never flagged: `Duration(hours: 2)` genuinely means two elapsed hours, and absolute arithmetic is the correct semantics for it. A mixed `Duration(days: 1, hours: 2)` is not reported either, since it carries a sub-day component that day-component arithmetic cannot reproduce.
-
-Receivers that are statically evident as UTC are skipped: `DateTime.utc(...)`, `.toUtc()`, a chain of shifts on either, and a local variable initialised from one. Anything less direct — a field, a parameter, a value returned by a function — is reported even when it happens to hold a UTC `DateTime` at runtime, because proving that would need flow analysis this rule does not attempt. If a receiver is known to be UTC but the rule cannot see it, silence the line with `// ignore: many_lints/avoid_dst_unsafe_date_arithmetic`.
-
-The quick fix is deliberately narrower than the rule. It applies only when the receiver is a simple identifier and the shift is a plain integer literal, because the replacement reads the receiver eight times — duplicating a call like `loadDate()` would change behaviour, not just semantics.
+**The quick fix is narrower than the rule.** It applies only when the receiver is a simple identifier and the shift is a plain integer literal, because the replacement reads the receiver eight times — duplicating a call like `loadDate()` would change behaviour, not just semantics. The rule still reports; you write the replacement.
 
 ## Configuration
 

@@ -22,40 +22,118 @@ A `StreamSubscription` that is never stored cannot be cancelled. The listener ke
 
 ## Don't
 
-```dart
-void example() {
-  final stream = Stream.fromIterable([1, 2, 3]);
+Subscribing in `initState` and dropping the handle. The widget is disposed, the stream keeps producing, and the callback keeps calling `setState` on a dead `State`:
 
-  // Subscription not assigned -- cannot cancel later
-  stream.listen((event) {
-    print(event);
-  });
+```dart
+import 'dart:async';
+
+class _ChatState extends State<Chat> {
+  final Stream<String> _messages = const Stream<String>.empty();
+  List<String> _received = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Nothing holds the subscription, so dispose() has nothing to cancel
+    _messages.listen((message) {
+      setState(() => _received = [..._received, message]);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
 }
 ```
 
 ## Do
 
+Store the handle in a field and cancel it in `dispose()`:
+
 ```dart
-void example() {
-  final stream = Stream.fromIterable([1, 2, 3]);
+import 'dart:async';
 
-  // Assigned to a variable -- can be cancelled later
-  final subscription = stream.listen((event) {
-    print(event);
-  });
-  subscription.cancel();
-}
+class _ChatState extends State<Chat> {
+  final Stream<String> _messages = const Stream<String>.empty();
+  List<String> _received = [];
+  StreamSubscription<String>? _subscription;
 
-// Returning the subscription is also fine:
-StreamSubscription<int> listen(Stream<int> stream) {
-  return stream.listen((event) => print(event));
-}
+  @override
+  void initState() {
+    super.initState();
+    _subscription = _messages.listen((message) {
+      setState(() => _received = [..._received, message]);
+    });
+  }
 
-// Passing as an argument is also fine:
-void track(List<StreamSubscription> subs, Stream<int> stream) {
-  subs.add(stream.listen((event) => print(event)));
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
 }
 ```
+
+### Handing the subscription to a caller
+
+A method that subscribes on someone else's behalf satisfies the rule by returning the handle — the caller then owns cancellation:
+
+```dart
+import 'dart:async';
+
+StreamSubscription<String> watchMessages(
+  Stream<String> messages,
+  void Function(String) onMessage,
+) {
+  return messages.listen(onMessage);
+}
+```
+
+### Collecting several subscriptions
+
+Passing the handle as an argument counts too, which is the usual shape when one object owns a bag of subscriptions:
+
+```dart
+import 'dart:async';
+
+class _FeedState extends State<Feed> {
+  final Stream<String> _likes = const Stream<String>.empty();
+  final Stream<String> _comments = const Stream<String>.empty();
+  final _subscriptions = <StreamSubscription<String>>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _subscriptions.add(_likes.listen(_onLike));
+    _subscriptions.add(_comments.listen(_onComment));
+  }
+
+  void _onLike(String id) {}
+
+  void _onComment(String id) {}
+
+  @override
+  void dispose() {
+    for (final subscription in _subscriptions) {
+      subscription.cancel();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+```
+
+## Known limitations
+
+The rule reports a `listen(...)` that stands alone as a statement. Anything that consumes the returned subscription — assigning it, returning it, passing it as an argument, awaiting it — satisfies the rule.
+
+It checks only that the handle goes *somewhere*, not that it is ever cancelled. `final subscription = stream.listen(...);` with no matching `cancel()` passes this rule; the cancellation itself is [`dispose_fields`](/many_lints/docs/rules/resource-management/dispose-fields/)'s job once the handle is a `State` field.
+
+The receiver must resolve to something whose `listen` returns a `dart:async` `StreamSubscription`, so an unrelated `listen` method of your own is never flagged.
 
 ## Turning this rule off
 

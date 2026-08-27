@@ -13,21 +13,26 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-This rule flags nested `BlocProvider`, `BlocListener`, or `RepositoryProvider` widgets that could be consolidated using their `Multi*` counterpart. It only triggers when the same type is nested (e.g., `BlocProvider` inside `BlocProvider`), not when mixing different types.
+This rule flags a `BlocProvider`, `BlocListener` or `RepositoryProvider` whose `child:` is another widget of the **same** type, and offers a quick fix collapsing the nest into `MultiBlocProvider`, `MultiBlocListener` or `MultiRepositoryProvider`.
+
+Only the outermost provider of a nest is reported, so a three-deep pyramid produces one diagnostic, not two.
 
 ## Why use this rule
 
-Deeply nested providers create a "pyramid of doom" that hurts readability and makes diffs harder to review. `MultiBlocProvider`, `MultiBlocListener`, and `MultiRepositoryProvider` flatten the nesting into a clean list, keeping the widget tree shallow and easy to scan. The behavior is identical — it's purely a readability improvement.
+The nested and the flattened forms behave identically — this is readability. A `Multi*` list is a flat list of providers: adding one is a one-line diff, and removing one does not require re-indenting everything below it. A nest makes every such change touch the whole block.
 
 **See also:** [MultiBlocProvider](https://bloclibrary.dev/flutter-bloc-concepts/#multiblocprovider) | [MultiBlocListener](https://bloclibrary.dev/flutter-bloc-concepts/#multibloclistener) | [MultiRepositoryProvider](https://bloclibrary.dev/flutter-bloc-concepts/#multirepositoryprovider)
 
-## Don't
+## Examples
+
+### The app-root provider pyramid
 
 ```dart
+// Don't — one diagnostic, on the outermost BlocProvider
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-abstract class CounterEvent {}
+sealed class CounterEvent {}
 
 class CounterBloc extends Bloc<CounterEvent, int> {
   CounterBloc() : super(0);
@@ -37,23 +42,28 @@ class TimerCubit extends Cubit<int> {
   TimerCubit() : super(0);
 }
 
-// Nested BlocProviders
-final widget = BlocProvider<CounterBloc>(
+class ThemeCubit extends Cubit<bool> {
+  ThemeCubit() : super(false);
+}
+
+Widget buildApp(Widget home) => BlocProvider<CounterBloc>(
   create: (context) => CounterBloc(),
   child: BlocProvider<TimerCubit>(
     create: (context) => TimerCubit(),
-    child: Container(),
+    child: BlocProvider<ThemeCubit>(
+      create: (context) => ThemeCubit(),
+      child: home,
+    ),
   ),
 );
 ```
 
-## Do
-
 ```dart
+// Do — the quick fix produces this
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-abstract class CounterEvent {}
+sealed class CounterEvent {}
 
 class CounterBloc extends Bloc<CounterEvent, int> {
   CounterBloc() : super(0);
@@ -63,15 +73,60 @@ class TimerCubit extends Cubit<int> {
   TimerCubit() : super(0);
 }
 
-// Flattened with MultiBlocProvider
-final widget = MultiBlocProvider(
+class ThemeCubit extends Cubit<bool> {
+  ThemeCubit() : super(false);
+}
+
+Widget buildApp(Widget home) => MultiBlocProvider(
   providers: [
     BlocProvider<CounterBloc>(create: (context) => CounterBloc()),
     BlocProvider<TimerCubit>(create: (context) => TimerCubit()),
+    BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()),
   ],
-  child: Container(),
+  child: home,
 );
 ```
+
+### Listeners nest the same way
+
+```dart
+// Don't
+BlocListener<AuthBloc, bool>(
+  listener: (context, loggedIn) {},
+  child: BlocListener<CartBloc, int>(
+    listener: (context, count) {},
+    child: const HomeView(),
+  ),
+)
+```
+
+```dart
+// Do
+MultiBlocListener(
+  listeners: [
+    BlocListener<AuthBloc, bool>(listener: (context, loggedIn) {}),
+    BlocListener<CartBloc, int>(listener: (context, count) {}),
+  ],
+  child: const HomeView(),
+)
+```
+
+## Known limitations
+
+Only a nest of the **same** type is reported. A `BlocProvider` wrapping a `RepositoryProvider` cannot be collapsed into one `Multi*` widget, so it is left alone:
+
+```dart
+// Not reported — different types, nothing to merge
+RepositoryProvider<UserRepository>(
+  create: (context) => UserRepository(),
+  child: BlocProvider<AuthBloc>(
+    create: (context) => AuthBloc(),
+    child: const HomeView(),
+  ),
+)
+```
+
+The nesting must go through `child:`. A provider reached through any other argument, or through a builder callback, is not matched.
 
 ## Configuration
 

@@ -9,73 +9,101 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-Warns when a switch statement or switch expression evaluates a constant expression. Since the value never changes, the switch always takes the same branch, making all other cases dead code. This usually indicates a typo or a bug.
-
-## Why use this rule
-
-Switching on a constant means only one branch can ever execute, turning the switch into expensive dead code. This is typically a mistake — the developer likely intended to switch on a variable or parameter instead of a compile-time constant. Catching this early prevents unreachable code from accumulating.
-
-**See also:** [Effective Dart: Usage](https://dart.dev/effective-dart/usage)
+Flags a `switch` statement or switch expression whose subject is a compile-time constant. The value never changes, so one case always wins and every other case is unreachable.
 
 ## Don't
 
-```dart
-const _retryLimit = 4;
+Switching on the constant rather than on the value it was meant to be compared with:
 
+```dart
 abstract final class Config {
   static const channel = 'stable';
 }
 
-void bad() {
-  // Switching on a static const field
+String bannerText() {
   switch (Config.channel) {
     case 'stable':
-      print('always');
-    case '2':
-      print('never');
-  }
-
-  // Switching on a top-level const
-  switch (_retryLimit) {
-    case 4:
-      print('always');
+      return 'Welcome';
+    case 'beta':
+      return 'Thanks for testing';   // Unreachable
     default:
-      print('never');
+      return '';                     // Unreachable
   }
-
-  // Switch expression on an integer literal
-  final x = switch (42) {
-    42 => 'yes',
-    _ => 'no',
-  };
 }
 ```
 
 ## Do
 
+Switch on something that varies at runtime:
+
 ```dart
-void good(int another) {
-  // Parameter
-  switch (another) {
-    case 4:
-      print('maybe');
+abstract final class Config {
+  static const channel = 'stable';
+}
+
+String bannerText(String channel) {
+  switch (channel) {
+    case 'stable':
+      return 'Welcome';
+    case 'beta':
+      return 'Thanks for testing';
     default:
-      print('maybe');
-  }
-
-  // Switch expression on parameter
-  final x = switch (another) {
-    4 => 'ten',
-    _ => 'other',
-  };
-
-  // Method call result
-  switch (another.toString()) {
-    case '4':
-      print('maybe');
+      return '';
   }
 }
 ```
+
+If the value really is fixed, you did not need a switch — say what you meant:
+
+```dart
+abstract final class Config {
+  static const channel = 'stable';
+}
+
+String bannerText() => 'Welcome';
+```
+
+### Switch expressions are covered too
+
+The rule registers both forms, so an expression switch on a literal reports the same way:
+
+```dart
+void demo() {
+  // Don't
+  final label = switch (42) {
+    42 => 'answer',
+    _ => 'other',
+  };
+}
+```
+
+### An enum constant is constant
+
+`Status.active` is a `const` field on the enum, so switching on it takes the same fixed branch every time:
+
+```dart
+enum Status { active, archived }
+
+void demo() {
+  // Don't — switch on the value, not on the constant you are testing for
+  switch (Status.active) {
+    case Status.active:
+      print('live');
+    case Status.archived:
+      print('gone');
+  }
+}
+```
+
+Switching on `order.status` reads a property and is never reported.
+
+## Known limitations
+
+The diagnostic lands on the switch *subject*, not on the whole statement, so the highlight points at the expression you need to change.
+
+Constness is read syntactically: literals, `const` variables and static `const` fields (enum constants included), `const` collections and `const` constructor calls. A plain `final` local is **not** treated as constant — `final mode = 'debug'; switch (mode)` is not reported. Neither is a method call, so `switch (buildMode())` stays silent even when the function always returns the same thing.
+
+There is no quick fix: replacing the subject with the right variable is the design decision the rule is asking about.
 
 ## Configuration
 

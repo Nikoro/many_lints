@@ -17,28 +17,98 @@ Flags `Align` widgets that use `Alignment.center` (or omit the alignment paramet
 
 ## Why use this rule
 
-`Center` is a specialized subclass of `Align` that always aligns to center. Using `Center` makes the intent immediately obvious and removes the redundant `alignment: Alignment.center` argument. If you omit `alignment` on `Align`, Flutter defaults to center anyway — so you should just use `Center`.
+`Center` *is* an `Align` — a subclass that hard-codes `Alignment.center`. Using
+it drops an argument and makes the intent readable at a glance in a deep tree.
+The quick fix renames the widget and deletes the redundant `alignment:`.
 
 **See also:** [Center](https://api.flutter.dev/flutter/widgets/Center-class.html) | [Align](https://api.flutter.dev/flutter/widgets/Align-class.html)
 
 ## Don't
 
 ```dart
-// Align with explicit Alignment.center
-Align(alignment: Alignment.center, child: Text('Hello'));
-
-// Align without alignment defaults to center
-Align(child: Text('World'));
+// A loading spinner in the middle of the page.
+Align(
+  alignment: Alignment.center,
+  child: const CircularProgressIndicator(),
+);
 ```
 
 ## Do
 
 ```dart
-// Use Center directly
-Center(child: Text('Hello'));
-
-Center(child: Text('World'));
+Center(child: const CircularProgressIndicator());
 ```
+
+## Examples
+
+### An `Align` with no alignment at all
+
+`Align`'s `alignment` defaults to `Alignment.center`, so omitting it is the same
+widget written less clearly. It is reported too:
+
+```dart
+// Don't
+Align(child: const Text('Centred'));
+
+// Do
+Center(child: const Text('Centred'));
+```
+
+### Alignment written as coordinates
+
+`Alignment(0, 0)` is the centre, so a literal spelled that way is reported as
+well:
+
+```dart
+// Don't
+Align(alignment: const Alignment(0, 0), child: const Text('Centred'));
+
+// Do
+Center(child: const Text('Centred'));
+```
+
+Only exact zeros count — `Alignment(0.0, 0.1)` is not centre and is not
+reported.
+
+### Any other alignment is fine
+
+```dart
+// Not reported
+Align(alignment: Alignment.bottomRight, child: const Text('Corner'));
+```
+
+## Known limitations
+
+**`widthFactor` and `heightFactor` are carried, not dropped.** `Center` declares
+both, so an `Align` using them still converts cleanly:
+
+```dart
+// Don't
+Align(
+  alignment: Alignment.center,
+  widthFactor: 2,
+  child: const Text('Wide'),
+);
+
+// Do
+Center(widthFactor: 2, child: const Text('Wide'));
+```
+
+**Only a literal is recognised.** An alignment behind a variable or a getter is
+opaque to the rule, even when it holds the centre:
+
+```dart
+// Not reported
+const spot = Alignment.center;
+Align(alignment: spot, child: const Text('Centred'));
+```
+
+**Any `X.center` is matched, not just `Alignment.center`.**
+`AlignmentDirectional.center` is the same point, so it converts cleanly — but so
+would a `center` constant on some unrelated class of your own, which would not.
+That shape is rare enough that the rule does not guard against it; if you hit
+it, silence the line with
+`// ignore: many_lints/prefer_center_over_align`.
 
 ## Configuration
 

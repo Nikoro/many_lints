@@ -13,53 +13,88 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-This rule flags a negation that can be removed without changing the meaning — `!!flag`, `!(a != b)`, `!true`, and `!a == !b`.
-
-## Why use this rule
-
-A double negation states a positive condition the long way. The reader has to unwind both operators before knowing what is actually being tested, and it is easy to miscount when the expression is longer.
-
-Negating a boolean literal (`!true`) is just the other literal written indirectly. Negating both sides of an equality (`!a == !b`) cancels out entirely — the comparison gives the same answer without either `!`.
-
-These usually appear when a condition is inverted during a change and the inner expression is left as it was.
+This rule flags a negation that can be removed without changing the meaning. Four shapes are reported.
 
 ## Don't
 
+**A negation over a negation.** Usually the result of inverting a condition and leaving the inner expression as it was:
+
 ```dart
-if (!!isEnabled) {
-  start();
-}
+void start() {}
 
-if (!(status != Status.active)) {
-  activate();
+void toggle(bool isEnabled) {
+  if (!!isEnabled) {
+    start();
+  }
 }
+```
 
-if (!true) {
-  unreachable();
+**A negation over `!=`.** The `!` and the `!=` cancel:
+
+```dart
+enum Status { active, archived }
+
+void activate() {}
+
+void refresh(Status status) {
+  if (!(status != Status.active)) {
+    activate();
+  }
 }
+```
 
-if (!isReady == !isLoaded) {
-  sync();
+**A negation over a boolean literal.** `!true` is just `false` written the long way — most often a feature flag that was flipped in place:
+
+```dart
+void renderLegacyBanner() {}
+
+void render() {
+  if (!true) {
+    renderLegacyBanner();
+  }
+}
+```
+
+**A negation on both sides of a comparison.** Negating both operands leaves the answer unchanged:
+
+```dart
+void sync() {}
+
+void check(bool isReady, bool isLoaded) {
+  if (!isReady == !isLoaded) {
+    sync();
+  }
 }
 ```
 
 ## Do
 
+The quick fix removes the redundant operators, one diagnostic at a time:
+
 ```dart
-if (isEnabled) {
-  start();
-}
+enum Status { active, archived }
 
-if (status == Status.active) {
-  activate();
-}
+void start() {}
+void activate() {}
+void renderLegacyBanner() {}
+void sync() {}
 
-if (false) {
-  unreachable();
-}
+void examples(bool isEnabled, Status status, bool isReady, bool isLoaded) {
+  if (isEnabled) {
+    start();
+  }
 
-if (isReady == isLoaded) {
-  sync();
+  if (status == Status.active) {
+    activate();
+  }
+
+  if (false) {
+    renderLegacyBanner();
+  }
+
+  if (isReady == isLoaded) {
+    sync();
+  }
 }
 ```
 

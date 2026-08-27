@@ -50,6 +50,92 @@ class CheckoutForm {
 
 `_handleTap` is accepted too — `handle` is the second default prefix.
 
+## Examples
+
+### Only a tear-off passed to an `on...` parameter is judged
+
+The rule needs both halves: a parameter named `on...`, and a bare method name as its value. Anything else gives it no anchor:
+
+```dart
+class Button {
+  Button({this.onTap, this.builder});
+
+  final void Function()? onTap;
+  final void Function()? builder;
+}
+
+class CheckoutForm {
+  void submit() {}
+
+  void run() {
+    // Not reported — a closure is not a named handler
+    Button(onTap: () => submit());
+
+    // Not reported — `builder` is not an `on...` parameter
+    Button(builder: submit);
+
+    // Not reported — called normally, not passed as a handler
+    submit();
+  }
+}
+```
+
+### The prefix must start a new word
+
+`_online` does not satisfy `on`, because `l` is not the start of a new word:
+
+```dart
+class CheckoutForm {
+  void _online() {}
+  void _onLine() {}
+
+  void run() {
+    Button(onTap: _online);   // LINT
+    Button(onTap: _onLine);   // accepted
+  }
+}
+```
+
+### Dropping the private requirement
+
+`require_private: true` — the default — means a handler must also start with an underscore, so `onTap` as a method name is reported while `_onTap` passes. Set it to `false` when your widgets expose their handlers:
+
+```yaml
+rules:
+  prefer_correct_handler_name:
+    require_private: false
+```
+
+```dart
+class CheckoutForm {
+  void onTap() {}
+
+  void run() {
+    Button(onTap: onTap);   // accepted with `require_private: false`
+  }
+}
+```
+
+### Adding a prefix of your own
+
+`additional_prefixes` **extends** the defaults. Writing `prefixes:` instead **replaces** them, so `on` and `handle` stop being accepted unless you list them again:
+
+```yaml
+rules:
+  prefer_correct_handler_name:
+    additional_prefixes: [process]
+```
+
+```dart
+class CheckoutForm {
+  void _processTap() {}
+
+  void run() {
+    Button(onTap: _processTap);   // accepted with the config above
+  }
+}
+```
+
 ## Enabling this rule
 
 This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
@@ -71,7 +157,6 @@ rules:
 many_lints:
   rules:
     prefer_correct_handler_name:
-      prefixes: [on, handle]
       additional_prefixes: [process]
       require_private: true
 ```
@@ -83,7 +168,6 @@ many_lints:
 # many_lints.yaml
 rules:
   prefer_correct_handler_name:
-    prefixes: [on, handle]
     additional_prefixes: [process]
     require_private: true
 ```
@@ -93,9 +177,17 @@ rules:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `prefixes` | list | `[on, handle]` | Accepted handler prefixes |
-| `additional_prefixes` | list | `[]` | Prefixes to add without replacing the defaults |
+| `prefixes` | list | `[on, handle]` | Accepted handler prefixes. **Replaces** the defaults |
+| `additional_prefixes` | list | `[]` | Prefixes to add **without** replacing the defaults |
 | `require_private` | bool | `true` | Whether a handler must also start with an underscore |
+
+## Known limitations
+
+**Methods only.** A top-level function or a local function passed as a handler is not reported — the value has to resolve to a method on a class.
+
+**Closures are invisible.** `onTap: () => submit()` is never reported, however the method behind it is named.
+
+**No quick fix.** Renaming a method touches every call site, which is a rename refactoring rather than a one-file edit.
 
 ## Turning this rule off
 

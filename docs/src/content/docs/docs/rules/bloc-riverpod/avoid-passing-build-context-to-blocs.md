@@ -9,72 +9,119 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-This rule flags Bloc or Cubit classes that accept a `BuildContext` as a constructor or method parameter. Blocs should remain independent of the UI layer and never hold a reference to a widget's context.
+This rule flags a `BuildContext` parameter on any constructor or method of a `Bloc` or `Cubit`. Positional and named parameters are both reported.
 
 ## Why use this rule
 
-Passing `BuildContext` into a Bloc creates a dangerous coupling between your business logic and the widget tree. The context can become invalid (unmounted) while the Bloc is still alive, leading to runtime crashes. It also makes the Bloc impossible to unit test without mocking the entire widget framework. Any logic that needs the context (navigation, showing dialogs, reading theme) belongs in the widget layer, not in the Bloc.
+A `BuildContext` is only valid while its element is mounted. A Bloc typically outlives the widget that created it — it sits in a `BlocProvider` above the route, or in a `MultiBlocProvider` at the app root — so the context it was handed goes stale, and the next `Navigator.of(context)` throws from inside business logic, far from the widget that caused it.
+
+It also makes the Bloc untestable in isolation: `blocTest` cannot supply a real context, so every test needs a widget tree.
+
+Whatever the context was for — navigating, showing a snackbar, reading the theme — belongs in the widget, driven by the state the Bloc emits.
 
 **See also:** [Bloc best practices](https://bloclibrary.dev/bloc-concepts/)
 
-## Don't
+## Examples
+
+### Navigating from inside the bloc
 
 ```dart
+// Don't — `context` is stale by the time login finishes
 import 'package:bloc/bloc.dart';
 import 'package:flutter/widgets.dart';
 
-abstract class CounterEvent {}
+sealed class AuthEvent {}
 
-// Bloc constructor accepts BuildContext
-class BadBloc extends Bloc<CounterEvent, int> {
+class LoginRequested extends AuthEvent {}
+
+class AuthBloc extends Bloc<AuthEvent, bool> {
+  AuthBloc(this.context) : super(false) {   // LINT on `context`
+    on<LoginRequested>((event, emit) async {
+      emit(true);
+      await Navigator.of(context).pushNamed('/home');
+    });
+  }
+
   final BuildContext context;
-
-  BadBloc(this.context) : super(0);
-}
-
-// Cubit method accepts BuildContext
-class BadCubit extends Cubit<int> {
-  BadCubit() : super(0);
-
-  void doSomething(BuildContext context) {}
-}
-
-// Named constructor parameter with BuildContext
-class AnotherBadBloc extends Bloc<CounterEvent, int> {
-  AnotherBadBloc({required BuildContext context}) : super(0);
 }
 ```
 
-## Do
+Emit the outcome and let the widget navigate, where the context is guaranteed live:
 
 ```dart
+// Do
 import 'package:bloc/bloc.dart';
-import 'package:flutter/widgets.dart';
 
-abstract class CounterEvent {}
+sealed class AuthEvent {}
 
-class Increment extends CounterEvent {}
+class LoginRequested extends AuthEvent {}
 
-// Bloc with repository dependency (no BuildContext)
-class CounterRepository {
-  int getValue() => 0;
-}
-
-class GoodBloc extends Bloc<CounterEvent, int> {
-  final CounterRepository repository;
-
-  GoodBloc(this.repository) : super(0) {
-    on<Increment>((event, emit) => emit(state + 1));
+class AuthBloc extends Bloc<AuthEvent, bool> {
+  AuthBloc() : super(false) {
+    on<LoginRequested>((event, emit) => emit(true));
   }
 }
 
-// Cubit with no BuildContext dependency
-class GoodCubit extends Cubit<int> {
-  GoodCubit() : super(0);
+// In the widget:
+// BlocListener<AuthBloc, bool>(
+//   listener: (context, loggedIn) {
+//     if (loggedIn) Navigator.of(context).pushNamed('/home');
+//   },
+//   child: const LoginForm(),
+// )
+```
 
-  void increment() => emit(state + 1);
+### A method parameter counts too
+
+The context does not have to be stored — taking one at all is reported:
+
+```dart
+// Don't
+import 'package:bloc/bloc.dart';
+import 'package:flutter/widgets.dart';
+
+class SettingsCubit extends Cubit<bool> {
+  SettingsCubit() : super(false);
+
+  void applyTheme(BuildContext context) {   // LINT on `context`
+    emit(MediaQuery.of(context).platformBrightness == Brightness.dark);
+  }
 }
 ```
+
+```dart
+// Do — take the value, not the context that produces it
+import 'package:bloc/bloc.dart';
+
+class SettingsCubit extends Cubit<bool> {
+  SettingsCubit() : super(false);
+
+  void applyTheme({required bool isDark}) => emit(isDark);
+}
+
+// In the widget:
+// context.read<SettingsCubit>().applyTheme(
+//   isDark: MediaQuery.of(context).platformBrightness == Brightness.dark,
+// );
+```
+
+### Named parameters are reported
+
+```dart
+// Don't
+import 'package:bloc/bloc.dart';
+import 'package:flutter/widgets.dart';
+
+sealed class CheckoutEvent {}
+
+class CheckoutBloc extends Bloc<CheckoutEvent, int> {
+  CheckoutBloc({required BuildContext context}) : super(0);  // LINT
+}
+```
+
+## Known limitations
+
+The parameter type must be exactly `BuildContext`. A bloc that takes a wrapper carrying a context (`class NavigationService { final BuildContext context; }`) has the same lifetime hazard but no `BuildContext` parameter to match, so it is not reported.
 
 ## Configuration
 

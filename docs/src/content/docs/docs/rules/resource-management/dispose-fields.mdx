@@ -26,28 +26,13 @@ Disposable resources that are not cleaned up cause memory leaks. A `TextEditingC
 
 ## Don't
 
+A form with no `dispose()` at all. Every controller and focus node here outlives the widget:
+
 ```dart
-class _BadState extends State<BadWidget> {
-  final _textController = TextEditingController();
-  final _focusNode = FocusNode();
-  final _streamController = StreamController<int>();
-
-  // No dispose() method -- all fields leak
-
-  @override
-  Widget build(BuildContext context) => const SizedBox();
-}
-
-class _IncompleteState extends State<IncompleteWidget> {
-  final _controller1 = TextEditingController();
-  final _controller2 = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller1.dispose();
-    // _controller2 is missing!
-    super.dispose();
-  }
+class _LoginFormState extends State<LoginForm> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _emailFocus = FocusNode();
 
   @override
   Widget build(BuildContext context) => const SizedBox();
@@ -57,27 +42,16 @@ class _IncompleteState extends State<IncompleteWidget> {
 ## Do
 
 ```dart
-class _GoodState extends State<GoodWidget> {
-  final _textController = TextEditingController();
-  final _focusNode = FocusNode();
+class _LoginFormState extends State<LoginForm> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _emailFocus = FocusNode();
 
   @override
   void dispose() {
-    _textController.dispose();
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox();
-}
-
-class _StreamState extends State<StreamWidget> {
-  final _streamController = StreamController<int>();
-
-  @override
-  void dispose() {
-    _streamController.close();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _emailFocus.dispose();
     super.dispose();
   }
 
@@ -85,6 +59,94 @@ class _StreamState extends State<StreamWidget> {
   Widget build(BuildContext context) => const SizedBox();
 }
 ```
+
+### A dispose() that misses one field
+
+This is the more common shape in a live codebase: a `dispose()` exists, and a field added later never got a line in it. The rule reports `_passwordController` only.
+
+```dart
+class _LoginFormState extends State<LoginForm> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();   // LINT
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+```
+
+### The cleanup method has to be the right one
+
+Each type has one expected cleanup method, and calling a different one does not count. A `StreamController` is closed, not disposed:
+
+```dart
+class _FeedState extends State<Feed> {
+  final _events = StreamController<int>();
+
+  @override
+  void dispose() {
+    _events.close();   // `close`, not `dispose`
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+```
+
+A `StreamSubscription` is cancelled, and a `Timer` is cancelled too:
+
+```dart
+class _TickerState extends State<Ticker> {
+  StreamSubscription<int>? _subscription;
+  Timer? _timer;
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+```
+
+## Known limitations
+
+The cleanup call is matched by the field's **name as written**. `_controller.dispose()` and `this._controller.dispose()` both count, but routing the call through a local or a helper does not:
+
+```dart
+@override
+void dispose() {
+  final c = _controller;
+  c.dispose();        // still reported: the rule does not see `_controller`
+  _disposeEverything();  // a helper's contents are not inspected
+  super.dispose();
+}
+```
+
+Calls inside a closure are not counted either, since the closure runs on its own schedule and may never run at all:
+
+```dart
+@override
+void dispose() {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    _controller.dispose();   // still reported
+  });
+  super.dispose();
+}
+```
+
+Both are deliberate — the rule proves cleanup happens on the direct path through `dispose()`, and anything else is beyond what it can confirm. Add a `// ignore: many_lints/dispose_fields` where a helper genuinely owns the teardown.
+
+Static fields are skipped: they are not per-widget state and do not die with the element.
 
 ## Turning this rule off
 

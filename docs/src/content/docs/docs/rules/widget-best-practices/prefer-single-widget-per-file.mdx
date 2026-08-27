@@ -12,13 +12,11 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule warns when a file contains more than one public widget class. The first public widget is fine, but the second and any subsequent ones trigger the lint. Private widgets (prefixed with `_`) and non-widget classes are not counted.
+Flags every public widget class in a file after the first. Private widgets (`_Name`) and non-widget classes are not counted by default.
 
-## Why use this rule
+One widget per file makes the file system an index of the widget library: the file name tells you what is in it, an import pulls in exactly what it says, and a diff touches one widget. Private helpers stay next to the widget they serve.
 
-Having multiple public widgets in one file makes them harder to find, harder to test independently, and harder to reason about in code reviews. A one-widget-per-file convention keeps files focused, makes the file system a natural index of your widget library, and ensures that imports pull in exactly what is needed.
-
-**See also:** [Flutter performance best practices](https://docs.flutter.dev/perf/best-practices)
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and `preset: pedantic`.
 
 ## Don't
 
@@ -62,26 +60,68 @@ class _InvoiceHeader extends StatelessWidget {
 
 `InvoiceList` moves to `invoice_list.dart`.
 
-## Turning this rule off
+### Counting private widgets too
 
-This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
-
-```yaml
-# many_lints.yaml
-rules:
-  prefer_single_widget_per_file: true
-```
-
-To turn it off again:
+`ignore_private_widgets: false` makes a `_Header` count like any other widget — the strict reading of one widget per file:
 
 ```yaml
 # many_lints.yaml
 rules:
-  prefer_single_widget_per_file: false
+  prefer_single_widget_per_file:
+    ignore_private_widgets: false
 ```
 
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+```dart
+// invoice_card.dart
+class InvoiceCard extends StatelessWidget {
+  const InvoiceCard({super.key});
+
+  @override
+  Widget build(BuildContext context) => const _InvoiceHeader();
+}
+
+// Now reported under the config above
+class _InvoiceHeader extends StatelessWidget {
+  const _InvoiceHeader();
+
+  @override
+  Widget build(BuildContext context) => const Text('Invoice');
+}
+```
+
+### Test-only widgets
+
+A widget existing only so tests can drive something is a deliberate extra, not a file that needs splitting. `ignore_visible_for_testing: true` exempts it:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_single_widget_per_file:
+    ignore_visible_for_testing: true
+```
+
+```dart
+class InvoiceCard extends StatelessWidget {
+  const InvoiceCard({super.key});
+
+  @override
+  Widget build(BuildContext context) => const Text('Invoice');
+}
+
+@visibleForTesting
+class InvoiceCardHarness extends StatelessWidget {   // not reported
+  const InvoiceCardHarness({super.key});
+
+  @override
+  Widget build(BuildContext context) => const InvoiceCard();
+}
+```
+
+## Known limitations
+
+Only widget **classes** are counted. A file may hold any number of enums, extensions, typedefs and plain classes without being reported — [`prefer_single_declaration_per_file`](/many_lints/docs/rules/code-organization/prefer-single-declaration-per-file/) covers those.
+
+The report lands on the second widget and every one after it, not on the file, so a file with four widgets carries three diagnostics.
 
 ## Options
 
@@ -115,6 +155,16 @@ rules:
 |--------|------|---------|-------------|
 | `ignore_private_widgets` | bool | `true` | Skip widgets whose name starts with `_` |
 | `ignore_visible_for_testing` | bool | `false` | Skip widgets annotated `@visibleForTesting` |
+
+## Turning this rule off
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_single_widget_per_file: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Related rules
 

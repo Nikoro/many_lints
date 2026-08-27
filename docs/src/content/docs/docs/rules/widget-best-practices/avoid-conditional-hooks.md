@@ -9,55 +9,84 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule flags hook calls (`useState`, `useMemoized`, `useEffect`, etc.) that appear inside `if` statements, ternary expressions, `switch` cases, or short-circuit operators (`&&`, `||`). Hooks must be called in the exact same order on every build, and conditional execution breaks that guarantee.
+Flags a hook call (`useState`, `useMemoized`, `useEffect`, …) reached only conditionally: inside an `if`, a ternary, a `switch`, an `if` element in a collection, or the right-hand side of `&&` / `||`.
 
-## Why use this rule
+The hooks framework tracks state by call *order*, not by name. Skip a hook on one build and every hook after it shifts position and reads the wrong slot — values swap between hooks, or the build throws. This is the same "Rules of Hooks" constraint as React.
 
-The hooks framework tracks state by call order, not by name. If a hook is skipped on one build because a condition is false, every subsequent hook shifts position and reads the wrong state. This leads to bizarre bugs where values swap between hooks or the app crashes with an index-out-of-range error. This is the same "Rules of Hooks" constraint from React.
+This rule is in the **`core`** preset, so it is on with `preset: core` and every preset above it. No configuration.
 
 **See also:** [flutter_hooks](https://pub.dev/packages/flutter_hooks) | [React Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks)
 
 ## Don't
 
 ```dart
-class MyWidget extends HookWidget {
-  final bool condition;
+class ProfileView extends HookWidget {
+  const ProfileView({required this.userId, super.key});
+
+  final String? userId;
 
   @override
   Widget build(BuildContext context) {
-    // Hook called conditionally — order changes between builds
-    if (condition) {
-      final value = useMemoized(() => 42);
+    // Skipped whenever userId is null — every later hook shifts a slot
+    if (userId != null) {
+      final profile = useMemoized(() => loadProfile(userId!), [userId]);
+      return Text(profile);
     }
-    return const Text('Hello');
+
+    final theme = useState(ThemeMode.system);
+    return Text('${theme.value}');
   }
 }
 ```
 
 ## Do
 
+Call the hook unconditionally and put the branch *inside* it. The call order is then the same on every build:
+
 ```dart
-class MyWidget extends HookWidget {
-  final bool condition;
+class ProfileView extends HookWidget {
+  const ProfileView({required this.userId, super.key});
+
+  final String? userId;
 
   @override
   Widget build(BuildContext context) {
-    // Hook always called, conditional logic inside
-    final value = useMemoized(() {
-      if (condition) return 42;
-      return 0;
-    });
-    return Text('$value');
+    final profile = useMemoized(
+      () => userId == null ? '' : loadProfile(userId!),
+      [userId],
+    );
+    final theme = useState(ThemeMode.system);
+
+    if (userId == null) return Text('${theme.value}');
+    return Text(profile);
   }
 }
 ```
 
-## Configuration
+### Ternaries and `&&` count too
 
-This rule is in the **`core`** preset, so it is on with `preset: core`,
-`preset: recommended` or `preset: opinionated`.
+Both branches of a ternary and the right operand of a short-circuit operator are conditionally executed, so hooks there are reported:
 
-To turn it off:
+```dart
+// Don't
+final label = isCompact ? useState('S').value : useState('L').value;
+final ready = isLoggedIn && useIsMounted()();
+
+// Do — one unconditional call, branch on its value
+final size = useState(isCompact ? 'S' : 'L');
+final mounted = useIsMounted();
+final isReady = isLoggedIn && mounted();
+```
+
+## Known limitations
+
+**Loops are not this rule's job.** A hook in a `for` or `while` body is reported by [`avoid_misused_hooks`](/many_lints/docs/rules/hook-rules/avoid-misused-hooks/) instead — this rule only tracks branches.
+
+The condition of an `if` or a ternary is *not* conditional — a hook there runs on every build, so it is left alone.
+
+Hooks inside a nested closure are not reported by this rule; the closure is its own invocation context, and calling a hook from one is [`avoid_hooks_outside_build`](/many_lints/docs/rules/hook-rules/avoid-hooks-outside-build/)'s job. A `HookBuilder` starts a fresh hook context, so its `builder` body is checked on its own rather than as part of the enclosing build.
+
+## Turning this rule off
 
 ```yaml
 # many_lints.yaml

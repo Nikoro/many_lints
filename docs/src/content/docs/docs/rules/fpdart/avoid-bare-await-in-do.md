@@ -23,19 +23,51 @@ This is one of four `Do` pitfalls that fpdart documents in its own `do_construct
 
 ## Don't
 
+`analytics.track` is awaited directly, so when it rejects the exception escapes
+the pipeline as an ordinary exception — past the `match` the caller wrote:
+
 ```dart
-TaskEither<String, int> f(Future<int> future) => TaskEither.Do(($) async {
-  await future; // escapes the Do tracking
-  return 1;
+TaskEither<String, String> checkout(
+  TaskEither<String, String> chargeCard,
+  Future<void> Function(String) track,
+) => TaskEither.Do(($) async {
+  final receipt = await $(chargeCard);
+  await track(receipt); // escapes the Do tracking
+  return receipt;
 });
 ```
 
 ## Do
 
+Wrap the raw future so it becomes a step the block owns, with its failure in
+the left channel:
+
 ```dart
-TaskEither<String, int> f(Future<int> future) => TaskEither.Do(($) async {
-  await $(TaskEither.tryCatch(() => future, (e, s) => '$e'));
-  return 1;
+TaskEither<String, String> checkout(
+  TaskEither<String, String> chargeCard,
+  Future<void> Function(String) track,
+) => TaskEither.Do(($) async {
+  final receipt = await $(chargeCard);
+  await $(TaskEither.tryCatch(() => track(receipt), (e, s) => '$e'));
+  return receipt;
+});
+```
+
+When the side effect genuinely must not fail the pipeline, say so — wrap it and
+discard the outcome rather than leaving a bare `await`:
+
+```dart
+TaskEither<String, String> checkout(
+  TaskEither<String, String> chargeCard,
+  Future<void> Function(String) track,
+) => TaskEither.Do(($) async {
+  final receipt = await $(chargeCard);
+  await $(
+    TaskEither.tryCatch(() => track(receipt), (e, s) => '$e').orElse(
+      (_) => TaskEither.of(null),
+    ),
+  );
+  return receipt;
 });
 ```
 

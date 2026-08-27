@@ -13,22 +13,27 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule detects `HookWidget` subclasses whose `build` method does not call any hooks (`useState`, `useMemoized`, `useEffect`, etc.). If no hooks are used, the widget should be a plain `StatelessWidget` instead.
+Flags a `HookWidget` whose `build` calls no hook, and a `HookBuilder` whose `builder` calls none.
 
-## Why use this rule
+`HookWidget` installs a hook-management layer over the normal widget lifecycle. With no hooks that layer is pure overhead, and the class advertises state management that is not there. The quick fix rewrites the superclass to `StatelessWidget`.
 
-`HookWidget` adds a hook management layer on top of the standard widget lifecycle. If you never call any hooks, that layer is pure overhead. Switching to `StatelessWidget` removes the dependency on `flutter_hooks`, makes the widget simpler, and signals to readers that no hook-based state management is happening.
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and `preset: pedantic`. No configuration.
 
 **See also:** [flutter_hooks](https://pub.dev/packages/flutter_hooks)
 
 ## Don't
 
+The common way in is a refactor: the `useState` moved up to the parent and nobody changed the base class back.
+
 ```dart
-// HookWidget that never calls any hooks
 class Greeting extends HookWidget {
+  const Greeting({required this.name, super.key});
+
+  final String name;
+
   @override
   Widget build(BuildContext context) {
-    return Text('Hello');
+    return Text('Hello $name');
   }
 }
 ```
@@ -36,27 +41,43 @@ class Greeting extends HookWidget {
 ## Do
 
 ```dart
-// StatelessWidget since no hooks are needed
 class Greeting extends StatelessWidget {
+  const Greeting({required this.name, super.key});
+
+  final String name;
+
   @override
   Widget build(BuildContext context) {
-    return Text('Hello');
+    return Text('Hello $name');
   }
 }
 ```
 
-## Configuration
+### An empty HookBuilder
 
-This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
+A `HookBuilder` exists to open a hook scope for a small part of a tree. One whose body calls no hook is a `Builder` with extra machinery:
 
-```yaml
-# many_lints.yaml
-rules:
-  avoid_unnecessary_hook_widgets: true
+```dart
+// Don't
+HookBuilder(
+  builder: (context) => const Text('Static'),
+);
+
+// Do
+Builder(
+  builder: (context) => const Text('Static'),
+);
 ```
 
-To turn it off again:
+## Known limitations
+
+Only a class whose `extends` clause names `HookWidget` or `HookConsumerWidget` **directly** is checked. A subclass of your own `AppHookWidget` base is not.
+
+Hook detection is by name — an identifier matching `use` followed by a capital or a digit, optionally prefixed with `_`. A helper of your own called `useFormatting()` that is not really a hook therefore keeps the widget quiet.
+
+A `HookConsumerWidget` that uses neither hooks nor `ref` is reported here *and* by [`avoid_unnecessary_consumer_widgets`](/many_lints/docs/rules/widget-best-practices/avoid-unnecessary-consumer-widgets/). The two answer different questions and point at different nodes.
+
+## Turning this rule off
 
 ```yaml
 # many_lints.yaml

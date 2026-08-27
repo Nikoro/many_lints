@@ -12,52 +12,15 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
 
-This rule flags a call whose **named** arguments are not in the configured order.
+Flags a call whose **named** arguments are not in the order you configure.
 
 A call site with a dozen named arguments is a lookup table, and an unordered one has to be read end to end to answer "is this already set?". Ordering keeps a diff honest too: a new argument lands in the middle where it can be seen, rather than appended beside a near-duplicate nobody noticed.
 
 **Positional arguments are never ordered**, since their order is the call's meaning and reordering them changes what it does.
 
-This rule is in the **`pedantic`** preset. That preset supplies
-`order: alphabetical` and lowers `min_arguments` to `2`; outside it the rule
-stays silent until an order is configured.
+This rule is in the **`pedantic`** preset, which sets `order: alphabetical` and lowers `min_arguments` to `2`. Under any other preset **it reports nothing until you set `order:`** — a widget call deliberately leads with the arguments that matter most.
 
-## Don't
-
-```dart
-buildCard(
-  elevation: 2,
-  color: Colors.white,
-  padding: EdgeInsets.zero,
-  margin: EdgeInsets.zero,
-  borderRadius: BorderRadius.zero,
-)
-```
-
-## Do
-
-```dart
-buildCard(
-  borderRadius: BorderRadius.zero,
-  color: Colors.white,
-  elevation: 2,
-  margin: EdgeInsets.zero,
-  padding: EdgeInsets.zero,
-)
-```
-
-## Enabling this rule
-
-Outside `preset: pedantic`, this rule reports **nothing until you choose an order**:
-
-```yaml
-# many_lints.yaml
-rules:
-  arguments_ordering:
-    order: alphabetical
-```
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -85,10 +48,156 @@ rules:
 </TabItem>
 </Tabs>
 
+## Don't
+
+With `order: alphabetical`:
+
+```dart
+void showSnack({
+  String? label,
+  Duration? duration,
+  int? elevation,
+  bool? dismissible,
+  String? action,
+}) {}
+
+void onSaved() {
+  showSnack(
+    label: 'Saved',
+    duration: Duration(seconds: 2),
+    elevation: 4,
+    dismissible: true,
+    action: 'Undo',
+  );
+}
+```
+
+## Do
+
+```dart
+void showSnack({
+  String? label,
+  Duration? duration,
+  int? elevation,
+  bool? dismissible,
+  String? action,
+}) {}
+
+void onSaved() {
+  showSnack(
+    action: 'Undo',
+    dismissible: true,
+    duration: Duration(seconds: 2),
+    elevation: 4,
+    label: 'Saved',
+  );
+}
+```
+
+## Examples
+
+### `min_arguments` keeps short calls out of it
+
+Below the threshold a reader takes in the whole call at once and order costs nothing. The default is 5, so a four-argument call is never reported:
+
+```yaml
+rules:
+  arguments_ordering:
+    order: alphabetical
+```
+
+```dart
+void connect({String? url, int? port, int? retries, bool? secure}) {}
+
+// Not reported — four named arguments, under the default min_arguments: 5
+void main() {
+  connect(url: 'example.com', port: 443, secure: true, retries: 3);
+}
+```
+
+Lower it if you want short calls checked too — this is what `preset: pedantic` does:
+
+```yaml
+rules:
+  arguments_ordering:
+    order: alphabetical
+    min_arguments: 2
+```
+
+```dart
+void connect({String? url, int? port}) {}
+
+void main() {
+  // Don't — now reported at two arguments
+  connect(url: 'example.com', port: 443);
+
+  // Do
+  connect(port: 443, url: 'example.com');
+}
+```
+
+### Positional arguments are ignored, named ones around them are not
+
+Only the named arguments are compared, and they are compared to each other:
+
+```yaml
+rules:
+  arguments_ordering:
+    order: alphabetical
+    min_arguments: 2
+```
+
+```dart
+void draw(int x, int y, {int? width, int? height, int? radius}) {}
+
+void main() {
+  // Don't — `x`/`y` are left alone, but `width` precedes `height`
+  draw(10, 20, width: 100, height: 50, radius: 8);
+
+  // Do
+  draw(10, 20, height: 50, radius: 8, width: 100);
+}
+```
+
+### `by_length`
+
+Longest argument name last. Ties fall back to alphabetical so the order is total:
+
+```yaml
+rules:
+  arguments_ordering:
+    order: by_length
+    min_arguments: 2
+```
+
+```dart
+void render({int? width, int? x, bool? antialias}) {}
+
+void main() {
+  // Don't
+  render(width: 100, x: 0, antialias: true);
+
+  // Do
+  render(x: 0, width: 100, antialias: true);
+}
+```
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `order` | string | `—` | `alphabetical`, `alphabetical_case_sensitive` or `by_length`. Unset means the rule is silent |
-| `min_arguments` | int | `5` | How many named arguments a call needs before order is checked |
+| `min_arguments` | int | `5` | How many **named** arguments a call needs before order is checked |
+
+## Known limitations
+
+**The threshold counts named arguments only.** A call with three positional and four named arguments has four for this rule's purposes, and stays under the default of 5.
+
+**Only the first out-of-order argument is reported.** One misplaced name makes every later name look wrong too, and reporting them all would turn one edit into a wall of diagnostics. Fix the reported one and re-run to see the next.
+
+**No quick fix.** Named arguments frequently carry trailing comments tied to their line, and moving them past one silently mismatches the two.
+
+**An unrecognised `order:` falls back to `alphabetical`** rather than throwing, because a plugin cannot report a diagnostic against a YAML file. Check the spelling if the order you get is not the one you asked for.
 
 ## Turning this rule off
 

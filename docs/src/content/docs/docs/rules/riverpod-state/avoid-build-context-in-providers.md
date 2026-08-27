@@ -19,33 +19,106 @@ Providers outlive the widgets that read them. A `BuildContext` held by a provide
 
 ## Don't
 
+A provider that takes the context so it can read the locale itself. The context
+it captured belongs to a widget that may already be gone by the time the
+provider rebuilds:
+
 ```dart
 @riverpod
-int example(Ref ref, BuildContext context) => 0; // LINT
+Future<List<Article>> articles(Ref ref, BuildContext context) { // LINT
+  final locale = Localizations.localeOf(context);
+  return api.fetchArticles(locale.languageCode);
+}
+```
 
+Every method of a `@riverpod` class is checked, not just `build` — an action
+method that takes a context to show a snackbar afterwards is the same problem:
+
+```dart
 @riverpod
-class Example extends _$Example {
+class Checkout extends _$Checkout {
   @override
-  int build(BuildContext context) => 0; // LINT
+  CheckoutState build() => const CheckoutState.idle();
+
+  Future<void> submit(BuildContext context) async { // LINT
+    await api.submit();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Order placed')),
+    );
+  }
 }
 ```
 
 ## Do
 
+Pass the *value* the provider needs, and let the family key on it:
+
 ```dart
-// Pass the value read from the context, not the context itself.
 @riverpod
-int example(Ref ref, Locale locale) => 0;
+Future<List<Article>> articles(Ref ref, String languageCode) =>
+    api.fetchArticles(languageCode);
 
-// At the call site:
-ref.watch(exampleProvider(Localizations.localeOf(context)));
+// At the call site, where a context is legitimately in scope:
+class ArticleList extends ConsumerWidget {
+  const ArticleList({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = Localizations.localeOf(context);
+    final articles = ref.watch(articlesProvider(locale.languageCode));
+    return Text('${articles.valueOrNull?.length}');
+  }
+}
 ```
 
-Ordinary classes and functions are unaffected — only `@riverpod` declarations are checked:
+Let the notifier report the outcome through its state, and let the widget do
+the UI work:
 
 ```dart
-int helper(BuildContext context) => 0; // no lint
+@riverpod
+class Checkout extends _$Checkout {
+  @override
+  CheckoutState build() => const CheckoutState.idle();
+
+  Future<void> submit() async {
+    state = const CheckoutState.submitting();
+    await api.submit();
+    state = const CheckoutState.placed();
+  }
+}
+
+class CheckoutButton extends ConsumerWidget {
+  const CheckoutButton({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(checkoutProvider, (previous, next) {
+      if (next is CheckoutPlaced) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Order placed')),
+        );
+      }
+    });
+
+    return ElevatedButton(
+      onPressed: () => ref.read(checkoutProvider.notifier).submit(),
+      child: const Text('Place order'),
+    );
+  }
+}
 ```
+
+## Known limitations
+
+Only `@riverpod` declarations are checked. An ordinary function or class taking
+a `BuildContext` is left alone:
+
+```dart
+Locale readLocale(BuildContext context) => Localizations.localeOf(context);
+```
+
+The parameter type must resolve to exactly `BuildContext`. A subtype, or a
+context wrapped in some project-specific holder, is not reported.
 
 ## Configuration
 

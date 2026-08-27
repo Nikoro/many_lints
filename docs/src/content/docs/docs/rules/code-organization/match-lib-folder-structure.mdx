@@ -12,19 +12,22 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
 
-This rule flags a file under `lib/` that sits in a folder whose name is not `lower_snake_case`.
-
-This rule is in the **`pedantic`** preset.
-
-## Why use this rule
+Flags a file under `lib/` sitting in a folder whose name is not `lower_snake_case`.
 
 A folder name becomes part of every `package:` URI that imports through it, so it is public API in a way a local variable name is not — renaming it later is a breaking change for every consumer.
 
-`CamelCase` and `kebab-case` folders also break on case-insensitive filesystems. A folder renamed from `Models` to `models` is invisible to git on macOS by default, so the import keeps resolving on the machine that made the change and fails in CI, which is the worst place to find out.
+`CamelCase` and `kebab-case` folders also break on case-insensitive filesystems. A folder renamed from `Models` to `models` is invisible to git on macOS by default, so the import keeps resolving on the machine that made the change and fails in CI.
 
 The SDK's [`file_names`](https://dart.dev/tools/linter-rules/file_names) rule checks the **file**; nothing in the SDK checks the directories above it, which is the gap this fills.
 
-The diagnostic is reported once per file, at the first offending folder: a second one on the same path would be fixed by the same rename.
+This rule is in the **`pedantic`** preset. It works out of the box; enable it in any other preset by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  match_lib_folder_structure:
+    enabled: true
+```
 
 **See also:** [`file_names`](https://dart.dev/tools/linter-rules/file_names), [Effective Dart: naming](https://dart.dev/effective-dart/style#do-name-libraries-and-source-files-using-lowercase_with_underscores)
 
@@ -33,15 +36,52 @@ The diagnostic is reported once per file, at the first offending folder: a secon
 ```
 lib/dataSources/user_repository.dart
 lib/data-sources/user_repository.dart
+lib/Models/user.dart
 ```
 
 ## Do
 
 ```
 lib/data_sources/user_repository.dart
+lib/models/user.dart
 ```
 
-## Options
+## Examples
+
+### The suggestion converts the name for you
+
+The diagnostic names both the offending folder and its `lower_snake_case` form, so the rename is spelled out:
+
+```
+lib/dataSources/user.dart   → data_sources
+lib/data-sources/user.dart  → data_sources
+lib/UserProfile/view.dart   → user_profile
+```
+
+### Nested folders are all checked, but reported once per file
+
+Every folder between the root and the file is examined. Only the first offender reports, since a second diagnostic on the same path would be fixed by the same kind of rename:
+
+```
+lib/Features/userProfile/view.dart
+```
+
+Reported once, at `Features`. Fix it and re-analyze to see `userProfile`.
+
+### Digits and underscores are fine
+
+The check is `^[a-z0-9]+(_[a-z0-9]+)*$`, so a folder may contain digits and underscore-separated words — it just may not start or end with an underscore, or double one up:
+
+```
+lib/api_v2/client.dart        ✓
+lib/oauth2/token.dart         ✓
+lib/_internal/helpers.dart    ✗ leading underscore
+lib/data__sources/user.dart   ✗ doubled underscore
+```
+
+### Pointing the rule at a different root
+
+`root:` moves the whole check. Set it when your package's sources are not under `lib/`:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -51,7 +91,7 @@ lib/data_sources/user_repository.dart
 many_lints:
   rules:
     match_lib_folder_structure:
-      root: lib
+      root: packages
 ```
 
 </TabItem>
@@ -61,15 +101,29 @@ many_lints:
 # many_lints.yaml
 rules:
   match_lib_folder_structure:
-    root: lib
+    root: packages
 ```
 
 </TabItem>
 </Tabs>
 
+Files outside `packages/` are then never reported — including everything under `lib/`.
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `root` | string | `lib` | The top-level directory the rule applies to. Files outside it are never reported |
+
+## Known limitations
+
+**A file directly in the root has no folders to check.** `lib/main.dart` is never reported; the rule looks only at the segments between the root and the file name.
+
+**The root itself is never checked**, only what is below it — `root: lib` does not report `lib` for anything.
+
+**The file name is not this rule's job.** [`file_names`](https://dart.dev/tools/linter-rules/file_names) covers that, and [`prefer_match_file_name`](/many_lints/docs/rules/code-organization/prefer-match-file-name/) covers whether the name describes the contents.
+
+**No quick fix.** Renaming a folder moves files and rewrites every import that passes through it, which is a refactoring your IDE or `git mv` should drive, not a single-file edit.
 
 ## Turning this rule off
 

@@ -26,17 +26,19 @@ Every `addListener()` on a `ChangeNotifier`, `ValueNotifier`, or `AnimationContr
 
 ## Don't
 
+Listening to a search field so the clear button can appear, and never unsubscribing. The `State` — and the whole subtree it captures — stays alive as long as the controller does:
+
 ```dart
-class _BadState extends State<BadWidget> {
-  final ValueNotifier<int> _counter = ValueNotifier(0);
+class _SearchBarState extends State<SearchBar> {
+  final _queryController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _counter.addListener(_onChanged); // No matching removeListener
+    _queryController.addListener(_onQueryChanged);   // no matching removal
   }
 
-  void _onChanged() => setState(() {});
+  void _onQueryChanged() => setState(() {});
 
   @override
   Widget build(BuildContext context) => const SizedBox();
@@ -46,27 +48,64 @@ class _BadState extends State<BadWidget> {
 ## Do
 
 ```dart
-class _GoodState extends State<GoodWidget> {
-  final ValueNotifier<int> _counter = ValueNotifier(0);
+class _SearchBarState extends State<SearchBar> {
+  final _queryController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _counter.addListener(_onChanged);
+    _queryController.addListener(_onQueryChanged);
   }
 
   @override
   void dispose() {
-    _counter.removeListener(_onChanged);
+    _queryController.removeListener(_onQueryChanged);
+    _queryController.dispose();
     super.dispose();
   }
 
-  void _onChanged() => setState(() {});
+  void _onQueryChanged() => setState(() {});
 
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
 ```
+
+### Re-subscribing when the widget updates
+
+`didUpdateWidget` is checked too. Swapping notifiers means removing from the old one and adding to the new, and `dispose()` still needs its own removal:
+
+```dart
+class _MeterState extends State<Meter> {
+  @override
+  void didUpdateWidget(Meter oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.progress != oldWidget.progress) {
+      oldWidget.progress.removeListener(_onProgress);
+      widget.progress.addListener(_onProgress);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.progress.removeListener(_onProgress);
+    super.dispose();
+  }
+
+  void _onProgress() => setState(() {});
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+```
+
+## Known limitations
+
+Only `initState`, `didUpdateWidget` and `didChangeDependencies` are scanned. An `addListener` in `build`, in a callback, or in a helper method is not reported — registering a listener from those places is usually a separate bug, and this rule does not try to pair it.
+
+The add and the remove are matched on the **written form** of both the target and the callback, so `_queryController.addListener(_onQueryChanged)` needs `_queryController.removeListener(_onQueryChanged)`. Removing through a differently-spelled target, or via a helper method, is not recognised.
+
+An inline closure passed to `addListener` can never be removed by identity at all; that is [`avoid_unremovable_callbacks_in_listeners`](/many_lints/docs/rules/resource-management/avoid-unremovable-callbacks-in-listeners/)'s job.
 
 ## Turning this rule off
 

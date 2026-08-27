@@ -9,59 +9,85 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Collection & Type</span>
 
-Collections in Dart (List, Set, Map) use reference equality by default, not structural equality. Comparing two collections with `==` or `!=` almost never produces the intended result because two distinct instances with identical contents are not considered equal.
-
-## Why use this rule
-
-Using `==` on collections is a common source of bugs. Two lists with the same elements will return `false` when compared with `==` because they are different objects in memory. Use `DeepCollectionEquality` from the `collection` package or compare individual elements instead.
-
-**See also:** [Dart collections](https://dart.dev/language/collections) | [collection package](https://pub.dev/packages/collection) | [Dart lint: unrelated_type_equality_checks](https://dart.dev/tools/linter-rules/unrelated_type_equality_checks)
+Flags `==` or `!=` where either side is a `List`, `Set`, `Map` or `Iterable`. Collections have no deep equality in Dart: two distinct instances are never equal, however identical their contents.
 
 ## Don't
 
+The comparison compiles and always answers `false`, so the branch it guards never runs:
+
 ```dart
-void example() {
-  final list1 = [1, 2, 3];
-  final list2 = [1, 2, 3];
-
-  // Reference equality, not deep equality
-  final same = list1 == list2; // always false!
-
-  final set1 = {1, 2};
-  final set2 = {1, 2};
-
-  // Same problem with sets
-  final sameSet = set1 == set2;
-
-  final map1 = {'a': 1};
-  final map2 = {'a': 1};
-
-  // Same problem with maps
-  final sameMap = map1 != map2;
+bool hasSelectionChanged(List<String> previous, List<String> current) {
+  return previous != current;
 }
 ```
+
+Here `hasSelectionChanged` returns `true` for every call — including when nothing changed — because `previous` and `current` are separate objects.
 
 ## Do
 
+Compare contents with `DeepCollectionEquality` from `package:collection`:
+
 ```dart
-void example() {
-  // Const collections are fine — they are canonicalized
-  final same = const [1, 2] == const [1, 2]; // true
+import 'package:collection/collection.dart';
 
-  // Null checks are fine
-  final List<int>? maybeList = null;
-  final isNull = maybeList == null;
-
-  // Non-collection equality is fine
-  final a = 1;
-  final b = 1;
-  final sameInt = a == b;
-
-  // Use DeepCollectionEquality from the `collection` package:
-  // import 'package:collection/collection.dart';
-  // final eq = DeepCollectionEquality().equals(list1, list2);
+bool hasSelectionChanged(List<String> previous, List<String> current) {
+  return !const DeepCollectionEquality().equals(previous, current);
 }
 ```
+
+For a flat list, `ListEquality` is cheaper and states the depth you expect:
+
+```dart
+import 'package:collection/collection.dart';
+
+bool hasSelectionChanged(List<String> previous, List<String> current) {
+  return !const ListEquality<String>().equals(previous, current);
+}
+```
+
+### Comparing a field inside a model
+
+The same trap sits in a hand-written `==`, where it silently makes every instance unequal:
+
+```dart
+// Don't
+class Cart {
+  const Cart(this.items);
+
+  final List<String> items;
+
+  @override
+  bool operator ==(Object other) => other is Cart && items == other.items;
+}
+```
+
+```dart
+// Do
+import 'package:collection/collection.dart';
+
+class Cart {
+  const Cart(this.items);
+
+  final List<String> items;
+
+  @override
+  bool operator ==(Object other) =>
+      other is Cart && const ListEquality<String>().equals(items, other.items);
+
+  @override
+  int get hashCode => const ListEquality<String>().hash(items);
+}
+```
+
+## Known limitations
+
+Three shapes are deliberately accepted:
+
+- **A null check.** `items == null` and `items != null` are the normal way to test presence and are never reported.
+- **Two compile-time constants.** `const [1, 2] == const [1, 2]` is `true`, because constant collections are canonicalized to one instance. Both sides must be `const` for the exemption to apply.
+- **Neither side a collection.** At least one operand must be a `List`, `Set`, `Map` or `Iterable`, so ordinary value comparisons are untouched.
+
+**See also:** [collection package](https://pub.dev/packages/collection)
 
 ## Configuration
 

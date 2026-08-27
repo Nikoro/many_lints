@@ -24,37 +24,92 @@ Those lookups are backed by `dependOnInheritedWidgetOfExactType`, which is not v
 
 ## Don't
 
+Caching a theme colour at init time. It either throws immediately, or freezes
+at whatever the theme was when the widget was first inserted and ignores every
+later theme change:
+
 ```dart
-class _MyWidgetState extends State<MyWidget> {
-  late final Color _color;
+class _BannerState extends State<Banner> {
+  late final Color _background;
 
   @override
   void initState() {
     super.initState();
-    // Not valid here — throws or never updates
-    _color = Theme.of(context).primaryColor;
+    _background = Theme.of(context).primaryColor; // LINT
   }
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(color: _background);
+}
+```
+
+Any inherited lookup has the same problem — `MediaQuery.of`, `Navigator.of`,
+`Localizations.of`, and your own `InheritedWidget`:
+
+```dart
+class _SplitViewState extends State<SplitView> {
+  late final bool _isWide;
+
+  @override
+  void initState() {
+    super.initState();
+    _isWide = MediaQuery.of(context).size.width > 600; // LINT
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      _isWide ? const Text('wide') : const Text('narrow');
 }
 ```
 
 ## Do
 
+Read it in `build`, where it re-reads on every rebuild:
+
 ```dart
-class _MyWidgetState extends State<MyWidget> {
-  late Color _color;
+class _BannerState extends State<Banner> {
+  @override
+  Widget build(BuildContext context) =>
+      ColoredBox(color: Theme.of(context).primaryColor);
+}
+```
+
+When the value genuinely has to be cached — because computing it is expensive,
+or because something else needs it in a callback — use
+`didChangeDependencies`. Flutter calls it once right after `initState`, and
+again every time an inherited dependency changes:
+
+```dart
+class _SplitViewState extends State<SplitView> {
+  late bool _isWide;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Valid here, and re-runs when the theme changes
-    _color = Theme.of(context).primaryColor;
+    _isWide = MediaQuery.of(context).size.width > 600;
   }
+
+  @override
+  Widget build(BuildContext context) =>
+      _isWide ? const Text('wide') : const Text('narrow');
 }
 ```
 
+Note the field is `late`, not `late final` — `didChangeDependencies` runs more
+than once.
+
 ## Known limitations
 
-The check descends into closures declared inside `initState`, because a closure invoked synchronously fails the same way. A lookup inside a closure that deliberately escapes `initState` — for example one passed to `WidgetsBinding.instance.addPostFrameCallback` — runs after mounting and is therefore safe, but will still be reported. Suppress those with `// ignore: many_lints/avoid_inherited_widget_in_initstate`.
+Only `.of(context)` and `.maybeOf(context)` on a type that is an
+`InheritedWidget` are matched. A helper that wraps the lookup —
+`AppTheme.current(context)` — is not recognised.
+
+The check descends into closures declared inside `initState`, because a closure
+invoked synchronously fails the same way. A lookup inside a closure that
+deliberately escapes `initState` — one passed to
+`WidgetsBinding.instance.addPostFrameCallback`, say — runs after mounting and is
+safe, but is still reported. Suppress those with
+`// ignore: many_lints/avoid_inherited_widget_in_initstate`.
 
 ## Turning this rule off
 

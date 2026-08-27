@@ -9,30 +9,23 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-This rule is in the **`pedantic`** preset.
-
-This rule flags `if (x != null) { ... }` where the guarded branch never mentions `x`. The check exists to make `x` usable, so a branch that ignores it is usually operating on the wrong variable.
-
-## Why use this rule
-
-A null check is a statement of intent: *this branch is safe because `x` is non-null here*. When the branch then uses a different variable, the guard protects nothing and the code reads as though it does.
-
-The common shape is a copy-paste slip — two similarly named variables, one checked and the other used. Nothing in the type system objects, because the variable actually used may be perfectly non-null on its own. The result is a check that looks like safety and provides none.
+This rule flags `if (x != null) { ... }` where the guarded branch never mentions `x`. The check exists to make `x` usable, so a branch that ignores it is usually operating on the wrong variable — a copy-paste slip between two similarly named values. Nothing in the type system objects, because the variable actually used may be perfectly non-null on its own.
 
 **See also:** [Dart: understanding null safety](https://dart.dev/null-safety/understanding-null-safety)
 
 ## Don't
 
+`name` is checked, `fallbackName` is used:
+
 ```dart
 void greet(String? name, String fallbackName) {
-  // `name` was checked, `fallbackName` is used
   if (name != null) {
     print(fallbackName);
   }
 }
 ```
 
-The inverted form has the same problem — the `else` branch is the guarded one:
+The inverted form has the same problem — for `x == null`, the `else` is the guarded branch:
 
 ```dart
 void greet(String? name, String fallbackName) {
@@ -66,9 +59,9 @@ For `x == null`, only the `else` branch is examined, since that is the branch wh
 
 ## Configuration
 
-This rule appears only in the **`pedantic`** preset because checking whether a
-value exists can legitimately select behavior without reading the value inside
-the selected branch.
+This rule is in the **`pedantic`** preset, because checking whether a value
+exists can legitimately select behaviour without reading the value inside the
+selected branch.
 
 Enable it by name:
 

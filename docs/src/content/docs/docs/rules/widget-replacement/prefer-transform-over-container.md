@@ -25,43 +25,95 @@ The SDK's [`avoid_unnecessary_containers`](https://dart.dev/tools/linter-rules/a
 
 ## Why use this rule
 
-`Container` is a convenience widget that composes many lower-level widgets internally. When you only need a matrix transform, using `Transform` directly avoids the overhead and clearly communicates your intent. It also gives you access to Transform's named constructors like `Transform.rotate` and `Transform.scale`.
+With only `transform` set, the `Container` collapses to a single `Transform`.
+Writing `Transform` directly also puts the named constructors in reach —
+`Transform.rotate`, `Transform.scale`, `Transform.translate` — which are far
+easier to read than a hand-built `Matrix4`. The quick fix does the rename; the
+matrix moves across as-is.
 
-**See also:** [Transform](https://api.flutter.dev/flutter/widgets/Transform-class.html) | [Container](https://api.flutter.dev/flutter/widgets/Container-class.html)
+**See also:** [Transform](https://api.flutter.dev/flutter/widgets/Transform-class.html) | [Matrix4](https://api.flutter.dev/vector_math/Matrix4-class.html)
 
 ## Don't
 
 ```dart
-// Container with only transform parameter
+// A "SALE" ribbon tilted across a product tile.
 Container(
-  transform: Matrix4.rotationZ(math.pi / 6)..rotateX(0.15),
-  child: const Text('Skewed'),
-);
-
-// Container with only transform and key
-Container(
-  key: const ValueKey('rotated'),
-  transform: Matrix4.rotationZ(math.pi / 4),
-  child: const Text('Rotated'),
+  transform: Matrix4.rotationZ(-math.pi / 12),
+  child: const Text('SALE'),
 );
 ```
 
 ## Do
 
 ```dart
-// Use Transform directly
 Transform(
-  transform: Matrix4.rotationZ(math.pi / 6)..rotateX(0.15),
-  child: const Text('Skewed'),
-);
-
-// Container with transform and other parameters is fine
-Container(
-  transform: Matrix4.rotationZ(math.pi / 4),
-  alignment: Alignment.topRight,
-  child: const Text('Rotated with alignment'),
+  transform: Matrix4.rotationZ(-math.pi / 12),
+  child: const Text('SALE'),
 );
 ```
+
+## Examples
+
+### Reach for the named constructor
+
+Once it is a `Transform`, most cases have a constructor that spells out the
+intent — and unlike the raw matrix, they take an `alignment`:
+
+```dart
+// Don't
+Container(
+  transform: Matrix4.rotationZ(-math.pi / 12),
+  child: const Text('SALE'),
+);
+
+// Do — rotates about the centre rather than the top-left corner
+Transform.rotate(
+  angle: -math.pi / 12,
+  child: const Text('SALE'),
+);
+```
+
+The quick fix will not do this step for you; it only renames the widget.
+
+### `key` and `child` do not count
+
+```dart
+// Don't
+Container(
+  key: const ValueKey('ribbon'),
+  transform: Matrix4.rotationZ(math.pi / 4),
+  child: const Text('Rotated'),
+);
+
+// Do
+Transform(
+  key: const ValueKey('ribbon'),
+  transform: Matrix4.rotationZ(math.pi / 4),
+  child: const Text('Rotated'),
+);
+```
+
+## Known limitations
+
+**Any other argument silences it,** including `transformAlignment` — which is
+the argument you would reach for next:
+
+```dart
+// Not reported: transformAlignment has no equivalent on a plain Transform,
+// which takes `origin` and `alignment` instead.
+Container(
+  transform: Matrix4.rotationZ(math.pi / 4),
+  transformAlignment: Alignment.center,
+  child: const Text('Rotated'),
+);
+```
+
+The equivalent is `Transform(transform: …, alignment: Alignment.center, …)`, but
+that is a rename plus an argument rename, so the rule leaves it alone.
+
+**A transform does not affect layout.** Both widgets paint the transformed
+child while laying it out untransformed, so the rewrite changes nothing about
+the render — it is purely a simplification.
 
 ## Configuration
 

@@ -12,15 +12,9 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-This rule flags a conditional expression nested inside another one.
+Flags a conditional expression (`? :`) nested inside another one. `a ? b : (c ? d : e)` packs a decision tree onto one line and the reader has to track which `?` each `:` belongs to.
 
 This rule is in the **`opinionated`** preset.
-
-## Why use this rule
-
-`a ? b : (c ? d : e)` packs a decision tree onto one line, and the reader has to track which `?` each `:` belongs to. A `switch` expression lines the branches up, and an early return removes the nesting entirely.
-
-The outermost conditional carries the diagnostic, so one nested chain produces one report rather than one per level.
 
 ## Don't
 
@@ -33,6 +27,8 @@ String label(int score) =>
 
 ## Do
 
+A `switch` expression lines the branches up:
+
 ```dart
 String label(int score) => switch (score) {
   > 100 => 'high',
@@ -41,7 +37,40 @@ String label(int score) => switch (score) {
 };
 ```
 
-## Options
+### When the branches are not about one value
+
+A `switch` needs a single subject. When the tests are unrelated, early returns are the way out:
+
+```dart
+// Don't
+String shippingLabel(bool express, bool international, double weightKg) =>
+    express
+        ? (international ? 'Express international' : 'Express domestic')
+        : 'Standard';
+```
+
+```dart
+// Do
+String shippingLabel(bool express, bool international, double weightKg) {
+  if (!express) return 'Standard';
+  if (international) return 'Express international';
+  return 'Express domestic';
+}
+```
+
+### Nesting in the then-branch counts the same
+
+Depth is measured down both branches and the deeper one wins, so a conditional in the `then` position is reported just as readily as one in the `else`:
+
+```dart
+// Don't
+String tier(bool member, int years) =>
+    member ? (years > 5 ? 'gold' : 'silver') : 'guest';
+```
+
+### Allowing exactly one level
+
+Some codebases accept a single nesting and want only the deeper ones flagged. With `max_depth: 2`, the two-level example above passes and a third level reports:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -51,6 +80,7 @@ String label(int score) => switch (score) {
 many_lints:
   rules:
     avoid_nested_conditional_expressions:
+      enabled: true
       max_depth: 2
 ```
 
@@ -61,11 +91,33 @@ many_lints:
 # many_lints.yaml
 rules:
   avoid_nested_conditional_expressions:
+    enabled: true
     max_depth: 2
 ```
 
 </TabItem>
 </Tabs>
+
+```dart
+// Accepted at max_depth: 2
+String tier(bool member, int years) =>
+    member ? (years > 5 ? 'gold' : 'silver') : 'guest';
+
+// Still reported — three levels
+String band(int n) => n > 100 ? 'a' : (n > 50 ? 'b' : (n > 10 ? 'c' : 'd'));
+```
+
+## Known limitations
+
+The diagnostic lands on the **outermost** conditional of a chain, so one nested tree gives one report rather than one per level. The message names the measured depth and the configured limit.
+
+Nesting is only followed through the `?` and `:` branches, not through everything written inside them. A conditional passed as an argument — `outer ? f(a ? b : c) : d` — starts its own count, so each is measured separately and neither may reach the limit.
+
+The condition itself is not counted. `(a ? b : c) ? d : e` is depth 1.
+
+There is no quick fix: whether the right replacement is a `switch`, early returns, or a named helper depends on what the branches mean.
+
+## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|

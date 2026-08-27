@@ -61,9 +61,103 @@ ValueNotifier<int> useCounter() {
 }
 ```
 
+## Other places there is no hook context
+
+### A `StatelessWidget`, not a `HookWidget`
+
+The commonest version of this mistake: the hook is in a `build` method, just
+not one that has hook storage behind it.
+
+```dart
+// Don't — MyWidget is a StatelessWidget, so there is no hook context
+class MyWidget extends StatelessWidget {
+  const MyWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final counter = useState(0);        // LINT
+    return Text('${counter.value}');
+  }
+}
+
+// Do — extend HookWidget
+class MyWidget extends HookWidget {
+  const MyWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final counter = useState(0);
+    return Text('${counter.value}');
+  }
+}
+```
+
+### A lifecycle method
+
+`initState` runs once, outside the build pass hooks depend on:
+
+```dart
+// Don't
+class MyState extends State<MyWidget> {
+  @override
+  void initState() {
+    super.initState();
+    final controller = useTextEditingController();   // LINT
+  }
+}
+```
+
+Convert the widget to a `HookWidget` and call the hook in `build`; the hook
+already gives you the once-per-widget behaviour `initState` was providing.
+
+### A plain helper function
+
+```dart
+// Don't — a top-level function is not a hook context
+void setupThings() {
+  useState(0);                          // LINT
+}
+
+// Do — name it as a hook, and it becomes one
+ValueNotifier<int> useThings() {
+  return useState(0);
+}
+```
+
+### Splitting build across several methods
+
+A widget whose `build` delegates to helper methods needs those methods named as
+hook contexts, or the hooks in them are reported:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_hooks_outside_build:
+    additional_methods: [buildBody]
+```
+
+```dart
+class MyWidget extends HookWidget {
+  const MyWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) => buildBody(context);
+
+  // Reported by default; accepted with the config above.
+  Widget buildBody(BuildContext context) {
+    final counter = useState(0);
+    return Text('${counter.value}');
+  }
+}
+```
+
 ## Known limitations
 
-Hooks are recognised by name: an unqualified call whose name matches `use` followed by an uppercase letter or digit. A hook renamed to something else is not detected, and a plain function following that naming convention is treated as a hook.
+**Hooks are recognised by name** — an unqualified call whose name matches `use` followed by an uppercase letter or digit. A hook renamed to something else is not detected, and a plain function following that naming convention is treated as a hook.
+
+**A qualified call is never a hook.** `controller.useSomething()` has a receiver, so it is left alone.
+
+**A `HookBuilder`'s `builder` closure is a valid context.** Hooks inside it are not reported; any other closure is.
 
 ## Turning this rule off
 

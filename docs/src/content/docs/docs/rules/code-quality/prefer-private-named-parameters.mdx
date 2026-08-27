@@ -20,33 +20,116 @@ Warns when a constructor declares a public named parameter whose only purpose is
 
 ## Why use this rule
 
-Before Dart 3.12, a named parameter could not start with an underscore, so initializing a private field from a named parameter required boilerplate: declare a public parameter, then assign it in the initializer list. Dart 3.12 removes that restriction — `Foo({required this._name})` is valid and is called as `Foo(name: ...)`. The shorter form eliminates a redundant local name, keeps the parameter and field in sync, and cannot drift (e.g. assigning the wrong parameter to the wrong field).
-
-The rule only reports when the conversion is behavior-preserving: the parameter is used solely in that one initializer, its declared type matches the field type, and the library's language version is 3.12 or later.
+Before Dart 3.12, a named parameter could not start with an underscore, so initializing a private field from a named parameter required boilerplate: declare a public parameter, then assign it in the initializer list. Dart 3.12 removes that restriction — `Foo({required this._name})` is valid and is still called as `Foo(name: ...)`.
 
 **See also:** [Announcing Dart 3.12](https://dart.dev/blog/announcing-dart-3-12) | [Constructors: Initializing formal parameters](https://dart.dev/language/constructors#use-initializing-formal-parameters)
 
 ## Don't
 
-```dart
-class Bird {
-  final String _petName;
+Three parameters that exist only to be copied into three fields:
 
-  // LINT: petName exists only to initialize _petName
-  Bird({required String petName}) : _petName = petName;
+```dart
+class UserRepository {
+  final HttpClient _client;
+  final Cache _cache;
+  final Logger _logger;
+
+  UserRepository({
+    required HttpClient client,
+    required Cache cache,
+    required Logger logger,
+  }) : _client = client,
+       _cache = cache,
+       _logger = logger;
 }
+
+class HttpClient {}
+
+class Cache {}
+
+class Logger {}
 ```
 
 ## Do
 
-```dart
-class Bird {
-  final String _petName;
+The initializer list disappears; call sites are unchanged — `UserRepository(client: ..., cache: ..., logger: ...)`:
 
-  // Callers still write Bird(petName: ...)
-  Bird({required this._petName});
+```dart
+class UserRepository {
+  final HttpClient _client;
+  final Cache _cache;
+  final Logger _logger;
+
+  UserRepository({
+    required this._client,
+    required this._cache,
+    required this._logger,
+  });
+}
+
+class HttpClient {}
+
+class Cache {}
+
+class Logger {}
+```
+
+The quick fix does this rewrite.
+
+### Catching renamed parameters too
+
+By default only a parameter whose name matches its field (`client` → `_client`) is reported. Set `only_same_name: false` to also flag one that was renamed on the way in:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_private_named_parameters:
+      only_same_name: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_private_named_parameters:
+    only_same_name: false
+```
+
+</TabItem>
+</Tabs>
+
+```dart
+class Account {
+  final String _id;
+
+  // Reported only under `only_same_name: false`.
+  Account({required String identifier}) : _id = identifier;
 }
 ```
+
+The quick fix **declines** these: adopting the shorthand would rename the named argument from `identifier` to `id`, breaking every call site. The diagnostic tells you; the edit is yours.
+
+## Known limitations
+
+The rule only reports when the conversion is behaviour-preserving:
+
+**The parameter is used solely in that one initializer.** A parameter also read in the body or in an assertion is doing more than copying.
+
+**Its declared type matches the field type.** A widening or narrowing conversion is not a rename.
+
+**The library is on language version 3.12 or later.** A file pinned to an older version is skipped, since the shorthand would not compile there.
+
+**Only named parameters.** A positional `Foo(String name) : _name = name` is not covered — positional initializing formals could always be written as `this._name`.
+
+**Function-typed parameters are skipped.** `Foo({required void Function() onTap}) : _onTap = onTap` keeps its shape; converting it would lose the written signature.
+
+**Only a single leading underscore.** A field named `__cache` is not reported.
 
 ## Turning this rule off
 

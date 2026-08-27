@@ -13,72 +13,117 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-Warns when a `throw` expression is used inside a catch block. Throwing a new exception (or re-throwing the caught one with `throw e`) discards the original stack trace, making debugging significantly harder. Use `rethrow` or `Error.throwWithStackTrace()` instead.
-
-## Why use this rule
-
-When you use `throw` inside a catch block, the original stack trace is lost. This means error reports and logs will point to the catch block instead of the actual source of the error. Using `rethrow` preserves the full stack trace, and `Error.throwWithStackTrace()` lets you throw a different exception while keeping the original stack trace attached.
+Flags a `throw` inside a `catch` block. The new exception starts a fresh stack trace at the `throw`, so the report points at the error handler instead of at the line that actually failed. Use `rethrow`, or `Error.throwWithStackTrace` when you want to change the exception type.
 
 **See also:** [Exceptions](https://dart.dev/language/error-handling) | [Dart lint: throw_in_finally](https://dart.dev/tools/linter-rules/throw_in_finally) | [Dart lint: only_throw_errors](https://dart.dev/tools/linter-rules/only_throw_errors)
 
 ## Don't
 
+Translating a low-level failure into a domain exception is the right instinct — but a bare `throw` throws away the only thing that says where it came from:
+
 ```dart
-void bad() {
-  // throw loses original stack trace
+Future<Order> loadOrder(String id) async {
   try {
-    networkDataProvider();
+    return await fetchOrder(id);
   } on Object {
-    throw RepositoryException();
+    throw OrderUnavailable(id);
   }
+}
 
-  // throw with caught exception still loses stack trace
-  try {
-    networkDataProvider();
-  } catch (e) {
-    throw e;
-  }
+Future<Order> fetchOrder(String id) async => Order();
 
-  // throw with logic before it
-  try {
-    networkDataProvider();
-  } catch (e) {
-    print(e);
-    throw RepositoryException('failed');
-  }
+class Order {}
+
+class OrderUnavailable implements Exception {
+  OrderUnavailable(this.id);
+
+  final String id;
 }
 ```
 
 ## Do
 
-```dart
-void good() {
-  // Use Error.throwWithStackTrace to preserve the stack trace
-  try {
-    networkDataProvider();
-  } catch (_, stack) {
-    Error.throwWithStackTrace(RepositoryException(), stack);
-  }
+Keep the wrapper *and* the trace by passing the caught stack explicitly:
 
-  // Use rethrow to re-throw the original exception
+```dart
+Future<Order> loadOrder(String id) async {
   try {
-    networkDataProvider();
+    return await fetchOrder(id);
+  } catch (error, stack) {
+    Error.throwWithStackTrace(OrderUnavailable(id), stack);
+  }
+}
+
+Future<Order> fetchOrder(String id) async => Order();
+
+class Order {}
+
+class OrderUnavailable implements Exception {
+  OrderUnavailable(this.id);
+
+  final String id;
+}
+```
+
+### Forwarding the same exception
+
+`throw e` re-throws the caught object but restarts the trace at the `throw`. `rethrow` keeps the original:
+
+```dart
+void demo(String id) {
+  // Don't
+  try {
+    fetchOrderSync(id);
+  } catch (e) {
+    print(e);
+    throw e;
+  }
+}
+
+void fetchOrderSync(String id) {}
+```
+
+```dart
+void demo(String id) {
+  // Do
+  try {
+    fetchOrderSync(id);
   } catch (e) {
     print(e);
     rethrow;
   }
+}
 
-  // Throw inside a closure is fine — it's not in the catch scope
+void fetchOrderSync(String id) {}
+```
+
+### A throw inside a closure is fine
+
+The rule does not descend into nested functions, because a `throw` there runs whenever the closure is called — not while the catch block is unwinding:
+
+```dart
+void demo(String id) {
   try {
-    networkDataProvider();
+    fetchOrderSync(id);
   } catch (e) {
-    final callback = () {
-      throw RepositoryException();
-    };
-    callback();
+    scheduleRetry(() {
+      throw StateError('retry gave up');   // Not reported
+    });
   }
 }
+
+void fetchOrderSync(String id) {}
+
+void scheduleRetry(void Function() action) {}
 ```
+
+## Known limitations
+
+Every `throw` reachable in the catch body is reported, however deeply nested in `if`, `for`, or `switch` — but never one inside a closure or a local function declaration.
+
+The rule looks at `catch` and `on` clauses only. A `throw` in a `finally` block is a separate problem, covered by the SDK's [`throw_in_finally`](https://dart.dev/tools/linter-rules/throw_in_finally).
+
+The quick fix rewrites `throw X` to `Error.throwWithStackTrace(X, stackTrace)`, adding the stack-trace parameter to the clause when it does not already have one — `catch (e)` becomes `catch (e, stackTrace)`, and a bare `on FormatException {` becomes `on FormatException catch (_, stackTrace) {`. When the thrown expression is the caught exception itself, plain `rethrow` is shorter and says the same thing; the fix does not choose it for you.
 
 ## Configuration
 

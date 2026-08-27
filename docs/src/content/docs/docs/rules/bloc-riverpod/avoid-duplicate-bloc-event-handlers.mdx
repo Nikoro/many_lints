@@ -26,21 +26,24 @@ The usual cause is a copy-pasted `on<...>` line where the type argument was not 
 
 **See also:** [bloc: Bloc.on](https://pub.dev/documentation/bloc/latest/bloc/Bloc/on.html)
 
-## Don't
+## Examples
+
+### A copy-pasted registration
+
+The usual cause: the line was duplicated to add the opposite behaviour and the type argument was never updated. It compiles; it throws the first time the bloc is constructed.
 
 ```dart
+// Don't
 class CounterBloc extends Bloc<CounterEvent, int> {
   CounterBloc() : super(0) {
     on<IncrementEvent>((event, emit) => emit(state + 1));
-    // Throws at construction — the type argument was never updated
-    on<IncrementEvent>((event, emit) => emit(state - 1));
+    on<IncrementEvent>((event, emit) => emit(state - 1));   // LINT
   }
 }
 ```
 
-## Do
-
 ```dart
+// Do
 class CounterBloc extends Bloc<CounterEvent, int> {
   CounterBloc() : super(0) {
     on<IncrementEvent>((event, emit) => emit(state + 1));
@@ -49,11 +52,37 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 }
 ```
 
-If two behaviours genuinely belong to one event, merge them into a single handler.
+If two behaviours genuinely belong to one event, merge them into a single handler rather than registering twice.
+
+### A project wrapper around `on`
+
+If your blocs register through a helper that forwards to `on`, name it so the same crash is caught there:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_duplicate_bloc_event_handlers:
+    additional_methods: [onEvent]
+```
+
+```dart
+// Don't
+class CounterBloc extends Bloc<CounterEvent, int> {
+  CounterBloc() : super(0) {
+    onEvent<IncrementEvent>((event, emit) => emit(state + 1));
+    onEvent<IncrementEvent>((event, emit) => emit(state - 1));   // LINT
+  }
+
+  void onEvent<E extends CounterEvent>(EventHandler<E, int> handler) =>
+      on<E>(handler);
+}
+```
 
 ## Known limitations
 
 Registrations are tracked per constructor. A bloc with two constructors that each register the same event is not flagged, because only one of them runs for any given instance.
+
+Only an unqualified `on<E>(...)` or `this.on<E>(...)` with exactly one type argument is counted. A registration made outside the constructor body, or through a variable holding the handler, is not seen.
 
 ## Turning this rule off
 

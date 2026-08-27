@@ -13,63 +13,21 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule is in the **`pedantic`** preset.
+Flags a `BuildContext` parameter named with a wildcard — `_`, `__`, and so on.
 
-This rule flags a `BuildContext` parameter named with a wildcard — `_`, `__`, and so on. Discarding the parameter throws away the closest context, which is usually the only correct one to use.
+Discarding the context does not remove the need for one. The body still has to look things up, so it reaches for a `context` from an enclosing scope — and that one sits **higher in the tree**. `Theme.of`, `MediaQuery.of` and `Navigator.of` all walk *up* from the element they are given, so an outer context resolves against a different subtree:
 
-## Why use this rule
+- a `Theme` or `MediaQuery` introduced between the two contexts is skipped, and you silently read the ancestor's values;
+- `Navigator.of` can find the wrong navigator in a nested-navigator layout;
+- if the outer element is deactivated while the callback is still alive, the lookup throws.
 
-Discarding a context does not remove the need for one. The body still has to look things up, so it reaches for a `context` from an enclosing scope — and that context sits **higher in the widget tree**.
+The code compiles and usually appears to work, right up until someone inserts a widget between the two contexts.
 
-That difference is not cosmetic. `Theme.of`, `MediaQuery.of` and `Navigator.of` walk *up* from the element they are given, so an outer context resolves against a different subtree. The consequences are real:
+This rule is in the **`pedantic`** preset, because a builder that performs no inherited lookup can legitimately discard its context.
 
-- A `Theme` or `MediaQuery` introduced between the two contexts is skipped entirely, so you silently read the ancestor's values.
-- `Navigator.of` may find the wrong navigator in a nested-navigator layout.
-- If the outer element is deactivated while the callback is still alive, the lookup throws.
+**See also:** [`BuildContext` API docs](https://api.flutter.dev/flutter/widgets/BuildContext-class.html)
 
-The failure mode is what makes this worth linting: the code compiles, and usually appears to work, right up until someone inserts a widget between the two contexts.
-
-**See also:** [`BuildContext` API docs](https://api.flutter.dev/flutter/widgets/BuildContext-class.html), [Flutter: `of` accessors and `BuildContext`](https://docs.flutter.dev/resources/architectural-overview#widgets)
-
-## Don't
-
-```dart
-// The builder's own context is discarded, so `Theme.of` runs against the
-// outer context and skips any theme introduced in between.
-Widget build(BuildContext context) {
-  return Builder(
-    builder: (_) => Text('hi', style: Theme.of(context).textTheme.bodyMedium),
-  );
-}
-```
-
-## Do
-
-```dart
-Widget build(BuildContext context) {
-  return Builder(
-    builder: (innerContext) =>
-        Text('hi', style: Theme.of(innerContext).textTheme.bodyMedium),
-  );
-}
-```
-
-## Quick fix
-
-**Name the parameter `context`** renames the wildcard so the parameter becomes usable.
-
-The fix is deliberately withheld when something named `context` is already in scope — most often the enclosing `build` method's own parameter. Renaming there would shadow that name and change which element the existing lookups in the body resolve against, so the rule still reports but leaves the choice of name to you.
-
-## Known limitations
-
-Only an exact `BuildContext` is reported. A subclass is left alone, since renaming a parameter with its own meaning is not obviously right.
-
-A name such as `_context` is not a discard — it is a private name that remains usable — and is not reported.
-
-## Configuration
-
-This rule appears only in the **`pedantic`** preset because builders that perform
-no inherited lookup can legitimately discard their context.
+## Enabling this rule
 
 ```yaml
 # many_lints.yaml
@@ -77,7 +35,88 @@ rules:
   never_discard_build_context: true
 ```
 
-To turn it off again:
+## Don't
+
+```dart
+class OrderPage extends StatelessWidget {
+  const OrderPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: ThemeData.dark(),
+      // The builder's own context is discarded, so `Theme.of` runs against
+      // the outer one and never sees the dark theme just introduced above.
+      child: Builder(
+        builder: (_) => Text('Total', style: Theme.of(context).textTheme.bodyMedium),
+      ),
+    );
+  }
+}
+```
+
+## Do
+
+Name it and use it. The lookup now resolves against the element the `Builder` created, which is below the `Theme`:
+
+```dart
+class OrderPage extends StatelessWidget {
+  const OrderPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: ThemeData.dark(),
+      child: Builder(
+        builder: (innerContext) =>
+            Text('Total', style: Theme.of(innerContext).textTheme.bodyMedium),
+      ),
+    );
+  }
+}
+```
+
+### Any builder-shaped callback
+
+The rule reads the parameter's type, not the widget it belongs to, so every callback taking a `BuildContext` is covered:
+
+```dart
+// Don't
+LayoutBuilder(builder: (_, constraints) => SizedBox(width: constraints.maxWidth));
+
+showDialog<void>(context: context, builder: (_) => const AlertDialog());
+
+// Do
+LayoutBuilder(
+  builder: (context, constraints) => SizedBox(width: constraints.maxWidth),
+);
+
+showDialog<void>(
+  context: context,
+  builder: (dialogContext) => const AlertDialog(),
+);
+```
+
+### An underscore prefix is not a discard
+
+`_context` is an ordinary private name and remains usable, so it is never reported:
+
+```dart
+// Not reported
+Builder(builder: (_context) => Text(Theme.of(_context).toString()));
+```
+
+## Quick fix
+
+**Name the parameter `context`** renames the wildcard so the parameter becomes usable.
+
+It is deliberately withheld when something named `context` is already in scope — most often the enclosing `build` method's own parameter, which is the commonest case of all. Renaming there would shadow that name and change which element the *existing* lookups in the body resolve against. The rule still reports; picking the new name is left to you.
+
+## Known limitations
+
+Only an exact `BuildContext` is reported. A subclass with its own meaning is left alone.
+
+## Turning this rule off
 
 ```yaml
 # many_lints.yaml

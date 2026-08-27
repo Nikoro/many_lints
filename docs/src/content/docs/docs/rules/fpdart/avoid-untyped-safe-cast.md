@@ -23,9 +23,14 @@ fpdart's own API documentation carries this warning on both constructors — *"M
 
 ## Don't
 
+`R` has nothing to infer from, so it lands on `dynamic` — and every value
+satisfies `is dynamic`. The validator accepts anything:
+
 ```dart
-// R infers as dynamic — this is always Right, whatever `json` holds.
-final result = Either.safeCast(json, (v) => 'not a map');
+Either<String, dynamic> parsePayload(dynamic json) {
+  final result = Either.safeCast(json, (v) => 'not a map');
+  return result; // always Right, whatever `json` holds
+}
 ```
 
 ## Do
@@ -33,17 +38,23 @@ final result = Either.safeCast(json, (v) => 'not a map');
 Write the target type on the call:
 
 ```dart
-final result = Either<String, Map<String, dynamic>>.safeCast(
-  json,
-  (v) => 'not a map',
-);
+Either<String, Map<String, dynamic>> parsePayload(dynamic json) =>
+    Either<String, Map<String, dynamic>>.safeCast(json, (v) => 'not a map');
 ```
 
 Letting the context supply it works just as well, and is not reported:
 
 ```dart
-Either<String, int> parse(dynamic json) =>
+Either<String, int> parsePort(dynamic json) =>
     Either.safeCast(json, (v) => 'not an int');
+```
+
+Nor is a typed local, for the same reason:
+
+```dart
+void check(dynamic json) {
+  final Either<String, int> port = Either.safeCast(json, (v) => 'not an int');
+}
 ```
 
 ## Known limitations

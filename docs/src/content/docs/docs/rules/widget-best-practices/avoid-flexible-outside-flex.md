@@ -9,48 +9,80 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule flags `Flexible` and `Expanded` widgets that are not direct children of a `Row`, `Column`, or `Flex`. These widgets rely on the flex layout protocol to work, so wrapping them inside other widgets like `Container` or `Padding` makes them silently do nothing.
+Flags a `Flexible` or `Expanded` that is not a direct child of a `Row`, `Column` or `Flex`.
 
-## Why use this rule
+Both widgets work by handing a flex factor to the parent's layout protocol. A non-flex parent — `Container`, `Padding`, `Center`, `SizedBox` — ignores it. Nothing throws at build time; the widget simply has no effect, which is why this is worth catching at lint time rather than by staring at the tree.
 
-When `Expanded` or `Flexible` is nested inside a non-flex parent, Flutter does not throw an error at build time — the widget simply has no effect. This leads to confusing layouts where you think you are distributing space but nothing happens. Catching this at lint time saves you from staring at the widget tree wondering why your layout is broken.
+This rule is in the **`core`** preset, so it is on with `preset: core` and every preset above it. No configuration.
 
-**See also:** [Flexible](https://api.flutter.dev/flutter/widgets/Flexible-class.html) | [Row](https://api.flutter.dev/flutter/widgets/Row-class.html) | [Column](https://api.flutter.dev/flutter/widgets/Column-class.html)
+**See also:** [Flexible](https://api.flutter.dev/flutter/widgets/Flexible-class.html) | [Row](https://api.flutter.dev/flutter/widgets/Row-class.html)
 
 ## Don't
+
+The usual way in is wrapping for padding *after* the layout already worked:
 
 ```dart
 Column(
   children: [
-    // Expanded is inside a Container, not directly in the Column
-    Container(child: Expanded(child: Text('hello'))),
-
-    // Flexible is inside a Center
-    Center(child: Flexible(child: Text('hello'))),
+    // Padding is not a Flex, so Expanded does nothing here
+    Padding(
+      padding: const EdgeInsets.all(8),
+      child: Expanded(child: Text('Body')),
+    ),
   ],
 )
 ```
 
 ## Do
 
+Keep `Expanded` next to the `Column` and move the wrapper inside it:
+
 ```dart
 Column(
   children: [
-    // Expanded directly in a Row
-    Row(children: [Expanded(child: Text('hello'))]),
-
-    // Flexible directly in a Column
-    Flexible(child: Text('hello')),
+    Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Text('Body'),
+      ),
+    ),
   ],
 )
 ```
 
-## Configuration
+### A nested Row needs its own Expanded
 
-This rule is in the **`core`** preset, so it is on with `preset: core`,
-`preset: recommended` or `preset: opinionated`.
+Nesting a flex inside a flex is fine — each `Expanded` just has to sit directly in one of them:
 
-To turn it off:
+```dart
+// Don't — Center swallows the flex factor
+final bad = Row(
+  children: [
+    Center(child: Flexible(child: Text('Title'))),
+  ],
+);
+
+// Do
+final good = Row(
+  children: [
+    Flexible(child: Center(child: Text('Title'))),
+  ],
+);
+```
+
+### Nothing at all above it
+
+A `Flexible` returned bare from a helper or built outside any flex parent is reported too — there is no layout to be flexible in:
+
+```dart
+// Don't
+Widget spacerBar() => Expanded(child: Container());
+
+// Do — return the child, and let the caller wrap it
+Widget spacerBar() => Container();
+```
+
+## Turning this rule off
 
 ```yaml
 # many_lints.yaml

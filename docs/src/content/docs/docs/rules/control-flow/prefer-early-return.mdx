@@ -22,16 +22,9 @@ This rule flags a function body that consists of a single `if` wrapping everythi
 
 The reader has to hold "we are inside the valid case" for the entire body, and every further condition nests one level deeper. A guard states the precondition once and lets the rest of the function be the happy path.
 
-The rule is deliberately narrow, and each exclusion below came from running it against real code:
-
-- **Only when the `if` is the whole body.** A statement before it is setup the guard would have to move or duplicate.
-- **Never with an `else`.** Inverting would swap the branches rather than flatten anything — that case belongs to [`avoid_negated_conditions`](/many_lints/docs/rules/control-flow/avoid-negated-conditions/).
-- **Never when the condition is already negated.** `if (!map.containsKey(k))` inverts into a *longer* positive guard, and the negation is what made the precondition obvious. This was the rule's only hit on a production codebase, and the rewrite would have read worse than the original.
-- **Never for a pattern `if`.** `if (x case final int n)` binds variables the inverted branch cannot see.
-
-This rule is in the **`pedantic`** preset: where to draw the line between a guard and a wrapped body is a house style.
-
 ## Don't
+
+The whole function body is one `if`, and the useful work is a level in:
 
 ```dart
 class Order {
@@ -68,6 +61,42 @@ void ship(Order order) {
 }
 ```
 
+## Known limitations
+
+The rule is deliberately narrow. It stays silent in each of these:
+
+**A statement before the `if`.** That is setup the guard form would have to move or duplicate:
+
+```dart
+void ship(Order order) {
+  final startedAt = DateTime.now();
+
+  if (order.isPaid) {
+    order.reserveStock();
+    order.printLabel();
+    order.dispatch();
+  }
+}
+```
+
+**An `else` branch.** Inverting would swap the branches rather than flatten anything — that case belongs to [`avoid_negated_conditions`](/many_lints/docs/rules/control-flow/avoid-negated-conditions/).
+
+**An already-negated condition.** `if (!map.containsKey(key))` inverts into a *longer* positive guard, and the negation is what made the precondition obvious:
+
+```dart
+void register(Map<String, int> counts, String key) {
+  if (!counts.containsKey(key)) {
+    counts[key] = 0;
+    counts[key] = counts[key]! + 1;
+    print('registered $key');
+  }
+}
+```
+
+**A pattern `if`.** `if (x case final int n)` binds variables the inverted branch cannot see.
+
+**A body shorter than `min_statements`** — three by default. See below.
+
 ## Enabling this rule
 
 This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
@@ -80,6 +109,11 @@ rules:
 ```
 
 ## Options
+
+### `min_statements`
+
+How many statements the wrapped block must hold before the guard is worth it.
+Below that, the rewrite saves no nesting worth doing:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -104,6 +138,19 @@ rules:
 
 </TabItem>
 </Tabs>
+
+With `min_statements: 4`, a three-statement body stops being reported:
+
+```dart
+void ship(Order order) {
+  // Not reported at min_statements: 4 — reported at the default of 3.
+  if (order.isPaid) {
+    order.reserveStock();
+    order.printLabel();
+    order.dispatch();
+  }
+}
+```
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|

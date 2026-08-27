@@ -13,55 +13,94 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Pattern Matching</span>
 
-Destructuring a single field from an object or record pattern adds unnecessary syntactic overhead. Direct property access like `config.name` is simpler and clearer when only one value is needed.
+This rule flags a pattern declaration that pulls out exactly one field. `final User(:name) = user;` is pattern syntax doing the job of `final name = user.name;`, and the quick fix rewrites it to that.
 
-## Why use this rule
-
-Destructuring shines when extracting multiple values at once. For a single field, `final Config(:name) = config;` is more verbose than `final name = config.name;` with no readability benefit. This rule encourages destructuring only when it genuinely simplifies the code.
+Destructuring pays for itself from two fields upward. At one, it is a longer way to write a property read.
 
 **See also:** [Dart patterns](https://dart.dev/language/patterns)
 
 ## Don't
 
 ```dart
-class Config {
+class User {
+  const User({required this.name, required this.email});
+
   final String name;
-  final int timeout;
-
-  const Config({required this.name, required this.timeout});
+  final String email;
 }
 
-void example(Config config) {
-  // Single field destructured from object pattern
-  final Config(:name) = config;
-
-  // Single named field destructured with renamed variable
-  final Config(timeout: t) = config;
+void greet(User user) {
+  final User(:name) = user;                 // LINT
+  print('Hello, $name');
 }
 
-void recordExample(({int length}) record) {
-  // Single field destructured from record pattern
-  final (:length) = record;
+void mail(User user) {
+  final User(email: address) = user;        // LINT — renaming does not help
+  print(address);
 }
 ```
 
 ## Do
 
 ```dart
-// Direct property access
-void example(Config config) {
-  final name = config.name;
-  final t = config.timeout;
+void greet(User user) {
+  final name = user.name;
+  print('Hello, $name');
 }
 
-// Multiple fields destructured (this is the right use case)
-void multipleFields(Config config) {
-  final Config(:name, :timeout) = config;
+void mail(User user) {
+  final address = user.email;
+  print(address);
+}
+```
+
+## Records too
+
+A record pattern binding one field is the same shape and is reported the same way:
+
+```dart
+// Don't
+void report(({int length, String path}) file) {
+  final (:length) = file;                   // LINT
+  print(length);
 }
 
-// Regular variable declaration (no destructuring)
-void regularDeclaration() {
-  final x = 42;
+// Do
+void report(({int length, String path}) file) {
+  final length = file.length;
+  print(length);
+}
+```
+
+## When destructuring is the right call
+
+Two or more fields, and the pattern earns its place — nothing is reported:
+
+```dart
+void summary(User user) {
+  final User(:name, :email) = user;
+  print('$name <$email>');
+}
+
+void report(({int length, String path}) file) {
+  final (:length, :path) = file;
+  print('$path is $length bytes');
+}
+```
+
+## Known limitations
+
+**Only pattern *declarations* are checked** — a `final`/`var` binding with a pattern on the left. A single-field pattern in a `switch` case or an `if-case` is doing matching work as well as extraction, so it is never reported:
+
+```dart
+// Not reported — the pattern also decides whether the branch runs
+if (payload case Response(:final body)) {
+  print(body);
+}
+
+switch (event) {
+  case KeyEvent(:final key):
+    print(key);
 }
 ```
 

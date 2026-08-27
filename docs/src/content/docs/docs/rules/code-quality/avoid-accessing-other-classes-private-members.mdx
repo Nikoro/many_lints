@@ -14,24 +14,16 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule flags one class reading another class's private member.
 
-This rule is in the **`pedantic`** preset: it imposes an architecture rather than catching a defect.
+Dart scopes privacy to the **library**, not the class. `_field` is visible to every declaration in the same file — and to every `part` of it. Most people write `_` meaning "mine", and the language quietly means "this file's". In a long file, or a `part`-heavy library, a class ends up depending on another's internals with nothing in the code to mark it.
 
-## Why use this rule
-
-Dart scopes privacy to the **library**, not the class. `_field` is visible to every declaration in the same file — and to every `part` of it. Most people write `_` meaning "mine", and the language quietly means "this file's".
-
-In a short file those coincide. In a long one, or a `part`-heavy library, they do not, and a class ends up depending on another's internals with nothing in the code to mark it. This rule makes the language behave the way the underscore already reads.
-
-Several idioms legitimately reach across, and are exempt:
-
-- A **`State` reading `widget._foo`** — one object the framework split in two.
-- **`copyWith`, `operator ==`, `hashCode` and `toString`**, which exist precisely to read another instance's fields.
-- **Another instance of the same class**: `other._value` inside `==` is the pattern, not a violation.
-- **`this._x`** and a bare `_x`, which are the class's own business.
+This rule is in the **`pedantic`** preset and works with its defaults.
 
 **See also:** [Dart: libraries and privacy](https://dart.dev/language/libraries)
 
 ## Don't
+
+Both classes live in one file, so this compiles. Nothing marks that `Report`
+now breaks whenever `Account` renames a field:
 
 ```dart
 class Account {
@@ -39,27 +31,107 @@ class Account {
 }
 
 class Report {
-  // Compiles, because both classes live in one library.
   int total(Account account) => account._balance;
 }
 ```
 
 ## Do
 
+Expose what the other class actually needs:
+
 ```dart
 class Account {
   int _balance = 0;
 
   int get balance => _balance;
-
-  // Another instance of the SAME class is the `==` / `copyWith` pattern.
-  bool sameAs(Account other) => _balance == other._balance;
 }
 
 class Report {
   int total(Account account) => account.balance;
 }
 ```
+
+## More examples
+
+### Another instance of the same class is fine
+
+`other._value` inside `==`, `copyWith` or a comparison is the pattern, not a
+violation — it is the class reaching into itself:
+
+```dart
+class Money {
+  const Money(this._cents);
+
+  final int _cents;
+
+  // Not reported — `other` is a Money too.
+  bool isMoreThan(Money other) => _cents > other._cents;
+
+  @override
+  bool operator ==(Object other) => other is Money && _cents == other._cents;
+
+  @override
+  int get hashCode => _cents.hashCode;
+}
+```
+
+### A `State` reading `widget._foo`
+
+A `StatefulWidget` and its `State` are one object the framework split in two,
+so a read through `widget` is never reported:
+
+```dart
+class CounterState extends State<Counter> {
+  // Not reported.
+  int get start => widget._initial;
+}
+```
+
+The exemption keys on the receiver being spelled `widget`, which is the
+convention `flutter create` and every Flutter template produce. A `State` that
+renames it loses the exemption.
+
+### Allowing your own merge-style members
+
+`copyWith`, `operator ==`, `hashCode` and `toString` are exempt by default —
+they exist precisely to read another instance's fields. Add your own:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_accessing_other_classes_private_members:
+    additional_ignored_members: [merge, mergeWith]
+```
+
+```dart
+class Settings {
+  Settings(this._values);
+
+  final Map<String, String> _values;
+
+  // Not reported with the config above.
+  Settings merge(Settings other) => Settings({..._values, ...other._values});
+}
+```
+
+Use `ignored_members` instead to *replace* the default list rather than add to
+it.
+
+## Known limitations
+
+Only reads from inside a class are reported. A **top-level function** in the
+same library reaching into a class's private field is not flagged:
+
+```dart
+class Account {
+  int _balance = 0;
+}
+
+// Not reported — no enclosing class.
+int total(Account account) => account._balance;
+```
+
+`this._x` and a bare `_x` are the class's own business and are never reported.
 
 ## Options
 

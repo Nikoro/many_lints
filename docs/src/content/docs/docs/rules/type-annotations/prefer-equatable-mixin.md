@@ -13,30 +13,24 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Type Annotations</span>
 
-Flags classes that directly extend `Equatable` instead of using `EquatableMixin`. Extending `Equatable` consumes the single `extends` slot in Dart, preventing your class from inheriting from any other base class. Using the mixin keeps the `extends` slot free while providing identical functionality.
-
-## Why use this rule
-
-Dart only allows single inheritance. By using `with EquatableMixin` instead of `extends Equatable`, you preserve the ability to extend another meaningful base class while still getting value equality. This is especially important for domain models that might need to extend an existing hierarchy.
-
-**See also:** [equatable package](https://pub.dev/packages/equatable)
+Flags a class that extends `Equatable` from `package:equatable` instead of mixing in `EquatableMixin`. Both give the same value equality; only one leaves the `extends` slot free.
 
 ## Don't
+
+Dart allows a single superclass. Spending it on `Equatable` means the day this
+model needs a real base class, the equality has to be reworked first:
 
 ```dart
 import 'package:equatable/equatable.dart';
 
-class BadPerson extends Equatable {
-  const BadPerson(this.name, this.age);
-  final String name;
-  final int age;
+class CartItem extends Equatable {
+  const CartItem(this.sku, this.quantity);
+
+  final String sku;
+  final int quantity;
 
   @override
-  List<Object?> get props => [name, age];
-}
-
-abstract class BadBaseEntity extends Equatable {
-  const BadBaseEntity();
+  List<Object?> get props => [sku, quantity];
 }
 ```
 
@@ -45,28 +39,66 @@ abstract class BadBaseEntity extends Equatable {
 ```dart
 import 'package:equatable/equatable.dart';
 
-class GoodPerson with EquatableMixin {
-  GoodPerson(this.name, this.age);
-  final String name;
-  final int age;
+class CartItem with EquatableMixin {
+  CartItem(this.sku, this.quantity);
+
+  final String sku;
+  final int quantity;
 
   @override
-  List<Object?> get props => [name, age];
-}
-
-// Can extend another class while using EquatableMixin
-class Pet extends Animal with EquatableMixin {
-  const Pet(super.species, this.name);
-  final String name;
-
-  @override
-  List<Object?> get props => [species, name];
-}
-
-abstract class GoodBaseEntity with EquatableMixin {
-  const GoodBaseEntity();
+  List<Object?> get props => [sku, quantity];
 }
 ```
+
+### The point: `extends` stays available
+
+With the mixin, the same model can join a hierarchy without giving up equality:
+
+```dart
+import 'package:equatable/equatable.dart';
+
+abstract class DomainEntity {
+  const DomainEntity(this.id);
+
+  final String id;
+}
+
+class CartItem extends DomainEntity with EquatableMixin {
+  CartItem(super.id, this.sku, this.quantity);
+
+  final String sku;
+  final int quantity;
+
+  @override
+  List<Object?> get props => [id, sku, quantity];
+}
+```
+
+### Abstract bases too
+
+An abstract class that extends `Equatable` passes the same constraint on to
+every subclass:
+
+```dart
+import 'package:equatable/equatable.dart';
+
+// Don't — every subclass now has its `extends` slot spent.
+abstract class BaseEntity extends Equatable {
+  const BaseEntity();
+}
+
+// Do
+abstract class BaseEntity with EquatableMixin {
+  const BaseEntity();
+}
+```
+
+### Not reported
+
+Only `extends Equatable` is reported. A class that already uses the mixin, and
+a class extending something else entirely, are left alone.
+
+**See also:** [equatable package](https://pub.dev/packages/equatable)
 
 ## Configuration
 

@@ -13,67 +13,111 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
 
-Flags generic type parameters that shadow a top-level type declaration (class, mixin, enum, typedef, or extension type) in the same file. When a type parameter has the same name as a real class, it becomes confusing whether a reference points to the generic or the concrete type.
+Flags a generic type parameter whose name is also a top-level declaration in the same file — a class, mixin, enum, typedef or extension type.
 
-## Why use this rule
+Inside that scope the name no longer means the class. Every annotation reading `User` looks like the model and is in fact an unbounded type parameter, so the compiler accepts a `String` where the author was certain only a `User` could arrive.
 
-Shadowing a top-level type with a generic parameter silently replaces the concrete type with an unbounded generic within that scope. This can lead to subtle bugs where code appears to reference a specific class but actually operates on an unrelated type parameter. Using conventional single-letter names like `T`, `R`, or `E` eliminates the ambiguity.
+A quick fix renames the parameter to a free single letter.
+
+This rule is in the **`recommended`** preset, so it is on with `preset: recommended`, `preset: opinionated` or `preset: pedantic`.
 
 **See also:** [Dart language - Generics](https://dart.dev/language/generics) | [Dart lint: avoid_shadowing_type_parameters](https://dart.dev/tools/linter-rules/avoid_shadowing_type_parameters)
 
 ## Don't
 
 ```dart
-class MyModel {}
-enum MyEnum { first, second }
+class User {
+  const User(this.id);
 
-// Generic type parameter shadows the top-level class MyModel
-class Repository<MyModel> {
-  MyModel get(int id) => throw '';
+  final String id;
 }
 
-class SomeClass {
-  // MyEnum shadows the top-level enum
-  void method<MyEnum>(MyEnum p) {}
-}
-
-// Both type parameters shadow top-level types
-class BadPair<MyModel, AnotherClass> {
-  final MyModel first;
-  final AnotherClass second;
-  BadPair(this.first, this.second);
+// `User` here is a type parameter, not the class above. `findById` accepts
+// and returns anything at all, and nothing in the signature says so.
+class Repository<User> {
+  User findById(String id) => throw UnimplementedError();
 }
 ```
 
 ## Do
 
 ```dart
-class MyModel {}
-enum MyEnum { first, second }
+class User {
+  const User(this.id);
 
-// Use conventional single-letter type parameters
-class GoodRepository<T> {
-  T get(int id) => throw '';
+  final String id;
 }
 
-// Descriptive names that don't shadow top-level types
-class GoodPair<TFirst, TSecond> {
-  final TFirst first;
-  final TSecond second;
-  GoodPair(this.first, this.second);
-}
-
-class Processor {
-  void process<T>(T item) {}
-  R transform<R>(Object input) => throw '';
+class Repository<T> {
+  T findById(String id) => throw UnimplementedError();
 }
 ```
 
-## Configuration
+## Examples
 
-This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
-`avoid_generics_shadowing: true`.
+### A method's own type parameter shadows too
+
+The rule looks at every type parameter list in the file, not just a class's:
+
+```dart
+enum Role { admin, guest }
+
+class Permissions {
+  // `Role` names the parameter, so `value` is unconstrained — `check(42)`
+  // compiles.
+  void check<Role>(Role value) {}
+}
+```
+
+```dart
+enum Role { admin, guest }
+
+class Permissions {
+  void check<T>(T value) {}
+}
+```
+
+### Descriptive names are fine as long as they do not collide
+
+Renaming to a single letter is what the quick fix offers, but any free name works:
+
+```dart
+class Order {}
+
+class Invoice {}
+
+// Reported — both parameters shadow a class in this file
+class Pair<Order, Invoice> {
+  Pair(this.first, this.second);
+
+  final Order first;
+  final Invoice second;
+}
+```
+
+```dart
+class Order {}
+
+class Invoice {}
+
+// Accepted — neither name is declared at the top level here
+class Pair<TFirst, TSecond> {
+  Pair(this.first, this.second);
+
+  final TFirst first;
+  final TSecond second;
+}
+```
+
+## Known limitations
+
+**Only declarations in the same file count.** A type parameter named after a class imported from another library is not reported — the rule reads the compilation unit's own top-level declarations, so it cannot see what an import brought in.
+
+**Shadowing an outer *type parameter* is the SDK's job.** [`avoid_shadowing_type_parameters`](https://dart.dev/tools/linter-rules/avoid_shadowing_type_parameters) covers a method's `T` hiding its class's `T`; this rule covers a `T` hiding a real type.
+
+**The quick fix picks the first free letter.** It skips names already used by sibling parameters, by types named in the declaring scope, and by top-level declarations, so the rename cannot reintroduce the collision — but the letter it lands on may not be the one you would have chosen.
+
+## Configuration
 
 To turn it off:
 

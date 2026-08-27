@@ -18,18 +18,19 @@ This rule is in the **`recommended`** preset.
 
 ## Why use this rule
 
-`package:test` only runs files matching `*_test.dart`. A file named `user_repository_tests.dart` or `test_user_repository.dart` still compiles, still passes analysis, and is **silently never executed** — the worst failure mode a test can have, because the suite stays green by not running the test at all.
-
-Nothing else catches this. The analyzer is happy, the file has no errors, and CI reports success; the only symptom is a bug shipping past a test that was written to prevent it.
-
-The rule reports only files that actually declare tests — a top-level `main` containing a `test(...)`, `testWidgets(...)` or `group(...)` call. The helpers, fixtures, builders and robots that legitimately live under `test/` without being test files are left alone.
-
-**See also:** [package:test](https://pub.dev/packages/test), [Flutter: testing](https://docs.flutter.dev/testing/overview)
+`package:test` only runs files matching `*_test.dart`. A file named `user_repository_tests.dart` or `test_user_repository.dart` still compiles, still passes analysis, and is **silently never executed** — the suite stays green by not running the test at all. Nothing else catches this: the analyzer is happy and CI reports success.
 
 ## Don't
 
 ```dart
-// test/user_repository_tests.dart — plural, so it never runs
+// test/user_repository_tests.dart — plural, so the runner never picks it up
+void main() {
+  test('should load a user', () {});
+}
+```
+
+```dart
+// test/test_user_repository.dart — prefix instead of suffix, same result
 void main() {
   test('should load a user', () {});
 }
@@ -44,10 +45,59 @@ void main() {
 }
 ```
 
+### Files that declare no tests are never reported
+
+The rule reports only a file whose top-level `main` contains a `test(...)`,
+`testWidgets(...)` or `group(...)` call. Helpers, fixtures, builders and robots
+live under `test/` without being test files, and are left alone:
+
 ```dart
-// test/support/user_builder.dart — declares no tests, never reported
-class UserBuilder {}
+// test/support/user_builder.dart — no tests declared, never reported
+class UserBuilder {
+  UserBuilder withName(String name) => this;
+}
 ```
+
+### Extending the directories checked
+
+By default the rule looks at `test/`, `integration_test/` and `test_driver/`.
+A project with a suite elsewhere adds it:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_correct_test_file_name:
+      additional_directories: [e2e]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_correct_test_file_name:
+    additional_directories: [e2e]
+```
+
+</TabItem>
+</Tabs>
+
+```dart
+// e2e/checkout_flow.dart — now reported; rename to checkout_flow_test.dart
+void main() {
+  test('completes a checkout', () {});
+}
+```
+
+Use `directories:` instead to replace the defaults outright rather than add to
+them.
+
+**See also:** [package:test](https://pub.dev/packages/test), [Flutter: testing](https://docs.flutter.dev/testing/overview)
 
 ## Options
 

@@ -17,27 +17,87 @@ Flags usages of `BorderRadius.circular()` which should be replaced with `BorderR
 
 ## Why use this rule
 
-`BorderRadius.circular()` calls `BorderRadius.all(Radius.circular())` under the hood. Using the explicit form allows the entire expression to be `const`, which means the Dart compiler can canonicalize it at compile time. This avoids repeated allocations in build methods and is especially beneficial for border radii that never change.
+`BorderRadius.circular(8)` is a factory, and a factory can never be `const`. It
+forwards straight to `BorderRadius.all(Radius.circular(8))`, which can. Writing
+the second form lets the whole surrounding expression be constant, so it is
+allocated once at compile time instead of on every `build`.
 
 **See also:** [BorderRadius](https://api.flutter.dev/flutter/painting/BorderRadius-class.html) | [Dart lint: prefer_const_constructors](https://dart.dev/tools/linter-rules/prefer_const_constructors)
 
 ## Don't
 
 ```dart
-// BorderRadius.circular cannot be const
-final radius = BorderRadius.circular(8);
-
-final radius2 = BorderRadius.circular(16.0);
+// A rounded card decoration rebuilt on every frame.
+Container(
+  decoration: BoxDecoration(
+    color: const Color(0xFFEEEEEE),
+    borderRadius: BorderRadius.circular(8), // LINT
+  ),
+  child: const Text('Hello'),
+);
 ```
 
 ## Do
 
 ```dart
-// BorderRadius.all(Radius.circular()) supports const
-final radius = BorderRadius.all(Radius.circular(8));
-
-const radius2 = BorderRadius.all(Radius.circular(16.0));
+Container(
+  decoration: const BoxDecoration(
+    color: Color(0xFFEEEEEE),
+    borderRadius: BorderRadius.all(Radius.circular(8)),
+  ),
+  child: const Text('Hello'),
+);
 ```
+
+## Examples
+
+### A shared radius constant
+
+Once the expression is const-capable, it can be hoisted to a top-level constant
+and reused:
+
+```dart
+// Don't — a new object per call site, per build
+ClipRRect(
+  borderRadius: BorderRadius.circular(12),
+  child: const Text('Clipped'),
+);
+
+// Do
+const kCardRadius = BorderRadius.all(Radius.circular(12));
+
+ClipRRect(borderRadius: kCardRadius, child: const Text('Clipped'));
+```
+
+### Any argument shape is reported
+
+The radius does not have to be a literal — the rule reports the factory call
+itself:
+
+```dart
+// Don't
+final radius = BorderRadius.circular(spacing * 2);
+
+// Do
+final radius = BorderRadius.all(Radius.circular(spacing * 2));
+```
+
+Here the value is not constant, so `const` is not available — but the explicit
+form is still what the rule asks for, and it becomes const the moment `spacing`
+does.
+
+## Known limitations
+
+**The fix does not add `const` for you.** It rewrites
+`BorderRadius.circular(r)` into `BorderRadius.all(Radius.circular(r))` and
+stops there. Adding the keyword is the SDK's
+[`prefer_const_constructors`](https://dart.dev/tools/linter-rules/prefer_const_constructors)
+job — turn that on to get the second half of the win.
+
+**Only `BorderRadius.circular` is matched.** `BorderRadius.horizontal`,
+`BorderRadius.vertical` and `BorderRadius.only` are factories too, but they take
+`Radius` arguments rather than doubles, so there is no mechanical rewrite to
+offer.
 
 ## Configuration
 

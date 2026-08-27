@@ -17,65 +17,161 @@ When one Bloc depends directly on another, you create a hidden coupling that mak
 
 **See also:** [Bloc architecture](https://bloclibrary.dev/architecture/)
 
-## Don't
+## Examples
+
+### One bloc listening to another's stream
+
+The motivating shape: `TimerBloc` wants to react when the counter changes, so it takes the `CounterBloc` and subscribes to its state stream. Now `TimerBloc` cannot be constructed or tested without a live `CounterBloc`, and the subscription outlives neither cleanly.
 
 ```dart
+// Don't
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 
-abstract class CounterEvent {}
+sealed class CounterEvent {}
 
 class Increment extends CounterEvent {}
 
-abstract class TimerEvent {}
+sealed class TimerEvent {}
+
+class CounterChanged extends TimerEvent {
+  CounterChanged(this.value);
+
+  final int value;
+}
+
+class CounterBloc extends Bloc<CounterEvent, int> {
+  CounterBloc() : super(0) {
+    on<Increment>((event, emit) => emit(state + 1));
+  }
+}
+
+class TimerBloc extends Bloc<TimerEvent, int> {
+  TimerBloc(this.counterBloc) : super(0) {          // LINT on `counterBloc`
+    on<CounterChanged>((event, emit) => emit(event.value));
+    _subscription = counterBloc.stream.listen((v) => add(CounterChanged(v)));
+  }
+
+  final CounterBloc counterBloc;
+
+  late final StreamSubscription<int> _subscription;
+
+  @override
+  Future<void> close() {
+    _subscription.cancel();
+    return super.close();
+  }
+}
+```
+
+Put the shared data in a repository both blocs read, and let each own its own subscription to it:
+
+```dart
+// Do
+import 'dart:async';
+
+import 'package:bloc/bloc.dart';
+
+sealed class CounterEvent {}
+
+class Increment extends CounterEvent {}
+
+sealed class TimerEvent {}
+
+class CounterChanged extends TimerEvent {
+  CounterChanged(this.value);
+
+  final int value;
+}
+
+class CounterRepository {
+  final _controller = StreamController<int>.broadcast();
+
+  Stream<int> get changes => _controller.stream;
+
+  int value = 0;
+
+  void increment() => _controller.add(++value);
+}
+
+class CounterBloc extends Bloc<CounterEvent, int> {
+  CounterBloc(this.repository) : super(0) {
+    on<Increment>((event, emit) {
+      repository.increment();
+      emit(repository.value);
+    });
+  }
+
+  final CounterRepository repository;
+}
+
+class TimerBloc extends Bloc<TimerEvent, int> {
+  TimerBloc(this.repository) : super(0) {
+    on<CounterChanged>((event, emit) => emit(event.value));
+    _subscription = repository.changes.listen((v) => add(CounterChanged(v)));
+  }
+
+  final CounterRepository repository;
+
+  late final StreamSubscription<int> _subscription;
+
+  @override
+  Future<void> close() {
+    _subscription.cancel();
+    return super.close();
+  }
+}
+```
+
+### Cubits count too, in both directions
+
+The rule matches any constructor parameter assignable to `BlocBase` — so a Cubit taking a Bloc, a Bloc taking a Cubit, and a named parameter are all reported:
+
+```dart
+// Don't
+import 'package:bloc/bloc.dart';
+
+sealed class CounterEvent {}
 
 class CounterBloc extends Bloc<CounterEvent, int> {
   CounterBloc() : super(0);
 }
 
-// Bloc depends on another Bloc
-class TimerBloc extends Bloc<TimerEvent, int> {
-  final CounterBloc counterBloc;
-
-  TimerBloc(this.counterBloc) : super(0);
+class SettingsCubit extends Cubit<bool> {
+  SettingsCubit() : super(false);
 }
 
-// Cubit depends on a Bloc
 class SummaryCubit extends Cubit<int> {
-  final CounterBloc counterBloc;
+  SummaryCubit(this.counterBloc) : super(0);        // LINT on `counterBloc`
 
-  SummaryCubit(this.counterBloc) : super(0);
+  final CounterBloc counterBloc;
+}
+
+class ReportCubit extends Cubit<int> {
+  ReportCubit({required this.settings}) : super(0); // LINT on `settings`
+
+  final SettingsCubit settings;
 }
 ```
 
-## Do
+### Coordinate in the widget layer instead
+
+When the interaction is one-off rather than continuous, do not wire the blocs together at all — let the widget that already has both read one and dispatch to the other:
 
 ```dart
-import 'package:bloc/bloc.dart';
-
-abstract class CounterEvent {}
-
-class Increment extends CounterEvent {}
-
-abstract class TimerEvent {}
-
-// Depend on a repository instead
-class CounterRepository {
-  int getValue() => 0;
-}
-
-class CounterBloc extends Bloc<CounterEvent, int> {
-  final CounterRepository repository;
-
-  CounterBloc(this.repository) : super(0) {
-    on<Increment>((event, emit) => emit(state + 1));
-  }
-}
-
-// No external Bloc dependencies
-class IndependentBloc extends Bloc<TimerEvent, int> {
-  IndependentBloc() : super(0);
-}
+// Do
+BlocListener<CounterBloc, int>(
+  listener: (context, count) {
+    context.read<TimerBloc>().add(CounterChanged(count));
+  },
+  child: const TimerView(),
+)
 ```
+
+## Known limitations
+
+Only constructor parameters are checked. A bloc that reaches another one through a service locator inside its body (`getIt<CounterBloc>()`) has the same coupling but is invisible to this rule — there is no parameter to type-check.
 
 ## Configuration
 

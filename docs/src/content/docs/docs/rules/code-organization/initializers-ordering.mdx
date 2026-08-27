@@ -12,39 +12,11 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
 
-This rule flags a constructor whose field initializers are not in the same order as the fields they assign.
+Flags a constructor whose field initializers are not in the same order as the fields they assign.
 
-Unlike its ordering siblings this rule has a **useful default**: it matches the initializer list against the class's own field declaration order rather than against an alphabet. That order is already a decision the class made, so following it costs nothing and makes a missing initializer visible as a gap rather than as a name buried in a differently-ordered list.
+Unlike its ordering siblings this rule **works out of the box**: with no `order:` set it matches the initializer list against the class's own field declaration order. That order is already a decision the class made, so following it costs nothing and makes a missing initializer visible as a gap rather than as a name buried in a differently-ordered list.
 
-Initializers that are not plain field assignments — `super()`, `assert()`, a redirect — are skipped, since their position is fixed by the language or by intent.
-
-This rule is in the **`pedantic`** preset.
-
-## Don't
-
-```dart
-class Point {
-  final int x;
-  final int y;
-
-  Point(int a, int b) : y = b, x = a;
-}
-```
-
-## Do
-
-```dart
-class Point {
-  final int x;
-  final int y;
-
-  Point(int a, int b) : x = a, y = b;
-}
-```
-
-## Enabling this rule
-
-This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:
+This rule is in the **`pedantic`** preset. Enable it in any other preset by name:
 
 ```yaml
 # many_lints.yaml
@@ -53,35 +25,100 @@ rules:
     enabled: true
 ```
 
-## Options
+## Don't
 
-<Tabs syncKey="many-lints-config-file">
-<TabItem label="analysis_options.yaml">
+```dart
+class Invoice {
+  final String id;
+  final DateTime issuedAt;
+  final int total;
 
-```yaml
-# analysis_options.yaml
-many_lints:
-  rules:
-    initializers_ordering:
-      order: alphabetical
+  // The initializers run id..total, but they are written total, id, issuedAt.
+  Invoice(String reference, DateTime when, int amount)
+    : total = amount,
+      id = reference,
+      issuedAt = when;
+}
 ```
 
-</TabItem>
-<TabItem label="many_lints.yaml">
+## Do
+
+```dart
+class Invoice {
+  final String id;
+  final DateTime issuedAt;
+  final int total;
+
+  Invoice(String reference, DateTime when, int amount)
+    : id = reference,
+      issuedAt = when,
+      total = amount;
+}
+```
+
+## Examples
+
+### `super()`, `assert()` and redirects are skipped
+
+Only plain field assignments are ordered. The others have a position fixed by the language or by intent, so they are ignored and do not break the run around them:
+
+```dart
+class Base {
+  Base(this.kind);
+
+  final String kind;
+}
+
+class Payment extends Base {
+  final String id;
+  final int amount;
+
+  Payment(this.id, this.amount)
+    : assert(amount > 0),
+      super('payment');
+}
+```
+
+### Sort by name instead of by field order
+
+Set `order:` when the class's field order is not the one you want the initializer list to follow:
 
 ```yaml
-# many_lints.yaml
 rules:
   initializers_ordering:
     order: alphabetical
 ```
 
-</TabItem>
-</Tabs>
+```dart
+class Point {
+  // Declared y-then-x, but with `order: alphabetical` the initializers are
+  // compared against the alphabet, not against this.
+  final int y;
+  final int x;
+
+  // Don't
+  Point(int a, int b) : y = b, x = a;
+
+  // Do
+  Point.at(int a, int b) : x = a, y = b;
+}
+```
+
+## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `order` | string | `—` | Sort by name instead of by field order: `alphabetical`, `alphabetical_case_sensitive` or `by_length` |
+| `order` | string | *(field declaration order)* | Sort by name instead: `alphabetical`, `alphabetical_case_sensitive` or `by_length` |
+
+## Known limitations
+
+**An initializer for something the class does not declare as a field stops the check.** Assigning an inherited field or a setter gives the rule no declared position to compare against, so it leaves the whole constructor alone rather than order the rest around it. This only applies to the default mode; with `order:` set, names are compared to each other and nothing needs to be declared locally.
+
+**Fewer than two field initializers are never reported** — a single assignment cannot be out of order.
+
+**Only the first out-of-order initializer is reported**, so one misplaced assignment does not produce a wall of diagnostics.
+
+**No quick fix.** Initializers can depend on each other through the constructor's parameters, and reordering them is not always inert.
 
 ## Turning this rule off
 

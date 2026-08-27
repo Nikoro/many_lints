@@ -23,27 +23,58 @@ The generator turns a notifier's `build` method into the provider's create funct
 
 ## Don't
 
+A notifier where the initial value was put in a field instead of a `build`
+method. The class looks complete, and the failure surfaces as a build_runner
+error inside `counter.g.dart`:
+
 ```dart
 @riverpod
-class Counter extends _$Counter {} // LINT
+class Counter extends _$Counter { // LINT
+  int value = 0;
+
+  void increment() => value++;
+}
 ```
 
 ## Do
+
+`build()` *is* the initial state, and `state` is where it lives afterwards:
 
 ```dart
 @riverpod
 class Counter extends _$Counter {
   @override
   int build() => 0;
+
+  void increment() => state = state + 1;
 }
 ```
 
-Functional providers are not affected — they have no `build` method by design:
+A notifier that starts from other providers builds from them:
+
+```dart
+@riverpod
+class CartTotal extends _$CartTotal {
+  @override
+  double build() {
+    final items = ref.watch(cartItemsProvider);
+    return items.fold(0, (sum, item) => sum + item.price);
+  }
+}
+```
+
+## Known limitations
+
+Only `@riverpod`-annotated **classes** are checked. Functional providers have
+no `build` method by design and are never reported:
 
 ```dart
 @riverpod
 int counter(Ref ref) => 0;
 ```
+
+The check is for a member named `build`, whatever its shape. A `build` field or
+getter satisfies it even though the generator wants a method.
 
 ## Configuration
 

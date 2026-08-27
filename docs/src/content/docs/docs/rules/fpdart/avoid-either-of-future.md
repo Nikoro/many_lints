@@ -23,23 +23,52 @@ The pipeline has to enter the async world at that point, which is exactly what `
 
 ## Don't
 
+`validate` is synchronous, so mapping it with an async function does not make
+the pipeline async — it parks a running `Future` inside the success channel,
+where the error channel no longer covers it:
+
 ```dart
+class Failure {
+  const Failure(this.message);
+
+  final String message;
+}
+
+class LeagueDraft {
+  const LeagueDraft(this.name);
+
+  final String name;
+}
+
+class League {
+  const League(this.name);
+
+  final String name;
+}
+
+Either<Failure, LeagueDraft> validate(LeagueDraft draft) => Either.of(draft);
+
+Future<League> saveLeague(LeagueDraft draft) async => League(draft.name);
+
 Either<Failure, Future<League>> save(LeagueDraft draft) =>
-    validate(draft).map((valid) => api.saveLeague(valid));
+    validate(draft).map((valid) => saveLeague(valid));
 ```
+
+Every `fold` written downstream sees a `Right` — even when the future inside it
+has already failed.
 
 ## Do
 
-Convert once, early, then keep chaining in the async world:
+Enter the async world at that point, then keep chaining there:
 
 ```dart
 TaskEither<Failure, League> save(LeagueDraft draft) =>
     validate(draft).toTaskEither().flatMap(
-          (valid) => TaskEither.tryCatch(
-            () => api.saveLeague(valid),
-            (e, s) => Failure.from(e),
-          ),
-        );
+      (valid) => TaskEither.tryCatch(
+        () => saveLeague(valid),
+        (error, stackTrace) => Failure('$error'),
+      ),
+    );
 ```
 
 `chainEither` is the counterpart when a synchronous validation step joins an already-async pipeline.

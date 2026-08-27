@@ -9,15 +9,11 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Collection Type</span>
 
-This rule flags a map literal whose key type is an enum but whose entries do not cover every constant of that enum.
+Flags a map literal whose key type is an enum but whose entries do not cover every constant of that enum. The diagnostic names the missing ones.
 
-## Why use this rule
+A map keyed by an enum is almost always meant as a total lookup table — labels, icons, colors, route names. A missing constant makes `map[value]` return `null` rather than fail, so the gap travels: it becomes a null-check crash, an empty label, or a `!` that throws somewhere unrelated.
 
-A map keyed by an enum is almost always intended as a total lookup table — labels, icons, colors, route names. When a constant is missing, `map[value]` returns `null` rather than failing, so the gap travels: it becomes a null-check crash, an empty label, or a `!` that throws somewhere unrelated.
-
-The bigger risk is drift. A `switch` over an enum is checked for exhaustiveness by the compiler, so adding a constant produces errors at every site that must change. A map gets no such check — add a constant and every lookup table in the codebase is quietly incomplete.
-
-**See also:** [Dart enums](https://dart.dev/language/enums)
+Adding an enum constant is where this bites. A `switch` is checked for exhaustiveness by the compiler, so a new constant produces an error at every site that must change; a map gets no such check, and every lookup table in the codebase goes quietly incomplete.
 
 ## Don't
 

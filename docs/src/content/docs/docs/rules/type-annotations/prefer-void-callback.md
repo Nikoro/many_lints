@@ -13,46 +13,76 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Type Annotations</span>
 
-Flags uses of `void Function()` that can be replaced with the `VoidCallback` typedef from `dart:ui`. The typedef is shorter, more readable, and is the standard Flutter convention for no-argument void callbacks.
+Flags `void Function()` written where the `VoidCallback` typedef from `dart:ui` would say the same thing. The quick fix replaces the type and adds the import.
 
-## Why use this rule
-
-`VoidCallback` is a well-known typedef in the Flutter framework. Using it instead of the verbose `void Function()` makes code more concise and consistent with the rest of the Flutter ecosystem. The quick fix automatically replaces the type and adds the necessary import.
-
-**See also:** [VoidCallback typedef](https://api.flutter.dev/flutter/dart-ui/VoidCallback.html)
+Only the exact shape is reported: no parameters, and a `void` return. `void Function(int)` and `int Function()` are left alone — there is no typedef for them.
 
 ## Don't
 
+A callback field on a widget, spelled out longhand:
+
 ```dart
-class BadWidget {
-  final void Function() onTap;
+class DismissButton {
+  const DismissButton({required this.onPressed, this.onLongPress});
+
+  final void Function() onPressed;
   final void Function()? onLongPress;
-
-  const BadWidget(this.onTap, this.onLongPress);
 }
+```
 
-void badParameter(void Function() callback) {}
+The same type in a function signature and a return type:
 
-void Function() badReturnType() => () {};
+```dart
+void onNextFrame(void Function() callback) {}
 
-List<void Function()> callbacks = [];
+void Function() dismissAction(String routeName) => () {};
+```
+
+And in a collection of teardown work:
+
+```dart
+final List<void Function()> disposers = [];
 ```
 
 ## Do
 
 ```dart
-class GoodWidget {
-  final VoidCallback onTap;
-  final VoidCallback? onLongPress;
+import 'dart:ui';
 
-  const GoodWidget(this.onTap, this.onLongPress);
+class DismissButton {
+  const DismissButton({required this.onPressed, this.onLongPress});
+
+  final VoidCallback onPressed;
+  final VoidCallback? onLongPress;
 }
 
-// Function types with parameters or different return types are fine:
-void goodWithParams(void Function(int value) callback) {}
-int Function() goodIntReturn = () => 0;
-Future<void> Function() goodFutureReturn = () async {};
+void onNextFrame(VoidCallback callback) {}
+
+VoidCallback dismissAction(String routeName) => () {};
+
+final List<VoidCallback> disposers = [];
 ```
+
+In a Flutter file `VoidCallback` usually needs no import of its own — it is
+re-exported by `package:flutter/foundation.dart` and by `material.dart`.
+
+### Shapes that are never reported
+
+`VoidCallback` is exactly `void Function()`, so anything with a parameter or a
+different return type has no typedef to swap in:
+
+```dart
+// Takes an argument — that family is `ValueChanged<T>`.
+void Function(int index) onSelected = (_) {};
+
+// Returns a value.
+int Function() itemCount = () => 0;
+
+// Asynchronous — that one is `AsyncCallback`; see prefer_async_callback.
+Future<void> Function() refresh = () async {};
+```
+
+**See also:** [VoidCallback typedef](https://api.flutter.dev/flutter/dart-ui/VoidCallback.html)
 
 ## Configuration
 

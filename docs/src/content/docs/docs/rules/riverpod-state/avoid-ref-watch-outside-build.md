@@ -28,57 +28,117 @@ The correct alternative depends on intent. For a one-off read in a callback, use
 
 This rule is the counterpart to [`avoid_ref_read_inside_build`](/many_lints/docs/rules/riverpod-state/avoid-ref-read-inside-build/): together they express the rule that subscribing belongs in `build` and reading once belongs outside it.
 
-The two ecosystems are told apart by the **receiver's resolved type**, not by its name — see the sibling rule for what that buys.
-
 **See also:** [Riverpod refs](https://riverpod.dev/docs/concepts2/refs), [provider: read vs watch](https://pub.dev/packages/provider)
 
 ## Don't
 
+Seeding a text field from a provider in `initState`. `watch` here registers a
+subscription no build owns, so it fires at times the widget cannot handle — and
+under `package:provider` it does not even get that far, because
+`context.watch<T>()` throws when called from `initState`:
+
 ```dart
-// Riverpod
-class MyState extends ConsumerState<MyWidget> {
+final userNameProvider = StateProvider<String>((ref) => '');
+
+class _ProfileFormState extends ConsumerState<ProfileForm> {
+  final _controller = TextEditingController();
+
   @override
   void initState() {
     super.initState();
-    // Subscription created outside a build — leaks and misbehaves
-    final value = ref.watch(someProvider);
-  }
-
-  void onButtonTap() {
-    // Also wrong: a callback should not subscribe
-    final value = ref.watch(someProvider);
+    _controller.text = ref.watch(userNameProvider); // LINT
   }
 
   @override
-  Widget build(BuildContext context) => const SizedBox();
+  Widget build(BuildContext context) => TextField(controller: _controller);
+}
+```
+
+A handler that subscribes is the same mistake, one lifecycle later:
+
+```dart
+class _CheckoutPageState extends ConsumerState<CheckoutPage> {
+  void _onPayPressed() {
+    final total = ref.watch(cartTotalProvider); // LINT
+    Navigator.of(context).pushNamed('/pay', arguments: total);
+  }
+
+  @override
+  Widget build(BuildContext context) => ElevatedButton(
+    onPressed: _onPayPressed,
+    child: const Text('Pay'),
+  );
 }
 ```
 
 ## Do
 
+Read once where you want the value now, and subscribe in `build`:
+
 ```dart
-class MyState extends ConsumerState<MyWidget> {
-  void onButtonTap() {
-    // One-off read in a callback
-    final value = ref.read(someProvider);
+final userNameProvider = StateProvider<String>((ref) => '');
+
+class _ProfileFormState extends ConsumerState<ProfileForm> {
+  final _controller = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.text = ref.read(userNameProvider);
   }
 
   @override
-  Widget build(BuildContext context) {
-    // Subscribe here — this is what watch is for
-    final value = ref.watch(someProvider);
+  Widget build(BuildContext context) => TextField(controller: _controller);
+}
+```
 
-    // React to changes with a side effect
-    ref.listen(someProvider, (previous, next) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Changed to $next')),
-      );
+```dart
+class _CheckoutPageState extends ConsumerState<CheckoutPage> {
+  void _onPayPressed() {
+    final total = ref.read(cartTotalProvider);
+    Navigator.of(context).pushNamed('/pay', arguments: total);
+  }
+
+  @override
+  Widget build(BuildContext context) => ElevatedButton(
+    onPressed: _onPayPressed,
+    child: const Text('Pay'),
+  );
+}
+```
+
+### Reacting to a change with a side effect
+
+When you wanted the *change*, not the value, `ref.listen` is what you were
+reaching for — and it belongs in `build`:
+
+```dart
+class _OrderPageState extends ConsumerState<OrderPage> {
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(orderStatusProvider, (previous, next) {
+      if (next == OrderStatus.shipped) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Your order has shipped')),
+        );
+      }
     });
 
-    return Text(value);
+    return const SizedBox();
   }
 }
 ```
+
+## Known limitations
+
+The check descends into closures declared outside `build`, since a closure
+written in `initState` subscribes just as wrongly. A closure declared *inside*
+`build` — `onPressed: () => ref.watch(...)` — is under the build method and is
+not reported by this rule.
+
+The two ecosystems are told apart by the **receiver's resolved type**, not its
+name, so `widgetContext.watch<T>()` is caught under any receiver name while a
+field of some unrelated class you happened to call `ref` is not.
 
 ## Configuration
 

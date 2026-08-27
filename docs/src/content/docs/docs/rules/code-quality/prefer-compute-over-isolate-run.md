@@ -17,32 +17,68 @@ Flags uses of `Isolate.run()` from `dart:isolate`, which is not supported on the
 
 ## Why use this rule
 
-`Isolate.run()` throws at runtime on web targets because web browsers do not support Dart isolates. By using `compute()` instead, your code works on mobile, desktop, and web without any platform-specific conditional logic.
+`Isolate.run()` throws at runtime on web targets, because browsers do not support Dart isolates. `compute()` gives the same background execution and works on mobile, desktop and web, with no platform-specific branching.
 
 **See also:** [Flutter - compute()](https://api.flutter.dev/flutter/foundation/compute.html) | [Dart - Isolate.run()](https://api.dart.dev/stable/dart-isolate/Isolate/run.html)
 
 ## Don't
 
+Parsing a large payload off the UI thread — correct everywhere except in the browser:
+
 ```dart
 import 'dart:isolate';
 
-Future<void> runWork() async {
-  final result = await Isolate.run(() => expensiveWork());
-  final result2 = await Isolate.run(() async => expensiveWork());
-  final result3 = await Isolate.run(expensiveWork);
-  final result4 = await Isolate.run<int>(() => expensiveWork());
+class ReportParser {
+  Future<int> parse(String csv) async {
+    return Isolate.run(() => _countRows(csv));
+  }
+
+  static int _countRows(String csv) => csv.split('\n').length;
 }
 ```
 
 ## Do
 
+`compute()` takes a one-argument callback and its message, so the closure gains a parameter. The quick fix does this rewrite for you and adds the `foundation.dart` import:
+
 ```dart
 import 'package:flutter/foundation.dart';
 
-Future<void> runWork() async {
-  final result = await compute((_) => expensiveWork(), null);
+class ReportParser {
+  Future<int> parse(String csv) async {
+    return compute((_) => _countRows(csv), null);
+  }
+
+  static int _countRows(String csv) => csv.split('\n').length;
 }
 ```
+
+Better still, pass the payload as the message so nothing is captured by the closure:
+
+```dart
+import 'package:flutter/foundation.dart';
+
+class ReportParser {
+  Future<int> parse(String csv) => compute(_countRows, csv);
+
+  static int _countRows(String csv) => csv.split('\n').length;
+}
+```
+
+### What the quick fix does to each callback shape
+
+| You wrote | The fix produces |
+|-----------|------------------|
+| `Isolate.run(() => work())` | `compute((_) => work(), null)` |
+| `Isolate.run(() async => work())` | `compute((_) async => work(), null)` |
+| `Isolate.run(() { ... })` | `compute((_) { ... }, null)` |
+| `Isolate.run(work)` | `compute((_) => work(), null)` |
+
+## Known limitations
+
+**Only `Isolate.run` is reported**, and only when `Isolate` resolves to `dart:isolate`. A class of your own named `Isolate` is left alone.
+
+**Other isolate APIs are not covered.** `Isolate.spawn`, `ReceivePort` and friends have no `compute` equivalent and are never reported.
 
 ## Configuration
 

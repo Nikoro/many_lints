@@ -13,37 +13,62 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule flags a class that could declare a `const` constructor but does not.
 
-A `const` constructor is what lets a value be built once at compile time and shared, rather than allocated at every call. In Flutter that is the difference between a widget the framework can skip rebuilding and one it cannot — which is why `prefer_const_constructors` is in every lint preset. But that rule only fires where a `const` constructor **already exists**; this one asks for the constructor in the first place.
-
-A class qualifies when every field is `final`, it declares exactly one generative constructor, that constructor's body is empty, its superclass offers a `const` constructor to chain to, and every initializer is itself const-evaluable.
-
-That last check matters more than it looks: `_random = random ?? Random.secure()` is a field initializer whose value is a **call**, so suggesting `const` for it would produce code that does not build. Both of the rule's initial hits on a production codebase were exactly that shape.
-
-Classes marked `@immutable` are skipped, since the SDK's `prefer_const_constructors_in_immutables` already covers them.
+A `const` constructor lets a value be built once at compile time and shared, rather than allocated at every call. In Flutter that is the difference between a widget the framework can skip rebuilding and one it cannot — which is why `prefer_const_constructors` is in every lint preset. But that rule only fires where a `const` constructor **already exists**; this one asks for the constructor in the first place.
 
 This rule is in the **`pedantic`** preset.
 
 ## Don't
 
-```dart
-class Point {
-  final int x;
-  final int y;
+A value class every call site has to allocate:
 
-  Point(this.x, this.y);
+```dart
+class ApiError {
+  final int status;
+  final String message;
+
+  ApiError(this.status, this.message);
 }
 ```
 
 ## Do
 
 ```dart
-class Point {
-  final int x;
-  final int y;
+class ApiError {
+  final int status;
+  final String message;
 
-  const Point(this.x, this.y);
+  const ApiError(this.status, this.message);
 }
 ```
+
+Callers can now write `const ApiError(404, 'Not found')`, and the SDK's `prefer_const_constructors` will start telling them to.
+
+## Known limitations
+
+A class qualifies only when **all** of these hold, so most classes that look eligible are not:
+
+**Every instance field is `final`.** One `var` and the class cannot be const. Static fields do not count.
+
+**There is exactly one generative constructor**, and it is not already `const`. With none there is nothing to mark; with several, choosing which gets `const` is a judgement this rule will not make. Factory constructors are ignored.
+
+**Its body is empty and it does not redirect.** A redirecting constructor's constness is decided by its target.
+
+**Every initializer is const-evaluable.** This is the one that catches people out — a field initializer whose value is a *call* cannot be const, and suggesting `const` for it produces code that does not build:
+
+```dart
+// Not reported: Random.secure() is a call, so `const` would not compile.
+class TokenSource {
+  final Random _random;
+
+  TokenSource({Random? random}) : _random = random ?? Random.secure();
+}
+```
+
+Literals, parameters, other constants, `const Foo()`, and arithmetic or conditionals over those all pass. A string interpolation, a bare `Foo()` or a cascade does not.
+
+**The superclass offers a `const` constructor to chain to.** A const constructor can only call a const super constructor, so a class extending one without is skipped.
+
+**Abstract classes are skipped**, and so are classes marked `@immutable` — the SDK's `prefer_const_constructors_in_immutables` already owns those, and the two must never both report.
 
 ## Enabling this rule
 

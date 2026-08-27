@@ -9,11 +9,13 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-This rule flags multi-child widgets like `Column`, `Row`, and `Wrap` that contain only a single child in their `children` list. A multi-child layout widget with one child adds unnecessary complexity and layout overhead for something that could be expressed more simply.
+Flags a multi-child widget whose `children` list holds exactly one element.
 
-## Why use this rule
+A `Column` with one child does the same thing as the child on its own, plus a layout pass and a level of nesting. Whatever you actually wanted — alignment, padding, sizing — has a single-child widget that says so in its name.
 
-A `Column` or `Row` with a single child does the same thing as just using that child directly, but adds an extra layout pass and makes the code harder to read. If you need alignment, use `Align` or `Center`. If you need padding, use `Padding`. Using the right widget for the job makes intent clearer and keeps the widget tree lean.
+Reported for `Column`, `Row`, `Wrap`, `Flex`, `SliverList`, `SliverMainAxisGroup`, `SliverCrossAxisGroup`, `SliverChildListDelegate`, and `MultiSliver` from `sliver_tools`.
+
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and `preset: pedantic`. No configuration.
 
 **See also:** [Column](https://api.flutter.dev/flutter/widgets/Column-class.html) | [Row](https://api.flutter.dev/flutter/widgets/Row-class.html)
 
@@ -22,7 +24,6 @@ A `Column` or `Row` with a single child does the same thing as just using that c
 ```dart
 Scaffold(
   body: Column(
-    // Column with a single child is unnecessary
     children: [Text('I am the only child')],
   ),
 )
@@ -32,23 +33,69 @@ Scaffold(
 
 ```dart
 Scaffold(
-  // Use the child widget directly
   body: Text('I am the only child'),
 )
 ```
 
-## Configuration
+### Reach for the single-child widget that names the intent
 
-This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
+Most one-child `Column`s exist for an alignment or spacing property. Each has a direct replacement:
 
-```yaml
-# many_lints.yaml
-rules:
-  avoid_single_child_in_multi_child_widgets: true
+```dart
+// Don't
+final bad = Column(
+  mainAxisAlignment: MainAxisAlignment.center,
+  children: [Text('Loading')],
+);
+
+// Do
+final good = Center(child: Text('Loading'));
 ```
 
-To turn it off again:
+```dart
+// Don't
+final bad = Row(
+  children: [
+    Padding(padding: EdgeInsets.all(16), child: Text('Total')),
+  ],
+);
+
+// Do
+final good = Padding(padding: EdgeInsets.all(16), child: Text('Total'));
+```
+
+### Slivers too
+
+```dart
+// Don't
+final bad = CustomScrollView(
+  slivers: [
+    SliverMainAxisGroup(
+      slivers: [SliverToBoxAdapter(child: Text('Header'))],
+    ),
+  ],
+);
+
+// Do
+final good = CustomScrollView(
+  slivers: [SliverToBoxAdapter(child: Text('Header'))],
+);
+```
+
+## Known limitations
+
+A list whose single element is a spread (`...items`), a collection-`for`, or a map entry is **not** reported — the number of children at run time is not one:
+
+```dart
+// Not reported: `...items` may expand to any number of children
+Column(children: [...items])
+```
+
+An `if` element counts as one child only when every branch it has is itself a plain widget, so `Column(children: [if (isWide) Text('a') else Text('b')])` is reported while `Column(children: [if (isWide) ...wideParts])` is not.
+
+Only a list *literal* is examined. `Column(children: buildRows())` is opaque and left alone.
+
+## Turning this rule off
 
 ```yaml
 # many_lints.yaml

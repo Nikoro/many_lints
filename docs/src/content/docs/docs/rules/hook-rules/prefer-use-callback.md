@@ -13,58 +13,93 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Hook Rules</span>
 
-Flags uses of `useMemoized` where the factory function returns another function. When you are memoizing a callback, `useCallback` is the semantically correct hook to use. `useMemoized` is designed for expensive non-function values.
+This rule flags `useMemoized(() => someFunction)` — a `useMemoized` whose factory returns a function. `useCallback` exists for exactly that, and the quick fix swaps it in.
 
 ## Why use this rule
 
-`useCallback` communicates intent more clearly than `useMemoized(() => someFunction)`. It signals that you are memoizing a callback, not computing an expensive value. Using the right hook improves readability and aligns with the hooks naming conventions from React and flutter_hooks.
+`useMemoized(() => () { ... })` has two layers of closure and only one of them means anything: the outer one is ceremony the hook demands, the inner one is the callback you wanted. `useCallback` takes the callback directly, so what you read is what gets memoised.
 
-**See also:** [flutter_hooks - useCallback](https://pub.dev/documentation/flutter_hooks/latest/flutter_hooks/useCallback.html)
+**See also:** [flutter_hooks — useCallback](https://pub.dev/documentation/flutter_hooks/latest/flutter_hooks/useCallback.html)
 
 ## Don't
 
 ```dart
-class BadWidget extends HookWidget {
-  const BadWidget({super.key});
+import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+
+class SubmitButton extends HookWidget {
+  const SubmitButton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // useMemoized wrapping a closure
-    final onPressed = useMemoized(
+    // A closure wrapped in a closure
+    final onPressed = useMemoized(              // LINT
       () => () {
-        debugPrint('pressed');
+        debugPrint('submitted');
       },
     );
 
-    // useMemoized wrapping a tear-off
-    final onTap = useMemoized(() => _handleTap);
-    return ElevatedButton(onPressed: onPressed, child: const Text('Tap'));
+    return ElevatedButton(onPressed: onPressed, child: const Text('Submit'));
   }
-
-  void _handleTap() => debugPrint('tapped');
 }
 ```
 
 ## Do
 
 ```dart
-class GoodWidget extends HookWidget {
-  const GoodWidget({super.key});
+class SubmitButton extends HookWidget {
+  const SubmitButton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // useCallback for memoizing callbacks
     final onPressed = useCallback(() {
-      debugPrint('pressed');
-    }, []);
+      debugPrint('submitted');
+    }, const []);
 
-    return ElevatedButton(onPressed: onPressed, child: const Text('Tap'));
+    return ElevatedButton(onPressed: onPressed, child: const Text('Submit'));
   }
 }
-
-// useMemoized is fine for non-function values:
-final expensiveValue = useMemoized(() => List.generate(100, (i) => i));
 ```
+
+## A returned tear-off counts too
+
+```dart
+// Don't
+final onTap = useMemoized(() => _handleTap);          // LINT
+
+// Do
+final onTap = useCallback(_handleTap, const []);
+```
+
+## `useMemoized` is right for non-function values
+
+Nothing is reported when the factory returns data — that is what the hook is for:
+
+```dart
+// Not reported
+final rows = useMemoized(
+  () => items.map((i) => i.toUpperCase()).toList(),
+  [items],
+);
+
+final total = useMemoized(() => items.length * 2, [items]);
+```
+
+## Known limitations
+
+**Only a single-expression or single-`return` factory is checked.** A factory that does other work before returning the closure is left alone, even though `useCallback` may still fit:
+
+```dart
+// Not reported — the block has more than one statement
+final onTap = useMemoized(() {
+  final label = title.toUpperCase();
+  return () => debugPrint(label);
+});
+```
+
+**The hook is matched by name.** `useMemoized` and `_useMemoized` are recognised wherever they are declared; a memoisation helper under another name is not.
+
+**The factory must be written inline.** `useMemoized(buildCallback)`, passing an existing function rather than a literal closure, is not inspected.
 
 ## Configuration
 

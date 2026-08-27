@@ -27,19 +27,68 @@ By default only expressions inside an fpdart pipeline are reported, since that i
 
 ## Don't
 
+`players.first` throws `StateError` on an empty list, and that throw escapes
+the error channel — past every `match` the caller wrote:
+
 ```dart
-TaskEither<Failure, Player> firstPlayer(List<Player> players) =>
+class Player {
+  const Player(this.name);
+
+  final String name;
+}
+
+class NoPlayersFailure {
+  const NoPlayersFailure();
+}
+
+TaskEither<NoPlayersFailure, Player> firstPlayer(List<Player> players) =>
     TaskEither.of(players.first);
 ```
 
 ## Do
 
+`head` returns `None`, so the empty case becomes a value the pipeline carries:
+
 ```dart
-TaskEither<Failure, Player> firstPlayer(List<Player> players) =>
+TaskEither<NoPlayersFailure, Player> firstPlayer(List<Player> players) =>
     players.head.toEither(() => const NoPlayersFailure()).toTaskEither();
 ```
 
-Since 1.2.0 the total accessors go further than `head`: `singleOption`, `elementAtOption(i)`, `singleWhereOption` and `lastWhereOption` cover the rest of the throwing family, and `map.lookup(key)` replaces `map[key]!`.
+Since 1.2.0 the total accessors go further than `head`: `singleOption`,
+`elementAtOption(i)`, `singleWhereOption` and `lastWhereOption` cover the rest
+of the throwing family, and `map.lookup(key)` replaces `map[key]!`.
+
+```dart
+Option<Player> playerAt(List<Player> players, int index) =>
+    players.elementAtOption(index);
+
+Option<String> setting(Map<String, String> settings, String key) =>
+    settings.lookup(key);
+```
+
+### Outside a pipeline
+
+By default only expressions inside an fpdart pipeline are reported, so an
+ordinary helper is left alone:
+
+```dart
+Player captain(List<Player> players) => players.first; // not reported
+```
+
+With `report_outside_pipelines: true`:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_safe_collection_access:
+    report_outside_pipelines: true
+```
+
+that call is reported too, and the answer is to make the absence explicit:
+
+```dart
+Option<Player> captain(List<Player> players) => players.head;
+```
 
 ## Quick fix
 

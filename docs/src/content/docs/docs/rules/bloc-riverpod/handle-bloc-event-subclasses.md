@@ -19,11 +19,18 @@ The gap almost always appears later: a new event class joins the hierarchy and t
 
 **See also:** [bloc: Bloc.on](https://pub.dev/documentation/bloc/latest/bloc/Bloc/on.html)
 
-## Don't
+## Examples
+
+### A new event class with no handler
+
+The usual shape: `Decrement` was added to the hierarchy and the matching `on<Decrement>` was never written. It compiles, `add(Decrement())` returns normally, and nothing happens.
 
 ```dart
+// Don't
 sealed class CounterEvent {}
+
 class Increment extends CounterEvent {}
+
 class Decrement extends CounterEvent {}
 
 class CounterBloc extends Bloc<CounterEvent, int> {
@@ -34,9 +41,8 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 }
 ```
 
-## Do
-
 ```dart
+// Do — one registration per subclass
 class CounterBloc extends Bloc<CounterEvent, int> {
   CounterBloc() : super(0) {
     on<Increment>((event, emit) => emit(state + 1));
@@ -45,17 +51,51 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 }
 ```
 
-A handler for the base type covers every subclass:
+### One handler for the whole hierarchy
+
+Registering the sealed base covers every subclass, so the rule reports nothing. Switch on the event inside — the `sealed` base makes the `switch` exhaustive, so the compiler catches the next new event class for you:
 
 ```dart
-on<CounterEvent>((event, emit) => emit(state));
+class CounterBloc extends Bloc<CounterEvent, int> {
+  CounterBloc() : super(0) {
+    on<CounterEvent>((event, emit) {
+      emit(switch (event) {
+        Increment() => state + 1,
+        Decrement() => state - 1,
+      });
+    });
+  }
+}
 ```
+
+Do not write the empty form `on<CounterEvent>((event, emit) => emit(state))` just to silence this rule. It satisfies this check but is reported by [`emit_new_bloc_state_instances`](/many_lints/docs/rules/bloc-riverpod/emit-new-bloc-state-instances/), which is in the `core` preset and therefore on in every configuration that turns anything on — `emit(state)` re-emits the current instance, which Bloc drops as equal, so it also does nothing at runtime.
+
+### An open hierarchy is never reported
+
+Only **sealed** event bases are checked. A subtype of an open class may live in any library, so "every subtype" cannot be computed:
+
+```dart
+// Not reported — `OpenEvent` is not sealed, so `OpenDecrement` is invisible
+class OpenEvent {}
+
+class OpenIncrement extends OpenEvent {}
+
+class OpenDecrement extends OpenEvent {}
+
+class OpenBloc extends Bloc<OpenEvent, int> {
+  OpenBloc() : super(0) {
+    on<OpenIncrement>((event, emit) => emit(state + 1));
+  }
+}
+```
+
+Marking the base `sealed` is what turns the check on.
 
 ## Known limitations
 
-Only **sealed** event hierarchies are checked. A sealed type may only be extended within its own library, so its subtypes are knowable. For an open base class a subtype may live in any library, so "every subtype" cannot be computed and a report would be guesswork — make the event base `sealed` to get this check, which is good practice regardless.
+Handlers are found by scanning the Bloc class for `on<E>(...)` calls, so a registration made outside the class, or through a helper method that forwards to `on`, is not detected and the event is reported as unhandled.
 
-Handlers are found by scanning the class for `on<E>(...)` calls, so a registration made outside the Bloc, or through a helper, is not detected.
+Only the event type argument of `extends Bloc<E, S>` is read. A Bloc that reaches its event type through a generic type parameter or an intermediate base class is not checked.
 
 ## Configuration
 

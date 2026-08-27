@@ -20,69 +20,91 @@ nor `Exception`.
 
 `throw Exception('upload failed')` cannot be caught by kind. Every `catch`
 downstream either swallows everything or re-inspects the message string, and
-message matching breaks the moment somebody improves the wording. That break is
-silent: the `catch` still compiles and still runs, it just stops matching.
+message matching breaks the moment somebody improves the wording — silently,
+because the `catch` still compiles and still runs.
 
-This is concrete for anything that maps failures onto behaviour — a CLI
-choosing an exit code, a client deciding whether to retry, a UI choosing
-between "check your connection" and "that file is not valid". None of those
-questions can be answered about a value whose only distinguishing feature is
-prose.
+Three things are reported:
 
-### How this differs from the SDK's `only_throw_errors`
+- `throw Exception(...)` and `throw Error(...)` — the base types, which say nothing.
+- `throw 'a string'` (or any non-throwable value).
+- `throw SomeClass(...)` where `SomeClass` implements neither `Error` nor `Exception`.
 
-Dart's [`only_throw_errors`](https://dart.dev/tools/linter-rules/only_throw_errors)
-covers the adjacent case — throwing something that is neither `Error` nor
-`Exception`, like a bare string — but is satisfied by `Exception(...)`, which
-is where most of the real damage is. This rule covers both, so enabling it
-alone is sufficient.
+An SDK type from the `allow` list is accepted, and so is any project type that
+implements `Exception` or `Error`.
+
+Dart's own [`only_throw_errors`](https://dart.dev/tools/linter-rules/only_throw_errors)
+covers the adjacent case — throwing a bare string — but is satisfied by
+`Exception(...)`, which is where most of the damage is. This rule covers both,
+so enabling it alone is sufficient.
 
 **See also:** [Dart lint: only_throw_errors](https://dart.dev/tools/linter-rules/only_throw_errors) | [Effective Dart: error handling](https://dart.dev/language/error-handling)
 
 ## Don't
 
 ```dart
-void bad() {
+class Failure {
+  const Failure(this.message);
+
+  final String message;
+}
+
+void uploadArtifact() {
   // Nothing downstream can catch just this failure.
   throw Exception('upload failed');
+}
 
+void uploadRaw() {
   // Not even an Exception.
   throw 'upload failed';
+}
 
-  // A domain object that forgot to implement Exception is just as opaque.
-  throw Failure('upload failed');
+void uploadDomain() {
+  // A domain class that forgot `implements Exception` is just as opaque:
+  // `on Failure` does not compile against a non-throwable.
+  throw const Failure('upload failed');
 }
 ```
 
 ## Do
 
+Give each failure a type, and the boundary can branch on it:
+
 ```dart
 class UploadFailure implements Exception {
-  const UploadFailure(this.message);
+  const UploadFailure(this.path);
 
-  final String message;
+  final String path;
 }
 
-void good() {
-  // A caller can catch exactly this, and nothing else.
-  throw const UploadFailure('upload failed');
+class AuthFailure implements Exception {
+  const AuthFailure();
 }
 
-void alsoGood(int port) {
-  // SDK types whose own name identifies the failure are allowed by default.
-  throw ArgumentError.value(port, 'port', 'must be positive');
+void uploadArtifact(String path) {
+  throw UploadFailure(path);
 }
 ```
 
-Catching then becomes precise, which is what makes an error taxonomy testable:
+```dart
+Future<void> run(String path) async {
+  try {
+    await upload(path);
+  } on AuthFailure {
+    exitCode = 3;
+  } on UploadFailure catch (failure) {
+    stderr.writeln('could not upload ${failure.path}');
+    exitCode = 4;
+  }
+}
+```
+
+SDK types whose own name already identifies the failure are accepted as they are:
 
 ```dart
-try {
-  await upload(artifact);
-} on AuthFailure {
-  exitCode = 3;
-} on UploadFailure {
-  exitCode = 4;
+void configure(int port) {
+  if (port <= 0) {
+    throw ArgumentError.value(port, 'port', 'must be positive');
+  }
 }
 ```
 
@@ -105,6 +127,14 @@ To keep the rule on but skip certain paths — tests often throw freely — use
 
 ## Options
 
+Both options name **`dart:core`** types only. A type from any other library —
+`TimeoutException`, or one of your own — is judged by whether it implements
+`Exception` or `Error`, which no list can override.
+
+### `additional_allow`
+
+Extends the default list. Use it to accept a core type the defaults leave out:
+
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
 
@@ -114,7 +144,7 @@ many_lints:
   rules:
     prefer_typed_exceptions:
       additional_allow:
-        - TimeoutException
+        - OutOfMemoryError
 ```
 
 </TabItem>
@@ -125,15 +155,30 @@ many_lints:
 rules:
   prefer_typed_exceptions:
     additional_allow:
-      - TimeoutException
+      - OutOfMemoryError
 ```
 
 </TabItem>
 </Tabs>
 
+### `allow`
+
+Replaces the default list outright. Use it to *narrow* the defaults — a project
+that wants every failure named, `ArgumentError` included, can empty the list:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_typed_exceptions:
+    allow: []
+```
+
+Prefer `additional_allow` for anything else: a restated default list silently
+rots when a later version of this package adds a name.
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `allow` | list of strings | see below | SDK types specific enough to throw directly. Replaces the default list |
+| `allow` | list of strings | see below | `dart:core` types specific enough to throw directly. Replaces the default list |
 | `additional_allow` | list of strings | `[]` | Adds to whichever list won, so you can extend the defaults without restating them |
 
 The default `allow` list is:
@@ -143,9 +188,7 @@ The default `allow` list is:
 `UnimplementedError`, `UnsupportedError`.
 
 Each of these is already as catchable as a hand-written class would be, so
-wrapping one adds a type without adding information. Prefer `additional_allow`
-over `allow`: a restated default list silently rots when a later version of
-this package adds a name.
+wrapping one adds a type without adding information.
 
 ## Related rules
 

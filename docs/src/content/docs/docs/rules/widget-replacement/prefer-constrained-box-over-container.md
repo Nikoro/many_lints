@@ -25,39 +25,99 @@ The SDK's [`avoid_unnecessary_containers`](https://dart.dev/tools/linter-rules/a
 
 ## Why use this rule
 
-`Container` is a convenience widget that composes many lower-level widgets internally. When you only need constraints, using `ConstrainedBox` directly avoids the overhead and communicates your intent more clearly. It also keeps the widget tree shallow and easier to reason about.
+With only `constraints` set, the single render object a `Container` produces is
+a `ConstrainedBox`. Writing it directly is one widget instead of a composition,
+and it reads as what it is. The quick fix renames the constructor; the
+`constraints:` argument moves across unchanged.
 
-**See also:** [ConstrainedBox](https://api.flutter.dev/flutter/widgets/ConstrainedBox-class.html) | [Container](https://api.flutter.dev/flutter/widgets/Container-class.html)
+**See also:** [ConstrainedBox](https://api.flutter.dev/flutter/widgets/ConstrainedBox-class.html) | [BoxConstraints](https://api.flutter.dev/flutter/rendering/BoxConstraints-class.html)
 
 ## Don't
 
 ```dart
-// Container with only constraints parameter
+// Cap how wide a label is allowed to grow.
 Container(
-  constraints: BoxConstraints(maxWidth: 200),
-  child: Text('Hello'),
+  constraints: const BoxConstraints(maxWidth: 200),
+  child: const Text('A long product name that should wrap'),
 );
-
-// Container with only constraints, no child
-Container(constraints: BoxConstraints.tightFor(width: 100));
 ```
 
 ## Do
 
 ```dart
-// Use ConstrainedBox directly
 ConstrainedBox(
-  constraints: BoxConstraints(maxWidth: 200),
-  child: Text('Hello'),
-);
-
-// Container with additional properties besides constraints is fine
-Container(
-  constraints: BoxConstraints(maxWidth: 200),
-  padding: EdgeInsets.all(8),
-  child: Text('Hello'),
+  constraints: const BoxConstraints(maxWidth: 200),
+  child: const Text('A long product name that should wrap'),
 );
 ```
+
+## Examples
+
+### A minimum tap target
+
+```dart
+// Don't
+Container(
+  constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+  child: const Icon(Icons.close),
+);
+
+// Do
+ConstrainedBox(
+  constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+  child: const Icon(Icons.close),
+);
+```
+
+### No child is still reported
+
+```dart
+// Don't
+Container(constraints: BoxConstraints.tightFor(width: 100));
+
+// Do
+ConstrainedBox(constraints: BoxConstraints.tightFor(width: 100));
+```
+
+### Consider `SizedBox` for a tight constraint
+
+If the constraint is tight in both axes, `SizedBox` says it in fewer words:
+
+```dart
+// Reported, and correct as far as this rule goes
+ConstrainedBox(
+  constraints: const BoxConstraints.tightFor(width: 100, height: 100),
+  child: child,
+);
+
+// Clearer still — and then
+// `prefer_sized_box_square` will suggest SizedBox.square(dimension: 100)
+SizedBox(width: 100, height: 100, child: child);
+```
+
+## Known limitations
+
+**`width:`/`height:` on a `Container` are not `constraints:`.** They are a
+separate pair of arguments, so this rule does not see them:
+
+```dart
+// Not reported by this rule
+Container(width: 100, height: 100, child: child);
+```
+
+**Any other argument silences it.** `padding`, `color`, `alignment`,
+`decoration` — one of them and the `Container` is doing more than constraining:
+
+```dart
+// Not reported
+Container(
+  constraints: const BoxConstraints(maxWidth: 200),
+  padding: const EdgeInsets.all(8),
+  child: const Text('Hello'),
+);
+```
+
+`key` and `child` are the exceptions; neither counts against the rule.
 
 ## Configuration
 

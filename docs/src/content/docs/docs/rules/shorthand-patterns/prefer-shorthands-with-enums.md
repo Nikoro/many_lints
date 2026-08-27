@@ -13,124 +13,99 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Shorthand Patterns</span>
 
-Flags explicit enum prefixes (e.g., `LogLevel.debug`) when the enum type can be inferred from context and a dot shorthand (`.debug`) would suffice. This applies to switch cases, switch expressions, variable declarations with explicit types, comparisons, default parameter values, and return expressions.
+This rule flags `LogLevel.debug` in a position where the expected type is already `LogLevel`, because `.debug` says the same thing. The quick fix removes the prefix.
 
-## Why use this rule
+It fires wherever the context supplies the type: switch cases and switch expression patterns, typed variable declarations, `==` comparisons, default parameter values, typed named arguments, returns from a function with a declared return type, and elements of a collection that has a real element type.
 
-When the expected enum type is already known from context, repeating the enum name adds noise without adding clarity. Dot shorthands are shorter, reduce visual clutter in switch statements and widget trees, and are the idiomatic Dart style in type-inferred positions.
-
-**See also:** [Dart language - Enums](https://dart.dev/language/enums)
+**See also:** [Dart language — dot shorthands](https://dart.dev/language/dot-shorthands)
 
 ## Don't
 
 ```dart
-enum LogLevel { debug, warning }
+enum LogLevel { debug, warning, error }
 
-void example(LogLevel? e) {
-  switch (e) {
-    case LogLevel.debug:
-      print(e);
+void configure({LogLevel threshold = LogLevel.warning}) {}   // LINT
+
+LogLevel defaultLevel() => LogLevel.debug;                    // LINT
+
+String label(LogLevel level) {
+  final LogLevel fallback = LogLevel.warning;                 // LINT
+
+  if (level == LogLevel.debug) {                              // LINT
+    return 'verbose';
   }
 
-  final v = switch (e) {
-    LogLevel.debug => 1,
-    _ => 2,
+  return switch (level) {
+    LogLevel.warning => 'warn',                               // LINT
+    _ => 'other',
   };
-
-  final LogLevel defaultLevel = LogLevel.debug;
-
-  if (e == LogLevel.debug) {}
 }
-
-void fn({LogLevel value = LogLevel.debug}) {}
-
-LogLevel levelForBad() => LogLevel.debug;
 ```
 
 ## Do
 
 ```dart
-enum LogLevel { debug, warning }
+void configure({LogLevel threshold = .warning}) {}
 
-void example(LogLevel? e) {
-  switch (e) {
-    case .debug:
-      print(e);
+LogLevel defaultLevel() => .debug;
+
+String label(LogLevel level) {
+  final LogLevel fallback = .warning;
+
+  if (level == .debug) {
+    return 'verbose';
   }
 
-  final v = switch (e) {
-    .debug => 1,
-    _ => 2,
+  return switch (level) {
+    .warning => 'warn',
+    _ => 'other',
   };
-
-  final LogLevel defaultLevel = .debug;
-
-  if (e == .debug) {}
-
-  // Collection in an untyped position — no context type, so no lint:
-  expect(rankings, equals([LogLevel.debug]));
-
-  // An explicit type argument does provide context:
-  takes(<LogLevel>[.debug]);
 }
-
-void fn({LogLevel value = .debug}) {}
-
-LogLevel levelForBad() => .debug;
-
-// Explicit prefix is fine when type cannot be inferred:
-Object asObject() => LogLevel.debug;
 ```
 
-## Collection literals need a real context type
+## Named arguments and collections
+
+A named argument with a declared enum type, and a collection whose element type is known, both give the compiler a context type:
+
+```dart
+enum LogLevel { debug, warning, error }
+
+void setLevels({required List<LogLevel> levels}) {}
+
+// Don't
+void configure() {
+  final List<LogLevel> verbose = [LogLevel.debug, LogLevel.warning];
+  setLevels(levels: [LogLevel.error]);
+
+  final Map<String, LogLevel> routes = {'api': LogLevel.warning};
+}
+
+// Do
+void configure() {
+  final List<LogLevel> verbose = [.debug, .warning];
+  setLevels(levels: [.error]);
+
+  final Map<String, LogLevel> routes = {'api': .warning};
+}
+```
+
+## Known limitations
 
 A dot shorthand is only legal where the compiler has a **downward** context
-type. Inside a collection literal that sits in a `dynamic` or `Object?`
-position, there is none — the analyzer infers the literal's type upward from
-the elements themselves:
+type. Where there is none, writing `.debug` fails to compile with
+`dot_shorthand_missing_context` — so the rule stays quiet:
 
-```dart
-// Not reported: `equals(Object? expected)` gives the list no context type.
-expect(rankings, equals([LogLevel.debug]));
+**An untyped destination.** `Object asObject() => LogLevel.debug;` and a `dynamic` or `Object?` parameter give the expression nothing to resolve against.
 
-// Writing `.debug` here would fail to compile:
-//   error: A dot shorthand can't be used where there is no context type.
-//          (dot_shorthand_missing_context)
-```
+**A collection in an untyped position.** In `expect(rankings, equals([LogLevel.debug]))`, `equals` takes `Object?`, so the list's element type is inferred upward from the elements themselves — there is no context. Give the literal an explicit type argument (`equals(<LogLevel>[.debug])`) and it is reported.
 
-The rule reports inside a collection only when the element type comes from a
-genuine context — a typed variable, a typed parameter, or an explicit type
-argument:
+**A type argument solved from the argument.** In `Box(items: const [LogLevel.debug])` the analyzer infers `T` *from* the element. The type displays as `List<LogLevel>`, but it is upward inference and the shorthand would not compile. `Box<LogLevel>(items: const [.debug])` pins the type argument and is reported.
 
-```dart
-void collectionExamples() {
-  final List<LogLevel> list = [.debug]; // reported
-  takes(items: [.debug]); // reported (typed named argument)
-  takes(<LogLevel>[.debug]); // reported (explicit type argument)
+**Only the half that matches.** In `Map<LogLevel, Object>`, the key position has a context type and the value position does not: `{LogLevel.first: LogLevel.second}` reports the key only.
 
-  final Map<LogLevel, String> map = {.debug: 'a'}; // key has context
-}
-```
+**Plain assignment to an already-declared variable.** `value = LogLevel.debug;` after `LogLevel value;` is not reported.
 
-The same applies to a generic parameter whose type argument is solved *from* the
-argument. The analyzer reports `List<LogLevel>` there, but only because it
-inferred `T` from the element itself — so there is no downward context and the
-shorthand would not compile:
-
-```dart
-class Box<T> {
-  const Box({required this.items});
-  final List<T> items;
-}
-
-void boxExamples() {
-  // Not reported: `T` is inferred, so there is no context type.
-  Box(items: const [LogLevel.debug]);
-
-  // Reported: the type argument imposes a context.
-  Box<LogLevel>(items: const [.debug]);
-}
-```
+**Access through an import prefix.** `logging.LogLevel.debug` is skipped, since the leading name is the library prefix rather than the enum.
 
 ## Configuration
 

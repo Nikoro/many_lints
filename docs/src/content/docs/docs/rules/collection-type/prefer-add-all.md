@@ -13,56 +13,74 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Collection Type</span>
 
-This rule flags two ways of adding elements one at a time: a `for-in` loop whose only statement adds the loop variable, and several consecutive `add` calls on the same collection.
-
-## Why use this rule
-
-`for (final x in source) target.add(x);` is `target.addAll(source)` spelled out across three lines. The loop form makes the reader decode control flow to recognise a single operation, and it hides the intent from anyone skimming.
-
-The same applies to `target.add(a); target.add(b);` — one `addAll([a, b])` states the intent in a single call.
-
-`addAll` is also free to be more efficient — a `List` can grow its backing store once instead of on each `add`.
+Flags two ways of adding elements one at a time: a `for-in` loop whose only statement adds the loop variable, and two or more consecutive `add` calls on the same collection. The quick fix collapses either into `addAll`.
 
 ## Don't
 
-```dart
-List<String> merge(List<String> newItems) {
-  final selected = <String>[];
+A copy loop is `addAll` spelled out across three lines. The reader has to follow the control flow to work out it is a single operation:
 
-  for (final item in newItems) {
-    selected.add(item);
+```dart
+List<String> withDefaults(List<String> configured) {
+  final result = <String>[];
+
+  for (final tag in configured) {
+    result.add(tag);
   }
 
-  selected.add('first');
-  selected.add('second');
-
-  return selected;
+  return result;
 }
 ```
 
 ## Do
 
 ```dart
-List<String> merge(List<String> newItems) {
-  final selected = <String>[];
+List<String> withDefaults(List<String> configured) {
+  final result = <String>[];
 
-  selected.addAll(newItems);
-  selected.addAll(['first', 'second']);
+  result.addAll(configured);
 
-  return selected;
+  return result;
 }
+```
+
+`addAll` also lets a `List` grow its backing store once instead of on each `add`.
+
+### Consecutive `add` calls
+
+A run of `add` calls on the same receiver is one `addAll` with a literal:
+
+```dart
+// Don't
+final steps = <String>[];
+steps.add('validate');
+steps.add('persist');
+steps.add('notify');
+
+// Do
+final steps = <String>[];
+steps.addAll(['validate', 'persist', 'notify']);
+```
+
+The run has to be uninterrupted. Any other statement between the calls breaks it, and neither half is reported:
+
+```dart
+// Accepted — the log call splits the run
+steps.add('validate');
+log('validating');
+steps.add('persist');
 ```
 
 ## Known limitations
 
-For the loop form, only the exact copy pattern is reported. The rule stays silent whenever the loop does anything else:
+For the loop form, only an exact copy is reported. The rule stays silent whenever the loop does anything else:
 
-- The added value is not the loop variable unchanged — `target.add(x.name)` is a map, not a copy.
-- The body has more than one statement, or wraps the `add` in a condition.
-- The loop is indexed (`for (var i = 0; ...)`) rather than `for-in`, since it may skip or reorder elements.
-- The method is anything other than `add`.
+- **The added value is not the loop variable unchanged.** `result.add(tag.trim())` is a map, not a copy — reach for `addAll(configured.map((t) => t.trim()))` yourself.
+- **The body has more than one statement**, or wraps the `add` in a condition.
+- **The loop is indexed** (`for (var i = 0; ...)`) rather than `for-in`, since it may skip or reorder elements.
+- **The receiver depends on the loop variable.** `groups.putIfAbsent(key(item), () => []).add(item)` distributes the source across a different target per iteration, and has no `addAll` equivalent.
+- **The method is anything other than `add`** — `insert`, `addEntries` and the rest are untouched.
 
-For consecutive calls, a run is broken by any other statement, so `add(a); log(); add(b);` is left alone. The receiver must also be a plain variable or property chain — `items[i].add(x)` may denote a different object on each call — and it must be a collection, since `add` exists on many unrelated types.
+For consecutive calls, the receiver must be a plain variable or property chain. `items[i].add(x)` may denote a different object on each call, so it is left alone — and the receiver must resolve to a collection, since `add` exists on many unrelated types.
 
 ## Configuration
 

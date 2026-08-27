@@ -13,45 +13,76 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Testing Rules</span>
 
-Flags `expect()` calls where the first argument is a `Future`. Passing a Future to `expect()` instead of `expectLater()` means the assertion completes before the asynchronous operation finishes, causing the test to silently pass regardless of the actual result.
-
-## Why use this rule
-
-Using `expect()` with a Future is almost always a bug. The test framework cannot await a synchronous `expect()` call, so the assertion is evaluated against the Future object itself rather than its resolved value. Switching to `await expectLater()` ensures the Future completes before the matcher runs.
-
-**See also:** [test package - expectLater](https://pub.dev/documentation/test/latest/test/expectLater.html)
+Flags an `expect()` call whose **first** argument is a `Future`. Nothing awaits a plain `expect`, so the test method returns before the future resolves and the assertion's outcome is never seen.
 
 ## Don't
+
+`loadCart()` returns a `Future`. The test body is synchronous, so it finishes
+immediately and passes whatever the future eventually produces — including a
+failure:
 
 ```dart
 void main() {
   test('loads the cart', () {
     expect(loadCart(), completion(isNotNull));
+  });
+}
 
+Future<Object?> loadCart() async => null;
+```
+
+The same hole when the future is held in a variable first — the rule reads the
+static type, not the shape of the expression:
+
+```dart
+void main() {
+  test('totals the cart', () {
     final total = cartTotal();
     expect(total, completion(equals(240)));
   });
 }
+
+Future<int> cartTotal() async => 240;
 ```
 
-Nothing awaits the assertion, so the test ends before the future resolves and
-passes whatever the future produces.
-
 ## Do
+
+`await expectLater(...)` in an `async` body. The test now waits for the future
+and the matcher runs against its value:
 
 ```dart
 void main() {
   test('loads the cart', () async {
     await expectLater(loadCart(), completion(isNotNull));
+  });
 
+  test('totals the cart', () async {
     final total = cartTotal();
     await expectLater(total, completion(equals(240)));
   });
 }
+
+Future<Object?> loadCart() async => null;
+Future<int> cartTotal() async => 240;
 ```
 
-Matching a plain value needs no change — `expect` is only a problem when the
-actual value is a `Future`:
+Awaiting the value instead is equally correct, and often reads better — the
+matcher then describes the resolved value rather than the future:
+
+```dart
+void main() {
+  test('totals the cart', () async {
+    expect(await cartTotal(), equals(240));
+  });
+}
+
+Future<int> cartTotal() async => 240;
+```
+
+### Never reported
+
+`expect` is only a problem when the actual value is a `Future`. A plain value
+needs no change:
 
 ```dart
 void main() {
@@ -59,7 +90,14 @@ void main() {
     expect(subtotal(), equals(240));
   });
 }
+
+int subtotal() => 240;
 ```
+
+The rule also reports `expect` only — an `expectLater` you already wrote is
+left alone, awaited or not.
+
+**See also:** [test package - expectLater](https://pub.dev/documentation/test/latest/test/expectLater.html)
 
 ## Configuration
 

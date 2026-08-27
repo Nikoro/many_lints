@@ -26,35 +26,93 @@ This pairs with [`always_remove_listener`](/many_lints/docs/rules/resource-manag
 
 ## Don't
 
+Rebuilding on every keystroke by subscribing with an inline closure. The `dispose()` below looks complete, but the `removeListener` cannot match a closure it never saw:
+
 ```dart
-controller.addListener(() => setState(() {}));   // can never be removed
+class _SearchBarState extends State<SearchBar> {
+  final _queryController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _queryController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _queryController.removeListener(() => setState(() {}));   // a different object
+    _queryController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
 ```
 
 ## Do
 
-Give the callback a stable identity:
+Give the callback a stable identity — a method reference is the same object every time it is named:
 
 ```dart
-void _onChange() => setState(() {});
+class _SearchBarState extends State<SearchBar> {
+  final _queryController = TextEditingController();
 
-@override
-void initState() {
-  super.initState();
-  controller.addListener(_onChange);
+  @override
+  void initState() {
+    super.initState();
+    _queryController.addListener(_onQueryChanged);
+  }
+
+  @override
+  void dispose() {
+    _queryController.removeListener(_onQueryChanged);
+    _queryController.dispose();
+    super.dispose();
+  }
+
+  void _onQueryChanged() => setState(() {});
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
 }
+```
 
-@override
-void dispose() {
-  controller.removeListener(_onChange);
-  super.dispose();
+A `final` field holding the closure works too, when the callback needs to capture something a method cannot reach:
+
+```dart
+class _RowState extends State<Row> {
+  late final VoidCallback _onTick = () => setState(() => _ticks++);
+  int _ticks = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.clock.addListener(_onTick);
+  }
+
+  @override
+  void dispose() {
+    widget.clock.removeListener(_onTick);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
 }
 ```
 
 ## Known limitations
 
-Only `addListener` and `addStatusListener` are recognised by default; a project wrapper can be added with `additional_methods`.
+**Matching is by method name, not by receiver type.** Any single-argument call named `addListener` or `addStatusListener` that is given a closure literal is reported, whatever the receiver is. That keeps the rule working on your own `Listenable` implementations, but it also means an unrelated class with a method of that name is flagged — suppress those with `// ignore: many_lints/avoid_unremovable_callbacks_in_listeners`.
 
-A registration with more than one argument is skipped, since this rule is about the add/remove pair specifically.
+Only a **closure literal** written at the call site is reported. A variable, field, or method reference is assumed to have a stable identity and is left alone, even though a getter that builds a fresh closure on each read would have the same defect:
+
+```dart
+VoidCallback get _onTick => () => setState(() {});   // not reported, still unremovable
+```
+
+A registration with more than one argument is skipped, since this rule is about the add/remove pair specifically. Add a project wrapper with `additional_methods`.
 
 ## Turning this rule off
 

@@ -64,6 +64,33 @@ void countdown(int total) {
 }
 ```
 
+### `do`/`while` is covered too
+
+Here the body runs once and then spins forever, which makes the bug harder to spot in a log:
+
+```dart
+void drain(int available) {
+  var left = available;
+  do {
+    print(left);         // LINT: `left` is never decremented
+  } while (left > 0);
+}
+```
+
+### Advancing a copy is not advancing the condition
+
+Assigning to a variable the condition does not read leaves it unchanged, whatever the body appears to be doing:
+
+```dart
+void poll(int attempts) {
+  var remaining = attempts;
+  var next = remaining;
+  while (remaining > 0) {
+    next = next - 1;     // LINT: `remaining` is what the condition reads
+  }
+}
+```
+
 ## Known limitations
 
 The rule is deliberately narrow, because the cost of a false positive here is high.

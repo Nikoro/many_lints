@@ -12,57 +12,15 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
 
-This rule flags a function whose **named** parameters are not in the configured order.
+Flags a function whose **named** parameters are not in the order you configure.
 
 A long named-parameter list has the same problem as a long map literal: without an order, checking whether a parameter already exists means reading all of them, and a new one gets appended at the end beside the near-duplicate nobody saw.
 
 **Positional parameters are never ordered.** They are ordered by meaning and by every call site that depends on them — sorting those would break the code.
 
-Outside `preset: pedantic`, **this rule reports nothing until configured**, since a widget constructor deliberately leads with its most important parameters. The pedantic preset chooses alphabetical order, sorts required and optional parameters independently, and checks lists from two named parameters upward.
+This rule is in the **`pedantic`** preset, which sets `order: alphabetical` and lowers `min_parameters` to `2`. Under any other preset **it reports nothing until you set `order:`** — a widget constructor deliberately leads with its most important parameters.
 
-By default `required` and optional parameters are sorted as independent groups.
-Their relative placement is deliberately left to the official Dart rule
-[`always_put_required_named_parameters_first`](https://dart.dev/tools/linter-rules/always_put_required_named_parameters_first),
-so the two rules do not report the same issue.
-
-This rule is in the **`pedantic`** preset.
-
-## Don't
-
-```dart
-void configure({
-  required String name,
-  required String id,
-  String? theme,
-  int? timeout,
-  bool? verbose,
-})
-```
-
-## Do
-
-```dart
-void configure({
-  required String id,
-  required String name,
-  String? theme,
-  int? timeout,
-  bool? verbose,
-})
-```
-
-## Enabling this rule
-
-Outside `preset: pedantic`, enabling it by name is not enough — set `order:`:
-
-```yaml
-# many_lints.yaml
-rules:
-  parameters_ordering:
-    order: alphabetical
-```
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -92,11 +50,155 @@ rules:
 </TabItem>
 </Tabs>
 
+## Don't
+
+With `order: alphabetical`:
+
+```dart
+class UploadRequest {
+  UploadRequest({
+    required this.name,
+    required this.id,
+    this.timeout,
+    this.retries,
+    this.verbose,
+  });
+
+  final String name;
+  final String id;
+  final Duration? timeout;
+  final int? retries;
+  final bool? verbose;
+}
+```
+
+## Do
+
+```dart
+class UploadRequest {
+  UploadRequest({
+    required this.id,
+    required this.name,
+    this.retries,
+    this.timeout,
+    this.verbose,
+  });
+
+  final String name;
+  final String id;
+  final Duration? timeout;
+  final int? retries;
+  final bool? verbose;
+}
+```
+
+## Examples
+
+### `required` and optional are sorted as two independent runs
+
+This is the default, `group_required: true`. Their *relative* placement belongs to the SDK's [`always_put_required_named_parameters_first`](https://dart.dev/tools/linter-rules/always_put_required_named_parameters_first), so the two rules never report the same issue:
+
+```yaml
+rules:
+  parameters_ordering:
+    order: alphabetical
+    min_parameters: 2
+```
+
+```dart
+// Accepted — required run is a..b, optional run is x..y; the optional `x`
+// following the required `b` is not this rule's business.
+void send({required String alpha, required String beta, String? x, String? y}) {}
+```
+
+Set it to `false` to sort every named parameter as one list instead:
+
+```yaml
+rules:
+  parameters_ordering:
+    order: alphabetical
+    group_required: false
+    min_parameters: 2
+```
+
+```dart
+// Don't — one list now, and `zebra` precedes `apple`
+void send({required String zebra, String? apple}) {}
+
+// Do
+void send({String? apple, required String zebra}) {}
+```
+
+### `min_parameters` keeps short signatures out of it
+
+The default is 5, so a four-parameter signature is never reported:
+
+```yaml
+rules:
+  parameters_ordering:
+    order: alphabetical
+```
+
+```dart
+// Not reported — four named parameters, under the default min_parameters: 5
+void connect({String? url, int? port, int? retries, bool? secure}) {}
+```
+
+Lower it to check short signatures too — this is what `preset: pedantic` does:
+
+```yaml
+rules:
+  parameters_ordering:
+    order: alphabetical
+    min_parameters: 2
+```
+
+```dart
+// Don't — now reported at two parameters
+void connect({String? url, int? port}) {}
+
+// Do
+void connect({int? port, String? url}) {}
+```
+
+### `by_length`
+
+Longest parameter name last. Ties fall back to alphabetical so the order is total:
+
+```yaml
+rules:
+  parameters_ordering:
+    order: by_length
+    min_parameters: 2
+```
+
+```dart
+// Don't
+void render({int? width, int? x, bool? antialias}) {}
+
+// Do
+void render({int? x, int? width, bool? antialias}) {}
+```
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `order` | string | `—` | `alphabetical`, `alphabetical_case_sensitive` or `by_length`. Unset means the rule is silent |
-| `group_required` | bool | `true` | Sort required and optional parameters as separate groups |
-| `min_parameters` | int | `5` | How many named parameters a signature needs before order is checked |
+| `group_required` | bool | `true` | Sort required and optional named parameters as two independent runs |
+| `min_parameters` | int | `5` | How many **named** parameters a signature needs before order is checked |
+
+## Known limitations
+
+**Positional parameters do not count towards the threshold.** A function with three positional and four named parameters has four for this rule's purposes, and stays under the default of 5.
+
+**With `group_required: true`, each run is checked against the threshold as a whole list.** The count is of all named parameters; the sort then runs separately over the required ones and the optional ones.
+
+**A parameter with no name token stops the check.** The rest of that run is left alone rather than ordered around something the rule cannot place.
+
+**Only the first out-of-order parameter in a run is reported**, so one misplaced name does not produce a wall of diagnostics.
+
+**No quick fix.** Reordering named parameters is safe for callers, but a signature often carries doc comments tied to particular lines, and moving parameters past them silently mismatches the two.
 
 ## Turning this rule off
 

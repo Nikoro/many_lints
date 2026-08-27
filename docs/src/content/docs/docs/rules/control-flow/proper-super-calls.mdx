@@ -26,42 +26,59 @@ There is no SDK rule covering the Flutter lifecycle contract, which is what this
 
 ## Why use this rule
 
-Flutter's `State` lifecycle methods have a specific contract about when `super` should be called. Calling `super.initState()` after your own initialization code can lead to errors because the framework expects to set up its own state first. Conversely, calling `super.dispose()` before your cleanup code means your resources are released while the framework has already torn down its own state. The quick fix automatically moves the super call to the correct position.
+Flutter's `State` lifecycle splits into two halves, and `super` goes on opposite ends of each:
+
+- **`super` first** — `initState`, `didChangeDependencies`, `didUpdateWidget`, `activate`, `reassemble`. The framework sets up its own state before yours reads it.
+- **`super` last** — `deactivate`, `dispose`. Your cleanup runs while the framework's state is still there to clean up against.
+
+Getting it backwards is not always visible immediately: `super.dispose()` first tears down the element, and a controller disposed after it may throw only under a particular navigation. The quick fix moves the call to the right end.
 
 **See also:** [State.initState](https://api.flutter.dev/flutter/widgets/State/initState.html) | [State.dispose](https://api.flutter.dev/flutter/widgets/State/dispose.html)
 
 ## Don't
 
+`super.initState()` after your own setup:
+
 ```dart
-class _BadInitStateState extends State<BadInitState> {
-  String _data = '';
+class _EditorState extends State<Editor> {
+  late final TextEditingController _controller;
 
   @override
   void initState() {
-    _data = 'Hello'; // super.initState() should come before this
+    _controller = TextEditingController(text: widget.initialText);
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
+```
 
-class _BadDisposeState extends State<BadDispose> {
+`super.dispose()` before your cleanup:
+
+```dart
+class _EditorState extends State<Editor> {
+  late final TextEditingController _controller;
+
   @override
   void dispose() {
-    super.dispose(); // super.dispose() should come after cleanup
-    debugPrint('cleanup');
+    super.dispose();
+    _controller.dispose();
   }
 
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
+```
 
-class _BadDeactivateState extends State<BadDeactivate> {
+`deactivate` follows `dispose` — `super` goes last there too:
+
+```dart
+class _EditorState extends State<Editor> {
   @override
   void deactivate() {
-    super.deactivate(); // super.deactivate() should come after cleanup
-    debugPrint('deactivating');
+    super.deactivate();
+    _unsubscribeFromDocument();
   }
 
   @override
@@ -72,41 +89,40 @@ class _BadDeactivateState extends State<BadDeactivate> {
 ## Do
 
 ```dart
-class _GoodInitStateState extends State<GoodInitState> {
-  String _data = '';
+class _EditorState extends State<Editor> {
+  late final TextEditingController _controller;
 
   @override
   void initState() {
-    super.initState(); // First
-    _data = 'Hello';
+    super.initState();
+    _controller = TextEditingController(text: widget.initialText);
   }
 
-  @override
-  Widget build(BuildContext context) => const SizedBox();
-}
-
-class _GoodDisposeState extends State<GoodDispose> {
-  @override
-  void dispose() {
-    debugPrint('cleanup');
-    super.dispose(); // Last
-  }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox();
-}
-
-class _GoodDeactivateState extends State<GoodDeactivate> {
   @override
   void deactivate() {
-    debugPrint('deactivating');
-    super.deactivate(); // Last
+    _unsubscribeFromDocument();
+    super.deactivate();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) => const SizedBox();
 }
 ```
+
+## Known limitations
+
+A method with no `super` call at all is not reported — whether the override is
+allowed to skip `super` is a different question, and this rule only orders a
+call that is already there.
+
+Only subclasses of Flutter's `State` are checked, unless `state_base_classes`
+names another base class.
 
 ## Turning this rule off
 
@@ -126,8 +142,12 @@ To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints
 
 ## Options
 
-Projects with a state abstraction that does not extend Flutter's `State` can
-opt that base class into this rule:
+### `state_base_classes`
+
+An intermediate base class that itself extends `State` needs no configuration —
+the check walks the hierarchy. This option is for the other case: a state-like
+base class that does **not** extend Flutter's `State` at all, which the rule
+would otherwise skip entirely.
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -137,7 +157,7 @@ opt that base class into this rule:
 many_lints:
   rules:
     proper_super_calls:
-      state_base_classes: [AppState]
+      state_base_classes: [TrackedState]
 ```
 
 </TabItem>
@@ -147,11 +167,30 @@ many_lints:
 # many_lints.yaml
 rules:
   proper_super_calls:
-    state_base_classes: [AppState]
+    state_base_classes: [TrackedState]
 ```
 
 </TabItem>
 </Tabs>
+
+```dart
+// Not a Flutter State — its own lifecycle, same ordering contract.
+abstract class TrackedState {
+  void initState() {}
+
+  void dispose() {}
+}
+
+class ReportPresenter extends TrackedState {
+  late final Stream<int> _updates;
+
+  @override
+  void initState() {
+    _updates = const Stream.empty();
+    super.initState();   // LINT — super must come first
+  }
+}
+```
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|

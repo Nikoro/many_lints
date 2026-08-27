@@ -13,45 +13,121 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-This rule flags a `continue` written as the last statement of a loop body, where control reaches the next iteration whether it is there or not.
-
-## Why use this rule
-
-The keyword changes nothing, but it does not read as though it changes nothing. `continue` announces that something below it is being skipped, so a reader stops to look for what — and finds the closing brace.
-
-It is usually a leftover. Statements that once followed the `continue` were moved or deleted during a change, and the guard that protected them stayed behind. Removing it makes the loop say what it does.
-
-A `continue` anywhere else is doing real work and is left alone, including one that ends a `then` branch to skip an `else`, and a labelled `continue` that targets an outer loop.
+Flags a `continue` written as the **last** statement of a loop body. Control reaches the next iteration whether it is there or not, but the keyword still announces that something below is being skipped — and a reader stops to look for what.
 
 ## Don't
 
+The usual origin: the statements this `continue` was skipping were moved or deleted, and the guard stayed behind.
+
 ```dart
-for (final order in orders) {
-  process(order);
-  continue; // nothing follows; the loop continues anyway
+class Order {
+  bool isCancelled = false;
 }
+
+void run(List<Order> orders) {
+  for (final order in orders) {
+    process(order);
+    continue;
+  }
+}
+
+void process(Order order) {}
 ```
 
 ## Do
 
 ```dart
-for (final order in orders) {
-  process(order);
+class Order {
+  bool isCancelled = false;
 }
+
+void run(List<Order> orders) {
+  for (final order in orders) {
+    process(order);
+  }
+}
+
+void process(Order order) {}
 ```
 
-A `continue` that actually skips something stays:
+The quick fix deletes the statement, leaving the rest of the body untouched.
+
+### A `continue` that skips something is left alone
+
+Only the last statement is examined, so the guard-clause form — the reason `continue` exists — is never reported:
 
 ```dart
-for (final order in orders) {
-  if (order.isCancelled) continue; // skips the call below
-  process(order);
+class Order {
+  bool isCancelled = false;
+}
+
+void run(List<Order> orders) {
+  for (final order in orders) {
+    if (order.isCancelled) continue;
+    process(order);
+  }
+}
+
+void process(Order order) {}
+```
+
+### Ending an `if` branch is real work too
+
+A `continue` at the end of a `then` branch skips the `else` and everything after the `if`, so it is not the last statement of the loop body and is not reported:
+
+```dart
+class Order {
+  bool isCancelled = false;
+}
+
+void run(List<Order> orders) {
+  for (final order in orders) {
+    if (order.isCancelled) {
+      archive(order);
+      continue;
+    }
+
+    process(order);
+  }
+}
+
+void process(Order order) {}
+
+void archive(Order order) {}
+```
+
+### `while` and `do`/`while` are covered
+
+The rule registers all three loop forms, so a trailing `continue` reports the same way in each:
+
+```dart
+void drain(int count) {
+  var remaining = count;
+  while (remaining > 0) {
+    remaining--;
+    continue;   // LINT
+  }
 }
 ```
+
+## Known limitations
+
+A **labelled** `continue` is never reported. `continue outer;` targets an enclosing loop, so it does change where control goes even when written last.
+
+A loop with no braces is still checked: `for (final o in orders) continue;` is a body consisting of exactly one `continue`, and reports.
+
+A `continue` inside a `switch` case within the loop body is not the loop body's last statement, so it is left alone.
 
 ## Turning this rule off
 
-This rule is in the **`opinionated`** preset.
+This rule is in the **`opinionated`** preset, so it is on with
+`preset: opinionated` or `preset: pedantic`, or by name:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_unnecessary_continue: true
+```
 
 To disable this rule:
 

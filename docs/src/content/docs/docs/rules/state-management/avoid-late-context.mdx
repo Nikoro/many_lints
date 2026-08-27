@@ -26,9 +26,37 @@ Inherited widgets are designed to be read where they can be re-read — in `buil
 
 ## Don't
 
+A theme cached in a `late final` field. It initializes the first time `build`
+touches it and then never changes — flip the app to dark mode and this widget
+keeps painting the light palette:
+
 ```dart
-class _MyState extends State<MyWidget> {
-  late final theme = Theme.of(context);   // frozen after first access
+class _CardState extends State<Card> {
+  late final ThemeData _theme = Theme.of(context);
+
+  @override
+  Widget build(BuildContext context) =>
+      Text(widget.title, style: _theme.textTheme.titleLarge);
+}
+```
+
+The same field read from `initState` fails harder — the element is not mounted
+yet, so the lookup throws:
+
+```dart
+class _CardState extends State<Card> {
+  final Analytics _analytics = Analytics();
+
+  late final ThemeData _theme = Theme.of(context);
+
+  @override
+  void initState() {
+    super.initState();
+    _analytics.screenOpened(_theme.brightness.name); // throws here
+  }
+
+  @override
+  Widget build(BuildContext context) => Text(widget.title);
 }
 ```
 
@@ -37,19 +65,20 @@ class _MyState extends State<MyWidget> {
 Read it in `build`, where it re-reads on every rebuild:
 
 ```dart
-class _MyState extends State<MyWidget> {
+class _CardState extends State<Card> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Text('hi', style: theme.textTheme.bodyMedium);
+    return Text(widget.title, style: theme.textTheme.titleLarge);
   }
 }
 ```
 
-When the value really must be cached, use `didChangeDependencies`, which Flutter calls again whenever an inherited dependency changes:
+When the value must be cached, use `didChangeDependencies` — Flutter calls it
+again whenever an inherited dependency changes, so the cache stays current:
 
 ```dart
-class _MyState extends State<MyWidget> {
+class _CardState extends State<Card> {
   late ThemeData _theme;
 
   @override
@@ -57,16 +86,40 @@ class _MyState extends State<MyWidget> {
     super.didChangeDependencies();
     _theme = Theme.of(context);
   }
+
+  @override
+  Widget build(BuildContext context) =>
+      Text(widget.title, style: _theme.textTheme.titleLarge);
 }
 ```
 
 ## Known limitations
 
-Only fields inside a `State` are checked, since elsewhere `context` is not the ambient widget context this rule is about. Classes that act as state without extending `State` can be included with the shared [`state_base_classes`](/many_lints/docs/configuration/) option.
+Only fields inside a `State` are checked, since elsewhere `context` is not the
+ambient widget context this rule is about. Classes that act as state without
+extending `State` can be included with the shared
+[`state_base_classes`](/many_lints/docs/configuration/) option.
 
-Static fields are skipped, and so are `late` fields with no initializer — those are assigned explicitly, where the author controls the timing.
+Static fields are skipped, and so are `late` fields with **no** initializer —
+those are assigned explicitly, where the author controls the timing:
 
-The initializer must mention `context` by name and resolve to a `BuildContext`, so an unrelated local named `context` does not trigger the rule.
+```dart
+class _CardState extends State<Card> {
+  late ThemeData _theme; // not reported — nothing runs at first access
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _theme = Theme.of(context);
+  }
+
+  @override
+  Widget build(BuildContext context) => Text(widget.title);
+}
+```
+
+The initializer must mention `context` by name and resolve to a
+`BuildContext`, so an unrelated local named `context` does not trigger the rule.
 
 ## Turning this rule off
 

@@ -12,8 +12,6 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Quality</span>
 
-This rule is in the **`pedantic`** preset.
-
 This rule warns when the same property-access or invocation chain is repeated inside one block, and could be computed once into a variable. It reports at the first occurrence, which is where the variable belongs.
 
 ## Why use this rule
@@ -22,11 +20,13 @@ A chain like `Theme.of(context)` written three times is three lookups and three 
 
 The win grows with the length of the chain: `context.dependOnInheritedWidgetOfExactType<Foo>()!.bar.baz` is noise at every call site, and a name is the only thing that makes the surrounding line legible.
 
+This rule is in the **`pedantic`** preset, because some codebases deliberately keep short expressions at their call sites.
+
 **See also:** [Effective Dart: usage](https://dart.dev/effective-dart/usage)
 
 ## Don't
 
-With `max_extra_occurrences: 0` (the default), the second occurrence reports:
+With `max_extra_occurrences: 0` (the default), the **second** occurrence reports — and the diagnostic lands on the **first**, which is where the variable belongs:
 
 ```dart
 class Settings {
@@ -64,24 +64,79 @@ void configure(HttpClient http, String path) {
 }
 ```
 
-## What is not reported
+### Tolerating a repetition before reporting
+
+`max_extra_occurrences` counts the repeats you are willing to live with. `0` reports the second occurrence; `1` waits for the third:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_moving_to_variable:
+      max_extra_occurrences: 1
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_moving_to_variable:
+    max_extra_occurrences: 1
+```
+
+</TabItem>
+</Tabs>
+
+### Exempting a lookup your codebase repeats on purpose
+
+If `Theme.of(context)` at every call site is your house style, exempt it by the method name or by the class it reaches:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_moving_to_variable:
+    ignored_invocations: [of, watch]
+    ignored_targets: [Theme, MediaQuery]
+```
+
+### Requiring a longer property chain
+
+`min_chain_length` counts links: `a.b` is 1, `a.b.c` is 2. The default `2` already leaves `a.b` alone; raise it to stop reporting `a.b.c` too:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_moving_to_variable:
+    min_chain_length: 3
+```
+
+An invocation is always long enough to name, whatever `min_chain_length` says: repeating `Theme.of(context)` repeats the work, where repeating a field read only repeats the text.
+
+## Known limitations
 
 A chain is only worth naming when re-evaluating it is redundant, so several shapes are left alone:
 
-- **A call made for its effect.** `print(x)` twice is two prints; hoisting it would change what the code does.
-- **Anything that allocates or awaits** — `Thing()`, `await f()`, a cascade. Re-evaluating those is usually the point, so reusing one result is observably different.
-- **A chain inside a closure.** The closure may run a different number of times, so lifting the chain out of it changes when the work happens.
-- **An assignment target.** `a.b.c = 1` writes; naming the target does not apply.
-- **A short property chain**, by default `a.b`, which reads no worse than the variable would. See `min_chain_length`.
+**A call made for its effect.** `print(x)` twice is two prints; hoisting it would change what the code does.
 
-An invocation is always long enough to name, whatever `min_chain_length` says: repeating `Theme.of(context)` repeats the work, where repeating a field read only repeats the text.
+**Anything that allocates or awaits** — `Thing()`, `await f()`, a cascade. Re-evaluating those is usually the point, so reusing one result is observably different.
+
+**A chain inside a closure.** The closure may run a different number of times, so lifting the chain out of it changes when the work happens.
+
+**An assignment target.** `a.b.c = 1` writes; naming the target does not apply.
+
+**Repetition across separate blocks.** The rule looks within one block, so the same chain in two different methods is two independent readings.
 
 When a chain and its own prefix both repeat the same number of times, only the longest is reported — naming it subsumes the shorter one, so two diagnostics would ask for the same edit twice.
 
 ## Turning this rule off
 
-This rule appears only in the **`pedantic`** preset because some codebases
-deliberately keep short expressions at their call sites.
+This rule appears only in the **`pedantic`** preset, so enable it by name if
+you are not on that preset:
 
 ```yaml
 # many_lints.yaml

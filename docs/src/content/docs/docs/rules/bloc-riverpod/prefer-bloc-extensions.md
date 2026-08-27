@@ -13,63 +13,123 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Bloc / Riverpod</span>
 
-This rule flags usage of `BlocProvider.of()` and `RepositoryProvider.of()` and suggests using the shorter `context.read()` or `context.watch()` extensions instead. When `listen: true` is passed, the rule suggests `context.watch()`.
+This rule flags `BlocProvider.of<T>(context)` and `RepositoryProvider.of<T>(context)`, and offers a quick fix rewriting them to `context.read<T>()`. When `listen: true` is passed, the fix produces `context.watch<T>()` instead.
 
 ## Why use this rule
 
-The `context.read()` and `context.watch()` extensions are shorter, more readable, and make the intent clearer. With `BlocProvider.of()`, developers can easily forget the `listen` parameter or misconfigure it. The extension methods make the distinction between one-time reads and reactive watches explicit in the method name itself.
+`BlocProvider.of` and the extensions do the same lookup, but the extension puts the subscription decision in the method name. With `of`, whether the widget rebuilds on state changes depends on a `listen:` argument that is easy to omit and easy to misread — and its default (`false`) is silent, so a widget that should rebuild simply never does.
 
 **See also:** [BlocProvider](https://bloclibrary.dev/flutter-bloc-concepts/#blocprovider) | [context.read vs context.watch](https://bloclibrary.dev/flutter-bloc-concepts/#usage-1)
 
-## Don't
+## Examples
+
+### Dispatching an event
+
+A one-off read in a callback becomes `context.read`:
 
 ```dart
+// Don't
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-abstract class CounterEvent {}
+sealed class CounterEvent {}
+
+class Increment extends CounterEvent {}
 
 class CounterBloc extends Bloc<CounterEvent, int> {
   CounterBloc() : super(0);
 }
 
-class CounterCubit extends Cubit<int> {
-  CounterCubit() : super(0);
-}
-
-class MyRepository {}
-
-void examples(BuildContext context) {
-  final bloc = BlocProvider.of<CounterBloc>(context);
-  final watched = BlocProvider.of<CounterCubit>(context, listen: true);
-  final repo = RepositoryProvider.of<MyRepository>(context);
+void onTap(BuildContext context) {
+  BlocProvider.of<CounterBloc>(context).add(Increment());   // LINT
 }
 ```
 
-## Do
-
 ```dart
+// Do
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-abstract class CounterEvent {}
+sealed class CounterEvent {}
+
+class Increment extends CounterEvent {}
 
 class CounterBloc extends Bloc<CounterEvent, int> {
   CounterBloc() : super(0);
 }
 
+void onTap(BuildContext context) {
+  context.read<CounterBloc>().add(Increment());
+}
+```
+
+### `listen: true` becomes `watch`
+
+Reading state in `build` needs a subscription, so the fix produces `watch`:
+
+```dart
+// Don't
+import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 class CounterCubit extends Cubit<int> {
   CounterCubit() : super(0);
 }
 
-class MyRepository {}
-
-void examples(BuildContext context) {
-  final bloc = context.read<CounterBloc>();
-  final cubit = context.watch<CounterCubit>();
-  final repo = context.read<MyRepository>();
+Widget build(BuildContext context) {
+  final count = BlocProvider.of<CounterCubit>(context, listen: true).state; // LINT
+  return Text('$count');
 }
 ```
+
+```dart
+// Do
+import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+class CounterCubit extends Cubit<int> {
+  CounterCubit() : super(0);
+}
+
+Widget build(BuildContext context) {
+  final count = context.watch<CounterCubit>().state;
+  return Text('$count');
+}
+```
+
+### Repositories too
+
+`RepositoryProvider.of` is reported on the same terms:
+
+```dart
+// Don't
+import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+class UserRepository {}
+
+void load(BuildContext context) {
+  final repo = RepositoryProvider.of<UserRepository>(context);   // LINT
+}
+```
+
+```dart
+// Do
+import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+class UserRepository {}
+
+void load(BuildContext context) {
+  final repo = context.read<UserRepository>();
+}
+```
+
+## Known limitations
+
+Only `BlocProvider` and `RepositoryProvider` resolving to `package:flutter_bloc`, `package:bloc` or `package:provider` are matched. A project's own wrapper with an `of` static is not reported.
+
+A dynamic `listen:` argument (`listen: shouldWatch`) is treated as `false`, since the rule can only read a boolean literal — so the fix would produce `read` where `watch` may be wanted.
 
 ## Configuration
 

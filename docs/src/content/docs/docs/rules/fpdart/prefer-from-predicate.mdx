@@ -26,19 +26,52 @@ The conditional also names the value twice — once in the condition and once in
 ## Don't
 
 ```dart
-final option = age > 18 ? Option.of(age) : Option<int>.none();
+Option<int> adultAge(int age) =>
+    age > 18 ? Option.of(age) : Option<int>.none();
 ```
 
 ## Do
 
 ```dart
-final option = Option.fromPredicate(age, (a) => a > 18);
+Option<int> adultAge(int age) => Option.fromPredicate(age, (a) => a > 18);
 ```
 
 `Either.fromPredicate` is the equivalent when the rejected case needs to carry a failure:
 
 ```dart
-Either.fromPredicate(age, (a) => a > 18, (a) => TooYoungFailure(a));
+class TooYoungFailure {
+  const TooYoungFailure(this.age);
+
+  final int age;
+}
+
+Either<TooYoungFailure, int> adultAgeOrFail(int age) =>
+    Either.fromPredicate(age, (a) => a > 18, (a) => TooYoungFailure(a));
+```
+
+### A compound condition needs the option raised
+
+Only single-condition guards are reported by default, so this one is silent:
+
+```dart
+Option<int> validAge(int age) =>
+    age > 18 && age < 120 ? Option.of(age) : Option<int>.none();
+```
+
+With `max_condition_complexity: 3`:
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_from_predicate:
+    max_condition_complexity: 3
+```
+
+it is reported, and becomes:
+
+```dart
+Option<int> validAge(int age) =>
+    Option.fromPredicate(age, (a) => a > 18 && a < 120);
 ```
 
 ## Quick fix

@@ -17,11 +17,11 @@ This rule is in the **`core`** preset.
 
 `late final` promises one assignment, and Dart enforces it — but at run time, by throwing `LateInitializationError` on the second write. A second assignment the analyzer can see on one path is therefore a guaranteed crash, not a possibility, and it is worth catching before the code runs.
 
-Only assignments in the same block are compared, without following branches. Two writes in opposite arms of an `if` are exactly how a `late final` is meant to be initialised, so they are left alone.
-
 **See also:** [`late` variables](https://dart.dev/language/variables#late-variables)
 
 ## Don't
+
+Assigning a provisional value and then refining it. The second line throws:
 
 ```dart
 class Session {
@@ -29,12 +29,14 @@ class Session {
 
   void start(String value) {
     token = value;
-    token = value.trim(); // throws LateInitializationError
+    token = value.trim();   // throws LateInitializationError
   }
 }
 ```
 
 ## Do
+
+Compute the final value first, then assign once:
 
 ```dart
 class Session {
@@ -46,21 +48,60 @@ class Session {
 }
 ```
 
-Initialising through branches is fine:
+### Branching is the intended use
+
+Two writes in opposite arms of an `if` are exactly what `late final` is for — only one of them ever runs, so this is not reported:
 
 ```dart
 class Session {
   late final String token;
 
-  void start(bool isGuest) {
+  void start({required bool isGuest}) {
     if (isGuest) {
       token = 'guest';
     } else {
-      token = generate();
+      token = _generate();
     }
   }
+
+  String _generate() => 'real';
 }
 ```
+
+The same holds for a `switch`, and for an early return:
+
+```dart
+class Session {
+  late final String token;
+
+  void start(String? cached) {
+    if (cached != null) {
+      token = cached;
+      return;
+    }
+    token = _generate();
+  }
+
+  String _generate() => 'real';
+}
+```
+
+## Known limitations
+
+Only writes in the **same block** are compared, and the rule does not follow branches. That is what makes the branching examples above pass — but it also means a genuine double write split across a branch boundary is missed:
+
+```dart
+void start(String value) {
+  if (value.isNotEmpty) {
+    token = value;    // not reported
+  }
+  token = value.trim();  // throws at run time when the branch above ran
+}
+```
+
+Only **fields** are checked. A `late final` local with the same defect is left to the analyzer, which already flags it at compile time.
+
+Only a plain `=` counts; a compound assignment to a `late final` does not compile in the first place.
 
 ## Turning this rule off
 

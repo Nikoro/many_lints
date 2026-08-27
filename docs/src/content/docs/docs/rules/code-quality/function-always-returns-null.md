@@ -21,10 +21,17 @@ In practice this is almost always a leftover — an unfinished implementation, o
 
 ## Don't
 
+A lookup whose real return was removed in a refactor and never put back:
+
 ```dart
-String? lookup(String key) {
-  if (key.isEmpty) return null;
-  return null;              // nothing can ever come back
+class SessionStore {
+  final Map<String, String> _tokens = {};
+
+  String? tokenFor(String userId) {
+    if (userId.isEmpty) return null;
+    if (!_tokens.containsKey(userId)) return null;
+    return null; // the read was lost; every caller null-checks for nothing
+  }
 }
 ```
 
@@ -33,27 +40,54 @@ String? lookup(String key) {
 Return the value the signature promises:
 
 ```dart
-String? lookup(String key) {
-  if (key.isEmpty) return null;
-  return _cache[key];
+class SessionStore {
+  final Map<String, String> _tokens = {};
+
+  String? tokenFor(String userId) {
+    if (userId.isEmpty) return null;
+    return _tokens[userId];
+  }
 }
 ```
 
 Or, if the function genuinely produces nothing, say so in the type:
 
 ```dart
-void record(String key) {
-  _log.add(key);
+class SessionStore {
+  final Map<String, String> _tokens = {};
+
+  void forget(String userId) {
+    _tokens.remove(userId);
+  }
+}
+```
+
+### A bare `return;` counts as null
+
+In a nullable-returning function `return;` yields `null`, so this reports too — the mix of styles is often what hid the problem:
+
+```dart
+class Draft {
+  String? _title;
+
+  String? titleOrNull() {
+    if (_title == null) return;
+    return null;
+  }
 }
 ```
 
 ## Known limitations
 
-`@override` methods are skipped: an override must keep the inherited signature, so the author may have no freedom to change it.
+**`@override` methods are skipped.** An override must keep the inherited signature, so the author may have no freedom to change it.
 
-`async` and generator bodies are skipped too. Their declared type wraps the value — `Future<String?>` — so "every return is null" does not carry the same meaning.
+**`async` and generator bodies are skipped.** Their declared type wraps the value — `Future<String?>` — so "every return is null" does not carry the same meaning, and a `Future<String?>` returning null is a normal "not found".
 
-A function with no `return` at all is not this rule's concern; the analyzer already reports `body_might_complete_normally_nullable` for it. Nor is a bare `return;`, which the analyzer flags as `return_without_value`. Returns inside a nested closure are attributed to that closure, not the enclosing function.
+**The return type must be written out.** An omitted annotation is inferred as `Null`, which the analyzer surfaces on its own terms, so this rule only reads types the author typed.
+
+**A function with no `return` at all is not reported.** The analyzer already covers that with `body_might_complete_normally_nullable`.
+
+**Returns inside a nested closure belong to that closure**, not to the enclosing function.
 
 ## Configuration
 

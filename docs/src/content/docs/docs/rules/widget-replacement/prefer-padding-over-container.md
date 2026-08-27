@@ -25,38 +25,75 @@ The SDK's [`avoid_unnecessary_containers`](https://dart.dev/tools/linter-rules/a
 
 ## Why use this rule
 
-`Container` is a convenience widget that composes many lower-level widgets internally. When you only need padding or margin, using `Padding` directly avoids the overhead and makes the intent immediately clear. This also keeps the widget tree shallow and easier to read during debugging.
+`Container` composes half a dozen widgets internally; when the only argument is
+`padding` or `margin`, `Padding` does the same job in one render object. The
+quick fix does the rewrite for you — it renames the constructor and, for a
+`margin`, renames the argument too.
 
 **See also:** [Padding](https://api.flutter.dev/flutter/widgets/Padding-class.html) | [Container](https://api.flutter.dev/flutter/widgets/Container-class.html)
 
 ## Don't
 
 ```dart
-// Container with only margin parameter
-Container(margin: EdgeInsets.all(16), child: Text('Hello'));
-
-// Container with only margin, no child
-Container(margin: EdgeInsets.symmetric(horizontal: 8));
-
-// Container with only padding parameter
+// A Container used purely to inset a label.
 Container(padding: EdgeInsets.all(16), child: Text('Hello'));
-
-// Container with only padding, no child
-Container(padding: EdgeInsets.symmetric(vertical: 8));
 ```
 
 ## Do
 
 ```dart
-// Use Padding directly
 Padding(padding: EdgeInsets.all(16), child: Text('Hello'));
-
-Padding(padding: EdgeInsets.symmetric(horizontal: 8));
-
-Padding(padding: EdgeInsets.all(16), child: Text('Hello'));
-
-Padding(padding: EdgeInsets.symmetric(vertical: 8));
 ```
+
+## Examples
+
+### `margin:` becomes `padding:`
+
+On a `Container` with nothing else set, `margin` and `padding` render
+identically — the margin has no decoration or colour to sit outside of. So the
+fix renames the argument as it swaps the widget:
+
+```dart
+// Don't
+Container(margin: EdgeInsets.all(16), child: Text('Hello'));
+
+// Do
+Padding(padding: EdgeInsets.all(16), child: Text('Hello'));
+```
+
+### No child is still reported
+
+`Padding` takes an optional child too, so a childless spacer converts the same
+way:
+
+```dart
+// Don't
+Container(margin: EdgeInsets.symmetric(horizontal: 8));
+
+// Do
+Padding(padding: EdgeInsets.symmetric(horizontal: 8));
+```
+
+## Known limitations
+
+**`padding` *and* `margin` together is not reported.** Those two are no longer
+equivalent once both exist — the fix would have to merge them — so the rule
+stays quiet:
+
+```dart
+// Not reported
+Container(padding: EdgeInsets.all(8), margin: EdgeInsets.all(8));
+```
+
+**Any other argument stops it.** `width`, `color`, `decoration`, `alignment` —
+one of them and `Container` is doing something `Padding` cannot:
+
+```dart
+// Not reported
+Container(padding: EdgeInsets.all(8), width: 100, child: Text('Hello'));
+```
+
+`key` and `child` are the two exceptions; they do not count against the rule.
 
 ## Configuration
 

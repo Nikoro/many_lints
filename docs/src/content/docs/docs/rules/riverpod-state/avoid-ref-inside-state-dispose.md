@@ -19,12 +19,66 @@ In Riverpod, the lifecycle of providers and widgets is not tightly coupled. When
 
 ## Don't
 
+The usual shape: a `dispose()` that tries to tell a provider the screen is
+gone. By the time it runs the provider may already have been torn down, so this
+either throws or writes to state nothing is listening to.
+
 ```dart
-class MyWidgetState extends ConsumerState<ConsumerStatefulWidget> {
+class _EditorPageState extends ConsumerState<EditorPage> {
+  final _controller = TextEditingController();
+
   @override
   void dispose() {
-    // ref may already be invalid at this point
-    ref.read(someProvider);
+    ref.read(draftProvider.notifier).save(_controller.text); // LINT
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => TextField(controller: _controller);
+}
+```
+
+## Do
+
+Dispose only what this widget owns, and push the provider work to the moment
+the user actually leaves — or let the provider clean up after itself with
+`ref.onDispose`:
+
+```dart
+class _EditorPageState extends ConsumerState<EditorPage> {
+  final _controller = TextEditingController();
+
+  void _saveDraft() {
+    ref.read(draftProvider.notifier).save(_controller.text);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => TextField(
+    controller: _controller,
+    onSubmitted: (_) => _saveDraft(),
+  );
+}
+```
+
+### Reading a value you need at dispose time
+
+Capture it while the widget is alive, then use the captured value in
+`dispose()`:
+
+```dart
+class _SessionPageState extends ConsumerState<SessionPage> {
+  late final Analytics _analytics = ref.read(analyticsProvider);
+
+  @override
+  void dispose() {
+    _analytics.screenClosed('session'); // no ref here
     super.dispose();
   }
 
@@ -33,24 +87,14 @@ class MyWidgetState extends ConsumerState<ConsumerStatefulWidget> {
 }
 ```
 
-## Do
+## Known limitations
 
-```dart
-class MyWidgetState extends ConsumerState<ConsumerStatefulWidget> {
-  @override
-  void dispose() {
-    // Clean up without accessing ref
-    super.dispose();
-  }
+The search stops at a closure boundary. A `ref` read inside a callback declared
+in `dispose()` is not reported, because such a callback may be stored and run
+somewhere else entirely.
 
-  @override
-  Widget build(BuildContext context) {
-    // ref is safe to use in build
-    final value = ref.watch(someProvider);
-    return Text(value);
-  }
-}
-```
+Only `dispose()` on a `ConsumerState` subclass is checked. `deactivate()` has
+the same hazard and is not covered.
 
 ## Configuration
 

@@ -40,6 +40,75 @@ class TableColumn {
 }
 ```
 
+## Examples
+
+### An override is skipped
+
+A setter marked `@override` inherits its parameter name along with the signature, so renaming it would only diverge from the base:
+
+```dart
+class Base {
+  set width(int value) {}
+}
+
+class TableColumn extends Base {
+  // Not reported — the name comes with the inherited signature
+  @override
+  set width(int newValue) {}
+}
+```
+
+### Accepting a second spelling
+
+`allow_names` adds spellings alongside the default, for the setters where `value` genuinely reads worse:
+
+```yaml
+rules:
+  prefer_correct_setter_parameter_name:
+    allow_names: [newValue]
+```
+
+```dart
+class TableColumn {
+  int _width = 0;
+
+  // Both accepted with the config above
+  set width(int value) => _width = value;
+  set minWidth(int newValue) => _width = newValue;
+
+  // Still reported — `v` is in neither
+  set maxWidth(int v) => _width = v;
+}
+```
+
+### Changing the name outright
+
+Set `parameter_name` when the house word is the only one you want:
+
+```yaml
+rules:
+  prefer_correct_setter_parameter_name:
+    parameter_name: newValue
+```
+
+```dart
+class TableColumn {
+  int _width = 0;
+
+  // Don't — `value` is no longer the accepted name
+  set width(int value) => _width = value;
+
+  // Do
+  set height(int newValue) => _width = newValue;
+}
+```
+
+## Known limitations
+
+**Setters only.** A single-parameter method that acts as a setter (`void setWidth(int w)`) is not checked.
+
+**No quick fix.** The parameter name appears in the body as well as the signature, and renaming both is a rename refactoring rather than a one-token edit.
+
 ## Enabling this rule
 
 This rule is in the **`pedantic`** preset, so it is enabled by `preset: pedantic` or by name:

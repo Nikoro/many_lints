@@ -12,29 +12,19 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Class Naming</span>
 
-This rule flags a class, mixin, enum, extension type or typedef whose name is too short, too long, or does not start with a capital letter.
+Flags a class, mixin, enum, extension type or typedef whose name is too short, too long, or does not start with a capital letter.
 
-The SDK's [`camel_case_types`](https://dart.dev/tools/linter-rules/camel_case_types) covers the *spelling* of a type name but says nothing about its length, and length is where the two real failures live: a one-letter type (`class R`) that reads as a type *parameter* at the point of use, and a forty-character type that names its whole call chain instead of the thing it models.
+The SDK's [`camel_case_types`](https://dart.dev/tools/linter-rules/camel_case_types) covers the *spelling* of a type name but says nothing about its length. The defaults are deliberately loose — **3 to 40 characters** — so the rule reports only genuine outliers.
 
-The defaults are deliberately loose — 3 to 40 characters — so the rule reports only genuine outliers.
-
-This rule is in the **`pedantic`** preset, because the right length is a house style.
-
-## Why use this rule
-
-A type name is the single most-read identifier in a codebase: it appears in every declaration, every parameter list and every error message. A name that is too short forces the reader to jump to the declaration to learn anything; a name that is too long is usually a sign the type is doing several jobs, and the name is the list of them.
-
-Type **parameters** are exempt. `T`, `E` and `K`/`V` are the convention the SDK itself uses, and holding them to a minimum length would fight it.
-
-**See also:** [Effective Dart: naming](https://dart.dev/effective-dart/design#names), [`camel_case_types`](https://dart.dev/tools/linter-rules/camel_case_types)
+This rule is in the **`pedantic`** preset, and works with its defaults — no configuration needed.
 
 ## Don't
 
 ```dart
-// Reads as a type parameter at the point of use.
+// Two characters: reads as a type PARAMETER at the point of use.
 class Ab {}
 
-// Names its whole call chain rather than the thing it models.
+// 48 characters: names its whole call chain rather than the thing it models.
 class AVeryLongTypeNameThatDescribesItsEntireCallChain {}
 ```
 
@@ -43,15 +33,52 @@ class AVeryLongTypeNameThatDescribesItsEntireCallChain {}
 ```dart
 class UserRepository {}
 
-// A type PARAMETER is exempt — this is the SDK's own convention.
-class Box<T> {
-  final T value;
+class OrderTotal {}
+```
 
-  Box(this.value);
+## Examples
+
+### Every type declaration is checked, not just classes
+
+Mixins, enums, extension types and typedefs go through the same bounds:
+
+```dart
+// Don't
+mixin Ab {}                     // LINT
+enum Cd { a }                   // LINT
+typedef Ef = int;               // LINT
+
+// Do
+mixin Cacheable {}
+enum OrderStatus { open }
+typedef UserId = int;
+```
+
+### Type parameters are exempt
+
+`T`, `E` and `K`/`V` are the SDK's own convention, so a single-letter type *parameter* is never reported — only the declaration it sits on:
+
+```dart
+// Accepted — `T` is a type parameter, `Box` is 3 characters
+class Box<T> {
+  const Box(this.value);
+
+  final T value;
 }
 ```
 
-## Options
+### A private type is measured without its underscore
+
+The leading `_` is a modifier, not part of the name, so `_Foo` counts as three characters and passes the default `min_length: 3`:
+
+```dart
+// Accepted
+class _Foo {}
+```
+
+### Tightening the bounds
+
+Raise `min_length` when three characters is still too terse for your codebase, and lower `max_length` to force long names to be broken up. `ignored_names` exempts the abbreviations you keep on purpose:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -81,11 +108,30 @@ rules:
 </TabItem>
 </Tabs>
 
+```dart
+// Accepted only because they are in `ignored_names`
+class Id {}
+class Db {}
+
+// Reported under `min_length: 4`, accepted under the default 3
+class Box {}
+```
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `min_length` | int | `3` | Shortest accepted name, excluding a leading underscore |
 | `max_length` | int | `40` | Longest accepted name, excluding a leading underscore |
-| `ignored_names` | list of strings | `[]` | Names exempt from every check |
+| `ignored_names` | list of strings | `[]` | Names exempt from every check, matched exactly including any underscore |
+
+## Known limitations
+
+**Extensions are not checked.** A named `extension` declaration goes through neither bound.
+
+**Capitalisation overlaps the SDK.** A lowercase type name is already reported by [`camel_case_types`](https://dart.dev/tools/linter-rules/camel_case_types); this rule reports it too, so you will see both when that lint is on.
+
+**See also:** [Effective Dart: naming](https://dart.dev/effective-dart/design#names)
 
 ## Turning this rule off
 

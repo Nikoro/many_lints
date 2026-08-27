@@ -28,24 +28,67 @@ This is the fpdart counterpart to the SDK's `unawaited_futures`, and the one mis
 
 ## Don't
 
+`save` returns a `TaskEither`, which is a *description* of the write. Dropping
+it means no row is ever written — and nothing says so:
+
 ```dart
-void save(User user) {
-  repository.save(user); // returns TaskEither — never runs
+class Failure {
+  const Failure(this.message);
+
+  final String message;
+}
+
+class User {
+  const User(this.id);
+
+  final String id;
+}
+
+class UserRepository {
+  TaskEither<Failure, Unit> save(User user) => TaskEither.of(unit);
+}
+
+void persist(UserRepository repository, User user) {
+  repository.save(user); // never runs
 }
 ```
 
 ## Do
 
+Run it, and await the result:
+
 ```dart
-Future<void> save(User user) async {
+Future<void> persist(UserRepository repository, User user) async {
   await repository.save(user).run();
 }
 ```
 
-Returning it is equally fine — the caller then owns running it:
+Or return the pipeline and let the caller own running it — often the better
+answer, since the caller is the one that can report the failure:
 
 ```dart
-TaskEither<Failure, Unit> save(User user) => repository.save(user);
+TaskEither<Failure, Unit> persist(UserRepository repository, User user) =>
+    repository.save(user);
+```
+
+### A discarded step inside a chain
+
+The same mistake hides mid-pipeline, where a step is built and then not joined
+on:
+
+```dart
+Future<void> checkout(UserRepository repository, User user) async {
+  repository.save(user).map((_) => 'saved'); // still never runs
+  await Future<void>.delayed(Duration.zero);
+}
+```
+
+Chain it into the pipeline that *is* run:
+
+```dart
+Future<void> checkout(UserRepository repository, User user) async {
+  await repository.save(user).map((_) => 'saved').run();
+}
 ```
 
 ## Known limitations

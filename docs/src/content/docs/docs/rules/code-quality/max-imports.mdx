@@ -18,44 +18,59 @@ This rule flags a file that imports more libraries than the configured budget.
 
 The import count measures how much a file depends on. A file importing twenty libraries is coupled to twenty things that can change under it, and usually has taken on more than one job.
 
-`export` directives are not counted by default — a barrel file is exports by definition.
-
 This rule is in the **`pedantic`** preset.
 
 ## Don't
 
-With `max_imports: 5`:
+With `max_imports: 5`, a screen file that grew into a service layer:
 
 ```dart
 import 'dart:async';
-import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
-import 'dart:developer'; // LINT: 6 imports exceeds the budget of 5
+import 'dart:developer'; // LINT: 6 imports, over the limit of 5
 
-class ReportGenerator {}
+class ReportScreen {}
 ```
+
+The diagnostic lands on the **first** directive, so it points at the import block rather than at whichever import happened to push it over.
 
 ## Do
 
-Split the file so each part imports what it needs:
+Split the file so each part imports only what it needs:
 
 ```dart
-// report_generator.dart
+// report_screen.dart
+import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
-class ReportGenerator {}
+class ReportScreen {}
 ```
 
 ```dart
-// report_statistics.dart
+// report_encoder.dart
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:developer';
 
-class ReportStatistics {}
+class ReportEncoder {}
 ```
+
+### Barrel files are not reported
+
+`export` directives do not count, so a barrel of forty exports stays silent under the default budget:
+
+```dart
+// widgets.dart — 0 imports counted
+export 'buttons.dart';
+export 'cards.dart';
+export 'dialogs.dart';
+```
+
+Set `count_exports: true` if you want a barrel held to the same budget.
 
 ## Enabling this rule
 

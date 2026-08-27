@@ -23,30 +23,61 @@ For an `AsyncValue<int?>`, a successfully loaded `null` is a real result. The `?
 
 ## Don't
 
+A profile screen whose provider yields `User?` — `null` meaning "signed out",
+which is a perfectly good loaded value. The `?` pattern rejects it, so a
+signed-out user gets a spinner that never stops:
+
 ```dart
-switch (asyncValue) { // AsyncValue<int?>
-  case AsyncValue(:final value?): // LINT — a loaded null never matches
-    print(value);
-  default:
-    return const CircularProgressIndicator();
+final currentUserProvider = FutureProvider<User?>((ref) => auth.currentUser());
+
+class ProfileView extends ConsumerWidget {
+  const ProfileView({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+
+    return switch (user) {
+      AsyncValue(:final value?) => Text(value.name), // LINT
+      AsyncValue(:final error?) => Text('$error'),
+      _ => const CircularProgressIndicator(),
+    };
+  }
 }
 ```
 
 ## Do
 
+Ask the question you meant — *has this loaded?* — and handle the null yourself:
+
 ```dart
-switch (asyncValue) { // AsyncValue<int?>
-  case AsyncValue(:final value, hasValue: true):
-    print(value);
-  default:
-    return const CircularProgressIndicator();
+final currentUserProvider = FutureProvider<User?>((ref) => auth.currentUser());
+
+class ProfileView extends ConsumerWidget {
+  const ProfileView({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+
+    return switch (user) {
+      AsyncValue(:final value, hasValue: true) =>
+        Text(value?.name ?? 'Signed out'),
+      AsyncValue(:final error?) => Text('$error'),
+      _ => const CircularProgressIndicator(),
+    };
+  }
 }
 ```
 
-The rule stays silent where the `?` pattern is precise:
+## Known limitations
+
+The rule stays silent where the `?` pattern is already precise.
+
+A non-nullable value type — `null` can then only mean "not loaded", which is
+exactly what `?` asks:
 
 ```dart
-// Non-nullable value: null can only mean "not loaded"
 void fn(AsyncValue<int> asyncValue) {
   switch (asyncValue) {
     case AsyncValue(:final value?):
@@ -55,8 +86,12 @@ void fn(AsyncValue<int> asyncValue) {
       break;
   }
 }
+```
 
-// AsyncData.hasValue is always true, so the null check carries the meaning
+Matching `AsyncData` rather than `AsyncValue` — `AsyncData.hasValue` is always
+true, so the null check is doing real work:
+
+```dart
 void onData(AsyncValue<int?> asyncValue) {
   switch (asyncValue) {
     case AsyncData(:final value?):

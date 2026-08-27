@@ -11,20 +11,19 @@ sidebar:
 
 This rule flags an extension member whose name already exists on the type being extended. Instance members always win over extension members, so the extension one can never be called.
 
-## Why use this rule
+The result is code that reads as though the extension applies and behaves as though it does not. Nothing errors, so the discrepancy is usually found by debugging the wrong thing.
 
-Extension members are resolved statically and lose to instance members every time. An extension declaring `toUpperCase()` on `String` compiles cleanly and is simply never invoked — every call site silently reaches `String.toUpperCase` instead.
-
-The result is code that reads as though the extension applies and behaves as though it does not. Since nothing errors, the discrepancy is usually found by debugging the wrong thing.
-
-**See also:** [Dart: extension methods](https://dart.dev/language/extension-methods#static-types-and-dynamic-types)
+This rule is in the **`core`** preset and takes no configuration.
 
 ## Don't
 
 ```dart
-extension on String {
-  String toUpperCase() => '!';   // never called
+extension StringShouting on String {
+  // Never called — String.toUpperCase always wins at every call site.
+  String toUpperCase() => '$this!';
 }
+
+String announce(String name) => name.toUpperCase();   // 'ADA', not 'Ada!'
 ```
 
 ## Do
@@ -32,16 +31,77 @@ extension on String {
 Give the extension member a name the type does not already use:
 
 ```dart
-extension on String {
-  String shout() => '\$this!';
+extension StringShouting on String {
+  String shout() => '$this!';
+}
+
+String announce(String name) => name.shout();         // 'Ada!'
+```
+
+## More examples
+
+### Shadowing a getter you added to your own class
+
+The type does not have to be from the SDK. This bites hardest on your own
+classes, where the instance member was added *after* the extension:
+
+```dart
+class Cart {
+  const Cart(this.lines);
+
+  final List<int> lines;
+
+  int get total => lines.fold(0, (sum, line) => sum + line);
+}
+
+extension CartTotals on Cart {
+  // Reported — Cart.total already exists, so this body never runs.
+  int get total => 0;
+}
+```
+
+```dart
+extension CartTotals on Cart {
+  int get totalWithTax => (total * 1.23).round();
+}
+```
+
+### Inherited members shadow too
+
+The check walks the extended type's supertypes, so a member inherited from a
+base class shadows an extension just as an own member does:
+
+```dart
+class Entity {
+  const Entity(this.id);
+
+  final String id;
+
+  String describe() => 'Entity($id)';
+}
+
+class Booking extends Entity {
+  const Booking(super.id);
+}
+
+extension BookingDisplay on Booking {
+  // Reported — Booking inherits describe() from Entity.
+  String describe() => 'Booking $id';
 }
 ```
 
 ## Known limitations
 
-The check walks the extended type and its supertypes. Members inherited from `Object` are excluded — every type has them, so reporting `toString` or `hashCode` would flag ordinary, useful extensions.
+Members inherited from `Object` are excluded. The compiler already rejects those outright (`extension_declares_member_of_object`), so there is nothing left for this rule to say, and the exclusion also keeps it from flagging every supertype's inherited `toString`.
 
-Static extension members are skipped, since they are accessed through the extension name and cannot be shadowed.
+Static extension members are skipped, since they are accessed through the extension name and cannot be shadowed:
+
+```dart
+extension DurationParsing on Duration {
+  // Not reported — called as DurationParsing.parse(...).
+  static Duration parse(String source) => Duration.zero;
+}
+```
 
 ## Configuration
 

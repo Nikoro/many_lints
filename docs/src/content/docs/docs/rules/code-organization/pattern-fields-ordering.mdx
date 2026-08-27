@@ -12,43 +12,13 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Code Organization</span>
 
-This rule flags an object or record pattern whose named fields are not in the configured order.
+Flags an object or record **pattern** whose named fields are not in the order you configure.
 
 A destructuring pattern reads as a small table of what is being pulled out, and the same object is often destructured in several places. When each spelling picks its own order, the reader cannot compare two of them at a glance to see which fields one takes and the other does not.
 
-A positional field in a record pattern is identified by position and is left alone; one unnamed field makes the whole list unorderable rather than partially ordered.
+This rule is in the **`pedantic`** preset, which sets `order: alphabetical`. Under any other preset **it reports nothing until you set `order:`**.
 
-This rule is in the **`pedantic`** preset.
-
-## Don't
-
-```dart
-if (user case User(name: final n, age: final a)) {
-  print('$n is $a');
-}
-```
-
-## Do
-
-```dart
-if (user case User(age: final a, name: final n)) {
-  print('$n is $a');
-}
-```
-
-## Enabling this rule
-
-Outside `preset: pedantic`, which uses alphabetical order, this rule reports
-**nothing until you choose an order**:
-
-```yaml
-# many_lints.yaml
-rules:
-  pattern_fields_ordering:
-    order: alphabetical
-```
-
-## Options
+## Setup
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -74,9 +44,188 @@ rules:
 </TabItem>
 </Tabs>
 
+## Don't
+
+With `order: alphabetical`:
+
+```dart
+class User {
+  const User(this.age, this.name);
+
+  final int age;
+  final String name;
+}
+
+void greet(Object value) {
+  if (value case User(name: final n, age: final a)) {
+    print('$n is $a');
+  }
+}
+```
+
+## Do
+
+```dart
+class User {
+  const User(this.age, this.name);
+
+  final int age;
+  final String name;
+}
+
+void greet(Object value) {
+  if (value case User(age: final a, name: final n)) {
+    print('$n is $a');
+  }
+}
+```
+
+## Examples
+
+### Every pattern position is checked
+
+`if case`, `switch` arms and a destructuring `final` declaration all carry patterns, and all are ordered:
+
+```yaml
+rules:
+  pattern_fields_ordering:
+    order: alphabetical
+```
+
+```dart
+class Point {
+  const Point(this.x, this.y);
+
+  final int x;
+  final int y;
+}
+
+// Don't — a switch arm
+String describe(Object o) => switch (o) {
+  Point(y: final b, x: final a) => '$a,$b',
+  _ => 'other',
+};
+
+// Don't — a destructuring declaration
+void unpack(({int width, int height}) box) {
+  final (:height, :width) = (width: box.width, height: box.height);
+  print('$width x $height');
+}
+```
+
+```dart
+class Point {
+  const Point(this.x, this.y);
+
+  final int x;
+  final int y;
+}
+
+// Do
+String describe(Object o) => switch (o) {
+  Point(x: final a, y: final b) => '$a,$b',
+  _ => 'other',
+};
+
+void unpack(({int width, int height}) box) {
+  final (:height, :width) = (height: box.height, width: box.width);
+  print('$width x $height');
+}
+```
+
+Note the second case: `(:height, :width)` is already alphabetical, so it is the *record literal* on the right that had to move.
+
+### The `:name` shorthand is ordered by that name
+
+Both spellings carry a name, so both are compared:
+
+```yaml
+rules:
+  pattern_fields_ordering:
+    order: alphabetical
+```
+
+```dart
+class Config {
+  const Config(this.host, this.port);
+
+  final String host;
+  final int port;
+}
+
+void read(Object o) {
+  // Don't
+  if (o case Config(:final port, :final host)) {
+    print('$host:$port');
+  }
+
+  // Do
+  if (o case Config(:final host, :final port)) {
+    print('$host:$port');
+  }
+}
+```
+
+### `by_length`
+
+Longest field name last. Ties fall back to alphabetical so the order is total:
+
+```yaml
+rules:
+  pattern_fields_ordering:
+    order: by_length
+```
+
+```dart
+class Box {
+  const Box(this.antialias, this.width, this.x);
+
+  final bool antialias;
+  final int width;
+  final int x;
+}
+
+void draw(Object o) {
+  // Don't
+  if (o case Box(:final width, :final x, :final antialias)) {
+    print('$width$x$antialias');
+  }
+
+  // Do
+  if (o case Box(:final x, :final width, :final antialias)) {
+    print('$width$x$antialias');
+  }
+}
+```
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `order` | string | `—` | `alphabetical`, `alphabetical_case_sensitive` or `by_length`. Unset means the rule is silent |
+
+## Known limitations
+
+**One positional field skips the whole pattern.** A positional field in a record pattern is identified by position and has no name to sort by. Rather than order the rest around a field it cannot place, the rule leaves the pattern alone entirely:
+
+```dart
+// Not reported — the first field is positional
+void f(Object o) {
+  if (o case (final first, zebra: final z, apple: final a)) {
+    print('$first$z$a');
+  }
+}
+```
+
+A wholly positional record pattern — `(final b, final a)` — is skipped for the same reason.
+
+**Fewer than two fields are never reported** — a single field cannot be out of order.
+
+**Only the first out-of-order field is reported**, so one misplaced name does not produce a wall of diagnostics.
+
+**Nested patterns are checked independently.** An outer pattern and a pattern inside one of its fields are two separate lists; ordering one does not order the other.
+
+**No quick fix.** Reordering pattern fields is safe, but a pattern often sits inline in a condition where the moved text is easier to review as a deliberate edit.
 
 ## Turning this rule off
 

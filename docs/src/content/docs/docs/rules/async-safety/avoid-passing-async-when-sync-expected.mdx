@@ -26,12 +26,16 @@ This is deliberately the *only* shape reported. For any other return type the an
 
 ## Don't
 
-```dart
-void schedule(void Function() task) => task();
+A retry hook typed `void Function()`. The `async` body compiles, runs, and its failure has nowhere to go:
 
-schedule(() async {
-  await save();   // nothing awaits this; a failure becomes unhandled
-});
+```dart
+void onRetry(void Function() retry) => retry();
+
+void wire(Future<void> Function() save) {
+  onRetry(() async {
+    await save();   // nothing awaits this; a failure becomes unhandled
+  });
+}
 ```
 
 ## Do
@@ -39,24 +43,45 @@ schedule(() async {
 Change the parameter so the future has somewhere to go:
 
 ```dart
-Future<void> schedule(Future<void> Function() task) => task();
+Future<void> onRetry(Future<void> Function() retry) => retry();
 
-schedule(() async {
-  await save();
-});
+Future<void> wire(Future<void> Function() save) async {
+  await onRetry(() async {
+    await save();
+  });
+}
 ```
 
-When the callback genuinely is fire-and-forget, handle errors inside it so nothing escapes:
+### When you cannot change the signature
+
+Third-party APIs are often fixed. Handle the error inside the closure so nothing escapes into the zone:
 
 ```dart
-schedule(() async {
-  try {
-    await save();
-  } catch (e, st) {
-    reportError(e, st);
-  }
-});
+void wire(void Function() onRetry, Future<void> Function() save) {
+  onRetry(() async {
+    try {
+      await save();
+    } catch (error, stackTrace) {
+      _reportError(error, stackTrace);
+    }
+  });
+}
 ```
+
+### Flutter handlers are exempt by default
+
+`onPressed` and friends are `void`-returning by design, and giving them an `async` body is idiomatic Flutter. They are skipped, so this is not reported:
+
+```dart
+ElevatedButton(
+  onPressed: () async {
+    await _save();
+  },
+  child: const Text('Save'),
+)
+```
+
+The skipped names are `onPressed`, `onTap`, `onLongPress`, `onChanged`, `onSubmitted`, `onDoubleTap`, `onRefresh`, `onSaved` and `listener`. With `ignore_widget_callbacks: false` those are audited too — worth doing only if your app installs an error boundary that catches what they drop.
 
 ## Known limitations
 

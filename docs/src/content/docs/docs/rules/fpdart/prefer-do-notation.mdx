@@ -24,11 +24,20 @@ Nested callbacks indent one level per step and push each step's value into a clo
 
 ## Don't
 
+Three steps, each one wrapping the next in a callback. By the third the reader
+is counting brackets to work out which `)` closes what:
+
 ```dart
-market.buyBanana().flatMap(
-      (banana) => market.buyApple().flatMap(
-            (apple) => market.buyPear().flatMap(
-                  (pear) => Option.of('$banana, $apple, $pear'),
+TaskEither<String, String> readConfig(String path) => TaskEither.of('{}');
+
+TaskEither<String, int> parsePort(String config) => TaskEither.of(8080);
+
+TaskEither<String, String> connect(int port) => TaskEither.of('ready');
+
+TaskEither<String, String> start(String path) => readConfig(path).flatMap(
+      (config) => parsePort(config).flatMap(
+            (port) => connect(port).flatMap(
+                  (status) => TaskEither.of('$status on $port'),
                 ),
           ),
     );
@@ -36,23 +45,27 @@ market.buyBanana().flatMap(
 
 ## Do
 
+Every extracted value is an ordinary local, and the block stays flat however
+many steps it grows to:
+
 ```dart
-Option.Do(($) {
-  final banana = $(market.buyBanana());
-  final apple = $(market.buyApple());
-  final pear = $(market.buyPear());
-  return '$banana, $apple, $pear';
+TaskEither<String, String> start(String path) => TaskEither.Do(($) async {
+  final config = await $(readConfig(path));
+  final port = await $(parsePort(config));
+  final status = await $(connect(port));
+  return '$status on $port';
 });
 ```
 
-An async pipeline reads the same way, awaiting each extraction:
+A synchronous `Option` pipeline is the same shape without the `await`:
 
 ```dart
-TaskEither.Do(($) async {
-  final file = await $(fileAt(path));
-  final content = await $(readAsString(file));
-  return content;
-});
+Option<String> label(Option<String> first, Option<String> last) =>
+    Option.Do(($) {
+      final given = $(first);
+      final family = $(last);
+      return '$given $family';
+    });
 ```
 
 ## Known limitations
@@ -63,13 +76,11 @@ Exactly one diagnostic is reported per nest, on the outermost call, because the 
 
 There is no quick fix, but there **is** an assist: put the cursor on any `flatMap` in the nest and pick **"Convert to `Do` notation"**. It generates the block, takes each step's name from that callback's own parameter, and offers every generated name as a linked edit position — so accepting the assist drops the cursor on the first name with the rest reachable by Tab.
 
-It is an assist rather than a fix on purpose. The generated names are only as good as the original parameter names, so the rename belongs in the same gesture as the conversion; as a fix hanging off this warning, "apply all" would be one keystroke away from a file full of `final a = ...`.
-
 ### Going back the other way
 
-The inverse assist, **"Convert to `flatMap` chain"**, is offered with the cursor anywhere in a `Do` block. It is there for the times this rule's preference is the wrong call for a particular pipeline — matching the style of the code around it, or stepping out of a block whose imperative shape was never earning its keep.
+The inverse assist, **"Convert to `flatMap` chain"**, is offered with the cursor anywhere in a `Do` block, for when this rule's preference is the wrong call for a particular pipeline.
 
-It converts only the straight-line shape: a run of `final <name> = $(...)` bindings followed by a single `return`. A block that branches, loops, or extracts inside a larger expression is declined outright rather than half-translated, because `flatMap` is a fixed chain of continuations — turning an `if` into one would mean duplicating everything after it into both arms. A `Do` block that does that much is one where `Do` is genuinely the better notation.
+It converts only the straight-line shape: a run of `final <name> = $(...)` bindings followed by a single `return`. A block that branches, loops, or extracts inside a larger expression is declined rather than half-translated.
 
 A plain `return x` becomes `Type.of(x)` on the way out, since `Do` lifts its own result and a chain does not; `await $(...)` in a `TaskEither.Do` loses the `await`, which belonged to the block rather than to the step.
 

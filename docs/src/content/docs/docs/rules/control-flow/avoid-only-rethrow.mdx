@@ -16,86 +16,105 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-Warns when a catch clause contains only a `rethrow` statement. Such catch clauses are completely redundant — they catch an exception only to immediately rethrow it, adding no value. The entire try-catch block can be removed.
-
-## Why use this rule
-
-A catch clause that only rethrows does not handle, log, or transform the exception in any way. It adds indentation and visual noise without changing behavior. Removing the redundant try-catch makes the code simpler and communicates that no error handling is happening at this level.
+Flags a `catch` clause whose entire body is `rethrow;`. It catches the exception only to put it straight back, which is what would have happened with no `try` at all.
 
 **See also:** [Exceptions](https://dart.dev/language/error-handling) | [Dart lint: use_rethrow_when_possible](https://dart.dev/tools/linter-rules/use_rethrow_when_possible)
 
 ## Don't
 
+This usually survives a refactor: the logging that justified the `catch` was moved elsewhere, and the empty shell stayed:
+
 ```dart
-void bad() {
-  // Redundant catch clause
+Future<Order> loadOrder(String id) async {
   try {
-    doSomething();
+    return await fetchOrder(id);
   } catch (e) {
     rethrow;
   }
-
-  // Same with typed on clause
-  try {
-    doSomething();
-  } on Exception {
-    rethrow;
-  }
-
-  // With stack trace parameter, still redundant
-  try {
-    doSomething();
-  } catch (e, s) {
-    rethrow;
-  }
 }
+
+Future<Order> fetchOrder(String id) async => Order();
+
+class Order {}
 ```
 
 ## Do
 
+Delete the `try` — the behaviour is identical:
+
 ```dart
-void good() {
-  // Logging before rethrowing is meaningful
+Future<Order> loadOrder(String id) async {
+  return await fetchOrder(id);
+}
+
+Future<Order> fetchOrder(String id) async => Order();
+
+class Order {}
+```
+
+That is what the quick fix does when the offending clause is the only one and there is no `finally`. Otherwise it removes just that clause and leaves the rest of the `try` in place.
+
+### Or give the clause a reason to exist
+
+A clause that does something before rethrowing is never reported:
+
+```dart
+Future<Order> loadOrder(String id) async {
   try {
-    doSomething();
-  } catch (e) {
-    print('Error: $e');
+    return await fetchOrder(id);
+  } catch (e, s) {
+    log.warning('order $id failed to load', e, s);
     rethrow;
   }
+}
 
-  // Conditional rethrow with handling
+Future<Order> fetchOrder(String id) async => Order();
+
+class Order {}
+
+abstract final class log {
+  static void warning(String message, Object error, StackTrace stack) {}
+}
+```
+
+So is one that rethrows conditionally, since it handles some cases and forwards the rest:
+
+```dart
+void parse(String source) {
   try {
-    doSomething();
+    decode(source);
   } catch (e) {
     if (e is FormatException) {
-      handleFormat(e);
+      useDefaults();
       return;
     }
     rethrow;
   }
-
-  // No try-catch needed at all if you're just rethrowing
-  doSomething();
 }
+
+void decode(String source) {}
+
+void useDefaults() {}
 ```
 
-## Turning this rule off
+### A typed clause is still reported by default
 
-This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
-`avoid_only_rethrow: true`.
+`on Exception { rethrow; }` looks narrower but behaves the same — the exception propagates either way:
 
-To turn it off:
+```dart
+void demo(String source) {
+  // Don't
+  try {
+    decode(source);
+  } on FormatException {
+    rethrow;
+  }
+}
 
-```yaml
-# many_lints.yaml
-rules:
-  avoid_only_rethrow: false
+void decode(String source) {}
 ```
 
-To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
-
-## Options
+There is one case where the typed form is not redundant: a `try` with *several* clauses, where one handles and another only forwards. If your codebase writes that deliberately, exempt typed clauses:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -121,12 +140,35 @@ rules:
 </TabItem>
 </Tabs>
 
+With that set, `on FormatException { rethrow; }` is accepted and the untyped `catch (e) { rethrow; }` still reports.
+
+## Known limitations
+
+The body must be exactly one statement, and that statement must be `rethrow;`. A body with a comment above the `rethrow` is still one statement and is still reported.
+
+Each clause is judged on its own, so a `try` with one real handler and one bare-rethrow clause reports the second — turn on `ignore_typed_catches` if that shape is intentional in your project.
+
+## Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `ignore_typed_catches` | bool | `false` | Only report untyped `catch (e)` clauses, leaving `on SomeError catch (e) { rethrow; }` alone |
+| `ignore_typed_catches` | bool | `false` | Only report untyped `catch (e)` clauses, leaving `on SomeError { rethrow; }` alone |
 
-A typed clause narrows which exceptions propagate, so it is not always
-redundant — enable this option if your codebase uses that pattern deliberately.
+## Turning this rule off
+
+This rule is in the **`recommended`** preset, so it is on with
+`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
+`avoid_only_rethrow: true`.
+
+To turn it off:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_only_rethrow: false
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
 
 ## Related rules
 

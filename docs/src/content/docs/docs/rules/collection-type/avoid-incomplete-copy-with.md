@@ -13,72 +13,81 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Collection & Type</span>
 
-A `copyWith` method that does not include all parameters from the class's default constructor is incomplete. Callers cannot override every field, which defeats the purpose of having a `copyWith` method in the first place.
-
-## Why use this rule
-
-An incomplete `copyWith` is a common source of subtle bugs. When a new field is added to a class but not to `copyWith`, callers silently lose the ability to override that field. This rule ensures your `copyWith` stays in sync with the constructor.
-
-**See also:** [Effective Dart: Design](https://dart.dev/effective-dart/design)
+Flags a `copyWith` whose parameters do not cover every parameter of the class's unnamed constructor. The diagnostic names the missing ones, and the quick fix adds them.
 
 ## Don't
 
+This is what adding a field looks like when `copyWith` is not updated with it. Nothing breaks at the definition; the loss shows up at every call site, silently:
+
 ```dart
-// copyWith is missing the 'surname' parameter
-class IncompletePerson {
-  const IncompletePerson({required this.name, required this.surname});
-
-  final String name;
-  final String surname;
-
-  IncompletePerson copyWith({String? name}) {
-    return IncompletePerson(name: name ?? this.name, surname: surname);
-  }
-}
-
-// copyWith is missing both 'port' and 'path'
-class IncompleteConfig {
-  const IncompleteConfig({
-    required this.host,
-    required this.port,
-    required this.path,
+class Filters {
+  const Filters({
+    required this.query,
+    required this.category,
+    required this.inStockOnly,
   });
 
-  final String host;
-  final int port;
-  final String path;
+  final String query;
+  final String category;
+  final bool inStockOnly;
 
-  IncompleteConfig copyWith({String? host}) {
-    return IncompleteConfig(host: host ?? this.host, port: port, path: path);
+  Filters copyWith({String? query, String? category}) {
+    return Filters(
+      query: query ?? this.query,
+      category: category ?? this.category,
+      inStockOnly: inStockOnly,
+    );
   }
 }
 ```
+
+`filters.copyWith(inStockOnly: true)` does not compile, so the caller writes the whole constructor out by hand — or, worse, drops the toggle.
 
 ## Do
 
 ```dart
-// copyWith includes all constructor parameters
-class CompletePerson {
-  const CompletePerson({required this.name, required this.surname});
+class Filters {
+  const Filters({
+    required this.query,
+    required this.category,
+    required this.inStockOnly,
+  });
 
-  final String name;
-  final String surname;
+  final String query;
+  final String category;
+  final bool inStockOnly;
 
-  CompletePerson copyWith({String? name, String? surname}) {
-    return CompletePerson(
-      name: name ?? this.name,
-      surname: surname ?? this.surname,
+  Filters copyWith({String? query, String? category, bool? inStockOnly}) {
+    return Filters(
+      query: query ?? this.query,
+      category: category ?? this.category,
+      inStockOnly: inStockOnly ?? this.inStockOnly,
     );
   }
 }
+```
 
-// No copyWith method — no warning
-class NoCopyWith {
-  const NoCopyWith({required this.value});
+### A class with no `copyWith` is left alone
 
-  final int value;
+The rule never asks you to add one — it only keeps an existing `copyWith` in step with the constructor:
+
+```dart
+// No warning: nothing to keep in sync
+class Coordinates {
+  const Coordinates({required this.lat, required this.lon});
+
+  final double lat;
+  final double lon;
 }
 ```
+
+## Known limitations
+
+**Only the unnamed constructor is compared.** A class whose primary constructor is named — `const Filters.initial({...})` — is not checked, since the rule finds no default constructor to compare against.
+
+**Parameters are matched by name only.** A `copyWith` that declares the right names but ignores one in its body is not reported; the check is on the signature.
+
+**Nullable fields need a sentinel, and the rule does not know that.** Adding `String? note` to `copyWith` makes `copyWith(note: null)` indistinguishable from "leave it alone". The rule asks for the parameter; choosing a sentinel or a wrapper to express "set to null" is yours.
 
 ## Configuration
 

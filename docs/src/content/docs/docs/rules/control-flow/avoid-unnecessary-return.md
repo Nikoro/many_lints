@@ -9,39 +9,84 @@ sidebar:
 <span class="rule-badge rule-badge--warning">Warning</span>
 <span class="rule-badge rule-badge--category">Control Flow</span>
 
-This rule flags a bare `return;` written as the last statement of a function that returns nothing, where control leaves the function whether it is there or not.
+This rule flags a bare `return;` written as the last statement of a function that returns nothing. Control leaves the function whether it is there or not, but `return` reads as an early exit, so a reader stops to look for what is being skipped and finds the closing brace.
 
-## Why use this rule
-
-The statement changes nothing, but it does not read as though it changes nothing. `return` announces an early exit, so a reader stops to look for what is being skipped, and finds the closing brace.
-
-It is usually a leftover from a change that moved or deleted the statements it once guarded. An early `return;` that genuinely skips later code is doing real work and is left alone.
+It is usually left behind by a change that moved or deleted the statements it once guarded.
 
 ## Don't
 
 ```dart
+class Order {
+  bool get isCancelled => false;
+}
+
+void send(Order order) {}
+
 void process(Order order) {
   send(order);
-  return; // nothing follows
+  return;
+}
+```
+
+`Future<void>` counts the same — an `async` function with nothing left to run:
+
+```dart
+Future<void> flush(List<String> pending) async {
+  await Future<void>.delayed(Duration.zero);
+  pending.clear();
+  return;
 }
 ```
 
 ## Do
 
+Drop the statement:
+
 ```dart
+class Order {
+  bool get isCancelled => false;
+}
+
+void send(Order order) {}
+
 void process(Order order) {
   send(order);
 }
 ```
 
-An early return stays:
+An early `return;` that genuinely skips later statements is doing real work, and stays:
 
 ```dart
+class Order {
+  bool get isCancelled => false;
+}
+
+void send(Order order) {}
+
 void process(Order order) {
-  if (order.isCancelled) return; // skips the call below
+  if (order.isCancelled) return;
+
   send(order);
 }
 ```
+
+## Known limitations
+
+Only a `return` with **no value** is reported, and only when the return type is
+written as `void` or `Future<void>`.
+
+An **omitted** return type is not treated as `void` — it means `dynamic`, where
+`return;` may be deliberate. So this is not reported:
+
+```dart
+process(List<String> pending) {
+  pending.clear();
+  return;
+}
+```
+
+A bare closure is skipped too, for the same reason: its return type would have
+to be inferred.
 
 ## Turning this rule off
 
