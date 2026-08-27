@@ -68,6 +68,30 @@ docs/
   dist/                     # Build output (gitignored)
 ```
 
+## Assist Examples Are Executed
+
+The before/after pairs on `docs/src/content/docs/docs/assists.md` are the only
+place a reader learns what an assist emits, so they are checked against the real
+thing rather than reviewed by eye.
+
+`test/docs_assist_examples_test.dart` replays every one through a real
+`PluginServer` and compares the output to the documented "After". The fixtures
+live in `docs/verified/assist_examples.json`.
+
+Two consequences when touching an assist:
+
+- **Changing an assist's output fails this test**, naming the page section to
+  update. Fix the page first, then the fixture — in that order, so the page
+  stays the source of truth.
+- **Adding an assist means adding a fixture.** A guard asserts the fixture count
+  so an emptied file cannot make the suite vacuously green.
+
+Note what `tool/verify_documentation.dart` does *not* cover: it proves a snippet
+parses, not that it is what the code produces. A snippet can be valid Dart and
+still advertise output no assist has emitted in months — the class of drift this
+test exists to catch. Prose claims ("this rule reports X", "only fires on Y") are
+still unverified; check them against the rule source when editing.
+
 ## Rule Pages
 
 Rule documentation pages are **hand-maintained** and committed directly. The generation script (`scripts/generate-rule-pages.mjs`) can bootstrap new pages but does not run in CI. It exits non-zero when a rule is uncategorized, listed in multiple categories, or referenced without a matching rule source.

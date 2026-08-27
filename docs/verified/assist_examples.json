@@ -1,0 +1,142 @@
+[
+  {
+    "section": "Convert to collection-for",
+    "assist": "many_lints.assist.convertIterableMapToCollectionFor",
+    "fpdart": false,
+    "before": "void f(List<int> numbers) {\n  final doubled = numbers.m^ap((e) => e * 2).toList();\n}\n",
+    "after": "void f(List<int> numbers) {\n  final doubled = [for (final e in numbers) e * 2];\n}\n"
+  },
+  {
+    "section": "Convert to collection-for",
+    "assist": "many_lints.assist.convertIterableMapToCollectionFor",
+    "fpdart": false,
+    "before": "void f(List<int> numbers) {\n  final halved = numbers.m^ap((e) => e / 2).toSet();\n}\n",
+    "after": "void f(List<int> numbers) {\n  final halved = {for (final e in numbers) e / 2};\n}\n"
+  },
+  {
+    "section": "Convert to `Do` notation",
+    "assist": "many_lints.assist.convertFlatMapToDoNotation",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nclass Market {\n  Option<String> buyBanana() => Option.of('banana');\n  Option<String> buyApple() => Option.of('apple');\n}\nOption<Market> goToShoppingCenter() => Option.of(Market());\n\nOption<String> goShopping() => goToShoppingCenter().flat^Map(\n      (market) => market.buyBanana().flatMap(\n            (banana) => market.buyApple().flatMap(\n                  (apple) => Option.of('$banana, $apple'),\n                ),\n          ),\n    );\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nclass Market {\n  Option<String> buyBanana() => Option.of('banana');\n  Option<String> buyApple() => Option.of('apple');\n}\nOption<Market> goToShoppingCenter() => Option.of(Market());\n\nOption<String> goShopping() => Option.Do(($) {\n  final market = $(goToShoppingCenter());\n  final banana = $(market.buyBanana());\n  final apple = $(market.buyApple());\n  return '$banana, $apple';\n});\n"
+  },
+  {
+    "section": "Convert to `flatMap` chain",
+    "assist": "many_lints.assist.convertDoNotationToFlatMap",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nclass Market {\n  Option<String> buyBanana() => Option.of('banana');\n}\nOption<Market> goToShoppingCenter() => Option.of(Market());\n\nOption<String> goShopping() => Option.Do(($) {\n      final market = $(goToShoppingCent^er());\n      final banana = $(market.buyBanana());\n      return '$banana';\n    });\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nclass Market {\n  Option<String> buyBanana() => Option.of('banana');\n}\nOption<Market> goToShoppingCenter() => Option.of(Market());\n\nOption<String> goShopping() => goToShoppingCenter().flatMap(\n  (market) => market.buyBanana().flatMap(\n    (banana) => Option.of('$banana'),\n  ),\n);\n"
+  },
+  {
+    "section": "Convert to `TaskEither` / `TaskOption` (from Future<Either>)",
+    "assist": "many_lints.assist.convertToLazyFpdartType",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nclass Failure {}\nclass User {}\nclass Api { Future<User> get(String id) async => User(); }\nfinal api = Api();\n\nFuture<Either<Failure, User>> get^User(String id) async {\n  return right(await api.get(id));\n}\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nclass Failure {}\nclass User {}\nclass Api { Future<User> get(String id) async => User(); }\nfinal api = Api();\n\nTaskEither<Failure, User> getUser(String id) => TaskEither(() async {\n      return right(await api.get(id));\n    });\n"
+  },
+  {
+    "section": "Convert to `TaskEither` / `TaskOption` (from Either)",
+    "assist": "many_lints.assist.convertToLazyFpdartType",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nclass Failure { static Failure empty() => Failure(); }\nclass User { static User fromJson(String r) => User(); }\n\nEither<Failure, User> pa^rse(String raw) {\n  if (raw.isEmpty) return left(Failure.empty());\n  return right(User.fromJson(raw));\n}\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nclass Failure { static Failure empty() => Failure(); }\nclass User { static User fromJson(String r) => User(); }\n\nTaskEither<Failure, User> parse(String raw) => TaskEither(() async {\n      if (raw.isEmpty) return left(Failure.empty());\n      return right(User.fromJson(raw));\n    });\n"
+  },
+  {
+    "section": "Convert to `TaskEither` / `TaskOption` (from Option)",
+    "assist": "many_lints.assist.convertToLazyFpdartType",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nclass User { static User fromJson(String r) => User(); }\n\nOption<User> fi^nd(String raw) {\n  if (raw.isEmpty) return none();\n  return some(User.fromJson(raw));\n}\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nclass User { static User fromJson(String r) => User(); }\n\nTaskOption<User> find(String raw) => TaskOption(() async {\n      if (raw.isEmpty) return none();\n      return some(User.fromJson(raw));\n    });\n"
+  },
+  {
+    "section": "Convert to `andThen`",
+    "assist": "many_lints.assist.convertFlatMapToAndThen",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nclass Resetter { TaskEither<String, int> reset() => throw ''; }\nclass AuthRepository { TaskEither<String, int> logout() => throw ''; }\n\nTaskEither<String, int> f(Resetter resetter, AuthRepository authRepository) =>\n    resetter.reset().flat^Map((_) => authRepository.logout());\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nclass Resetter { TaskEither<String, int> reset() => throw ''; }\nclass AuthRepository { TaskEither<String, int> logout() => throw ''; }\n\nTaskEither<String, int> f(Resetter resetter, AuthRepository authRepository) =>\n    resetter.reset().andThen(authRepository.logout);\n"
+  },
+  {
+    "section": "Convert to `map`",
+    "assist": "many_lints.assist.convertFlatMapToMap",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nint transform(String v) => throw '';\n\nTaskEither<String, int> f(TaskEither<String, String> pipeline) =>\n    pipeline.flat^Map((v) => TaskEither.right(transform(v)));\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nint transform(String v) => throw '';\n\nTaskEither<String, int> f(TaskEither<String, String> pipeline) =>\n    pipeline.map(transform);\n"
+  },
+  {
+    "section": "Convert to `filterOrElse`",
+    "assist": "many_lints.assist.convertFlatMapToFilterOrElse",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nclass Invalid {}\n\nextension on String { bool get isValid => true; }\n\nTaskEither<Invalid, String> f(TaskEither<Invalid, String> pipeline) =>\n    pipeline.flat^Map((v) => v.isValid ? TaskEither.right(v) : TaskEither.left(Invalid()));\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nclass Invalid {}\n\nextension on String { bool get isValid => true; }\n\nTaskEither<Invalid, String> f(TaskEither<Invalid, String> pipeline) =>\n    pipeline.filterOrElse((v) => v.isValid, (v) => Invalid());\n"
+  },
+  {
+    "section": "Convert to `sequenceListSeq`",
+    "assist": "many_lints.assist.convertReduceToSequenceList",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nextension <E> on Iterable<E> {\n  E reduce(E Function(E value, E element) combine) => throw '';\n}\n\nTaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>\n    tasks.red^uce((acc, t) => acc.flatMap((_) => t));\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nextension <E> on Iterable<E> {\n  E reduce(E Function(E value, E element) combine) => throw '';\n}\n\nTaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>\n    TaskEither.sequenceListSeq(tasks);\n"
+  },
+  {
+    "section": "Convert to `chainFirst`",
+    "assist": "many_lints.assist.convertFlatMapToChainFirst",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nTaskEither<String, int> audit(String user) => throw '';\n\nTaskEither<String, String> f(TaskEither<String, String> pipeline) =>\n    pipeline.flat^Map((user) => audit(user).map((_) => user));\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nTaskEither<String, int> audit(String user) => throw '';\n\nTaskEither<String, String> f(TaskEither<String, String> pipeline) =>\n    pipeline.chainFirst(audit);\n"
+  },
+  {
+    "section": "Expand to `flatMap` (andThen row)",
+    "assist": "many_lints.assist.expandToFlatMap",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nTaskEither<String, int> logout() => throw '';\n\nTaskEither<String, int> f(TaskEither<String, String> p) => p.and^Then(logout);\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nTaskEither<String, int> logout() => throw '';\n\nTaskEither<String, int> f(TaskEither<String, String> p) => p.flatMap((_) => logout());\n"
+  },
+  {
+    "section": "Expand to `flatMap` (map row)",
+    "assist": "many_lints.assist.expandToFlatMap",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nint transform(String raw) => throw '';\n\nTaskEither<String, int> f(TaskEither<String, String> p) => p.m^ap(transform);\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nint transform(String raw) => throw '';\n\nTaskEither<String, int> f(TaskEither<String, String> p) => p.flatMap((value) => TaskEither.of(transform(value)));\n"
+  },
+  {
+    "section": "Expand to `flatMap` (filterOrElse row)",
+    "assist": "many_lints.assist.expandToFlatMap",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nclass Bad {}\nBad onBad(String v) => Bad();\nextension on String { bool get isValid => true; }\n\nTaskEither<Bad, String> f(TaskEither<Bad, String> p) =>\n    p.filter^OrElse((v) => v.isValid, onBad);\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nclass Bad {}\nBad onBad(String v) => Bad();\nextension on String { bool get isValid => true; }\n\nTaskEither<Bad, String> f(TaskEither<Bad, String> p) =>\n    p.flatMap((v) => v.isValid ? TaskEither.of(v) : TaskEither.left(onBad(v)));\n"
+  },
+  {
+    "section": "Expand `tryCatch` into `try`/`catch` (TaskEither)",
+    "assist": "many_lints.assist.convertTryCatchConstructorToTryStatement",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nclass Failure {\n  Failure.from(Object e);\n}\n\nclass User {}\n\nFuture<User> getUser(String id) async => User();\n\nTaskEither<Failure, User> fetchUser(String id) => TaskEither.tryC^atch(\n      () => getUser(id),\n      (error, stackTrace) => Failure.from(error),\n    );\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nclass Failure {\n  Failure.from(Object e);\n}\n\nclass User {}\n\nFuture<User> getUser(String id) async => User();\n\nTaskEither<Failure, User> fetchUser(String id) => TaskEither(() async {\n      try {\n        return right(await getUser(id));\n      } catch (error) {\n        return left(Failure.from(error));\n      }\n    });\n"
+  },
+  {
+    "section": "Expand `tryCatch` into `try`/`catch` (Either)",
+    "assist": "many_lints.assist.convertTryCatchConstructorToTryStatement",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nclass Failure {\n  Failure.parse(Object e, StackTrace s);\n}\n\nclass User {\n  static User fromJson(String json) => User();\n}\n\nEither<Failure, User> parseUser(String json) => Either.tryC^atch(\n      () => User.fromJson(json),\n      (error, stackTrace) => Failure.parse(error, stackTrace),\n    );\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nclass Failure {\n  Failure.parse(Object e, StackTrace s);\n}\n\nclass User {\n  static User fromJson(String json) => User();\n}\n\nEither<Failure, User> parseUser(String json) {\n  try {\n    return right(User.fromJson(json));\n  } catch (error, stackTrace) {\n    return left(Failure.parse(error, stackTrace));\n  }\n}\n"
+  },
+  {
+    "section": "Expand `tryCatch` into `try`/`catch` (Option)",
+    "assist": "many_lints.assist.convertTryCatchConstructorToTryStatement",
+    "fpdart": true,
+    "before": "import 'package:fpdart/fpdart.dart';\n\nclass User {\n  static User fromJson(String json) => User();\n}\n\nOption<User> tryParse(String json) =>\n    Option.tryC^atch(() => User.fromJson(json));\n",
+    "after": "import 'package:fpdart/fpdart.dart';\n\nclass User {\n  static User fromJson(String json) => User();\n}\n\nOption<User> tryParse(String json) {\n  try {\n    return some(User.fromJson(json));\n  } catch (_) {\n    return none();\n  }\n}\n"
+  },
+  {
+    "section": "Convert null check to pattern",
+    "assist": "many_lints.assist.convertNullCheckToPattern",
+    "fpdart": false,
+    "before": "class Test {\n  String? field;\n\n  void method() {\n    if (fi^eld != null) {\n      field!.contains('other');\n    }\n  }\n}\n",
+    "after": "class Test {\n  String? field;\n\n  void method() {\n    if (field case final field_?) {\n      field_.contains('other');\n    }\n  }\n}\n"
+  },
+  {
+    "section": "Convert null check to destructuring pattern",
+    "assist": "many_lints.assist.inlineNullCheckIntoPattern",
+    "fpdart": false,
+    "before": "class UserData { String? name; }\nvoid sendEvent(String v) {}\n\nclass Holder {\n  UserData? userData;\n  void method() {\n    if (user^Data != null) {\n      sendEvent(userData!.name!);\n    }\n  }\n}\n",
+    "after": "class UserData { String? name; }\nvoid sendEvent(String v) {}\n\nclass Holder {\n  UserData? userData;\n  void method() {\n    if (userData case UserData(:final name?)) {\n      sendEvent(name);\n    }\n  }\n}\n"
+  }
+]
