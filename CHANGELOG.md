@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Changed
+
+- `prefer_primary_constructors` now covers every class and enum whose one
+  generative constructor can move into the header: with methods, other
+  fields, a superclass, `super.x` and plain parameters, an initializer list, a
+  body, a mutable field (`var`), a named constructor, factories or redirecting
+  constructors beside it. A type that declares no constructor is still never
+  reported, which makes it a drop-in replacement for the SDK's
+  `use_primary_constructors` without the empty `()` it asks for. The fix moves
+  an initializer list and a body into a `this` block, carries field comments,
+  doc comments and annotations into the header, and never deletes a comment.
+
 ## [1.2.0] - 2026-08-27
 
 ### Added

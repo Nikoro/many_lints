@@ -1,6 +1,6 @@
 ---
 title: prefer_primary_constructors
-description: "Prefer a primary constructor (Dart 3.13+) over a class of final fields plus a field-assigning constructor."
+description: "Move a class or enum constructor into the type header as a primary constructor (Dart 3.13+), without touching types that declare none."
 sidebar:
   badge:
     text: "Fix"
@@ -13,13 +13,15 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Code Quality</span>
 
-Warns when a class consists only of final fields and a constructor that does nothing but assign them. Since Dart 3.13, primary constructors let the whole declaration collapse into the class header, so the field list, the constructor signature and the assignments stop being three copies of the same information.
+Warns when a class or enum declares a generative constructor that can move into the type header as a Dart 3.13 primary constructor. The field list, the parameter list and the assignments stop being three copies of the same information.
+
+A type that declares no constructor is never reported. That is the difference from the SDK's `use_primary_constructors`, which also wants `enum Sport() {` and `abstract interface class Gateway() {`.
 
 ## Why use this rule
 
-A value class written the old way names each field three times: once in the field declaration, once in the constructor parameter list, and once implicitly in the assignment. Since Dart 3.13, a primary constructor declares all three at once, so the classic bug where a field is added but the constructor is not updated stops being expressible.
+A class written the old way names each field three times: in the field declaration, in the constructor parameter list, and in the assignment. A primary constructor declares all three at once, so adding a field and forgetting the constructor stops being possible.
 
-**See also:** [Announcing Dart 3.13](https://dart.dev/blog/announcing-dart-3-13) | [Primary constructors feature specification](https://github.com/dart-lang/language/blob/main/accepted/3.13/primary-constructors/feature-specification.md)
+**See also:** [Primary constructors](https://dart.dev/language/primary-constructors) | [Feature specification](https://github.com/dart-lang/language/blob/main/accepted/3.13/primary-constructors/feature-specification.md)
 
 ## Don't
 
@@ -29,69 +31,91 @@ A value class written the old way names each field three times: once in the fiel
 class CartLine {
   final String sku;
   final int quantity;
-  final int unitPrice;
-  CartLine(this.sku, this.quantity, this.unitPrice);
+  CartLine(this.sku, this.quantity);
+
+  int get total => quantity * 2;
+}
+```
+
+```dart
+// LINT: an enum constructor moves too.
+enum Currency {
+  pln('zł'),
+  eur('€');
+
+  const Currency(this.symbol);
+
+  final String symbol;
 }
 ```
 
 ## Do
 
 ```dart
-class CartLine(final String sku, final int quantity, final int unitPrice);
-```
-
-### Named parameters, `required` and defaults carry over
-
-```dart
-class CartLine({
-  required final String sku,
-  required final int unitPrice,
-  final int quantity = 1,
-});
-```
-
-### `const` moves onto the class header
-
-Instances stay const-constructible:
-
-```dart
-class const CartLine(final String sku, final int quantity);
-```
-
-## Known limitations
-
-The rule only reports a class whose **entire** body is those final fields plus that one constructor, because only those collapse to the `;` form with nothing left behind. It stays silent whenever the class would still need a body:
-
-```dart
-// Has a getter, so the body survives.
-class WithMethod {
-  final int v;
-  WithMethod(this.v);
-  int get doubled => v * 2;
-}
-
-// The initializer list does work beyond assigning fields.
-class Guarded {
-  final int x;
-  Guarded(this.x) : assert(x > 0);
+class CartLine(final String sku, final int quantity) {
+  int get total => quantity * 2;
 }
 ```
 
-Also left alone: a static member, a second constructor, a constructor body, a superclass, and any mutable field.
+```dart
+enum Currency(final String symbol) {
+  pln('zł'),
+  eur('€');
+}
+```
+
+### Initializer lists and bodies move into a `this` block
+
+```dart
+class Account(final String id, int balance) {
+  final int cents;
+
+  this : cents = balance * 100, assert(balance >= 0);
+}
+```
+
+### Types without a constructor stay as they are
+
+```dart
+enum Sport { squash, padel }
+
+abstract interface class Gateway {
+  Future<void> send();
+}
+```
+
+## What is reported
+
+A class or enum with exactly one generative constructor that does not redirect. Any other constructor must be a factory or redirect with `: this(...)`, since that is all a primary constructor allows beside it. The class may have methods, other fields, a superclass, `super.x` parameters, plain parameters, an initializer list and a body.
+
+Not reported, because the rewrite has no faithful form:
+
+- a second generative constructor that does not redirect,
+- an annotation on the constructor,
+- a `this.x` whose field is `late`, `covariant`, `external` or `abstract`,
+- `int this.x` (an explicit type may be narrower than the field's) and `this.cb(int v)`,
+- `final int a, b;` when the constructor declares only some of them,
+- a `mixin class` whose constructor is not trivial.
 
 **The library must be on language version 3.13 or later.** A file pinned to an older version is skipped.
 
 ### Quick fix
 
-The fix rewrites the header and replaces the body with `;`, keeping the **constructor's** parameter order rather than the field declaration order — reordering would silently break every positional call site. It preserves `const`, type parameters, `required`, named-parameter braces and default values.
+The fix rewrites the header and the body in one edit:
 
-It declines when a field carries a doc comment or an annotation: neither has a home in a parameter list, and dropping documentation silently is worse than leaving the diagnostic for you to handle.
+- The parameter list is the constructor's own, with each `this.x` replaced by `final int x` (or `var int x` for a mutable field). Order, `required`, defaults and brace groups stay as they were.
+- `const` moves onto the header (`class const Point(...)`). An enum's constructor is implicitly const, so the fix leaves it out.
+- An initializer list and a non-empty body go into a `this` block. An initializer list is never turned into a field initializer.
+- Comments are never deleted. A field's comments, doc comment and annotations move with it into the header. The constructor's comments move there too, unless a `this` block remains for them to stay above.
+- A class body left empty becomes `;`.
+
+The quick fix works in the IDE. `dart fix --apply` in Dart 3.13 does not apply fixes from analyzer plugins.
 
 ### Interaction with SDK lints
 
-This does **not** overlap with the SDK's `use_declaring_parameters`. That rule visits primary-constructor nodes only, so it never fires on a class that has yet to adopt one — it polishes classes that already migrated, while this rule is what suggests migrating in the first place.
+Turn off the SDK's `use_primary_constructors` when you use this rule. It reports the same constructors, plus every type that has none.
 
-The SDK's `unnecessary_type_name_in_constructor` *does* fire on the same classes, suggesting the weaker `new(this.x)` form. If you adopt this rule, you will likely want that one off.
+`use_declaring_parameters`, `unnecessary_primary_constructor_body` and `empty_container_bodies` only look at code that already migrated, so they combine well with this rule. `unnecessary_type_name_in_constructor` suggests `new(this.x)` for the same constructor. Either fix leaves code this rule still converts.
 
 ## Turning this rule off
 

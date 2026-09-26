@@ -102,31 +102,216 @@ class Box<T> {
       expect(fixed, contains('class Box<T>(final T value);'));
     });
 
-    test('declines when a field carries a doc comment', () async {
-      // The comment has no home in a parameter list, so the fix withholds
-      // rather than dropping documentation silently.
-      await expectLater(
-        harness.applyFix(r'''
+    test(
+      "carries a field's doc comment and annotation into the header",
+      () async {
+        final fixed = await harness.applyFix(r'''
 class Point {
   /// The horizontal offset.
-  final int x;
-  Point(this.x);
-}
-''', 'prefer_primary_constructors'),
-        throwsA(isA<TestFailure>()),
-      );
-    });
-
-    test('declines when a field carries an annotation', () async {
-      await expectLater(
-        harness.applyFix(r'''
-class Point {
   @deprecated
   final int x;
   Point(this.x);
 }
-''', 'prefer_primary_constructors'),
-        throwsA(isA<TestFailure>()),
+''', 'prefer_primary_constructors');
+
+        expect(
+          fixed,
+          equals(r'''
+class Point(
+/// The horizontal offset.
+@deprecated final int x);
+'''),
+        );
+      },
+    );
+
+    test('keeps methods, getters and other fields in the body', () async {
+      final fixed = await harness.applyFix(r'''
+class Point {
+  static const origin = 0;
+
+  final int x;
+  final int y;
+  late final int sum = x + y;
+
+  const Point(this.x, this.y);
+
+  int get doubled => x * 2;
+}
+''', 'prefer_primary_constructors');
+
+      expect(
+        fixed,
+        equals(r'''
+class const Point(final int x, final int y) {
+  static const origin = 0;
+
+  late final int sum = x + y;
+
+  int get doubled => x * 2;
+}
+'''),
+      );
+    });
+
+    test('keeps the comment of the member after the constructor', () async {
+      final fixed = await harness.applyFix(r'''
+class Downsizer {
+  const Downsizer();
+
+  // Edge case: the server republishes at 256px.
+  static const maximumDimension = 512;
+}
+''', 'prefer_primary_constructors');
+
+      expect(
+        fixed,
+        equals(r'''
+class const Downsizer() {
+  // Edge case: the server republishes at 256px.
+  static const maximumDimension = 512;
+}
+'''),
+      );
+    });
+
+    test("moves a field's leading comment with it", () async {
+      final fixed = await harness.applyFix(r'''
+class Storage {
+  // Edge case: tokens must survive a locked phone.
+  final String key;
+
+  Storage(this.key);
+}
+''', 'prefer_primary_constructors');
+
+      expect(
+        fixed,
+        equals(r'''
+class Storage(
+// Edge case: tokens must survive a locked phone.
+final String key);
+'''),
+      );
+    });
+
+    test('moves the initializer list and body into a this block', () async {
+      final fixed = await harness.applyFix(r'''
+class Base(final int id);
+
+class Derived extends Base {
+  final int x;
+  final int doubled;
+
+  // Edge case: seed must be positive.
+  Derived(super.id, this.x, int seed) : doubled = seed * 2, assert(seed > 0) {
+    print(x);
+  }
+
+  int get y => doubled;
+}
+''', 'prefer_primary_constructors');
+
+      expect(
+        fixed,
+        equals(r'''
+class Base(final int id);
+
+class Derived(super.id, final int x, int seed) extends Base {
+  final int doubled;
+
+  // Edge case: seed must be positive.
+  this : doubled = seed * 2, assert(seed > 0) {
+    print(x);
+  }
+
+  int get y => doubled;
+}
+'''),
+      );
+    });
+
+    test('keeps a plain parameter feeding the initializer list', () async {
+      final fixed = await harness.applyFix(r'''
+class Format {
+  final int win;
+  final int winAfterDrop;
+
+  const Format({required this.win, int? winAfterDrop}) : winAfterDrop = winAfterDrop ?? win;
+}
+''', 'prefer_primary_constructors');
+
+      expect(
+        fixed,
+        equals(r'''
+class const Format({required final int win, int? winAfterDrop}) {
+  final int winAfterDrop;
+
+  this : winAfterDrop = winAfterDrop ?? win;
+}
+'''),
+      );
+    });
+
+    test('declares a mutable field with var', () async {
+      final fixed = await harness.applyFix(r'''
+class Counter {
+  int count;
+  Counter(this.count);
+}
+''', 'prefer_primary_constructors');
+
+      expect(
+        fixed,
+        equals(r'''
+class Counter(var int count);
+'''),
+      );
+    });
+
+    test(
+      "keeps a named constructor's name and the other constructors",
+      () async {
+        final fixed = await harness.applyFix(r'''
+class Named {
+  final int x;
+  Named._(this.x);
+
+  factory Named.parse(String s) => Named._(int.parse(s));
+}
+''', 'prefer_primary_constructors');
+
+        expect(
+          fixed,
+          equals(r'''
+class Named._(final int x) {
+  factory Named.parse(String s) => Named._(int.parse(s));
+}
+'''),
+        );
+      },
+    );
+
+    test('converts an enum without spelling const', () async {
+      final fixed = await harness.applyFix(r'''
+enum Color {
+  red('#f00'),
+  green('#0f0');
+
+  const Color(this.hex);
+
+  final String hex;
+}
+''', 'prefer_primary_constructors');
+
+      expect(
+        fixed,
+        equals(r'''
+enum Color(final String hex) {
+  red('#f00'),
+  green('#0f0');
+}
+'''),
       );
     });
   });
