@@ -1,5 +1,5 @@
 // ignore_for_file: unused_element, unused_field, unused_local_variable
-// ignore_for_file: many_lints/prefer_immutable_bloc_state, many_lints/prefer_overriding_parent_equality, many_lints/prefer_single_widget_per_file
+// ignore_for_file: many_lints/prefer_immutable_bloc_state, many_lints/prefer_overriding_parent_equality, many_lints/prefer_single_widget_per_file, many_lints/prefer_primary_constructors
 
 // avoid_unnecessary_setstate
 //

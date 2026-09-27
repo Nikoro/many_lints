@@ -1,5 +1,5 @@
 // ignore_for_file: unused_element, unused_local_variable
-// ignore_for_file: many_lints/prefer_immutable_bloc_state, many_lints/emit_new_bloc_state_instances
+// ignore_for_file: many_lints/prefer_immutable_bloc_state, many_lints/emit_new_bloc_state_instances, many_lints/prefer_primary_constructors
 
 // handle_bloc_event_subclasses
 //

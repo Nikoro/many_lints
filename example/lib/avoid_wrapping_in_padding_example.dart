@@ -1,4 +1,4 @@
-// ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_padding_over_container, many_lints/prefer_shorthands_with_constructors, many_lints/prefer_single_widget_per_file
+// ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_padding_over_container, many_lints/prefer_shorthands_with_constructors, many_lints/prefer_single_widget_per_file, many_lints/prefer_primary_constructors
 import 'package:flutter/material.dart';
 
 // avoid_wrapping_in_padding
@@ -50,7 +50,10 @@ class GoodExamples extends StatelessWidget {
         Padding(padding: EdgeInsets.all(8), child: Icon(Icons.star)),
 
         // Good: Card has no padding parameter, only margin
-        Padding(padding: EdgeInsets.all(8), child: Card(child: Text('Hello'))),
+        Padding(
+          padding: EdgeInsets.all(8),
+          child: Card(child: Text('Hello')),
+        ),
 
         // Good: Container already has its own padding set
         Padding(

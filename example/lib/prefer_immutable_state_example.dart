@@ -1,5 +1,5 @@
 // ignore_for_file: unused_field
-// ignore_for_file: many_lints/prefer_returning_shorthands
+// ignore_for_file: many_lints/prefer_returning_shorthands, many_lints/prefer_primary_constructors
 // ignore_for_file: many_lints/prefer_overriding_parent_equality
 // The edge case below needs a second widget in this file, alongside the
 // LoginPage that demonstrates the Flutter State exclusion.

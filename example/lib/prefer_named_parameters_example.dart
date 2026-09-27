@@ -1,3 +1,4 @@
+// ignore_for_file: many_lints/prefer_primary_constructors
 // ignore_for_file: unused_element, unused_field
 
 // prefer_named_parameters

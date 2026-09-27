@@ -1,5 +1,5 @@
 // ignore_for_file: unused_local_variable
-// ignore_for_file: many_lints/prefer_returning_shorthands, many_lints/use_existing_variable
+// ignore_for_file: many_lints/prefer_returning_shorthands, many_lints/use_existing_variable, many_lints/prefer_primary_constructors
 
 // prefer_test_matchers
 //

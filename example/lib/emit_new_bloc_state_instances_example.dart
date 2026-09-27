@@ -1,6 +1,6 @@
 // ignore_for_file: unused_element, unused_local_variable
 // The state class is deliberately plain so the emit shapes stay the focus.
-// ignore_for_file: many_lints/prefer_immutable_bloc_state
+// ignore_for_file: many_lints/prefer_immutable_bloc_state, many_lints/prefer_primary_constructors
 // ignore_for_file: many_lints/prefer_returning_shorthands
 
 // emit_new_bloc_state_instances

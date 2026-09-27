@@ -1,5 +1,5 @@
 // ignore_for_file: avoid_print
-// ignore_for_file: many_lints/prefer_single_widget_per_file
+// ignore_for_file: many_lints/prefer_single_widget_per_file, many_lints/prefer_primary_constructors
 // ignore_for_file: many_lints/prefer_overriding_parent_equality
 // ignore_for_file: many_lints/prefer_correct_handler_name
 

@@ -1,4 +1,4 @@
-// ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_shorthands_with_constructors
+// ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_shorthands_with_constructors, many_lints/prefer_primary_constructors
 import 'package:flutter/material.dart';
 
 // prefer_padding_over_container

@@ -1,5 +1,5 @@
 // ignore_for_file: unused_local_variable, unused_element, unused_field
-// ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_immutable_bloc_state, many_lints/avoid_unnecessary_stateful_widgets, many_lints/prefer_returning_shorthands, many_lints/use_dedicated_media_query_methods, many_lints/avoid_default_tostring
+// ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_immutable_bloc_state, many_lints/avoid_unnecessary_stateful_widgets, many_lints/prefer_returning_shorthands, many_lints/use_dedicated_media_query_methods, many_lints/avoid_default_tostring, many_lints/prefer_primary_constructors
 
 // always_pass_global_key
 //

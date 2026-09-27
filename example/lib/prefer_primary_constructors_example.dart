@@ -55,7 +55,7 @@ class GoodSeeded(final int id, int seed) {
 
 enum GoodCurrency(final String symbol) {
   pln('zł'),
-  eur('€');
+  eur('€'),
 }
 
 // ✅ Good: no constructor, so there is nothing to move. An empty `()` in the

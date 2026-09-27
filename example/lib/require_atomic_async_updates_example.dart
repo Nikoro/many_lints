@@ -1,7 +1,7 @@
 // ignore_for_file: unused_element, unused_local_variable, unused_field
 // The good/edge-case bodies below deliberately re-read a field that a local
 // already holds; that is the point of the rule, so silence the overlap.
-// ignore_for_file: many_lints/use_existing_variable
+// ignore_for_file: many_lints/use_existing_variable, many_lints/prefer_primary_constructors
 
 // require_atomic_async_updates
 //

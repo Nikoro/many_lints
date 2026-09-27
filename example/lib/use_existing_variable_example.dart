@@ -1,5 +1,5 @@
 // ignore_for_file: unused_local_variable
-// ignore_for_file: many_lints/prefer_type_over_var
+// ignore_for_file: many_lints/prefer_type_over_var, many_lints/prefer_primary_constructors
 
 // use_existing_variable
 //

@@ -1,5 +1,5 @@
 // ignore_for_file: unused_element, unused_local_variable
-// ignore_for_file: many_lints/prefer_returning_shorthands
+// ignore_for_file: many_lints/prefer_returning_shorthands, many_lints/prefer_primary_constructors
 // ignore_for_file: many_lints/use_existing_variable
 // ignore_for_file: many_lints/prefer_for_loop_in_children
 

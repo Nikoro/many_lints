@@ -1,4 +1,4 @@
-// ignore_for_file: many_lints/prefer_single_widget_per_file
+// ignore_for_file: many_lints/prefer_single_widget_per_file, many_lints/prefer_primary_constructors
 // ignore_for_file: many_lints/prefer_overriding_parent_equality
 
 // avoid_too_many_widgets_per_build

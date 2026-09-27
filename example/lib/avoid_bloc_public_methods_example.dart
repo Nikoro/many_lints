@@ -1,4 +1,4 @@
-// ignore_for_file: many_lints/avoid_unnecessary_overrides
+// ignore_for_file: many_lints/avoid_unnecessary_overrides, many_lints/prefer_primary_constructors
 // ignore_for_file: unused_element
 import 'package:bloc/bloc.dart';
 

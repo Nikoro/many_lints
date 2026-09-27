@@ -1,5 +1,5 @@
 // ignore_for_file: deprecated_member_use, unused_field
-// ignore_for_file: many_lints/prefer_equatable_mixin, many_lints/prefer_overriding_parent_equality
+// ignore_for_file: many_lints/prefer_equatable_mixin, many_lints/prefer_overriding_parent_equality, many_lints/prefer_primary_constructors
 
 // list_all_equatable_fields
 //

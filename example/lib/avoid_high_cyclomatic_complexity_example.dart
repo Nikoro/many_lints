@@ -1,5 +1,5 @@
 // ignore_for_file: unused_local_variable, avoid_print
-// ignore_for_file: many_lints/avoid_complex_conditions
+// ignore_for_file: many_lints/avoid_complex_conditions, many_lints/prefer_primary_constructors
 // ignore_for_file: many_lints/prefer_early_return
 // ignore_for_file: many_lints/prefer_type_over_var
 // ignore_for_file: many_lints/member_ordering

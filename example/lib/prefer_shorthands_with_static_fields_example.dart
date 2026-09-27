@@ -1,5 +1,5 @@
 // ignore_for_file: unused_local_variable
-// ignore_for_file: many_lints/prefer_abstract_final_static_class, many_lints/use_existing_variable
+// ignore_for_file: many_lints/prefer_abstract_final_static_class, many_lints/use_existing_variable, many_lints/prefer_primary_constructors
 
 /// Example demonstrating the prefer_shorthands_with_static_fields lint rule.
 ///

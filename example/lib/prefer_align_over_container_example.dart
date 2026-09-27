@@ -1,4 +1,4 @@
-// ignore_for_file: many_lints/prefer_overriding_parent_equality
+// ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_primary_constructors
 import 'package:flutter/material.dart';
 
 // prefer_align_over_container

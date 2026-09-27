@@ -1,5 +1,5 @@
 // ignore_for_file: unused_element
-// ignore_for_file: many_lints/prefer_boolean_prefixes
+// ignore_for_file: many_lints/prefer_boolean_prefixes, many_lints/prefer_primary_constructors
 
 // avoid_complex_conditions
 //

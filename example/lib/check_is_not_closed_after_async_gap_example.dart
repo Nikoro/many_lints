@@ -1,3 +1,4 @@
+// ignore_for_file: many_lints/prefer_primary_constructors
 // ignore_for_file: unused_element, unused_local_variable
 
 // check_is_not_closed_after_async_gap

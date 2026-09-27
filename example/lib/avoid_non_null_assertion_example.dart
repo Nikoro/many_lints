@@ -1,5 +1,5 @@
 // ignore_for_file: unused_local_variable, unused_element
-// ignore_for_file: many_lints/function_always_returns_null
+// ignore_for_file: many_lints/function_always_returns_null, many_lints/prefer_primary_constructors
 // ignore_for_file: many_lints/avoid_commented_out_code
 // ignore_for_file: many_lints/prefer_type_over_var
 // ignore_for_file: many_lints/avoid_single_field_destructuring

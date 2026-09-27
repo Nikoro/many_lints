@@ -1,4 +1,4 @@
-// ignore_for_file: many_lints/avoid_returning_widgets, many_lints/prefer_single_widget_per_file, many_lints/use_closest_build_context, many_lints/prefer_overriding_parent_equality
+// ignore_for_file: many_lints/avoid_returning_widgets, many_lints/prefer_single_widget_per_file, many_lints/use_closest_build_context, many_lints/prefer_overriding_parent_equality, many_lints/prefer_primary_constructors
 import 'package:flutter/material.dart';
 
 // never_discard_build_context

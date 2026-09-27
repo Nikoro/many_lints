@@ -1,4 +1,4 @@
-// ignore_for_file: many_lints/avoid_border_all, many_lints/avoid_returning_widgets, many_lints/prefer_const_border_radius, many_lints/prefer_overriding_parent_equality, many_lints/prefer_padding_over_container
+// ignore_for_file: many_lints/avoid_border_all, many_lints/avoid_returning_widgets, many_lints/prefer_const_border_radius, many_lints/prefer_overriding_parent_equality, many_lints/prefer_padding_over_container, many_lints/prefer_primary_constructors
 // ignore_for_file: unused_element
 import 'package:flutter/material.dart';
 

@@ -1,5 +1,5 @@
 // ignore_for_file: unused_element
-// ignore_for_file: many_lints/prefer_single_widget_per_file
+// ignore_for_file: many_lints/prefer_single_widget_per_file, many_lints/prefer_primary_constructors
 // ignore_for_file: many_lints/prefer_overriding_parent_equality
 
 // prefer_widget_private_members

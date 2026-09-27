@@ -1,3 +1,4 @@
+// ignore_for_file: many_lints/prefer_primary_constructors
 // ignore_for_file: unused_local_variable
 
 // prefer_bloc_extensions
