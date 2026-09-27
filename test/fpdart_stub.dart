@@ -114,6 +114,7 @@ sealed class Either<L, R> {
   Either<L, B> map<B>(B Function(R r) f);
   Either<C, R> mapLeft<C>(C Function(L l) f);
   Either<L, B> flatMap<B>(Either<L, B> Function(R r) f);
+  Either<L, R> chainFirst<C>(Either<L, C> Function(R b) chain);
   Either<L, R> alt(Either<L, R> Function() orElse);
   Either<L, R> orElse<C>(Either<L, R> Function(L l) onLeft);
   R getOrElse(R Function(L l) orElse);
@@ -130,6 +131,7 @@ class Right<L, R> extends Either<L, R> {
   Either<L, B> map<B>(B Function(R r) f) => throw '';
   Either<C, R> mapLeft<C>(C Function(L l) f) => throw '';
   Either<L, B> flatMap<B>(Either<L, B> Function(R r) f) => throw '';
+  Either<L, R> chainFirst<C>(Either<L, C> Function(R b) chain) => throw '';
   Either<L, R> alt(Either<L, R> Function() orElse) => throw '';
   Either<L, R> orElse<C>(Either<L, R> Function(L l) onLeft) => throw '';
   R getOrElse(R Function(L l) orElse) => throw '';
@@ -146,6 +148,7 @@ class Left<L, R> extends Either<L, R> {
   Either<L, B> map<B>(B Function(R r) f) => throw '';
   Either<C, R> mapLeft<C>(C Function(L l) f) => throw '';
   Either<L, B> flatMap<B>(Either<L, B> Function(R r) f) => throw '';
+  Either<L, R> chainFirst<C>(Either<L, C> Function(R b) chain) => throw '';
   Either<L, R> alt(Either<L, R> Function() orElse) => throw '';
   Either<L, R> orElse<C>(Either<L, R> Function(L l) onLeft) => throw '';
   R getOrElse(R Function(L l) orElse) => throw '';
@@ -262,6 +265,8 @@ final class IOEither<L, R> {
   factory IOEither.of(R r) => throw '';
   IOEither<L, B> map<B>(B Function(R r) f) => throw '';
   IOEither<L, B> flatMap<B>(IOEither<L, B> Function(R r) f) => throw '';
+  IOEither<L, R> chainFirst<C>(IOEither<L, C> Function(R b) chain) =>
+      throw '';
   Either<L, R> run() => _run();
 }
 ''',

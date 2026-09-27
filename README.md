@@ -89,7 +89,7 @@ Presets are cumulative: moving right only adds rules.
 | `core` | 35 | You want only near-certain bugs and runtime failures. |
 | `recommended` | 97 | You want safe production defaults. Best starting point for most projects. |
 | `opinionated` | 185 | You also want a consistent Many Lints house style. |
-| `pedantic` | 242 | You want strict naming, ordering, structure and complexity limits. |
+| `pedantic` | 243 | You want strict naming, ordering, structure and complexity limits. |
 
 There is no "all" preset: some rules intentionally conflict, and config-only rules such
 as `avoid_banned_imports` cannot have useful defaults. See the
@@ -176,7 +176,7 @@ for shared-config setups.
 
 ## Available Lints
 
-261 lints with 106 quick fixes. All are off by default — enable selected rules by name,
+262 lints with 107 quick fixes. All are off by default — enable selected rules by name,
 use a [preset](#presets), or combine a preset with per-rule overrides. Each rule links to
 its full documentation with examples and fix details.
 
@@ -187,7 +187,7 @@ its full documentation with examples and fix details.
 | [Bloc / Riverpod](https://nikoro.github.io/many_lints/docs/rules/#bloc-riverpod) | 12 | BLoC and Riverpod state management patterns |
 | [Riverpod State](https://nikoro.github.io/many_lints/docs/rules/#riverpod-state) | 9 | Riverpod-specific state rules |
 | [Async Safety](https://nikoro.github.io/many_lints/docs/rules/#async-safety) | 12 | Async/await and state mutation safety |
-| [fpdart](https://nikoro.github.io/many_lints/docs/rules/#fpdart) | 23 | Functional error handling with Either, Option and TaskEither |
+| [fpdart](https://nikoro.github.io/many_lints/docs/rules/#fpdart) | 24 | Functional error handling with Either, Option and TaskEither |
 | [Widget Best Practices](https://nikoro.github.io/many_lints/docs/rules/#widget-best-practices) | 25 | General widget best practices |
 | [Widget Replacement](https://nikoro.github.io/many_lints/docs/rules/#widget-replacement) | 13 | Simpler widget alternatives |
 | [State Management](https://nikoro.github.io/many_lints/docs/rules/#state-management) | 9 | StatefulWidget and state patterns |
@@ -216,7 +216,7 @@ Assists are refactorings you invoke deliberately from the lightbulb menu (<kbd>C
 | **Convert to `map`** | a `flatMap` whose callback only re-wraps | `flatMap((v) => TaskEither.right(f(v)))` → `map(f)`. Declines when the body branches, since a `left` on one side is a real `flatMap` |
 | **Convert to `chainFirst`** | a `flatMap((v) => effect(v).map((_) => v))` | Runs an effect and keeps the original value. **Changes behaviour**: fpdart's `chainFirst` swallows the effect's failure, which the long form usually does not, so the lightbulb says so |
 | **Convert to `filterOrElse`** | a `flatMap` whose body is a `right`/`left` ternary | `flatMap((v) => p(v) ? right(v) : left(e))` → `filterOrElse(p, ...)`, negating the predicate when the branches are reversed |
-| **Convert to `sequenceListSeq`** | a `reduce` chaining tasks onto an accumulator | `tasks.reduce((a, t) => a.flatMap((_) => t))` → `TaskEither.sequenceListSeq(tasks)`. Always the `Seq` variant: the hand-rolled fold is sequential, and `sequenceList` is concurrent |
+| **Convert to `sequenceListSeq`** | a `reduce` chaining tasks onto an accumulator | `tasks.reduce((a, t) => a.flatMap((_) => t))` → `TaskEither.sequenceListSeq(tasks)`. Always the `Seq` variant: the hand-rolled fold is sequential, and `sequenceList` is concurrent. **Changes behaviour**: the fold stops at the first failure, `sequenceListSeq` still runs every task after it, so the lightbulb says so |
 | **Convert to `TaskEither` / `TaskOption`** | a function returning `Future<Either>`, `Either`, `Future<Option>` or `Option` | Converts the signature and moves the body into the lazy fpdart type, so the pipeline can host an `await` |
 | **Expand to `flatMap`** | an `andThen`, `map` or `filterOrElse` call | The inverse of the three exact narrowings, for when the next step needs the value the narrow form hides. `chainFirst` and `sequenceListSeq` are deliberately not offered |
 | **Expand `tryCatch` into `try`/`catch`** | a `tryCatch` constructor | `Either.tryCatch` / `TaskEither.tryCatch` / `Option.tryCatch` → an explicit `try`/`catch` |

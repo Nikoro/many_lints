@@ -124,7 +124,7 @@ const RELATED_GROUPS = [
   ['avoid_future_of_either', 'avoid_either_of_future', 'avoid_future_of_option', 'prefer_task_either_over_try_catch'],
   ['avoid_bare_await_in_do', 'avoid_dollar_outside_do_frame', 'avoid_nested_do_notation', 'prefer_do_notation'],
   ['avoid_unnecessary_option', 'prefer_from_nullable', 'prefer_from_predicate'],
-  ['avoid_get_or_else_swallowing_failure', 'avoid_throw_in_fp_callback', 'prefer_and_then', 'prefer_chain_either'],
+  ['avoid_chain_first_swallowing_failure', 'avoid_get_or_else_swallowing_failure', 'avoid_throw_in_fp_callback', 'prefer_and_then', 'prefer_chain_either'],
   ['avoid_future_ignore', 'avoid_nested_futures', 'avoid_passing_async_when_sync_expected', 'avoid_redundant_async', 'prefer_correct_future_return_type'],
   ['check_is_not_closed_after_async_gap', 'require_atomic_async_updates', 'use_ref_and_state_synchronously', 'use_ref_read_synchronously', 'use_setstate_synchronously'],
   ['avoid_ref_inside_state_dispose', 'avoid_ref_read_inside_build', 'avoid_ref_watch_outside_build'],

@@ -175,10 +175,13 @@ final recommendedRules = <String>{...coreRules, ..._recommendedOnlyRules};
 /// 3. **Rules that assume a package this project may not depend on**, such as
 ///    `use_gap` (the `gap` package) or the `equatable` rules.
 ///
-/// The same reasoning keeps three fpdart rules out: `avoid_ad_hoc_left_type`
+/// The same reasoning keeps four fpdart rules out: `avoid_ad_hoc_left_type`
 /// reports nothing until given `error_types`, while
-/// `avoid_unnecessary_option` and `avoid_get_or_else_swallowing_failure` each
-/// disagree with a coherent choice a codebase may have made deliberately.
+/// `avoid_unnecessary_option`, `avoid_get_or_else_swallowing_failure` and
+/// `avoid_chain_first_swallowing_failure` each disagree with a coherent choice
+/// a codebase may have made deliberately. The last is the plainest case: this
+/// package's own `ConvertFlatMapToChainFirst` assist offers `chainFirst`, and
+/// a codebase that accepted it chose to ignore the effect's failure.
 const _opinionatedOnlyRules = <String>{
   'avoid_bloc_public_methods',
   'avoid_border_all',
@@ -316,6 +319,7 @@ const _pedanticOnlyRules = <String>{
   'avoid_deep_nesting',
   'avoid_deep_widget_nesting',
   'avoid_duplicate_collection_elements',
+  'avoid_chain_first_swallowing_failure',
   'avoid_get_or_else_swallowing_failure',
   'avoid_high_cyclomatic_complexity',
   'avoid_inconsistent_digit_separators',

@@ -71,6 +71,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `avoid_build_context_in_providers` | Providers outlive widgets, so they should not receive a BuildContext. | — |
 | `avoid_cascade_after_if_null` | Detect cascades after if-null operators without parentheses. | Yes |
 | `avoid_catch_error` | Use try/catch instead of Future.catchError. | — |
+| `avoid_chain_first_swallowing_failure` | chainFirst turns a failing effect into success. | Yes |
 | `avoid_collapsible_if` | Merge nested if statements with &amp;&amp;. | Yes |
 | `avoid_collection_equality_checks` | Avoid comparing collections with == or != as it checks reference equality, not contents. | — |
 | `avoid_collection_methods_with_unrelated_types` | Avoid calling collection methods with arguments whose types are unrelated to the collection's type parameter. | — |
@@ -265,7 +266,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `prefer_overriding_parent_equality` | Override == and hashCode when the parent class overrides them. | Yes |
 | `prefer_padding_over_container` | Use Padding instead of Container when only padding or margin is set. | Yes |
 | `prefer_prefixed_global_constants` | Prefix public top-level constants. | — |
-| `prefer_primary_constructors` | Prefer a primary constructor (Dart 3.13+) over a class of final fields plus a field-assigning constructor. | Yes |
+| `prefer_primary_constructors` | Move a class or enum constructor into the type header as a primary constructor (Dart 3.13+), without touching types that declare none. | Yes |
 | `prefer_private_named_parameters` | Prefer private named parameters (Dart 3.12+) over initializer-list boilerplate. | Yes |
 | `prefer_return_await` | Detect missing await on returned Futures inside try-catch. | Yes |
 | `prefer_returning_condition` | Return the condition instead of true/false branches. | — |

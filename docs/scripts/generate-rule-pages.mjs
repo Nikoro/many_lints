@@ -63,6 +63,7 @@ const CATEGORIES = {
       'avoid_either_of_future',
       'avoid_future_of_either',
       'avoid_future_of_option',
+      'avoid_chain_first_swallowing_failure',
       'avoid_get_or_else_swallowing_failure',
       'avoid_nested_do_notation',
       'avoid_throw_in_fp_callback',

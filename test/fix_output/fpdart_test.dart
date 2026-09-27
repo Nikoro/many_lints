@@ -269,4 +269,131 @@ Option<int> f(int amount, int a) =>
       expect(fixed, contains('Option.fromPredicate(amount, (a2) => a2 > a)'));
     });
   });
+
+  group('avoid_chain_first_swallowing_failure', () {
+    Future<String> applyFix(String content) => harness.applyFix(
+      content,
+      'avoid_chain_first_swallowing_failure',
+      multiFilePackages: {'fpdart': fpdartStubFiles},
+    );
+
+    test('wraps a tear-off in a flatMap that keeps the value', () async {
+      final fixed = await applyFix(r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, Unit> save(int value) => throw '';
+
+TaskEither<String, int> f(TaskEither<String, int> p) => p.chainFirst(save);
+''');
+
+      expect(
+        fixed,
+        contains('p.flatMap((value) => save(value).map((_) => value))'),
+      );
+      expect(fixed, isNot(contains('chainFirst')));
+    });
+
+    test('keeps the receiver of a method tear-off', () async {
+      final fixed = await applyFix(r'''
+import 'package:fpdart/fpdart.dart';
+
+class Repo {
+  Either<String, Unit> check(int value) => throw '';
+}
+
+Either<String, int> f(Either<String, int> p, Repo repo) =>
+    p.chainFirst(repo.check);
+''');
+
+      expect(
+        fixed,
+        contains('p.flatMap((value) => repo.check(value).map((_) => value))'),
+      );
+    });
+
+    test('picks a name the tear-off does not already use', () async {
+      final fixed = await applyFix(r'''
+import 'package:fpdart/fpdart.dart';
+
+class Repo {
+  TaskEither<String, Unit> save(int id) => throw '';
+}
+
+TaskEither<String, int> f(TaskEither<String, int> p, Repo value) =>
+    p.chainFirst(value.save);
+''');
+
+      expect(
+        fixed,
+        contains(
+          'p.flatMap((value2) => value.save(value2).map((_) => value2))',
+        ),
+      );
+    });
+
+    test('appends the map to a lambda body, keeping its parameter', () async {
+      final fixed = await applyFix(r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, Unit> save(int value) => throw '';
+
+TaskEither<String, int> f(TaskEither<String, int> p) =>
+    p.chainFirst((user) => save(user));
+''');
+
+      expect(
+        fixed,
+        contains('p.flatMap((user) => save(user).map((_) => user))'),
+      );
+    });
+
+    test('names a wildcard parameter so the body can return it', () async {
+      final fixed = await applyFix(r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, Unit> audit() => throw '';
+
+TaskEither<String, int> f(TaskEither<String, int> p) =>
+    p.chainFirst((_) => audit());
+''');
+
+      expect(
+        fixed,
+        contains('p.flatMap((value) => audit().map((_) => value))'),
+      );
+    });
+
+    test('parenthesises a body that binds looser than "."', () async {
+      final fixed = await applyFix(r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, Unit> save(int value) => throw '';
+TaskEither<String, Unit> skip() => throw '';
+
+TaskEither<String, int> f(TaskEither<String, int> p) =>
+    p.chainFirst((n) => n > 0 ? save(n) : skip());
+''');
+
+      expect(
+        fixed,
+        contains('p.flatMap((n) => (n > 0 ? save(n) : skip()).map((_) => n))'),
+      );
+    });
+
+    test('offers no fix for a block-bodied callback', () async {
+      await harness.expectNoFix(
+        r'''
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, Unit> save(int value) => throw '';
+
+TaskEither<String, int> f(TaskEither<String, int> p) => p.chainFirst((n) {
+  return save(n);
+});
+''',
+        'avoid_chain_first_swallowing_failure',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+    });
+  });
 }

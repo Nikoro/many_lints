@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- `avoid_chain_first_swallowing_failure` (fpdart, `pedantic` preset) reports
+  `chainFirst` on `Either`, `TaskEither` and `IOEither`. fpdart's `chainFirst`
+  ends in `orElse((l) => right(b))`, so a failing effect is turned back into
+  success: a check chained this way cannot reject and a failed write goes
+  unnoticed. A quick fix rewrites `x.chainFirst(effect)` to
+  `x.flatMap((value) => effect(value).map((_) => value))` for a tear-off or a
+  one-expression lambda. `ignore_tests` (default `true`) skips `test/`.
+
 ### Fixed
 
 - `prefer_abstract_final_static_class` no longer reports a class whose primary
@@ -14,6 +24,12 @@
   capture it. `final now = clock.now().toUtc(); task.andThen(() =>
   check(now.subtract(window)))` was reported, because the search for the
   variable's initializer stopped at the closure's own body.
+- The "Convert to `sequenceListSeq`" assist no longer claims to preserve
+  behaviour. A `reduce` chaining tasks with `flatMap` stops at the first
+  failure; fpdart's `sequenceListSeq` runs every task and only then collects
+  the results, so the tasks after a failure still run. The lightbulb now reads
+  "Convert to 'sequenceListSeq' (runs every task after a failure)" and ranks
+  below the exact conversions, like the `chainFirst` assist.
 
 ### Changed
 

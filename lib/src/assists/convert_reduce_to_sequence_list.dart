@@ -22,23 +22,39 @@ import '../type_checker.dart';
 /// TaskEither.sequenceListSeq(tasks)
 /// ```
 ///
-/// The hand-rolled version also needs an empty-list guard, because `reduce`
-/// throws on an empty iterable; `sequenceListSeq` does not. That is one more
-/// reason to prefer the library version, and the guard is usually the bug the
-/// long form ships with.
+/// ## This one changes behaviour, and says so
+///
+/// The conversion is **not** exact. The `reduce` chains each task onto the
+/// accumulator with `flatMap`, so it stops at the first failure: the tasks
+/// after it never run. fpdart declares `sequenceListSeq` through
+/// `traverseListWithIndexSeq`, which runs every task through
+/// `Task.traverseListWithIndexSeq` and only then folds the results with
+/// `Either.sequenceList`. Every task runs, even after one has failed; the
+/// result is still the first failure.
+///
+/// For tasks without side effects the two agree. For writes they do not: a
+/// failed step no longer stops the steps after it. So the lightbulb names the
+/// difference instead of offering a plain "convert to", and the assist sits
+/// below the exact conversions, as the `chainFirst` one does.
+///
+/// Two smaller differences: `reduce` throws on an empty iterable where
+/// `sequenceListSeq` succeeds with an empty list, and the result carries every
+/// value (`List<R>`) rather than the last one.
 ///
 /// ## Always the `Seq` variant
 ///
 /// `sequenceList` runs its tasks **concurrently**; `sequenceListSeq` runs them
 /// in order. A `reduce` that chains each element onto the accumulator is
 /// inherently sequential — element two cannot start until element one
-/// finishes — so only the `Seq` variant preserves behaviour. Offering the
+/// finishes — so only the `Seq` variant keeps the order. Offering the
 /// concurrent one would change when effects run, and in what order.
 class ConvertReduceToSequenceList extends ResolvedCorrectionProducer {
   static const _assistKind = AssistKind(
     'many_lints.assist.convertReduceToSequenceList',
-    30,
-    "Convert to 'sequenceListSeq'",
+    // Below the exact conversions, beside `chainFirst`: this one asks the
+    // author to accept a change in behaviour.
+    29,
+    "Convert to 'sequenceListSeq' (runs every task after a failure)",
   );
 
   static const _iterableChecker = TypeChecker.fromUrl('dart:core#Iterable');

@@ -1616,6 +1616,28 @@ TaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>
       expect(result.source, isNot(contains('sequenceList(')));
     });
 
+    test('names the behaviour change in its label', () async {
+      final result = await harness.applyAssist(
+        r'''
+import 'package:fpdart/fpdart.dart';
+
+extension <E> on Iterable<E> {
+  E reduce(E Function(E value, E element) combine) => throw '';
+}
+
+TaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>
+    tasks.reduce^((acc, t) => acc.flatMap((_) => t));
+''',
+        'many_lints.assist.convertReduceToSequenceList',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+
+      expect(
+        result.message,
+        "Convert to 'sequenceListSeq' (runs every task after a failure)",
+      );
+    });
+
     test('is not offered for an unrelated reduce', () async {
       final offered = await harness.assistIds(r'''
 extension <E> on Iterable<E> {

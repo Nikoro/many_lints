@@ -16,7 +16,7 @@ when the codebase deliberately makes a different choice.
 | `core` | 35 | 35 | Near-certain defects with almost no stylistic judgement. |
 | `recommended` | 97 | 62 | The default choice for most production projects. |
 | `opinionated` | 185 | 88 | A coherent Many Lints house style. |
-| `pedantic` | 242 | 57 | Maximum uniformity, explicitness, ordering, and structural limits. |
+| `pedantic` | 243 | 58 | Maximum uniformity, explicitness, ordering, and structural limits. |
 
 ## `none`: choose everything yourself
 
@@ -119,7 +119,7 @@ lints, combine it with SDK rules such as `always_specify_types`,
 style. Avoid pairing `member_ordering` with `sort_constructors_first`: their
 constructor-first checks overlap.
 
-### Rules added by `pedantic` (57)
+### Rules added by `pedantic` (58)
 
 - **Class naming:** [`prefer_boolean_prefixes`](/many_lints/docs/rules/class-naming/prefer-boolean-prefixes/), [`prefer_correct_callback_field_name`](/many_lints/docs/rules/class-naming/prefer-correct-callback-field-name/), [`prefer_correct_error_name`](/many_lints/docs/rules/class-naming/prefer-correct-error-name/), [`prefer_correct_handler_name`](/many_lints/docs/rules/class-naming/prefer-correct-handler-name/), [`prefer_correct_identifier_length`](/many_lints/docs/rules/class-naming/prefer-correct-identifier-length/), [`prefer_correct_setter_parameter_name`](/many_lints/docs/rules/class-naming/prefer-correct-setter-parameter-name/), [`prefer_correct_type_name`](/many_lints/docs/rules/class-naming/prefer-correct-type-name/)
 - **Code organization:** [`arguments_ordering`](/many_lints/docs/rules/code-organization/arguments-ordering/), [`enum_constants_ordering`](/many_lints/docs/rules/code-organization/enum-constants-ordering/), [`initializers_ordering`](/many_lints/docs/rules/code-organization/initializers-ordering/), [`map_keys_ordering`](/many_lints/docs/rules/code-organization/map-keys-ordering/), [`match_lib_folder_structure`](/many_lints/docs/rules/code-organization/match-lib-folder-structure/), [`member_ordering`](/many_lints/docs/rules/code-organization/member-ordering/), [`parameters_ordering`](/many_lints/docs/rules/code-organization/parameters-ordering/), [`pattern_fields_ordering`](/many_lints/docs/rules/code-organization/pattern-fields-ordering/), [`prefer_match_file_name`](/many_lints/docs/rules/code-organization/prefer-match-file-name/), [`prefer_single_declaration_per_file`](/many_lints/docs/rules/code-organization/prefer-single-declaration-per-file/), [`record_fields_ordering`](/many_lints/docs/rules/code-organization/record-fields-ordering/)
@@ -127,7 +127,7 @@ constructor-first checks overlap.
 - **Collections and types:** [`avoid_duplicate_collection_elements`](/many_lints/docs/rules/collection-type/avoid-duplicate-collection-elements/), [`prefer_class_destructuring`](/many_lints/docs/rules/collection-type/prefer-class-destructuring/)
 - **Control flow:** [`avoid_negated_conditions`](/many_lints/docs/rules/control-flow/avoid-negated-conditions/), [`avoid_unused_after_null_check`](/many_lints/docs/rules/control-flow/avoid-unused-after-null-check/), [`no_equal_switch_case`](/many_lints/docs/rules/control-flow/no-equal-switch-case/), [`prefer_conditional_expressions`](/many_lints/docs/rules/control-flow/prefer-conditional-expressions/), [`prefer_early_return`](/many_lints/docs/rules/control-flow/prefer-early-return/)
 - **Formatting:** [`avoid_inconsistent_digit_separators`](/many_lints/docs/rules/formatting/avoid-inconsistent-digit-separators/), [`double_literal_format`](/many_lints/docs/rules/formatting/double-literal-format/), [`format_comment`](/many_lints/docs/rules/formatting/format-comment/)
-- **fpdart:** [`avoid_get_or_else_swallowing_failure`](/many_lints/docs/rules/fpdart/avoid-get-or-else-swallowing-failure/), [`avoid_unnecessary_option`](/many_lints/docs/rules/fpdart/avoid-unnecessary-option/)
+- **fpdart:** [`avoid_chain_first_swallowing_failure`](/many_lints/docs/rules/fpdart/avoid-chain-first-swallowing-failure/), [`avoid_get_or_else_swallowing_failure`](/many_lints/docs/rules/fpdart/avoid-get-or-else-swallowing-failure/), [`avoid_unnecessary_option`](/many_lints/docs/rules/fpdart/avoid-unnecessary-option/)
 - **Hooks:** [`prefer_use_prefix`](/many_lints/docs/rules/hook-rules/prefer-use-prefix/)
 - **Pattern matching:** [`avoid_wildcard_cases_with_enums`](/many_lints/docs/rules/pattern-matching/avoid-wildcard-cases-with-enums/)
 - **Shorthand patterns:** [`avoid_nested_shorthands`](/many_lints/docs/rules/shorthand-patterns/avoid-nested-shorthands/)

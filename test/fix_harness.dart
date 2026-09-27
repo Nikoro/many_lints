@@ -152,8 +152,15 @@ class FixHarness with ResourceProviderMixin {
   /// applied and compared exactly like a fix.
   ///
   /// Returns the new source plus the linked edit groups the assist offered, so
-  /// a test can assert on which names it made renameable.
-  Future<({String source, List<protocol.LinkedEditGroup> linkedGroups})>
+  /// a test can assert on which names it made renameable, and the lightbulb
+  /// label, for an assist whose label has to warn about a behaviour change.
+  Future<
+    ({
+      String source,
+      List<protocol.LinkedEditGroup> linkedGroups,
+      String message,
+    })
+  >
   applyAssist(
     String content,
     String assistId, {
@@ -208,6 +215,7 @@ class FixHarness with ResourceProviderMixin {
     return (
       source: _applyEdits(source, edits),
       linkedGroups: change.linkedEditGroups,
+      message: change.message,
     );
   }
 

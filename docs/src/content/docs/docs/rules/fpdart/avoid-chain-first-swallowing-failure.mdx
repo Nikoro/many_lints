@@ -1,0 +1,120 @@
+---
+title: avoid_chain_first_swallowing_failure
+description: "chainFirst turns a failing effect into success"
+sidebar:
+  badge:
+    text: "Fix"
+    variant: "tip"
+  label: avoid_chain_first_swallowing_failure
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.2.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--fix">Fix</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">fpdart</span>
+
+This rule flags `chainFirst` on an `Either`, `TaskEither` or `IOEither`. fpdart's `chainFirst` ignores the failure of the effect it runs.
+
+## Why use this rule
+
+fpdart declares `chainFirst` like this:
+
+```dart
+TaskEither<L, R> chainFirst<C>(TaskEither<L, C> Function(R b) chain) =>
+    flatMap((b) => chain(b).map((c) => b).orElse((l) => TaskEither.right(b)));
+```
+
+The trailing `orElse` turns a failing effect back into success, and the pipeline carries on with the original value. The name reads like "run this step too", so it gets used for checks and writes. A permission check chained this way cannot reject anything, and a save chained this way can fail without anyone noticing.
+
+`flatMap` with an inner `map` keeps the value and lets the failure through. Keep `chainFirst` only where ignoring the effect's failure is what you want, such as a best-effort log line.
+
+**See also:** [fpdart: TaskEither.chainFirst](https://pub.dev/documentation/fpdart/latest/fpdart/TaskEither/chainFirst.html)
+
+## Don't
+
+```dart
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> loadUser(int id) => TaskEither.right(id);
+TaskEither<String, Unit> saveUser(int user) => TaskEither.left('disk full');
+
+// Succeeds even though saveUser failed.
+TaskEither<String, int> save(int id) => loadUser(id).chainFirst(saveUser);
+```
+
+## Do
+
+```dart
+import 'package:fpdart/fpdart.dart';
+
+TaskEither<String, int> loadUser(int id) => TaskEither.right(id);
+TaskEither<String, Unit> saveUser(int user) => TaskEither.left('disk full');
+
+// Fails with 'disk full'.
+TaskEither<String, int> save(int id) =>
+    loadUser(id).flatMap((user) => saveUser(user).map((_) => user));
+```
+
+## Quick fix
+
+The fix rewrites `x.chainFirst(effect)` to `x.flatMap((value) => effect(value).map((_) => value))`. It handles a tear-off (`saveUser`, `repo.save`) and a lambda with an expression body (`(user) => saveUser(user)`). A block-bodied lambda, explicit type arguments or a callback computed by an expression are left for you to rewrite.
+
+The fix changes behaviour on purpose: after it, a failing effect fails the pipeline. It is applied one location at a time, never in bulk.
+
+## Known limitations
+
+Every `chainFirst` on these types is reported, including the ones where dropping the failure was intended. Suppress those with an `// ignore:` comment that says why.
+
+Files under `test/` are skipped by default. Set `ignore_tests: false` to report them too.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    avoid_chain_first_swallowing_failure:
+      ignore_tests: false
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_chain_first_swallowing_failure:
+    ignore_tests: false
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ignore_tests` | bool | `true` | Skip files under `test/` |
+
+## Configuration
+
+This rule is in the **`pedantic`** preset. The "Convert to `chainFirst`" assist offers `chainFirst` deliberately, so a codebase may have chosen it. Turn it on explicitly:
+
+```yaml
+# many_lints.yaml
+rules:
+  avoid_chain_first_swallowing_failure: true
+```
+
+To keep the rule on but skip certain paths, use [per-rule `exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule).
+
+## Related rules
+
+- [`avoid_get_or_else_swallowing_failure`](/many_lints/docs/rules/fpdart/avoid-get-or-else-swallowing-failure/) — getOrElse is handed the failure; ignoring it should be a visible decision.
+- [`prefer_chain_either`](/many_lints/docs/rules/fpdart/prefer-chain-either/) — chainEither lifts a synchronous Either step for you.
+- [`avoid_throw_in_fp_callback`](/many_lints/docs/rules/fpdart/avoid-throw-in-fp-callback/) — A throw inside an fpdart callback escapes the error channel the pipeline is built to carry.
+- [`prefer_and_then`](/many_lints/docs/rules/fpdart/prefer-and-then/) — andThen says that the previous value is not used.

@@ -218,7 +218,9 @@ TaskEither.sequenceListSeq(tasks)
 
 Always the `Seq` variant. `sequenceList` runs its tasks concurrently, and a `reduce` is inherently sequential — element two cannot start until element one finishes — so the concurrent version would change when effects run and in what order.
 
-The hand-rolled form also needs an empty-list guard, because `reduce` throws on an empty iterable. `sequenceListSeq` does not, and that missing guard is usually the bug the long form ships with.
+**This one changes behaviour.** The `reduce` stops at the first failure: the tasks after it never run. fpdart's `sequenceListSeq` runs every task in order and only then collects the results, so the tasks after a failure still run, and the result is the first failure. For tasks without side effects the two agree; for writes they do not. The lightbulb entry says so — "Convert to 'sequenceListSeq' (runs every task after a failure)" — and sits below the exact conversions.
+
+Two smaller differences: `reduce` throws on an empty iterable, while `sequenceListSeq` succeeds with an empty list, and the result holds every value (`List<R>`) instead of the last one.
 
 ### Convert to `chainFirst`
 

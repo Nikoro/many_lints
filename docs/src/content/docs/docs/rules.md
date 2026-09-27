@@ -5,7 +5,7 @@ sidebar:
   order: 5
 ---
 
-Many Lints provides 261 opt-in rules. Choose a category below, or use
+Many Lints provides 262 opt-in rules. Choose a category below, or use
 the site search when you already know the API or pattern you want to check.
 
 <a id="architecture"></a>
@@ -128,7 +128,7 @@ the site search when you already know the API or pattern you want to check.
 - [`prefer_immediate_return`](/many_lints/docs/rules/code-quality/prefer-immediate-return/) — Return an expression directly instead of via a throwaway variable.
 - [`prefer_moving_to_variable`](/many_lints/docs/rules/code-quality/prefer-moving-to-variable/) — Compute a repeated property or invocation chain once into a variable.
 - [`prefer_named_parameters`](/many_lints/docs/rules/code-quality/prefer-named-parameters/) — Name parameters once there are more than a couple.
-- [`prefer_primary_constructors`](/many_lints/docs/rules/code-quality/prefer-primary-constructors/) — Prefer a primary constructor (Dart 3.13+) over a class of final fields plus a field-assigning constructor.
+- [`prefer_primary_constructors`](/many_lints/docs/rules/code-quality/prefer-primary-constructors/) — Move a class or enum constructor into the type header as a primary constructor (Dart 3.13+), without touching types that declare none.
 - [`prefer_private_named_parameters`](/many_lints/docs/rules/code-quality/prefer-private-named-parameters/) — Prefer private named parameters (Dart 3.12+) over initializer-list boilerplate.
 - [`prefer_single_setstate`](/many_lints/docs/rules/code-quality/prefer-single-setstate/) — Merge multiple setState calls into a single call.
 
@@ -201,10 +201,11 @@ the site search when you already know the API or pattern you want to check.
 
 <a id="fpdart"></a>
 
-## fpdart (23)
+## fpdart (24)
 
 - [`avoid_ad_hoc_left_type`](/many_lints/docs/rules/fpdart/avoid-ad-hoc-left-type/) — A pipeline only composes when every step shares one error type.
 - [`avoid_bare_await_in_do`](/many_lints/docs/rules/fpdart/avoid-bare-await-in-do/) — Awaiting a raw Future inside a Do block escapes the block's tracking.
+- [`avoid_chain_first_swallowing_failure`](/many_lints/docs/rules/fpdart/avoid-chain-first-swallowing-failure/) — chainFirst turns a failing effect into success.
 - [`avoid_dollar_outside_do_frame`](/many_lints/docs/rules/fpdart/avoid-dollar-outside-do-frame/) — Calling a Do block's extraction function from a nested callback unwinds through code that cannot handle it.
 - [`avoid_either_of_future`](/many_lints/docs/rules/fpdart/avoid-either-of-future/) — A Future nested in Either or Option escapes the error channel.
 - [`avoid_future_of_either`](/many_lints/docs/rules/fpdart/avoid-future-of-either/) — Future&lt;Either&gt; throws away the composition TaskEither already gives you.

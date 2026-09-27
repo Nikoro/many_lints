@@ -170,6 +170,7 @@ import 'package:many_lints/src/rules/avoid_unsafe_collection_methods.dart';
 import 'package:many_lints/src/rules/avoid_empty_setstate.dart';
 import 'package:many_lints/src/rules/check_for_equals_in_render_object_setters.dart';
 import 'package:many_lints/src/rules/check_is_not_closed_after_async_gap.dart';
+import 'package:many_lints/src/rules/avoid_chain_first_swallowing_failure.dart';
 import 'package:many_lints/src/rules/avoid_get_or_else_swallowing_failure.dart';
 import 'package:many_lints/src/rules/avoid_hooks_outside_build.dart';
 import 'package:many_lints/src/rules/avoid_late_context.dart';
@@ -293,6 +294,7 @@ import 'package:many_lints/src/rules/never_discard_build_context.dart';
 import 'package:many_lints/src/fixes/always_remove_listener_fix.dart';
 import 'package:many_lints/src/fixes/dispose_fields_fix.dart';
 import 'package:many_lints/src/fixes/match_pattern_fix.dart';
+import 'package:many_lints/src/fixes/avoid_chain_first_swallowing_failure_fix.dart';
 import 'package:many_lints/src/fixes/prefer_and_then_fix.dart';
 import 'package:many_lints/src/fixes/dispose_provided_instances_fix.dart';
 import 'package:many_lints/src/fixes/avoid_cascade_after_if_null_fix.dart';
@@ -609,6 +611,7 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidEitherOfFuture());
     _registerWarningRule(registry, AvoidFutureOfEither());
     _registerWarningRule(registry, AvoidFutureOfOption());
+    _registerWarningRule(registry, AvoidChainFirstSwallowingFailure());
     _registerWarningRule(registry, AvoidGetOrElseSwallowingFailure());
     _registerWarningRule(registry, AvoidDollarOutsideDoFrame());
     _registerWarningRule(registry, AvoidNestedDoNotation());
@@ -722,6 +725,10 @@ class ManyLintsPlugin extends Plugin {
     );
     registry.registerFixForRule(MatchPattern.code, MatchPatternFix.new);
     registry.registerFixForRule(PreferAndThen.code, PreferAndThenFix.new);
+    registry.registerFixForRule(
+      AvoidChainFirstSwallowingFailure.code,
+      AvoidChainFirstSwallowingFailureFix.new,
+    );
     registry.registerFixForRule(DisposeFields.code, DisposeFieldsFix.new);
     registry.registerFixForRule(
       PreferUnitOverVoid.code,
