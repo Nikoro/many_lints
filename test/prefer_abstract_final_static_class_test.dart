@@ -244,4 +244,31 @@ mixin class MyMixinClass {
 }
 ''');
   }
+
+  Future<void> test_primaryConstructorWithField() async {
+    await assertNoDiagnostics(r'''
+class const StorageKey._(final String value) {
+  static StorageKey parse(String value) => StorageKey._(value);
+}
+''');
+  }
+
+  Future<void> test_primaryConstructorWithFieldAndStaticField() async {
+    await assertNoDiagnostics(r'''
+class Gate(final int limit) {
+  static const fallback = 1;
+}
+''');
+  }
+
+  Future<void> test_parameterlessPrivatePrimaryConstructor() async {
+    await assertDiagnostics(
+      r'''
+class Constants._() {
+  static const name = 'app';
+}
+''',
+      [lint(0, 52)],
+    );
+  }
 }

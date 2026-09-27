@@ -55,6 +55,15 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
+    // A primary constructor that declares parameters is an instance
+    // constructor in the class header: the class is meant to be instantiated,
+    // even when every member in its body is static.
+    if (node.namePart case PrimaryConstructorDeclaration(
+      :final formalParameters,
+    ) when formalParameters.parameters.isNotEmpty) {
+      return;
+    }
+
     final body = node.body;
     if (body is! BlockClassBody) return;
 

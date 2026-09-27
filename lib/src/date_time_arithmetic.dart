@@ -114,21 +114,26 @@ class DateTimeShift {
 
   /// Resolves a local variable back to its initializer to see if it is UTC.
   ///
-  /// Scoped to the enclosing function body: a field or top-level variable is
-  /// left alone, because it may be reassigned anywhere.
+  /// Scoped to the enclosing function bodies: a field or top-level variable is
+  /// left alone, because it may be reassigned anywhere. The search widens one
+  /// body at a time, so a local captured by a closure (`() => now.add(d)`) is
+  /// still traced to the function that declares it.
   static bool _isUtcVariable(Element element, AstNode reference) {
     if (element is! LocalVariableElement) return false;
 
-    final body = reference.thisOrAncestorOfType<FunctionBody>();
-    if (body == null) return false;
+    for (
+      var body = reference.thisOrAncestorOfType<FunctionBody>();
+      body != null;
+      body = body.parent?.thisOrAncestorOfType<FunctionBody>()
+    ) {
+      final finder = _InitializerFinder(element);
+      body.accept(finder);
 
-    final finder = _InitializerFinder(element);
-    body.accept(finder);
+      final initializer = finder.initializer;
+      if (initializer != null) return _isUtc(initializer);
+    }
 
-    final initializer = finder.initializer;
-    if (initializer == null) return false;
-
-    return _isUtc(initializer);
+    return false;
   }
 }
 

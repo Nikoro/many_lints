@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `prefer_abstract_final_static_class` no longer reports a class whose primary
+  constructor declares parameters (`class const Key._(final String value) {
+  static Key parse(...) }`). The fields live in the header, so the class is
+  instantiable even when every member in its body is static. A parameterless
+  private primary constructor (`class Constants._()`) is still the old
+  instantiation guard and is still reported.
+- `avoid_dst_unsafe_date_arithmetic` traces a UTC local into the closures that
+  capture it. `final now = clock.now().toUtc(); task.andThen(() =>
+  check(now.subtract(window)))` was reported, because the search for the
+  variable's initializer stopped at the closure's own body.
+
 ### Changed
 
 - `prefer_primary_constructors` now covers every class and enum whose one

@@ -268,6 +268,15 @@ void f() {
 ''');
   }
 
+  Future<void> test_utcLocalVariableUsedInClosure_isNotReported() async {
+    await assertNoDiagnostics(r'''
+void f(void Function(DateTime Function()) run) {
+  final d = DateTime.utc(2025, 3, 30);
+  run(() => d.add(const Duration(days: 1)));
+}
+''');
+  }
+
   Future<void> test_chainedShiftOnUtc_isNotReported() async {
     await assertNoDiagnostics(r'''
 void f() {
