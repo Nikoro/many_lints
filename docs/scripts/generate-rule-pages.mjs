@@ -46,6 +46,8 @@ const CATEGORIES = {
   architecture: {
     label: 'Architecture',
     rules: [
+      'prefer_module_barrel_imports',
+      'require_module_barrel',
       'avoid_banned_imports',
       'avoid_banned_exports',
       'avoid_banned_types',

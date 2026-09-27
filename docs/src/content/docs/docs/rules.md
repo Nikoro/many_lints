@@ -5,12 +5,12 @@ sidebar:
   order: 5
 ---
 
-Many Lints provides 262 opt-in rules. Choose a category below, or use
+Many Lints provides 264 opt-in rules. Choose a category below, or use
 the site search when you already know the API or pattern you want to check.
 
 <a id="architecture"></a>
 
-## Architecture (6)
+## Architecture (8)
 
 - [`avoid_banned_annotations`](/many_lints/docs/rules/architecture/avoid-banned-annotations/) — Ban specific annotations, optionally scoped by directory.
 - [`avoid_banned_exports`](/many_lints/docs/rules/architecture/avoid-banned-exports/) — Ban re-exports of specific libraries, optionally scoped by directory.
@@ -18,6 +18,8 @@ the site search when you already know the API or pattern you want to check.
 - [`avoid_banned_names`](/many_lints/docs/rules/architecture/avoid-banned-names/) — Ban specific identifiers from being used as declaration names.
 - [`avoid_banned_types`](/many_lints/docs/rules/architecture/avoid-banned-types/) — Ban specific types from being named, optionally scoped by directory.
 - [`banned_usage`](/many_lints/docs/rules/architecture/banned-usage/) — Ban specific members, such as DateTime.now, optionally scoped by directory.
+- [`prefer_module_barrel_imports`](/many_lints/docs/rules/architecture/prefer-module-barrel-imports/) — Require public entry points when importing another module.
+- [`require_module_barrel`](/many_lints/docs/rules/architecture/require-module-barrel/) — Report modules with no public entry-point file.
 
 <a id="async-safety"></a>
 

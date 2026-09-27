@@ -1,0 +1,84 @@
+---
+title: require_module_barrel
+description: Report modules with no public entry-point file.
+sidebar:
+  label: require_module_barrel
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.2.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Architecture</span>
+
+Reports a source module with no barrel named after its directory. This checks
+file presence, not export completeness. It is in **no preset**; enable it by name.
+
+## Don't
+
+`lib/users/model.dart`, with no `lib/users/users.dart`:
+
+```dart
+class User {}
+```
+
+## Do
+
+Keep the model and add `lib/users/users.dart`:
+
+```dart
+export 'model.dart';
+```
+
+Generated files, part files, and files directly in a module root are skipped.
+The diagnostic appears at the first token of each checked file in the module.
+Use `prefer_module_barrel_imports` as well to check how callers import it.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    require_module_barrel:
+      module_roots: [lib]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  require_module_barrel:
+    module_roots: [lib]
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `module_roots` | List of strings | `[lib]` | Package-relative parent directories of modules. The longest matching root wins. |
+
+An empty or wrongly typed list uses `[lib]`. Configure `include` and `exclude`
+for generated directories or modules that intentionally have no entry point.
+
+## Turning this rule off
+
+```yaml
+many_lints:
+  rules:
+    require_module_barrel: false
+```
+
+## Related rules
+
+- [`prefer_module_barrel_imports`](/many_lints/docs/rules/architecture/prefer-module-barrel-imports/) — Require public entry points when importing another module.
+- [`avoid_banned_annotations`](/many_lints/docs/rules/architecture/avoid-banned-annotations/) — Ban specific annotations, optionally scoped by directory.
+- [`avoid_banned_exports`](/many_lints/docs/rules/architecture/avoid-banned-exports/) — Ban re-exports of specific libraries, optionally scoped by directory.
+- [`avoid_banned_imports`](/many_lints/docs/rules/architecture/avoid-banned-imports/) — Ban imports of specific libraries, optionally scoped by directory.

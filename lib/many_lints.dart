@@ -197,6 +197,8 @@ import 'package:many_lints/src/rules/avoid_skipped_tests.dart';
 import 'package:many_lints/src/rules/avoid_todo_comments.dart';
 import 'package:many_lints/src/rules/prefer_typed_exceptions.dart';
 import 'package:many_lints/src/rules/require_mirror_test.dart';
+import 'package:many_lints/src/rules/require_module_barrel.dart';
+import 'package:many_lints/src/rules/prefer_module_barrel_imports.dart';
 import 'package:many_lints/src/rules/avoid_collection_equality_checks.dart';
 import 'package:many_lints/src/rules/dispose_fields.dart';
 import 'package:many_lints/src/rules/emit_new_bloc_state_instances.dart';
@@ -450,6 +452,8 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, AvoidTodoComments());
     _registerWarningRule(registry, PreferTypedExceptions());
     _registerWarningRule(registry, RequireMirrorTest());
+    _registerWarningRule(registry, RequireModuleBarrel());
+    _registerWarningRule(registry, PreferModuleBarrelImports());
     _registerWarningRule(registry, AvoidDstUnsafeDateArithmetic());
     _registerWarningRule(registry, AvoidDuplicateCascades());
     _registerWarningRule(registry, AvoidConstantConditions());

@@ -260,6 +260,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `prefer_immutable_state` | Ensure classes named as state are annotated with @immutable. | Yes |
 | `prefer_iterable_of` | Use List.of() / Set.of() instead of .from() for type-safe copies. | Yes |
 | `prefer_match_file_name` | Name a file after the first public declaration in it. | — |
+| `prefer_module_barrel_imports` | Require public entry points when importing another module. | — |
 | `prefer_moving_to_variable` | Compute a repeated property or invocation chain once into a variable. | — |
 | `prefer_multi_bloc_provider` | Use MultiBlocProvider, MultiBlocListener, or MultiRepositoryProvider instead of nesting. | Yes |
 | `prefer_named_parameters` | Name parameters once there are more than a couple. | — |
@@ -304,6 +305,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `record_fields_ordering` | Keep record named fields in a configured order. | — |
 | `require_atomic_async_updates` | Re-read shared state after an await instead of writing back a stale value. | — |
 | `require_mirror_test` | Detect libraries under lib/ with no matching test file. | — |
+| `require_module_barrel` | Report modules with no public entry-point file. | — |
 | `use_class_prefix` | Require a name prefix for classes deriving from a configured type. | Yes |
 | `use_class_suffix` | Require a name suffix for classes deriving from a configured type. | Yes |
 | `use_closest_build_context` | Use the inner BuildContext from builder callbacks, not the outer one. | Yes |

@@ -1,0 +1,97 @@
+---
+title: prefer_module_barrel_imports
+description: Require public entry points when importing another module.
+sidebar:
+  label: prefer_module_barrel_imports
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<span class="rule-badge rule-badge--version">v1.2.0</span>
+<span class="rule-badge rule-badge--warning">Warning</span>
+<span class="rule-badge rule-badge--config">Configurable</span>
+<span class="rule-badge rule-badge--category">Architecture</span>
+
+Reports imports into another module that bypass its barrel. Direct imports inside
+the same module remain allowed. This rule is in **no preset**; enable it by name.
+By default a module is a directory directly below `lib`, with an entry point named
+after that directory, such as `lib/users/users.dart`.
+
+## Don't
+
+In `lib/orders/page.dart`, given `lib/users/model.dart` declaring `User`:
+
+```dart
+import '../users/model.dart';
+
+User? selectedUser;
+```
+
+## Do
+
+Export `model.dart` from `lib/users/users.dart`, then import that barrel:
+
+```dart
+import '../users/users.dart';
+
+User? selectedUser;
+```
+
+Both relative and package imports are checked, including every conditional-import
+branch. Generated source files are skipped. Imports into unconfigured external
+packages are unaffected. Missing import targets remain the analyzer's concern.
+
+There is no quick fix: a barrel might not export the required names, or might
+introduce an ambiguous name. Review its exports before changing an import.
+
+## Options
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    prefer_module_barrel_imports:
+      module_roots: [lib]
+      package_entry_points: [package:models/models.dart]
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  prefer_module_barrel_imports:
+    module_roots: [lib]
+    package_entry_points: [package:models/models.dart]
+```
+
+</TabItem>
+</Tabs>
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `module_roots` | List of strings | `[lib]` | Package-relative parent directories of modules. The longest matching root wins. |
+| `package_entry_points` | List of strings | `[]` | Package URIs required for external consumers and same-package files outside `lib`. Inside `lib`, importing that package's own umbrella is reported to prevent an import back into the umbrella. |
+
+Use `include` and `exclude` to scope approved exceptions. An empty or wrongly
+typed `module_roots` uses `[lib]`. An entry point is a convention, not a proof of
+layer separation: a barrel can still export infrastructure to presentation.
+
+## Turning this rule off
+
+```yaml
+many_lints:
+  rules:
+    prefer_module_barrel_imports: false
+```
+
+## Related rules
+
+- [`require_module_barrel`](/many_lints/docs/rules/architecture/require-module-barrel/) — Report modules with no public entry-point file.
+- [`avoid_banned_imports`](/many_lints/docs/rules/architecture/avoid-banned-imports/) — Ban imports of specific libraries, optionally scoped by directory.
+- [`avoid_banned_annotations`](/many_lints/docs/rules/architecture/avoid-banned-annotations/) — Ban specific annotations, optionally scoped by directory.
+- [`avoid_banned_exports`](/many_lints/docs/rules/architecture/avoid-banned-exports/) — Ban re-exports of specific libraries, optionally scoped by directory.

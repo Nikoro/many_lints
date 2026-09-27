@@ -679,7 +679,7 @@ Resolve such a list **once per callback** and pass it into every collector that 
 
 ## Testing a Configurable Rule
 
-`ManyLintsRuleTest` **cannot** test configuration — it writes its own `preset: all` file, which is the very thing a config test needs to control. Drive a real `PluginServer` instead, following [`test/rule_config_test.dart`](../../../test/rule_config_test.dart).
+`ManyLintsRuleTest` writes a default file enabling the rule under test. A rule test can overwrite `many_lints.yaml` after `super.setUp()` and call `ConfigLoader.clearCache()` before analysis; the module-barrel tests demonstrate this. Create dependency packages before `super.setUp()` so the package configuration includes them. Use a real `PluginServer` for end-to-end enablement and configuration loading, following [`test/rule_config_test.dart`](../../../test/rule_config_test.dart).
 
 The harness writes `analysis_options.yaml` (with the `plugins:` block), optionally `many_lints.yaml`, then the Dart file, and asserts on emitted diagnostic codes:
 

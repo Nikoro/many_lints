@@ -134,7 +134,7 @@ constructor-first checks overlap.
 - **Type annotations:** [`prefer_explicit_parameter_names`](/many_lints/docs/rules/type-annotations/prefer-explicit-parameter-names/), [`prefer_typedefs_for_callbacks`](/many_lints/docs/rules/type-annotations/prefer-typedefs-for-callbacks/)
 - **Widget best practices:** [`avoid_deep_widget_nesting`](/many_lints/docs/rules/widget-best-practices/avoid-deep-widget-nesting/), [`avoid_too_many_widgets_per_build`](/many_lints/docs/rules/widget-best-practices/avoid-too-many-widgets-per-build/), [`never_discard_build_context`](/many_lints/docs/rules/widget-best-practices/never-discard-build-context/), [`prefer_extracting_callbacks`](/many_lints/docs/rules/widget-best-practices/prefer-extracting-callbacks/), [`prefer_widget_private_members`](/many_lints/docs/rules/widget-best-practices/prefer-widget-private-members/), [`use_sliver_prefix`](/many_lints/docs/rules/widget-best-practices/use-sliver-prefix/)
 
-## Rules outside every preset (19)
+## Rules outside every preset (21)
 
 Some rules need project-specific vocabulary, assume an optional dependency,
 enforce the opposite of a convention selected by `opinionated`, or are
@@ -142,7 +142,7 @@ deliberately opt-in conventions. They remain available by name so presets never
 guess package dependencies, silently do nothing without required options,
 overreach into project-specific taste, or enable fixes that undo one another.
 
-- **Architecture:** [`avoid_banned_annotations`](/many_lints/docs/rules/architecture/avoid-banned-annotations/), [`avoid_banned_exports`](/many_lints/docs/rules/architecture/avoid-banned-exports/), [`avoid_banned_imports`](/many_lints/docs/rules/architecture/avoid-banned-imports/), [`avoid_banned_names`](/many_lints/docs/rules/architecture/avoid-banned-names/), [`avoid_banned_types`](/many_lints/docs/rules/architecture/avoid-banned-types/), [`banned_usage`](/many_lints/docs/rules/architecture/banned-usage/)
+- **Architecture:** [`avoid_banned_annotations`](/many_lints/docs/rules/architecture/avoid-banned-annotations/), [`avoid_banned_exports`](/many_lints/docs/rules/architecture/avoid-banned-exports/), [`avoid_banned_imports`](/many_lints/docs/rules/architecture/avoid-banned-imports/), [`avoid_banned_names`](/many_lints/docs/rules/architecture/avoid-banned-names/), [`avoid_banned_types`](/many_lints/docs/rules/architecture/avoid-banned-types/), [`banned_usage`](/many_lints/docs/rules/architecture/banned-usage/), [`prefer_module_barrel_imports`](/many_lints/docs/rules/architecture/prefer-module-barrel-imports/), [`require_module_barrel`](/many_lints/docs/rules/architecture/require-module-barrel/)
 - **Class naming:** [`match_class_name_pattern`](/many_lints/docs/rules/class-naming/match-class-name-pattern/), [`prefer_prefixed_global_constants`](/many_lints/docs/rules/class-naming/prefer-prefixed-global-constants/), [`use_class_prefix`](/many_lints/docs/rules/class-naming/use-class-prefix/), [`use_class_suffix`](/many_lints/docs/rules/class-naming/use-class-suffix/)
 - **Code quality:** [`match_pattern`](/many_lints/docs/rules/code-quality/match-pattern/)
 - **Collections and types:** [`list_all_equatable_fields`](/many_lints/docs/rules/collection-type/list-all-equatable-fields/)

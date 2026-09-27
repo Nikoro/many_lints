@@ -230,3 +230,7 @@ rules:
   prefer_explicit_type_arguments:
     methods: [showDialog]
     include: ["lib/prefer_explicit_type_arguments_example.dart"]
+  prefer_module_barrel_imports:
+    include: ["lib/prefer_module_barrel_imports_example.dart"]
+  require_module_barrel:
+    include: ["lib/missing_barrel/require_module_barrel_example.dart"]

@@ -166,6 +166,10 @@ const _unenforceable = <String, String>{
   'prefer_match_file_name': 'diagnoses the file path, not the source',
   'prefer_correct_test_file_name': 'diagnoses the file path, not the source',
   'require_mirror_test': 'diagnoses the absence of a sibling test file',
+  'require_module_barrel':
+      'needs module paths; covered by require_module_barrel_test.dart',
+  'prefer_module_barrel_imports':
+      'needs sibling modules; covered by prefer_module_barrel_imports_test.dart',
   // Config-only rules: silent until a project names what is banned, so the
   // documented Don't block is correct but needs that page's own YAML.
   'avoid_banned_names': 'config-only; needs the page\'s own entries',

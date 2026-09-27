@@ -176,14 +176,14 @@ for shared-config setups.
 
 ## Available Lints
 
-262 lints with 107 quick fixes. All are off by default — enable selected rules by name,
+264 lints with 107 quick fixes. All are off by default — enable selected rules by name,
 use a [preset](#presets), or combine a preset with per-rule overrides. Each rule links to
 its full documentation with examples and fix details.
 
 | Category | Rules | Description |
 |----------|------:|-------------|
 | [Class Naming](https://nikoro.github.io/many_lints/docs/rules/#class-naming) | 12 | Class and type naming conventions |
-| [Architecture](https://nikoro.github.io/many_lints/docs/rules/#architecture) | 6 | Configurable bans on imports, types, names and members |
+| [Architecture](https://nikoro.github.io/many_lints/docs/rules/#architecture) | 8 | Configurable bans and module entry-point boundaries |
 | [Bloc / Riverpod](https://nikoro.github.io/many_lints/docs/rules/#bloc-riverpod) | 12 | BLoC and Riverpod state management patterns |
 | [Riverpod State](https://nikoro.github.io/many_lints/docs/rules/#riverpod-state) | 9 | Riverpod-specific state rules |
 | [Async Safety](https://nikoro.github.io/many_lints/docs/rules/#async-safety) | 12 | Async/await and state mutation safety |
