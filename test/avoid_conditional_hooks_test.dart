@@ -35,6 +35,15 @@ class HookConsumerWidget extends Widget {
   Widget build(BuildContext context) => Widget();
 }
 ''');
+    final webPlugins = newPackage('flutter_web_plugins');
+    webPlugins.addFile(
+      'lib/src/navigation/url_strategy.dart',
+      'void usePathUrlStrategy() {}',
+    );
+    webPlugins.addFile(
+      'lib/url_strategy.dart',
+      "export 'src/navigation/url_strategy.dart';",
+    );
     super.setUp();
   }
 
@@ -435,5 +444,20 @@ class MyWidget extends HookWidget {
 ''',
       [lint(267, 11), lint(291, 11)],
     );
+  }
+
+  Future<void> test_flutterWebUrlStrategyIsNotAHook() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+class MyWidget extends HookWidget {
+  @override
+  Widget build(BuildContext context) {
+    if (true) usePathUrlStrategy();
+    return Widget();
+  }
+}
+''');
   }
 }

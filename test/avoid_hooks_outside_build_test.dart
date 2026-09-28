@@ -63,6 +63,15 @@ ValueNotifier<T> useState<T>(T initial) => ValueNotifier<T>(initial);
 T useMemoized<T>(T Function() factory) => factory();
 void useEffect(void Function()? Function() effect) {}
 ''');
+    final webPlugins = newPackage('flutter_web_plugins');
+    webPlugins.addFile(
+      'lib/src/navigation/url_strategy.dart',
+      'void usePathUrlStrategy() {}',
+    );
+    webPlugins.addFile(
+      'lib/url_strategy.dart',
+      "export 'src/navigation/url_strategy.dart';",
+    );
     super.setUp();
   }
 
@@ -242,5 +251,26 @@ void setupThings() {
   Controller().useResource();
 }
 ''');
+  }
+
+  Future<void> test_flutterWebUrlStrategyIsNotAHook() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter_web_plugins/url_strategy.dart';
+void main() {
+  usePathUrlStrategy();
+}
+''');
+  }
+
+  Future<void> test_localFunctionWithSdkNameStillCountsAsHook() async {
+    await assertDiagnostics(
+      r'''
+void usePathUrlStrategy() {}
+void main() {
+  usePathUrlStrategy();
+}
+''',
+      [lint(45, 20)],
+    );
   }
 }

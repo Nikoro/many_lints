@@ -153,7 +153,7 @@ class MyWidget extends HookWidget {
 
 ## Known limitations
 
-**Hooks are recognised by name** — an unqualified call whose name matches `use` followed by an uppercase letter or digit. A hook renamed to something else is not detected, and a plain function following that naming convention is treated as a hook.
+**Hooks are recognised by name** — an unqualified call whose name matches `use` followed by an uppercase letter or digit. Calls resolved to the Dart SDK or the `flutter` and `flutter_web_plugins` packages are excluded: SDK helpers such as `usePathUrlStrategy()` are not hooks. Re-exports are checked against the declaring library. A hook renamed to something else is not detected, and other plain functions following that naming convention are still treated as hooks.
 
 **A qualified call is never a hook.** `controller.useSomething()` has a receiver, so it is left alone.
 

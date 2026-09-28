@@ -14,6 +14,10 @@
 
 ### Fixed
 
+- Hook rules exclude resolved Dart and Flutter SDK functions, including
+  `usePathUrlStrategy()` from `flutter_web_plugins`, from hook-name detection.
+  Custom hooks remain checked, including functions with the same name.
+
 - `prefer_abstract_final_static_class` no longer reports a class whose primary
   constructor declares parameters (`class const Key._(final String value) {
   static Key parse(...) }`). The fields live in the header, so the class is

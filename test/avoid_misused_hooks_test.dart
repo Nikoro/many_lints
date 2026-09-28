@@ -46,6 +46,15 @@ class ValueNotifier<T> {
 ValueNotifier<T> useState<T>(T initial) => ValueNotifier<T>(initial);
 T useMemoized<T>(T Function() factory) => factory();
 ''');
+    final webPlugins = newPackage('flutter_web_plugins');
+    webPlugins.addFile(
+      'lib/src/navigation/url_strategy.dart',
+      'void usePathUrlStrategy() {}',
+    );
+    webPlugins.addFile(
+      'lib/url_strategy.dart',
+      "export 'src/navigation/url_strategy.dart';",
+    );
     super.setUp();
   }
 
@@ -232,6 +241,17 @@ int userCount() => 0;
 void setup() {
   for (var i = 0; i < 3; i++) {
     userCount();
+  }
+}
+''');
+  }
+
+  Future<void> test_flutterWebUrlStrategyIsNotAHook() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter_web_plugins/url_strategy.dart';
+void main() {
+  for (var i = 0; i < 2; i++) {
+    usePathUrlStrategy();
   }
 }
 ''');

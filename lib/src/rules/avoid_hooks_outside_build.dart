@@ -60,7 +60,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   void _check(InvocationExpression node) {
     final name = node.beginToken.lexeme;
-    if (!hookNameRegex.hasMatch(name)) return;
+    if (!isHookInvocation(node)) return;
 
     // A qualified call like `controller.useSomething()` is not a hook.
     if (node case MethodInvocation(

@@ -32,6 +32,15 @@ class HookBuilder extends Widget {
   HookBuilder({required Widget Function(BuildContext) builder});
 }
 ''');
+    final webPlugins = newPackage('flutter_web_plugins');
+    webPlugins.addFile(
+      'lib/src/navigation/url_strategy.dart',
+      'void usePathUrlStrategy() {}',
+    );
+    webPlugins.addFile(
+      'lib/url_strategy.dart',
+      "export 'src/navigation/url_strategy.dart';",
+    );
     super.setUp();
   }
 
@@ -172,6 +181,15 @@ Widget myWidget() {
     final value = useState(0);
     return Widget();
   });
+}
+''');
+  }
+
+  Future<void> test_flutterWebUrlStrategyIsNotAHook() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter_web_plugins/url_strategy.dart';
+void configureBrowserNavigation() {
+  usePathUrlStrategy();
 }
 ''');
   }

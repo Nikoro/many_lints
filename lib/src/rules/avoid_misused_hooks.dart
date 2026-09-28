@@ -61,7 +61,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   void _check(InvocationExpression node) {
     final name = node.beginToken.lexeme;
-    if (!hookNameRegex.hasMatch(name)) return;
+    if (!isHookInvocation(node)) return;
 
     // `ignored_names` exempts specific hooks. A project's own `useX()` helper
     // that merely *looks* like a hook — matching the naming convention

@@ -8,6 +8,28 @@ import './type_checker.dart';
 /// an uppercase letter or digit (to avoid matching words like "user").
 final hookNameRegex = RegExp('^_?use[0-9A-Z]');
 
+bool isHookInvocation(AstNode node) {
+  if (!hookNameRegex.hasMatch(node.beginToken.lexeme)) return false;
+
+  final libraryUri = switch (node) {
+    MethodInvocation(:final methodName) => methodName.element?.library?.uri,
+    FunctionExpressionInvocation(function: Identifier(:final element)) =>
+      element?.library?.uri,
+    InstanceCreationExpression(:final constructorName) =>
+      constructorName.element?.library.uri,
+    _ => null,
+  };
+  if (libraryUri?.scheme == 'dart') return false;
+  if (libraryUri?.scheme == 'package' &&
+      const {
+        'flutter',
+        'flutter_web_plugins',
+      }.contains(libraryUri?.pathSegments.firstOrNull)) {
+    return false;
+  }
+  return true;
+}
+
 /// Collects hook invocations from AST nodes.
 class _HookExpressionsGatherer extends GeneralizingAstVisitor<void> {
   final List<InvocationExpression> _hookExpressions = [];
@@ -17,9 +39,6 @@ class _HookExpressionsGatherer extends GeneralizingAstVisitor<void> {
     node.accept(visitor);
     return visitor._hookExpressions;
   }
-
-  // use + upper case letter to avoid cases like "user"
-  static final _isHookRegex = hookNameRegex;
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
@@ -34,7 +53,7 @@ class _HookExpressionsGatherer extends GeneralizingAstVisitor<void> {
 
   @override
   void visitInvocationExpression(InvocationExpression node) {
-    if (_isHookRegex.hasMatch(node.beginToken.lexeme)) {
+    if (isHookInvocation(node)) {
       _hookExpressions.add(node);
     }
 

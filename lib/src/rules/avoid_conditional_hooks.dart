@@ -89,11 +89,8 @@ class _ConditionalHookFinder extends RecursiveAstVisitor<void> {
 
   _ConditionalHookFinder(this.rule);
 
-  static final _isHookRegex = hookNameRegex;
-
   void _checkHookCall(AstNode node) {
-    if (_conditionalDepth > 0 &&
-        _isHookRegex.hasMatch(node.beginToken.lexeme)) {
+    if (_conditionalDepth > 0 && isHookInvocation(node)) {
       rule.reportAtNode(node);
     }
   }
