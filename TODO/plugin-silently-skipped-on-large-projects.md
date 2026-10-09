@@ -1,7 +1,7 @@
-# Dart 3.13.1–3.13.2 `dart analyze` can exit before plugin diagnostics arrive
+# Dart 3.13.1–3.13.5 `dart analyze` can exit before plugin diagnostics arrive
 
 **Reported:** 2026-08-26 (found while migrating a Flutter app's bash quality gates to lints)
-**Status:** CLOSED — fixed on Dart SDK `main`; Dart 3.13.1 and 3.13.2 remain affected
+**Status:** CLOSED — fixed on Dart SDK `main`; Dart 3.13.1 through 3.13.5 remain affected
 **Affects:** every rule — an upstream `dart analyze` completion race, not this package
 
 ## Final diagnosis 2026-08-27 — one race explains every observation
@@ -84,6 +84,17 @@ reported the same 702 diagnostics, including eight `prefer_type_over_var`
 canaries. That is a useful smoke test, but it does not close a timing race. The
 source still has the faulty completion semantics, so 3.13.2 must be treated as
 affected even when repeated local runs happen to pass.
+
+### Dart 3.13.5 verification
+
+Re-checked 2026-10-09. Flutter 3.47.7 ships Dart 3.13.5 revision
+`04bcd1036cdc799ac6564988f159ee454d42c822`. GitHub's compare of `f0c0ab967e`
+against that revision reports `diverged`: the 3.13 stable branch does not
+contain the fix. Its `analyze.dart` still awaits `server.analysisFinished` and
+then calls `server.shutdown()`, and `dartdev_aot.dart.snapshot` contains no
+`workspaceAnalysisComplete`. On Birthminder, five `dart analyze lib` runs and
+six bare `dart analyze` runs with a canary all reported it, which again is the
+race won, not the race gone. The first fixed stable will be a 3.14 release.
 
 ### Workaround for Dart 3.13.1 and 3.13.2
 

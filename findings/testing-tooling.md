@@ -70,10 +70,10 @@ Filter by `state` before comparing: only `stable` and `deprecated` rules can dis
 
 ---
 
-### [GOTCHA] [CRITICAL] Dart 3.13.1–3.13.2 can exit before plugin diagnostics arrive
+### [GOTCHA] [CRITICAL] Dart 3.13.1–3.13.5 can exit before plugin diagnostics arrive
 **Area:** verifying any rule against a real project; CI gates
 **Tags:** `#gotcha` `#tooling` `#testing`
-**Verified:** 2026-08-27 (Dart 3.13.1 revision `852b3e3608`; Dart 3.13.2 revision `60a57cd42d`)
+**Verified:** 2026-08-27 (Dart 3.13.1 revision `852b3e3608`; Dart 3.13.2 revision `60a57cd42d`; re-checked 2026-10-09 on Dart 3.13.5 revision `04bcd1036c`, Flutter 3.47.7)
 
 **Symptom:** the same `dart analyze --fatal-infos` alternates between reporting 1002 findings and `No issues found!` on an unchanged project. Exit code is 0 in the silent case. The only tell is wall-clock: ~113s when the plugin runs, ~18s when it does not.
 
@@ -81,11 +81,11 @@ Filter by `state` before comparing: only `stable` and `deprecated` rules can dis
 
 A warm cache and a large real project make the race easier to lose: the first makes analyzer work faster, while the second makes plugin work slower. That produced two convincing but false diagnoses during investigation — “directory cache hits always fail” and “explicit argument lists fail above ~800 files.” A 4002-file synthetic fixture disproved both. File count and invocation shape affect timing, not correctness.
 
-**Upstream fix:** Dart SDK commit `f0c0ab967e` switches `dart analyze` to LSP `workspaceAnalysisComplete()`. That handler waits for context rebuilds, analyzer-driver idle, plugin initialization, and finally `plugin.status == false`. Integration tests cover a plugin diagnostic even when the completion request is sent immediately after initialization. The commit is on SDK `main`, but is not part of Dart 3.13.1 or 3.13.2; verify the first released fixed version before documenting one. Four consecutive analyses on 3.13.2 happened to return the same 702 diagnostics, but the exact shipped source still contains the race, so successful repetitions are only a smoke test.
+**Upstream fix:** Dart SDK commit `f0c0ab967e` switches `dart analyze` to LSP `workspaceAnalysisComplete()`. That handler waits for context rebuilds, analyzer-driver idle, plugin initialization, and finally `plugin.status == false`. Integration tests cover a plugin diagnostic even when the completion request is sent immediately after initialization. The commit is on SDK `main`, but is not part of Dart 3.13.1 through 3.13.5 (the 3.13 stable branch diverged from `main` before it); verify the first released fixed version before documenting one. Four consecutive analyses on 3.13.2 happened to return the same 702 diagnostics, but the exact shipped source still contains the race, so successful repetitions are only a smoke test.
 
 **Consequences for this repo's workflow:**
 
-1. On Dart 3.13.1 or 3.13.2, batch explicit files well below the observed slow-project cliff: `git ls-files -z '*.dart' | xargs -0 -n 400 dart analyze --fatal-infos`. Batching reduces the race window but is not a correctness guarantee.
+1. On Dart 3.13.1 through 3.13.5, batch explicit files well below the observed slow-project cliff: `git ls-files -z '*.dart' | xargs -0 -n 400 dart analyze --fatal-infos`. Batching reduces the race window but is not a correctness guarantee.
 2. **Never trust a clean run without a canary.** Keep a file that must produce a plugin diagnostic, prove it fires alone, include it in every batch, and fail that batch when it is absent. Checking the canary once does not protect later invocations. This is the only deterministic consumer-side guard on an affected SDK.
 3. **Do not diagnose from file count, cache state, or command shape.** Re-check with the canary and inspect the SDK version. The same race can make any of those correlations look absolute on one project and disappear on another.
 4. Once using an SDK that contains `f0c0ab967e`, validate both a deliberately slow plugin and an immediate completion request before removing the canary.
