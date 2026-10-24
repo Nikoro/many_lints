@@ -130,8 +130,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     final contextType = _getContextType(node);
     if (contextType == null) return;
 
-    // Verify the context type matches the constructor's class
-    if (!_isTypeCompatible(contextType, typeElement)) return;
+    // Verify the shorthand would resolve against the context type
+    final name = node.constructorName.name?.name ?? 'new';
+    if (!_shorthandResolves(contextType, typeElement, name)) return;
 
     // Report the lint
     rule.reportAtNode(node.constructorName);
@@ -163,8 +164,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     final contextType = _getContextType(node);
     if (contextType == null) return;
 
-    // Verify the context type matches the constructor's class
-    if (!_isTypeCompatible(contextType, typeElement)) return;
+    // Verify the shorthand would resolve against the context type
+    final name = node.methodName.name;
+    if (!_shorthandResolves(contextType, typeElement, name)) return;
 
     // Report the lint - report at the target (class name) and method name
     // We need to cover both parts: "EdgeInsets" + "." + "symmetric"
@@ -197,8 +199,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Gets the expected type from the context where the expression appears.
   ///
-  /// This uses a pragmatic approach: for arguments, it returns the static type
-  /// of the expression itself rather than trying to infer from parent context.
+  /// For an argument this is the parameter's declared type, which is what a
+  /// dot shorthand resolves against; the expression's own type would claim a
+  /// shorthand exists when the parameter is a supertype that lacks it.
   DartType? _getContextType(Expression node) {
     AstNode? current = node.parent;
 
@@ -206,9 +209,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       switch (current) {
         case NamedArgument():
         case ArgumentList():
-          // For arguments, use the static type of the expression
-          // This is a pragmatic approach that works for most cases
-          return node.staticType;
+          final argument = _outermost(node);
+          return switch (argument.parent) {
+            final NamedArgument named => named.correspondingParameter?.type,
+            _ => argument.correspondingParameter?.type,
+          };
         case ListLiteral():
         case SetOrMapLiteral():
           return _getCollectionElementType(current);
@@ -240,9 +245,39 @@ class _Visitor extends SimpleAstVisitor<void> {
     return typeArgs.first;
   }
 
-  /// Checks if the context type is compatible with the constructor's class.
-  bool _isTypeCompatible(DartType contextType, InterfaceElement classElement) {
+  /// The argument expression itself, past any wrapping parentheses.
+  Expression _outermost(Expression node) {
+    var current = node;
+    for (
+      var parent = current.parent;
+      parent is ParenthesizedExpression;
+      parent = parent.parent
+    ) {
+      current = parent;
+    }
+    return current;
+  }
+
+  /// Whether `.name(...)` would resolve against [contextType]: the same class,
+  /// or a supertype that declares a usable constructor or a static method of
+  /// that name (Flutter's `EdgeInsetsGeometry.all`, but not an abstract
+  /// `ShapeBorder` for `Border()`).
+  bool _shorthandResolves(
+    DartType contextType,
+    InterfaceElement classElement,
+    String name,
+  ) {
     if (contextType is! InterfaceType) return false;
-    return contextType.element == classElement;
+    final context = contextType.element;
+    if (context == classElement) return true;
+    final isAbstract = context is ClassElement && context.isAbstract;
+    final constructorFound = context.constructors.any(
+      (constructor) =>
+          (constructor.name ?? 'new') == name &&
+          (!isAbstract || constructor.isFactory),
+    );
+    if (constructorFound) return true;
+    final method = context.getMethod(name);
+    return method != null && method.isStatic;
   }
 }

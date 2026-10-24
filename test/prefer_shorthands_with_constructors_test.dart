@@ -16,7 +16,7 @@ class PreferShorthandsWithConstructorsTest extends ManyLintsRuleTest {
     newPackage('flutter').addFile('lib/widgets.dart', r'''
 class Widget {}
 
-class EdgeInsets {
+class EdgeInsets extends EdgeInsetsGeometry {
   const EdgeInsets.all(double value);
   const EdgeInsets.symmetric({double vertical = 0, double horizontal = 0});
   const EdgeInsets.only({double left = 0, double top = 0, double right = 0, double bottom = 0});
@@ -34,8 +34,22 @@ class Radius {
   const Radius.circular(double radius);
 }
 
-class Border {
+abstract class ShapeBorder {
+  const ShapeBorder();
+}
+
+class Border extends ShapeBorder {
+  const Border();
   const Border.all({required Color color, double width = 1.0});
+}
+
+abstract class EdgeInsetsGeometry {
+  const EdgeInsetsGeometry();
+  const factory EdgeInsetsGeometry.all(double value) = EdgeInsets.all;
+}
+
+class ExpansionTile extends Widget {
+  ExpansionTile({ShapeBorder? shape, EdgeInsetsGeometry? tilePadding});
 }
 
 class Color {
@@ -199,8 +213,8 @@ void f({required MyClass obj}) {
   // Note: This lint cannot detect dynamic parameter types at compile time
   // The shorthand would still work, but we cannot verify the type
   Future<void> test_typeNotInferable_dynamicParameter() async {
-    await assertDiagnostics(
-      r'''
+    // A dynamic parameter gives `.all(8)` nothing to resolve against
+    await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
 void f(dynamic padding) {}
@@ -208,9 +222,7 @@ void f(dynamic padding) {}
 void caller() {
   f(EdgeInsets.all(8));
 }
-''',
-      [lint(88, 14)],
-    );
+''');
   }
 
   Future<void> test_inListLiteral() async {
@@ -383,6 +395,31 @@ void f() {
 }
 ''',
       [lint(100, 12)],
+    );
+  }
+
+  Future<void> test_supertypeParameterWithoutTheConstructor_noLint() async {
+    // `.new()` would resolve against ShapeBorder, which is abstract: no shorthand exists
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+Widget f() {
+  return ExpansionTile(shape: const Border());
+}
+''');
+  }
+
+  Future<void> test_supertypeParameterWithTheConstructor_lints() async {
+    // `.all(8)` resolves against EdgeInsetsGeometry, which declares it
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+Widget f() {
+  return ExpansionTile(tilePadding: EdgeInsets.all(8));
+}
+''',
+      [lint(89, 14)],
     );
   }
 }
