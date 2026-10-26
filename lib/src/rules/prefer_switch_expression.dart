@@ -2,6 +2,7 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
@@ -11,6 +12,10 @@ import '../many_lints_rule.dart';
 /// In cases where all branches of a switch statement have a return statement or
 /// assign to the same variable, using a switch expression can make the code more
 /// compact and easier to understand.
+///
+/// Only reported when the switch is exhaustive: it has a `default` or `_` case,
+/// or switches over an enum, a sealed type, or a `bool`. A switch that can fall
+/// through to the code after it has no expression form.
 ///
 /// **BAD:**
 /// ```dart
@@ -74,6 +79,10 @@ class _Visitor extends SimpleAstVisitor<void> {
     // Check if all cases can be converted to expression form
     final canConvert = _canConvertToExpression(members);
     if (!canConvert) return;
+
+    // A switch that can fall through to the following code cannot become an
+    // expression.
+    if (!isExhaustiveSwitch(node) && trailingReturnOf(node) == null) return;
 
     // Report the lint at the switch keyword
     rule.reportAtToken(node.switchKeyword);
@@ -155,4 +164,57 @@ class _Visitor extends SimpleAstVisitor<void> {
     // merge its pattern with. The quick fix bails on the same shape.
     return !pendingFallthrough;
   }
+}
+
+/// Whether every input reaches a case of [node].
+///
+/// Dart 3 already requires a switch statement over an enum, a sealed type, or
+/// a `bool` to be exhaustive, so those need no scan of the cases. Anything
+/// else is exhaustive only through a catch-all.
+bool isExhaustiveSwitch(SwitchStatement node) {
+  final hasCatchAll = node.members.any(
+    (member) => switch (member) {
+      SwitchDefault() => true,
+      SwitchPatternCase(:final guardedPattern) =>
+        guardedPattern.pattern is WildcardPattern &&
+            guardedPattern.whenClause == null,
+      _ => false,
+    },
+  );
+  if (hasCatchAll) return true;
+
+  final type = node.expression.staticType;
+  if (type == null) return false;
+  if (type.isDartCoreBool) return true;
+
+  return switch (type.element) {
+    EnumElement() => true,
+    ClassElement(:final isSealed) => isSealed,
+    _ => false,
+  };
+}
+
+/// The final `return value;` of the block holding [node], when it directly
+/// follows [node] and [node] is return-based.
+///
+/// That statement is what a non-exhaustive return-based switch falls through
+/// to, so it can become the switch expression's `_` case. Anything else
+/// between the switch and the end of the block is code the expression could
+/// not reproduce.
+ReturnStatement? trailingReturnOf(SwitchStatement node) {
+  final isReturnBased = node.members
+      .expand((member) => member.statements)
+      .every((statement) => statement is ReturnStatement);
+  if (!isReturnBased) return null;
+
+  final parent = node.parent;
+  if (parent is! Block) return null;
+
+  final statements = parent.statements;
+  if (statements.length < 2 || statements[statements.length - 2] != node) {
+    return null;
+  }
+
+  final last = statements.last;
+  return last is ReturnStatement && last.expression != null ? last : null;
 }

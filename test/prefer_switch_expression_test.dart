@@ -16,6 +16,24 @@ class PreferSwitchExpressionTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
+  Future<void> test_noTrigger_nonExhaustiveFallsThrough() async {
+    await assertNoDiagnostics(r'''
+String iconFor(Map<String, dynamic> item) {
+  switch (item['kind']) {
+    case 'first':
+      return 'one';
+    case 'second':
+      return 'two';
+  }
+
+  if (item.isEmpty) {
+    return 'three';
+  }
+  return 'other';
+}
+''');
+  }
+
   Future<void> test_returnBased_simple() async {
     await assertDiagnostics(
       r'''
@@ -31,6 +49,21 @@ String getType(int value) {
 ''',
       [lint(30, 6)],
     );
+  }
+
+  Future<void> test_noTrigger_nonExhaustiveAssignment() async {
+    await assertNoDiagnostics(r'''
+String getType(int value) {
+  String result = '';
+  switch (value) {
+    case 1:
+      result = 'first';
+    case 2:
+      result = 'second';
+  }
+  return result;
+}
+''');
   }
 
   Future<void> test_returnBased_withDefault() async {
@@ -74,13 +107,13 @@ String getName(Color color) {
   Future<void> test_assignmentBased_simple() async {
     await assertDiagnostics(
       r'''
-String getType(int value) {
+String getType(bool flag) {
   String result = '';
-  switch (value) {
-    case 1:
-      result = 'first';
-    case 2:
-      result = 'second';
+  switch (flag) {
+    case true:
+      result = 'yes';
+    case false:
+      result = 'no';
   }
   return result;
 }
@@ -204,8 +237,9 @@ int calculate(int value) {
       return value + 10;
     case 3:
       return value - 5;
+    default:
+      return 0;
   }
-  return 0;
 }
 ''',
       [lint(29, 6)],
@@ -224,6 +258,8 @@ int calculate(int value) {
       result = value + 10;
     case 3:
       result = value - 5;
+    default:
+      result = 0;
   }
   return result;
 }

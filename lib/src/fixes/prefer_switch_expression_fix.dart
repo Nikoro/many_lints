@@ -5,6 +5,8 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
+import '../rules/prefer_switch_expression.dart';
+
 /// Fix that converts a switch statement to a switch expression.
 ///
 /// Transforms:
@@ -52,8 +54,33 @@ class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
     final replacement = _buildSwitchExpression(switchNode);
     if (replacement == null) return;
 
+    // A non-exhaustive switch followed by the block's final `return` folds
+    // that return into the expression as its `_` case.
+    final trailing = isExhaustiveSwitch(switchNode)
+        ? null
+        : trailingReturnOf(switchNode);
+    if (!isExhaustiveSwitch(switchNode) && trailing == null) return;
+
+    // Replacing across the gap would drop a comment sitting in it.
+    if (trailing != null && trailing.beginToken.precedingComments != null) {
+      return;
+    }
+
     await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(range.node(switchNode), replacement);
+      if (trailing == null) {
+        builder.addSimpleReplacement(range.node(switchNode), replacement);
+        return;
+      }
+
+      final fallback = trailing.expression!.toSource();
+      final withFallback = replacement.replaceFirst(
+        RegExp(r'\n\};$'),
+        '\n  _ => $fallback,\n};',
+      );
+      builder.addSimpleReplacement(
+        range.startEnd(switchNode, trailing),
+        withFallback,
+      );
     });
   }
 

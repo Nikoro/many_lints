@@ -34,6 +34,12 @@
   the results, so the tasks after a failure still run. The lightbulb now reads
   "Convert to 'sequenceListSeq' (runs every task after a failure)" and ranks
   below the exact conversions, like the `chainFirst` assist.
+- `prefer_switch_expression` no longer reports a switch that is not exhaustive.
+  A switch with no `default` or `_` case over a type other than an enum, a
+  sealed type, or a `bool` falls through to the code after it, and a switch
+  expression must cover every input, so the suggestion could not be applied.
+  A return-based switch directly followed by the final `return` of its block
+  is still reported, and the quick fix turns that return into the `_` case.
 
 ### Changed
 

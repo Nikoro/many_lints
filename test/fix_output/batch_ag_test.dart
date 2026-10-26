@@ -49,7 +49,7 @@ Widget f() {
   });
 
   group('prefer_switch_expression', () {
-    test('converts a return-based switch to a switch expression', () async {
+    test('folds the trailing return into the default case', () async {
       final fixed = await harness.applyFix(r'''
 String getType(int value) {
   switch (value) {
@@ -62,7 +62,65 @@ String getType(int value) {
 }
 ''', 'prefer_switch_expression');
 
+      expect(fixed, '''
+String getType(int value) {
+  return switch (value) {
+  1 => 'first',
+  2 => 'second',
+  _ => 'default',
+};
+}
+''');
+    });
+
+    test('converts an exhaustive return-based switch', () async {
+      final fixed = await harness.applyFix(r'''
+String getType(int value) {
+  switch (value) {
+    case 1:
+      return 'first';
+    default:
+      return 'other';
+  }
+}
+''', 'prefer_switch_expression');
+
       expect(fixed, contains('return switch (value) {'));
+      expect(fixed, contains("1 => 'first',"));
+      expect(fixed, contains("_ => 'other',"));
+      expect(fixed, isNot(contains('default')));
+    });
+
+    test('converts an exhaustive assignment-based switch', () async {
+      final fixed = await harness.applyFix(r'''
+String getType(bool flag) {
+  String result;
+  switch (flag) {
+    case true:
+      result = 'yes';
+    case false:
+      result = 'no';
+  }
+  return result;
+}
+''', 'prefer_switch_expression');
+
+      expect(fixed, contains('result = switch (flag) {'));
+      expect(fixed, contains("true => 'yes',"));
+      expect(fixed, contains("false => 'no',"));
+    });
+
+    test('keeps a comment between the switch and the return', () async {
+      await harness.expectNoFix(r'''
+String getType(int value) {
+  switch (value) {
+    case 1:
+      return 'first';
+  }
+  // Fallback when nothing matched.
+  return 'default';
+}
+''', 'prefer_switch_expression');
     });
   });
 
