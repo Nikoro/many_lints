@@ -1,6 +1,7 @@
-import 'many_lints_rule_test_base.dart';
 import 'package:many_lints/src/rules/prefer_correct_edge_insets_constructor.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
+
+import 'many_lints_rule_test_base.dart';
 
 void main() {
   defineReflectiveSuite(
@@ -425,5 +426,34 @@ final p = EdgeInsetsHelper.all(0);
 ''',
       [lint(50, 23)],
     );
+  }
+
+  // === dot shorthand tests ===
+
+  Future<void> test_shorthand_all_zero() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/painting.dart';
+final EdgeInsets p = .all(0);
+''',
+      [lint(61, 7)],
+    );
+  }
+
+  Future<void> test_shorthand_only_allEqual() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/painting.dart';
+final EdgeInsets p = .only(left: 8, top: 8, right: 8, bottom: 8);
+''',
+      [lint(61, 43)],
+    );
+  }
+
+  Future<void> test_shorthand_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/painting.dart';
+final EdgeInsets p = .all(8);
+''');
   }
 }

@@ -39,6 +39,7 @@ class PreferCorrectEdgeInsetsConstructor extends ManyLintsRule {
     final visitor = _Visitor(this);
     registry.addInstanceCreationExpression(this, visitor);
     registry.addMethodInvocation(this, visitor);
+    registry.addDotShorthandConstructorInvocation(this, visitor);
   }
 }
 
@@ -72,6 +73,18 @@ class _Visitor extends SimpleAstVisitor<void> {
     _check(node, constructorName, node.argumentList);
   }
 
+  @override
+  void visitDotShorthandConstructorInvocation(
+    DotShorthandConstructorInvocation node,
+  ) {
+    final staticType = node.staticType;
+    if (staticType == null || !edgeInsetsChecker.isExactlyType(staticType)) {
+      return;
+    }
+
+    _check(node, node.constructorName.name, node.argumentList);
+  }
+
   void _check(
     Expression node,
     String? constructorName,
@@ -103,13 +116,13 @@ class _Visitor extends SimpleAstVisitor<void> {
         _isZeroSource(t) &&
         _isZeroSource(r) &&
         _isZeroSource(b)) {
-      rule.reportAtNode(node, arguments: ['EdgeInsets.zero']);
+      _report(node, '.zero');
       return;
     }
 
     // All equal → EdgeInsets.all(v)
     if (l == t && t == r && r == b) {
-      rule.reportAtNode(node, arguments: ['EdgeInsets.all($l)']);
+      _report(node, '.all($l)');
       return;
     }
 
@@ -118,20 +131,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       final horizontal = !_isZeroSource(l);
       final vertical = !_isZeroSource(t);
       if (horizontal && vertical) {
-        rule.reportAtNode(
-          node,
-          arguments: ['EdgeInsets.symmetric(horizontal: $l, vertical: $t)'],
-        );
+        _report(node, '.symmetric(horizontal: $l, vertical: $t)');
       } else if (horizontal) {
-        rule.reportAtNode(
-          node,
-          arguments: ['EdgeInsets.symmetric(horizontal: $l)'],
-        );
+        _report(node, '.symmetric(horizontal: $l)');
       } else if (vertical) {
-        rule.reportAtNode(
-          node,
-          arguments: ['EdgeInsets.symmetric(vertical: $t)'],
-        );
+        _report(node, '.symmetric(vertical: $t)');
       }
       return;
     }
@@ -154,10 +158,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (hasTop) parts.add('top: $t');
       if (hasRight) parts.add('right: $r');
       if (hasBottom) parts.add('bottom: $b');
-      rule.reportAtNode(
-        node,
-        arguments: ['EdgeInsets.only(${parts.join(', ')})'],
-      );
+      _report(node, '.only(${parts.join(', ')})');
     }
   }
 
@@ -192,13 +193,13 @@ class _Visitor extends SimpleAstVisitor<void> {
         _isZeroSource(t) &&
         _isZeroSource(r) &&
         _isZeroSource(b)) {
-      rule.reportAtNode(node, arguments: ['EdgeInsets.zero']);
+      _report(node, '.zero');
       return;
     }
 
     // All equal → EdgeInsets.all(v)
     if (l == t && t == r && r == b) {
-      rule.reportAtNode(node, arguments: ['EdgeInsets.all($l)']);
+      _report(node, '.all($l)');
       return;
     }
 
@@ -207,20 +208,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       final horizontal = !_isZeroSource(l);
       final vertical = !_isZeroSource(t);
       if (horizontal && vertical) {
-        rule.reportAtNode(
-          node,
-          arguments: ['EdgeInsets.symmetric(horizontal: $l, vertical: $t)'],
-        );
+        _report(node, '.symmetric(horizontal: $l, vertical: $t)');
       } else if (horizontal) {
-        rule.reportAtNode(
-          node,
-          arguments: ['EdgeInsets.symmetric(horizontal: $l)'],
-        );
+        _report(node, '.symmetric(horizontal: $l)');
       } else if (vertical) {
-        rule.reportAtNode(
-          node,
-          arguments: ['EdgeInsets.symmetric(vertical: $t)'],
-        );
+        _report(node, '.symmetric(vertical: $t)');
       }
     }
   }
@@ -245,13 +237,13 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     // Both zero → EdgeInsets.zero
     if (_isZeroSource(h) && _isZeroSource(v)) {
-      rule.reportAtNode(node, arguments: ['EdgeInsets.zero']);
+      _report(node, '.zero');
       return;
     }
 
     // Both equal → EdgeInsets.all(v)
     if (h == v) {
-      rule.reportAtNode(node, arguments: ['EdgeInsets.all($h)']);
+      _report(node, '.all($h)');
     }
   }
 
@@ -261,8 +253,21 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final value = args.first.toSource();
     if (_isZeroSource(value)) {
-      rule.reportAtNode(node, arguments: ['EdgeInsets.zero']);
+      _report(node, '.zero');
     }
+  }
+
+  /// Reports [node].
+  ///
+  /// [argument] should be a dot-shorthand. `EdgeInsets` automatically gets
+  /// prepended if the original was not a dot-shorthand.
+  void _report(Expression node, String argument) {
+    assert(argument.startsWith('.'), 'Argument should be a dot shorthand.');
+    final isShorthand = node is DotShorthandConstructorInvocation;
+    rule.reportAtNode(
+      node,
+      arguments: [isShorthand ? argument : 'EdgeInsets$argument'],
+    );
   }
 
   static bool _isZeroSource(String source) {

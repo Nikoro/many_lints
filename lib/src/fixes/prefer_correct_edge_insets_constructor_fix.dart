@@ -45,12 +45,26 @@ class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {
       }
       constructorName = targetNode.methodName.name;
       argumentList = targetNode.argumentList;
+    } else if (targetNode is DotShorthandConstructorInvocation) {
+      final staticType = targetNode.staticType;
+      if (staticType == null || !edgeInsetsChecker.isExactlyType(staticType)) {
+        return;
+      }
+      constructorName = targetNode.constructorName.name;
+      argumentList = targetNode.argumentList;
     } else {
       return;
     }
 
-    final replacement = _computeReplacement(constructorName, argumentList);
-    if (replacement == null) return;
+    final dotShorthandReplacement = _computeReplacement(
+      constructorName,
+      argumentList,
+    );
+    if (dotShorthandReplacement == null) return;
+
+    final replacement = targetNode is DotShorthandConstructorInvocation
+        ? dotShorthandReplacement
+        : 'EdgeInsets$dotShorthandReplacement';
 
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(range.node(targetNode), replacement);
@@ -80,22 +94,22 @@ class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {
     final b = args[3].toSource();
 
     if (_isZero(l) && _isZero(t) && _isZero(r) && _isZero(b)) {
-      return 'EdgeInsets.zero';
+      return '.zero';
     }
 
     if (l == t && t == r && r == b) {
-      return 'EdgeInsets.all($l)';
+      return '.all($l)';
     }
 
     if (l == r && t == b) {
       final horizontal = !_isZero(l);
       final vertical = !_isZero(t);
       if (horizontal && vertical) {
-        return 'EdgeInsets.symmetric(horizontal: $l, vertical: $t)';
+        return '.symmetric(horizontal: $l, vertical: $t)';
       } else if (horizontal) {
-        return 'EdgeInsets.symmetric(horizontal: $l)';
+        return '.symmetric(horizontal: $l)';
       } else if (vertical) {
-        return 'EdgeInsets.symmetric(vertical: $t)';
+        return '.symmetric(vertical: $t)';
       }
     }
 
@@ -116,7 +130,7 @@ class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {
       if (hasTop) parts.add('top: $t');
       if (hasRight) parts.add('right: $r');
       if (hasBottom) parts.add('bottom: $b');
-      return 'EdgeInsets.only(${parts.join(', ')})';
+      return '.only(${parts.join(', ')})';
     }
 
     return null;
@@ -149,22 +163,22 @@ class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {
     final b = bottom ?? '0';
 
     if (_isZero(l) && _isZero(t) && _isZero(r) && _isZero(b)) {
-      return 'EdgeInsets.zero';
+      return '.zero';
     }
 
     if (l == t && t == r && r == b) {
-      return 'EdgeInsets.all($l)';
+      return '.all($l)';
     }
 
     if (l == r && t == b) {
       final horizontal = !_isZero(l);
       final vertical = !_isZero(t);
       if (horizontal && vertical) {
-        return 'EdgeInsets.symmetric(horizontal: $l, vertical: $t)';
+        return '.symmetric(horizontal: $l, vertical: $t)';
       } else if (horizontal) {
-        return 'EdgeInsets.symmetric(horizontal: $l)';
+        return '.symmetric(horizontal: $l)';
       } else if (vertical) {
-        return 'EdgeInsets.symmetric(vertical: $t)';
+        return '.symmetric(vertical: $t)';
       }
     }
 
@@ -190,11 +204,11 @@ class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {
     final v = vertical ?? '0';
 
     if (_isZero(h) && _isZero(v)) {
-      return 'EdgeInsets.zero';
+      return '.zero';
     }
 
     if (h == v) {
-      return 'EdgeInsets.all($h)';
+      return '.all($h)';
     }
 
     return null;
@@ -206,7 +220,7 @@ class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {
 
     final value = args.first.toSource();
     if (_isZero(value)) {
-      return 'EdgeInsets.zero';
+      return '.zero';
     }
 
     return null;
