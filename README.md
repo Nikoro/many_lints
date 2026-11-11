@@ -34,7 +34,7 @@ Add `many_lints` to the **top-level** `plugins` section in your `analysis_option
 
 ```yaml
 plugins:
-  many_lints: ^1.2.0
+  many_lints: ^1.3.0
 ```
 
 The analysis server will automatically download and resolve the plugin from [pub.dev](https://pub.dev/packages/many_lints). There is no need to add it to your `pubspec.yaml`.
@@ -116,7 +116,7 @@ The recommended location is the top-level `many_lints:` section in
 ```yaml
 # analysis_options.yaml
 plugins:
-  many_lints: ^1.2.0
+  many_lints: ^1.3.0
 
 many_lints:
   preset: recommended
@@ -170,7 +170,7 @@ configuration:
 ```yaml
 plugins:
   many_lints:
-    version: ^1.2.0
+    version: ^1.3.0
     diagnostics:
       avoid_equal_expressions: error   # error | warning | info
 ```

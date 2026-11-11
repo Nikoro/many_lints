@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.3.0] - 2026-11-11
 
 ### Added
 
@@ -17,6 +17,15 @@
   through any import or prefix, without also banning every member named
   `systemClock`. Library spellings are matched by `deny:` only, so existing
   `deny_pattern:` entries match exactly what they did before.
+
+- `prefer_module_barrel_imports` and `require_module_barrel` (architecture, in
+  no preset). A module is a directory directly below a configured
+  `module_roots` entry (default `[lib]`), and its public entry point is the
+  file named after that directory, such as `lib/users/users.dart`.
+  `prefer_module_barrel_imports` reports a relative or package import into
+  another module that bypasses that file; `package_entry_points` names the
+  entry point other packages must use. `require_module_barrel` reports a
+  module that has no entry point at all.
 
 - `avoid_chain_first_swallowing_failure` (fpdart, `pedantic` preset) reports
   `chainFirst` on `Either`, `TaskEither` and `IOEither`. fpdart's `chainFirst`
@@ -40,6 +49,21 @@
   comment reference (`[DateTime.now]`) is no longer reported, and a bare-name
   entry no longer matches a local function, local variable or parameter that
   shares the name.
+
+- `prefer_theme_mode_getters` and `use_sliver_prefix` recognise the types of
+  `package:material_ui`. Flutter 3.50 deprecates
+  `package:flutter/material.dart` in favour of that package, which declares
+  its own `ThemeMode` and `SliverAppBar`, so both rules went silent in a
+  migrated project.
+- `prefer_shorthands_with_constructors` resolves the shorthand against the
+  parameter's declared type instead of the argument's own type. It suggested
+  `.new()` for `shape: const Border()`, where the parameter is the abstract
+  `ShapeBorder` and the shorthand does not compile. A `dynamic` parameter is
+  no longer reported.
+- The "Expand 'tryCatch' into 'try'/'catch'" assist is no
+  longer offered from inside an unrelated closure nested in its arguments.
+- The "Convert to collection-for" assist writes `for (` with a space, as
+  `dart format` does.
 
 - Hook rules exclude resolved Dart and Flutter SDK functions, including
   `usePathUrlStrategy()` from `flutter_web_plugins`, from hook-name detection.
@@ -73,6 +97,26 @@
   `use_primary_constructors` without the empty `()` it asks for. The fix moves
   an initializer list and a body into a `this` block, carries field comments,
   doc comments and annotations into the header, and never deletes a comment.
+
+- Requires `analyzer` ^14.5.0, `analyzer_plugin` ^0.14.18 and
+  `analysis_server_plugin` ^0.3.24 (was ^14.1.0, ^0.14.14 and ^0.3.20), the
+  versions matching the analyzer in Dart 3.14.0. `analysis_server_plugin`
+  0.3.23 and later run faster when every enabled rule only needs the parsed
+  AST. The minimum Dart SDK stays 3.11; on Dart 3.13 and later the analysis
+  server can resolve up to `analyzer` 14.7.0.
+
+### Notes
+
+- Dart 3.14.0 (Flutter 3.50.0) fixes the `dart analyze` race in which the
+  command exited before plugin diagnostics arrived and printed
+  `No issues found!` on large projects. It now waits for plugin analysis to
+  finish (Dart SDK commit
+  [`f0c0ab967e`](https://github.com/dart-lang/sdk/commit/f0c0ab967e9d3f85d73b3fcd13da29a0277daa01)),
+  so a single bare `dart analyze` is enough. Dart 3.13.1 to 3.13.7 remain
+  affected; keep batching files with a canary there.
+- Dart 3.14.0 also lets a pub workspace member declare `plugins:` in its own
+  `analysis_options.yaml`; earlier SDKs ignore it with a
+  `plugins_in_inner_options` warning.
 
 ## [1.2.0] - 2026-08-27
 
