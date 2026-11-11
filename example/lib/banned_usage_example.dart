@@ -24,6 +24,18 @@ class BadSession {
   bool get isExpired => DateTime.now().isAfter(expiresAt);
 }
 
+class BadStopwatch {
+  // LINT: a tear-off hands out the same hidden input as a call.
+  BadStopwatch({DateTime Function()? now}) : _now = now ?? DateTime.now;
+
+  final DateTime Function() _now;
+
+  DateTime lap() => _now();
+}
+
+// LINT: a dot shorthand is the same constructor under a shorter name.
+DateTime badStartedAt() => .now();
+
 // ✅ Good: take the clock as a dependency, so a test can decide "now".
 class Session {
   const Session({required this.expiresAt, required Clock clock})

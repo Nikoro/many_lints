@@ -7,6 +7,7 @@ import 'package:analyzer/error/error.dart';
 
 import '../banned_entry.dart';
 import '../many_lints_rule.dart';
+import '../rule_config.dart';
 
 /// Warns when a banned member is used.
 ///
@@ -61,13 +62,20 @@ class BannedUsage extends ManyLintsRule {
     RuleContext context,
   ) {
     final visitor = _Visitor(this);
-    registry.addMethodInvocation(this, visitor);
-    registry.addInstanceCreationExpression(this, visitor);
-    // A `target.member` read parses as PropertyAccess, except when the target
-    // is a simple identifier, which parses as PrefixedIdentifier — both shapes
-    // are needed or `DateTime.now` as a tear-off is missed.
-    registry.addPropertyAccess(this, visitor);
-    registry.addPrefixedIdentifier(this, visitor);
+    // Every reference to a method, getter, setter or static member names it
+    // with a SimpleIdentifier: a call, a tear-off, a read, a write, a dot
+    // shorthand, or an unqualified use inside the declaring class. Visiting
+    // the identifier rather than each enclosing node keeps one report per
+    // reference however the expression is shaped.
+    registry.addSimpleIdentifier(this, visitor);
+    // Constructors are the exception: the unnamed one has no identifier of its
+    // own (`Random()`, `super()`), so they are visited through the nodes that
+    // carry their element. ConstructorName covers creation, tear-offs
+    // (`DateTime.now` as a value, `Random.new`) and redirecting factories.
+    registry.addConstructorName(this, visitor);
+    registry.addDotShorthandConstructorInvocation(this, visitor);
+    registry.addSuperConstructorInvocation(this, visitor);
+    registry.addRedirectingConstructorInvocation(this, visitor);
   }
 }
 
@@ -76,30 +84,73 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  @override
-  void visitMethodInvocation(MethodInvocation node) =>
-      _check(node.methodName.element, node.methodName);
+  RuleConfig? _entriesConfig;
+  List<BannedEntry> _entries = const [];
 
   @override
-  void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    // A constructor's member name is its own for a named constructor, and
-    // `new` for the unnamed one — so `Random.new` bans the default form.
-    _check(node.constructorName.element, node.constructorName);
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    final element = switch (node.parent) {
+      // Constructor names are reported by the constructor visitors below.
+      ConstructorName() ||
+      DotShorthandConstructorInvocation() ||
+      SuperConstructorInvocation() ||
+      RedirectingConstructorInvocation() => null,
+      // `show x` and `hide x` name a member without using it.
+      Combinator() => null,
+      _ => _writtenElement(node) ?? node.element,
+    };
+    _check(element, node);
+  }
+
+  /// The setter [node] writes through, when it is the target of `=`, `+=`,
+  /// `++` and the like.
+  ///
+  /// A written identifier has no element of its own; the setter is recorded
+  /// on the enclosing assignment.
+  Element? _writtenElement(SimpleIdentifier node) {
+    final parent = node.parent;
+    final target = switch (parent) {
+      PrefixedIdentifier(:final identifier) when identifier == node => parent,
+      PropertyAccess(:final propertyName) when propertyName == node => parent,
+      _ => node,
+    };
+
+    return switch (target.parent) {
+      AssignmentExpression(:final leftHandSide, :final writeElement)
+          when leftHandSide == target =>
+        writeElement,
+      PrefixExpression(:final operand, :final writeElement)
+          when operand == target =>
+        writeElement,
+      PostfixExpression(:final operand, :final writeElement)
+          when operand == target =>
+        writeElement,
+      _ => null,
+    };
   }
 
   @override
-  void visitPropertyAccess(PropertyAccess node) =>
-      _check(node.propertyName.element, node.propertyName);
+  void visitConstructorName(ConstructorName node) => _check(node.element, node);
 
   @override
-  void visitPrefixedIdentifier(PrefixedIdentifier node) =>
-      _check(node.identifier.element, node.identifier);
+  void visitDotShorthandConstructorInvocation(
+    DotShorthandConstructorInvocation node,
+  ) => _check(node.element, node.constructorName);
+
+  @override
+  void visitSuperConstructorInvocation(SuperConstructorInvocation node) =>
+      _check(node.element, node.constructorName ?? node);
+
+  @override
+  void visitRedirectingConstructorInvocation(
+    RedirectingConstructorInvocation node,
+  ) => _check(node.element, node.constructorName ?? node);
 
   /// Reports [node] when [element] resolves to a banned member.
   void _check(Element? element, AstNode node) {
-    if (element == null) return;
+    if (element == null || !_isMember(element)) return;
 
-    final entries = readBannedEntries(rule.config);
+    final entries = _entriesFor(rule.config);
     if (entries.isEmpty) return;
 
     final memberName = _memberNameOf(element);
@@ -112,11 +163,38 @@ class _Visitor extends SimpleAstVisitor<void> {
         _find(entries, [memberName]);
     if (banned == null) return;
 
+    // A `[DateTime.now]` doc reference names the member without using it.
+    if (node.thisOrAncestorOfType<CommentReference>() != null) return;
+
     rule.reportAtNode(
       node,
       arguments: [_displayNameOf(element, memberName), messageSuffix(banned)],
     );
   }
+
+  /// The entries for [config], parsed once per file rather than once per
+  /// identifier.
+  List<BannedEntry> _entriesFor(RuleConfig config) {
+    if (!identical(config, _entriesConfig)) {
+      _entriesConfig = config;
+      _entries = readBannedEntries(config);
+    }
+    return _entries;
+  }
+
+  /// Whether [element] is a member of a type or extension, or a top-level
+  /// function or variable.
+  ///
+  /// Locals, parameters, local functions, types and import prefixes share
+  /// names with members (`now`, `random`) but are declared in the file being
+  /// read; banning those is `avoid_banned_names`' job.
+  bool _isMember(Element element) => switch (element) {
+    ConstructorElement() => true,
+    ExecutableElement(:final enclosingElement) ||
+    PropertyInducingElement(:final enclosingElement) =>
+      enclosingElement is InstanceElement || enclosingElement is LibraryElement,
+    _ => false,
+  };
 
   BannedEntry? _find(List<BannedEntry> entries, List<String> candidates) {
     for (final candidate in candidates) {
@@ -145,16 +223,18 @@ class _Visitor extends SimpleAstVisitor<void> {
   ///
   /// The declaring type comes first, then its supertypes, so banning
   /// `Iterable.first` also catches a `List` receiver — the member is one
-  /// declaration however it is reached.
+  /// declaration however it is reached. An extension member is qualified by
+  /// the extension's name.
   List<String> _qualifiedNamesOf(Element element, String memberName) {
     final enclosing = element.enclosingElement;
-    if (enclosing is! InterfaceElement) return const [];
+    if (enclosing is! InstanceElement) return const [];
 
     final names = <String>[];
     final ownName = enclosing.name;
     if (ownName != null && ownName.isNotEmpty) {
       names.add('$ownName.$memberName');
     }
+    if (enclosing is! InterfaceElement) return names;
 
     for (final supertype in enclosing.allSupertypes) {
       final name = supertype.element.name;
@@ -168,7 +248,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   /// How the member is named in the diagnostic.
   String _displayNameOf(Element element, String memberName) {
     final enclosing = element.enclosingElement;
-    if (enclosing is! InterfaceElement) return memberName;
+    if (enclosing is! InstanceElement) return memberName;
 
     final ownName = enclosing.name;
     return ownName == null || ownName.isEmpty

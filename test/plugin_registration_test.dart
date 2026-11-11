@@ -104,7 +104,6 @@ void main() {
       'avoid_banned_imports',
       'avoid_banned_names',
       'avoid_banned_types',
-      'banned_usage',
     };
     expect(
       registered.difference(directTests),

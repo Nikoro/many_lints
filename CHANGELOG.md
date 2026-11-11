@@ -14,6 +14,19 @@
 
 ### Fixed
 
+- `banned_usage` reports every way of referring to a banned member, once.
+  Before, `deny: ['DateTime.now']` caught `DateTime.now()` but not the
+  constructor tear-off (`now: DateTime.now`, `Random.new`, `Box<int>.of`), dot
+  shorthands (`.now()`, `.new()`, `.current`), unqualified uses of a static
+  member inside its own class, writes through a banned setter
+  (`Clock.instance = clock`, `count++`), constructor redirection
+  (`super.system()`, `this()`, `factory A() = B.named`), or a top-level
+  function's tear-off and a top-level variable's read when banned by bare name.
+  An extension's static member can be banned as `Extension.member`. A doc
+  comment reference (`[DateTime.now]`) is no longer reported, and a bare-name
+  entry no longer matches a local function, local variable or parameter that
+  shares the name.
+
 - Hook rules exclude resolved Dart and Flutter SDK functions, including
   `usePathUrlStrategy()` from `flutter_web_plugins`, from hook-name detection.
   Custom hooks remain checked, including functions with the same name.

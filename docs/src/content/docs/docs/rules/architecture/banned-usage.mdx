@@ -50,7 +50,21 @@ rules:
 </TabItem>
 </Tabs>
 
-Members are written `Type.member`, matched on the type that **declares** the member. The unnamed constructor is spelled `new`.
+Members are written `Type.member`, matched on the type that **declares** the member. The unnamed constructor is spelled `new`. A static member of an extension is written `Extension.member`.
+
+## What counts as a use
+
+Every way of referring to a banned member is reported once:
+
+- calls and constructor invocations: `DateTime.now()`, `Random()`, `Random.new()`
+- tear-offs: `DateTime.now` and `Random.new` passed as a value, `Box<int>.of`
+- reads and writes of a getter, setter or field: `Clock.current`, `Clock.instance = clock`
+- dot shorthands: `.now()`, `.new()`, `.current`
+- import prefixes: `core.DateTime.now()`, `math.Random.new`
+- unqualified uses inside the declaring class: `now()` in a static method of `Clock`
+- constructor redirection: `super.system()`, `this.system()`, `factory Clock.fixed() = Clock.system;`
+
+A doc comment reference such as `[DateTime.now]` and a `show`/`hide` combinator name the member without using it, so they are not reported. A local function, local variable or parameter that shares the member's name is not the member and is never reported.
 
 ## Examples
 
@@ -88,6 +102,40 @@ class Session {
   final Clock _clock;
 
   bool get isExpired => _clock.now().isAfter(expiresAt);
+}
+```
+
+### Catch tear-offs and dot shorthands
+
+Passing `DateTime.now` as a value hands out the same hidden input as calling
+it, and `.now()` is the same constructor under a shorthand. Both are reported:
+
+```yaml
+- deny: ['DateTime.now']
+  message: 'Inject a clock so this stays testable.'
+```
+
+```dart
+// Don't
+class Session {
+  Session({DateTime Function()? now}) : _now = now ?? DateTime.now;  // LINT
+
+  final DateTime Function() _now;
+}
+
+DateTime startedAt() => .now();  // LINT
+```
+
+```dart
+// Do
+abstract class Clock {
+  DateTime now();
+}
+
+class Session {
+  Session({required Clock clock}) : _clock = clock;
+
+  final Clock _clock;
 }
 ```
 
@@ -149,7 +197,26 @@ String encode(Map<String, Object?> json) => jsonEncode(json);
 ```
 
 Prefer the qualified form unless you really mean every type — `deny: ['now']`
-catches `DateTime.now()` and anything else named `now`.
+catches `DateTime.now()` and any other member named `now`.
+
+### Ban a top-level function or variable
+
+A top-level declaration has no type to qualify it, so it is banned by its bare
+name. The entry also matches any member with the same name:
+
+```yaml
+- deny: ['randomUuid', 'systemClock']
+  in: ['lib/domain/**']
+  message: 'Take the id source and the clock as parameters.'
+```
+
+```dart
+// Don't  — in lib/domain/order.dart
+Order newOrder() => Order(id: randomUuid(), at: systemClock.now());  // LINT
+
+// Do
+Order newOrder(IdSource ids, Clock clock) => Order(id: ids.next(), at: clock.now());
+```
 
 ### Scope a layer, then carve out one exception
 
@@ -192,6 +259,14 @@ rules:
 Writing to stdout is now reported everywhere under `lib/` except the one
 renderer that owns the terminal.
 
+An entry has no exception list of its own. `in:` only adds paths, and its globs
+support `*`, `**` and `?` but no negation or `{a,b}` alternatives. To allow a
+member in one file, either narrow `in:` to the directories where it stays
+banned, or use the rule-wide `exclude:` as above. `exclude:` silences every entry of the rule in
+that file, so a file excluded to allow `DateTime.now` is also free to call
+`Random()`. Rules that need different carve-outs per member cannot be expressed
+in one `banned_usage` block.
+
 ## Options
 
 | Option | Type | Default | Description |
@@ -213,7 +288,13 @@ Per entry:
 
 **A pattern is tested against both spellings.** `deny_pattern` is tried against the qualified `Type.member` and against the bare `member`, so `DateTime\.now` and `now` both report `DateTime.now()` — and an unanchored-looking pattern like `.*` bans every member it reaches.
 
-**Calls, reads and tear-offs, not declarations.** The rule reports where a member is *used*. Declaring a method named `now` is [`avoid_banned_names`](/many_lints/docs/rules/architecture/avoid-banned-names/)'s job.
+**Uses, not declarations.** The rule reports where a member is *used*. Declaring a method named `now` is [`avoid_banned_names`](/many_lints/docs/rules/architecture/avoid-banned-names/)'s job.
+
+**An implicit super constructor call is not reported.** A subclass constructor with no initializer list calls the superclass's unnamed constructor without naming it, so `class SeededRandom extends Random { SeededRandom(); }` is not reported for `Random.new`. Write `: super()` and it is.
+
+**Top-level members are matched by bare name only.** There is no library-qualified spelling, so `deny: ['systemClock']` also bans a member named `systemClock` on any type.
+
+**No per-entry exceptions.** See [Scope a layer, then carve out one exception](#scope-a-layer-then-carve-out-one-exception): `in:` cannot be negated, and `exclude:` applies to the whole rule.
 
 **A malformed entry is skipped silently.** An invalid regular expression costs you that pattern and nothing else — a plugin cannot report problems against a YAML file.
 

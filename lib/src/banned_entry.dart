@@ -59,9 +59,9 @@ class BannedEntry {
 
   /// Whether this entry applies to the file at [relativePath].
   ///
-  /// An entry with no `in:` applies everywhere; [relativePath] is `null` when
-  /// the file lies outside the package root, which is also treated as in scope
-  /// so a scoped entry never silently stops applying.
+  /// An entry with no `in:` applies everywhere. [relativePath] is `null` when
+  /// the file lies outside the package root, which no `in:` glob can name, so
+  /// a scoped entry does not apply there.
   bool appliesTo(String? relativePath) {
     if (paths.isEmpty) return true;
     if (relativePath == null) return false;
