@@ -183,6 +183,7 @@ Per entry:
 | `deny` | string or list | one of `deny` / `deny_pattern` | Type names banned by **exact** match. Accepts a bare `Name` or a qualified `package:uri#Name` |
 | `deny_pattern` | string or list | one of `deny` / `deny_pattern` | Regular expressions, anchored to the whole name |
 | `in` | list of globs | no | Paths, relative to the package root, where the entry applies. Omit to apply everywhere |
+| `except` | list of globs | no | Paths, relative to the package root, where the entry does not apply, even inside `in`. Lifts this entry only |
 | `message` | string | no | A project-specific explanation appended to the diagnostic |
 
 ## Known limitations

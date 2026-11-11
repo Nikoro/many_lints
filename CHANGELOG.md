@@ -4,6 +4,20 @@
 
 ### Added
 
+- `banned:` entries take an `except:` list of globs, in every rule of the
+  `avoid_banned_*` family, `banned_usage` included. It lifts that entry alone
+  in the named paths, so `deny: ['Uuid.new']`, `in: ['lib/**']`, `except:
+  ['lib/core/ids/uuid_provider.dart']` allows one file to construct a `Uuid`
+  while every other entry still applies there. Before, the only carve-out was
+  the rule-wide `exclude:`, which lifts every entry of the rule.
+- `banned_usage` accepts a library-qualified spelling, `uri#name` for a
+  top-level function or variable and `uri#Type.member` for a member, with the
+  same `#` as `avoid_banned_types`. `deny:
+  ['package:app/core/clock.dart#systemClock']` bans that one declaration,
+  through any import or prefix, without also banning every member named
+  `systemClock`. Library spellings are matched by `deny:` only, so existing
+  `deny_pattern:` entries match exactly what they did before.
+
 - `avoid_chain_first_swallowing_failure` (fpdart, `pedantic` preset) reports
   `chainFirst` on `Either`, `TaskEither` and `IOEither`. fpdart's `chainFirst`
   ends in `orElse((l) => right(b))`, so a failing effect is turned back into

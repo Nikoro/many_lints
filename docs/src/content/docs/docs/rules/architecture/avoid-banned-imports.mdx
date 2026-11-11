@@ -148,8 +148,8 @@ import 'package:design_system/design_system.dart';
 
 ### Ban one library everywhere except its owner
 
-`in:` scopes an entry; the rule-wide `exclude:` skips paths for the whole rule.
-They compose into "banned across the app, except in the module that owns it":
+`in:` scopes an entry and `except:` carves paths back out of it. Together they
+read as "banned across the app, except in the module that owns it":
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -159,10 +159,10 @@ They compose into "banned across the app, except in the module that owns it":
 many_lints:
   rules:
     avoid_banned_imports:
-      exclude: ['lib/infrastructure/analytics/**']
       banned:
         - deny: ['package:firebase_analytics/firebase_analytics.dart']
           in: ['lib/**']
+          except: ['lib/infrastructure/analytics/**']
           message: 'Log through AnalyticsService, not the vendor SDK.'
 ```
 
@@ -173,15 +173,18 @@ many_lints:
 # many_lints.yaml
 rules:
   avoid_banned_imports:
-    exclude: ['lib/infrastructure/analytics/**']
     banned:
       - deny: ['package:firebase_analytics/firebase_analytics.dart']
         in: ['lib/**']
+        except: ['lib/infrastructure/analytics/**']
         message: 'Log through AnalyticsService, not the vendor SDK.'
 ```
 
 </TabItem>
 </Tabs>
+
+`except:` lifts this entry only, so the analytics module still follows every
+other entry. The rule-wide `exclude:` would lift all of them in those paths.
 
 ## Options
 
@@ -196,6 +199,7 @@ Per entry:
 | `deny` | string or list | one of `deny` / `deny_pattern` | Import URIs banned by **exact** match |
 | `deny_pattern` | string or list | one of `deny` / `deny_pattern` | Regular expressions, anchored to the whole URI |
 | `in` | list of globs | no | Paths, relative to the package root, where the entry applies. Omit to apply everywhere |
+| `except` | list of globs | no | Paths, relative to the package root, where the entry does not apply, even inside `in`. Lifts this entry only |
 | `message` | string | no | A project-specific explanation appended to the diagnostic |
 
 ## Known limitations

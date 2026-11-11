@@ -225,6 +225,50 @@ rules:
       expect(entry.appliesTo('lib/data/user.dart'), isTrue);
       expect(entry.appliesTo('lib/ui/page.dart'), isFalse);
     });
+
+    test('except carves paths out of in', () {
+      final entry = entryOf('''
+rules:
+  r:
+    banned:
+      - deny: [a]
+        in: ['lib/**']
+        except: ['lib/core/clock.dart', 'lib/main.dart']
+''');
+
+      expect(entry.exceptPaths, ['lib/core/clock.dart', 'lib/main.dart']);
+      expect(entry.appliesTo('lib/feature/page.dart'), isTrue);
+      expect(entry.appliesTo('lib/core/clock.dart'), isFalse);
+      expect(entry.appliesTo('lib/main.dart'), isFalse);
+    });
+
+    test('except without in carves paths out of everywhere', () {
+      final entry = entryOf('''
+rules:
+  r:
+    banned:
+      - deny: [a]
+        except: ['lib/generated/**']
+''');
+
+      expect(entry.appliesTo('lib/feature/page.dart'), isTrue);
+      expect(entry.appliesTo('lib/generated/nested/api.dart'), isFalse);
+      // A file outside the package cannot be named by a glob, so an entry
+      // that applies everywhere keeps applying there.
+      expect(entry.appliesTo(null), isTrue);
+    });
+
+    test('except accepts a bare scalar', () {
+      final entry = entryOf('''
+rules:
+  r:
+    banned:
+      - deny: [a]
+        except: lib/main.dart
+''');
+
+      expect(entry.appliesTo('lib/main.dart'), isFalse);
+    });
   });
 
   group('findBannedEntry', () {
@@ -262,6 +306,68 @@ rules:
           entries: entries,
           value: 'b',
           relativePath: 'lib/x.dart',
+        ),
+        isNull,
+      );
+    });
+  });
+
+  group('findBannedEntry with except', () {
+    test('an excepted entry does not lift another entry in the same file', () {
+      final entries = entriesOf('''
+rules:
+  r:
+    banned:
+      - deny: [a]
+        in: ['lib/**']
+        except: ['lib/main.dart']
+      - deny: [b]
+        in: ['lib/**']
+''');
+
+      expect(
+        findBannedEntry(
+          entries: entries,
+          value: 'a',
+          relativePath: 'lib/main.dart',
+        ),
+        isNull,
+      );
+      expect(
+        findBannedEntry(
+          entries: entries,
+          value: 'b',
+          relativePath: 'lib/main.dart',
+        ),
+        isNotNull,
+      );
+    });
+  });
+
+  group('findBannedEntry with patterns: false', () {
+    test('matches deny exactly and skips deny_pattern', () {
+      final entries = entriesOf('''
+rules:
+  r:
+    banned:
+      - deny: ['package:a/a.dart#x']
+      - deny_pattern: ['package:.*']
+        message: pattern
+''');
+
+      final exact = findBannedEntry(
+        entries: entries,
+        value: 'package:a/a.dart#x',
+        relativePath: 'lib/x.dart',
+        patterns: false,
+      );
+      expect(exact?.deny, {'package:a/a.dart#x'});
+      expect(
+        findBannedEntry(
+          entries: entries,
+          value: 'package:b/b.dart#y',
+          relativePath: 'lib/x.dart',
+          patterns: false,
         ),
         isNull,
       );

@@ -438,7 +438,7 @@ is the shared implementation, and the shape generalises to any "list of things
 this project forbids" rule.
 
 **One entry shape across the whole family.** Every one of those rules reads the
-same `banned:` list with the same four keys, so learning one teaches all six:
+same `banned:` list with the same five keys, so learning one teaches all six:
 
 ```yaml
 rules:
@@ -446,9 +446,15 @@ rules:
     banned:
       - deny: ['package:flutter/material.dart']   # exact match
         deny_pattern: ['package:legacy_.*']       # anchored regex, opt-in
-        in: ['lib/domain/**']                     # globs; omit = everywhere
-        message: 'Domain must not depend on Flutter.'
+        in: ['lib/**']                            # globs; omit = everywhere
+        except: ['lib/ui/**']                     # globs lifting this entry only
+        message: 'Only the UI layer may depend on Flutter.'
 ```
+
+`except:` is per entry and checked after `in:`. It is deliberately not spelled
+`exclude:`: the rule-wide `exclude:` lifts every entry, so a mis-indented
+`exclude:` would silently widen what is allowed, while a mis-indented `except:`
+is an unknown rule-level key and leaves the ban in force.
 
 This is the mistake worth *not* repeating: an `entries:` key that means six
 unrelated shapes across twelve rules, so you cannot infer the shape from the
@@ -526,6 +532,15 @@ Two shapes are easy to miss: the unnamed constructor has an empty
 and a `target.member` read parses as `PropertyAccess` **except** when the
 target is a simple identifier, where it is a `PrefixedIdentifier` — register
 both or tear-offs are missed.
+
+### Pin a member to its library
+
+`banned_usage` also tries `uri#name` (top-level) and `uri#Type.member`, with the
+URI of the library that **declares** the name or type, before `Type.member` and
+the bare name. Those spellings are matched against `deny:` only
+(`findBannedEntry(..., patterns: false)`): a `deny_pattern:` such as `.*Clock.*`
+written before they existed must not start matching
+`package:app/clock.dart#tick`.
 
 ### Disambiguate a bare name with a qualified form
 

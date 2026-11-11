@@ -2,6 +2,8 @@
 // ignore_for_file: many_lints/prefer_private_named_parameters, many_lints/prefer_primary_constructors
 // ignore_for_file: many_lints/prefer_returning_shorthands
 
+import 'banned_usage_clock.dart';
+
 // banned_usage
 //
 // Warns when a banned member is used — one member of a type, rather than the
@@ -55,3 +57,16 @@ DateTime parseStamp(String raw) => DateTime.parse(raw);
 // so a subclass cannot slip past — banning 'Iterable.first' also catches a
 // List receiver. The unnamed constructor is written 'new', so 'Random.new'
 // bans `Random()` while leaving `Random.secure()` alone.
+
+// LINT: 'systemClock' is banned everywhere under lib/ except the file that
+// declares it. The entry names it with its library,
+// 'package:example/banned_usage_clock.dart#systemClock', so a member or a
+// declaration elsewhere that happens to share the name stays allowed.
+DateTime badReadsTheGlobalClock() => systemClock();
+
+// OK: a different declaration with the same name is not the banned one.
+abstract final class Fixture {
+  static DateTime systemClock() => DateTime.utc(2026);
+}
+
+DateTime fixtureNow() => Fixture.systemClock();

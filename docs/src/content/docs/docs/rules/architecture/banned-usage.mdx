@@ -201,28 +201,87 @@ catches `DateTime.now()` and any other member named `now`.
 
 ### Ban a top-level function or variable
 
-A top-level declaration has no type to qualify it, so it is banned by its bare
-name. The entry also matches any member with the same name:
+A top-level declaration has no type to qualify it. Write it with its library,
+`uri#name`, using the same `#` separator as
+[`avoid_banned_types`](/many_lints/docs/rules/architecture/avoid-banned-types/):
 
 ```yaml
-- deny: ['randomUuid', 'systemClock']
+- deny: ['package:my_app/core/clock.dart#systemClock']
   in: ['lib/domain/**']
-  message: 'Take the id source and the clock as parameters.'
+  message: 'Take the clock as a parameter.'
 ```
 
 ```dart
 // Don't  — in lib/domain/order.dart
-Order newOrder() => Order(id: randomUuid(), at: systemClock.now());  // LINT
+Order newOrder() => Order(at: systemClock.now());  // LINT
 
 // Do
-Order newOrder(IdSource ids, Clock clock) => Order(id: ids.next(), at: clock.now());
+Order newOrder(Clock clock) => Order(at: clock.now());
 ```
 
-### Scope a layer, then carve out one exception
+The library is the one that **declares** the name, not the one you import, so
+an import prefix or a re-exporting barrel does not hide a use. A member named
+`systemClock` on some type, or a `systemClock` declared in another library, is
+not matched. A bare `deny: ['systemClock']` still works, but it also bans every
+member with that name.
 
-`in:` and `exclude:` do different jobs and compose. `in:` scopes a **banned
-entry** to the paths where the policy applies; `exclude:` (available on every
-rule) skips paths for the **whole rule**:
+The same prefix pins a member to the library declaring its type:
+`dart:core#DateTime.now`, `package:my_app/core/clock.dart#Clock.now`. Use it
+when two packages declare a type with the same name.
+
+### Allow a member in one file only
+
+`except:` lifts one entry in the paths it names, using the same globs as `in:`.
+The other entries keep applying there:
+
+<Tabs syncKey="many-lints-config-file">
+<TabItem label="analysis_options.yaml">
+
+```yaml
+# analysis_options.yaml
+many_lints:
+  rules:
+    banned_usage:
+      banned:
+        - deny: ['Uuid.new']
+          in: ['lib/**']
+          except: ['lib/core/ids/uuid_provider.dart']
+          message: 'Read ids from the injected id source.'
+        - deny: ['package:my_app/core/clock.dart#systemClock']
+          in: ['lib/**']
+          except: ['lib/core/clock.dart', 'lib/main.dart']
+          message: 'Read the time from the injected clock.'
+```
+
+</TabItem>
+<TabItem label="many_lints.yaml">
+
+```yaml
+# many_lints.yaml
+rules:
+  banned_usage:
+    banned:
+      - deny: ['Uuid.new']
+        in: ['lib/**']
+        except: ['lib/core/ids/uuid_provider.dart']
+        message: 'Read ids from the injected id source.'
+      - deny: ['package:my_app/core/clock.dart#systemClock']
+        in: ['lib/**']
+        except: ['lib/core/clock.dart', 'lib/main.dart']
+        message: 'Read the time from the injected clock.'
+```
+
+</TabItem>
+</Tabs>
+
+`lib/core/ids/uuid_provider.dart` may construct a `Uuid`, but it still may not
+read `systemClock`. `lib/main.dart` may read `systemClock` and may not
+construct a `Uuid`. An entry with `except:` and no `in:` applies everywhere
+except the named paths.
+
+### Lift every entry in one file
+
+`exclude:` (available on every rule) skips paths for the **whole rule**:
 
 <Tabs syncKey="many-lints-config-file">
 <TabItem label="analysis_options.yaml">
@@ -257,15 +316,8 @@ rules:
 </Tabs>
 
 Writing to stdout is now reported everywhere under `lib/` except the one
-renderer that owns the terminal.
-
-An entry has no exception list of its own. `in:` only adds paths, and its globs
-support `*`, `**` and `?` but no negation or `{a,b}` alternatives. To allow a
-member in one file, either narrow `in:` to the directories where it stays
-banned, or use the rule-wide `exclude:` as above. `exclude:` silences every entry of the rule in
-that file, so a file excluded to allow `DateTime.now` is also free to call
-`Random()`. Rules that need different carve-outs per member cannot be expressed
-in one `banned_usage` block.
+renderer that owns the terminal. Every other entry of the rule is lifted there
+too, so prefer `except:` on the entry when a file needs one exception.
 
 ## Options
 
@@ -277,24 +329,23 @@ Per entry:
 
 | Key | Type | Required | Description |
 |-----|------|----------|-------------|
-| `deny` | string or list | one of `deny` / `deny_pattern` | Members banned by **exact** match, written `Type.member` or as a bare `member` |
+| `deny` | string or list | one of `deny` / `deny_pattern` | Members banned by **exact** match, written `Type.member`, as a bare `member`, or with the declaring library: `uri#name`, `uri#Type.member` |
 | `deny_pattern` | string or list | one of `deny` / `deny_pattern` | Regular expressions, anchored to the whole value and tried against both `Type.member` and the bare `member` |
 | `in` | list of globs | no | Paths, relative to the package root, where the entry applies. Omit to apply everywhere |
+| `except` | list of globs | no | Paths, relative to the package root, where the entry does not apply, even inside `in`. Lifts this entry only |
 | `message` | string | no | A project-specific explanation appended to the diagnostic |
 
 ## Known limitations
 
 **Write the declaring type.** `Iterable.first` catches a `List` receiver, but `List.first` catches nothing — the member is declared once, on `Iterable`. When an entry unexpectedly reports nothing, this is usually why.
 
-**A pattern is tested against both spellings.** `deny_pattern` is tried against the qualified `Type.member` and against the bare `member`, so `DateTime\.now` and `now` both report `DateTime.now()` — and an unanchored-looking pattern like `.*` bans every member it reaches.
+**A pattern is tested against both spellings.** `deny_pattern` is tried against the qualified `Type.member` and against the bare `member`, so `DateTime\.now` and `now` both report `DateTime.now()` — and an unanchored-looking pattern like `.*` bans every member it reaches. It is not tried against the `uri#name` spelling: write library-qualified entries under `deny`.
 
 **Uses, not declarations.** The rule reports where a member is *used*. Declaring a method named `now` is [`avoid_banned_names`](/many_lints/docs/rules/architecture/avoid-banned-names/)'s job.
 
 **An implicit super constructor call is not reported.** A subclass constructor with no initializer list calls the superclass's unnamed constructor without naming it, so `class SeededRandom extends Random { SeededRandom(); }` is not reported for `Random.new`. Write `: super()` and it is.
 
-**Top-level members are matched by bare name only.** There is no library-qualified spelling, so `deny: ['systemClock']` also bans a member named `systemClock` on any type.
-
-**No per-entry exceptions.** See [Scope a layer, then carve out one exception](#scope-a-layer-then-carve-out-one-exception): `in:` cannot be negated, and `exclude:` applies to the whole rule.
+**Globs have no negation.** `in:` and `except:` support `*`, `**` and `?` but no `!` or `{a,b}` alternatives. List each path instead.
 
 **A malformed entry is skipped silently.** An invalid regular expression costs you that pattern and nothing else — a plugin cannot report problems against a YAML file.
 

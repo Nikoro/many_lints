@@ -19,6 +19,13 @@ import '../rule_config.dart';
 /// Members are written `Type.member`, matched on the type that *declares* the
 /// member, so a subclass cannot slip past: with `Iterable.first` banned, a
 /// `List` receiver still reports. A bare `member` name bans it on any type.
+/// Prefixing the declaring library, `package:uri#name` or
+/// `package:uri#Type.member` as in `avoid_banned_types`, bans one library's
+/// declaration only, which is the way to ban a top-level function or variable
+/// without also banning every member that shares its name.
+///
+/// Each entry may carve paths back out with `except:`, lifting that entry
+/// alone where the rule-wide `exclude:` would lift them all.
 ///
 /// **Configuration** (`many_lints.yaml`):
 ///
@@ -29,6 +36,9 @@ import '../rule_config.dart';
 ///       - deny: ['DateTime.now', 'Random.new']
 ///         in: ['lib/domain/**']
 ///         message: 'Inject a clock so this stays testable.'
+///       - deny: ['package:app/core/clock.dart#systemClock']
+///         in: ['lib/**']
+///         except: ['lib/core/clock.dart', 'lib/main.dart']
 /// ```
 ///
 /// **BAD:**
@@ -156,9 +166,16 @@ class _Visitor extends SimpleAstVisitor<void> {
     final memberName = _memberNameOf(element);
     if (memberName == null || memberName.isEmpty) return;
 
-    // Try the qualified form first so a `Type.member` entry is preferred over
-    // a bare `member` one when both could match.
+    // Most specific first, so an entry naming the library is preferred over a
+    // `Type.member` one, and that over a bare `member` one. Library spellings
+    // match `deny:` only: a `deny_pattern:` written before they existed must
+    // not start matching them.
     final banned =
+        _find(
+          entries,
+          _libraryQualifiedNamesOf(element, memberName),
+          patterns: false,
+        ) ??
         _find(entries, _qualifiedNamesOf(element, memberName)) ??
         _find(entries, [memberName]);
     if (banned == null) return;
@@ -196,12 +213,17 @@ class _Visitor extends SimpleAstVisitor<void> {
     _ => false,
   };
 
-  BannedEntry? _find(List<BannedEntry> entries, List<String> candidates) {
+  BannedEntry? _find(
+    List<BannedEntry> entries,
+    List<String> candidates, {
+    bool patterns = true,
+  }) {
     for (final candidate in candidates) {
       final banned = findBannedEntry(
         entries: entries,
         value: candidate,
         relativePath: rule.relativePath,
+        patterns: patterns,
       );
       if (banned != null) return banned;
     }
@@ -240,6 +262,36 @@ class _Visitor extends SimpleAstVisitor<void> {
       final name = supertype.element.name;
       if (name == null || name.isEmpty) continue;
       names.add('$name.$memberName');
+    }
+
+    return names;
+  }
+
+  /// Every `uri#name` spelling that should match [element]: the declaring
+  /// library's URI before a top-level name, or before each `Type.member` of
+  /// [_qualifiedNamesOf] with the library declaring that type.
+  ///
+  /// The `#` separator is the one `avoid_banned_types` already reads, so a
+  /// project pins a library the same way in both rules.
+  List<String> _libraryQualifiedNamesOf(Element element, String memberName) {
+    final enclosing = element.enclosingElement;
+    if (enclosing is LibraryElement) {
+      return ['${enclosing.identifier}#$memberName'];
+    }
+    if (enclosing is! InstanceElement) return const [];
+
+    final names = <String>[];
+    final ownName = enclosing.name;
+    if (ownName != null && ownName.isNotEmpty) {
+      names.add('${enclosing.library.identifier}#$ownName.$memberName');
+    }
+    if (enclosing is! InterfaceElement) return names;
+
+    for (final supertype in enclosing.allSupertypes) {
+      final type = supertype.element;
+      final name = type.name;
+      if (name == null || name.isEmpty) continue;
+      names.add('${type.library.identifier}#$name.$memberName');
     }
 
     return names;

@@ -61,6 +61,16 @@ rules:
 ''');
   }
 
+  /// Writes [banned] as the rule's `banned:` list, verbatim YAML.
+  void _configure(String banned) {
+    ConfigLoader.clearCache();
+    newFile('$testPackageRootPath/${ConfigLoader.fileName}', '''
+rules:
+  banned_usage:
+    banned:
+$banned''');
+  }
+
   /// Asserts one diagnostic over each `(needle, occurrence)` in [code]: the
   /// occurrence-th match of the needle, counting from zero.
   Future<void> _expectAt(String code, List<(String, int)> needles) {
@@ -471,6 +481,130 @@ import 'clock.dart';
 Clock f() => ClockMaker.make();
 ''',
       ['make'],
+    );
+  }
+
+  // ---- Library-qualified entries ----
+
+  Future<void> test_libraryQualifiedTopLevelDeclarations() async {
+    _deny([
+      'package:test/clock.dart#systemClock',
+      'package:test/clock.dart#makeClock',
+    ]);
+    const code = '''
+import 'clock.dart';
+
+Clock a() => systemClock;
+Clock b() => makeClock();
+final Clock Function() c = makeClock;
+''';
+    await _expectAt(code, [
+      ('systemClock', 0),
+      ('makeClock', 0),
+      ('makeClock', 1),
+    ]);
+  }
+
+  Future<void> test_libraryQualifiedTopLevelThroughAnImportPrefix() async {
+    _deny(['package:test/clock.dart#systemClock']);
+    const code = '''
+import 'clock.dart' as c;
+
+c.Clock a() => c.systemClock;
+''';
+    await _expectAt(code, [('systemClock', 0)]);
+  }
+
+  Future<void> test_libraryQualifiedEntryIgnoresAnotherLibrarysName() async {
+    // The point of the qualified form: a same-named declaration elsewhere,
+    // here a local top-level function and a static member, stays allowed.
+    _deny([
+      'package:test/clock.dart#makeClock',
+      'package:test/other.dart#systemClock',
+    ]);
+    await assertNoDiagnostics('''
+import 'clock.dart';
+
+class Factory {
+  static Clock makeClock() => Clock.system();
+}
+
+Clock a() => systemClock;
+Clock b() => Factory.makeClock();
+''');
+  }
+
+  Future<void> test_libraryQualifiedMember() async {
+    _deny([
+      'package:test/clock.dart#Clock.now',
+      'package:test/x.dart#Clock.system',
+    ]);
+    const code = '''
+import 'clock.dart';
+
+Clock f() => Clock.now();
+Clock g() => Clock.system();
+''';
+    await _expectAt(code, [('now', 0)]);
+  }
+
+  Future<void> test_libraryQualifiedMemberOfASupertype() async {
+    _deny(['dart:core#Iterable.first']);
+    await _expect(
+      '''
+int f(List<int> values) => values.first;
+''',
+      ['first'],
+    );
+  }
+
+  Future<void> test_denyPatternIsNotTriedAgainstTheLibrarySpelling() async {
+    // A pattern written before library spellings existed must keep matching
+    // exactly what it matched then.
+    _configure('''
+      - deny_pattern: ['package:.*', '.*#.*']
+''');
+    await assertNoDiagnostics('''
+import 'clock.dart';
+
+Clock f() => makeClock();
+''');
+  }
+
+  // ---- Per-entry exceptions ----
+
+  Future<void> test_exceptLiftsOnlyItsOwnEntry() async {
+    // The test file is lib/test.dart: excepted from the first entry, still
+    // covered by the second.
+    _configure('''
+      - deny: ['Clock.now']
+        in: ['lib/**']
+        except: ['lib/test.dart']
+      - deny: ['makeClock']
+        in: ['lib/**']
+''');
+    const code = '''
+import 'clock.dart';
+
+Clock f() => Clock.now();
+Clock g() => makeClock();
+''';
+    await _expectAt(code, [('makeClock', 0)]);
+  }
+
+  Future<void> test_exceptElsewhereStillReports() async {
+    _configure('''
+      - deny: ['package:test/clock.dart#systemClock']
+        in: ['lib/**']
+        except: ['lib/clock.dart', 'lib/main.dart']
+''');
+    await _expect(
+      '''
+import 'clock.dart';
+
+Clock f() => systemClock;
+''',
+      ['systemClock'],
     );
   }
 

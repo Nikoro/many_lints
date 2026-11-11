@@ -120,6 +120,12 @@ rules:
       - deny: ['DateTime.now']
         in: ['lib/banned_usage_example.dart']
         message: 'Inject a clock so this stays testable.'
+      # A top-level declaration is pinned to its library with `uri#name`, and
+      # `except:` lifts this entry alone in the file that owns the clock.
+      - deny: ['package:example/banned_usage_clock.dart#systemClock']
+        in: ['lib/**']
+        except: ['lib/banned_usage_clock.dart']
+        message: 'Take the clock as a parameter.'
 
   # Pedantic budget rules. Each example with a custom value lowers its own
   # budget far enough to demonstrate the rule in a file short enough to read.

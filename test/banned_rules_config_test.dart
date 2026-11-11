@@ -138,6 +138,40 @@ rules:
       expect(codes, isNot(contains('avoid_banned_imports')));
     });
 
+    test('except lifts the entry in the named file', () async {
+      final codes = await harness.codesFor(
+        _importCode,
+        config: '''
+rules:
+  avoid_banned_imports:
+    banned:
+      - deny: ['dart:async']
+        in: ['lib/**']
+        except: ['lib/test.dart']
+''',
+      );
+
+      expect(codes, isNot(contains('avoid_banned_imports')));
+    });
+
+    test('except naming another file leaves the entry reporting', () async {
+      // Asymmetric to the test above, so silence there proves the exception
+      // matched rather than that nothing ran.
+      final codes = await harness.codesFor(
+        _importCode,
+        config: '''
+rules:
+  avoid_banned_imports:
+    banned:
+      - deny: ['dart:async']
+        in: ['lib/**']
+        except: ['lib/main.dart']
+''',
+      );
+
+      expect(codes, contains('avoid_banned_imports'));
+    });
+
     test('deny_pattern matches', () async {
       final codes = await harness.codesFor(
         _importCode,
@@ -600,6 +634,50 @@ rules:
   banned_usage:
     banned:
       - deny: ['String.first']
+''',
+      );
+
+      expect(codes, isNot(contains('banned_usage')));
+    });
+
+    test('except lifts one entry and keeps the others', () async {
+      final codes = await harness.codesFor(
+        _usageCode,
+        config: '''
+rules:
+  banned_usage:
+    banned:
+      - deny: ['DateTime.now']
+        except: ['lib/test.dart']
+      - deny: ['print']
+''',
+      );
+
+      expect(codes.where((code) => code == 'banned_usage'), hasLength(1));
+    });
+
+    test('a library-qualified entry matches the declaring library', () async {
+      final codes = await harness.codesFor(
+        _usageCode,
+        config: '''
+rules:
+  banned_usage:
+    banned:
+      - deny: ['dart:core#print']
+''',
+      );
+
+      expect(codes, contains('banned_usage'));
+    });
+
+    test('a wrong-library qualification does not match', () async {
+      final codes = await harness.codesFor(
+        _usageCode,
+        config: '''
+rules:
+  banned_usage:
+    banned:
+      - deny: ['dart:io#print', 'dart:io#DateTime.now']
 ''',
       );
 

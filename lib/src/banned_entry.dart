@@ -33,6 +33,18 @@ class BannedEntry {
   /// not arise.
   final List<String> paths;
 
+  /// Globs, relative to the package root, where this entry does not apply.
+  ///
+  /// Checked after [paths], so `in: ['lib/**']` with `except:
+  /// ['lib/main.dart']` reads as written. It lifts this entry only: the
+  /// rule-wide `exclude:` lifts every entry of the rule in a file, which is
+  /// too broad when one file may use one banned value and nothing else.
+  ///
+  /// Named `except:` rather than `exclude:` so a mis-indented key cannot
+  /// silently become the rule-wide `exclude:` and lift every entry; an
+  /// unknown rule-level key is ignored, so the ban stays in force instead.
+  final List<String> exceptPaths;
+
   /// A project-specific explanation appended to the diagnostic, or `null`.
   final String? message;
 
@@ -40,6 +52,7 @@ class BannedEntry {
     required this.deny,
     required this.denyPatterns,
     required this.paths,
+    required this.exceptPaths,
     required this.message,
   });
 
@@ -47,8 +60,12 @@ class BannedEntry {
   bool get isEmpty => deny.isEmpty && denyPatterns.isEmpty;
 
   /// Whether [value] is denied by this entry, ignoring path scope.
-  bool matches(String value) {
+  ///
+  /// With [patterns] false only `deny:` is consulted, for spellings that
+  /// `deny_pattern:` was never written against.
+  bool matches(String value, {bool patterns = true}) {
     if (deny.contains(value)) return true;
+    if (!patterns) return false;
 
     for (final pattern in denyPatterns) {
       if (pattern.matchesWholeValue(value)) return true;
@@ -59,14 +76,19 @@ class BannedEntry {
 
   /// Whether this entry applies to the file at [relativePath].
   ///
-  /// An entry with no `in:` applies everywhere. [relativePath] is `null` when
-  /// the file lies outside the package root, which no `in:` glob can name, so
-  /// a scoped entry does not apply there.
+  /// An entry with no `in:` applies everywhere, minus its `except:` globs.
+  /// [relativePath] is `null` when the file lies outside the package root,
+  /// which no glob can name, so a scoped entry does not apply there and an
+  /// `except:` cannot lift an unscoped one.
   bool appliesTo(String? relativePath) {
-    if (paths.isEmpty) return true;
-    if (relativePath == null) return false;
+    if (relativePath == null) return paths.isEmpty;
+    if (_anyMatches(exceptPaths, relativePath)) return false;
 
-    for (final pattern in paths) {
+    return paths.isEmpty || _anyMatches(paths, relativePath);
+  }
+
+  static bool _anyMatches(List<String> globs, String relativePath) {
+    for (final pattern in globs) {
       if (Glob('/', pattern).matches(relativePath)) return true;
     }
 
@@ -92,6 +114,7 @@ List<BannedEntry> readBannedEntries(RuleConfig config) {
       deny: _stringList(raw['deny']).toSet(),
       denyPatterns: _regExpList(raw['deny_pattern']),
       paths: _stringList(raw['in']),
+      exceptPaths: _stringList(raw['except']),
       message: _nonEmptyString(raw['message']),
     );
 
@@ -143,14 +166,18 @@ List<RegExp> _regExpList(Object? value) {
 }
 
 /// The first entry denying [value] in a file at [relativePath], or `null`.
+///
+/// With [patterns] false, only exact `deny:` values match; see
+/// [BannedEntry.matches].
 BannedEntry? findBannedEntry({
   required List<BannedEntry> entries,
   required String value,
   required String? relativePath,
+  bool patterns = true,
 }) {
   for (final entry in entries) {
     if (!entry.appliesTo(relativePath)) continue;
-    if (!entry.matches(value)) continue;
+    if (!entry.matches(value, patterns: patterns)) continue;
 
     return entry;
   }
