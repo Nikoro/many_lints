@@ -1,7 +1,7 @@
 // ignore_for_file: unused_element
 // ignore_for_file: many_lints/avoid_unnecessary_stateful_widgets, many_lints/prefer_immutable_bloc_state, many_lints/prefer_overriding_parent_equality, many_lints/prefer_single_widget_per_file, many_lints/prefer_primary_constructors
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 // use_sliver_prefix
 //

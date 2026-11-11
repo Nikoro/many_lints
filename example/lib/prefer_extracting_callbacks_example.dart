@@ -11,7 +11,7 @@
 //     max_statements: 3
 //     ignored_parameters: [builder, itemBuilder, separatorBuilder]
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BadExample extends StatelessWidget {
   const BadExample({super.key});

@@ -7,7 +7,7 @@
 // initializer. A `late` field initializes exactly once, at an unpredictable
 // moment, so the value freezes and later theme/media changes are ignored.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class _MyWidget extends StatefulWidget {
   const _MyWidget();

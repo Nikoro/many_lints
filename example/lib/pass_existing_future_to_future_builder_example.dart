@@ -7,7 +7,7 @@
 // run many times per second, so an inline Future is recreated on every
 // rebuild, resetting the builder to its waiting state and redoing the work.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 Future<String> fetchUserData() async => 'data';
 

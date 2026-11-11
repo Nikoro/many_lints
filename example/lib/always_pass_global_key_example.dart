@@ -8,7 +8,7 @@
 // whole subtree it identifies — losing form contents, scroll position and
 // every State below it.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 // ❌ Bad: a new key on every rebuild
 class _BadForm extends StatelessWidget {

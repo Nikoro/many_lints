@@ -6,7 +6,7 @@
 // Detects setState called after an await with no mounted guard. This is a
 // real crash — "setState() called after dispose()" — not a style preference.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BadWidget extends StatefulWidget {
   const BadWidget({super.key});

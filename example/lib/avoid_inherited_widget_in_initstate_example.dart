@@ -7,7 +7,7 @@
 // initState. The element is not fully mounted yet, so the lookup either
 // throws or registers a dependency that never delivers updates.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class _MyWidget extends StatefulWidget {
   const _MyWidget();

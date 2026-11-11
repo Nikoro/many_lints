@@ -7,7 +7,7 @@
 // by call position while a hook widget builds; calling a hook from a
 // callback, a lifecycle method, or a plain helper has nowhere to write to.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 // ❌ Bad: hook inside an event handler

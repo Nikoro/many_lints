@@ -7,7 +7,7 @@
 // unconditionally. That recurses until the stack overflows as soon as the
 // widget is mounted.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 // ❌ Bad: builds itself with no terminating condition
 class _BadRecursive extends StatelessWidget {

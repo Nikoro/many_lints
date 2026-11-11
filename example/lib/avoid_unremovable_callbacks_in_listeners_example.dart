@@ -7,7 +7,7 @@
 // matches by identity, so a closure can never be removed — it leaks the
 // captured State and keeps firing after disposal.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class _MyWidget extends StatefulWidget {
   const _MyWidget();

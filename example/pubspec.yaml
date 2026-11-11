@@ -20,11 +20,12 @@ dependencies:
   equatable: ^2.1.0
   fpdart: ^1.2.0
   meta: ^1.19.0
+  material_ui: ^1.11.0
 
 # flutter_test pulls in `test`, which pins an old analyzer (10.x) and the
 # Flutter SDK pins meta to 1.18.0. Neither matches what many_lints itself
 # builds against, so the example would resolve against a different analyzer
 # than the plugin under demonstration. These overrides keep them aligned.
 dependency_overrides:
-  analyzer: ^14.1.0
+  analyzer: ^14.5.0
   meta: ^1.19.0

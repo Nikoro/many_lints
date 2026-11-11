@@ -7,7 +7,7 @@
 // call position, so a data-dependent number of hook calls shifts every
 // later hook into a different slot.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 // ❌ Bad: hook count depends on the data

@@ -1,7 +1,7 @@
 // ignore_for_file: unused_local_variable, dead_code
 // ignore_for_file: many_lints/prefer_overriding_parent_equality, many_lints/prefer_single_widget_per_file, many_lints/prefer_primary_constructors
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 // avoid_conditional_hooks

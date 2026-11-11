@@ -1,6 +1,6 @@
 // ignore_for_file: many_lints/prefer_overriding_parent_equality
 // ignore_for_file: unused_element
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 // prefer_single_widget_per_file
 //

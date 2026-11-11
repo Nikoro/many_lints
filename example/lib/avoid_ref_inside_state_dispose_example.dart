@@ -7,7 +7,7 @@
 // ConsumerState class. At disposal time, providers may already be
 // disposed and accessing them can lead to unexpected errors.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final someProvider = Provider<String>((ref) => 'hello');

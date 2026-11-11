@@ -16,7 +16,7 @@
 // depend on package:provider. The provider half is covered by the rule's tests
 // and by its docs page.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final someProvider = Provider<String>((ref) => 'hello');

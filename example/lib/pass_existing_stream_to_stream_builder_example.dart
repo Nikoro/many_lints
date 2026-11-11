@@ -7,7 +7,7 @@
 // Stream is recreated on every rebuild, so the old subscription is cancelled
 // and a new one opened, losing buffered events.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class _Repository {
   Stream<int> watchCounter() async* {

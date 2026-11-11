@@ -7,7 +7,7 @@
 // mutated elsewhere, so the change and the rebuild request are detached
 // from each other.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class _MyWidget extends StatefulWidget {
   const _MyWidget();

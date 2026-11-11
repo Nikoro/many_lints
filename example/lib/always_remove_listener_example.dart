@@ -8,7 +8,7 @@
 // matching removeListener() call in dispose(). This can cause
 // memory leaks if the Listenable outlives the widget.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 // ❌ Bad: Listener added in initState but never removed
 class BadNoDispose extends StatefulWidget {

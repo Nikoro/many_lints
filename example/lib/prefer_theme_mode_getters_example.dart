@@ -7,7 +7,7 @@
 // constant instead of using the isDark/isLight/isSystem getters
 // (Flutter 3.44+).
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 // ❌ Bad: comparisons against ThemeMode constants
 class BadExamples {
