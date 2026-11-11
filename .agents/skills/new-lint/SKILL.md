@@ -380,8 +380,9 @@ analysis_server_plugin 0.3.18+:
   `await pluginServer.waitForIdle()` **before** `channel.close()`. Skipping it
   makes background analysis report to a closed channel.
 
-Note that `analyzer_testing` (0.3.4) still exposes no API for testing quick-fix
-or assist *output* — only `AnalysisRuleTest` for diagnostics. Both are covered
+Note that `analyzer_testing` (0.4.5) still exposes no API for testing quick-fix
+output; 0.4.x added `AssistProcessorTest` for assists, which this package has
+not adopted. Both are covered
 anyway, because `PluginServer` answers `edit.getFixes` **and**
 `edit.getAssists`, and `test/fix_harness.dart` wraps both.
 
@@ -688,25 +689,22 @@ Run the following commands from the project root to ensure everything works:
    sweep and confirm it appears in the output before trusting a zero: a run
    that analyzed nothing looks exactly like a clean one.
 
-   **Always sweep with explicit file arguments**, never a bare `dart analyze`
-   or a directory:
+   On Dart 3.14.0 and later, a single bare `dart analyze --fatal-infos` in
+   the target package is enough: it waits for plugin diagnostics before it
+   exits (upstream commit `f0c0ab967e`). Keep the positive control anyway; it
+   also catches a rule that is not enabled.
+
+   On Dart 3.13.1 through 3.13.7, `dart analyze` can exit before plugin
+   diagnostics arrive and print `No issues found!` (see
+   `findings/testing-tooling.md`). There, batch explicit files **and** put the
+   known violation in every batch, failing a batch that does not report it:
 
    ```bash
-   git ls-files -z '*.dart' | xargs -0 dart analyze --fatal-infos
+   git ls-files -z '*.dart' | xargs -0 -n 400 dart analyze --fatal-infos
    ```
 
-   The reason is now pinned down (2026-08-26, see
-   `findings/testing-tooling.md`): with a **directory or no argument**, the
-   analysis server serves cached results that **omit plugin diagnostics** on
-   every run after the first. It is not a race and not size-dependent — a
-   twelve-file directory behaves like a 731-file `lib/`, editing a file does
-   not even reset it, and the run exits 0 while checking nothing. Explicit
-   file arguments run the plugin every time. (A 69 KB file list is one
-   invocation, well under the 1 MB `ARG_MAX`.)
-
-   Other ways the sweep has silently analyzed nothing: BSD `xargs` on macOS
-   has no `-a` flag, so `xargs -a list.txt dart analyze` fails without running
-   (use `< list.txt xargs -n 60 dart analyze`).
+   BSD `xargs` on macOS has no `-a` flag, so `xargs -a list.txt dart analyze`
+   fails without running (use `< list.txt xargs -n 400 dart analyze`).
 
    Enable the rule with a temporary `many_lints.yaml` at the target package
    root, and delete it afterwards.

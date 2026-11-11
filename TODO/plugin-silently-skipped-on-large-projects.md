@@ -1,8 +1,38 @@
-# Dart 3.13.1–3.13.5 `dart analyze` can exit before plugin diagnostics arrive
+# Dart 3.13.1–3.13.7 `dart analyze` can exit before plugin diagnostics arrive
 
 **Reported:** 2026-08-26 (found while migrating a Flutter app's bash quality gates to lints)
-**Status:** CLOSED — fixed on Dart SDK `main`; Dart 3.13.1 through 3.13.5 remain affected
+**Status:** CLOSED — fixed in Dart 3.14.0 (Flutter 3.50.0), verified 2026-11-11; Dart 3.13.1 through 3.13.7 remain affected
 **Affects:** every rule — an upstream `dart analyze` completion race, not this package
+
+## Resolution 2026-11-11 — fixed in Dart 3.14.0
+
+Dart 3.14.0 is the first stable release containing upstream commit
+[`f0c0ab967e`](https://github.com/dart-lang/sdk/commit/f0c0ab967e9d3f85d73b3fcd13da29a0277daa01)
+([review](https://dart-review.googlesource.com/c/sdk/+/534060)). Verified
+against the shipped SDK, not only the commit:
+
+- GitHub's compare of `f0c0ab967e...3.14.0` reports the tag ahead with
+  `behind_by: 0`, so the commit is an ancestor of 3.14.0. Against 3.13.7 it
+  reports `diverged`.
+- 3.14.0's
+  [`analyze.dart`](https://github.com/dart-lang/sdk/blob/3.14.0/pkg/dartdev/lib/src/commands/analyze.dart)
+  starts an `LspAnalysisServer` and awaits `workspaceAnalysisComplete()` before
+  `shutdown()`. 3.13.7 still awaits `server.analysisFinished` on the legacy
+  protocol.
+- The server's `handler_workspace_analysis_complete.dart` at 3.14.0 waits for
+  driver idle, then plugin initialization, then until plugin analysis stops.
+- The local Flutter 3.50.0 SDK reports Dart 3.14.0 revision
+  `fa8c1270c374c1346931583a17c3b7f278d3822d`, and its
+  `dartdev_aot.dart.snapshot` contains `dart/workspace/analysis/complete` and
+  `LspAnalysisServer.workspaceAnalysisComplete`.
+- On a 2420-file Flutter app with a canary in `lib/`, a single bare
+  `dart analyze --fatal-infos` with no batching reported the canary in 3 of 3
+  runs (242 s, 125 s, 121 s). On 3.13 the same app lost the canary above about
+  850 files.
+
+On Dart 3.14.0 and later, a single `dart analyze` is enough: no batching, no
+canary. The workaround below remains the advice for Dart 3.13.1 through 3.13.7
+only.
 
 ## Final diagnosis 2026-08-27 — one race explains every observation
 
@@ -67,10 +97,9 @@ The SDK has integration coverage for both the normal call and the worst-case
 call made immediately after initialization; each asserts that a plugin's
 diagnostic is present after `workspaceAnalysisComplete()` returns.
 
-The commit is on Dart SDK `main` but is absent from both released revisions,
-despite its earlier calendar date. Dart 3.13.1 and 3.13.2 therefore remain
-affected. Do not claim a released fixed version until that version is verified
-directly.
+The commit is absent from every 3.13 release despite its earlier calendar
+date: the 3.13 stable branch diverged from `main` before it. It first shipped
+in Dart 3.14.0 (see the resolution above).
 
 ### Dart 3.13.2 verification
 
@@ -94,9 +123,10 @@ contain the fix. Its `analyze.dart` still awaits `server.analysisFinished` and
 then calls `server.shutdown()`, and `dartdev_aot.dart.snapshot` contains no
 `workspaceAnalysisComplete`. On Birthminder, five `dart analyze lib` runs and
 six bare `dart analyze` runs with a canary all reported it, which again is the
-race won, not the race gone. The first fixed stable will be a 3.14 release.
+race won, not the race gone. The first fixed stable is Dart 3.14.0 (see the
+resolution above).
 
-### Workaround for Dart 3.13.1 and 3.13.2
+### Workaround for Dart 3.13.1 through 3.13.7
 
 Keep the batching workaround, but describe it honestly: it reduces the chance
 of losing the race; it does not create a protocol guarantee.

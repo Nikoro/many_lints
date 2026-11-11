@@ -15,7 +15,7 @@
     <img alt="MIT License" src="https://tinyurl.com/3uf9tzpy">
   </a>
   <a href="https://pub.dev/packages/analyzer">
-    <img src="https://img.shields.io/badge/analyzer-14.1.0-blue" alt="analyzer version 14.1.0">
+    <img src="https://img.shields.io/badge/analyzer-14.7.0-blue" alt="analyzer version 14.7.0">
   </a>
   <a href="https://nikoro.github.io/many_lints">
     <img src="https://img.shields.io/badge/docs-many__lints-154A95" alt="Documentation">
@@ -72,11 +72,19 @@ rules:
 
 > **Important**: After any change to the `plugins` section, you must restart the Dart Analysis Server.
 
-> **Known issue — Dart 3.13.1–3.13.5:** `dart analyze` can finish before plugin
-> diagnostics arrive. Until using a Dart SDK containing the upstream fix, batch
-> explicit files and include a canary that must produce a Many Lints diagnostic
-> in every batch; batching alone only reduces the race window. IDE diagnostics
-> are not affected by this CLI completion race. See the
+> **Pub workspaces:** from Dart 3.14.0 a member package can declare `plugins:` in
+> its own `analysis_options.yaml`, and the plugin then runs for that package only.
+> On earlier SDKs the analyzer ignores it with a `plugins_in_inner_options` warning,
+> so declare plugins in the workspace root `analysis_options.yaml` and keep each
+> member's file including it.
+
+> **Fixed in Dart 3.14.0 (Flutter 3.50.0):** `dart analyze` now waits for plugin
+> diagnostics before it exits, so a single bare `dart analyze` reports every
+> Many Lints diagnostic, however large the project. Dart 3.13.1–3.13.7 are still
+> affected: there `dart analyze` can exit before plugin diagnostics arrive and
+> print `No issues found!`. On those SDKs, batch explicit files and include a
+> canary that must produce a Many Lints diagnostic in every batch; batching alone
+> only narrows the race. IDE diagnostics were never affected. See the
 > [upstream fix](https://github.com/dart-lang/sdk/commit/f0c0ab967e9d3f85d73b3fcd13da29a0277daa01).
 
 ### Presets

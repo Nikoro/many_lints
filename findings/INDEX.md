@@ -8,7 +8,7 @@ Review before making changes to unfamiliar areas.
 | [config-constraints.md](config-constraints.md) | What the analyzer cannot do | 3 | 2026-08-08 |
 | [config-mechanism.md](config-mechanism.md) | How config is reached at runtime | 6 | 2026-08-09 |
 | [rule-authoring.md](rule-authoring.md) | Writing configurable rules | 10 | 2026-08-26 |
-| [testing-tooling.md](testing-tooling.md) | Test harness & CLI quirks | 6 | 2026-08-26 |
+| [testing-tooling.md](testing-tooling.md) | Test harness & CLI quirks | 6 | 2026-11-11 |
 
 ## All Finding Titles
 
@@ -42,5 +42,5 @@ Review before making changes to unfamiliar areas.
 - [NOTE] [NOTE] `dart analyze <file>.yaml` does not validate analysis options
 - [GOTCHA] [CRITICAL] A regex over `LintCode(` silently captures a third of the rules
 - [NOTE] [NOTE] The SDK publishes its lint catalogue as machine-readable JSON
-- [GOTCHA] [CRITICAL] Dart 3.13.1–3.13.5 can exit before plugin diagnostics arrive
+- [GOTCHA] [CRITICAL] Dart 3.13.1–3.13.7 can exit before plugin diagnostics arrive (fixed in 3.14.0)
 - [GOTCHA] [GOTCHA] The mock SDK's `Iterable` declares no `reduce`

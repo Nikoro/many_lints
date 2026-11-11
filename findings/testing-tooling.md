@@ -70,25 +70,24 @@ Filter by `state` before comparing: only `stable` and `deprecated` rules can dis
 
 ---
 
-### [GOTCHA] [CRITICAL] Dart 3.13.1–3.13.5 can exit before plugin diagnostics arrive
+### [GOTCHA] [CRITICAL] Dart 3.13.1–3.13.7 can exit before plugin diagnostics arrive (fixed in 3.14.0)
 **Area:** verifying any rule against a real project; CI gates
 **Tags:** `#gotcha` `#tooling` `#testing`
-**Verified:** 2026-08-27 (Dart 3.13.1 revision `852b3e3608`; Dart 3.13.2 revision `60a57cd42d`; re-checked 2026-10-09 on Dart 3.13.5 revision `04bcd1036c`, Flutter 3.47.7)
+**Verified:** 2026-08-27 (Dart 3.13.1 revision `852b3e3608`; Dart 3.13.2 revision `60a57cd42d`; re-checked 2026-10-09 on Dart 3.13.5 revision `04bcd1036c`, Flutter 3.47.7); fixed release verified 2026-11-11 (Dart 3.14.0 revision `fa8c1270c3`, Flutter 3.50.0)
 
 **Symptom:** the same `dart analyze --fatal-infos` alternates between reporting 1002 findings and `No issues found!` on an unchanged project. Exit code is 0 in the silent case. The only tell is wall-clock: ~113s when the plugin runs, ~18s when it does not.
 
-**Cause:** this is a completion race, not a cache bug or a file-count limit. Dart 3.13.1 and 3.13.2's `AnalyzeCommand` awaits `AnalysisServer.analysisFinished`, which is driven only by the analyzer's `server.status`, then immediately shuts the server down. Plugin work reports its lifecycle separately through `plugin.status`; the CLI does not wait for it. If the analyzer becomes idle first, pending plugin diagnostics die with the process.
+**Cause:** this is a completion race, not a cache bug or a file-count limit. On Dart 3.13.x, `AnalyzeCommand` awaits `AnalysisServer.analysisFinished`, which is driven only by the analyzer's `server.status`, then immediately shuts the server down. Plugin work reports its lifecycle separately through `plugin.status`; the CLI does not wait for it. If the analyzer becomes idle first, pending plugin diagnostics die with the process.
 
 A warm cache and a large real project make the race easier to lose: the first makes analyzer work faster, while the second makes plugin work slower. That produced two convincing but false diagnoses during investigation — “directory cache hits always fail” and “explicit argument lists fail above ~800 files.” A 4002-file synthetic fixture disproved both. File count and invocation shape affect timing, not correctness.
 
-**Upstream fix:** Dart SDK commit `f0c0ab967e` switches `dart analyze` to LSP `workspaceAnalysisComplete()`. That handler waits for context rebuilds, analyzer-driver idle, plugin initialization, and finally `plugin.status == false`. Integration tests cover a plugin diagnostic even when the completion request is sent immediately after initialization. The commit is on SDK `main`, but is not part of Dart 3.13.1 through 3.13.5 (the 3.13 stable branch diverged from `main` before it); verify the first released fixed version before documenting one. Four consecutive analyses on 3.13.2 happened to return the same 702 diagnostics, but the exact shipped source still contains the race, so successful repetitions are only a smoke test.
+**Upstream fix, first shipped in Dart 3.14.0:** Dart SDK commit [`f0c0ab967e`](https://github.com/dart-lang/sdk/commit/f0c0ab967e9d3f85d73b3fcd13da29a0277daa01) (“[dartdev] Switch 'dart analyze' to use LSP instead of the legacy protocol”) switches `dart analyze` to LSP `workspaceAnalysisComplete()`. That handler waits for context rebuilds, analyzer-driver idle, plugin initialization, and finally `plugin.status == false`. SDK integration tests cover a plugin diagnostic even when the completion request is sent immediately after initialization. The commit is an ancestor of the `3.14.0` tag; the 3.13 stable branch diverged before it, so every 3.13 release through 3.13.7 still awaits `analysisFinished`. Evidence for 3.14.0: its [`analyze.dart`](https://github.com/dart-lang/sdk/blob/3.14.0/pkg/dartdev/lib/src/commands/analyze.dart) creates an `LspAnalysisServer` and awaits `workspaceAnalysisComplete()` before shutdown; the shipped `dartdev_aot.dart.snapshot` contains `dart/workspace/analysis/complete`; and on a 2420-file Flutter app a single bare `dart analyze --fatal-infos`, with no batching, reported its canary in 3 of 3 runs (on 3.13 the same app lost the canary above ~850 files). `flutter analyze` on Flutter 3.50.0 waits on the same request.
 
 **Consequences for this repo's workflow:**
 
-1. On Dart 3.13.1 through 3.13.5, batch explicit files well below the observed slow-project cliff: `git ls-files -z '*.dart' | xargs -0 -n 400 dart analyze --fatal-infos`. Batching reduces the race window but is not a correctness guarantee.
-2. **Never trust a clean run without a canary.** Keep a file that must produce a plugin diagnostic, prove it fires alone, include it in every batch, and fail that batch when it is absent. Checking the canary once does not protect later invocations. This is the only deterministic consumer-side guard on an affected SDK.
-3. **Do not diagnose from file count, cache state, or command shape.** Re-check with the canary and inspect the SDK version. The same race can make any of those correlations look absolute on one project and disappear on another.
-4. Once using an SDK that contains `f0c0ab967e`, validate both a deliberately slow plugin and an immediate completion request before removing the canary.
+1. On Dart 3.14.0 and later, run a single `dart analyze`. No batching and no canary are needed.
+2. On Dart 3.13.1 through 3.13.7, batch explicit files well below the observed slow-project cliff (`git ls-files -z '*.dart' | xargs -0 -n 400 dart analyze --fatal-infos`) **and** keep a canary: a file that must produce a plugin diagnostic, proven alone, included in every batch, failing that batch when absent. Batching only narrows the race; the canary is the only deterministic guard on an affected SDK.
+3. **Do not diagnose a silent plugin from file count, cache state, or command shape.** Check the SDK version first.
 
 ---
 
@@ -109,9 +108,10 @@ Two workarounds, and the right one depends on how the producer matches:
     E reduce(E Function(E value, E element) combine) => throw '';
   }
   ```
-- **Name-based** — assert the resulting error and move on, as `test/avoid_unsafe_collection_methods_test.dart` does:
+- **Name-based** — assert the resulting error with `undefinedName` from `test/many_lints_rule_test_base.dart` and move on, as `test/avoid_unsafe_collection_methods_test.dart` does:
   ```dart
-  [lint(42, 29), error(diag.undefinedMethod, 48, 6)]
+  [lint(42, 29), undefinedName(48, 6)]
   ```
+  Do not write `error(diag.undefinedMethod, ...)`: analyzer 14.6 replaced `undefined_method`, `undefined_getter`, `undefined_function`, `undefined_identifier` and `undefined_prefixed_name` with read/write variants such as `undefined_instance_member_read`, and the package's range spans both (14.5 on Dart 3.11, 14.7 on Dart 3.13+). `undefinedName` matches either spelling.
 
 Before concluding a type-based producer is broken, confirm every member the fixture calls actually resolves under the mock SDK.
