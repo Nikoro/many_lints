@@ -1,4 +1,8 @@
+// ignore_for_file: implementation_imports
+
 import 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
+import 'package:analyzer_testing/src/analysis_rule/pub_package_resolution.dart'
+    show ExpectedDiagnostic;
 import 'package:many_lints/src/rule_config.dart';
 
 export 'package:analyzer_testing/analysis_rule/analysis_rule.dart';
@@ -40,3 +44,29 @@ abstract class ManyLintsRuleTest extends AnalysisRuleTest {
     );
   }
 }
+
+/// Expects the analyzer's own error for a name that does not resolve.
+///
+/// analyzer 14.6 replaced `undefined_method`, `undefined_getter`,
+/// `undefined_function`, `undefined_identifier` and `undefined_prefixed_name`
+/// with one read and one write diagnostic per lookup kind. The package accepts
+/// analyzer 14.5 (Dart 3.11) and 14.7, so a fixture that leans on a gap in the
+/// mock SDK matches either spelling.
+ExpectedDiagnostic undefinedName(int offset, int length) => ExpectedDiagnostic(
+  (diagnostic) =>
+      _undefinedNameCodes.contains(diagnostic.diagnosticCode.lowerCaseName),
+  offset,
+  length,
+);
+
+const _undefinedNameCodes = {
+  'undefined_method',
+  'undefined_getter',
+  'undefined_function',
+  'undefined_identifier',
+  'undefined_prefixed_name',
+  'undefined_instance_member_read',
+  'undefined_static_member_read',
+  'undefined_unqualified_name_read',
+  'undefined_prefixed_name_read',
+};

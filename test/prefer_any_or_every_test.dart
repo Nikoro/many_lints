@@ -1,4 +1,3 @@
-import 'package:analyzer/src/diagnostic/diagnostic.dart' as diag;
 import 'many_lints_rule_test_base.dart';
 import 'package:many_lints/src/rules/prefer_any_or_every.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
@@ -50,7 +49,7 @@ void f() {
       [
         // any() is not defined on List in the test environment,
         // but the lint rule should not trigger.
-        error(diag.undefinedMethod, 44, 3),
+        undefinedName(44, 3),
       ],
     );
   }
@@ -66,7 +65,7 @@ void f() {
       [
         // every() is not defined on List in the test environment,
         // but the lint rule should not trigger.
-        error(diag.undefinedMethod, 44, 5),
+        undefinedName(44, 5),
       ],
     );
   }

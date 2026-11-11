@@ -142,7 +142,7 @@ disabled rule a null-listener reporter. Resolution order in
 - **Fix classes**: PascalCase with Fix suffix (`PreferCenterOverAlignFix`)
 - **Type checking**: Use `TypeChecker.fromName()` or `TypeChecker.fromUrl()`
 - **Pattern matching**: Dart 3.0+ patterns for AST analysis
-- **SDK**: Dart ^3.11.0, analyzer ^14.1.0
+- **SDK**: Dart ^3.11.0, analyzer ^14.5.0
 
 ## Key Helpers
 

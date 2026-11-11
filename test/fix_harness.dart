@@ -19,7 +19,7 @@ import 'package:test/test.dart';
 /// Drives a real `PluginServer` so a quick fix can be checked by the text it
 /// actually produces.
 ///
-/// `analyzer_testing` has no fix test API (still true as of 0.3.4), but the
+/// `analyzer_testing` has no fix test API (still true as of 0.4.5), but the
 /// plugin server answers `edit.getFixes`, so the returned edit can be applied
 /// to the source and compared. Without this, a fix that silently produces
 /// nothing — or produces code that does not compile — looks identical to a

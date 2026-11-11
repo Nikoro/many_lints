@@ -687,7 +687,7 @@ class ManyLintsPlugin extends Plugin {
 
 ### Testing Assists
 
-`analyzer_testing` has no dedicated assist test base class, so there are two routes. Pick by what you need to assert.
+`analyzer_testing` 0.4.x added an `AssistProcessorTest` base class, but this package has not adopted it; assists are tested by one of two routes. Pick by what you need to assert.
 
 **1. `CorrectionProducerContext` directly** — `PubPackageResolutionTest` plus `CorrectionProducerContext.createResolved()`: manually resolve the code, create a context at a target offset, run the assist's `compute()`, and verify the produced edits. Fast, and enough for most assists.
 
@@ -727,7 +727,7 @@ extension <E> on Iterable<E> {
 }
 ```
 
-A **name**-matching rule can instead assert the resulting `undefinedMethod` error and carry on — see `test/avoid_unsafe_collection_methods_test.dart`, which does exactly that. A **type**-matching rule or assist cannot, so it needs the declaration.
+A **name**-matching rule can instead assert the resulting error with `undefinedName(offset, length)` (from `test/many_lints_rule_test_base.dart`, which matches the analyzer 14.5 and 14.6+ diagnostic names) and carry on — see `test/avoid_unsafe_collection_methods_test.dart`, which does exactly that. A **type**-matching rule or assist cannot, so it needs the declaration.
 
 The general lesson: before concluding a type-based producer is broken, confirm every member the fixture calls actually resolves under `createMockSdk`.
 

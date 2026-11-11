@@ -1,5 +1,3 @@
-// ignore_for_file: implementation_imports
-import 'package:analyzer/src/diagnostic/diagnostic.dart' as diag;
 import 'package:many_lints/src/rules/avoid_removed_fpdart_api.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -26,7 +24,7 @@ void f() {
   final pair = Tuple2(1, 'a');
 }
 ''',
-      [error(diag.undefinedFunction, 64, 6), lint(64, 6)],
+      [undefinedName(64, 6), lint(64, 6)],
     );
   }
 
@@ -39,7 +37,7 @@ void f() {
   final p = Predicate;
 }
 ''',
-      [error(diag.undefinedIdentifier, 61, 9), lint(61, 9)],
+      [undefinedName(61, 9), lint(61, 9)],
     );
   }
 
@@ -63,7 +61,7 @@ void f() {
   final pair = Tuple2(1, 'a');
 }
 ''',
-      [error(diag.undefinedFunction, 26, 6)],
+      [undefinedName(26, 6)],
     );
   }
 
@@ -101,7 +99,7 @@ Option<int> f(List<int> values) {
   return Option.of(1);
 }
 ''',
-      [error(diag.undefinedMethod, 81, 4), lint(81, 4)],
+      [undefinedName(81, 4), lint(81, 4)],
     );
   }
 }

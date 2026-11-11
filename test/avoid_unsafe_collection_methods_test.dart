@@ -1,4 +1,3 @@
-import 'package:analyzer/src/diagnostic/diagnostic.dart' as diag;
 import 'many_lints_rule_test_base.dart';
 import 'package:many_lints/src/rules/avoid_unsafe_collection_methods.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
@@ -50,7 +49,7 @@ int onlyItem(Iterable<int> items) {
 ''',
       // The test SDK's minimal Iterable declares no `single` getter, so the
       // resolution error is expected alongside the lint.
-      [lint(45, 12), error(diag.undefinedGetter, 51, 6)],
+      [lint(45, 12), undefinedName(51, 6)],
     );
   }
 
@@ -62,7 +61,7 @@ int total(Iterable<int> items) {
 }
 ''',
       // The test SDK's minimal Iterable declares no `reduce` method.
-      [lint(42, 29), error(diag.undefinedMethod, 48, 6)],
+      [lint(42, 29), undefinedName(48, 6)],
     );
   }
 

@@ -1,4 +1,3 @@
-import 'package:analyzer/src/diagnostic/diagnostic.dart' as diag;
 import 'many_lints_rule_test_base.dart';
 import 'package:many_lints/src/rules/prefer_compute_over_isolate_run.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
@@ -28,7 +27,7 @@ void fn() async {
   final result = await Isolate.run(() => 42);
 }
 ''',
-      [lint(65, 21), error(diag.undefinedMethod, 73, 3)],
+      [lint(65, 21), undefinedName(73, 3)],
     );
   }
 
@@ -41,7 +40,7 @@ void fn() async {
   final result = await Isolate.run(() async => 42);
 }
 ''',
-      [lint(65, 27), error(diag.undefinedMethod, 73, 3)],
+      [lint(65, 27), undefinedName(73, 3)],
     );
   }
 
@@ -56,7 +55,7 @@ void fn() async {
   final result = await Isolate.run(expensiveWork);
 }
 ''',
-      [lint(93, 26), error(diag.undefinedMethod, 101, 3)],
+      [lint(93, 26), undefinedName(101, 3)],
     );
   }
 
@@ -69,7 +68,7 @@ void fn() async {
   final result = await Isolate.run<int>(() => 42);
 }
 ''',
-      [lint(65, 26), error(diag.undefinedMethod, 73, 3)],
+      [lint(65, 26), undefinedName(73, 3)],
     );
   }
 
@@ -82,7 +81,7 @@ void fn() {
   final future = Isolate.run(() => 42);
 }
 ''',
-      [lint(53, 21), error(diag.undefinedMethod, 61, 3)],
+      [lint(53, 21), undefinedName(61, 3)],
     );
   }
 
@@ -119,7 +118,7 @@ void fn() async {
   await Isolate.spawn((_) {}, null);
 }
 ''',
-      [error(diag.undefinedMethod, 58, 5)],
+      [undefinedName(58, 5)],
     );
   }
 

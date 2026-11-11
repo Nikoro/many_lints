@@ -204,13 +204,16 @@ int score(String grade) {
 
 /// A fallthrough case with nothing after it to share a body with, so there is
 /// no pattern to merge into — unreported even with the option on.
+// Edge case: no `default:` before the dangling case. analyzer 14.5 fails a
+// flow-analysis assertion on a case after `default:`, which hangs this harness.
 const _trailingFallthroughCode = '''
 int score(String grade) {
   switch (grade) {
-    default:
+    case 'b':
       return 0;
     case 'a':
   }
+  return 1;
 }
 ''';
 
