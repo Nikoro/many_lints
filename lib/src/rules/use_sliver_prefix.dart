@@ -117,6 +117,13 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (!typeName.startsWith('Sliver')) return false;
 
     final libraryUri = type.element.library.identifier;
-    return libraryUri.startsWith('package:flutter/');
+    return _flutterLibraryPrefixes.any(libraryUri.startsWith);
   }
+
+  /// Flutter 3.50 moved the Material slivers (`SliverAppBar`) into
+  /// package:material_ui.
+  static const _flutterLibraryPrefixes = [
+    'package:flutter/',
+    'package:material_ui/',
+  ];
 }

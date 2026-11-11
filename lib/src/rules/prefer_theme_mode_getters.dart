@@ -55,10 +55,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _themeModeChecker = TypeChecker.fromName(
-    'ThemeMode',
-    packageName: 'flutter',
-  );
+  // Flutter 3.50 deprecates package:flutter/material.dart in favour of
+  // package:material_ui, which declares its own ThemeMode.
+  static const _themeModeChecker = TypeChecker.any([
+    TypeChecker.fromName('ThemeMode', packageName: 'flutter'),
+    TypeChecker.fromName('ThemeMode', packageName: 'material_ui'),
+  ]);
 
   static const _getters = {
     'dark': 'isDark',

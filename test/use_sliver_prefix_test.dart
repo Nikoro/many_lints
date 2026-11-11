@@ -58,6 +58,16 @@ class CustomScrollView extends Widget {
   const CustomScrollView({super.key, List<Widget>? slivers});
 }
 ''');
+    // Flutter 3.50 deprecates package:flutter/material.dart; the Material
+    // slivers now come from package:material_ui.
+    newPackage('material_ui').addFile('lib/material_ui.dart', r'''
+import 'package:flutter/widgets.dart';
+export 'package:flutter/widgets.dart';
+
+class SliverAppBar extends Widget {
+  const SliverAppBar({super.key});
+}
+''');
     super.setUp();
   }
 
@@ -96,6 +106,24 @@ class MyList extends StatelessWidget {
 }
 ''',
       [lint(46, 6)],
+    );
+  }
+
+  Future<void> test_widgetReturningMaterialUiSliver_lint() async {
+    await assertDiagnostics(
+      r'''
+import 'package:material_ui/material_ui.dart';
+
+class MyAppBar extends StatelessWidget {
+  const MyAppBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverAppBar();
+  }
+}
+''',
+      [lint(54, 8)],
     );
   }
 

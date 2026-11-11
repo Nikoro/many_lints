@@ -6,6 +6,7 @@ void main() {
   defineReflectiveSuite(() {
     defineReflectiveTests(PreferThemeModeGettersTest);
     defineReflectiveTests(PreferThemeModeGettersWithoutGettersTest);
+    defineReflectiveTests(PreferThemeModeGettersMaterialUiTest);
   });
 }
 
@@ -120,5 +121,38 @@ import 'package:flutter/material.dart';
 
 bool isDarkMode(ThemeMode mode) => mode == ThemeMode.dark;
 ''');
+  }
+}
+
+/// Flutter 3.50 deprecates package:flutter/material.dart; a migrated project
+/// gets ThemeMode from package:material_ui instead.
+@reflectiveTest
+class PreferThemeModeGettersMaterialUiTest extends ManyLintsRuleTest {
+  @override
+  void setUp() {
+    rule = PreferThemeModeGetters();
+    newPackage('material_ui').addFile('lib/material_ui.dart', r'''
+enum ThemeMode {
+  system,
+  light,
+  dark;
+
+  bool get isSystem => this == ThemeMode.system;
+  bool get isLight => this == ThemeMode.light;
+  bool get isDark => this == ThemeMode.dark;
+}
+''');
+    super.setUp();
+  }
+
+  Future<void> test_equalsDark() async {
+    await assertDiagnostics(
+      r'''
+import 'package:material_ui/material_ui.dart';
+
+bool isDarkMode(ThemeMode mode) => mode == ThemeMode.dark;
+''',
+      [lint(83, 22)],
+    );
   }
 }
