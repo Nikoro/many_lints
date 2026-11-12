@@ -4,8 +4,6 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import './ast_node_analysis.dart';
 import './type_checker.dart';
 
-/// Matches hook function names: starts with `use` (or `_use`) followed by
-/// an uppercase letter or digit (to avoid matching words like "user").
 final hookNameRegex = RegExp('^_?use[0-9A-Z]');
 
 bool isHookInvocation(AstNode node) {
@@ -30,7 +28,6 @@ bool isHookInvocation(AstNode node) {
   return true;
 }
 
-/// Collects hook invocations from AST nodes.
 class _HookExpressionsGatherer extends GeneralizingAstVisitor<void> {
   final List<InvocationExpression> _hookExpressions = [];
 
@@ -42,12 +39,8 @@ class _HookExpressionsGatherer extends GeneralizingAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    final body = maybeHookBuilderBody(node);
-    if (body != null) {
-      // this is a hook builder, so it has a new hook context for used hooks: stop recursing
-      return;
-    }
-    // It is not a hook builder, let's continue searching
+    // Edge case: a hook builder opens its own hook context, so its hooks are not ours
+    if (maybeHookBuilderBody(node) != null) return;
     super.visitInstanceCreationExpression(node);
   }
 
@@ -61,12 +54,10 @@ class _HookExpressionsGatherer extends GeneralizingAstVisitor<void> {
   }
 }
 
-/// Returns all hook expressions found within an AST node.
 List<InvocationExpression> getAllInnerHookExpressions(AstNode node) {
   return _HookExpressionsGatherer.gather(node);
 }
 
-/// Given an instance creation, returns the builder function body if the node is a HookBuilder.
 FunctionBody? maybeHookBuilderBody(InstanceCreationExpression node) {
   final classElement = node.constructorName.type.element;
   if (classElement == null) return null;

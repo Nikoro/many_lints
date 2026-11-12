@@ -1,51 +1,17 @@
 // ignore_for_file: implementation_imports
-import 'package:analyzer/file_system/file_system.dart';
 import 'package:analyzer/src/util/glob.dart';
 
 import 'rule_config.dart';
 
-/// One configured `banned:` item: what to deny, where it applies, and why.
-///
-/// Shared by every rule in the `avoid_banned_*` family plus [banned_usage], so
-/// a project writes one entry shape no matter which rule reads it. A generic
-/// `entries:` key invites reuse across unrelated rules to mean unrelated
-/// shapes; naming the key after its concept keeps that from happening here.
 class BannedEntry {
-  /// Values denied by exact match.
-  ///
-  /// Exact by default is deliberate. Were `deny:` entries regexes matched as
-  /// *substrings*, banning `visibleForTesting` would also hit
-  /// `notVisibleForTesting`, leaving users to anchor every pattern with
-  /// `^`/`$`. Opt into patterns with [denyPatterns].
   final Set<String> deny;
 
-  /// Values denied by regular expression, anchored to the whole value.
-  ///
-  /// Anchoring is applied here rather than left to the user, so a pattern
-  /// cannot silently match a substring.
   final List<RegExp> denyPatterns;
 
-  /// Globs, relative to the package root, limiting where this entry applies.
-  ///
-  /// Empty means everywhere. Globs (not regexes) keep path semantics identical
-  /// to `exclude:`, and [Folder.relativeIfContains] normalizes separators, so
-  /// the Windows-path caveat that separator-sensitive matching invites does
-  /// not arise.
   final List<String> paths;
 
-  /// Globs, relative to the package root, where this entry does not apply.
-  ///
-  /// Checked after [paths], so `in: ['lib/**']` with `except:
-  /// ['lib/main.dart']` reads as written. It lifts this entry only: the
-  /// rule-wide `exclude:` lifts every entry of the rule in a file, which is
-  /// too broad when one file may use one banned value and nothing else.
-  ///
-  /// Named `except:` rather than `exclude:` so a mis-indented key cannot
-  /// silently become the rule-wide `exclude:` and lift every entry; an
-  /// unknown rule-level key is ignored, so the ban stays in force instead.
   final List<String> exceptPaths;
 
-  /// A project-specific explanation appended to the diagnostic, or `null`.
   final String? message;
 
   BannedEntry({
@@ -57,18 +23,11 @@ class BannedEntry {
   }) : _pathGlobs = _compile(paths),
        _exceptGlobs = _compile(exceptPaths);
 
-  /// [paths] and [exceptPaths] compiled once, since [appliesTo] runs for
-  /// every candidate identifier of every file.
   final List<Glob> _pathGlobs;
   final List<Glob> _exceptGlobs;
 
-  /// Whether this entry has nothing to deny, in which case it is inert.
   bool get isEmpty => deny.isEmpty && denyPatterns.isEmpty;
 
-  /// Whether [value] is denied by this entry, ignoring path scope.
-  ///
-  /// With [patterns] false only `deny:` is consulted, for spellings that
-  /// `deny_pattern:` was never written against.
   bool matches(String value, {bool patterns = true}) {
     if (deny.contains(value)) return true;
     if (!patterns) return false;
@@ -80,12 +39,6 @@ class BannedEntry {
     return false;
   }
 
-  /// Whether this entry applies to the file at [relativePath].
-  ///
-  /// An entry with no `in:` applies everywhere, minus its `except:` globs.
-  /// [relativePath] is `null` when the file lies outside the package root,
-  /// which no glob can name, so a scoped entry does not apply there and an
-  /// `except:` cannot lift an unscoped one.
   bool appliesTo(String? relativePath) {
     if (relativePath == null) return paths.isEmpty;
     if (_exceptGlobs.any((glob) => glob.matches(relativePath))) return false;
@@ -99,16 +52,6 @@ class BannedEntry {
   ];
 }
 
-/// Reads the `banned:` list from [config].
-///
-/// Takes a [RuleConfig] rather than a rule so any consumer holding a resolved
-/// config — including a quick fix, which has no rule instance — resolves
-/// exactly the same entries.
-///
-/// Malformed entries are dropped rather than reported: a plugin cannot report
-/// diagnostics against a YAML file at all, so bad configuration has to degrade
-/// quietly instead of breaking analysis of the whole package. An invalid regex
-/// costs the user that pattern and nothing else.
 List<BannedEntry> readBannedEntries(RuleConfig config) {
   final entries = <BannedEntry>[];
 
@@ -121,8 +64,6 @@ List<BannedEntry> readBannedEntries(RuleConfig config) {
       message: _nonEmptyString(raw['message']),
     );
 
-    // An entry denying nothing would match nothing; dropping it keeps
-    // `isEmpty` from having to be re-checked at every call site.
     if (entry.isEmpty) continue;
     entries.add(entry);
   }
@@ -130,18 +71,9 @@ List<BannedEntry> readBannedEntries(RuleConfig config) {
   return entries;
 }
 
-/// Returns [value] when it is a non-empty string, else `null`.
-///
-/// An empty `message:` is treated as absent rather than appended as a stray
-/// space — the degenerate value should not change how a diagnostic reads.
 String? _nonEmptyString(Object? value) =>
     value is String && value.isNotEmpty ? value : null;
 
-/// Normalizes a YAML value that may be a single string or a list of strings.
-///
-/// Accepting a bare scalar is a convenience for the common one-value case
-/// (`deny: package:flutter/material.dart`); it costs nothing and removes a
-/// class of "why is my config ignored" confusion.
 List<String> _stringList(Object? value) {
   if (value is String) return value.isEmpty ? const [] : [value];
   if (value is! List) return const [];
@@ -152,7 +84,6 @@ List<String> _stringList(Object? value) {
   ];
 }
 
-/// Compiles patterns, dropping any that fail to parse.
 List<RegExp> _regExpList(Object? value) {
   final patterns = <RegExp>[];
 
@@ -160,7 +91,6 @@ List<RegExp> _regExpList(Object? value) {
     try {
       patterns.add(RegExp(source));
     } on FormatException {
-      // Degrade quietly — see [readBannedEntries].
       continue;
     }
   }
@@ -168,10 +98,6 @@ List<RegExp> _regExpList(Object? value) {
   return patterns;
 }
 
-/// The first entry denying [value] in a file at [relativePath], or `null`.
-///
-/// With [patterns] false, only exact `deny:` values match; see
-/// [BannedEntry.matches].
 BannedEntry? findBannedEntry({
   required List<BannedEntry> entries,
   required String value,
@@ -179,8 +105,6 @@ BannedEntry? findBannedEntry({
   bool patterns = true,
 }) {
   for (final entry in entries) {
-    // The value test is cheap; the path globs are only worth matching for an
-    // entry that denies the value.
     if (!entry.matches(value, patterns: patterns)) continue;
     if (!entry.appliesTo(relativePath)) continue;
 
@@ -190,10 +114,6 @@ BannedEntry? findBannedEntry({
   return null;
 }
 
-/// Builds the message argument carrying an entry's optional explanation.
-///
-/// Returns an empty string when no `message:` is configured, so the diagnostic
-/// reads cleanly either way rather than trailing an empty sentence.
 String messageSuffix(BannedEntry entry) {
   final message = entry.message;
   return message == null ? '' : ' $message';

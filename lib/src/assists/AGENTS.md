@@ -1,5 +1,7 @@
 # Code Assists — Quick Reference
 
+**Comments:** assists carry no doc comments and practically no comments; follow the [comment policy](../../../AGENTS.md#comments) (`comment_gate`, see `~/Projects/comment_gate` README; project config to come).
+
 This directory contains code assist implementations. Assists are standalone refactoring actions, independent of lint diagnostics.
 
 **Full implementation guide:** [assists-cookbook.md](../../../.agents/skills/new-lint/assists-cookbook.md)
@@ -42,15 +44,15 @@ Key differences from fixes:
 
 ## Common Patterns
 
-```dart
-// Walk parent chain to find target
-AstNode? current = node;
-while (current != null) {
-  if (current is MethodInvocation) break;
-  current = current.parent;
-}
+Walk the parent chain to find the target:
 
-// Multi-range replacement (preserve middle)
+```dart
+final invocation = node.thisOrAncestorOfType<MethodInvocation>();
+```
+
+Replace several ranges and keep the middle untouched:
+
+```dart
 builder.addSimpleReplacement(SourceRange(start, prefixLen), 'prefix');
 builder.addSimpleReplacement(SourceRange(suffixStart, suffixLen), 'suffix');
 ```

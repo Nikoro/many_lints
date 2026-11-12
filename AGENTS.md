@@ -147,6 +147,24 @@ disabled rule a null-listener reporter. Resolution order in
 - **Pattern matching**: Dart 3.0+ patterns for AST analysis
 - **SDK**: Dart ^3.11.0, analyzer ^14.5.0
 
+## Comments
+
+Code describes itself through the names of classes, functions and variables, so
+practically no comments are needed. The only comments allowed are:
+
+- tool directives (`// ignore:`, `// ignore_for_file:` and so on);
+- `///` doc comments in `lib/many_lints.dart` only, the public API on pub.dev;
+- one-line notes of at most 100 characters, directly above the code they explain or
+  trailing a code line: `// Edge case: <why>` for a case the code cannot show, or
+  `// Workaround: <issue URL> <why>` for a tracked bug. At most 3 per file.
+
+Notes say why, never what. Rules, fixes, assists and helpers carry no doc comments:
+users read the docs site and the rule's `problemMessage` / `correctionMessage`, so
+knowledge about a rule belongs on its page under `docs/src/content/docs/docs/rules/`.
+Comments inside test fixture strings are code under test and are exempt. The checker
+is `comment_gate` (`~/Projects/comment_gate`, see its README for every rule); the
+project configuration for it is still to come.
+
 ## Key Helpers
 
 ### 📂 Quick References (For Understanding Existing Code)

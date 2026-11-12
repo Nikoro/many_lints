@@ -1,39 +1,3 @@
-/// Curated rule sets, selected by `preset:` in `many_lints.yaml` or the
-/// top-level `many_lints:` section of `analysis_options.yaml`.
-///
-/// ## Why presets are resolved by this package rather than by `include:`
-///
-/// The official lint packages ship presets as YAML that consumers pull in with
-/// `include: package:lints/recommended.yaml`. That works because their rules
-/// live under the `linter:` key, which the analyzer parses and *merges* across
-/// an include graph.
-///
-/// Plugin rules cannot use that channel. They are configured under
-/// `plugins: many_lints: diagnostics:`, and `_applyPlugins` in the analyzer's
-/// options parser merges plugin configurations keyed by plugin name, where a
-/// later configuration **replaces** an earlier one outright:
-///
-/// ```dart
-/// for (var configuration in plugins.configurations) {
-///   configurations[configuration.name] = configuration;   // replace
-/// }
-/// ```
-///
-/// So an included preset would be silently discarded the moment a consumer
-/// writes its own `plugins: many_lints:` block — which it must, to declare the
-/// plugin version at all. `diagnostics:` is also validated to accept only
-/// severity scalars, leaving no room for a preset or group key.
-///
-/// Presets therefore resolve here, through the same configuration file that
-/// already carries `rules:`, `exclude`, `include` and `message`.
-library;
-
-/// The name of every rule in this package that reports a near-certain bug.
-///
-/// The bar is deliberately high, matching `package:lints/core.yaml`: a rule
-/// belongs here only when what it flags is dead, contradictory, unreachable or
-/// guaranteed to misbehave at runtime, with no stylistic judgement and
-/// essentially no false positives.
 const coreRules = <String>{
   'always_pass_global_key',
   'always_remove_listener',
@@ -72,12 +36,6 @@ const coreRules = <String>{
   'prefer_return_await',
 };
 
-/// Rules that [recommendedRules] adds on top of [coreRules].
-///
-/// These catch likely defects and concrete runtime risks that are not certain
-/// enough for [coreRules]. Rules that merely prefer an equivalent spelling,
-/// impose an architecture or naming scheme, or enforce a performance style
-/// are deliberately excluded, as are rules that do nothing until configured.
 const _recommendedOnlyRules = <String>{
   'avoid_accessing_collections_by_constant_index',
   'avoid_build_context_in_providers',
@@ -143,45 +101,8 @@ const _recommendedOnlyRules = <String>{
   'use_setstate_synchronously',
 };
 
-/// [coreRules] plus everything in [_recommendedOnlyRules].
-///
-/// Layered the same way `package:lints/recommended.yaml` includes
-/// `core.yaml`, so moving up a tier only ever adds rules.
 final recommendedRules = <String>{...coreRules, ..._recommendedOnlyRules};
 
-/// Rules that [opinionatedRules] adds on top of [recommendedRules].
-///
-/// These express a stylistic preference rather than a defect: reasonable
-/// codebases disagree about them. Every rule here is one this package takes a
-/// side on.
-///
-/// The side it takes is a concrete one: this tier is a coherent house style, so
-/// adopting it should make a codebase look a particular way rather than hand it
-/// an assortment of unrelated opinions. The test for adding a rule here is
-/// empirical — run it against real production codebases and keep it only if
-/// what it reports is code they would actually change. A rule that fights an
-/// established style belongs in no preset and stays opt-in by name, which is
-/// also the honest default whenever the answer is unclear.
-///
-/// Three kinds of rule are deliberately **excluded**, and stay opt-in by name:
-///
-/// 1. **Rules that contradict one in this set.** A preset must never enable
-///    both halves of a disagreement, because each would undo the other's fix.
-///    See [conflictingWithOpinionated].
-/// 2. **Rules that do nothing until configured** — the `banned_*` family,
-///    `use_class_prefix`-style affix rules and `prefer_use_prefix`. They enforce
-///    *your* project's vocabulary, which this package cannot guess, and report
-///    nothing at all until told what to look for.
-/// 3. **Rules that assume a package this project may not depend on**, such as
-///    `use_gap` (the `gap` package) or the `equatable` rules.
-///
-/// The same reasoning keeps four fpdart rules out: `avoid_ad_hoc_left_type`
-/// reports nothing until given `error_types`, while
-/// `avoid_unnecessary_option`, `avoid_get_or_else_swallowing_failure` and
-/// `avoid_chain_first_swallowing_failure` each disagree with a coherent choice
-/// a codebase may have made deliberately. The last is the plainest case: this
-/// package's own `ConvertFlatMapToChainFirst` assist offers `chainFirst`, and
-/// a codebase that accepted it chose to ignore the effect's failure.
 const _opinionatedOnlyRules = <String>{
   'avoid_bloc_public_methods',
   'avoid_border_all',
@@ -273,45 +194,13 @@ const _opinionatedOnlyRules = <String>{
   'use_ref_read_synchronously',
 };
 
-/// Rules deliberately kept out of [opinionatedRules] because each contradicts
-/// a rule that is in it.
-///
-/// Enabling both halves would leave a project with two diagnostics on one line
-/// whose fixes undo one another, so the preset takes a side and the other half
-/// stays available by name.
-///
-/// - `prefer_container` merges nested single-purpose widgets *into* a
-///   `Container`, which is the exact inverse of `prefer_padding_over_container`
-///   and its `prefer_*_over_container` siblings.
-/// - `use_gap` replaces a spacing `SizedBox` with the `gap` package's `Gap`,
-///   while `prefer_spacing` replaces the same `SizedBox` with the built-in
-///   `spacing:` argument. Both match on `sizedBoxChecker` inside a flex.
-/// - `list_all_equatable_fields` and `prefer_equatable_mixin` presume a
-///   dependency on `equatable`, so they are opt-in rather than contradictory.
-/// Public so a test can assert the preset never enables one of these, keeping
-/// the exclusions a checked invariant rather than a comment that drifts.
 const conflictingWithOpinionated = <String>{'prefer_container', 'use_gap'};
 
-/// [recommendedRules] plus [_opinionatedOnlyRules].
-///
-/// Layered like the tiers below it, so moving up a preset only ever adds rules.
 final opinionatedRules = <String>{
   ...recommendedRules,
   ..._opinionatedOnlyRules,
 };
 
-/// Rules that [pedanticRules] adds on top of [opinionatedRules].
-///
-/// This tier deliberately optimizes for uniformity and explicitness rather
-/// than for a quiet signal. It enables structural budgets, naming rules and
-/// mechanical ordering that are too restrictive for a general-purpose house
-/// style, but useful in a codebase that wants every file to follow one shape.
-///
-/// Rules that need project vocabulary, introduce a package dependency or
-/// contradict a rule selected below still remain opt-in. In particular, a
-/// preset cannot guess banned APIs or class affixes, cannot assume `equatable`
-/// or `gap`, and must not enable `prefer_container` beside the rules that
-/// unwrap a `Container`.
 const _pedanticOnlyRules = <String>{
   'arguments_ordering',
   'avoid_accessing_other_classes_private_members',
@@ -373,14 +262,8 @@ const _pedanticOnlyRules = <String>{
   'use_sliver_prefix',
 };
 
-/// [opinionatedRules] plus [_pedanticOnlyRules].
 final pedanticRules = <String>{...opinionatedRules, ..._pedanticOnlyRules};
 
-/// Option defaults supplied by the strictest preset.
-///
-/// A user's per-rule options override these values. Keeping the defaults here
-/// makes `preset: pedantic` complete on its own: ordering rules that are
-/// intentionally silent in lower presets receive an actual policy here.
 const pedanticRuleOptions = <String, Map<String, Object?>>{
   'arguments_ordering': {'order': 'alphabetical', 'min_arguments': 2},
   'avoid_non_null_assertion': {'ignore_map_indexes': false},
@@ -397,40 +280,23 @@ const pedanticRuleOptions = <String, Map<String, Object?>>{
   'record_fields_ordering': {'order': 'alphabetical'},
 };
 
-/// A named rule set that a project can select with `preset:`.
 enum Preset {
-  /// Enables nothing. The default, and the explicit way to opt out.
   none('none'),
 
-  /// Near-certain bugs only.
   core('core'),
 
-  /// [core] plus idiomatic, uncontroversial Dart and Flutter practice.
   recommended('recommended'),
 
-  /// [recommended] plus the opinionated style rules this package prefers.
   opinionated('opinionated'),
 
-  /// [opinionated] plus strict naming, structure and ordering conventions.
   pedantic('pedantic');
 
   const Preset(this.name);
 
-  /// The spelling used in configuration.
   final String name;
 
-  /// The preset applied when a project selects none.
-  ///
-  /// Rules are opt-in: a bare install reports nothing until a preset is chosen
-  /// or individual rules are enabled.
   static const fallback = Preset.none;
 
-  /// Parses [value] as written in configuration, returning `null` when it
-  /// names no known preset.
-  ///
-  /// An unknown name is rejected here so the caller can fall back rather than
-  /// throw: configuration problems cannot be surfaced as diagnostics, so they
-  /// have to degrade quietly.
   static Preset? parse(String value) {
     for (final preset in Preset.values) {
       if (preset.name == value) return preset;
@@ -438,7 +304,6 @@ enum Preset {
     return null;
   }
 
-  /// Whether [ruleName] is enabled by this preset.
   bool enables(String ruleName) => switch (this) {
     Preset.none => false,
     Preset.core => coreRules.contains(ruleName),
@@ -447,7 +312,6 @@ enum Preset {
     Preset.pedantic => pedanticRules.contains(ruleName),
   };
 
-  /// Built-in rule options supplied by this preset.
   Map<String, Object?> optionsFor(String ruleName) => switch (this) {
     Preset.pedantic => pedanticRuleOptions[ruleName] ?? const {},
     _ => const {},

@@ -1,37 +1,18 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 
-/// A utility to check if a Dart type or element matches a specific type.
-///
-/// This is a simplified replacement for `TypeChecker` from custom_lint_builder.
 class TypeChecker {
-  /// Creates a type checker that matches a type by its name and package.
-  ///
-  /// Use this when checking for types from external packages.
-  /// Example: `TypeChecker.fromName('Widget', packageName: 'flutter')`
-  ///
-  /// Omitting [packageName] matches a type of that name from **any** library.
-  /// That is only appropriate for user-supplied configuration, where the type
-  /// may live in the analyzed package itself and has no package URI to pin
-  /// against. Rules in this package should always pass a package.
   const TypeChecker.fromName(this._name, {String? packageName})
     : _packageName = packageName,
       _url = null,
       _checkers = null;
 
-  /// Creates a type checker that matches a type by its full URL.
-  ///
-  /// Use this for dart: core types or when you need precise matching.
-  /// Example: `TypeChecker.fromUrl('dart:core#Iterable')`
   const TypeChecker.fromUrl(String url)
     : _url = url,
       _name = null,
       _packageName = null,
       _checkers = null;
 
-  /// Creates a type checker that matches if any of the given checkers match.
-  ///
-  /// Useful for checking against multiple possible types.
   const TypeChecker.any(this._checkers)
     : _name = null,
       _packageName = null,
@@ -42,7 +23,6 @@ class TypeChecker {
   final String? _url;
   final List<TypeChecker>? _checkers;
 
-  /// Checks if [element] is exactly the type this checker represents.
   bool isExactly(Element element) {
     if (_checkers != null) {
       return _checkers.any((c) => c.isExactly(element));
@@ -57,7 +37,6 @@ class TypeChecker {
     return element.name == _name && _isFromPackage(element);
   }
 
-  /// Checks if [type] is exactly the type this checker represents.
   bool isExactlyType(DartType type) {
     if (_checkers != null) {
       return _checkers.any((c) => c.isExactlyType(type));
@@ -67,7 +46,6 @@ class TypeChecker {
     return isExactly(type.element);
   }
 
-  /// Checks if [element] is a subtype of the type this checker represents.
   bool isSuperOf(Element element) {
     if (_checkers != null) {
       return _checkers.any((c) => c.isSuperOf(element));
@@ -75,10 +53,8 @@ class TypeChecker {
 
     if (element is! InterfaceElement) return false;
 
-    // Check the element itself
     if (isExactly(element)) return true;
 
-    // Check all supertypes
     for (final supertype in element.allSupertypes) {
       if (isExactlyType(supertype)) return true;
     }
@@ -86,7 +62,6 @@ class TypeChecker {
     return false;
   }
 
-  /// Checks if [type] is assignable from the type this checker represents.
   bool isAssignableFromType(DartType type) {
     if (_checkers != null) {
       return _checkers.any((c) => c.isAssignableFromType(type));
@@ -94,10 +69,8 @@ class TypeChecker {
 
     if (type is! InterfaceType) return false;
 
-    // Check the type itself
     if (isExactlyType(type)) return true;
 
-    // Check all supertypes
     for (final supertype in type.element.allSupertypes) {
       if (isExactlyType(supertype)) return true;
     }
@@ -109,7 +82,6 @@ class TypeChecker {
     if (_url == null) return false;
     if (element is! InterfaceElement) return false;
 
-    // Parse URL like 'dart:core#Iterable' or 'package:flutter/widgets.dart#Widget'
     final hashIndex = _url.indexOf('#');
     if (hashIndex < 0 || hashIndex == _url.length - 1) return false;
 
@@ -123,18 +95,15 @@ class TypeChecker {
   }
 
   bool _isFromPackage(InterfaceElement element) {
-    // No package pin: match the name wherever it is declared, including in the
-    // analyzed package itself (which has no `package:` URI here).
+    // Edge case: the analyzed package itself has no `package:` URI to match
     if (_packageName == null) return true;
 
     final libraryUri = element.library.identifier;
 
-    // Check for dart: libraries
     if (_packageName == 'dart') {
       return libraryUri.startsWith('dart:');
     }
 
-    // Check for package: libraries
     return libraryUri.startsWith('package:$_packageName/');
   }
 }

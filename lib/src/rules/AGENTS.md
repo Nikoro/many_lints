@@ -1,5 +1,7 @@
 # Lint Rules — Quick Reference
 
+**Comments:** rules carry no doc comments and practically no comments; follow the [comment policy](../../../AGENTS.md#comments) (`comment_gate`, see `~/Projects/comment_gate` README; project config to come).
+
 This directory contains lint rule implementations. Each rule extends `ManyLintsRule` (this package's `AnalysisRule` subclass) and uses the `SimpleAstVisitor` pattern.
 
 **Full implementation guides:** [rules-patterns.md](../../../.agents/skills/new-lint/rules-patterns.md) | [rules-recipes.md](../../../.agents/skills/new-lint/rules-recipes.md)

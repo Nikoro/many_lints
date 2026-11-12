@@ -19,8 +19,7 @@ class ModuleBoundary {
       ..sort((a, b) => b.length.compareTo(a.length));
     for (final root in matches) {
       final segments = path.substring(root.length + 1).split('/');
-      // Edge case: `src` below a root is pub's private implementation
-      // directory, not a feature module.
+      // Edge case: `src` below a root is pub's private implementation directory
       if (segments.length < 2 || segments.first == 'src') return null;
       final directory = '$root/${segments.first}';
       return ModuleBoundary(directory, '$directory/${segments.first}.dart');
