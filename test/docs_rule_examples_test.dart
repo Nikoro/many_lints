@@ -7,35 +7,6 @@ import 'package:test/test.dart';
 import 'fix_harness.dart';
 import 'fpdart_stub.dart';
 
-/// Runs the `## Don't` snippet from every rule documentation page through a
-/// real `PluginServer` and asserts the rule that page documents actually
-/// reports on it.
-///
-/// Nothing else checks this. `tool/verify_documentation.dart` proves a snippet
-/// *parses* — and it tries eleven wrapper contexts until one sticks, so
-/// `int _useData() => useState(42);` sails through despite `useState` returning
-/// `ValueNotifier<int>`. A page can therefore present, as its canonical bad
-/// example, code the rule does not report at all. That is the worst failure a
-/// lint page has: the reader calibrates on it and never recognises the real
-/// thing.
-///
-/// A full read-audit in 2026-08 found this class of drift on live pages:
-///
-/// - `avoid_unmodified_loop_condition` showed `while (i < items.length)` while
-///   its own "Known limitations" said a condition reading a property is opaque
-///   and never reported. The page contradicted itself; the rule bails on
-///   `hasOpaqueRead`.
-/// - `avoid_deep_widget_nesting` showed a tree commented "9 levels in" that is
-///   eight widgets deep, at the documented default `max_depth: 8`.
-/// - `require_atomic_async_updates` showed a body with no field read *before*
-///   the await, which is the only shape the rule tracks.
-///
-/// This is the rule-page counterpart of `docs_assist_examples_test.dart`, which
-/// does the same job for the assists page.
-///
-/// **Adding a rule page:** nothing to do. The page is picked up automatically
-/// and its Don't block is expected to report. If it legitimately cannot be
-/// checked here, add it to [_unenforceable] with the reason.
 void main() {
   late FixHarness harness;
 
@@ -50,9 +21,7 @@ void main() {
 
   final pages = _rulePages();
 
-  test('rule pages were found', () {
-    // A guard against the glob silently matching nothing — a moved docs tree
-    // would otherwise make this whole suite vacuously green.
+  test('the docs glob still finds the rule pages', () {
     expect(pages, hasLength(greaterThan(200)));
   });
 
@@ -69,9 +38,6 @@ void main() {
   }
 
   test('coverage is not silently shrinking', () {
-    // The suite is only worth as much as the number of pages it actually
-    // drives. Without this, stubbing gaps could swallow page after page and
-    // the run would stay green while checking almost nothing.
     expect(
       checkable,
       hasLength(greaterThanOrEqualTo(_minimumCheckedPages)),
@@ -112,17 +78,8 @@ void main() {
   }
 }
 
-/// The floor for how many pages this suite drives, raised as stubs grow.
-///
-/// 171 of 264 pages are checked today. The rest are skipped for reasons
-/// [_skipReason] names out loud, and the `coverage` test prints every one, so
-/// the gap is visible rather than implied. Most are rules keyed to Flutter,
-/// Riverpod, Bloc or hooks types the stubs do not carry: widening a stub moves
-/// pages from skipped to checked and this number goes up. Lowering it means
-/// coverage shrank, and needs a reason.
 const _minimumCheckedPages = 171;
 
-/// Why [page] cannot be driven through the harness, or null when it can.
 String? _skipReason(_Page page) {
   if (_unenforceable.containsKey(page.rule)) return _unenforceable[page.rule];
 
@@ -132,12 +89,7 @@ String? _skipReason(_Page page) {
   final unstubbed = _unstubbedPackage(snippet);
   if (unstubbed != null) return 'needs a package:$unstubbed stub';
 
-  // Two conditions, because either alone is wrong. Rule-source alone skips
-  // pages that resolve fine against the stub (`avoid_catch_error` keys on
-  // `dart:async#Future`, and merely imports a helper that mentions Flutter).
-  // Snippet alone misses rules like `prefer_padding_over_container`, whose
-  // Don't block names only `Container`, a type the stub does carry — while the
-  // rule needs `EdgeInsets`, which it does not.
+  // Edge case: either check alone is wrong; rule source over-skips, the snippet misses EdgeInsets
   if (_needsRealFlutter(page.rule) && _beyondFlutterStub.hasMatch(snippet)) {
     return 'rule keys on package:flutter types the stub does not carry';
   }
@@ -145,7 +97,9 @@ String? _skipReason(_Page page) {
   final ghost = _undeclaredStandIn(snippet);
   if (ghost != null) return 'uses undeclared `$ghost`';
 
-  final match = _beyondMockSdk.firstMatch(_codeOnly(snippet));
+  final match = _beyondMockSdk.firstMatch(
+    _withStringsAndCommentsBlanked(snippet),
+  );
   final missing = match?.group(1) ?? match?.group(2);
   if (missing != null) return '`$missing` is absent from the mock SDK';
 
@@ -156,12 +110,7 @@ String? _skipReason(_Page page) {
   return null;
 }
 
-/// Rules whose Don't block cannot be driven through the harness, with the
-/// reason. Keep this list short and justified — every entry is a page nothing
-/// verifies.
 const _unenforceable = <String, String>{
-  // Reports on the path of the file being analysed, not on its content, so a
-  // snippet in a fixed `lib/test.dart` can never trigger it.
   'match_lib_folder_structure': 'diagnoses the file path, not the source',
   'prefer_match_file_name': 'diagnoses the file path, not the source',
   'prefer_correct_test_file_name': 'diagnoses the file path, not the source',
@@ -170,8 +119,6 @@ const _unenforceable = <String, String>{
       'needs module paths; covered by require_module_barrel_test.dart',
   'prefer_module_barrel_imports':
       'needs sibling modules; covered by prefer_module_barrel_imports_test.dart',
-  // Config-only rules: silent until a project names what is banned, so the
-  // documented Don't block is correct but needs that page's own YAML.
   'avoid_banned_names': 'config-only; needs the page\'s own entries',
   'avoid_banned_types': 'config-only; needs the page\'s own entries',
   'avoid_banned_imports': 'config-only; needs the page\'s own entries',
@@ -183,7 +130,6 @@ const _unenforceable = <String, String>{
   'match_class_name_pattern': 'config-only; needs the page\'s own pattern',
 };
 
-/// A rule documentation page and the pieces of it this suite reads.
 class _Page {
   _Page({
     required this.path,
@@ -198,23 +144,14 @@ class _Page {
   final String rule;
   final String? dontSnippet;
 
-  /// The `many_lints.yaml` block the page documents, when it shows one.
-  ///
-  /// Several rules are silent until configured — `map_keys_ordering` bails on
-  /// `if (configured is! String) return;` — so running their example without
-  /// the page's own YAML would report nothing and look like a broken example.
-  /// Taking the config from the page also means the snippet is checked against
-  /// the configuration the page actually advertises.
   final String? config;
 
   final bool needsFlutter;
   final bool needsFpdart;
 }
 
-/// The `title:` in a page's frontmatter is the rule name.
 final _title = RegExp(r'^title:\s*(\S+)\s*$', multiLine: true);
 
-/// The first ```dart fence under a `## Don't` heading, up to the next heading.
 final _dontSection = RegExp(
   r"^## Don't\s*$(.*?)^## ",
   multiLine: true,
@@ -261,14 +198,6 @@ List<_Page> _rulePages() {
   return pages;
 }
 
-/// The `# many_lints.yaml` block a page documents for its own rule.
-///
-/// Pages show the same options twice — once nested under `many_lints:` for
-/// `analysis_options.yaml`, once at the top level for `many_lints.yaml`. Only
-/// the latter is wanted, and only when it configures this page's rule.
-/// Pages carry several such blocks — one just switching the rule on, one
-/// showing its options. The richest is the one worth running, and `enabled:
-/// true` is appended so an options-only block still turns the rule on.
 String? _documentedConfig(String source, String rule) {
   String? best;
   for (final match in RegExp(
@@ -278,17 +207,10 @@ String? _documentedConfig(String source, String rule) {
   ).allMatches(source)) {
     final block = match.group(1)!;
     if (!block.contains('$rule:')) continue;
-    // Skip the `false` blocks that show how to turn the rule back off.
     if (RegExp('$rule:\\s*false').hasMatch(block)) continue;
-    // Prefer the richest block: one setting an option exercises more of the
-    // rule than a bare `enabled: true`.
     if (best == null || block.length > best.length) best = block;
   }
 
-  // A page whose example only makes sense under a particular setting says so
-  // in prose beside it — "With `max_imports: 5`". That inline value wins over
-  // the Options section, so the printed number and the checked behaviour are
-  // the same thing rather than two claims that can drift apart.
   final inline = RegExp(
     r'With\s+`([a-z_]+):\s*([^`]+)`',
   ).firstMatch(_dontPreamble(source));
@@ -299,15 +221,13 @@ String? _documentedConfig(String source, String rule) {
 
   if (best == null) return null;
 
-  // `<rule>: true` is a complete block already; an options map needs the flag
-  // adding, since supplying a config replaces the default `enabled: true`.
+  // Edge case: a supplied config replaces the default enabled: true, so options maps need the flag
   if (RegExp('$rule:\\s*true').hasMatch(best)) return best;
   if (best.contains('enabled:')) return best;
 
   return best.replaceFirst('$rule:\n', '$rule:\n    enabled: true\n');
 }
 
-/// The prose between the `## Don't` heading and its first code fence.
 String _dontPreamble(String source) {
   final section = _dontSection.firstMatch(source)?.group(1) ?? '';
   final fence = section.indexOf('```');
@@ -328,23 +248,8 @@ bool _mentionsFpdart(String? snippet) =>
       r'Unit|unit)\b',
     ).hasMatch(snippet);
 
-/// Packages a snippet may lean on that the harness has no stub for.
-///
-/// A rule that matches types from an unstubbed package cannot report, so
-/// asserting on it would fail for a reason that has nothing to do with the
-/// page. Those pages are skipped loudly rather than failed quietly — see the
-/// `unverifiable` test, which prints the list so it cannot grow unnoticed.
 const _unstubbed = <String, String>{
-  // `\w*Notifier` rather than `\bNotifier\b`: a page naming its own
-  // `MyNotifier` still needs the real `Notifier` supertype for
-  // `notifierChecker` to match, and matching only the bare word let such a
-  // page through to fail for a missing stub rather than be skipped.
-  // Anchored on Riverpod's own constructors rather than on any identifier
-  // ending in "Provider": the loose spelling matched a local named
-  // `networkDataProvider` in an unrelated page and skipped it silently, so the
-  // page looked verified while nothing ran it — and its author renamed a
-  // perfectly good identifier to get back into coverage. The harness must not
-  // dictate what documentation may call things.
+  // Edge case: anchored on Riverpod constructors, a loose *Provider match skipped pages silently
   'riverpod':
       r'@riverpod|\w*Notifier\b|\bRef\b|\bWidgetRef\b|'
       r'ConsumerWidget|ConsumerState|ProviderScope|\bref\.|\bAsyncValue\b|'
@@ -370,32 +275,7 @@ String? _unstubbedPackage(String? snippet) {
   return null;
 }
 
-/// The first identifier a snippet leans on without declaring it, or null.
-///
-/// This matters more than it looks. Most rules gate on a resolved type —
-/// `avoid_catch_error` checks `node.realTarget?.staticType` against
-/// `dart:async#Future` — so a receiver that resolves to nothing makes the rule
-/// correctly stay silent, and an assertion would be blaming the page for
-/// missing context rather than for its content.
-///
-/// It is also the machine-checkable form of the "ghost helper" complaint: a
-/// snippet calling `repository.fetch()` with no `repository` in sight is
-/// exactly what a reader cannot follow either.
-///
-/// Declaration is read from the snippet itself rather than matched against a
-/// list of suspicious names. A fixed page that declares its own `client` must
-/// start being checked again — a name-based list would keep skipping it, and
-/// the skip is silent, so the page would look repaired while nothing verified
-/// it.
-/// [source] with string literals and comments blanked out.
-///
-/// Identifier heuristics must not read prose. A URL in a string —
-/// `'https://api.example.com'` — contains `api`, and matching it skipped a
-/// page whose Dart was perfectly well formed. The skip is silent, so the page
-/// looked verified while nothing ran it, and the author "fixed" it by changing
-/// the documentation to suit the harness. Blanking rather than deleting keeps
-/// every offset intact.
-String _codeOnly(String source) => source
+String _withStringsAndCommentsBlanked(String source) => source
     .replaceAll(RegExp(r'//[^\n]*'), '')
     .replaceAll(
       RegExp(
@@ -408,7 +288,7 @@ String _codeOnly(String source) => source
     .replaceAll(RegExp(r'"(?:\\.|[^"\\\n])*"'), '""');
 
 String? _undeclaredStandIn(String rawSnippet) {
-  final snippet = _codeOnly(rawSnippet);
+  final snippet = _withStringsAndCommentsBlanked(rawSnippet);
   const seeds = {
     'repository',
     'logger',
@@ -431,8 +311,6 @@ String? _undeclaredStandIn(String rawSnippet) {
 
   for (final seed in seeds) {
     if (!RegExp('(?<![.\\w\$])$seed(?![\\w\$])').hasMatch(snippet)) continue;
-    // Declared as a variable, parameter, field, function or class in the
-    // snippet? Then it resolves, and the page is checkable.
     final declared = RegExp(
       '(?:'
       r'(?:final|var|const|late)\s+(?:[\w<>,?\[\] ]+\s+)?'
@@ -451,10 +329,6 @@ String? _undeclaredStandIn(String rawSnippet) {
   return null;
 }
 
-/// Whether the rule's own source pins `package:flutter` types.
-///
-/// Read from `lib/src/rules/<rule>.dart` rather than guessed from the snippet,
-/// so a rule whose example never names a widget is still recognised.
 bool _needsRealFlutter(String rule) {
   final source = File('lib/src/rules/$rule.dart');
   if (!source.existsSync()) return false;
@@ -462,11 +336,6 @@ bool _needsRealFlutter(String rule) {
 
   if (_pinsFlutter(text)) return true;
 
-  // Most Flutter rules never name the package: they import a shared checker
-  // file and use `containerChecker` and friends, each declared with
-  // `packageName: 'flutter'`. Following those imports one level is what makes
-  // the difference between skipping 14 pages and skipping the 60 that really
-  // cannot run against the stub.
   for (final match in RegExp(
     r"""import\s+'(?:\./)?\.\./([a-z_]+\.dart)'""",
   ).allMatches(text)) {
@@ -482,11 +351,6 @@ bool _pinsFlutter(String source) =>
     source.contains('package:flutter') ||
     source.contains("packageName: 'flutter'");
 
-/// Flutter types the minimal stub does not carry.
-///
-/// `flutterWidgets` in the harness declares a handful — Widget, Text, ListView
-/// and friends. A snippet naming anything else cannot resolve, so the rule
-/// stays silent for want of a type rather than because the example is wrong.
 final _beyondFlutterStub = RegExp(
   r'\b(Colors?|Sliver\w+|Theme\w*|Navigator|MediaQuery|Scaffold|AppBar|Icon\w*|'
   r'Image|Border\w*|BoxDecoration|Decoration|Align|Center|Expanded|Flexible|'
@@ -498,24 +362,10 @@ final _beyondFlutterStub = RegExp(
   r'Wrap|Flex|Stack|InkWell|RichText|TextSpan|WidgetsBinding)\b',
 );
 
-/// Members `analyzer_testing`'s mock SDK does not declare.
-///
-/// The mock SDK is a hand-written subset, not the real one: it has
-/// `abstract class Future` but no `ignore()`, for instance. A rule keyed to a
-/// member that is missing there can never fire, so the snippet is skipped
-/// rather than blamed. Verified by probing the harness directly, not assumed —
-/// each entry here failed a minimal reproduction that should have reported.
 final _beyondMockSdk = RegExp(
   r'\.(ignore)\(|\b(StreamController|ReceivePort)\b',
 );
 
-/// Declarations prepended to every snippet, so the commonest stand-ins resolve.
-///
-/// These are the names pages reach for as generic sample data. Declaring them
-/// is strictly better than skipping the page: a skipped page is unverified,
-/// while a declared name lets the rule resolve types and actually run. Keep
-/// this to genuinely generic names — anything domain-specific belongs in the
-/// page itself.
 const _preamble = '''
 final List<String> items = <String>[];
 final List<String> users = <String>[];
@@ -525,17 +375,6 @@ void handle(Object? value) {}
 void doWork() {}
 ''';
 
-/// Wraps a snippet so it stands a chance of resolving, returning null when no
-/// wrapping makes it a valid library.
-///
-/// Pages show fragments at whatever level reads best — a bare expression, a
-/// statement, a method body, a whole class — so several framings are tried and
-/// the first that parses wins. This mirrors `_parsesInDocumentedContext` in
-/// `tool/verify_documentation.dart`; the difference is that this suite then
-/// goes on to demand a diagnostic, which is the part that catches drift.
-///
-/// Imports are always prepended: an unused import is harmless, a missing one
-/// silences the rule and makes the assertion vacuous.
 String? _wrap(String snippet, _Page page) {
   final imports = StringBuffer();
   if (page.needsFlutter) {
@@ -543,16 +382,13 @@ String? _wrap(String snippet, _Page page) {
   }
   if (page.needsFpdart) imports.writeln("import 'package:fpdart/fpdart.dart';");
 
-  // A snippet may carry its own imports — `max_imports` is about nothing else.
-  // They have to lead the library, ahead of the preamble's declarations, so
-  // they are lifted out rather than left where they would be a syntax error.
-  final own = <String>[];
+  final snippetImports = <String>[];
   final rest = <String>[];
   for (final line in snippet.trimRight().split('\n')) {
-    (line.trimLeft().startsWith('import ') ? own : rest).add(line);
+    (line.trimLeft().startsWith('import ') ? snippetImports : rest).add(line);
   }
-  imports.writeAll(own, '\n');
-  if (own.isNotEmpty) imports.writeln();
+  imports.writeAll(snippetImports, '\n');
+  if (snippetImports.isNotEmpty) imports.writeln();
 
   final body = rest.join('\n').trim();
   final candidates = <String>[
