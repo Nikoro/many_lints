@@ -7,19 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../ordering_check.dart';
 
-/// Warns when a constructor's field initializers are not in the same order as
-/// the fields they assign.
-///
-/// Unlike its ordering siblings this rule has a **useful default**: it matches
-/// the initializer list against the class's own field declaration order rather
-/// than against an alphabet. That order is already a decision the class made,
-/// so following it costs nothing and makes a missing initializer visible as a
-/// gap rather than as a name buried in a differently-ordered list.
-///
-/// Set `order: alphabetical` (or `by_length`, or
-/// `alphabetical_case_sensitive`) to sort by name instead. Initializers that
-/// are not plain field assignments — `super()`, `assert()`, a redirect — are
-/// skipped, since their position is fixed by the language or by intent.
 class InitializersOrdering extends ManyLintsRule {
   static const LintCode code = LintCode(
     'initializers_ordering',
@@ -64,27 +51,35 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final configured = rule.config.options['order'];
     if (configured is String) {
-      final mode = OrderingMode.parse(configured);
-      final index = firstUnorderedIndex(names, mode);
-      if (index != null) {
-        rule.reportAtNode(
-          assignments[index].fieldName,
-          arguments: [names[index]],
-        );
-      }
-      return;
+      _reportAgainstConfiguredOrder(assignments, names, configured);
+    } else {
+      _reportAgainstDeclarationOrder(node, assignments, names);
     }
+  }
 
-    // The default: follow the class's own field declaration order, which is a
-    // decision the class already made.
+  void _reportAgainstConfiguredOrder(
+    List<ConstructorFieldInitializer> assignments,
+    List<String> names,
+    String configured,
+  ) {
+    final index = firstUnorderedIndex(names, OrderingMode.parse(configured));
+    if (index == null) return;
+
+    rule.reportAtNode(assignments[index].fieldName, arguments: [names[index]]);
+  }
+
+  void _reportAgainstDeclarationOrder(
+    ConstructorDeclaration node,
+    List<ConstructorFieldInitializer> assignments,
+    List<String> names,
+  ) {
     final declared = _declaredFieldOrder(node);
     if (declared.isEmpty) return;
 
     final positions = <int>[];
     for (final name in names) {
       final position = declared.indexOf(name);
-      // An initializer for something the class does not declare as a field —
-      // an inherited field, a setter — has no position to compare.
+      // Edge case: an inherited field or a setter has no declared position to compare
       if (position < 0) return;
       positions.add(position);
     }
@@ -97,7 +92,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// The names of the fields the enclosing class declares, in source order.
   List<String> _declaredFieldOrder(ConstructorDeclaration node) {
     final body = node.parent;
     if (body is! BlockClassBody) return const [];

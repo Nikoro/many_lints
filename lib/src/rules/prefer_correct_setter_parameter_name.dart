@@ -6,17 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a setter's parameter is not named consistently.
-///
-/// A setter has exactly one parameter and its name appears nowhere but the
-/// body, so the only thing it communicates is which convention the file
-/// follows. When half the setters say `value` and half say `newValue` or `v`,
-/// a reader scanning a class of setters has to look at each one to be sure
-/// nothing else is going on.
-///
-/// The expected name is `value` by default, configurable through
-/// `parameter_name`. `allow_names` accepts additional spellings without
-/// replacing the default.
 class PreferCorrectSetterParameterName extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_correct_setter_parameter_name',
@@ -52,7 +41,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
     if (!node.isSetter) return;
-    // An override inherits its parameter name along with the signature.
+    // Edge case: an override inherits its parameter name along with the signature
     if (node.metadata.any((a) => a.name.name == 'override')) return;
 
     final parameters = node.parameters?.parameters;

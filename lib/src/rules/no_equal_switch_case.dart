@@ -6,16 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when two branches of a `switch` have identical bodies.
-///
-/// Repeating a body states the same outcome twice, and the two copies drift:
-/// one gets fixed and the other keeps the old behaviour, with nothing to show
-/// that they were ever meant to agree. Sharing the patterns
-/// (`case a || b => ...`) says the outcome is deliberately the same and can
-/// only ever change in one place.
-///
-/// A wildcard or `default` branch is compared like any other. An empty body is
-/// not: several empty cases in a row are how a fallthrough is written.
 class NoEqualSwitchCase extends ManyLintsRule {
   static const LintCode code = LintCode(
     'no_equal_switch_case',
@@ -56,17 +46,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     final seen = <String>{};
 
     for (final member in node.members) {
-      // An empty body is a fallthrough to the next case, not a duplicate.
+      // Edge case: an empty body falls through to the next case rather than duplicating it
       if (member.statements.isEmpty) continue;
 
-      // Neither a guarded case nor the catch-all can be merged into an `||`
-      // pattern: a guard belongs to its own pattern, and the catch-all has to
-      // stay last. In both, repeating a body is normal and intended.
       final isUnmergeable = switch (member) {
         SwitchDefault() => true,
-        SwitchPatternCase(:final guardedPattern) =>
-          guardedPattern.whenClause != null ||
-              guardedPattern.pattern is WildcardPattern,
+        SwitchPatternCase(:final guardedPattern) => _isUnmergeable(
+          guardedPattern,
+        ),
         _ => false,
       };
       if (isUnmergeable) continue;
@@ -83,15 +70,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final seen = <String>{};
 
     for (final member in node.cases) {
-      // A guarded case cannot be merged into an `||` pattern — each guard
-      // belongs to its own pattern — so repeating the body is the only way to
-      // write it.
-      if (member.guardedPattern.whenClause != null) continue;
-
-      // The catch-all is not mergeable either: it has to stay last, and
-      // folding a specific case into it would change which values it covers.
-      // Its body repeating an earlier one is normal and intended.
-      if (member.guardedPattern.pattern is WildcardPattern) continue;
+      if (_isUnmergeable(member.guardedPattern)) continue;
 
       final body = member.expression.toSource();
       if (!seen.add(body)) {
@@ -99,4 +78,9 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     }
   }
+
+  // Edge case: a guard belongs to its own pattern, and the catch-all has to stay last
+  bool _isUnmergeable(GuardedPattern guardedPattern) =>
+      guardedPattern.whenClause != null ||
+      guardedPattern.pattern is WildcardPattern;
 }

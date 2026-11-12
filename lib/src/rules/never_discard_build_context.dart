@@ -7,27 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when a `BuildContext` parameter is discarded by naming it `_`.
-///
-/// Discarding the context does not remove the need for one — it removes the
-/// *closest* one. The body then reaches for a `context` from an enclosing
-/// scope, and that context sits higher in the tree, so `Theme.of`,
-/// `MediaQuery.of` and `Navigator.of` resolve against the wrong element. The
-/// result is a value from the wrong subtree, or a lookup that throws once the
-/// outer element is deactivated.
-///
-/// This is easy to introduce with a builder whose context is not needed *yet*,
-/// and hard to spot later: the code compiles and usually appears to work.
-///
-/// **Bad:**
-/// ```dart
-/// Builder(builder: (_) => Text(Theme.of(context).toString()));
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// Builder(builder: (context) => Text(Theme.of(context).toString()));
-/// ```
 class NeverDiscardBuildContext extends ManyLintsRule {
   static const LintCode code = LintCode(
     'never_discard_build_context',
@@ -68,8 +47,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final name = node.name;
     if (name == null) return;
 
-    // Only a pure wildcard discards the parameter. `_context` is a private
-    // name, not a discard, and remains usable.
     if (!_isWildcard(name.lexeme)) return;
 
     final element = node.declaredFragment?.element;
@@ -79,8 +56,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtToken(name);
   }
 
-  /// Whether [lexeme] is made up only of underscores (`_`, `__`, ...), the
-  /// spellings Dart treats as a discard.
   static bool _isWildcard(String lexeme) =>
       lexeme.isNotEmpty && lexeme.split('').every((c) => c == '_');
 }

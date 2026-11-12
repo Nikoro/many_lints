@@ -7,15 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when several elements are added to a collection one at a time.
-///
-/// Two shapes are reported:
-///
-/// 1. A `for-in` loop whose only statement adds the loop variable —
-///    `for (final x in source) target.add(x);` is `target.addAll(source)`
-///    written out, with control flow the reader has to decode.
-/// 2. Consecutive `add` calls on the same receiver — `target.add(a);
-///    target.add(b);` is `target.addAll([a, b])`.
 class PreferAddAll extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_add_all',
@@ -55,13 +46,11 @@ class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitForStatement(ForStatement node) {
     final parts = node.forLoopParts;
-    // Only `for (final x in source)` — an indexed loop may skip or reorder.
     if (parts is! ForEachPartsWithDeclaration) return;
 
     final loopVariable = parts.loopVariable.declaredFragment?.element;
     if (loopVariable == null) return;
 
-    // The source must be an iterable we can hand to addAll directly.
     final iterableType = parts.iterable.staticType;
     if (iterableType == null) return;
     if (!_iterableChecker.isAssignableFromType(iterableType)) return;
@@ -73,13 +62,10 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (invocation is! MethodInvocation) return;
     if (invocation.methodName.name != 'add') return;
 
-    // A qualified target is required: `target.add(x)`, not a bare `add(x)`.
     final target = invocation.realTarget;
     if (target == null) return;
 
-    // `groups.putIfAbsent(keyOf(item), () => []).add(item)` distributes the
-    // source across a different target per iteration. There is no equivalent
-    // `addAll` call when the receiver itself depends on the loop variable.
+    // Edge case: a receiver built from the loop item is a different collection per iteration
     final targetVisitor = _ElementReferenceVisitor(loopVariable);
     target.accept(targetVisitor);
     if (targetVisitor.found) return;
@@ -87,8 +73,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final arguments = invocation.argumentList.arguments;
     if (arguments.length != 1) return;
 
-    // The argument must be the loop variable itself, unchanged. Anything
-    // else — `target.add(x.name)` — is a map, not a copy.
     final argument = arguments.first;
     if (argument is! SimpleIdentifier) return;
     if (argument.element != loopVariable) return;
@@ -96,19 +80,12 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(node);
   }
 
-  /// Returns the single statement of [body], unwrapping a one-statement
-  /// block.
   Statement? _soleStatement(Statement body) => switch (body) {
     Block(:final statements) when statements.length == 1 => statements.first,
     ExpressionStatement() => body,
     _ => null,
   };
 
-  /// Reports runs of consecutive `add` calls on the same receiver.
-  ///
-  /// `target.add(a); target.add(b);` is `target.addAll([a, b])`. A run is
-  /// broken by any other statement, so unrelated work between the calls
-  /// keeps them separate.
   @override
   void visitBlock(Block node) {
     String? runReceiver;
@@ -146,11 +123,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     flush();
   }
 
-  /// Returns the receiver of a lone `receiver.add(value)` statement.
-  ///
-  /// Only a stable receiver is returned: comparing by source is sound for an
-  /// identifier or property chain, but `list()..add(x)` or `map[k].add(x)`
-  /// may denote a different object on each call.
   ({String name, MethodInvocation invocation})? _addReceiver(
     Statement statement,
   ) {
@@ -165,7 +137,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (target == null) return null;
     if (!_isStableReceiver(target)) return null;
 
-    // Only collections: `add` exists on many unrelated types.
     final targetType = target.staticType;
     if (targetType == null) return null;
     if (!_iterableChecker.isAssignableFromType(targetType)) return null;
@@ -173,7 +144,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return (name: target.toSource(), invocation: invocation);
   }
 
-  /// Whether [expression] denotes the same object every time it appears.
   bool _isStableReceiver(Expression expression) => switch (expression) {
     SimpleIdentifier() => true,
     PrefixedIdentifier() => true,

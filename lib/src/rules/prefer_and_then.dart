@@ -7,30 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../fpdart_chain_call.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when `flatMap` ignores the value it is handed, which is what
-/// `andThen` is for.
-///
-/// fpdart declares `andThen` as literally `flatMap((_) => then())`, so this is
-/// not a behaviour change — it is the same call under the name that says what
-/// it does. A reader scanning a pipeline has to open the callback of every
-/// `flatMap` to learn whether the previous value matters; `andThen` answers
-/// that in the name.
-///
-/// Only the provably-ignored case is reported. A callback that reads its
-/// parameter has a real dependency on the previous step, and `andThen` throws
-/// that value away, so the check is by element rather than by the `_`
-/// spelling: a named-but-unused parameter is the same situation, and a used
-/// one is disqualifying whatever it is called.
-///
-/// **Bad:**
-/// ```dart
-/// resetter.reset().flatMap((_) => authRepository.logout());
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// resetter.reset().andThen(authRepository.logout);
-/// ```
 class PreferAndThen extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_and_then',
@@ -69,9 +45,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name != 'flatMap') return;
 
-    // Read from this node only: `readFpdartFlatMap` walks up the parent chain
-    // for an assist's cursor, and the enclosing chain is not what is being
-    // visited here.
+    // Edge case: the reader climbs to an enclosing flatMap for assists; that one has its own visit
     final call = readFpdartFlatMap(node);
     if (call == null || call.invocation != node) return;
 

@@ -58,6 +58,9 @@ class UserBuilder {
 }
 ```
 
+The calls are matched by name, not by the element they resolve to, so a
+project harness that re-exports `test` and `group` still counts.
+
 ### Extending the directories checked
 
 By default the rule looks at `test/`, `integration_test/` and `test_driver/`.

@@ -7,13 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when an `EdgeInsets` constructor can be replaced with a simpler one.
-///
-/// Detects cases where:
-/// - `EdgeInsets.fromLTRB` can be `EdgeInsets.all`, `.symmetric`, `.only`, or `.zero`
-/// - `EdgeInsets.only` can be `EdgeInsets.all`, `.symmetric`, or `.zero`
-/// - `EdgeInsets.symmetric` can be `EdgeInsets.all` or `.zero`
-/// - `EdgeInsets.all(0)` can be `EdgeInsets.zero`
 class PreferCorrectEdgeInsetsConstructor extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_correct_edge_insets_constructor',
@@ -98,7 +91,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final r = args[2].toSource();
     final b = args[3].toSource();
 
-    // All zero → EdgeInsets.zero
     if (_isZeroSource(l) &&
         _isZeroSource(t) &&
         _isZeroSource(r) &&
@@ -107,13 +99,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // All equal → EdgeInsets.all(v)
     if (l == t && t == r && r == b) {
       rule.reportAtNode(node, arguments: ['EdgeInsets.all($l)']);
       return;
     }
 
-    // Symmetric → EdgeInsets.symmetric(...)
     if (l == r && t == b) {
       final horizontal = !_isZeroSource(l);
       final vertical = !_isZeroSource(t);
@@ -136,7 +126,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // Check if .only would be simpler (some sides are zero)
     final hasLeft = !_isZeroSource(l);
     final hasTop = !_isZeroSource(t);
     final hasRight = !_isZeroSource(r);
@@ -187,7 +176,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final r = right ?? '0';
     final b = bottom ?? '0';
 
-    // All zero → EdgeInsets.zero
     if (_isZeroSource(l) &&
         _isZeroSource(t) &&
         _isZeroSource(r) &&
@@ -196,13 +184,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // All equal → EdgeInsets.all(v)
     if (l == t && t == r && r == b) {
       rule.reportAtNode(node, arguments: ['EdgeInsets.all($l)']);
       return;
     }
 
-    // Symmetric → EdgeInsets.symmetric(...)
     if (l == r && t == b) {
       final horizontal = !_isZeroSource(l);
       final vertical = !_isZeroSource(t);
@@ -243,13 +229,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     final h = horizontal ?? '0';
     final v = vertical ?? '0';
 
-    // Both zero → EdgeInsets.zero
     if (_isZeroSource(h) && _isZeroSource(v)) {
       rule.reportAtNode(node, arguments: ['EdgeInsets.zero']);
       return;
     }
 
-    // Both equal → EdgeInsets.all(v)
     if (h == v) {
       rule.reportAtNode(node, arguments: ['EdgeInsets.all($h)']);
     }

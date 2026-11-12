@@ -9,8 +9,6 @@ import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
-/// Warns when a class extending `Equatable` or using `EquatableMixin` does not
-/// include all of its declared instance fields in the `props` getter.
 class ListAllEquatableFields extends ManyLintsRule {
   static const LintCode code = LintCode(
     'list_all_equatable_fields',
@@ -54,27 +52,22 @@ class _Visitor extends SimpleAstVisitor<void> {
     final element = node.declaredFragment?.element;
     if (element == null) return;
 
-    // Check if the class extends Equatable or uses EquatableMixin
     if (!_equatableChecker.isSuperOf(element)) return;
 
     final body = node.body;
     if (body is! BlockClassBody) return;
 
-    // Collect all own non-static instance fields
     final ownFields = _collectOwnFields(element);
     if (ownFields.isEmpty) return;
 
-    // Find the props getter with a list literal body
     final propsGetter = _findPropsGetter(body);
     if (propsGetter == null) return;
 
     final listLiteral = _findPropsListLiteral(propsGetter);
     if (listLiteral == null) return;
 
-    // Extract field names referenced in the list literal
     final propsFieldNames = _extractPropsFieldNames(listLiteral);
 
-    // Find missing fields
     final missingFields = ownFields
         .where((f) => !propsFieldNames.contains(f))
         .toList();
@@ -84,8 +77,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Collects the names of all non-static instance fields declared directly
-  /// on this class (not inherited).
   static List<String> _collectOwnFields(ClassElement element) {
     final names = <String>[];
     for (final f in element.fields) {
@@ -96,7 +87,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return names;
   }
 
-  /// Finds the `props` getter in the class body.
   static MethodDeclaration? _findPropsGetter(BlockClassBody body) {
     for (final member in body.members) {
       if (member is MethodDeclaration &&
@@ -113,7 +103,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return expr is ListLiteral ? expr : null;
   }
 
-  /// Extracts field name identifiers from a list literal.
   static Set<String> _extractPropsFieldNames(ListLiteral listLiteral) {
     final collector = _IdentifierCollector();
     listLiteral.accept(collector);
@@ -121,7 +110,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Recursively collects all [SimpleIdentifier] names in an expression tree.
 class _IdentifierCollector extends RecursiveAstVisitor<void> {
   final Set<String> names = {};
 

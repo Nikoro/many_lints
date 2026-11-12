@@ -1,5 +1,4 @@
-// Ported from riverpod_lint (MIT, Copyright (c) 2023 Remi Rousselet).
-// See the NOTICE file at the repository root.
+// SPDX-FileCopyrightText: 2023 Remi Rousselet
 
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
@@ -10,26 +9,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
 
-/// Warns when a `@riverpod` class does not define a `build` method.
-///
-/// The generator turns the `build` method into the provider's create function.
-/// Without one, code generation fails with an error that points at the
-/// generated file rather than the class that caused it.
-///
-/// **BAD:**
-/// ```dart
-/// @riverpod
-/// class Counter extends _$Counter {} // LINT
-/// ```
-///
-/// **GOOD:**
-/// ```dart
-/// @riverpod
-/// class Counter extends _$Counter {
-///   @override
-///   int build() => 0;
-/// }
-/// ```
 class NotifierBuild extends ManyLintsRule {
   static const LintCode code = LintCode(
     'notifier_build',

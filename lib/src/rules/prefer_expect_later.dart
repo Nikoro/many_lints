@@ -7,21 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a `Future` is passed to `expect()` instead of `expectLater()`.
-///
-/// Not awaiting a `Future` passed to `expect` can lead to unexpected test
-/// results — the assertion may complete before the asynchronous operation
-/// finishes, silently passing.
-///
-/// **Bad:**
-/// ```dart
-/// expect(Future.value(1), completion(1));
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// await expectLater(Future.value(1), completion(1));
-/// ```
 class PreferExpectLater extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_expect_later',

@@ -8,22 +8,6 @@ import 'package:analyzer/dart/ast/token.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when an identifier is shorter or longer than the configured bounds.
-///
-/// A one-letter name outside a tiny scope forces the reader to hold a mapping
-/// the code never states, and a forty-character one is usually a sentence that
-/// belongs in a doc comment. Both bounds are house style, which is why this
-/// rule ships with generous defaults and an exception list rather than an
-/// opinion.
-///
-/// `min_length` defaults to 2 and `max_length` to 40. The conventional short
-/// names are exempt out of the box — loop counters, coordinates, the `e` of a
-/// catch clause. `allow_names` *replaces* that built-in set, and
-/// `additional_allow_names` extends it.
-///
-/// Only declarations this codebase controls are checked: locals, parameters,
-/// fields, top-level variables and their declarations. An override is skipped,
-/// since the name belongs to whoever declared it.
 class PreferCorrectIdentifierLength extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_correct_identifier_length',
@@ -53,7 +37,6 @@ class PreferCorrectIdentifierLength extends ManyLintsRule {
   }
 }
 
-/// The short names every codebase already uses without confusion.
 const _conventionalShortNames = {
   'i',
   'j',
@@ -90,7 +73,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   void _check(Token token) {
     final name = token.lexeme;
-    // A private name's underscore is a modifier, not part of its length.
     final bare = name.startsWith('_') ? name.substring(1) : name;
     if (bare.isEmpty) return;
 

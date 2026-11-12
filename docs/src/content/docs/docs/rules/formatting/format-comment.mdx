@@ -24,11 +24,13 @@ The value is not the punctuation itself but the discipline behind it: a fragment
 
 A great deal is deliberately exempt, because a comment is also where people legitimately put things that are not prose:
 
-- Anything a **tool** reads: `ignore:`, `TODO`, `FIXME`, `coverage:`.
+- A line whose first word a **tool** reads: `ignore`, `ignore_for_file`, `TODO`, `FIXME`, `HACK`, `NOTE`, `coverage`, `expect`. Only the first word is compared, so prose such as "part of what happened." is still prose.
 - A line that **is** a bare URL, a `{@template}` macro, or an indented code sample.
 - A **fenced code block** inside a doc comment.
 - A line opening on an **identifier** — backticked, `[bracketed]`, or bare. Capitalising `dart_frog` or `runApp` would falsify the name.
 - Every line but the first and last of a **block**, since only the first starts the sentence and only the last ends it.
+
+A sentence may end with `.`, `!`, `?` or `:` followed by closing backticks, quotes, parentheses, brackets, `*` or `_`, so `... (see §3.5).` and a sentence ending in a code span both pass.
 
 **See also:** [Effective Dart: documentation](https://dart.dev/effective-dart/documentation)
 

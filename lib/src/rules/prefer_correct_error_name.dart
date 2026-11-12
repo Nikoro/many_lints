@@ -7,22 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a class implementing `Exception` or extending `Error` is not
-/// named with the matching suffix.
-///
-/// Dart draws a real line between the two: an `Exception` is a condition the
-/// caller is expected to handle, an `Error` is a bug the caller should not
-/// catch. The name is where that distinction is visible at the call site — a
-/// reader deciding whether to write a `catch` should not have to open the
-/// declaration to find out which kind it is.
-///
-/// A class implementing `Exception` must end in `Exception`; one extending
-/// `Error` must end in `Error`. A class that is neither is never reported.
-///
-/// The two suffixes are configurable through `exception_suffix` and
-/// `error_suffix` for codebases that use their own vocabulary (`Failure` is
-/// the common one), and `allow_suffixes` accepts additional endings without
-/// replacing the default.
 class PreferCorrectErrorName extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_correct_error_name',
@@ -86,11 +70,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     );
   }
 
-  /// Whether [element] is an exception, an error, or neither.
-  ///
-  /// `Error` is checked first: `Error` itself does not implement `Exception`,
-  /// but a class can do both, and the stricter reading of "do not catch this"
-  /// is the one worth naming for.
   _ErrorKind? _kindOf(InterfaceElement element) {
     for (final type in element.allSupertypes) {
       final name = type.element.name;

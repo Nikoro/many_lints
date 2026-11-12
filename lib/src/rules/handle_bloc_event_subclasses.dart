@@ -9,28 +9,6 @@ import 'package:analyzer/error/error.dart';
 import '../bloc_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when a Bloc leaves one of its event subclasses without a handler.
-///
-/// `on<E>` registration is a runtime lookup, so an unregistered event type has
-/// no compile-time consequence: `add(MyEvent())` simply does nothing. No
-/// exception, no log, no state change — the feature silently does not work.
-///
-/// The gap usually appears later, when a new event class is added to a sealed
-/// hierarchy and the corresponding `on<E>` is forgotten. Because the compiler
-/// cannot see the omission, only a test that exercises that exact event will.
-///
-/// **Bad:**
-/// ```dart
-/// sealed class CounterEvent {}
-/// class Increment extends CounterEvent {}
-/// class Decrement extends CounterEvent {}
-///
-/// class CounterBloc extends Bloc<CounterEvent, int> {
-///   CounterBloc() : super(0) {
-///     on<Increment>(...); // `Decrement` is never handled
-///   }
-/// }
-/// ```
 class HandleBlocEventSubclasses extends ManyLintsRule {
   static const LintCode code = LintCode(
     'handle_bloc_event_subclasses',
@@ -76,27 +54,16 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final eventElement = eventType.element;
 
-    // Only a sealed hierarchy has a knowable set of subtypes. For an open base
-    // class a subtype may live in any library, so "every subtype" cannot be
-    // computed and a report would be guesswork.
     if (eventElement is! ClassElement || !eventElement.isSealed) return;
 
-    final subclasses = _directSubclassesOf(eventElement);
+    final subclasses = _sameLibrarySubtypesOf(eventElement);
     if (subclasses.isEmpty) return;
 
     final handled = _HandlerCollector();
     node.accept(handled);
 
     for (final subclass in subclasses) {
-      // A handler for the base type, or for an ancestor of this subclass,
-      // covers it — `on<CounterEvent>` handles every event.
-      final covered = handled.types.any(
-        (registered) =>
-            registered == subclass ||
-            subclass.allSupertypes.any((s) => s.element == registered),
-      );
-
-      if (!covered) {
+      if (!_isHandled(subclass, handled.types)) {
         rule.reportAtToken(
           node.namePart.typeName,
           arguments: [subclass.name ?? '?'],
@@ -105,7 +72,15 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// The event type argument of the `extends Bloc<E, S>` clause.
+  bool _isHandled(
+    InterfaceElement subclass,
+    Set<InterfaceElement> registeredTypes,
+  ) => registeredTypes.any(
+    (registered) =>
+        registered == subclass ||
+        subclass.allSupertypes.any((s) => s.element == registered),
+  );
+
   DartType? _eventTypeOf(ClassDeclaration node) {
     final superclass = node.extendsClause?.superclass;
     final typeArguments = superclass?.typeArguments?.arguments;
@@ -113,11 +88,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     return typeArguments?.firstOrNull?.type;
   }
 
-  /// The sealed subclasses of [element] declared in the same library.
-  ///
-  /// A sealed type may only be extended within its own library, so this is the
-  /// complete set.
-  List<InterfaceElement> _directSubclassesOf(ClassElement element) {
+  // Edge case: a sealed type is extended only inside its own library, so this set is complete
+  List<InterfaceElement> _sameLibrarySubtypesOf(ClassElement element) {
     return element.library.classes
         .where(
           (candidate) =>
@@ -128,7 +100,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Collects the type arguments of every `on<E>(...)` registration.
 class _HandlerCollector extends RecursiveAstVisitor<void> {
   final Set<InterfaceElement> types = {};
 

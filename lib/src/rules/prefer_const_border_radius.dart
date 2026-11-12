@@ -7,11 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when `BorderRadius.circular()` is used instead of
-/// `BorderRadius.all(Radius.circular())`.
-///
-/// `BorderRadius.circular` calls `BorderRadius.all(Radius.circular())` under
-/// the hood. Using the explicit form allows the expression to be const.
 class PreferConstBorderRadius extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_const_border_radius',
@@ -53,7 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    // BorderRadius.circular<TypeArgs>(...) is parsed as InstanceCreationExpression
     final constructorName = node.constructorName;
     if (constructorName.name?.name != 'circular') return;
     final staticType = node.staticType;
@@ -66,7 +60,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    // BorderRadius.circular(...) without type args is parsed as MethodInvocation
+    // Edge case: without type arguments the constructor call parses as a method call
     if (node.methodName.name != 'circular') return;
     final target = node.target;
     if (target is! SimpleIdentifier) return;

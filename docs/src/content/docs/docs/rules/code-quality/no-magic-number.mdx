@@ -114,6 +114,8 @@ const maximumStoredBytes = 100 * 1024 * 1024;
 
 **Tests.** A fixture's numbers are the test data, and naming each one buries the case it describes. Set `ignore_tests: false` to include them.
 
+**An integer and its double spelling are one number.** `17` and `17.0` match the same `allowed:` entry, and `-1` matches as written even though the parser sees a negated `1`. The diagnostic quotes the literal exactly as your file spells it.
+
 Two things this rule deliberately **does** still report: a `const` **constructor** argument — `const EdgeInsets.all(17)` still hides what 17 means, unless the type is in the ignore list — and seed or demo data. If a file *is* data, reach for [`exclude`](/many_lints/docs/configuration/#excluding-paths-per-rule) rather than weakening the rule.
 
 This rule is in the **`pedantic`** preset: what counts as magic is a house style, and in a Flutter codebase full of layout numbers the honest default is off.

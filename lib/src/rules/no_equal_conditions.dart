@@ -6,14 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when an `if`/`else if` chain tests the same condition twice.
-///
-/// The second test can never be reached: the first branch already took every
-/// case it would have matched. Whatever the repeated branch does is dead code,
-/// and the case it was meant to handle silently falls through to `else`.
-///
-/// It is a copy-paste result — a branch duplicated and its body edited while
-/// its condition was left alone.
 class NoEqualConditions extends ManyLintsRule {
   static const LintCode code = LintCode(
     'no_equal_conditions',
@@ -49,19 +41,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitIfStatement(IfStatement node) {
-    // Only start at the head of a chain, or every `else if` would be walked
-    // again as its own chain and report the same pair twice.
-    if (node.parent case IfStatement(
-      elseStatement: final elseBranch,
-    ) when identical(elseBranch, node)) {
-      return;
-    }
+    if (_isElseIfOfAnEnclosingChain(node)) return;
 
     final seen = <String>{};
 
     for (IfStatement? current = node; current != null;) {
-      // A pattern case (`if (x case ...)`) binds variables, so two spellings
-      // that read alike are not necessarily the same test.
+      // Edge case: an `if-case` binds variables, so two alike spellings may test different things
       if (current.caseClause != null) return;
 
       final condition = current.expression.toSource();
@@ -75,4 +60,9 @@ class _Visitor extends SimpleAstVisitor<void> {
       };
     }
   }
+
+  bool _isElseIfOfAnEnclosingChain(IfStatement node) => switch (node.parent) {
+    IfStatement(:final elseStatement) => identical(elseStatement, node),
+    _ => false,
+  };
 }

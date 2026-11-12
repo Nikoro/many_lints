@@ -7,18 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../file_name_utils.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when a file under `test/` that declares tests is not named
-/// `*_test.dart`.
-///
-/// `package:test` only runs files matching `*_test.dart`. A file named
-/// `user_repository_tests.dart` or `test_user_repository.dart` still compiles,
-/// still passes analysis, and is silently never executed — which is the worst
-/// failure mode a test can have, because the suite stays green by not running.
-///
-/// The rule reports only files that actually declare tests (a top-level
-/// `main` containing `test(...)`, `testWidgets(...)` or a `group(...)`), so
-/// the helpers, fixtures and robots that legitimately live under `test/`
-/// without being test files are left alone.
 class PreferCorrectTestFileName extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_correct_test_file_name',
@@ -76,8 +64,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (main == null || !_declaresTests(main)) return;
 
     final base = fileBaseName(path);
-    // Anchored at `main` rather than the unit: a diagnostic spanning the whole
-    // file underlines every line of it in an editor.
+    // Edge case: a diagnostic over the whole unit underlines every line in an editor
     rule.reportAtToken(main.name, arguments: [base]);
   }
 
@@ -100,12 +87,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Looks for a call to one of the `package:test` entry points.
-///
-/// Matched by name rather than by resolved element: `test` and `group` are
-/// top-level functions that a project may legitimately re-export through its
-/// own harness, and this rule's question is "does this file look like a test
-/// file", which the name answers on its own.
 class _TestCallFinder extends RecursiveAstVisitor<void> {
   static const _testFunctions = {
     'test',

@@ -7,27 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../ast_node_analysis.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when `BlocProvider.of(context)` or `RepositoryProvider.of(context)`
-/// is used instead of `context.read()` / `context.watch()` extensions.
-///
-/// Using context extensions is shorter, keeps the codebase consistent, and
-/// makes it less likely to overlook the `listen` parameter.
-///
-/// ## Example
-///
-/// ❌ Bad:
-/// ```dart
-/// final bloc = BlocProvider.of<CounterBloc>(context);
-/// final repo = RepositoryProvider.of<MyRepo>(context);
-/// final bloc = BlocProvider.of<CounterBloc>(context, listen: true);
-/// ```
-///
-/// ✅ Good:
-/// ```dart
-/// final bloc = context.read<CounterBloc>();
-/// final repo = context.read<MyRepo>();
-/// final bloc = context.watch<CounterBloc>();
-/// ```
 class PreferBlocExtensions extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_bloc_extensions',
@@ -71,7 +50,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (target is! SimpleIdentifier) return;
     if (!_targetClasses.contains(target.name)) return;
 
-    // Verify it resolves to flutter_bloc / bloc package
     final element = target.element;
     if (element == null) return;
     final library = element.library;
@@ -83,11 +61,9 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // Determine if listen: true is passed
     final hasListen = _hasListenTrue(node.argumentList);
     final extensionMethod = hasListen ? 'watch' : 'read';
 
-    // Build the type args string for the correction message
     final typeArgs = node.typeArguments?.toSource() ?? '';
 
     rule.reportAtNode(

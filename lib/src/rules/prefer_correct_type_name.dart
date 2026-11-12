@@ -7,27 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a type name is too short, too long, or does not start with a
-/// capital letter.
-///
-/// The SDK's `camel_case_types` covers the spelling of a type name but says
-/// nothing about its length, and length is where the two real failures live: a
-/// one-letter type (`class R`) that reads as a type *parameter* at the point
-/// of use, and a forty-character type that names its whole call chain.
-///
-/// The defaults are deliberately loose — 3 to 40 characters — so the rule
-/// reports only genuine outliers. Tighten them per project:
-///
-/// ```yaml
-/// rules:
-///   prefer_correct_type_name:
-///     min_length: 4
-///     max_length: 32
-///     ignored_names: [Id, Db]
-/// ```
-///
-/// Type *parameters* are exempt. `T`, `E` and `K`/`V` are the convention the
-/// SDK itself uses, and holding them to a minimum length would fight it.
 class PreferCorrectTypeName extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_correct_type_name',
@@ -93,8 +72,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final ignored = rule.config.stringListOption('ignored_names');
     if (ignored.contains(name)) return;
 
-    // A private type is still public within its library, so it is checked —
-    // but the underscore is not part of the name the reader judges.
     final bare = name.startsWith('_') ? name.substring(1) : name;
     if (bare.isEmpty) return;
 

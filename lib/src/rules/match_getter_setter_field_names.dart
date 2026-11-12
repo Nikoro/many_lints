@@ -6,21 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a getter and setter pair does not read and write the same field.
-///
-/// ```dart
-/// int get width => _width;
-/// set width(int value) => _height = value;   // writes the wrong field
-/// ```
-///
-/// This is the copy-paste bug that type checking cannot catch: both members
-/// compile, both have the right signature, and the mismatch only shows up as a
-/// value that will not stick. It is most common where a class has several
-/// similar pairs, which is exactly where it is hardest to spot by reading.
-///
-/// Only a pair whose bodies are a single field reference is considered — a
-/// getter that computes, or a setter that validates before assigning, has no
-/// single field to compare and is skipped rather than guessed at.
 class MatchGetterSetterFieldNames extends ManyLintsRule {
   static const LintCode code = LintCode(
     'match_getter_setter_field_names',
@@ -84,8 +69,8 @@ class _Visitor extends SimpleAstVisitor<void> {
       final setter = setters[name];
       if (setter == null) continue;
 
-      final read = _fieldRead(getter);
-      final written = _fieldWritten(setter);
+      final read = _singleFieldRead(getter);
+      final written = _singleFieldAssigned(setter);
       if (read == null || written == null) continue;
       if (read == written) continue;
 
@@ -93,8 +78,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// The single field a getter returns, or `null` when it computes anything.
-  String? _fieldRead(MethodDeclaration getter) {
+  String? _singleFieldRead(MethodDeclaration getter) {
     final expression = switch (getter.body) {
       ExpressionFunctionBody(:final expression) => expression,
       BlockFunctionBody(
@@ -107,8 +91,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     return _fieldName(expression);
   }
 
-  /// The single field a setter assigns, or `null` when it does anything else.
-  String? _fieldWritten(MethodDeclaration setter) {
+  String? _singleFieldAssigned(MethodDeclaration setter) {
     final expression = switch (setter.body) {
       ExpressionFunctionBody(:final expression) => expression,
       BlockFunctionBody(
@@ -119,14 +102,12 @@ class _Visitor extends SimpleAstVisitor<void> {
     };
 
     if (expression is! AssignmentExpression) return null;
-    // Only a plain `=` compares meaningfully: `??=` and `+=` read the field
-    // too, and their asymmetry with the getter can be deliberate.
+    // Edge case: `??=` and `+=` also read the field, so their asymmetry can be deliberate
     if (expression.operator.lexeme != '=') return null;
 
     return _fieldName(expression.leftHandSide);
   }
 
-  /// The name of a bare or `this.`-qualified field reference.
   String? _fieldName(Expression? expression) => switch (expression) {
     SimpleIdentifier(:final name) => name,
     PrefixedIdentifier(

@@ -8,26 +8,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../rule_config.dart';
 
-/// Warns when a class name does not match the configured pattern.
-///
-/// This is the general form of `use_class_prefix` and `use_class_suffix`: a
-/// project that wants `PascalCase` and nothing else, or wants every class in
-/// one folder to match `^[A-Z][A-Za-z]*Page$`, states it once as a regular
-/// expression rather than as a list of affixes.
-///
-/// **This rule reports nothing until configured.** Set `pattern` to a regular
-/// expression, which must match the whole name. Narrow it to a subtree with
-/// the per-rule `include`:
-///
-/// ```yaml
-/// rules:
-///   match_class_name_pattern:
-///     pattern: '[A-Z][A-Za-z0-9]*Page'
-///     include: ['lib/**/presentation/**']
-/// ```
-///
-/// An invalid pattern is ignored rather than throwing, like every other
-/// malformed option: a plugin cannot report a diagnostic against a YAML file.
 class MatchClassNamePattern extends ManyLintsRule {
   static const LintCode code = LintCode(
     'match_class_name_pattern',
