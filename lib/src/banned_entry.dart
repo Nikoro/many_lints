@@ -48,13 +48,19 @@ class BannedEntry {
   /// A project-specific explanation appended to the diagnostic, or `null`.
   final String? message;
 
-  const BannedEntry({
+  BannedEntry({
     required this.deny,
     required this.denyPatterns,
     required this.paths,
     required this.exceptPaths,
     required this.message,
-  });
+  }) : _pathGlobs = _compile(paths),
+       _exceptGlobs = _compile(exceptPaths);
+
+  /// [paths] and [exceptPaths] compiled once, since [appliesTo] runs for
+  /// every candidate identifier of every file.
+  final List<Glob> _pathGlobs;
+  final List<Glob> _exceptGlobs;
 
   /// Whether this entry has nothing to deny, in which case it is inert.
   bool get isEmpty => deny.isEmpty && denyPatterns.isEmpty;
@@ -82,18 +88,15 @@ class BannedEntry {
   /// `except:` cannot lift an unscoped one.
   bool appliesTo(String? relativePath) {
     if (relativePath == null) return paths.isEmpty;
-    if (_anyMatches(exceptPaths, relativePath)) return false;
+    if (_exceptGlobs.any((glob) => glob.matches(relativePath))) return false;
 
-    return paths.isEmpty || _anyMatches(paths, relativePath);
+    return paths.isEmpty ||
+        _pathGlobs.any((glob) => glob.matches(relativePath));
   }
 
-  static bool _anyMatches(List<String> globs, String relativePath) {
-    for (final pattern in globs) {
-      if (Glob('/', pattern).matches(relativePath)) return true;
-    }
-
-    return false;
-  }
+  static List<Glob> _compile(List<String> patterns) => [
+    for (final pattern in patterns) Glob('/', pattern),
+  ];
 }
 
 /// Reads the `banned:` list from [config].
@@ -176,8 +179,10 @@ BannedEntry? findBannedEntry({
   bool patterns = true,
 }) {
   for (final entry in entries) {
-    if (!entry.appliesTo(relativePath)) continue;
+    // The value test is cheap; the path globs are only worth matching for an
+    // entry that denies the value.
     if (!entry.matches(value, patterns: patterns)) continue;
+    if (!entry.appliesTo(relativePath)) continue;
 
     return entry;
   }

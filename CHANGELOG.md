@@ -142,6 +142,12 @@
   Constructors and static members are not inherited, but `deny: ['Random.new',
   'DateTime.now']` reported `FixedRandom(4)` for `class FixedRandom implements
   Random` and a subclass's own `FakeTime.now()` constructor.
+- `banned:` entries scoped with `in:` or `except:` no longer slow analysis
+  down. Each entry's globs were compiled again for every identifier checked,
+  and before the cheaper check whether the entry denies that name at all; a
+  6000-line file took 42 s with scoped entries against 30 s without. The
+  globs are now compiled once per entry and matched only for an entry that
+  denies the name.
 - `prefer_module_barrel_imports` allows an import of any of a package's
   `package_entry_points`; with `package:ext/ext.dart` and
   `package:ext/testing.dart` configured, `package:ext/testing.dart` was

@@ -387,4 +387,49 @@ rules:
       expect(messageSuffix(entry), ' Use B instead.');
     });
   });
+
+  group('findBannedEntry cost', () {
+    test('matches the value before the path globs', () {
+      final entry = _PathCountingEntry();
+
+      expect(
+        findBannedEntry(
+          entries: [entry],
+          value: 'allowed',
+          relativePath: 'lib/domain/user.dart',
+        ),
+        isNull,
+      );
+      expect(entry.pathChecks, 0);
+
+      expect(
+        findBannedEntry(
+          entries: [entry],
+          value: 'a',
+          relativePath: 'lib/domain/user.dart',
+        ),
+        same(entry),
+      );
+      expect(entry.pathChecks, 1);
+    });
+  });
+}
+
+class _PathCountingEntry extends BannedEntry {
+  _PathCountingEntry()
+    : super(
+        deny: {'a'},
+        denyPatterns: const [],
+        paths: const ['lib/domain/**'],
+        exceptPaths: const ['lib/domain/legacy/**'],
+        message: null,
+      );
+
+  int pathChecks = 0;
+
+  @override
+  bool appliesTo(String? relativePath) {
+    pathChecks++;
+    return super.appliesTo(relativePath);
+  }
 }
