@@ -31,7 +31,7 @@ Flutter's `State` lifecycle splits into two halves, and `super` goes on opposite
 - **`super` first** — `initState`, `didChangeDependencies`, `didUpdateWidget`, `activate`, `reassemble`. The framework sets up its own state before yours reads it.
 - **`super` last** — `deactivate`, `dispose`. Your cleanup runs while the framework's state is still there to clean up against.
 
-Getting it backwards is not always visible immediately: `super.dispose()` first tears down the element, and a controller disposed after it may throw only under a particular navigation. The quick fix moves the call to the right end.
+Getting it backwards is not always visible immediately. With `SingleTickerProviderStateMixin`, `super.dispose()` asserts that the ticker is no longer active, so calling it before `_controller.dispose()` throws in a debug build only when the widget goes away mid-animation. The quick fix moves the call to the right end.
 
 **See also:** [State.initState](https://api.flutter.dev/flutter/widgets/State/initState.html) | [State.dispose](https://api.flutter.dev/flutter/widgets/State/dispose.html)
 

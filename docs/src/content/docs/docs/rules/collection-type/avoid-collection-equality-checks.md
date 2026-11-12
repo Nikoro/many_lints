@@ -13,7 +13,7 @@ Flags `==` or `!=` where either side is a `List`, `Set`, `Map` or `Iterable`. Co
 
 ## Don't
 
-The comparison compiles and always answers `false`, so the branch it guards never runs:
+The comparison compiles but checks identity. For two separate lists `==` is always `false` and `!=` always `true`, whatever they contain:
 
 ```dart
 bool hasSelectionChanged(List<String> previous, List<String> current) {
@@ -21,7 +21,7 @@ bool hasSelectionChanged(List<String> previous, List<String> current) {
 }
 ```
 
-Here `hasSelectionChanged` returns `true` for every call — including when nothing changed — because `previous` and `current` are separate objects.
+Here `hasSelectionChanged` returns `true` whenever `previous` and `current` are separate objects, including when nothing changed.
 
 ## Do
 

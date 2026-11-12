@@ -24,7 +24,7 @@ This rule is in the **`opinionated`** preset.
 
 State that can be mutated in place changes without anything observing the change. A Riverpod notifier that assigns to a field of its own state, rather than replacing the state object, updates nothing: the reference is the same, so no listener rebuilds and no widget redraws.
 
-`@immutable` moves that failure to analysis time. The analyzer reports a non-final field where it is declared, instead of leaving the bug to surface as a screen that will not refresh.
+`@immutable` moves that failure to analysis time. The analyzer reports `must_be_immutable` on the class name, listing every non-final field, instead of leaving the bug to surface as a screen that will not refresh.
 
 This rule is deliberately state-management-agnostic: it covers Riverpod, a hand-rolled store, and any plain `...State` value object equally.
 
@@ -46,9 +46,9 @@ class LoginFormState {
 
 ## Do
 
-`@immutable` makes the analyzer report the non-final field where it is
-declared, instead of leaving the bug to surface as a screen that will not
-refresh:
+`@immutable` makes the analyzer report `must_be_immutable` on the class
+name, naming each non-final field, instead of leaving the bug to surface as a
+screen that will not refresh:
 
 ```dart
 import 'package:meta/meta.dart';

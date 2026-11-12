@@ -52,7 +52,7 @@ Future<Order> fetchOrder(String id) async => Order();
 class Order {}
 ```
 
-That is what the quick fix does when the offending clause is the only one and there is no `finally`. Otherwise it removes just that clause and leaves the rest of the `try` in place.
+That is what the quick fix does when the offending clause is the only one and there is no `finally`. Otherwise it removes just that clause and leaves the rest of the `try` in place. That keeps the behaviour only when no later clause catches the same exception: removing `on FormatException { rethrow; }` in front of a `catch (e)` sends a `FormatException` into that handler instead of out of the function.
 
 ### Or give the clause a reason to exist
 
@@ -146,7 +146,7 @@ With that set, `on FormatException { rethrow; }` is accepted and the untyped `ca
 
 The body must be exactly one statement, and that statement must be `rethrow;`. A body with a comment above the `rethrow` is still one statement and is still reported.
 
-Each clause is judged on its own, so a `try` with one real handler and one bare-rethrow clause reports the second — turn on `ignore_typed_catches` if that shape is intentional in your project.
+Each clause is judged on its own, so a `try` with one real handler and one bare-rethrow clause reports the second, even when that clause exists to keep an exception away from a broader handler below it. Removing such a clause, by hand or with the quick fix, changes which handler runs. Turn on `ignore_typed_catches` if that shape is intentional in your project.
 
 ## Options
 

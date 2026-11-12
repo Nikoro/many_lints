@@ -13,7 +13,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 This rule flags a class that could declare a `const` constructor but does not.
 
-A `const` constructor lets a value be built once at compile time and shared, rather than allocated at every call. In Flutter that is the difference between a widget the framework can skip rebuilding and one it cannot — which is why `prefer_const_constructors` is in every lint preset. But that rule only fires where a `const` constructor **already exists**; this one asks for the constructor in the first place.
+A `const` constructor lets a value be built once at compile time and shared, rather than allocated at every call. In Flutter that is the difference between a widget the framework can skip rebuilding and one it cannot. The SDK's `prefer_const_constructors` asks for `const` at the call site, but neither `package:lints` nor `flutter_lints` 6 enables it, and it only fires where a `const` constructor **already exists**; this rule asks for the constructor in the first place.
 
 This rule is in the **`pedantic`** preset.
 

@@ -16,7 +16,7 @@ This rule flags a `late` field inside a `State` whose initializer reads `context
 
 ## Why use this rule
 
-A `late` field initializes on first access. Inside a `State` that is usually during `build`, but nothing guarantees it — if the field is first touched from `initState`, the inherited-widget lookup runs before the element is mounted and throws.
+A `late` field initializes on first access. Inside a `State` that is usually during `build`, but nothing guarantees it — if the field is first touched from `initState`, the inherited-widget lookup runs before `initState` has completed, which Flutter rejects with an assertion error in debug builds.
 
 The quieter problem is worse. A `late` field initializes exactly **once**. A value derived from `Theme.of(context)` or `MediaQuery.of(context)` freezes at whatever it was on first access and then ignores every later change: a theme switch, a rotation, a locale change, a parent rebuilding with new data. The UI keeps rendering stale values with nothing to indicate why.
 
@@ -40,8 +40,8 @@ class _CardState extends State<Card> {
 }
 ```
 
-The same field read from `initState` fails harder — the element is not mounted
-yet, so the lookup throws:
+The same field read from `initState` fails harder: Flutter does not allow an
+inherited-widget lookup before `initState` completes, and a debug build throws:
 
 ```dart
 class _CardState extends State<Card> {

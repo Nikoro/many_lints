@@ -15,8 +15,8 @@ sidebar:
 
 Flags a variable declared with `var` instead of an explicit type annotation. `final` and `const` declarations are never reported — only the `var` keyword is.
 
-:::caution[Conflicts with an SDK rule you probably have enabled]
-The SDK rule [`omit_local_variable_types`](https://dart.dev/tools/linter-rules/omit_local_variable_types) mandates the **opposite** of this rule — it asks you to remove type annotations that inference can supply. It ships in `package:lints/recommended.yaml`, so most projects have it on by default.
+:::caution[Conflicts with an SDK rule]
+The SDK rule [`omit_local_variable_types`](https://dart.dev/tools/linter-rules/omit_local_variable_types) mandates the **opposite** of this rule — it asks you to remove type annotations that inference can supply. Neither `package:lints` nor `flutter_lints` enables it, but many projects turn it on by name, and some stricter shared rule sets include it.
 
 With both enabled you get contradictory diagnostics on every `var`. Pick one philosophy and disable the other:
 
@@ -41,8 +41,8 @@ String? findNickname(int userId) => null;
 
 void greet(int userId) {
   var nickname = findNickname(userId);
-  // `nickname` is String?, not String — nothing on this line says so.
-  print(nickname.length);
+  // `nickname` is String?, not String — nothing on the line above says so.
+  print(nickname?.length);
 }
 ```
 

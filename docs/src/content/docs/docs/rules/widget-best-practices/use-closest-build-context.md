@@ -63,7 +63,7 @@ class OrderPage extends StatelessWidget {
 
 ### Why it matters: the Scaffold case
 
-The commonest real bug this catches is `ScaffoldMessenger.of(context)` reaching above the `Scaffold` that was just built:
+The commonest real bug this catches is `Scaffold.of(context)` reaching above the `Scaffold` that was just built. (`ScaffoldMessenger.of` would work with either context, since `MaterialApp` provides the messenger above both.)
 
 ```dart
 // Don't — the outer context is above the Scaffold, so the lookup throws
@@ -72,8 +72,7 @@ Widget build(BuildContext context) {
   return Scaffold(
     body: Builder(
       builder: (inner) => TextButton(
-        onPressed: () =>
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hi'))),
+        onPressed: () => Scaffold.of(context).openDrawer(),
         child: const Text('Show'),
       ),
     ),
@@ -86,8 +85,7 @@ Widget build(BuildContext context) {
   return Scaffold(
     body: Builder(
       builder: (inner) => TextButton(
-        onPressed: () =>
-            ScaffoldMessenger.of(inner).showSnackBar(const SnackBar(content: Text('Hi'))),
+        onPressed: () => Scaffold.of(inner).openDrawer(),
         child: const Text('Show'),
       ),
     ),

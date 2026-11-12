@@ -16,11 +16,11 @@ sidebar:
 Warns when a class or mixin overrides a method, getter, or setter without adding any logic beyond calling `super`. This includes pass-through methods that forward all arguments unchanged, getters that only return `super.getter`, setters that only assign `super.setter`, and abstract redeclarations.
 
 :::note[Overlaps with an SDK rule]
-The SDK rule [`unnecessary_overrides`](https://dart.dev/tools/linter-rules/unnecessary_overrides) covers the **method** case. This rule extends it to getters, setters, operator overrides, and abstract redeclarations, which the SDK rule does not check.
+The SDK rule [`unnecessary_overrides`](https://dart.dev/tools/linter-rules/unnecessary_overrides) covers methods, getters, setters and operators (checked at Dart 3.14.0). This rule adds abstract redeclarations, which the SDK rule does not report.
 
 It applies the same exemptions as the SDK rule, so an override is **not** reported when it adds a documentation comment, an annotation other than `@override` (such as `@protected` or `@Deprecated`), or a `covariant` parameter — and `noSuchMethod` is never reported. These are legitimate reasons to override a member without changing its body.
 
-Enabling both rules means the method case is reported twice. If that bothers you, disable the SDK rule and keep this one for the wider coverage:
+Enabling both rules means every non-abstract case is reported twice. If that bothers you, disable the SDK rule and keep this one for the wider coverage:
 
 ```yaml
 # analysis_options.yaml
@@ -60,8 +60,8 @@ class _CartPageState extends State<CartPage> {
 
 ### Getters and setters
 
-The SDK's `unnecessary_overrides` stops at methods. This rule also reports the
-accessor forms, which is where they tend to accumulate:
+The accessor forms are reported too, by this rule and by the SDK's
+`unnecessary_overrides`:
 
 ```dart
 class TimestampedRepository extends BaseRepository {

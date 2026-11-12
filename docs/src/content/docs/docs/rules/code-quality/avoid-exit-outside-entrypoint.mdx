@@ -136,8 +136,9 @@ rules:
 ## Known limitations
 
 Only `dart:io`'s top-level `exit` is reported. The element is resolved, so a
-`Terminal().exit(3)` of your own, `Process.exit`, or a local function named
-`exit` are never flagged.
+`Terminal().exit(3)` of your own or a local function named `exit` is never
+flagged. (`dart:io` has no public `Process.exit`; `exit` is the only way
+there.)
 
 A file the analyzer cannot place relative to the package root is left alone
 rather than guessed at — reporting on an unclassifiable path risks flagging the
