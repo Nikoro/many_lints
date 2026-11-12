@@ -70,7 +70,7 @@ Filter by `state` before comparing: only `stable` and `deprecated` rules can dis
 
 ---
 
-### [GOTCHA] [CRITICAL] Dart 3.13.1–3.13.7 can exit before plugin diagnostics arrive (fixed in 3.14.0)
+### [GOTCHA] [CRITICAL] Dart 3.13.1–3.13.7 can exit before plugin diagnostics arrive (fixed in 3.14.0, but see #64023)
 **Area:** verifying any rule against a real project; CI gates
 **Tags:** `#gotcha` `#tooling` `#testing`
 **Verified:** 2026-08-27 (Dart 3.13.1 revision `852b3e3608`; Dart 3.13.2 revision `60a57cd42d`; re-checked 2026-10-09 on Dart 3.13.5 revision `04bcd1036c`, Flutter 3.47.7); fixed release verified 2026-11-11 (Dart 3.14.0 revision `fa8c1270c3`, Flutter 3.50.0)
@@ -83,11 +83,30 @@ A warm cache and a large real project make the race easier to lose: the first ma
 
 **Upstream fix, first shipped in Dart 3.14.0:** Dart SDK commit [`f0c0ab967e`](https://github.com/dart-lang/sdk/commit/f0c0ab967e9d3f85d73b3fcd13da29a0277daa01) (“[dartdev] Switch 'dart analyze' to use LSP instead of the legacy protocol”) switches `dart analyze` to LSP `workspaceAnalysisComplete()`. That handler waits for context rebuilds, analyzer-driver idle, plugin initialization, and finally `plugin.status == false`. SDK integration tests cover a plugin diagnostic even when the completion request is sent immediately after initialization. The commit is an ancestor of the `3.14.0` tag; the 3.13 stable branch diverged before it, so every 3.13 release through 3.13.7 still awaits `analysisFinished`. Evidence for 3.14.0: its [`analyze.dart`](https://github.com/dart-lang/sdk/blob/3.14.0/pkg/dartdev/lib/src/commands/analyze.dart) creates an `LspAnalysisServer` and awaits `workspaceAnalysisComplete()` before shutdown; the shipped `dartdev_aot.dart.snapshot` contains `dart/workspace/analysis/complete`; and on a 2420-file Flutter app a single bare `dart analyze --fatal-infos`, with no batching, reported its canary in 3 of 3 runs (on 3.13 the same app lost the canary above ~850 files). `flutter analyze` on Flutter 3.50.0 waits on the same request.
 
+**Not the end of it:** 3.14.0 fixes this early exit, not every lost diagnostic. See the next finding (dart-lang/sdk#64023). The 2026-11-11 conclusion that a single `dart analyze` needs no canary on 3.14.0 was wrong.
+
 **Consequences for this repo's workflow:**
 
-1. On Dart 3.14.0 and later, run a single `dart analyze`. No batching and no canary are needed.
-2. On Dart 3.13.1 through 3.13.7, batch explicit files well below the observed slow-project cliff (`git ls-files -z '*.dart' | xargs -0 -n 400 dart analyze --fatal-infos`) **and** keep a canary: a file that must produce a plugin diagnostic, proven alone, included in every batch, failing that batch when absent. Batching only narrows the race; the canary is the only deterministic guard on an affected SDK.
+1. On Dart 3.14.0 and later, no batching is needed for this race. Follow the next finding: one target, no inheriting nested packages, and a canary.
+2. On Dart 3.13.1 through 3.13.7, batch explicit files of one package well below the observed slow-project cliff (`git ls-files -z '*.dart' | xargs -0 -n 400 dart analyze --fatal-infos`) **and** keep a canary: a file that must produce a plugin diagnostic, proven alone, included in every batch, failing that batch when absent. Batching only narrows the race; the canary is the only deterministic guard on an affected SDK.
 3. **Do not diagnose a silent plugin from file count, cache state, or command shape.** Check the SDK version first.
+
+---
+
+### [GOTCHA] [CRITICAL] Dart 3.14 still drops plugin diagnostics when several plugin isolates run (dart-lang/sdk#64023)
+**Area:** verifying any rule against a real project; CI gates
+**Tags:** `#gotcha` `#tooling` `#testing`
+**Verified:** 2026-11-12 (Dart 3.14.0, Flutter 3.50.0; source checked at the `3.14.0` tag and on `main`)
+
+**Symptom:** on Dart 3.14.0, `dart analyze` reports every core lint but some or all Many Lints findings are missing, and the exit code reflects only what was reported. In Songbook, `dart analyze --fatal-infos lib test integration_test backend/tests/trials scripts/quality/architecture` lost every Many Lints finding, a canary included, in 3 of 3 runs; `dart analyze --fatal-infos .` reported all of them in 3 of 3. In a two-file package, `dart analyze lib test` lost one Many Lints finding in 2 of 13 runs while both SDK `unused_import` warnings always appeared; `dart analyze .` lost none in 14.
+
+**Cause:** the 3.14 `workspaceAnalysisComplete` handler waits for `server.notificationManager.pluginStatusAnalyzing` to become false. That is a single shared `bool` (`pkg/analysis_server/lib/src/plugin/notification_manager.dart`, line 81), but the server starts one plugin isolate per context root that has plugins. When one isolate goes idle the flag drops and the CLI can finish before another isolate's diagnostics arrive. Several targets mean several context roots; so does a nested directory with its own `pubspec.yaml` and no `analysis_options.yaml`, which inherits the parent's `plugins:` (verified on a temp fixture: `AnalysisContextCollection` makes it its own context root and the plugin reports there). Upstream: [#64023](https://github.com/dart-lang/sdk/issues/64023) (open, filed for 3.12 / plugin 0.3.20, flag unchanged in 3.14.0). Related: [#62710](https://github.com/dart-lang/sdk/issues/62710) (closed, said fixed for 3.14) and [#62690](https://github.com/dart-lang/sdk/issues/62690) (open). The rules run correctly; a plugin cannot fix the server's status aggregation from inside its rules.
+
+**Consequences:**
+
+1. Run `dart analyze` with exactly one target, the package or workspace root, and exclude what should not be analyzed in `analysis_options.yaml`.
+2. Give every nested package its own `analysis_options.yaml` without `plugins:` so it does not get a plugin isolate.
+3. Keep a canary in CI and fail when it is missing. Even with one target, a temp fixture with one plugin-enabled context root next to two plugin-free ones lost every Many Lints diagnostic in 1 of 10 runs, so the canary is still the only proof. Details and run counts: `TODO/plugin-silently-skipped-on-large-projects.md`.
 
 ---
 

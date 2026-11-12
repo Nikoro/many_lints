@@ -76,16 +76,35 @@ rules:
 > its own `analysis_options.yaml`, and the plugin then runs for that package only.
 > On earlier SDKs the analyzer ignores it with a `plugins_in_inner_options` warning,
 > so declare plugins in the workspace root `analysis_options.yaml` and keep each
-> member's file including it.
+> member's file including it. Every package whose options enable plugins gets its
+> own plugin isolate, so a workspace that does this is subject to the known issue
+> below.
 
-> **Fixed in Dart 3.14.0 (Flutter 3.50.0):** `dart analyze` now waits for plugin
-> diagnostics before it exits, so a single bare `dart analyze` reports every
-> Many Lints diagnostic, however large the project. Dart 3.13.1–3.13.7 are still
-> affected: there `dart analyze` can exit before plugin diagnostics arrive and
-> print `No issues found!`. On those SDKs, batch explicit files and include a
-> canary that must produce a Many Lints diagnostic in every batch; batching alone
-> only narrows the race. IDE diagnostics were never affected. See the
-> [upstream fix](https://github.com/dart-lang/sdk/commit/f0c0ab967e9d3f85d73b3fcd13da29a0277daa01).
+> **Known issue — `dart analyze` can drop plugin diagnostics:** Dart 3.14.0
+> (Flutter 3.50.0) fixes the 3.13 race in which `dart analyze` exited before
+> plugin diagnostics arrived
+> ([`f0c0ab967e`](https://github.com/dart-lang/sdk/commit/f0c0ab967e9d3f85d73b3fcd13da29a0277daa01)).
+> A second upstream bug remains open,
+> [dart-lang/sdk#64023](https://github.com/dart-lang/sdk/issues/64023): the server
+> starts one plugin isolate per context root that has plugins but tracks a single
+> shared "plugin analyzing" flag, so `dart analyze` can finish when one isolate goes
+> idle while another is still working. Core lints are still reported; Many Lints
+> findings silently go missing. The rules themselves run correctly. Until the SDK
+> fixes it:
+>
+> - Run `dart analyze` with exactly one target, the package or workspace root
+>   (`dart analyze .`), not a list of folders such as `lib test`. Exclude what
+>   should not be analyzed with `analyzer: exclude:` in `analysis_options.yaml`.
+> - Avoid nested packages that inherit `plugins:`. A directory with its own
+>   `pubspec.yaml` and no `analysis_options.yaml` inherits the parent options and
+>   gets its own plugin isolate; give it its own options file without `plugins:`.
+> - In CI, keep a canary: a file with a deliberately reported Many Lints diagnostic,
+>   and fail the job when it is missing. It is the only proof that plugin output
+>   arrived.
+>
+> Dart 3.13.1–3.13.7 also have the older race. There, batch explicit files of one
+> package and include the canary in every batch; batching alone only narrows the
+> race. IDE diagnostics are not affected by either issue.
 
 ### Presets
 

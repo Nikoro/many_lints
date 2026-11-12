@@ -689,15 +689,22 @@ Run the following commands from the project root to ensure everything works:
    sweep and confirm it appears in the output before trusting a zero: a run
    that analyzed nothing looks exactly like a clean one.
 
-   On Dart 3.14.0 and later, a single bare `dart analyze --fatal-infos` in
-   the target package is enough: it waits for plugin diagnostics before it
-   exits (upstream commit `f0c0ab967e`). Keep the positive control anyway; it
-   also catches a rule that is not enabled.
+   On Dart 3.14.0 and later, run one `dart analyze --fatal-infos .` at the
+   target package or workspace root, never a list of folders. 3.14.0 fixed the
+   early-exit race (upstream commit `f0c0ab967e`), but upstream
+   [dart-lang/sdk#64023](https://github.com/dart-lang/sdk/issues/64023) is
+   still open: the server starts one plugin isolate per context root with
+   plugins and finishes when a single shared flag says plugin analysis
+   stopped, so with several targets, or a nested package that inherits
+   `plugins:`, Many Lints findings can vanish while core lints still show.
+   The positive control is therefore mandatory: a run without it proves
+   nothing (see `findings/testing-tooling.md`).
 
    On Dart 3.13.1 through 3.13.7, `dart analyze` can exit before plugin
    diagnostics arrive and print `No issues found!` (see
-   `findings/testing-tooling.md`). There, batch explicit files **and** put the
-   known violation in every batch, failing a batch that does not report it:
+   `findings/testing-tooling.md`). There, batch explicit files of one package
+   **and** put the known violation in every batch, failing a batch that does
+   not report it:
 
    ```bash
    git ls-files -z '*.dart' | xargs -0 -n 400 dart analyze --fatal-infos

@@ -109,14 +109,22 @@
 
 - Dart 3.14.0 (Flutter 3.50.0) fixes the `dart analyze` race in which the
   command exited before plugin diagnostics arrived and printed
-  `No issues found!` on large projects. It now waits for plugin analysis to
-  finish (Dart SDK commit
-  [`f0c0ab967e`](https://github.com/dart-lang/sdk/commit/f0c0ab967e9d3f85d73b3fcd13da29a0277daa01)),
-  so a single bare `dart analyze` is enough. Dart 3.13.1 to 3.13.7 remain
-  affected; keep batching files with a canary there.
+  `No issues found!` on large projects (Dart SDK commit
+  [`f0c0ab967e`](https://github.com/dart-lang/sdk/commit/f0c0ab967e9d3f85d73b3fcd13da29a0277daa01)).
+  Plugin diagnostics can still go missing on 3.14.0 because of
+  [dart-lang/sdk#64023](https://github.com/dart-lang/sdk/issues/64023): the
+  server runs one plugin isolate per context root with plugins but stops
+  waiting once a single shared flag says plugin analysis is idle. Run
+  `dart analyze` with exactly one target, the package or workspace root, and
+  exclude what should not be analyzed in `analysis_options.yaml`; give nested
+  packages their own `analysis_options.yaml` without `plugins:`; and keep a
+  canary file with a deliberately reported Many Lints diagnostic in CI. Dart
+  3.13.1 to 3.13.7 also have the older race; batch files there and include the
+  canary in every batch.
 - Dart 3.14.0 also lets a pub workspace member declare `plugins:` in its own
   `analysis_options.yaml`; earlier SDKs ignore it with a
-  `plugins_in_inner_options` warning.
+  `plugins_in_inner_options` warning. Each such member gets its own plugin
+  isolate and is therefore subject to #64023.
 
 ## [1.2.0] - 2026-08-27
 
