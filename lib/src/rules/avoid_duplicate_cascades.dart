@@ -6,25 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a cascade expression contains duplicate cascade sections.
-///
-/// Duplicate cascades are usually the result of a copy-paste error and
-/// indicate a bug. The last assignment wins, making earlier duplicates
-/// dead code.
-///
-/// **Bad:**
-/// ```dart
-/// value
-///   ..field = '2'
-///   ..field = '1';
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// value
-///   ..field1 = '2'
-///   ..field2 = '1';
-/// ```
 class AvoidDuplicateCascades extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_duplicate_cascades',
@@ -74,21 +55,13 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Returns a string key that uniquely identifies a cascade section's
-  /// operation. Two sections with the same key are considered duplicates.
-  ///
-  /// Returns `null` for unrecognized section types.
   static String? _sectionKey(Expression section) {
     return switch (section) {
-      // ..field = value or ..[index] = value
       AssignmentExpression(:final leftHandSide, :final rightHandSide) =>
         'assign:${leftHandSide.toSource()}=${rightHandSide.toSource()}',
-      // ..method(args)
       MethodInvocation(:final methodName, :final argumentList) =>
         'call:${methodName.name}(${argumentList.arguments.map((a) => a.toSource()).join(',')})',
-      // ..[index]
       IndexExpression(:final index) => 'index:${index.toSource()}',
-      // ..property
       PropertyAccess(:final propertyName) => 'prop:${propertyName.name}',
       _ => null,
     };

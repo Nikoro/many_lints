@@ -8,10 +8,6 @@ import '../ast_node_analysis.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when an Image widget is wrapped in an Opacity widget.
-///
-/// The Image widget has a dedicated `opacity` parameter that is more
-/// efficient than wrapping the widget in an Opacity widget.
 class AvoidIncorrectImageOpacity extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_incorrect_image_opacity',

@@ -8,11 +8,6 @@ import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when a Flexible or Expanded widget is used outside a Flex widget.
-///
-/// Flexible and Expanded widgets should only be used as direct children of
-/// Row, Column, or Flex widgets. Using them elsewhere has no effect and
-/// indicates a structural issue in the widget tree.
 class AvoidFlexibleOutsideFlex extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_flexible_outside_flex',
@@ -58,38 +53,27 @@ class _Visitor extends SimpleAstVisitor<void> {
     final element = constructorType.element;
     if (element == null) return;
 
-    // Only interested in Flexible / Expanded
     if (!_flexibleChecker.isSuperOf(element)) return;
 
-    // Walk up the AST to find the nearest parent InstanceCreationExpression
-    // that represents a widget constructor. If it's a Flex widget, this is
-    // valid. If not (or if there is no parent widget), report the lint.
     if (_isDirectChildOfFlex(node)) return;
 
     final widgetName = constructorType.name.lexeme;
     rule.reportAtNode(node.constructorName, arguments: [widgetName]);
   }
 
-  /// Checks if [node] is a direct child in a Flex widget's children list
-  /// or child parameter.
   static bool _isDirectChildOfFlex(InstanceCreationExpression node) {
-    // Walk up the AST parent chain looking for the nearest
-    // InstanceCreationExpression that this Flexible/Expanded is an argument of.
     AstNode? current = node.parent;
     while (current != null) {
-      // Skip list literals (children: [Flexible(...)])
       if (current is ListLiteral) {
         current = current.parent;
         continue;
       }
 
-      // Skip named arguments (child: Flexible(...) or children: [...])
       if (current is NamedArgument) {
         current = current.parent;
         continue;
       }
 
-      // We've reached an argument list — check the parent constructor
       if (current is ArgumentList) {
         final parent = current.parent;
         if (parent is InstanceCreationExpression) {
@@ -102,7 +86,6 @@ class _Visitor extends SimpleAstVisitor<void> {
         return false;
       }
 
-      // Stop at function/method boundaries — we've left the widget tree
       if (current is FunctionExpression ||
           current is FunctionDeclaration ||
           current is MethodDeclaration) {

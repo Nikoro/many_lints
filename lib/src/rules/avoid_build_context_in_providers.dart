@@ -1,5 +1,5 @@
-// Ported from riverpod_lint (MIT, Copyright (c) 2023 Remi Rousselet).
-// See the NOTICE file at the repository root.
+// SPDX-FileCopyrightText: 2023 Remi Rousselet
+// SPDX-License-Identifier: MIT
 
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
@@ -11,23 +11,6 @@ import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
 
-/// Warns when a `@riverpod` provider takes a `BuildContext` parameter.
-///
-/// Providers outlive the widgets that read them. A `BuildContext` captured in
-/// a provider may refer to a widget that has already been unmounted, so using
-/// it later throws or silently reads stale data.
-///
-/// **BAD:**
-/// ```dart
-/// @riverpod
-/// int example(Ref ref, BuildContext context) => 0; // LINT
-/// ```
-///
-/// **GOOD:**
-/// ```dart
-/// @riverpod
-/// int example(Ref ref) => 0;
-/// ```
 class AvoidBuildContextInProviders extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_build_context_in_providers',

@@ -7,31 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../fpdart_do_notation.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when an async `Do` body awaits a raw `Future` instead of extracting
-/// through `$`.
-///
-/// `Do` tracks a block's steps through its extraction function: `$` is what
-/// makes a failing step short-circuit the rest of the block. A bare
-/// `await someFuture` bypasses that entirely — the future runs outside the
-/// block's control, and if it throws, the exception escapes as an ordinary
-/// exception rather than becoming a `Left`. This is the second of the four
-/// pitfalls fpdart documents in `do_constructor_pitfalls`.
-///
-/// **Bad:**
-/// ```dart
-/// TaskEither<String, int> f(Future<int> future) => TaskEither.Do(($) async {
-///   await future; // escapes the Do tracking
-///   return 1;
-/// });
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// TaskEither<String, int> f(Future<int> future) => TaskEither.Do(($) async {
-///   await $(TaskEither.tryCatch(() => future, (e, s) => '$e'));
-///   return 1;
-/// });
-/// ```
 class AvoidBareAwaitInDo extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_bare_await_in_do',
@@ -72,8 +47,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final invocation = DoInvocation.tryRead(node);
     if (invocation == null) return;
 
-    // Only async blocks await anything; the synchronous variants (`Option.Do`,
-    // `Either.Do`, the `IO*` family) cannot hit this.
     if (!invocation.isAsync) return;
 
     _BareAwaitFinder(rule, invocation).run();
@@ -83,12 +56,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 class _BareAwaitFinder extends DoBodyVisitor {
   final AvoidBareAwaitInDo rule;
 
-  /// How many closures deep the visitor currently is.
-  ///
-  /// A closure declared inside the body has its own async context, so an
-  /// `await` there was never one of the block's tracked steps. Depth is
-  /// counted rather than descent being cut off, because the closure may still
-  /// contain a nested `Do` whose own body must be visited.
+  // Edge case: depth is counted, not cut off, as a closure may hold a nested Do that must be visited
   int _closureDepth = 0;
 
   _BareAwaitFinder(this.rule, super.invocation);

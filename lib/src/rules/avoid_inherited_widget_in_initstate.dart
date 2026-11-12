@@ -9,15 +9,6 @@ import '../many_lints_rule.dart';
 import '../state_base_classes.dart';
 import '../type_checker.dart';
 
-/// Warns when an inherited widget is looked up inside `initState`.
-///
-/// `dependOnInheritedWidgetOfExactType` — which powers `Theme.of(context)`,
-/// `MediaQuery.of(context)` and friends — is not usable from `initState`.
-/// The element is not yet fully mounted in the tree, so the lookup either
-/// throws or registers a dependency that never produces updates.
-///
-/// Move the lookup to `didChangeDependencies`, which runs once after
-/// `initState` and again whenever a dependency changes.
 class AvoidInheritedWidgetInInitstate extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_inherited_widget_in_initstate',
@@ -69,13 +60,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Finds `SomeInheritedWidget.of(context)` calls.
-///
-/// Descends into closures deliberately: a lookup inside a closure that is
-/// invoked synchronously from `initState` fails the same way. Closures that
-/// merely *escape* `initState` (e.g. passed to `addPostFrameCallback`) are
-/// the one shape this over-reports, which is why the check is narrow in
-/// every other dimension.
 class _InheritedLookupFinder extends RecursiveAstVisitor<void> {
   final AvoidInheritedWidgetInInitstate rule;
 
@@ -94,7 +78,6 @@ class _InheritedLookupFinder extends RecursiveAstVisitor<void> {
       return;
     }
 
-    // The target must be a plain type reference: `Theme.of(...)`.
     if (node.target case SimpleIdentifier(element: final target?)) {
       if (target is InterfaceElement &&
           _inheritedWidgetChecker.isSuperOf(target)) {

@@ -6,25 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a file is longer than the configured budget.
-///
-/// A long file is where a module stops having a single subject: the name at
-/// the top no longer describes everything below it, and finding the right
-/// place to add something becomes a scroll rather than a decision. Enforcing
-/// the budget in the analyzer puts the signal where splitting is still cheap.
-///
-/// The limit is `max_lines`, defaulting to 300. Blank lines and comments are
-/// not counted by default, since a file is not hard to navigate because it is
-/// well documented — set `count_comments: true` to include them.
-///
-/// Generated files are the obvious exception and are best handled with the
-/// per-rule `exclude`, which every rule in this package supports:
-///
-/// ```yaml
-/// rules:
-///   avoid_long_files:
-///     exclude: ["**/*.g.dart", "**/*.freezed.dart"]
-/// ```
 class AvoidLongFiles extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_long_files',
@@ -51,7 +32,6 @@ class AvoidLongFiles extends ManyLintsRule {
   }
 }
 
-/// Long enough that a file reaching it usually covers more than one subject.
 const _defaultMaxLines = 300;
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -75,16 +55,10 @@ class _Visitor extends SimpleAstVisitor<void> {
         : _codeLineCount(node);
     if (length <= maxLines) return;
 
-    // A file has no single node to point at, and reporting the whole unit
-    // would underline every line in the editor. The first token is the
-    // smallest anchor that still lands in the right file.
+    // Edge case: a file has no single node, and reporting the unit would underline every line
     rule.reportAtOffset(0, 0, arguments: ['$length', '$maxLines']);
   }
 
-  /// Lines holding something other than whitespace or a comment.
-  ///
-  /// Counted from the token stream rather than by scanning text, so a `//`
-  /// inside a string literal cannot be mistaken for a comment.
   int _codeLineCount(CompilationUnit node) {
     final lineInfo = node.lineInfo;
     final lines = <int>{};
@@ -96,8 +70,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     ) {
       final first = lineInfo.getLocation(token.offset).lineNumber;
       final last = lineInfo.getLocation(token.end).lineNumber;
-      // A multi-line string is one token spanning several lines, and every
-      // one of them is code.
+      // Edge case: a multi-line string is one token, yet every line it spans is code
       for (var line = first; line <= last; line++) {
         lines.add(line);
       }

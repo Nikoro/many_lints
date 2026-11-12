@@ -1,5 +1,5 @@
-// Ported from riverpod_lint (MIT, Copyright (c) 2023 Remi Rousselet).
-// See the NOTICE file at the repository root.
+// SPDX-FileCopyrightText: 2023 Remi Rousselet
+// SPDX-License-Identifier: MIT
 
 import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
@@ -12,27 +12,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
 
-/// Warns when `AsyncValue(:final value?)` is used on a possibly-nullable value.
-///
-/// The `?` pattern matches only when the value is non-null, so a legitimately
-/// `null` success value is treated as "no value yet". Matching on `hasValue`
-/// instead distinguishes "loaded a null" from "not loaded".
-///
-/// **BAD:**
-/// ```dart
-/// switch (asyncValue) {
-///   case AsyncValue(:final value?): // LINT when value can be null
-///     print(value);
-/// }
-/// ```
-///
-/// **GOOD:**
-/// ```dart
-/// switch (asyncValue) {
-///   case AsyncValue(:final value, hasValue: true):
-///     print(value);
-/// }
-/// ```
 class AsyncValueNullablePattern extends ManyLintsRule {
   static const LintCode code = LintCode(
     'async_value_nullable_pattern',
@@ -69,7 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitNullCheckPattern(NullCheckPattern node) {
-    // Looking for `case AsyncValue(:final value?)`.
     final field = node.parent;
     if (field is! PatternField || field.effectiveName != 'value') return;
 
@@ -79,19 +57,16 @@ class _Visitor extends SimpleAstVisitor<void> {
     final patternType = objectPattern.type.type;
     if (patternType == null) return;
 
-    // `AsyncData` is excluded: its `hasValue` is always true, so the null
-    // check is the only thing distinguishing the cases.
+    // Edge case: AsyncData always has a value, so a null check on it is deliberate and exempt
     if (!asyncValueNullablePatternChecker.isExactlyType(patternType)) return;
     if (patternType is! InterfaceType) return;
 
     var valueType = patternType.typeArguments.first;
 
-    // For a generic `AsyncValue<T>`, the bound decides whether the value can
-    // be null; an unbounded `T` behaves like `dynamic`.
     if (valueType is TypeParameterType) {
       final bound = valueType.element.bound;
+      // Edge case: an unbounded type parameter behaves like dynamic
       if (bound == null) {
-        // Unbounded: treat as nullable and report.
         rule.reportAtNode(node);
         return;
       }

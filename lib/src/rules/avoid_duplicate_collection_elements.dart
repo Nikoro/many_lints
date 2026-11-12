@@ -6,15 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a collection literal contains the same element twice.
-///
-/// A hand-written literal listing the same value twice is almost always a
-/// mistake — usually one entry was meant to be a different value. Three
-/// shapes are reported: repeated plain values in a list, repeated spreads
-/// (`...items` twice), and repeated `if` elements.
-///
-/// Plain values in sets and maps are left alone: the analyzer already
-/// reports duplicate set elements and map keys natively.
 class AvoidDuplicateCollectionElements extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_duplicate_collection_elements',
@@ -52,15 +43,14 @@ class _Visitor extends SimpleAstVisitor<void> {
   _Visitor(this.rule);
 
   @override
-  void visitListLiteral(ListLiteral node) => _check(node.elements);
+  void visitListLiteral(ListLiteral node) => _checkListElements(node.elements);
 
-  /// Sets and maps are checked for spreads and `if` elements only: the
-  /// analyzer already reports duplicate set values and map keys natively.
   @override
   void visitSetOrMapLiteral(SetOrMapLiteral node) {
     final seen = <String>{};
 
     for (final element in node.elements) {
+      // Edge case: the analyzer already reports duplicate set values and map keys
       if (element is Expression || element is MapLiteralEntry) continue;
       if (!_isComparable(element)) continue;
 
@@ -71,21 +61,15 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  void _check(NodeList<CollectionElement> elements) {
+  void _checkListElements(NodeList<CollectionElement> elements) {
     final seen = <String>{};
 
-    // `ignore_literals: true` exempts repeated literals, which are often
-    // intentional in fixtures and padding lists (`[0, 0, 0]`), while still
-    // reporting a duplicated identifier or property access.
     final ignoreLiterals = rule.config.boolOption(
       'ignore_literals',
       defaultValue: false,
     );
 
     for (final element in elements) {
-      // A spread or an `if` element contributes an unknown number of values,
-      // but writing the identical one twice is still a duplicate: the second
-      // copy either repeats every value or is dead weight.
       if (!_isComparable(element)) continue;
       if (ignoreLiterals && element is Literal) continue;
 
@@ -96,10 +80,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Whether [element] denotes the same contribution everywhere it appears.
-  ///
-  /// Comparing by source is only sound when re-evaluating the element yields
-  /// the same result; a method call may return something different each time.
   bool _isComparable(CollectionElement element) => switch (element) {
     Expression() => _isStable(element),
     SpreadElement(:final expression) => _isStable(expression),
@@ -110,7 +90,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     _ => false,
   };
 
-  /// Whether an expression denotes the same value everywhere it appears.
+  // Edge case: a method call may yield a different value on each evaluation
   bool _isStable(Expression expression) => switch (expression) {
     Literal() => true,
     SimpleIdentifier() => true,

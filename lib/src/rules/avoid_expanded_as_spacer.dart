@@ -9,8 +9,6 @@ import '../ast_node_analysis.dart';
 import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when `Expanded` wraps an empty `SizedBox` or `Container` instead of
-/// using the dedicated `Spacer` widget.
 class AvoidExpandedAsSpacer extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_expanded_as_spacer',
@@ -71,8 +69,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Returns true if the expression is an empty SizedBox() or Container() —
-  /// i.e. has no arguments or only a `key` argument.
   bool _isEmptyWidget(Expression expr) {
     final type = expr.staticType;
     if (type == null) return false;

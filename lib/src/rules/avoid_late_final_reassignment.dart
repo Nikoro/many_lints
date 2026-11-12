@@ -7,17 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a `late final` field is assigned more than once on the same
-/// path.
-///
-/// `late final` promises one assignment, and Dart enforces it — but at run
-/// time, by throwing `LateInitializationError` on the second write. A second
-/// assignment the analyzer can see on one straight-line path is therefore a
-/// guaranteed crash, not a possibility.
-///
-/// Only assignments in the same block are compared, without following
-/// branches: two writes in opposite arms of an `if` are exactly how a
-/// `late final` is meant to be initialised, so they are left alone.
 class AvoidLateFinalReassignment extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_late_final_reassignment',
@@ -53,10 +42,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitBlock(Block node) {
-    // Only statements directly in this block share one path. A nested block
-    // gets its own visit, which keeps branches from being compared.
     final assigned = <Element, String>{};
 
+    // Edge case: only direct statements share one path; nested blocks get their own visit
     for (final statement in node.statements) {
       if (statement is! ExpressionStatement) continue;
 
@@ -76,8 +64,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// The element and name written by [node], when it targets a `late final`
-  /// field, or `null` otherwise.
   (Element, String)? _lateFinalTarget(AssignmentExpression node) {
     final identifier = switch (node.leftHandSide) {
       SimpleIdentifier() && final id => id,
@@ -87,8 +73,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     };
     if (identifier == null) return null;
 
-    // A write resolves through `writeElement`, and reaches us as a setter; the
-    // field it stands for is what carries `isLate` / `isFinal`.
+    // Edge case: a write resolves to a setter, and the field behind it carries isLate and isFinal
     final element = node.writeElement ?? identifier.element;
     final field = switch (element) {
       SetterElement(:final variable) => variable,

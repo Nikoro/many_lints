@@ -9,14 +9,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when mutable collections are compared with `==` or `!=`.
-///
-/// Collections in Dart have no inherent deep equality — two lists, sets, or
-/// maps are only equal when they are the same instance. Comparing them with
-/// `==` almost never produces the intended result.
-///
-/// Use `DeepCollectionEquality().equals()` from the `collection` package or
-/// a type-specific equality helper instead.
 class AvoidCollectionEqualityChecks extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_collection_equality_checks',
@@ -70,15 +62,12 @@ class _Visitor extends SimpleAstVisitor<void> {
     final leftIsCollection = _isCollectionType(leftType);
     final rightIsCollection = _isCollectionType(rightType);
 
-    // At least one side must be a collection.
     if (!leftIsCollection && !rightIsCollection) return;
 
-    // Allow null checks (e.g. list == null, list != null).
     if (node.leftOperand is NullLiteral || node.rightOperand is NullLiteral) {
       return;
     }
 
-    // Allow comparisons where both sides are compile-time constants.
     if (_isConstExpression(node.leftOperand) &&
         _isConstExpression(node.rightOperand)) {
       return;
@@ -92,24 +81,17 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   static bool _isConstExpression(Expression expr) {
-    // Unwrap parentheses.
     var e = expr;
     while (e is ParenthesizedExpression) {
       e = e.expression;
     }
 
     return switch (e) {
-      // const [1, 2] or const {1, 2} or const {'a': 1}
       TypedLiteral(constKeyword: _?) => true,
-
-      // Explicit const constructor: const MyList()
       InstanceCreationExpression(:final keyword?)
           when keyword.type == Keyword.CONST =>
         true,
-
-      // Null literal is fine to compare against.
       NullLiteral() => true,
-
       _ => false,
     };
   }

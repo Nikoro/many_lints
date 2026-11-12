@@ -7,22 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when control flow is nested more deeply than the configured budget.
-///
-/// This is the non-widget counterpart to `avoid_deep_widget_nesting`. Each
-/// level of `if`, `for`, `while`, `try` or `switch` is another condition the
-/// reader has to hold to know why a line runs at all, and the innermost
-/// statement of a five-level nest is reachable only through a path nobody can
-/// state out loud.
-///
-/// Depth is usually the more actionable signal than complexity: an early
-/// return, a guard clause or an extracted method removes a whole level, where
-/// a high complexity count says only that something is wrong.
-///
-/// The limit is `max_depth`, defaulting to 4. Only statements that introduce a
-/// new block of control flow are counted — a `case` body inside its `switch`
-/// is one level, not two — and a nested function starts its own count, since
-/// its body is not reached through the enclosing nest.
 class AvoidDeepNesting extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_deep_nesting',
@@ -55,8 +39,6 @@ class AvoidDeepNesting extends ManyLintsRule {
   }
 }
 
-/// Four levels is a guard, a loop, a branch and the work — past that a reader
-/// cannot state why the innermost line runs.
 const _defaultMaxDepth = 4;
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -89,9 +71,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final deepest = finder.report;
     if (deepest == null) return;
 
-    // Reported at the statement that first crosses the limit, so the
-    // diagnostic lands on the block worth extracting rather than on the
-    // innermost line, and one over-nested function reports once.
     rule.reportAtToken(
       deepest.token,
       arguments: ['${finder.deepestDepth}', '$maxDepth'],
@@ -99,17 +78,12 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// The statement that first crossed the budget, and how deep the nest went.
 class _Report {
   const _Report(this.token);
 
   final Token token;
 }
 
-/// Finds the first statement past [maxDepth] and the deepest nesting reached.
-///
-/// A nested function is skipped: its body is not reached through the enclosing
-/// nest, so counting it would blame a function for the shape of its callback.
 class _DeepestNestFinder extends RecursiveAstVisitor<void> {
   _DeepestNestFinder({required this.maxDepth});
 
@@ -125,11 +99,8 @@ class _DeepestNestFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitIfStatement(IfStatement node) {
-    // An `else if` is a sibling branch, not another level: it is written flat
-    // and reads flat, so counting it as nesting would report every long
-    // dispatch chain.
-    if (node.parent is IfStatement &&
-        (node.parent! as IfStatement).elseStatement == node) {
+    // Edge case: an else-if is a flat sibling branch, not another nesting level
+    if (_isElseIf(node)) {
       super.visitIfStatement(node);
       return;
     }
@@ -157,9 +128,15 @@ class _DeepestNestFinder extends RecursiveAstVisitor<void> {
   void visitTryStatement(TryStatement node) =>
       _enter(node.tryKeyword, () => super.visitTryStatement(node));
 
+  static bool _isElseIf(IfStatement node) => switch (node.parent) {
+    IfStatement(:final elseStatement) => elseStatement == node,
+    _ => false,
+  };
+
   void _enter(Token token, void Function() visitChildren) {
     _current++;
     if (_current > deepestDepth) deepestDepth = _current;
+    // Edge case: the first crossing marks the block worth extracting, once per function
     if (_current > maxDepth) report ??= _Report(token);
 
     visitChildren();

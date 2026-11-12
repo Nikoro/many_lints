@@ -7,22 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../digit_separator_grouping.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when a numeric literal groups its digits with `_` at an irregular
-/// interval.
-///
-/// `1_000_000` is readable because every group is the same size, which is the
-/// whole point of the separator: the eye counts groups instead of digits.
-/// `10_00_000` defeats that — it looks like a number in a different unit, and
-/// it is exactly how a mistyped literal survives review.
-///
-/// A literal with no separators is never reported: whether to use them at all
-/// is `prefer-digit-separators`' question, not this rule's.
-///
-/// The expected group size is `group_size`, defaulting to 3. Hexadecimal
-/// literals are grouped by `hex_group_size`, defaulting to 4, since a hex
-/// literal groups by byte or half-word rather than by thousands. Set either to
-/// `0` to accept any size, as long as it is used consistently within the
-/// literal.
 class AvoidInconsistentDigitSeparators extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_inconsistent_digit_separators',

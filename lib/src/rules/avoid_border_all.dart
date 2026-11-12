@@ -7,11 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when `Border.all()` is used instead of `Border.fromBorderSide()`.
-///
-/// `Border.all()` calls `Border.fromBorderSide()` under the hood, so using
-/// `Border.fromBorderSide(BorderSide(...))` directly allows the expression
-/// to be const.
 class AvoidBorderAll extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_border_all',
@@ -53,7 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    // Border.all<TypeArgs>(...) is parsed as InstanceCreationExpression
     final constructorName = node.constructorName;
     if (constructorName.name?.name != 'all') return;
     final staticType = node.staticType;
@@ -64,7 +58,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    // Border.all(...) without type args is parsed as MethodInvocation
+    // Edge case: without type arguments Border.all(...) parses as a method invocation
     if (node.methodName.name != 'all') return;
     final target = node.target;
     if (target is! SimpleIdentifier) return;

@@ -8,24 +8,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a function has more independent paths through it than the
-/// configured budget.
-///
-/// Cyclomatic complexity counts decisions: every branch, loop, `catch`, `&&`,
-/// `||`, `?:` and `??` adds one path a reader has to keep straight and a test
-/// has to cover. It measures something the line and statement budgets miss —
-/// twenty sequential statements are easy, while six nested conditions in five
-/// lines are not.
-///
-/// The limit is `max_complexity`, defaulting to 10, which is the threshold
-/// most tools have converged on.
-///
-/// A `switch` is counted per case, since each is a distinct path. But an
-/// *exhaustive* switch over an enum or sealed type is counted as one by
-/// default: the compiler proves every case is handled, so the paths are not
-/// something the reader has to verify, and counting them would report exactly
-/// the exhaustive pattern matching Dart 3 encourages. Set
-/// `count_exhaustive_switches: true` to count them individually.
 class AvoidHighCyclomaticComplexity extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_high_cyclomatic_complexity',
@@ -58,7 +40,6 @@ class AvoidHighCyclomaticComplexity extends ManyLintsRule {
   }
 }
 
-/// The threshold most complexity tools have settled on.
 const _defaultMaxComplexity = 10;
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -81,11 +62,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   void _check(FunctionBody body, Token? name, {AstNode? fallback}) {
     if (body is EmptyFunctionBody) return;
 
-    // A hand-written `==` is one `&&` per field, and a `copyWith` is one `??`
-    // per parameter. Both grow with the field count rather than with any
-    // decision the reader has to follow, and neither can be split — so their
-    // complexity is not the kind this rule is about. Together they were the
-    // majority of the rule's hits on a production codebase.
+    // Edge case: == and copyWith grow with the field count, not with decisions, and cannot be split
     if (_isFieldCountShaped(name)) return;
 
     final maxComplexity = rule.config.intOption(
@@ -102,7 +79,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     );
     body.accept(counter);
 
-    // Complexity starts at 1: a function with no decisions still has one path.
     final complexity = counter.decisions + 1;
     if (complexity <= maxComplexity) return;
 
@@ -114,16 +90,12 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Whether [name] belongs to a member whose branch count is decided by how
-  /// many fields the class has, rather than by its own logic.
   bool _isFieldCountShaped(Token? name) => switch (name?.lexeme) {
     '==' || 'copyWith' => true,
     _ => false,
   };
 }
 
-/// Counts the decision points of one function, not descending into nested
-/// function bodies — a callback is measured against its own budget.
 class _ComplexityCounter extends RecursiveAstVisitor<void> {
   _ComplexityCounter({required this.countExhaustiveSwitches});
 
@@ -131,10 +103,9 @@ class _ComplexityCounter extends RecursiveAstVisitor<void> {
 
   int decisions = 0;
 
+  // Edge case: a callback carries its own complexity, measured where it is declared
   @override
-  void visitFunctionExpression(FunctionExpression node) {
-    // A callback carries its own complexity, measured where it is declared.
-  }
+  void visitFunctionExpression(FunctionExpression node) {}
 
   @override
   void visitIfStatement(IfStatement node) {
@@ -202,18 +173,12 @@ class _ComplexityCounter extends RecursiveAstVisitor<void> {
     decisions += caseCount;
   }
 
-  /// Whether the compiler can prove a switch over [selector] exhaustive, in
-  /// which case its cases are not paths the reader has to check.
-  ///
-  /// Read from the static type rather than the cases, so it holds regardless
-  /// of how the patterns are written.
   bool _isExhaustible(Expression selector) {
     final element = selector.staticType?.element;
 
-    // A mixin cannot be sealed in Dart, so `class` and `enum` are the only
-    // declarations a switch can be exhaustive over.
     return switch (element) {
       EnumElement() => true,
+      // Edge case: a mixin cannot be sealed, so only enums and sealed classes are exhaustive
       ClassElement(:final isSealed) => isSealed,
       _ => false,
     };

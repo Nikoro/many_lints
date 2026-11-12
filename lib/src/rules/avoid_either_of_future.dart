@@ -9,36 +9,8 @@ import '../fpdart_type_checkers.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// The synchronous wrappers that cannot carry async work.
 const _syncCheckers = TypeChecker.any([eitherChecker, optionChecker]);
 
-/// Warns when a `Future` is nested inside a synchronous fpdart wrapper.
-///
-/// `Either` and `Option` are synchronous. Mapping one with an async function
-/// produces `Either<L, Future<R>>`: the future is created and starts running,
-/// but the error channel no longer covers it, so a rejection becomes an
-/// unhandled async error instead of a `Left`. Callers then get a `Right`
-/// holding a future that may already have failed.
-///
-/// The pipeline has to enter the async world at that point, which is what
-/// `toTaskEither()` is for.
-///
-/// **Bad:**
-/// ```dart
-/// Either<Failure, Future<League>> save(LeagueDraft draft) =>
-///     validate(draft).map((valid) => api.saveLeague(valid));
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// TaskEither<Failure, League> save(LeagueDraft draft) =>
-///     validate(draft).toTaskEither().flatMap(
-///           (valid) => TaskEither.tryCatch(
-///             () => api.saveLeague(valid),
-///             (e, s) => Failure.from(e),
-///           ),
-///         );
-/// ```
 class AvoidEitherOfFuture extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_either_of_future',
@@ -78,7 +50,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   static const _futureChecker = TypeChecker.fromUrl('dart:async#Future');
 
-  /// Reports a written type such as `Either<Failure, Future<League>>`.
   @override
   void visitNamedType(NamedType node) {
     final typeArguments = node.typeArguments?.arguments;
@@ -88,8 +59,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (type == null) return;
     if (!_syncCheckers.isAssignableFromType(type)) return;
 
-    // The success channel is the last type argument for both wrappers:
-    // `Either<L, R>` and `Option<T>`.
+    // Edge case: the success channel is last in both Either<L, R> and Option<T>
     final valueType = typeArguments.last;
     final resolved = valueType.type;
     if (resolved == null) return;
@@ -98,8 +68,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(valueType, arguments: [_wrapperName(type)]);
   }
 
-  /// Reports a `map` whose callback returns a `Future`, which produces the
-  /// same nesting without it ever being written down.
   @override
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name != 'map') return;
@@ -118,7 +86,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(node.methodName, arguments: [_wrapperName(targetType)]);
   }
 
-  /// The wrapper's display name, for the diagnostic message.
   String _wrapperName(DartType type) =>
       type is InterfaceType ? type.element.name ?? 'Either' : 'Either';
 }

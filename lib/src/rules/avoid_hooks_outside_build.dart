@@ -8,13 +8,6 @@ import '../hook_detection.dart';
 import '../hook_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when a hook is called outside a hook context.
-///
-/// Hooks are positional: `flutter_hooks` matches each call to stored state
-/// by its index in the call sequence. That only works inside a
-/// `HookWidget.build`, a `HookBuilder`'s `builder`, or another hook
-/// function. Calling a hook from an event handler, a lifecycle method, or a
-/// plain helper either throws or corrupts the hook order.
 class AvoidHooksOutsideBuild extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_hooks_outside_build',
@@ -62,7 +55,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final name = node.beginToken.lexeme;
     if (!isHookInvocation(node)) return;
 
-    // A qualified call like `controller.useSomething()` is not a hook.
+    // Edge case: controller.useSomething() is an ordinary method, not a hook
     if (node case MethodInvocation(
       target: final target?,
     ) when target is! ThisExpression) {
@@ -74,22 +67,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Walks outward from [node] to the first enclosing function-like scope
-  /// and decides whether that scope is a valid hook context.
   bool _isInHookContext(AstNode node) {
     for (AstNode? current = node; current != null; current = current.parent) {
-      // A hook function: `Foo useFoo() { ... }` or `void _useBar() { ... }`.
       if (current is FunctionDeclaration) {
         return hookNameRegex.hasMatch(current.name.lexeme);
       }
 
       if (current is MethodDeclaration) {
-        // A hook method, or the build method of a hook widget.
         if (hookNameRegex.hasMatch(current.name.lexeme)) return true;
-        // `additional_methods` names further methods of a hook widget that
-        // may call hooks — a project with its own `buildBody()` convention
-        // splits its build across several methods, all of them valid
-        // contexts. Default `[]` keeps `build` as the only one.
         if (current.name.lexeme != 'build' &&
             !rule.config
                 .stringListOption('additional_methods')
@@ -99,12 +84,10 @@ class _Visitor extends SimpleAstVisitor<void> {
         return _isHookWidgetMember(current);
       }
 
-      // A closure: valid only if it is a HookBuilder's `builder` argument.
       if (current is FunctionExpression) {
         final parent = current.parent;
 
-        // The body of a named function/method is not a closure boundary —
-        // keep walking so the declaration itself decides.
+        // Edge case: the body of a named function is no closure; its declaration decides
         if (parent is FunctionDeclaration || parent is MethodDeclaration) {
           continue;
         }
@@ -120,7 +103,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     }
 
-    // Top-level code with no enclosing function — not a hook context.
     return false;
   }
 

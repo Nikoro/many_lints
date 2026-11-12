@@ -6,11 +6,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../constant_expression.dart';
 
-/// Warns when a switch statement or expression evaluates a constant expression.
-///
-/// A switch on a constant like `switch (SomeClass.constField)` or
-/// `switch (42)` always takes the same branch, which usually indicates
-/// a typo or a bug.
 class AvoidConstantSwitches extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_constant_switches',

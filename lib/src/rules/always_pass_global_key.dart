@@ -7,33 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when a `GlobalKey` is constructed inside a `build` method.
-///
-/// `build` runs on every rebuild, so a key created there is a *new* key each
-/// time. Flutter matches elements by key, so a changed key makes the framework
-/// discard the old element and its entire subtree — losing all `State`,
-/// scroll positions, animation controllers and text field contents.
-///
-/// The symptom is a form that clears itself, or a list that jumps to the top,
-/// on every unrelated rebuild. Nothing throws, so it reads as a mysterious UI
-/// bug rather than a lifetime mistake.
-///
-/// **Bad:**
-/// ```dart
-/// Widget build(BuildContext context) {
-///   final key = GlobalKey(); // new identity on every rebuild
-///   return Form(key: key, ...);
-/// }
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// class _MyState extends State<MyWidget> {
-///   final _key = GlobalKey<FormState>(); // created once
-///
-///   Widget build(BuildContext context) => Form(key: _key, ...);
-/// }
-/// ```
 class AlwaysPassGlobalKey extends ManyLintsRule {
   static const LintCode code = LintCode(
     'always_pass_global_key',
@@ -83,8 +56,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Finds `GlobalKey(...)` construction, in both the `new`-style and named
-/// constructor forms.
 class _GlobalKeyFinder extends RecursiveAstVisitor<void> {
   final AlwaysPassGlobalKey rule;
   final TypeChecker checker;
@@ -107,8 +78,7 @@ class _GlobalKeyFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    // A constructor with no explicit type arguments can parse as a method
-    // invocation, e.g. `GlobalKey()`.
+    // Edge case: without type arguments a constructor call parses as a method invocation
     if (node.methodName.name == 'GlobalKey') _check(node);
     super.visitMethodInvocation(node);
   }

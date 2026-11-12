@@ -8,12 +8,6 @@ import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../bloc_type_checkers.dart';
 
-/// Warns when a Bloc class declares public members (methods, getters, setters)
-/// that are not overrides of parent class members.
-///
-/// Blocs should only expose state changes through events via the `add` method.
-/// Custom public methods, getters, and setters bypass the event-driven pattern
-/// and should be avoided.
 class AvoidBlocPublicMethods extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_bloc_public_methods',
@@ -53,10 +47,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     final element = node.declaredFragment?.element;
     if (element == null) return;
 
-    // Only check classes that extend Bloc (not Cubit or other subtypes)
     if (!blocChecker.isSuperOf(element)) return;
 
-    // Exclude the Bloc class itself and Cubit subclasses
     if (blocChecker.isExactly(element)) return;
     if (cubitChecker.isExactly(element)) return;
     if (cubitChecker.isSuperOf(element)) return;
@@ -74,13 +66,10 @@ class _Visitor extends SimpleAstVisitor<void> {
   void _checkMethodDeclaration(MethodDeclaration member) {
     final name = member.name.lexeme;
 
-    // Skip private members
     if (name.startsWith('_')) return;
 
-    // Skip static members
     if (member.isStatic) return;
 
-    // Skip overrides
     if (hasOverrideAnnotation(member)) return;
 
     rule.reportAtToken(member.name);

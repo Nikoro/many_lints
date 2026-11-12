@@ -6,15 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a condition combines more operands than the configured budget.
-///
-/// `a && b && !c || d` forces the reader to hold four facts and two precedence
-/// rules at once, and it is where an `&&` that should have been `||` hides
-/// longest. Naming the parts (`final isEligible = a && b;`) turns the
-/// condition into something that can be read at a glance and debugged one
-/// piece at a time.
-///
-/// Only `&&` and `||` are counted, through `max_operands`, defaulting to 3.
 class AvoidComplexConditions extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_complex_conditions',
@@ -42,7 +33,6 @@ class AvoidComplexConditions extends ManyLintsRule {
   }
 }
 
-/// Three operands is one `&&` chain a reader can still hold.
 const _defaultMaxOperands = 3;
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -54,11 +44,9 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitBinaryExpression(BinaryExpression node) {
     if (!_isLogical(node)) return;
 
-    // Report at the root of the chain only, so `a && b && c` counts once.
     if (_hasLogicalParent(node)) return;
 
-    // A hand-written `operator ==` is one `&&` per field by construction, and
-    // splitting it would scatter an equality check that reads as a unit.
+    // Edge case: operator == is one && per field by construction and reads as a unit
     if (_isInsideEqualityOperator(node)) return;
 
     final maxOperands = rule.config.intOption(
@@ -72,7 +60,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(node, arguments: ['$operands', '$maxOperands']);
   }
 
-  /// Whether this condition is the body of `operator ==`.
   bool _isInsideEqualityOperator(AstNode node) {
     final method = node.thisOrAncestorOfType<MethodDeclaration>();
     return method != null && method.name.lexeme == '==';
@@ -83,11 +70,9 @@ class _Visitor extends SimpleAstVisitor<void> {
       (expression.operator.lexeme == '&&' ||
           expression.operator.lexeme == '||');
 
-  /// Whether this expression is itself an operand of a larger logical chain.
   bool _hasLogicalParent(BinaryExpression node) {
     AstNode? current = node.parent;
 
-    // Parentheses do not break a chain: `(a && b) && c` is still one.
     while (current is ParenthesizedExpression) {
       current = current.parent;
     }
@@ -95,7 +80,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return current is BinaryExpression && _isLogical(current);
   }
 
-  /// How many leaf operands the chain combines.
   int _countOperands(Expression expression) {
     final unwrapped = switch (expression) {
       ParenthesizedExpression(:final expression) => expression,

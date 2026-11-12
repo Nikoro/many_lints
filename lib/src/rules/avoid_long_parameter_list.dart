@@ -7,17 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a function takes more parameters than the configured budget.
-///
-/// A long parameter list is usually several values that belong together
-/// travelling separately, and every caller has to assemble them in the right
-/// order. Grouping them into a record or a small class names the thing they
-/// form and makes the call sites read.
-///
-/// Named parameters are counted separately and given a larger budget, since
-/// they are labelled at the call site and do not depend on order — a widget
-/// constructor with eight named parameters is not the problem this rule
-/// exists for.
 class AvoidLongParameterList extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_long_parameter_list',
@@ -48,10 +37,8 @@ class AvoidLongParameterList extends ManyLintsRule {
   }
 }
 
-/// Past four positional arguments, a call site stops being readable.
 const _defaultMaxPositional = 4;
 
-/// Named parameters are labelled at the call site, so they scale further.
 const _defaultMaxNamed = 10;
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -65,7 +52,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
-    // An override cannot change its signature.
+    // Edge case: an override cannot change its signature
     if (node.metadata.any((a) => a.name.name == 'override')) return;
 
     _check(node.parameters, node.name, null);

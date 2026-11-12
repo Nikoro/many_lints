@@ -8,10 +8,6 @@ import 'package:analyzer/source/line_info.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when commented-out code is found.
-///
-/// Commented-out code is a sign of technical debt. Use version control
-/// instead of keeping old code in comments.
 class AvoidCommentedOutCode extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_commented_out_code',
@@ -58,16 +54,13 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // The visitor is reused across files; drop the previous unit's tokens.
+    // Edge case: the visitor is reused across files, so the previous unit's tokens must go
     _precedingCode.clear();
 
     final allComments = _collectAllComments(node);
     final lineInfo = node.lineInfo;
     final groups = _groupConsecutiveComments(allComments, lineInfo);
 
-    // `min_lines` reports only blocks of at least this many comment lines.
-    // Default 1 reports every block, reproducing the previous behaviour; a
-    // project tolerating single commented-out lines can raise it.
     final minLines = rule.config.intOption('min_lines', defaultValue: 1);
 
     for (final group in groups) {
@@ -90,13 +83,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Maximum number of single-line comments to collect before bailing out.
-  /// Prevents stalling the analysis server on auto-generated files with
-  /// thousands of comment lines.
+  // Edge case: generated files with thousands of comment lines would stall the analysis server
   static const _maxComments = 500;
 
-  /// Collects all single-line comment tokens (`//`) from the token stream,
-  /// excluding doc comments (`///`) and ignore directives.
   List<Token> _collectAllComments(CompilationUnit node) {
     final comments = <Token>[];
     Token? token = node.beginToken;
@@ -116,7 +105,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       token = token.next;
     }
 
-    // Also check the EOF token's preceding comments.
     if (token != null && token.isEof) {
       Token? comment = token.precedingComments;
       while (comment != null) {
@@ -132,11 +120,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     return comments;
   }
 
-  /// Returns true if the token is a single-line `//` comment (not `///`).
   bool _isSingleLineComment(Token token) {
     if (token.type != TokenType.SINGLE_LINE_COMMENT) return false;
     final lexeme = token.lexeme;
-    // Exclude doc comments (///) and ignore directives.
     if (lexeme.startsWith('///')) return false;
     if (lexeme.contains('ignore:') || lexeme.contains('ignore_for_file:')) {
       return false;
@@ -144,14 +130,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return true;
   }
 
-  /// Groups comment tokens that appear on directly consecutive lines with
-  /// nothing but whitespace between them.
-  ///
-  /// Two comments belong together only when the second starts on the line
-  /// right after the first ends. A blank line ends the group, and so does
-  /// any code between them — otherwise unrelated comments elsewhere in the
-  /// file would merge into one block and dilute the code-vs-prose ratio,
-  /// hiding real detections.
   List<List<Token>> _groupConsecutiveComments(
     List<Token> comments,
     LineInfo lineInfo,
@@ -168,10 +146,9 @@ class _Visitor extends SimpleAstVisitor<void> {
       final prevLine = lineInfo.getLocation(prev.end).lineNumber;
       final currLine = lineInfo.getLocation(curr.offset).lineNumber;
 
-      // A comment that trails code starts its own group: `} // note` is a
-      // remark about that line, not part of the block below it.
       if (currLine == prevLine + 1 &&
           !_hasCodeBetween(prev, curr) &&
+          // Edge case: a trailing comment remarks on its own line, not on the block below it
           !_trailsCode(prev, lineInfo) &&
           !_trailsCode(curr, lineInfo)) {
         currentGroup.add(curr);
@@ -184,12 +161,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return groups;
   }
 
-  /// Whether [comment] follows code on its own line.
-  ///
-  /// A trailing comment annotates the code beside it, so it does not belong
-  /// to a block of full-line comments above or below it. The token the
-  /// comment hangs off is recorded while collecting, and the code before it
-  /// is on the same line exactly when that token's predecessor ends there.
   bool _trailsCode(Token comment, LineInfo lineInfo) {
     final previous = _precedingCode[comment];
     if (previous == null) return false;
@@ -199,31 +170,21 @@ class _Visitor extends SimpleAstVisitor<void> {
     return previousLine == commentLine;
   }
 
-  /// Maps each collected comment to the last real token before it.
   final Map<Token, Token> _precedingCode = {};
 
-  /// Whether a real token sits between two comment tokens.
-  ///
-  /// Comments hang off the token that follows them, so two comments attached
-  /// to different tokens have code between them — even when they land on
-  /// adjacent lines, as in `} // trailing` followed by `// next`.
   bool _hasCodeBetween(Token a, Token b) {
-    // Comments in the same `precedingComments` chain share a parent token
-    // and therefore have nothing but whitespace between them.
     for (Token? comment = a.next; comment != null; comment = comment.next) {
       if (identical(comment, b)) return false;
     }
     return true;
   }
 
-  /// Strips the `//` prefix and optional leading space from a comment.
   String _stripCommentPrefix(String lexeme) {
     if (lexeme.startsWith('// ')) return lexeme.substring(3);
     if (lexeme.startsWith('//')) return lexeme.substring(2);
     return lexeme;
   }
 
-  /// Heuristic check: does the stripped comment text look like Dart code?
   bool _looksLikeCode(String text) {
     final lines = text.split('\n').where((l) => l.trim().isNotEmpty).toList();
     if (lines.isEmpty) return false;
@@ -235,19 +196,14 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     }
 
-    // If more than half the non-empty lines look like code, flag it.
     return codeLineCount > 0 && codeLineCount >= (lines.length + 1) ~/ 2;
   }
 
-  /// Checks if a single line of text looks like Dart code.
   bool _lineIsLikelyCode(String line) {
-    // Empty lines are neutral.
     if (line.isEmpty) return false;
 
-    // Ignore typical prose and note comments.
     if (_isProse(line)) return false;
 
-    // Lines ending with ; or { or } or , are very likely code.
     if (line.endsWith(';') ||
         line.endsWith('{') ||
         line.endsWith('}') ||
@@ -257,31 +213,23 @@ class _Visitor extends SimpleAstVisitor<void> {
       return true;
     }
 
-    // Lines starting with common Dart keywords followed by code patterns.
     if (_startsWithCodeKeyword(line)) return true;
 
-    // Lines that are just a closing brace.
     if (line == '}' || line == '};' || line == '},') return true;
 
-    // Lines that look like function/method calls: word( or word.word(
     if (_looksLikeFunctionCall(line)) return true;
 
-    // Lines that look like annotations: @override, @required, etc.
     if (_annotationPattern.hasMatch(line)) return true;
 
-    // Lines that look like assignments: word = ...
     if (_assignmentPattern.hasMatch(line)) return true;
 
-    // Lines that look like return statements
     if (_returnPattern.hasMatch(line)) return true;
 
-    // Lines that are just a single statement with a dot chain
     if (_cascadePattern.hasMatch(line)) return true;
 
     return false;
   }
 
-  /// Returns true if the line looks like natural language / prose.
   bool _isProse(String line) {
     final lower = line.toLowerCase();
     if (lower.startsWith('todo') ||
@@ -296,8 +244,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       return true;
     }
 
-    // Lines that are just prose (no code-like characters).
-    // Prose tends to have spaces and no special code characters.
     if (!line.contains(';') &&
         !line.contains('{') &&
         !line.contains('}') &&
@@ -307,7 +253,6 @@ class _Visitor extends SimpleAstVisitor<void> {
         !line.startsWith('@') &&
         !line.startsWith('import ') &&
         !line.startsWith('export ')) {
-      // If it's mostly words with spaces and no code markers, it's prose.
       final words = line.split(_whitespacePattern);
       if (words.length >= 3) return true;
     }
@@ -315,7 +260,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return false;
   }
 
-  /// Checks if the line starts with a common Dart code keyword.
   bool _startsWithCodeKeyword(String line) {
     const keywords = [
       'final ',
@@ -354,8 +298,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       'part ',
       'late ',
       'static ',
-      // Anchored on the `@`: bare `override` also opens ordinary prose such as
-      // "override this in subclasses", and the annotation is what code uses.
       '@override',
       'Widget ',
       'State<',
@@ -368,7 +310,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return false;
   }
 
-  /// Checks if a line looks like a function or method call.
   bool _looksLikeFunctionCall(String line) {
     return _functionCallPattern.hasMatch(line);
   }

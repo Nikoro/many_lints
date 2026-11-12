@@ -7,12 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when `Future.ignore()` silently discards an error without explaining
-/// why that is intentional.
-///
-/// Unlike `unawaited(future)`, `future.ignore()` consumes both the value and
-/// any error. An immediately preceding comment is treated as documentation of
-/// that deliberate choice and leaves the call alone.
 class AvoidFutureIgnore extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_future_ignore',
@@ -55,9 +49,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // Resolve the declaration instead of matching only the spelling. A class
-    // may legitimately declare its own `ignore()` method, and that method does
-    // not have FutureExtensions' error-swallowing semantics.
+    // Edge case: a class may declare its own ignore() without the error-swallowing semantics
     final element = node.methodName.element;
     if (element?.library?.identifier != 'dart:async' ||
         element?.enclosingElement?.name != 'FutureExtensions') {

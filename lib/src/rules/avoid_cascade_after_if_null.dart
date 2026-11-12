@@ -7,20 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a cascade expression follows an if-null (`??`) operator
-/// without parentheses, which can produce unexpected results due to
-/// operator precedence.
-///
-/// **Bad:**
-/// ```dart
-/// final cow = nullableCow ?? Cow()..moo();
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// final cow = (nullableCow ?? Cow())..moo();
-/// final cow = nullableCow ?? (Cow()..moo());
-/// ```
 class AvoidCascadeAfterIfNull extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_cascade_after_if_null',

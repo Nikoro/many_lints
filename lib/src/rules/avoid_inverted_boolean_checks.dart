@@ -7,11 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a comparison is negated instead of being inverted.
-///
-/// `!(a > b)` is `a <= b` written the long way. Every relational operator
-/// has a direct opposite, so the negation adds a step for the reader
-/// without adding meaning.
 class AvoidInvertedBooleanChecks extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_inverted_boolean_checks',
@@ -46,10 +41,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  /// Relational operators and their exact opposites.
-  ///
-  /// `==`/`!=` are handled by `avoid_unnecessary_negations`, so they are
-  /// left out here to avoid reporting the same code twice.
+  // Edge case: == and != are left to avoid_unnecessary_negations, so the code is reported once
   static const _opposites = {'<': '>=', '<=': '>', '>': '<=', '>=': '<'};
 
   @override
@@ -65,9 +57,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final opposite = _opposites[inner.operator.lexeme];
     if (opposite == null) return;
 
-    // Restricted to `int` on purpose. For a user-defined type the operators
-    // need not be consistent, and with doubles NaN breaks the equivalence:
-    // `!(nan > 1)` is true while `nan <= 1` is false.
+    // Edge case: NaN breaks the equivalence for doubles: !(nan > 1) is true while nan <= 1 is false
     if (!_isInt(inner.leftOperand) || !_isInt(inner.rightOperand)) return;
 
     final suggestion =

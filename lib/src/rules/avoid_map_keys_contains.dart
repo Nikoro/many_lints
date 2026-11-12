@@ -7,10 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when using `map.keys.contains(key)` instead of `map.containsKey(key)`.
-///
-/// `.keys.contains` iterates through all keys and is significantly slower
-/// than the built-in `containsKey` method.
 class AvoidMapKeysContains extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_map_keys_contains',
@@ -52,7 +48,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final target = node.target;
 
-    // map.keys.contains(x) — simple variable target parses as PrefixedIdentifier
+    // Edge case: map.keys parses as PrefixedIdentifier, a complex target's .keys as PropertyAccess
     if (target case PrefixedIdentifier(
       identifier: SimpleIdentifier(name: 'keys'),
       prefix: SimpleIdentifier(staticType: final mapType?),
@@ -61,7 +57,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // expr.keys.contains(x) — complex target parses as PropertyAccess
     if (target case PropertyAccess(
       propertyName: SimpleIdentifier(name: 'keys'),
       target: Expression(staticType: final mapType?),

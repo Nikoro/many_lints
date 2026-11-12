@@ -7,39 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../banned_entry.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when a file re-exports a library banned for its location.
-///
-/// Barrel files decide a package's public surface, and an accidental
-/// `export` there leaks an internal library to every consumer — a breaking
-/// change to remove later. Banning specific exports keeps that surface
-/// deliberate. Nothing is banned until you configure it.
-///
-/// Kept separate from [avoid_banned_imports] because importing a library for
-/// internal use and re-exporting it to consumers are different decisions: a
-/// package is often free to depend on something it must not expose.
-///
-/// **Configuration** (`many_lints.yaml`):
-///
-/// ```yaml
-/// rules:
-///   avoid_banned_exports:
-///     banned:
-///       - deny_pattern: ['src/internal/.*']
-///         in: ['lib/*.dart']
-///         message: 'Internal libraries must not be part of the public API.'
-/// ```
-///
-/// **BAD:**
-/// ```dart
-/// // in lib/my_package.dart
-/// export 'src/internal/cache.dart';  // LINT
-/// ```
-///
-/// **GOOD:**
-/// ```dart
-/// // in lib/my_package.dart
-/// export 'src/api/client.dart';
-/// ```
 class AvoidBannedExports extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_banned_exports',

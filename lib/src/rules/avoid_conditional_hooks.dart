@@ -9,11 +9,6 @@ import '../ast_node_analysis.dart';
 import '../hook_detection.dart';
 import '../hook_type_checkers.dart';
 
-/// Warns when hooks are called inside conditional branches.
-///
-/// Hooks rely on call order to maintain state correctly. Calling hooks
-/// conditionally can cause hooks to be called in a different order between
-/// builds, leading to unexpected behavior.
 class AvoidConditionalHooks extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_conditional_hooks',
@@ -80,9 +75,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Recursively visits a build body to find hook calls inside conditional
-/// branches. Tracks whether the current position is "conditional" via a depth
-/// counter that increments when entering if/else/switch/ternary branches.
 class _ConditionalHookFinder extends RecursiveAstVisitor<void> {
   final AvoidConditionalHooks rule;
   int _conditionalDepth = 0;
@@ -107,24 +99,16 @@ class _ConditionalHookFinder extends RecursiveAstVisitor<void> {
     super.visitFunctionExpressionInvocation(node);
   }
 
-  // Stop at HookBuilder boundaries (they create a new hook context)
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    final body = maybeHookBuilderBody(node);
-    if (body != null) {
-      // This is a HookBuilder — don't recurse into its builder body
-      return;
-    }
+    // Edge case: a HookBuilder opens a hook context of its own, checked separately
+    if (maybeHookBuilderBody(node) != null) return;
     _checkHookCall(node);
     super.visitInstanceCreationExpression(node);
   }
 
-  // --- Conditional branches ---
-
   @override
   void visitIfStatement(IfStatement node) {
-    // The condition itself is NOT conditional — hooks in condition would be fine
-    // (though unusual). The then and else branches are conditional.
     node.expression.accept(this);
 
     _conditionalDepth++;
@@ -167,7 +151,6 @@ class _ConditionalHookFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitConditionalExpression(ConditionalExpression node) {
-    // condition is not conditional, but then/else are
     node.condition.accept(this);
 
     _conditionalDepth++;
@@ -176,8 +159,6 @@ class _ConditionalHookFinder extends RecursiveAstVisitor<void> {
     _conditionalDepth--;
   }
 
-  // Short-circuit operators: `condition && useHook()` — the right operand
-  // is conditionally executed
   @override
   void visitBinaryExpression(BinaryExpression node) {
     final op = node.operator.lexeme;
@@ -191,17 +172,10 @@ class _ConditionalHookFinder extends RecursiveAstVisitor<void> {
     }
   }
 
-  // Stop at nested function boundaries — closures define their own scope
-  // but we still want to check them if they're immediately invoked.
-  // However, hooks inside passed callbacks are a different concern.
+  // Edge case: a closure is a separate invocation context, so its hooks are not conditional here
   @override
-  void visitFunctionExpression(FunctionExpression node) {
-    // Don't recurse into nested closures/functions — they are a different
-    // invocation context and hooks inside them are their own concern.
-  }
+  void visitFunctionExpression(FunctionExpression node) {}
 
   @override
-  void visitFunctionDeclaration(FunctionDeclaration node) {
-    // Don't recurse into nested function declarations.
-  }
+  void visitFunctionDeclaration(FunctionDeclaration node) {}
 }

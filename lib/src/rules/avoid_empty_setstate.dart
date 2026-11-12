@@ -7,15 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../state_base_classes.dart';
 
-/// Warns when `setState` is called with an empty callback.
-///
-/// `setState(() {})` means the state was mutated somewhere else and the
-/// callback exists only to request a rebuild. That hides the mutation from
-/// readers and from the framework's debug checks, and it breaks the moment
-/// the mutation moves after the `setState` call.
-///
-/// Move the mutation inside the callback so the state change and the
-/// rebuild request stay together.
 class AvoidEmptySetstate extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_empty_setstate',
@@ -55,8 +46,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name != 'setState') return;
 
-    // Only an unqualified `setState(...)` or `this.setState(...)` inside a
-    // State subclass — not a same-named method on some other object.
     final target = node.target;
     if (target != null && target is! ThisExpression) return;
 
@@ -76,10 +65,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Whether the callback body contains no statements at all.
-  ///
-  /// A body with any statement — even one that turns out to be a no-op —
-  /// is left alone; proving a statement has no effect is beyond this rule.
   bool _isEmptyBody(FunctionBody body) => switch (body) {
     BlockFunctionBody(:final block) => block.statements.isEmpty,
     _ => false,

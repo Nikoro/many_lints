@@ -6,12 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when both operands of a binary expression are identical.
-///
-/// `a == a`, `x && x` and `value - value` are almost always typos: one
-/// operand was meant to be a different variable, field, or index. The
-/// expression compiles and produces a constant result, so nothing fails
-/// until the wrong branch is taken.
 class AvoidEqualExpressions extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_equal_expressions',
@@ -47,10 +41,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  /// Operators where identical operands signal a mistake.
-  ///
-  /// `+`, `*` and the bit shifts are excluded: `x + x` and `x * x` are
-  /// ordinary arithmetic, not errors.
+  // Edge case: x + x and x * x are ordinary arithmetic, so + and * are left out
   static const _suspiciousOperators = {
     '==',
     '!=',
@@ -79,18 +70,16 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (left.toSource() != right.toSource()) return;
 
-    // `x != x` is the canonical NaN test for doubles, and `x == x` its
-    // inverse. Both are deliberate when the operand can be a double.
+    // Edge case: x != x is the canonical NaN test for doubles
     if ((operator == '!=' || operator == '==') && _mayBeDouble(left)) return;
 
     rule.reportAtNode(node, arguments: [operator]);
   }
 
-  /// Whether [expression] could hold a `double`, making a self-comparison a
-  /// deliberate NaN check rather than a typo.
   bool _mayBeDouble(Expression expression) {
     final type = expression.staticType;
-    if (type == null) return true; // Unresolved — stay silent.
+    // Edge case: an unresolved operand stays silent
+    if (type == null) return true;
     final name = type.getDisplayString();
     return name == 'double' ||
         name == 'double?' ||
@@ -98,11 +87,6 @@ class _Visitor extends SimpleAstVisitor<void> {
         name == 'num?';
   }
 
-  /// Whether an expression can be evaluated twice with the same result.
-  ///
-  /// A method call may return something different each time — `next() ==
-  /// next()` is a legitimate comparison — so only plain reads are
-  /// considered.
   bool _isSideEffectFree(Expression expression) => switch (expression) {
     SimpleIdentifier() => true,
     PrefixedIdentifier() => true,

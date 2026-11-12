@@ -7,13 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../state_base_classes.dart';
 
-/// Warns when a listener is added in a State lifecycle method but never
-/// removed in `dispose()`.
-///
-/// Every `addListener()` call on a `Listenable` (e.g. `ValueNotifier`,
-/// `ChangeNotifier`, `AnimationController`) inside `initState`,
-/// `didUpdateWidget`, or `didChangeDependencies` must have a corresponding
-/// `removeListener()` call in `dispose()` to prevent memory leaks.
 class AlwaysRemoveListener extends ManyLintsRule {
   static const LintCode code = LintCode(
     'always_remove_listener',
@@ -66,7 +59,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final methods = body.members.whereType<MethodDeclaration>();
 
-    // Collect all removeListener calls in dispose()
     final disposeMethod = methods
         .where((m) => m.name.lexeme == 'dispose')
         .firstOrNull;
@@ -80,7 +72,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       removeListenerCalls.addAll(collector.calls);
     }
 
-    // Check lifecycle methods for addListener calls
     for (final method in methods) {
       if (!_lifecycleMethods.contains(method.name.lexeme)) continue;
 
@@ -91,7 +82,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       method.body.visitChildren(collector);
 
       for (final addCall in collector.calls) {
-        // Check if there's a matching removeListener in dispose
         if (!_hasMatchingRemoveListener(addCall, removeListenerCalls)) {
           rule.reportAtNode(addCall.node);
         }
@@ -104,10 +94,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     Set<_ListenerCall> removeCalls,
   ) {
     for (final removeCall in removeCalls) {
-      // The target (object being listened to) must match
       if (addCall.targetSource != removeCall.targetSource) continue;
 
-      // The listener callback must match
       if (addCall.listenerSource != removeCall.listenerSource) continue;
 
       return true;
@@ -116,7 +104,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Represents an addListener() or removeListener() call with its context.
 class _ListenerCall {
   final MethodInvocation node;
   final String targetSource;
@@ -138,7 +125,6 @@ class _ListenerCall {
       listenerSource == other.listenerSource;
 }
 
-/// Collects all calls to a specific method (addListener or removeListener).
 class _MethodCallCollector extends RecursiveAstVisitor<void> {
   final String methodName;
   final bool stopAtFunctions;

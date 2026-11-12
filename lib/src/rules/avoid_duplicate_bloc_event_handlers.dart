@@ -9,13 +9,6 @@ import 'package:analyzer/error/error.dart';
 import '../bloc_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when the same event type is registered with `on<E>` more than once.
-///
-/// `Bloc.on<E>` asserts that each event type has exactly one handler and
-/// throws a `StateError` when a second registration for the same type is
-/// added. Because that happens in the constructor, the failure surfaces the
-/// first time the bloc is created rather than where the duplicate was
-/// written.
 class AvoidDuplicateBlocEventHandlers extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_duplicate_bloc_event_handlers',
@@ -59,23 +52,19 @@ class _Visitor extends SimpleAstVisitor<void> {
     final body = node.body;
     if (body is! BlockClassBody) return;
 
-    // Registrations are collected per class rather than per constructor:
-    // two constructors each registering the same event never both run.
     for (final member in body.members) {
       if (member is! ConstructorDeclaration) continue;
+      // Edge case: one finder per constructor, as two constructors never both run
       final finder = _EventHandlerFinder(rule);
       member.body.visitChildren(finder);
     }
   }
 }
 
-/// Collects `on<E>(...)` registrations and reports repeats of the same `E`.
 class _EventHandlerFinder extends RecursiveAstVisitor<void> {
   final AvoidDuplicateBlocEventHandlers rule;
 
-  /// Elements of event types already registered. Keying on the element
-  /// rather than the type makes two references to the same event compare
-  /// equal even when written with different import prefixes.
+  // Edge case: keyed by element, so one event written with two import prefixes still collides
   final Set<Element> _seen = {};
 
   _EventHandlerFinder(this.rule);
@@ -84,17 +73,12 @@ class _EventHandlerFinder extends RecursiveAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     super.visitMethodInvocation(node);
 
-    // `on` is Bloc's own registration API. `additional_methods` widens this
-    // to a project's own wrapper (`onEvent<E>()`, `handle<E>()`) that
-    // forwards to it — the duplicate-registration crash is the same, but the
-    // name is not one this package can know. Default `[]` keeps only `on`.
     final name = node.methodName.name;
     if (name != 'on' &&
         !rule.config.stringListOption('additional_methods').contains(name)) {
       return;
     }
 
-    // Only an unqualified `on<E>(...)` or `this.on<E>(...)`.
     final target = node.target;
     if (target != null && target is! ThisExpression) return;
 

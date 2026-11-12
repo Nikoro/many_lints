@@ -6,11 +6,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../constant_expression.dart';
 
-/// Warns when a collection is accessed by a constant index inside a loop body.
-///
-/// Accessing a collection with a constant index (e.g. `list[0]`) inside a loop
-/// is suspicious — the index never changes, so the access likely belongs
-/// outside the loop or the index should depend on the loop variable.
 class AvoidAccessingCollectionsByConstantIndex extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_accessing_collections_by_constant_index',
@@ -53,7 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(node);
   }
 
-  /// Returns `true` if [node] is inside the body of a loop statement.
   static bool _isInsideLoopBody(AstNode node) {
     AstNode? current = node.parent;
     while (current != null) {
@@ -62,8 +56,7 @@ class _Visitor extends SimpleAstVisitor<void> {
           current is DoStatement) {
         return true;
       }
-      // Stop at function boundaries — a loop in an outer function
-      // doesn't make a nested closure's index access suspicious.
+      // Edge case: a loop in an outer function says nothing about an index inside a nested closure
       if (current is FunctionExpression ||
           current is FunctionDeclaration ||
           current is MethodDeclaration) {
@@ -74,22 +67,17 @@ class _Visitor extends SimpleAstVisitor<void> {
     return false;
   }
 
-  /// Returns `true` if [expression] is a compile-time constant index.
   static bool _isConstantIndex(Expression expression) {
-    // Integer literal: list[0]
     if (expression is IntegerLiteral) return true;
 
-    // Simple identifier: list[constIndex]
     if (expression is SimpleIdentifier) {
       return isConstantIdentifier(expression);
     }
 
-    // Prefixed identifier: SomeClass.constField
     if (expression is PrefixedIdentifier) {
       return isConstantIdentifier(expression.identifier);
     }
 
-    // Property access: SomeClass.constField (alternative representation)
     if (expression is PropertyAccess) {
       return isConstantIdentifier(expression.propertyName);
     }

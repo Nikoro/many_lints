@@ -9,37 +9,6 @@ import 'package:analyzer/source/source_range.dart';
 import '../banned_entry.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when a declaration uses a banned name.
-///
-/// Enforces a project's vocabulary: ban `data`, `temp`, `info` and `manager`
-/// as meaningless, or reserve a term your domain uses for one specific thing.
-/// Nothing is banned until you configure it.
-///
-/// Only *declarations* are checked — the place a name is chosen. Reporting
-/// every reference too would bury the one line the author can act on under
-/// diagnostics they cannot fix without renaming the declaration anyway.
-///
-/// **Configuration** (`many_lints.yaml`):
-///
-/// ```yaml
-/// rules:
-///   avoid_banned_names:
-///     banned:
-///       - deny: ['data', 'temp', 'info', 'manager']
-///         message: 'Name it for what it holds.'
-///       - deny_pattern: ['.*Impl']
-///         message: 'Name the implementation for how it differs.'
-/// ```
-///
-/// **BAD:**
-/// ```dart
-/// final data = fetchUsers();  // LINT
-/// ```
-///
-/// **GOOD:**
-/// ```dart
-/// final users = fetchUsers();
-/// ```
 class AvoidBannedNames extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_banned_names',
@@ -62,9 +31,7 @@ class AvoidBannedNames extends ManyLintsRule {
     RuleContext context,
   ) {
     final visitor = _Visitor(this);
-    // One callback per kind of declaration that names something. Registering
-    // `addSimpleIdentifier` instead would also visit every *reference*, which
-    // this rule deliberately leaves alone.
+    // Edge case: declarations only: addSimpleIdentifier would also visit references, which stay allowed
     registry.addVariableDeclaration(this, visitor);
     registry.addRegularFormalParameter(this, visitor);
     registry.addMethodDeclaration(this, visitor);
@@ -113,7 +80,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitTypeParameter(TypeParameter node) => _check(node.name);
 
-  /// Reports [name] when a configured entry bans it.
   void _check(Token? name) {
     if (name == null) return;
 

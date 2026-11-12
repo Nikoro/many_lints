@@ -6,11 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a generic type parameter shadows a top-level type declaration
-/// in the same file (class, mixin, enum, typedef, or extension type).
-///
-/// Shadowing can be confusing when a parameter or variable annotated with the
-/// generic looks like it refers to the real class.
 class AvoidGenericsShadowing extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_generics_shadowing',
@@ -47,7 +42,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // Collect all top-level type names in this file.
     final topLevelNames = <String>{};
     for (final declaration in node.declarations) {
       switch (declaration) {
@@ -70,14 +64,11 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (topLevelNames.isEmpty) return;
 
-    // Check all type parameter lists in the file.
     final checker = _TypeParameterChecker(rule, topLevelNames);
     node.visitChildren(checker);
   }
 }
 
-/// Recursively visits the AST to find type parameter lists and check for
-/// shadowing.
 class _TypeParameterChecker extends RecursiveAstVisitor<void> {
   final AvoidGenericsShadowing rule;
   final Set<String> topLevelNames;

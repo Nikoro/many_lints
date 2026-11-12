@@ -6,10 +6,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../constant_expression.dart';
 
-/// Warns when a binary comparison has constant operands on both sides.
-///
-/// A condition like `10 == 11` or `SomeClass.value == '1'` always evaluates
-/// to the same result, which usually indicates a typo or a bug.
 class AvoidConstantConditions extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_constant_conditions',

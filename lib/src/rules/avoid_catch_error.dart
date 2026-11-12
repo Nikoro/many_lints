@@ -7,30 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when `Future.catchError` is used instead of `try`/`catch`.
-///
-/// `catchError` takes an untyped `Function`, so the analyzer cannot check its
-/// signature. A callback with the wrong number of parameters compiles
-/// perfectly and then throws at runtime — and only on the error path, which is
-/// exactly the path least likely to be covered by a test.
-///
-/// The `test` argument has a second trap: when it returns `false` the error is
-/// not handled at all but silently flows on to the next handler, which reads
-/// like the error was caught.
-///
-/// **Bad:**
-/// ```dart
-/// repository.load().catchError((err, st) => fallback);
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// try {
-///   await repository.load();
-/// } catch (err, st) {
-///   // handle
-/// }
-/// ```
 class AvoidCatchError extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_catch_error',
@@ -72,8 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name != 'catchError') return;
 
-    // Confirm the receiver really is a Future, so an unrelated user-defined
-    // `catchError` is not reported.
     final targetType = node.realTarget?.staticType;
     if (targetType == null) return;
     if (!_futureChecker.isAssignableFromType(targetType)) return;

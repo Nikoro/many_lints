@@ -6,8 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a `copyWith` method does not include all parameters from the
-/// class's default constructor, which can lead to incomplete copies.
 class AvoidIncompleteCopyWith extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_incomplete_copy_with',
@@ -47,14 +45,12 @@ class _Visitor extends SimpleAstVisitor<void> {
     final body = node.body;
     if (body is! BlockClassBody) return;
 
-    // Find the default (unnamed) constructor
     final constructor = body.members
         .whereType<ConstructorDeclaration>()
         .where((c) => c.name == null)
         .firstOrNull;
     if (constructor == null) return;
 
-    // Collect constructor parameter names
     final constructorParams = <String>{};
     for (final param in constructor.parameters.parameters) {
       final name = param.name?.lexeme;
@@ -63,14 +59,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (constructorParams.isEmpty) return;
 
-    // Find the copyWith method
     final copyWithMethod = body.members
         .whereType<MethodDeclaration>()
         .where((m) => m.name.lexeme == 'copyWith')
         .firstOrNull;
     if (copyWithMethod == null) return;
 
-    // Collect copyWith parameter names
     final copyWithParams = <String>{};
     final parameters = copyWithMethod.parameters?.parameters;
     if (parameters != null) {
@@ -80,7 +74,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     }
 
-    // Find missing parameters
     final missing = constructorParams.difference(copyWithParams);
     if (missing.isEmpty) return;
 

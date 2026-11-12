@@ -7,25 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when one class reads another class's private member.
-///
-/// Dart scopes privacy to the **library**, not the class, so `_field` is
-/// visible to every declaration in the same file — and to every `part` of it.
-/// Most people write `_` meaning "mine", and the language quietly means
-/// "this file's". In a long file or a `part`-heavy library those are very
-/// different things, and this rule makes the language behave the way the
-/// underscore already reads.
-///
-/// The exemptions are what keep it usable, because several idioms legitimately
-/// reach across:
-///
-/// - A `State` reading `widget._foo`, which is one object split in two by the
-///   framework.
-/// - `copyWith`, `operator ==` and `hashCode`, which exist precisely to read
-///   another instance's fields.
-/// - Another instance of the **same** class: `other._value` inside `==` is the
-///   pattern, not a violation.
-/// - Generated code, which is expected to reach into what it generated.
 class AvoidAccessingOtherClassesPrivateMembers extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_accessing_other_classes_private_members',
@@ -56,7 +37,6 @@ class AvoidAccessingOtherClassesPrivateMembers extends ManyLintsRule {
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
-  /// Members whose whole job is to read another instance's fields.
   static const _defaultIgnoredMembers = {
     'copyWith',
     '==',
@@ -81,7 +61,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (!name.startsWith('_')) return;
     if (target == null) return;
 
-    // `this._x` and a bare `_x` are the class's own business.
     if (target is ThisExpression) return;
 
     final enclosing = node
@@ -97,18 +76,17 @@ class _Visitor extends SimpleAstVisitor<void> {
     final member = node.thisOrAncestorOfType<MethodDeclaration>();
     if (member != null && ignored.contains(member.name.lexeme)) return;
 
-    // A `State` reading `widget._foo` is one object the framework split in two.
+    // Edge case: a State reading widget._foo is one object the framework split in two
     if (target is SimpleIdentifier && target.name == 'widget') return;
 
     final owner = _ownerOf(target);
     if (owner == null) return;
-    // Another instance of the SAME class is the `==`/`copyWith` pattern.
+    // Edge case: another instance of the same class is the == and copyWith pattern
     if (owner == enclosing) return;
 
     rule.reportAtNode(property, arguments: [name]);
   }
 
-  /// The class a target expression's static type belongs to.
   InterfaceElement? _ownerOf(Expression target) {
     final type = target.staticType;
     final element = type?.element;

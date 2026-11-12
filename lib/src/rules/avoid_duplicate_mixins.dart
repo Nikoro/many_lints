@@ -6,15 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when the same mixin is applied twice in one `with` clause.
-///
-/// `class A with M, M {}` compiles, and the second application contributes
-/// nothing — the members are already there. It reads as though two different
-/// behaviours are being mixed in, which is what makes it worth reporting
-/// rather than harmless: a reader counting mixins sees one more than exists.
-///
-/// Duplicates arrive through merges and through a rename that collapses two
-/// once-distinct names onto one.
 class AvoidDuplicateMixins extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_duplicate_mixins',
@@ -72,15 +63,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Identifies a mixin application, so that only genuinely identical ones
-  /// collide.
-  ///
-  /// The resolved type is used rather than the source text, so an aliased
-  /// import (`M` and `alias.M`) counts as one mixin. It also keeps the type
-  /// arguments, because `M<int>` and `M<String>` share an element but bring in
-  /// different members — applying both is legitimate, not a duplicate.
   String _mixinKey(NamedType mixin) {
     final type = mixin.type;
+    // Edge case: M<int> and M<String> share an element but bring different members, so both are legal
     return type == null ? mixin.toSource() : type.getDisplayString();
   }
 }

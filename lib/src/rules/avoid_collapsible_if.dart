@@ -6,12 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when an `if` statement contains nothing but another `if`.
-///
-/// Two nested conditions with no `else` on either level and no other
-/// statement between them are just a conjunction written across two
-/// blocks. Merging them with `&&` removes a level of indentation and makes
-/// the real condition readable in one line.
 class AvoidCollapsibleIf extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_collapsible_if',
@@ -47,10 +41,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitIfStatement(IfStatement node) {
-    // An else branch on the outer if means the nesting carries meaning.
     if (node.elseStatement != null) return;
 
-    // A case clause (`if (x case P)`) cannot be merged with `&&`.
+    // Edge case: an if-case clause cannot be merged with &&
     if (node.caseClause != null) return;
 
     final inner = _soleNestedIf(node.thenStatement);
@@ -62,8 +55,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtToken(node.ifKeyword);
   }
 
-  /// Returns the nested `if` when [statement] is exactly one `if` — either
-  /// written directly or as the only statement of a block.
   IfStatement? _soleNestedIf(Statement statement) => switch (statement) {
     IfStatement() => statement,
     Block(:final statements) when statements.length == 1 =>

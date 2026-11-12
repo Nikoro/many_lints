@@ -7,37 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../fpdart_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when `getOrElse` on a failable type discards the failure.
-///
-/// `Either.getOrElse` hands its callback the `Left` value. A callback that
-/// ignores that parameter throws the failure away: the pipeline carried the
-/// reason all the way to the boundary, and the boundary drops it in favour of
-/// a default the caller cannot distinguish from a real result.
-///
-/// Sometimes that is exactly right — a cached value, a display fallback. But
-/// it is a decision, and written as `(_) => 0` it does not look like one. Using
-/// the parameter, or folding with `match`, makes the choice visible.
-///
-/// `Option.getOrElse` takes no parameter and is never reported: there is no
-/// failure there to discard.
-///
-/// **Bad:**
-/// ```dart
-/// final count = result.getOrElse((_) => 0);
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// final count = result.match((failure) {
-///   log(failure);
-///   return 0;
-/// }, (value) => value);
-/// ```
-///
-/// ## Options
-///
-/// - `ignore_tests`: when `true` (the default), files under `test/` are not
-///   reported — discarding a failure in a fixture is ordinary.
 class AvoidGetOrElseSwallowingFailure extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_get_or_else_swallowing_failure',
@@ -82,10 +51,9 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // Only the failable wrappers: `Option.getOrElse` takes no parameter, so
-    // there is nothing to discard.
     final targetType = node.realTarget?.staticType;
     if (targetType == null) return;
+    // Edge case: Option.getOrElse takes no failure, so there is nothing to discard
     if (!failableFpdartChecker.isAssignableFromType(targetType)) return;
 
     final arguments = node.argumentList.arguments;
@@ -101,18 +69,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     final name = parameter.name?.lexeme;
     if (name == null) return;
 
-    // A wildcard says outright that the failure is unused; any other name has
-    // to be checked against the body, since naming it and then ignoring it is
-    // the same discard.
+    // Edge case: naming the failure and then ignoring it is the same discard
     if (!_isWildcard(name) && _isReferencedIn(callback.body, name)) return;
 
     rule.reportAtNode(node.methodName);
   }
 
-  /// Whether [name] is a discard (`_`, `__`, ...).
   bool _isWildcard(String name) => RegExp(r'^_+$').hasMatch(name);
 
-  /// Whether [name] is read anywhere in [body].
   bool _isReferencedIn(FunctionBody body, String name) {
     final finder = _IdentifierFinder(name);
     body.accept(finder);
@@ -120,7 +84,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Looks for a reference to a given name.
 class _IdentifierFinder extends RecursiveAstVisitor<void> {
   final String name;
   bool found = false;
