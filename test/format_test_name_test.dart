@@ -49,7 +49,6 @@ void main() {
 ''');
   }
 
-  // A group names a subject, not an expectation, so it is exempt by default.
   Future<void> test_groupIsExemptByDefault() async {
     await assertNoDiagnostics(r'''
 void group(String name, void Function() body) {}
@@ -60,8 +59,7 @@ void main() {
 ''');
   }
 
-  // A non-literal description cannot be read without evaluating it.
-  Future<void> test_interpolatedNameIsSkipped() async {
+  Future<void> test_nonLiteralInterpolatedNameIsSkipped() async {
     await assertNoDiagnostics(r'''
 void test(String name, void Function() body) {}
 
@@ -73,8 +71,6 @@ void main() {
   }
 }
 
-/// The control: with no pattern configured the rule must report nothing, which
-/// is what separates "the pattern matched" from "the rule never ran".
 @reflectiveTest
 class FormatTestNameUnconfiguredTest extends ManyLintsRuleTest {
   @override

@@ -77,9 +77,6 @@ class CounterCubit extends Cubit<CounterState> {
   }
 
   Future<void> test_stateNameAloneIsNotBlocState() async {
-    // The name-based strategy moved to `prefer_immutable_state`. Without a
-    // Bloc or Cubit in sight this rule must stay silent, which is the whole
-    // point of the split.
     await assertNoDiagnostics(r'''
 class MyFeatureState {}
 ''');
@@ -169,15 +166,7 @@ class State {}
 ''');
   }
 
-  // --- Cover Cubit state detection (lines 83-89) ---
-  // The Cubit path is an `else if` that only fires when the Bloc branch
-  // doesn't match. Since Cubit extends Bloc, MyCubit matches Bloc first.
-  // To trigger the Cubit path, we need a standalone Cubit not extending Bloc.
-  // Use a separate mock package with Cubit not extending Bloc.
-
-  Future<void> test_cubitOnlyWithNonStateNamedClass() async {
-    // Use a separate file in the existing bloc package where Cubit
-    // does not extend Bloc, to isolate the Cubit detection path.
+  Future<void> test_cubitNotExtendingBlocReachesTheCubitPath() async {
     final blocPkg = newPackage('bloc');
     blocPkg.addFile('lib/cubit_only.dart', r'''
 class Cubit<State> {

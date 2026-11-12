@@ -15,8 +15,6 @@ class NoEqualConditionsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_repeatedConditionInChain() async {
     await assertDiagnostics(
       r'''
@@ -51,8 +49,6 @@ String f(int x) {
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_distinctConditions() async {
     await assertNoDiagnostics(r'''
 String f(int x) {
@@ -66,9 +62,7 @@ String f(int x) {
 ''');
   }
 
-  Future<void> test_separateChains() async {
-    // Two independent `if`s test the same thing at different points, which is
-    // normal — the first may have changed the state the second reads.
+  Future<void> test_separateIfChainsMayRetestChangedState() async {
     await assertNoDiagnostics(r'''
 void f(int x) {
   if (x > 0) {
@@ -93,10 +87,7 @@ void f(int x, int y) {
 ''');
   }
 
-  // ---- Edge cases ----
-
-  Future<void> test_patternCaseBindsVariables() async {
-    // Two `case` clauses that read alike need not test the same thing.
+  Future<void> test_lookalikePatternCasesBindingVariables_noLint() async {
     await assertNoDiagnostics(r'''
 String f(Object x) {
   if (x case int()) {

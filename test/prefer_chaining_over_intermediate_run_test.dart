@@ -35,7 +35,6 @@ Future<void> best() async {
   }
 
   Future<void> test_singleRunIsFine() async {
-    // One `.run()` is the boundary the pipeline is meant to have.
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -60,9 +59,7 @@ Future<void> best() async {
 ''');
   }
 
-  Future<void> test_runInsideClosureIsNotCounted() async {
-    // The closure has its own boundary; counting it against the enclosing
-    // member would report a body that is already correct.
+  Future<void> test_runInsideClosureHasItsOwnBoundary() async {
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
 

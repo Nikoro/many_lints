@@ -38,8 +38,6 @@ const kDefaultTimeout = 30;
 ''');
   }
 
-  // A private constant cannot collide outside its library, which is the
-  // problem the prefix exists to solve.
   Future<void> test_privateConstantIsSkipped() async {
     await assertNoDiagnostics(r'''
 const _defaultTimeout = 30;

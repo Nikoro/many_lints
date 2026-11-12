@@ -17,16 +17,13 @@ import 'package:many_lints/src/presets.dart';
 import 'package:many_lints/src/rule_config.dart';
 import 'package:test/test.dart';
 
-/// Reported by `avoid_equal_expressions`, which is a **core** rule.
-const _coreCode = '''
+const _coreRuleCode = '''
 bool check(int a) {
   return a == a;
 }
 ''';
 
-/// Reported by `avoid_collapsible_if`, which is a **recommended** rule but not
-/// a core one.
-const _recommendedCode = '''
+const _recommendedOnlyRuleCode = '''
 void main() {
   bool a = true;
   bool b = false;
@@ -38,17 +35,11 @@ void main() {
 }
 ''';
 
-/// Reported by `prefer_type_over_var`, which is in the **opinionated** preset
-/// only — it contradicts `omit_local_variable_types` from
-/// `package:lints/recommended.yaml`, so neither `core` nor `recommended`
-/// takes a side on it.
-const _opinionatedCode = '''
+const _opinionatedOnlyRuleCode = '''
 var topLevel = 1;
 ''';
 
-/// Reported by `arguments_ordering`, whose alphabetical policy is supplied by
-/// the **pedantic** preset rather than by the rule's normal defaults.
-const _pedanticCode = '''
+const _pedanticPolicyCode = '''
 void configure({int alpha = 0, int beta = 0}) {}
 
 void main() {
@@ -98,8 +89,6 @@ void main() {
       expect(Preset.pedantic.enables('avoid_non_null_assertion'), isTrue);
     });
 
-    // The whole point of dropping `all`: a preset must never turn on two rules
-    // whose fixes undo one another.
     test('opinionated enables neither half of a contradiction', () {
       for (final name in conflictingWithOpinionated) {
         expect(
@@ -111,8 +100,6 @@ void main() {
     });
 
     test('config-only rules stay out of every preset', () {
-      // These report nothing until a project supplies its own vocabulary, so a
-      // preset that enabled them would be enabling a no-op.
       for (final name in const [
         'banned_usage',
         'avoid_banned_types',
@@ -194,11 +181,7 @@ void main() {
       expect(opinionatedRules, contains('prefer_add_all'));
     });
 
-    // Guards against a preset naming a rule that was renamed or removed, which
-    // would silently shrink the preset with nothing to notice it.
     test('every preset rule name is a real registered rule', () {
-      // `registeredRuleNames` is filled by `register`, so the plugin has to be
-      // registered against a throwaway registry before it is meaningful.
       final plugin = ManyLintsPlugin()
         ..register(plugin_registry.PluginRegistryImpl('many_lints'));
       final registered = plugin.registeredRuleNames;
@@ -248,11 +231,8 @@ rules:
     enabled: true
 ''');
 
-      // In the preset, but switched off.
       expect(config.isRuleEnabled('avoid_equal_expressions'), isFalse);
-      // Not in any preset, but switched on.
       expect(config.isRuleEnabled('prefer_type_over_var'), isTrue);
-      // Untouched, so the preset still decides.
       expect(config.isRuleEnabled('avoid_self_compare'), isTrue);
       expect(config.isRuleEnabled('avoid_collapsible_if'), isFalse);
     });
@@ -341,7 +321,7 @@ rules:
     tearDown(() async => harness.tearDown());
 
     test('reports nothing when no configuration exists', () async {
-      final errors = await harness.analyze(_coreCode);
+      final errors = await harness.analyze(_coreRuleCode);
 
       expect(
         errors.map((e) => e.code),
@@ -350,14 +330,17 @@ rules:
     });
 
     test('preset: core enables a core rule', () async {
-      final errors = await harness.analyze(_coreCode, config: 'preset: core');
+      final errors = await harness.analyze(
+        _coreRuleCode,
+        config: 'preset: core',
+      );
 
       expect(errors.map((e) => e.code), contains('avoid_equal_expressions'));
     });
 
     test('preset: core leaves a recommended-only rule off', () async {
       final errors = await harness.analyze(
-        _recommendedCode,
+        _recommendedOnlyRuleCode,
         config: 'preset: core',
       );
 
@@ -369,7 +352,7 @@ rules:
 
     test('preset: recommended enables both tiers', () async {
       final coreErrors = await harness.analyze(
-        _coreCode,
+        _coreRuleCode,
         config: 'preset: recommended',
       );
       expect(
@@ -380,7 +363,7 @@ rules:
 
     test('preset: recommended enables a recommended-only rule', () async {
       final errors = await harness.analyze(
-        _recommendedCode,
+        _recommendedOnlyRuleCode,
         config: 'preset: recommended',
       );
 
@@ -389,7 +372,7 @@ rules:
 
     test('preset: recommended leaves an opinionated rule off', () async {
       final errors = await harness.analyze(
-        _opinionatedCode,
+        _opinionatedOnlyRuleCode,
         config: 'preset: recommended',
       );
 
@@ -401,7 +384,7 @@ rules:
 
     test('preset: opinionated enables an opinionated rule', () async {
       final errors = await harness.analyze(
-        _opinionatedCode,
+        _opinionatedOnlyRuleCode,
         config: 'preset: opinionated',
       );
 
@@ -410,31 +393,31 @@ rules:
 
     test('preset: pedantic enables and configures a pedantic rule', () async {
       final errors = await harness.analyze(
-        _pedanticCode,
+        _pedanticPolicyCode,
         config: 'preset: pedantic',
       );
 
       expect(errors.map((e) => e.code), contains('arguments_ordering'));
     });
 
-    test('an unknown preset silently enables nothing', () async {
-      // `all` was removed in 1.0.0. Config problems cannot be reported as
-      // diagnostics, so a stale name degrades to `none` rather than throwing —
-      // which is exactly why the docs have to stop advertising it.
-      final errors = await harness.analyze(
-        _opinionatedCode,
-        config: 'preset: all',
-      );
+    test(
+      'an unknown preset silently enables nothing, such as the removed all preset',
+      () async {
+        final errors = await harness.analyze(
+          _opinionatedOnlyRuleCode,
+          config: 'preset: all',
+        );
 
-      expect(
-        errors.map((e) => e.code),
-        isNot(contains('prefer_type_over_var')),
-      );
-    });
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('prefer_type_over_var')),
+        );
+      },
+    );
 
     test('a rule can be added on top of a preset', () async {
       final errors = await harness.analyze(
-        _opinionatedCode,
+        _opinionatedOnlyRuleCode,
         config: '''
 preset: core
 rules:
@@ -448,7 +431,7 @@ rules:
 
     test('a rule can be removed from a preset', () async {
       final errors = await harness.analyze(
-        _coreCode,
+        _coreRuleCode,
         config: '''
 preset: core
 rules:
@@ -465,7 +448,7 @@ rules:
 
     test('a rule enabled without any preset reports', () async {
       final errors = await harness.analyze(
-        _coreCode,
+        _coreRuleCode,
         config: '''
 rules:
   avoid_equal_expressions:
@@ -478,7 +461,7 @@ rules:
 
     test('exclude still applies to a rule a preset enabled', () async {
       final errors = await harness.analyze(
-        _coreCode,
+        _coreRuleCode,
         fileName: 'legacy.dart',
         config: '''
 preset: core
@@ -497,7 +480,7 @@ rules:
 
     test('a preset can be selected from analysis_options.yaml', () async {
       final errors = await harness.analyze(
-        _coreCode,
+        _coreRuleCode,
         optionsSection: '''
 many_lints:
   preset: core

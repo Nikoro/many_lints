@@ -16,8 +16,6 @@ class PreferCorrectJsonCastsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_castToNonNullableString() async {
     await assertDiagnostics(
       r'''
@@ -36,8 +34,6 @@ int f(Map<String, dynamic> json) => json['age'] as int;
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_nullableCastIsFine() async {
     await assertNoDiagnostics(r'''
 String? f(Map<String, dynamic> json) => json['name'] as String?;
@@ -55,8 +51,6 @@ String f(Map<String, dynamic> json) => json['name'] as String? ?? '';
 String f(Map<String, String> json) => json['name'] as String;
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_castToObjectIsIgnored() async {
     await assertNoDiagnostics(r'''

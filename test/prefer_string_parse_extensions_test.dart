@@ -63,7 +63,6 @@ int? f(String input) => int.tryParse(input);
   }
 
   Future<void> test_radixArgumentIsFine() async {
-    // `radix:` changes what the call does and no extension covers it.
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
 

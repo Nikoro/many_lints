@@ -24,8 +24,6 @@ mixin EquatableMixin {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void> test_extendsEquatable() async {
     await assertDiagnostics(
       r'''
@@ -61,8 +59,6 @@ class Point extends Equatable {
     );
   }
 
-  // --- Negative cases (should NOT trigger lint) ---
-
   Future<void> test_usesEquatableMixin() async {
     await assertNoDiagnostics(r'''
 import 'package:equatable/equatable.dart';
@@ -97,8 +93,6 @@ class Child extends Base {
 ''');
   }
 
-  // --- Edge cases ---
-
   Future<void> test_abstractClassExtendsEquatable() async {
     await assertDiagnostics(
       r'''
@@ -111,8 +105,6 @@ abstract class BaseEntity extends Equatable {
       [lint(70, 17)],
     );
   }
-
-  // --- equatable versions ---
 
   Future<void> test_equatable2_0SuggestsEquatableMixin() async {
     await assertDiagnostics(

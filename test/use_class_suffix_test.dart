@@ -6,12 +6,6 @@ void main() {
   defineReflectiveSuite(() => defineReflectiveTests(UseClassSuffixTest));
 }
 
-/// `AnalysisRuleTest` gives the rule no package root, so no `many_lints.yaml`
-/// is ever read and `entries:` is always empty here. That makes this suite
-/// exactly one thing: proof that the rule is silent until configured.
-///
-/// The configured behaviour is covered end-to-end in `rule_options_test.dart`,
-/// which drives a real `PluginServer` with a config file.
 @reflectiveTest
 class UseClassSuffixTest extends ManyLintsRuleTest {
   @override
@@ -23,9 +17,7 @@ class Bloc<Event, State> {}
     super.setUp();
   }
 
-  Future<void> test_noConfig_noLint() async {
-    // Without `entries:` the rule enforces nothing — installing the package
-    // must not impose a naming convention on anyone.
+  Future<void> test_noConfig_imposesNoNamingConvention() async {
     await assertNoDiagnostics(r'''
 import 'package:bloc/bloc.dart';
 class Counter extends Bloc<String, int> {}

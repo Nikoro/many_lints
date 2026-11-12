@@ -17,8 +17,6 @@ class PreferCorrectHandlerNameTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_handlerWithoutPrefix() async {
     await assertDiagnostics(
       r'''
@@ -35,8 +33,6 @@ class C {
       [lint(119, 7)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_onPrefixedHandler() async {
     await assertNoDiagnostics(r'''
@@ -80,8 +76,6 @@ class C {
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_nonOnParameterIsNotAHandlerSlot() async {
     await assertNoDiagnostics(r'''
 class Button {
@@ -97,7 +91,6 @@ class C {
   }
 
   Future<void> test_prefixMustStartANewWord() async {
-    // `online` starts with `on` but is not an on-prefixed handler name.
     await assertDiagnostics(
       r'''
 class Button {

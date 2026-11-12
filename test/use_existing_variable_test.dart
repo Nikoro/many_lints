@@ -315,10 +315,7 @@ void fn() {
 ''');
   }
 
-  // === Tests for super.visit*() branches (non-matching expressions) ===
-
   Future<void> test_nonMatchingInstanceCreation_noLint() async {
-    // InstanceCreationExpression that doesn't match — super.visitInstanceCreationExpression is called
     await assertNoDiagnostics(r'''
 void fn() {
   final list = List<int>.filled(10, 0);
@@ -328,7 +325,6 @@ void fn() {
   }
 
   Future<void> test_nonMatchingIndexExpression_noLint() async {
-    // IndexExpression that doesn't match — super.visitIndexExpression is called
     await assertNoDiagnostics(r'''
 void fn(List<int> list) {
   final first = list[0];
@@ -338,7 +334,6 @@ void fn(List<int> list) {
   }
 
   Future<void> test_nonMatchingBinaryExpression_noLint() async {
-    // BinaryExpression that doesn't match — super.visitBinaryExpression is called
     await assertNoDiagnostics(r'''
 void fn(int a, int b) {
   final sum = a + b;
@@ -348,7 +343,6 @@ void fn(int a, int b) {
   }
 
   Future<void> test_nonMatchingConditionalExpression_noLint() async {
-    // ConditionalExpression that doesn't match — super.visitConditionalExpression is called
     await assertNoDiagnostics(r'''
 void fn(bool flag, int a, int b) {
   final val = flag ? a : b;
@@ -358,7 +352,6 @@ void fn(bool flag, int a, int b) {
   }
 
   Future<void> test_nonMatchingFunctionExpressionInvocation_noLint() async {
-    // FunctionExpressionInvocation that doesn't match — super.visitFunctionExpressionInvocation is called
     await assertNoDiagnostics(r'''
 void fn(int Function(int) apply) {
   final result = apply(42);
@@ -368,7 +361,6 @@ void fn(int Function(int) apply) {
   }
 
   Future<void> test_nonMatchingCascadeExpression_noLint() async {
-    // CascadeExpression that doesn't match — super.visitCascadeExpression is called
     await assertNoDiagnostics(r'''
 void fn() {
   final list = []..add(1)..add(2);
@@ -378,7 +370,6 @@ void fn() {
   }
 
   Future<void> test_nonMatchingPostfixExpression_noLint() async {
-    // PostfixExpression that doesn't match — super.visitPostfixExpression is called
     await assertNoDiagnostics(r'''
 void fn(int? a, int? b) {
   final x = a!;
@@ -388,7 +379,6 @@ void fn(int? a, int? b) {
   }
 
   Future<void> test_nonMatchingPrefixExpression_noLint() async {
-    // PrefixExpression that doesn't match — super.visitPrefixExpression is called
     await assertNoDiagnostics(r'''
 void fn(List<int> list) {
   final notEmpty = !list.isEmpty;
@@ -398,7 +388,6 @@ void fn(List<int> list) {
   }
 
   Future<void> test_nonMatchingAsExpression_noLint() async {
-    // AsExpression that doesn't match — super.visitAsExpression is called
     await assertNoDiagnostics(r'''
 void fn(dynamic d) {
   final s = d as String;
@@ -408,7 +397,6 @@ void fn(dynamic d) {
   }
 
   Future<void> test_nonMatchingIsExpression_noLint() async {
-    // IsExpression that doesn't match — super.visitIsExpression is called
     await assertNoDiagnostics(r'''
 void fn(Object obj) {
   final check = obj is String;
@@ -418,7 +406,6 @@ void fn(Object obj) {
   }
 
   Future<void> test_nonMatchingListLiteral_noLint() async {
-    // ListLiteral that doesn't match — super.visitListLiteral is called
     await assertNoDiagnostics(r'''
 void fn() {
   const items = [1, 2, 3];
@@ -428,7 +415,6 @@ void fn() {
   }
 
   Future<void> test_nonMatchingSetOrMapLiteral_noLint() async {
-    // SetOrMapLiteral that doesn't match — super.visitSetOrMapLiteral is called
     await assertNoDiagnostics(r'''
 void fn() {
   const items = {1, 2, 3};
@@ -438,7 +424,6 @@ void fn() {
   }
 
   Future<void> test_nonMatchingAwaitExpression_noLint() async {
-    // AwaitExpression that doesn't match — super.visitAwaitExpression is called
     await assertNoDiagnostics(r'''
 Future<int> getA() async => 1;
 Future<int> getB() async => 2;
@@ -450,7 +435,6 @@ void fn() async {
   }
 
   Future<void> test_nonMatchingParenthesizedExpression_noLint() async {
-    // ParenthesizedExpression that doesn't match — super.visitParenthesizedExpression is called
     await assertNoDiagnostics(r'''
 void fn(int a, int b) {
   final val = (a + b);
@@ -471,10 +455,6 @@ void fn(String value) {
       [lint(68, 18)],
     );
   }
-
-  // --- expressions whose re-evaluation is the point ---
-  // Reusing the variable would change behaviour, so these must not report even
-  // though the source text matches.
 
   Future<void> test_reallocatedResourceAfterClose_noLint() async {
     await assertNoDiagnostics(r'''
@@ -532,7 +512,6 @@ void fn() {
   }
 
   Future<void> test_pureMethodCallStillReported() async {
-    // The purity gate must not swallow the case the rule exists for.
     await assertDiagnostics(
       r'''
 void fn(List<int> list) {

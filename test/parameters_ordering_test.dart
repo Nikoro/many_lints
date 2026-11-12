@@ -22,8 +22,6 @@ class ParametersOrderingTest extends ManyLintsRuleTest {
     );
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_unorderedNamedParameters() async {
     await assertDiagnostics(
       r'''
@@ -39,8 +37,6 @@ void f({
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_orderedNamedParameters() async {
     await assertNoDiagnostics(r'''
 void f({
@@ -54,7 +50,6 @@ void f({
   }
 
   Future<void> test_positionalParametersAreNeverOrdered() async {
-    // Every call site depends on positional order, so sorting would break it.
     await assertNoDiagnostics(r'''
 void f(String zebra, String apple, String mango, String cherry, String banana) {}
 ''');
@@ -66,10 +61,7 @@ void f({String? zebra, String? apple}) {}
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_requiredAndOptionalAreSortedAsSeparateGroups() async {
-    // Required-first and alphabetical must be able to hold at once.
     await assertNoDiagnostics(r'''
 void f({
   required String apple,

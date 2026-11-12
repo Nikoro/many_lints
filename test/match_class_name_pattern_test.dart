@@ -38,8 +38,7 @@ class HomePage {}
 ''');
   }
 
-  // The pattern must match the WHOLE name, so a prefix match is not enough.
-  Future<void> test_patternIsAnchored() async {
+  Future<void> test_patternMustMatchTheWholeName() async {
     await assertDiagnostics(
       r'''
 class HomePageExtra {}

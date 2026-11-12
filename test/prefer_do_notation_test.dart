@@ -37,7 +37,6 @@ Option<String> f(Option<String> a, Option<String> b) =>
   }
 
   Future<void> test_chainedFlatMapIsFine() async {
-    // Chaining is already flat; only nesting grows sideways.
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -63,8 +62,7 @@ Option<String> f(Option<String> a, Option<String> b, Option<String> c) =>
 ''');
   }
 
-  Future<void> test_onlyOutermostReports() async {
-    // A four-level nest is one shape with one fix, so exactly one diagnostic.
+  Future<void> test_onlyOutermostOfAFourLevelNestReports() async {
     await assertDiagnostics(
       r'''
 import 'package:fpdart/fpdart.dart';

@@ -17,8 +17,6 @@ class UseExistingDestructuringTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void>
   test_objectPattern_propertyAccessNotDestructured_triggers() async {
     await assertDiagnostics(
@@ -113,8 +111,6 @@ void f(Foo obj) {
       [lint(151, 9)],
     );
   }
-
-  // --- Negative cases (should NOT trigger lint) ---
 
   Future<void> test_alreadyDestructured_noLint() async {
     await assertNoDiagnostics(r'''
@@ -240,8 +236,6 @@ void f() {
 ''');
   }
 
-  // --- RecordPattern coverage (lines 124-127) ---
-
   Future<void>
   test_recordPattern_propertyAccessNotDestructured_triggers() async {
     await assertDiagnostics(
@@ -254,8 +248,6 @@ void f(({int a, String b}) record) {
       [error(diag.patternTypeMismatchInIrrefutableContext, 45, 5), lint(69, 8)],
     );
   }
-
-  // --- PropertyAccess coverage (lines 170-177) ---
 
   Future<void> test_propertyAccess_conditionalAccess_triggers() async {
     await assertDiagnostics(
@@ -276,8 +268,6 @@ void f(Foo? obj) {
     );
   }
 
-  // --- visitPropertyAccess fallthrough (line 183) ---
-
   Future<void> test_propertyAccess_nonSimpleIdentifierTarget_noLint() async {
     await assertNoDiagnostics(r'''
 class Foo {
@@ -294,8 +284,6 @@ void f(Foo obj) {
 }
 ''');
   }
-
-  // --- visitFunctionExpression boundary (line 187) ---
 
   Future<void> test_functionExpression_noLint() async {
     await assertNoDiagnostics(r'''

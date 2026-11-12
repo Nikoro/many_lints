@@ -17,8 +17,6 @@ class PreferPrimaryConstructorsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void> test_simpleFieldAssigningConstructor() async {
     await assertDiagnostics(
       r'''
@@ -241,8 +239,6 @@ mixin class Mixable {
     );
   }
 
-  // --- Negative cases (should NOT trigger lint) ---
-
   Future<void> test_typeWithoutConstructorIsNotReported() async {
     await assertNoDiagnostics(r'''
 class Empty {
@@ -395,8 +391,6 @@ class FakeTime {
       ],
     );
   }
-
-  // --- Edge case: the language-feature gate ---
 
   Future<void> test_notReportedBeforeDart313() async {
     await assertNoDiagnostics(r'''

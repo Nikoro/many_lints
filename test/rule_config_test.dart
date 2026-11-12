@@ -15,8 +15,6 @@ import 'package:many_lints/many_lints.dart';
 import 'package:many_lints/src/rule_config.dart';
 import 'package:test/test.dart';
 
-/// A catch clause containing only `rethrow`, which `avoid_only_rethrow`
-/// reports. Pure Dart, so it needs no Flutter types to resolve.
 const _rethrowCode = '''
 void doSomething() {}
 
@@ -29,12 +27,7 @@ void main() {
 }
 ''';
 
-/// Triggers `prefer_type_over_var` from all three of the callbacks it
-/// registers — a top-level declaration, a local statement, and a `for` loop.
-///
-/// A rule that guards only some of its entry points still reports from the
-/// unguarded ones, so exclusion has to silence all three at once.
-const _varCode = '''
+const _varInEveryCallbackCode = '''
 var topLevel = 1;
 
 void main() {
@@ -47,17 +40,13 @@ void main() {
 }
 ''';
 
-/// Commented-out code, which `avoid_commented_out_code` reports from an
-/// `addCompilationUnit` callback rather than a per-node one.
-const _commentedOutCode = '''
+const _unitLevelCommentedOutCode = '''
 void main() {
   // print('hello');
   // var x = 1;
 }
 ''';
 
-/// A `!` on a field an enclosing `if (field != null)` already checked, which
-/// `avoid_non_null_assertion` reports unless `ignore_checked_fields` is set.
 const _checkedFieldBangCode = '''
 class C {
   String? field;
@@ -70,7 +59,6 @@ class C {
 }
 ''';
 
-/// A `!` with no null check guarding it, which no option exempts.
 const _unguardedBangCode = '''
 class C {
   String? field;
@@ -81,15 +69,12 @@ class C {
 }
 ''';
 
-/// The conventional map-index bang is exempt below pedantic, but the strictest
-/// preset bans every postfix null assertion.
-const _mapBangCode = '''
+const _mapIndexBangCode = '''
 void f(Map<String, String> values) {
   print(values['key']!.length);
 }
 ''';
 
-/// The same, but with a typed `on ... catch` clause.
 const _typedRethrowCode = '''
 void doSomething() {}
 
@@ -173,8 +158,6 @@ rules:
     message: hi
 ''');
 
-      // They are structural, like `exclude` — leaking them into `options`
-      // would let a rule read `include` as if it were its own option.
       final rule = config.forRule('avoid_border_all');
       expect(rule.options.keys, isEmpty);
     });
@@ -189,8 +172,6 @@ rules:
       expect(config.forRule('avoid_border_all').include, ['lib/ui/**']);
     });
 
-    // `exclude` gained scalar support alongside `include`, so the two spell
-    // the same idea the same way.
     test('a bare scalar exclude becomes a one-item list', () {
       final config = ManyLintsConfig.parse('''
 rules:
@@ -278,8 +259,6 @@ analyzer:
     });
 
     test('ignores a root-level rules key without the section', () {
-      // `rules:` at the document root belongs to many_lints.yaml, not to
-      // analysis_options.yaml, and must not be picked up here.
       final config = ManyLintsConfig.parseOptionsFile('''
 rules:
   avoid_only_rethrow:
@@ -302,13 +281,17 @@ rules:
 
     tearDown(() async => harness.tearDown());
 
-    // Rules are opt-in as of 1.0.0: with no configuration at all the package
-    // is silent, so installing it never floods an existing codebase.
-    test('reports nothing when no config file exists', () async {
-      final errors = await harness.analyze(_rethrowCode);
+    test(
+      'reports nothing when no config file exists, since rules are opt-in',
+      () async {
+        final errors = await harness.analyze(_rethrowCode);
 
-      expect(errors.map((e) => e.code), isNot(contains('avoid_only_rethrow')));
-    });
+        expect(
+          errors.map((e) => e.code),
+          isNot(contains('avoid_only_rethrow')),
+        );
+      },
+    );
 
     test('a preset alone enables the rule', () async {
       final errors = await harness.analyze(
@@ -319,9 +302,7 @@ rules:
       expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
     });
 
-    // Configuring a rule is itself a statement that the rule is wanted, so an
-    // `exclude:` or an option does not silently do nothing without a preset.
-    test('a config block alone enables the rule', () async {
+    test('a config block alone enables the rule without a preset', () async {
       final errors = await harness.analyze(
         _typedRethrowCode,
         config: '''
@@ -334,8 +315,6 @@ rules:
       expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
     });
 
-    // A glob is not required: an exact path is a valid pattern, which is the
-    // form users reach for first when silencing a single file.
     test('an exact file path with no glob excludes that file', () async {
       final errors = await harness.analyze(
         _rethrowCode,
@@ -377,9 +356,6 @@ class StillLinted {
   void another() {}
 }
 ''',
-        // `preset: opinionated` so that the rule which must *keep* reporting is on
-        // without needing a config block of its own — a block would itself
-        // opt the rule in and blunt what this test checks.
         config: '''
 preset: opinionated
 rules:
@@ -391,7 +367,6 @@ rules:
 
       final codes = errors.map((e) => e.code);
       expect(codes, isNot(contains('avoid_only_rethrow')));
-      // Excluding one rule leaves every other rule running on the same file.
       expect(codes, contains('avoid_commented_out_code'));
     });
 
@@ -469,14 +444,11 @@ rules:
       expect(codes, contains('prefer_overriding_parent_equality'));
     });
 
-    // `ManyLintsRule` suppresses diagnostics at the reporter rather than in
-    // each visitor, so exclusion should hold whatever shape a rule's visitor
-    // has. These cover one rule per shape in the package.
     test(
       'exclude silences every callback of a multi-registration rule',
       () async {
         final errors = await harness.analyze(
-          _varCode,
+          _varInEveryCallbackCode,
           config: '''
 rules:
   prefer_type_over_var:
@@ -496,12 +468,10 @@ rules:
       'a multi-registration rule reports from each of its callbacks',
       () async {
         final errors = await harness.analyze(
-          _varCode,
+          _varInEveryCallbackCode,
           config: 'preset: opinionated',
         );
 
-        // Asymmetric positive: without the exclusion the same source reports
-        // three times, so the test above cannot pass by reporting nothing.
         final offsets = errors
             .where((e) => e.code == 'prefer_type_over_var')
             .map((e) => e.location.offset)
@@ -512,7 +482,7 @@ rules:
 
     test('exclude silences a compilation-unit rule', () async {
       final errors = await harness.analyze(
-        _commentedOutCode,
+        _unitLevelCommentedOutCode,
         config: '''
 rules:
   avoid_commented_out_code:
@@ -529,7 +499,7 @@ rules:
 
     test('a compilation-unit rule reports without the exclusion', () async {
       final errors = await harness.analyze(
-        _commentedOutCode,
+        _unitLevelCommentedOutCode,
         config: 'preset: opinionated',
       );
 
@@ -540,7 +510,7 @@ rules:
       'exclude applies to the file being analyzed, not the whole run',
       () async {
         final excluded = await harness.analyze(
-          _varCode,
+          _varInEveryCallbackCode,
           fileName: 'generated.g.dart',
           config: '''
 rules:
@@ -618,8 +588,6 @@ rules:
         );
       });
 
-      // Asymmetric counterpart: the option must not silence an unguarded bang,
-      // or "the option worked" is indistinguishable from "the rule never ran".
       test('the option still reports an unguarded bang', () async {
         final errors = await harness.analyze(
           _unguardedBangCode,
@@ -651,7 +619,7 @@ rules:
     group('avoid_non_null_assertion.ignore_map_indexes', () {
       test('the default keeps the idiomatic map-index exemption', () async {
         final errors = await harness.analyze(
-          _mapBangCode,
+          _mapIndexBangCode,
           config: 'preset: opinionated',
         );
 
@@ -663,7 +631,7 @@ rules:
 
       test('pedantic bans the map-index bang too', () async {
         final errors = await harness.analyze(
-          _mapBangCode,
+          _mapIndexBangCode,
           config: 'preset: pedantic',
         );
 
@@ -713,8 +681,6 @@ many_lints:
 ''',
       );
 
-      // The analyzer only validates the interior of sections it knows, so an
-      // unrecognized top-level key must not yield `unsupported_option`.
       expect(errors.map((e) => e.code), isNot(contains('unsupported_option')));
     });
 
@@ -734,8 +700,6 @@ rules:
         expect(errors.map((e) => e.code), contains('avoid_only_rethrow'));
       });
 
-      // The asymmetric half: without this, the test above could pass purely
-      // because the rule fires everywhere and `include` does nothing.
       test('silences the rule outside matching paths', () async {
         final errors = await harness.analyze(
           _rethrowCode,
@@ -830,7 +794,6 @@ rules:
 
         final error = errors.firstWhere((e) => e.code == 'avoid_only_rethrow');
         expect(error.message, endsWith('Use our AppError helper instead.'));
-        // The original text must survive — appending, not replacing.
         expect(error.message, contains('rethrow'));
       });
 
@@ -872,13 +835,12 @@ rules:
         );
 
         final error = errors.firstWhere((e) => e.code == 'avoid_only_rethrow');
-        // No trailing separator from an empty suffix.
         expect(error.message.trimRight(), error.message);
       });
 
       test('applies to a rule reporting from several callbacks', () async {
         final errors = await harness.analyze(
-          _varCode,
+          _varInEveryCallbackCode,
           config: '''
 rules:
   prefer_type_over_var:
@@ -931,8 +893,6 @@ rules:
         );
       });
 
-      // Asymmetric counterpart: turning one defect off must leave the other
-      // reporting, or silence cannot be told from the rule never running.
       test(
         'trailing_zero: false still reports a missing leading zero',
         () async {
@@ -1064,8 +1024,6 @@ rules:
         );
       });
 
-      // Asymmetric counterpart: the raised threshold must still report a body
-      // that clears it, or silence proves nothing.
       test('a longer body still reports at the raised threshold', () async {
         final errors = await harness.analyze(
           '''
@@ -1125,7 +1083,6 @@ rules:
         );
       });
 
-      // Asymmetric counterpart: a bang is still a negation with the option off.
       test('report_not_equal: false still reports a bang', () async {
         final errors = await harness.analyze(
           '''
@@ -1152,14 +1109,12 @@ rules:
       test('many_lints.yaml wins over the analysis_options section', () async {
         final errors = await harness.analyze(
           _rethrowCode,
-          // The dedicated file excludes this file...
           config: '''
 rules:
   avoid_only_rethrow:
     exclude:
       - lib/**
 ''',
-          // ...while the options section would not have.
           optionsSection: '''
 many_lints:
   rules:
@@ -1178,9 +1133,6 @@ many_lints:
       test('the losing source is ignored outright, not merged', () async {
         final errors = await harness.analyze(
           _rethrowCode,
-          // The dedicated file exists but excludes nothing relevant, so the
-          // rule must report — proving the options section's `lib/**` was
-          // discarded rather than merged in.
           config: '''
 rules:
   avoid_only_rethrow:
@@ -1213,11 +1165,6 @@ class _ConfigHarness with ResourceProviderMixin {
 
   String get sdkRoot => convertPath('/sdk');
 
-  /// Analyzes [content], optionally writing configuration to either source.
-  ///
-  /// [config] is written to `many_lints.yaml`; [optionsSection] is written as
-  /// a top-level `many_lints:` section inside `analysis_options.yaml`. Passing
-  /// both exercises the precedence rule.
   Future<List<protocol.AnalysisError>> analyze(
     String content, {
     String? config,

@@ -22,9 +22,7 @@ class InitializersOrderingTest extends ManyLintsRuleTest {
     );
   }
 
-  // The default follows the class's own field declaration order, which is a
-  // decision the class already made.
-  Future<void> test_initializersOutOfFieldOrder() async {
+  Future<void> test_initializersOutOfFieldDeclarationOrder() async {
     await assertDiagnostics(
       r'''
 class C {
@@ -59,8 +57,7 @@ class C {
 ''');
   }
 
-  Future<void> test_superAndAssertAreSkipped() async {
-    // Their position is fixed by the language, not by this rule.
+  Future<void> test_languageFixedSuperAndAssertAreSkipped() async {
     await assertNoDiagnostics(r'''
 class B {
   B(int v);

@@ -20,8 +20,6 @@ void main() {
   });
 }
 
-// --- Lightweight rule that delegates to TypeChecker for testing ---
-
 enum CheckMode { isExactly, isSuperOf, isAssignableFromType }
 
 class TypeCheckerTestRule extends AnalysisRule {
@@ -74,8 +72,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-// --- fromName + isExactly ---
-
 @reflectiveTest
 class TypeCheckerFromNameExactTest extends ManyLintsRuleTest {
   @override
@@ -95,9 +91,6 @@ class OtherClass {}
   }
 
   Future<void> test_exactMatch_reportsSubclass() async {
-    // MyWidget extends BaseWidget from 'some_package' — the superclass
-    // itself is BaseWidget, so isExactly on MyWidget should NOT match.
-    // But isExactly checks the element directly, not its supertype.
     await assertNoDiagnostics(r'''
 import 'package:some_package/some_package.dart';
 
@@ -114,7 +107,6 @@ class MyClass extends OtherClass {}
   }
 
   Future<void> test_noMatch_localClassSameName() async {
-    // A local class named BaseWidget should NOT match (wrong package).
     await assertNoDiagnostics(r'''
 class BaseWidget {}
 
@@ -122,8 +114,6 @@ class MyWidget extends BaseWidget {}
 ''');
   }
 }
-
-// --- fromName + isExactly but checking the exact class ---
 
 @reflectiveTest
 class TypeCheckerFromNameNoMatchTest extends ManyLintsRuleTest {
@@ -148,8 +138,6 @@ class Unrelated {}
 ''');
   }
 }
-
-// --- isSuperOf ---
 
 @reflectiveTest
 class TypeCheckerIsSuperOfTest extends ManyLintsRuleTest {
@@ -198,8 +186,6 @@ class Unrelated {}
 ''');
   }
 }
-
-// --- any ---
 
 @reflectiveTest
 class TypeCheckerAnyTest extends ManyLintsRuleTest {
@@ -254,8 +240,6 @@ class MyC extends TypeC {}
   }
 }
 
-// --- isAssignableFromType ---
-
 @reflectiveTest
 class TypeCheckerIsAssignableFromTypeTest extends ManyLintsRuleTest {
   @override
@@ -291,8 +275,6 @@ class Unrelated {}
 ''');
   }
 }
-
-// --- fromName with packageName 'dart' ---
 
 @reflectiveTest
 class TypeCheckerDartPackageTest extends ManyLintsRuleTest {

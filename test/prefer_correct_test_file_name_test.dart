@@ -11,17 +11,11 @@ void main() {
   });
 }
 
-/// Relocates the analyzed file into `test/`.
-///
-/// The harness writes it to `lib/` by default, and this rule's whole subject
-/// is the directory the file sits in — so the tests below override the
-/// directory rather than the file name.
 mixin _InTestDirectory on ManyLintsRuleTest {
   @override
   String get testPackageLibPath => '$testPackageRootPath/test';
 }
 
-/// A file under `test/` whose name lacks the `_test.dart` suffix.
 @reflectiveTest
 class PreferCorrectTestFileNameTest extends ManyLintsRuleTest
     with _InTestDirectory {
@@ -47,7 +41,6 @@ void main() {
     );
   }
 
-  // A helper under test/ that declares no tests is not a test file.
   Future<void> test_fileWithoutTestsIsSilent() async {
     await assertNoDiagnostics(r'''
 void main() {
@@ -70,8 +63,6 @@ void main() {
   }
 }
 
-/// The asymmetric positive for the directory check: the same file, with the
-/// same name and the same tests, must stay silent outside `test/`.
 @reflectiveTest
 class PreferCorrectTestFileNameOutsideTestDirTest extends ManyLintsRuleTest {
   @override
@@ -94,7 +85,6 @@ void main() {
   }
 }
 
-/// The asymmetric positive for the suffix check.
 @reflectiveTest
 class PreferCorrectTestFileNameCorrectlyNamedTest extends ManyLintsRuleTest
     with _InTestDirectory {

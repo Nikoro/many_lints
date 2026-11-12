@@ -21,8 +21,6 @@ abstract class StatelessWidget extends Widget {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_fieldAfterMethod() async {
     await assertDiagnostics(
       r'''
@@ -36,8 +34,6 @@ class A {
   }
 
   Future<void> test_constructorAfterFieldIsFine() async {
-    // The default puts the constructor first, matching modern Dart and
-    // Flutter code — so a field below it is correct, not a violation.
     await assertNoDiagnostics(r'''
 class A {
   A(this.count);
@@ -70,8 +66,6 @@ class A {
       [lint(33, 14)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_correctOrder() async {
     await assertNoDiagnostics(r'''
@@ -118,11 +112,7 @@ class A {
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_oneMisplacedMemberDoesNotSilenceTheRest() async {
-    // The high-water mark is deliberately not lowered by a violation, so the
-    // second field is still reported against the method above it.
     await assertDiagnostics(
       r'''
 class A {
@@ -135,10 +125,7 @@ class A {
     );
   }
 
-  Future<void> test_notifierBuildIsNotAWidgetBuild() async {
-    // A Riverpod `Notifier.build` is the state initialiser and idiomatically
-    // comes first; only a widget's `build` renders and belongs last. Without
-    // the distinction, every helper below a notifier's build is reported.
+  Future<void> test_notifierBuildComesFirstUnlikeAWidgetBuild() async {
     await assertNoDiagnostics(r'''
 class AuthNotifier {
   Object? build() => null;

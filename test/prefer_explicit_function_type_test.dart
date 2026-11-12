@@ -102,8 +102,6 @@ void foo() {
     );
   }
 
-  // Valid cases - should not trigger lint
-
   Future<void> test_explicitFunctionType() async {
     await assertNoDiagnostics(r'''
 class SomeWidget {

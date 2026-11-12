@@ -54,12 +54,7 @@ void main() {
     },
   );
 
-  group('suppression comments', () {
-    // Plugin diagnostics are only silenced when the rule name carries the
-    // plugin-name prefix: `IgnoredDiagnosticName._matches` bails out when the
-    // comment's plugin name differs from the diagnostic's, and a bare comment
-    // parses to a null plugin name. These tests pin that down so the docs
-    // cannot drift back to claiming plugin rules ignore `// ignore`.
+  group('suppression comments need the plugin-name prefix', () {
     Future<bool> reportsEquality(String content) async {
       final errors = await harness.analyze(content);
       return errors.any(
@@ -157,8 +152,6 @@ void main() {
   );
 }
 
-/// Places [comment] on the line directly above the class that triggers
-/// `prefer_overriding_parent_equality`, where a line-scoped ignore applies.
 String _withLineComment(String comment) =>
     _preferOverridingParentEqualityCode.replaceFirst(
       'class Child extends Parent {',
@@ -202,10 +195,6 @@ class _PluginAnalysisHarness with ResourceProviderMixin {
   }) async {
     _writeAnalysisOptions(diagnostics);
 
-    // Rules are opt-in as of 1.0.0. This suite is about the analyzer's own
-    // `diagnostics:` key and `// ignore` comments, both of which act on a rule
-    // that is already running, so the broadest preset puts the rules these
-    // tests use into that state.
     newFile(join(packagePath, ConfigLoader.fileName), 'preset: opinionated\n');
     newFile(filePath, content);
 
@@ -246,9 +235,7 @@ class _PluginAnalysisHarness with ResourceProviderMixin {
   }
 
   Future<void> tearDown() async {
-    // Let background analysis finish before closing the channel; the
-    // 0.3.18+ plugin server analyzes asynchronously via the driver
-    // scheduler and would otherwise report to a closed channel.
+    // Edge case: the plugin server analyzes asynchronously and would report to a closed channel
     await pluginServer.waitForIdle();
     channel.close();
   }

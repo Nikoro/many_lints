@@ -6,9 +6,6 @@ void main() {
   defineReflectiveSuite(() => defineReflectiveTests(UseClassPrefixTest));
 }
 
-/// See `use_class_suffix_test.dart` — `AnalysisRuleTest` cannot supply
-/// configuration, so this suite only proves the rule is silent by default.
-/// Configured behaviour lives in `rule_options_test.dart`.
 @reflectiveTest
 class UseClassPrefixTest extends ManyLintsRuleTest {
   @override

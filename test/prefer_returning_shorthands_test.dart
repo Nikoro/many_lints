@@ -165,9 +165,6 @@ dynamic getInstance() => SomeClass('val');
 ''');
   }
 
-  // Removed: This test creates a compile error which is expected.
-  // The lint correctly doesn't trigger on type mismatches.
-
   Future<void> test_voidReturnType() async {
     await assertNoDiagnostics(r'''
 class SomeClass {
@@ -203,9 +200,6 @@ SomeClass getInstance() => SomeClass('val').copy();
 ''');
   }
 
-  // Removed: This test creates a compile error due to conditional type mismatch.
-  // The lint correctly triggers on the matching branch.
-
   Future<void> test_nestedConditional() async {
     await assertDiagnostics(
       r'''
@@ -234,9 +228,6 @@ class SomeClass {
       [lint(50, 11)],
     );
   }
-
-  // --- Cover MethodInvocation path (lines 142-158) ---
-  // When a named constructor without type args is parsed as MethodInvocation
 
   Future<void> test_methodInvocation_staticMethodReturningOwnType() async {
     await assertDiagnostics(

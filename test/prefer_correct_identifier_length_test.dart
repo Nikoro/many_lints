@@ -50,7 +50,6 @@ void f() {
 ''');
   }
 
-  // The conventional short names are exempt out of the box.
   Future<void> test_loopCounterIsAllowed() async {
     await assertNoDiagnostics(r'''
 void f() {
@@ -73,7 +72,6 @@ void f() {
 ''');
   }
 
-  // A private name's underscore is a modifier, not part of its length.
   Future<void> test_underscoreIsNotCounted() async {
     await assertNoDiagnostics(r'''
 class C {

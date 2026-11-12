@@ -35,8 +35,6 @@ class UncontrolledProviderScope extends Widget {
     super.setUp();
   }
 
-  // --- Positive cases: should trigger lint ---
-
   Future<void> test_runAppWithoutProviderScope() async {
     await assertDiagnostics(
       r'''
@@ -70,8 +68,6 @@ void main() {
     );
   }
 
-  // --- Negative cases: should not trigger lint ---
-
   Future<void> test_runAppWithProviderScope() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -86,7 +82,6 @@ void main() {
   }
 
   Future<void> test_runAppWithUncontrolledProviderScope() async {
-    // An externally-owned container is a legitimate way to install the scope.
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -102,8 +97,7 @@ void main() {
 ''');
   }
 
-  Future<void> test_localRunAppNotFlagged() async {
-    // A same-named function that is not Flutter's runApp.
+  Future<void> test_localRunAppThatIsNotFlutters_notFlagged() async {
     await assertNoDiagnostics(r'''
 class Widget {}
 class MyApp extends Widget {}

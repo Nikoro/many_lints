@@ -17,8 +17,6 @@ class MatchGetterSetterFieldNamesTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_setterWritesTheWrongField() async {
     await assertDiagnostics(
       r'''
@@ -54,8 +52,6 @@ class C {
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_matchingPair() async {
     await assertNoDiagnostics(r'''
 class C {
@@ -87,10 +83,7 @@ class C {
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_computedGetterIsSkipped() async {
-    // No single field to compare against, so the rule must not guess.
     await assertNoDiagnostics(r'''
 class C {
   int _a = 0;
@@ -117,8 +110,7 @@ class C {
 ''');
   }
 
-  Future<void> test_compoundAssignmentIsSkipped() async {
-    // `+=` reads the field too, so an asymmetry can be deliberate.
+  Future<void> test_compoundAssignmentReadingTheFieldIsSkipped() async {
     await assertNoDiagnostics(r'''
 class C {
   int _a = 0;

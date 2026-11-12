@@ -105,11 +105,7 @@ Widget f() {
 ''');
   }
 
-  // --- MethodInvocation path (top-level function returning RichText) ---
-
   Future<void> test_methodInvocation_richText() async {
-    // makeRichText() is a MethodInvocation with staticType=RichText and
-    // target=null. The RichText() in the function body also triggers the lint.
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -122,8 +118,6 @@ final w = makeRichText(text: TextSpan(text: 'Hello'));
   }
 
   Future<void> test_methodInvocation_richText_withTarget_noLint() async {
-    // Factory.make() has target=Factory, so visitMethodInvocation skips it.
-    // The RichText() in the method body still triggers through visitInstanceCreationExpression.
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';

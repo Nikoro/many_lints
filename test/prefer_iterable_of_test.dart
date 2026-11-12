@@ -15,8 +15,6 @@ class PreferIterableOfTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // --- Cases that SHOULD trigger the lint ---
-
   Future<void> test_listFromWithSameType() async {
     await assertDiagnostics(
       r'''
@@ -77,8 +75,6 @@ void f() {
     );
   }
 
-  // --- Cases that should NOT trigger the lint ---
-
   Future<void> test_listOfIsValid() async {
     await assertNoDiagnostics(r'''
 void f() {
@@ -98,7 +94,6 @@ void f() {
   }
 
   Future<void> test_listFromWithNarrowingType() async {
-    // List<int>.from(numList) is a downcast — .from() is needed
     await assertNoDiagnostics(r'''
 void f() {
   final numList = <num>[1, 2, 3];
@@ -108,7 +103,6 @@ void f() {
   }
 
   Future<void> test_setFromWithNarrowingType() async {
-    // Set<int>.from(numSet) is a downcast — .from() is needed
     await assertNoDiagnostics(r'''
 void f() {
   final numSet = <num>{1, 2, 3};
@@ -125,10 +119,7 @@ void f() {
 ''');
   }
 
-  // --- Edge cases ---
-
   Future<void> test_listFromWithDynamicTarget() async {
-    // List.from(dynamicList) where target is dynamic — still prefer .of()
     await assertDiagnostics(
       r'''
 void f() {
@@ -141,7 +132,6 @@ void f() {
   }
 
   Future<void> test_methodInvocation_notFrom_noLint() async {
-    // Method invocation but not 'from' — should not trigger
     await assertNoDiagnostics(r'''
 void f() {
   final intList = [1, 2, 3];
@@ -151,7 +141,6 @@ void f() {
   }
 
   Future<void> test_methodInvocation_nonListSetTarget_noLint() async {
-    // Method invocation 'from' but not on List/Set
     await assertNoDiagnostics(r'''
 class MyClass {
   static List<int> from(List<int> source) => source;
@@ -165,7 +154,6 @@ void f() {
   }
 
   Future<void> test_setFromWithoutExplicitTypeArg_methodInvocation() async {
-    // Set.from() via method invocation with compatible types
     await assertDiagnostics(
       r'''
 void f() {
@@ -178,8 +166,6 @@ void f() {
   }
 
   Future<void> test_listFrom_customIterableSubtype() async {
-    // Source is a custom Iterable subtype — exercises _getIterableElementType
-    // supertype fallback
     await assertDiagnostics(
       r'''
 void f() {
@@ -191,10 +177,7 @@ void f() {
     );
   }
 
-  // --- Cover visitMethodInvocation _check call (line 75) with Set.from ---
-
   Future<void> test_setFromWithoutTypeArgs_methodInvocation() async {
-    // Set.from() without type args — parsed as MethodInvocation
     await assertDiagnostics(
       r'''
 void f() {
@@ -206,11 +189,7 @@ void f() {
     );
   }
 
-  // --- Cover _getIterableElementType supertype fallback (lines 127-130) ---
-
   Future<void> test_listFrom_customIterable_supertypeFallback() async {
-    // Custom Iterable subclass where typeArguments may not be on the class
-    // itself but on the Iterable supertype
     await assertDiagnostics(
       r'''
 class MyInts extends Iterable<int> {
@@ -230,10 +209,7 @@ void f() {
     );
   }
 
-  // --- Cover non-InterfaceType source (line 107 early return) ---
-
   Future<void> test_listFrom_dynamicSource_noLint() async {
-    // Source has non-InterfaceType (dynamic) — exercises line 107 early return
     await assertNoDiagnostics(r'''
 void f(dynamic source) {
   final copy = List<int>.from(source);
@@ -241,10 +217,7 @@ void f(dynamic source) {
 ''');
   }
 
-  // --- Cover multiple positional args (line 87 early return) ---
-
   Future<void> test_listFrom_withGrowableArg() async {
-    // List.from with growable named arg — should still trigger
     await assertDiagnostics(
       r'''
 void f() {

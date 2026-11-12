@@ -40,8 +40,7 @@ class C {
 ''');
   }
 
-  // An override inherits its parameter name along with the signature.
-  Future<void> test_overrideIsSkipped() async {
+  Future<void> test_overrideInheritingTheParameterNameIsSkipped() async {
     await assertNoDiagnostics(r'''
 abstract class A {
   set a(int value);

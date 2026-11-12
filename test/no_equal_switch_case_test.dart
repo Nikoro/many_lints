@@ -15,8 +15,6 @@ class NoEqualSwitchCaseTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_duplicateBodyInSwitchExpression() async {
     await assertDiagnostics(
       r'''
@@ -47,8 +45,6 @@ void f(int x) {
       [lint(78, 38)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_distinctBodies() async {
     await assertNoDiagnostics(r'''
@@ -82,11 +78,7 @@ void f(int x) {
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_catchAllRepeatingAnEarlierBody() async {
-    // The catch-all has to stay last, so it cannot be folded into an earlier
-    // pattern. Sharing a body with a specific case is normal.
     await assertNoDiagnostics(r'''
 int maxDayInMonth(int month) => switch (month) {
   1 || 3 || 5 || 7 || 8 || 10 || 12 => 31,
@@ -112,8 +104,6 @@ void f(int x) {
   }
 
   Future<void> test_guardedCasesCannotBeMerged() async {
-    // Each `when` belongs to its own pattern, so an `||` pattern cannot carry
-    // both guards — repeating the body is the only way to write this.
     await assertNoDiagnostics(r'''
 String f(int x) => switch (x) {
   int() when x > 10 => 'big',

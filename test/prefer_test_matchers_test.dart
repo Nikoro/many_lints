@@ -12,7 +12,6 @@ class PreferTestMatchersTest extends ManyLintsRuleTest {
   void setUp() {
     rule = PreferTestMatchers();
 
-    // Mock the matcher package with a Matcher base class
     newPackage('matcher').addFile('lib/matcher.dart', r'''
 abstract class Matcher {
   const Matcher();
@@ -63,7 +62,6 @@ Matcher hasLength(Object? expected) => _HasLength(expected);
 _IsA<T> isA<T>() => _IsA<T>();
 ''');
 
-    // Mock test_api with expect/expectLater that use matcher package
     newPackage('test_api').addFile('lib/test_api.dart', r'''
 import 'package:matcher/matcher.dart';
 export 'package:matcher/matcher.dart';
@@ -74,8 +72,6 @@ void expectLater(dynamic actual, dynamic matcher) {}
 
     super.setUp();
   }
-
-  // ── Literal int as matcher ────────────────────────────────────────
 
   Future<void> test_literalInt_inExpect() async {
     await assertDiagnostics(
@@ -103,8 +99,6 @@ void f() {
     );
   }
 
-  // ── Literal string as matcher ─────────────────────────────────────
-
   Future<void> test_literalString_inExpect() async {
     await assertDiagnostics(
       r'''
@@ -117,8 +111,6 @@ void f() {
       [lint(71, 7)],
     );
   }
-
-  // ── Literal bool as matcher ───────────────────────────────────────
 
   Future<void> test_literalBool_inExpect() async {
     await assertDiagnostics(
@@ -133,8 +125,6 @@ void f() {
     );
   }
 
-  // ── Variable (non-Matcher) as matcher ─────────────────────────────
-
   Future<void> test_intVariable_inExpect() async {
     await assertDiagnostics(
       r'''
@@ -148,8 +138,6 @@ void f() {
       [lint(88, 8)],
     );
   }
-
-  // ── Matcher constants — no lint ───────────────────────────────────
 
   Future<void> test_isNull_noLint() async {
     await assertNoDiagnostics(r'''
@@ -203,8 +191,6 @@ void f() {
 ''');
   }
 
-  // ── Matcher function calls — no lint ──────────────────────────────
-
   Future<void> test_equals_noLint() async {
     await assertNoDiagnostics(r'''
 import 'package:test_api/test_api.dart';
@@ -235,8 +221,6 @@ void f() {
 ''');
   }
 
-  // ── expectLater with Matcher — no lint ────────────────────────────
-
   Future<void> test_expectLater_withMatcher_noLint() async {
     await assertNoDiagnostics(r'''
 import 'package:test_api/test_api.dart';
@@ -246,8 +230,6 @@ void f() {
 }
 ''');
   }
-
-  // ── Edge cases ────────────────────────────────────────────────────
 
   Future<void> test_nonExpectCall_noLint() async {
     await assertNoDiagnostics(r'''

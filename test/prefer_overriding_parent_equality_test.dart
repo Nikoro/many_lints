@@ -13,9 +13,6 @@ class PreferOverridingParentEqualityTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = PreferOverridingParentEquality();
-    // `Mock` overrides `==`/`hashCode` for identity, which is what `verify()`
-    // matches on. `Fake` overrides nothing — a Fake subclass reaches this rule
-    // through the interface it implements.
     newPackage('mocktail').addFile('lib/src/mocktail.dart', r'''
 class Mock {
   @override
@@ -31,9 +28,6 @@ abstract class Fake {
   dynamic noSuchMethod(Invocation invocation) => throw '';
 }
 ''');
-    // `Widget` overrides `==` and `hashCode` so that identity is runtimeType
-    // plus key — exactly the shape this rule reports on, and exactly the one
-    // no widget should override.
     newPackage('flutter').addFile('lib/widgets.dart', r'''
 class Key {}
 
@@ -57,7 +51,6 @@ abstract class StatelessWidget extends Widget {
     super.setUp();
   }
 
-  /// Overrides the base config so the rule sees a different `ignored_types`.
   void _configureIgnoredTypes(String body) {
     newFile('$testPackageRootPath/many_lints.yaml', '''
 rules:
@@ -65,8 +58,6 @@ rules:
 $body
 ''');
   }
-
-  // --- Positive cases (should trigger lint) ---
 
   Future<void> test_childMissingBothEqualsAndHashCode() async {
     await assertDiagnostics(
@@ -174,8 +165,6 @@ class Child extends Parent {}
     );
   }
 
-  // --- Negative cases (should NOT trigger lint) ---
-
   Future<void> test_childOverridesBoth() async {
     await assertNoDiagnostics(r'''
 class Parent {
@@ -268,11 +257,7 @@ class Standalone {
 ''');
   }
 
-  // --- ignored_types ---
-
   Future<void> test_widgetSubclassIsIgnoredByDefault() async {
-    // A widget's identity is its runtimeType and key; comparing fields
-    // instead would break the framework's element reuse.
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -287,9 +272,7 @@ class Greeting extends StatelessWidget {
 ''');
   }
 
-  Future<void> test_indirectWidgetSubclassIsIgnoredByDefault() async {
-    // Matching is by supertype, so a project's own widget base is covered
-    // without naming it.
+  Future<void> test_indirectWidgetSubclassIsIgnoredBySupertypeMatch() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -308,8 +291,7 @@ class Greeting extends BrandedWidget {
 ''');
   }
 
-  Future<void> test_ignoredTypesCanBeReplaced() async {
-    // Replacing the set drops `Widget` from it, so widgets report again.
+  Future<void> test_replacingIgnoredTypesReportsWidgetsAgain() async {
     _configureIgnoredTypes('    ignored_types:\n      - Marker');
     await assertDiagnostics(
       r'''
@@ -347,7 +329,6 @@ class Child extends Parent {
   }
 
   Future<void> test_nonWidgetStillReportedWithTheDefaultSet() async {
-    // The default exclusion must not weaken the rule for ordinary classes.
     await assertDiagnostics(
       r'''
 class Parent {
@@ -367,10 +348,7 @@ class Child extends Parent {
     );
   }
 
-  // --- Mock and Fake defaults ---
-
   Future<void> test_mockSubclassIsIgnoredByDefault() async {
-    // A mock's identity is the instance, which is what `verify()` matches on.
     await assertNoDiagnostics(r'''
 import 'package:mocktail/src/mocktail.dart';
 
@@ -387,8 +365,6 @@ class MockRepository extends Mock implements Repository {}
   }
 
   Future<void> test_fakeSubclassIsIgnoredByDefault() async {
-    // `Fake` itself overrides nothing: the subclass inherits `==` from the
-    // interface it implements, with no fields of its own to compare.
     await assertNoDiagnostics(r'''
 import 'package:test_api/src/frontend/fake.dart';
 
@@ -409,8 +385,6 @@ class FakePerson extends Fake implements Person {}
   }
 
   Future<void> test_aProjectClassNamedMockDoesNotSwitchTheRuleOff() async {
-    // The pin is what keeps a domain class from silently exempting its whole
-    // subtree. `Mock` and `Fake` are ordinary English words.
     await assertDiagnostics(
       r'''
 class Mock {

@@ -10,8 +10,6 @@ void main() {
   });
 }
 
-/// The harness writes `lib/test.dart`, so every declaration here is compared
-/// against the base name `test`.
 @reflectiveTest
 class PreferMatchFileNameTest extends ManyLintsRuleTest {
   @override
@@ -29,9 +27,7 @@ class UserRepository {}
     );
   }
 
-  // Only the first public declaration names the file; the rest are not
-  // separately fixable.
-  Future<void> test_onlyFirstDeclarationReported() async {
+  Future<void> test_onlyFirstPublicDeclarationReported() async {
     await assertDiagnostics(
       r'''
 class UserRepository {}
@@ -51,32 +47,24 @@ class UserRepository {}
     );
   }
 
-  // A file with nothing public has no name to match.
   Future<void> test_privateOnlyFileIsSilent() async {
     await assertNoDiagnostics(r'''
 class _Hidden {}
 ''');
   }
 
-  // `main` is an entrypoint, not the file's subject. Every test file declares
-  // one and none of them can be named main.dart — this was 143 of 166 reports
-  // on a real codebase, all wrong.
   Future<void> test_mainIsNotTheFileSubject() async {
     await assertNoDiagnostics(r'''
 void main() {}
 ''');
   }
 
-  // dart_frog's route contract: the file's PATH is the API, so `onRequest`
-  // cannot name it.
-  Future<void> test_frameworkEntrypointIsSkipped() async {
+  Future<void> test_dartFrogRouteEntrypointIsSkipped() async {
     await assertNoDiagnostics(r'''
 void onRequest() {}
 ''');
   }
 
-  // The list is configurable, and an entry that is NOT listed still reports —
-  // the asymmetric pair for the option.
   Future<void> test_entrypointsOptionNarrowsTheList() async {
     newFile(
       '$testPackageRootPath/many_lints.yaml',
@@ -93,7 +81,6 @@ void onRequest() {}
     );
   }
 
-  // ...but a declaration named `main` that is not a function still counts.
   Future<void> test_mainClassStillReports() async {
     await assertDiagnostics(
       r'''
@@ -103,8 +90,6 @@ class Main {}
     );
   }
 
-  // The entrypoint is skipped, not the whole file: a public declaration after
-  // it is still the file's subject.
   Future<void> test_declarationAfterMainStillReports() async {
     await assertDiagnostics(
       r'''
@@ -130,9 +115,6 @@ class UserRepository {}
   }
 }
 
-/// Renames the analyzed file so its name genuinely matches the declaration —
-/// the asymmetric positive the cookbook requires, proving the rule's silence
-/// above comes from the match rather than from the rule never running.
 @reflectiveTest
 class PreferMatchFileNameMatchingTest extends ManyLintsRuleTest {
   @override
@@ -159,8 +141,7 @@ class SomethingElse {}
     );
   }
 
-  // HTTPClient -> http_client, not h_t_t_p_client.
-  Future<void> test_acronymSnakeCase() async {
+  Future<void> test_acronymBecomesOneSnakeCaseWord() async {
     await assertDiagnostics(
       r'''
 class HTTPClient {}

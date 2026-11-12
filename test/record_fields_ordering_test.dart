@@ -38,8 +38,6 @@ typedef T = ({int apple, int zebra});
   }
 
   Future<void> test_positionalFieldsAreNeverOrdered() async {
-    // Position is identity for a positional field: reordering makes a
-    // different type.
     await assertNoDiagnostics(r'''
 typedef T = (int, String, bool);
 ''');

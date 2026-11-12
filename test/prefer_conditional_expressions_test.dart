@@ -91,7 +91,6 @@ void f(bool active) {
 ''');
   }
 
-  // Different operators are not a choice between two values.
   Future<void> test_differentAssignmentOperators() async {
     await assertNoDiagnostics(r'''
 void f(bool active) {

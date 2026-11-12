@@ -49,8 +49,6 @@ Future<void> open() async {
 ''');
   }
 
-  // A method that is not in the configured list is left alone, which is the
-  // asymmetric half proving the list is what drives the rule.
   Future<void> test_unlistedMethodIsSilent() async {
     await assertNoDiagnostics(r'''
 Future<T?> showSheet<T>(Object builder) async => null;
@@ -61,8 +59,6 @@ Future<void> open() async {
 ''');
   }
 
-  // A non-generic call cannot take type arguments, so asking for them would be
-  // asking for a compile error.
   Future<void> test_nonGenericCallIsSilent() async {
     await assertNoDiagnostics(r'''
 Future<void> showDialog(Object builder) async {}
@@ -74,7 +70,6 @@ Future<void> open() async {
   }
 }
 
-/// The control: with no `methods` configured the rule must report nothing.
 @reflectiveTest
 class PreferExplicitTypeArgumentsUnconfiguredTest extends ManyLintsRuleTest {
   @override

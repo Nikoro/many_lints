@@ -37,8 +37,6 @@ abstract class AsyncNotifier<State> {
     super.setUp();
   }
 
-  // --- Positive cases: should trigger lint ---
-
   Future<void> test_stateAccessedFromOutside() async {
     await assertDiagnostics(
       r'''
@@ -134,8 +132,6 @@ class MyNotifier extends Notifier<int> {
       [lint(246, 5)],
     );
   }
-
-  // --- Negative cases: should not trigger lint ---
 
   Future<void> test_stateUsedInsideOwnNotifier() async {
     await assertNoDiagnostics(r'''

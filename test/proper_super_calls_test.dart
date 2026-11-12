@@ -45,8 +45,6 @@ abstract class State<T extends StatefulWidget> {
     super.setUp();
   }
 
-  // --- Positive cases: should trigger lint ---
-
   Future<void> test_initStateSuperNotFirst() async {
     await assertDiagnostics(
       r'''
@@ -252,8 +250,6 @@ class _MyWidgetState extends State<MyWidget> {
     );
   }
 
-  // --- Negative cases: should NOT trigger lint ---
-
   Future<void> test_initStateSuperFirst() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -428,7 +424,6 @@ class _MyWidgetState extends State<MyWidget> {
   }
 
   Future<void> test_expressionBody() async {
-    // Expression bodies can't have multiple statements, so no ordering issue
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 

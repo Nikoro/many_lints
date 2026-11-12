@@ -15,7 +15,6 @@ import 'package:many_lints/many_lints.dart';
 import 'package:many_lints/src/rule_config.dart';
 import 'package:test/test.dart';
 
-/// A skipped test, with a reason string.
 const _skipWithReasonCode = '''
 void test(String description, void Function() body, {Object? skip}) {}
 
@@ -24,8 +23,7 @@ void main() {
 }
 ''';
 
-/// A skipped test with no reason, which no option should ever permit.
-const _skipBareCode = '''
+const _skipWithoutReasonCode = '''
 void test(String description, void Function() body, {Object? skip}) {}
 
 void main() {
@@ -33,8 +31,7 @@ void main() {
 }
 ''';
 
-/// A catch clause whose body holds only a comment.
-const _commentedCatchCode = '''
+const _catchWithOnlyACommentCode = '''
 void doSomething() {}
 
 void main() {
@@ -46,8 +43,7 @@ void main() {
 }
 ''';
 
-/// A catch clause with nothing at all in it.
-const _bareCatchCode = '''
+const _emptyCatchCode = '''
 void doSomething() {}
 
 void main() {
@@ -57,8 +53,7 @@ void main() {
 }
 ''';
 
-/// `exit()` in ordinary library code.
-const _exitCode = '''
+const _exitInLibraryCode = '''
 import 'dart:io';
 
 void upload() {
@@ -66,28 +61,24 @@ void upload() {
 }
 ''';
 
-/// A bare TODO with no tracked reference.
-const _bareTodoCode = '''
+const _unreferencedTodoCode = '''
 void upload() {
   // TODO: handle the 409 conflict case
 }
 ''';
 
-/// A TODO naming an issue, which the default `require_reference` accepts.
 const _referencedTodoCode = '''
 void upload() {
   // TODO(#42): handle the 409 conflict case
 }
 ''';
 
-/// A throw of a bare `Exception`.
 const _bareExceptionCode = '''
 void upload() {
   throw Exception('upload failed');
 }
 ''';
 
-/// A throw of `FormatException`, which the default allow list permits.
 const _formatExceptionCode = '''
 void upload() {
   throw FormatException('bad manifest');
@@ -107,16 +98,17 @@ void main() {
     tearDown(() async => harness.tearDown());
 
     group('avoid_skipped_tests', () {
-      // The positive control. Without this, every "excluded" assertion below
-      // could pass simply because the rule never ran.
-      test('reports a skip with a reason by default', () async {
-        final errors = await harness.analyze(
-          _skipWithReasonCode,
-          config: 'preset: recommended',
-        );
+      test(
+        'reports a skip with a reason by default, the positive control',
+        () async {
+          final errors = await harness.analyze(
+            _skipWithReasonCode,
+            config: 'preset: recommended',
+          );
 
-        expect(errors.map((e) => e.code), contains('avoid_skipped_tests'));
-      });
+          expect(errors.map((e) => e.code), contains('avoid_skipped_tests'));
+        },
+      );
 
       test('allow_reason permits a documented skip', () async {
         final errors = await harness.analyze(
@@ -134,10 +126,9 @@ rules:
         );
       });
 
-      // The asymmetric positive: the option must not switch the rule off.
       test('allow_reason still reports a bare skip', () async {
         final errors = await harness.analyze(
-          _skipBareCode,
+          _skipWithoutReasonCode,
           config: '''
 rules:
   avoid_skipped_tests:
@@ -152,7 +143,7 @@ rules:
     group('avoid_empty_catch', () {
       test('reports a comment-only catch by default', () async {
         final errors = await harness.analyze(
-          _commentedCatchCode,
+          _catchWithOnlyACommentCode,
           config: 'preset: recommended',
         );
 
@@ -161,7 +152,7 @@ rules:
 
       test('allow_with_comment permits a commented catch', () async {
         final errors = await harness.analyze(
-          _commentedCatchCode,
+          _catchWithOnlyACommentCode,
           config: '''
 rules:
   avoid_empty_catch:
@@ -174,7 +165,7 @@ rules:
 
       test('allow_with_comment still reports a bare empty catch', () async {
         final errors = await harness.analyze(
-          _bareCatchCode,
+          _emptyCatchCode,
           config: '''
 rules:
   avoid_empty_catch:
@@ -189,7 +180,7 @@ rules:
     group('avoid_exit_outside_entrypoint', () {
       test('reports exit in lib by default', () async {
         final errors = await harness.analyze(
-          _exitCode,
+          _exitInLibraryCode,
           config: 'preset: recommended',
         );
 
@@ -201,7 +192,7 @@ rules:
 
       test('allow_in permits the configured location', () async {
         final errors = await harness.analyze(
-          _exitCode,
+          _exitInLibraryCode,
           fileName: 'main.dart',
           config: '''
 rules:
@@ -219,7 +210,7 @@ rules:
 
       test('allow_in still reports elsewhere', () async {
         final errors = await harness.analyze(
-          _exitCode,
+          _exitInLibraryCode,
           fileName: 'upload.dart',
           config: '''
 rules:
@@ -239,14 +230,13 @@ rules:
     group('avoid_todo_comments', () {
       test('reports a bare TODO by default', () async {
         final errors = await harness.analyze(
-          _bareTodoCode,
+          _unreferencedTodoCode,
           config: 'preset: opinionated',
         );
 
         expect(errors.map((e) => e.code), contains('avoid_todo_comments'));
       });
 
-      // The default `require_reference: true` is what keeps the rule usable.
       test('a referenced TODO passes by default', () async {
         final errors = await harness.analyze(
           _referencedTodoCode,
@@ -274,7 +264,7 @@ rules:
 
       test('markers narrows which words count', () async {
         final errors = await harness.analyze(
-          _bareTodoCode,
+          _unreferencedTodoCode,
           config: '''
 rules:
   avoid_todo_comments:
@@ -328,8 +318,7 @@ rules:
     });
 
     group('require_mirror_test', () {
-      // In no preset: it must stay silent until named.
-      test('is silent under every preset', () async {
+      test('is silent under every preset until named', () async {
         final errors = await harness.analyze(
           'class Parser {}\n',
           fileName: 'parser.dart',
@@ -366,11 +355,6 @@ class _QualityGateHarness with ResourceProviderMixin {
 
   String get sdkRoot => convertPath('/sdk');
 
-  /// Analyzes [content], optionally writing configuration to either source.
-  ///
-  /// [config] is written to `many_lints.yaml`; [optionsSection] is written as
-  /// a top-level `many_lints:` section inside `analysis_options.yaml`. Passing
-  /// both exercises the precedence rule.
   Future<List<protocol.AnalysisError>> analyze(
     String content, {
     String? config,

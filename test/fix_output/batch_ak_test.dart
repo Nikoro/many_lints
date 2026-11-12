@@ -2,9 +2,6 @@ import 'package:test/test.dart';
 
 import '../fix_harness.dart';
 
-/// End-to-end tests for the text these quick fixes actually produce.
-///
-/// See [FixHarness] for why this drives a real plugin server.
 void main() {
   late FixHarness harness;
 
@@ -105,7 +102,6 @@ void f(bool ok) {
 ''', 'prefer_early_return');
 
       expect(fixed, contains('if (!ok) return;'));
-      // The body must come out one level shallower, still inside the function.
       expect(fixed, contains('\n  print(1);'));
       expect(fixed, isNot(contains('    print(1);')));
     });
@@ -156,7 +152,6 @@ void f(bool ok) {
 ''', 'avoid_negated_conditions');
 
       expect(fixed, contains('if (ok) {'));
-      // The branches must have traded places, not just the condition flipped.
       final thenIndex = fixed.indexOf('print(2);');
       final elseIndex = fixed.indexOf('print(1);');
       expect(thenIndex, lessThan(elseIndex));

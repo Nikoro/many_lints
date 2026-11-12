@@ -15,8 +15,6 @@ class PreferWildcardPatternTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // === Switch expression cases ===
-
   Future<void> test_switchExpression_objectPattern() async {
     await assertDiagnostics(
       r'''
@@ -30,8 +28,6 @@ String f(Object object) {
       [lint(77, 8)],
     );
   }
-
-  // === Switch statement cases ===
 
   Future<void> test_switchStatement_objectPattern() async {
     await assertDiagnostics(
@@ -49,8 +45,6 @@ void f(Object object) {
     );
   }
 
-  // === If-case cases ===
-
   Future<void> test_ifCase_objectPattern() async {
     await assertDiagnostics(
       r'''
@@ -61,8 +55,6 @@ void f(Object object) {
       [lint(42, 8)],
     );
   }
-
-  // === Nested patterns ===
 
   Future<void> test_logicalAndPattern_objectPattern() async {
     await assertDiagnostics(
@@ -88,8 +80,6 @@ void f(Object object) {
       [lint(53, 8), error(diag.deadCode, 62, 11), lint(65, 8)],
     );
   }
-
-  // === No lint cases ===
 
   Future<void> test_noLint_wildcardPattern() async {
     await assertNoDiagnostics(r'''

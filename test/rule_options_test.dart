@@ -15,12 +15,6 @@ import 'package:many_lints/many_lints.dart';
 import 'package:many_lints/src/rule_config.dart';
 import 'package:test/test.dart';
 
-/// Three distinct property accesses on one variable — the default threshold
-/// for `prefer_class_destructuring`.
-///
-/// Deliberately pure Dart: rules needing Flutter types do not resolve under
-/// `createMockSdk`, and a rule that never fires makes every "silenced"
-/// assertion pass vacuously.
 const _threePropertyCode = '''
 class Foo {
   int get x => 1;
@@ -35,8 +29,6 @@ void f(Foo foo) {
 }
 ''';
 
-/// Only two distinct property accesses — below the default threshold, above a
-/// configured threshold of 2.
 const _twoPropertyCode = '''
 class Foo {
   int get x => 1;
@@ -49,16 +41,12 @@ void f(Foo foo) {
 }
 ''';
 
-/// An enum interpolated into a string. Exempt by default (it renders as
-/// `Status.active`), reported under `report_enums: true`.
 const _interpolatedEnumCode = '''
 enum Status { active, inactive }
 
 String describe(Status status) => 'status: \$status';
 ''';
 
-/// A local read before an await and written back after it. Exempt by default
-/// (only fields are shared), reported under `include_local_variables: true`.
 const _staleLocalCode = '''
 Future<void> run() async {
   var total = 0;
@@ -68,8 +56,6 @@ Future<void> run() async {
 }
 ''';
 
-/// The same shape on a field, which is reported regardless of the option — the
-/// control proving `include_local_variables` widens rather than replaces.
 const _staleFieldCode = '''
 class Counter {
   int value = 0;
@@ -82,8 +68,6 @@ class Counter {
 }
 ''';
 
-/// A Cubit emitting the current state through `emit`, which is reported with
-/// no configuration at all.
 const _emitStateCode = '''
 import 'package:bloc/bloc.dart';
 
@@ -94,8 +78,6 @@ class CounterCubit extends Cubit<int> {
 }
 ''';
 
-/// The same no-op through a project wrapper, which only `additional_methods`
-/// can reach.
 const _safeEmitStateCode = '''
 import 'package:bloc/bloc.dart';
 
@@ -106,8 +88,6 @@ class CounterCubit extends Cubit<int> {
 }
 ''';
 
-/// An async closure passed to a `void`-returning parameter named `onPressed`,
-/// so both `ignored_parameters` and `ignore_widget_callbacks` can reach it.
 const _asyncVoidCallbackCode = '''
 void build({required void Function() onPressed}) {}
 
@@ -120,8 +100,6 @@ void f() {
 }
 ''';
 
-/// The same shape on a plainly named parameter, which neither option targets —
-/// the asymmetric control proving they narrow rather than disable.
 const _asyncVoidPlainCode = '''
 void schedule(void Function() task) {}
 
@@ -134,20 +112,14 @@ void f() {
 }
 ''';
 
-/// An `is` check between unrelated core types, which `report_is_checks: false`
-/// silences.
 const _unrelatedIsCheckCode = '''
 bool f(String value) => value is int;
 ''';
 
-/// The `as` form of the same mismatch, which stays reported either way — the
-/// asymmetric control for `report_is_checks`.
 const _unrelatedAsCastCode = '''
 int f(String value) => value as int;
 ''';
 
-/// A `toJson` map holding a type the project converts elsewhere, reachable
-/// only via `allowed_types`.
 const _customEncodableCode = '''
 class Decimal {}
 
@@ -160,8 +132,6 @@ class Price {
 }
 ''';
 
-/// A `toJson` map holding a plainly non-encodable type, which stays reported
-/// even with an unrelated `allowed_types` entry.
 const _plainNotEncodableCode = '''
 class Other {}
 
@@ -174,8 +144,6 @@ class Price {
 }
 ''';
 
-/// An enum that *does* override toString, which stays exempt even under
-/// `report_enums` — the asymmetric half of that option's tests.
 const _enumWithToStringCode = '''
 enum Status {
   active,
@@ -188,8 +156,6 @@ enum Status {
 String describe(Status status) => 'status: \$status';
 ''';
 
-/// Two labels sharing one body. Convertible only as `case 'a' || 'b' =>`,
-/// so it is reported only under `allow_fallthrough_cases: true`.
 const _fallthroughSwitchCode = '''
 int score(String grade) {
   switch (grade) {
@@ -202,10 +168,7 @@ int score(String grade) {
 }
 ''';
 
-/// A fallthrough case with nothing after it to share a body with, so there is
-/// no pattern to merge into — unreported even with the option on.
-// Edge case: no `default:` before the dangling case. analyzer 14.5 fails a
-// flow-analysis assertion on a case after `default:`, which hangs this harness.
+// Edge case: analyzer 14.5 hangs on a case after `default:`
 const _trailingFallthroughCode = '''
 int score(String grade) {
   switch (grade) {
@@ -217,8 +180,6 @@ int score(String grade) {
 }
 ''';
 
-/// A `dynamic` argument passed to `contains` on a typed list. Skipped by
-/// default because the real type is unknown; reported under `strict: true`.
 const _dynamicContainsCode = '''
 bool check(List<int> values, dynamic candidate) => values.contains(candidate);
 ''';
@@ -257,8 +218,6 @@ const _customStateNameCode = '''
 class LoadingStatus {}
 ''';
 
-/// A field below a method: reported by the default order, and by any order
-/// listing fields before methods.
 const _memberOrderCode = '''
 class Order {
   void submit() {}
@@ -397,21 +356,12 @@ class PublicWidget extends Widget {}
 class TestWidget extends Widget {}
 ''';
 
-/// Two public classes and an enum — pure Dart, so the default group of
-/// `prefer_single_declaration_per_file` fires without any package mocking.
 const _twoDeclarationsCode = '''
 class First {}
 class Second {}
 enum Third { one }
 ''';
 
-/// One class per "group" once `groups:` narrows by base type: a file holding
-/// one of each is the layout a grouped configuration asks for.
-///
-/// The base types are declared in a separate part-free library on purpose.
-/// `TypeChecker.isSuperOf` is reflexive, so declaring `Store` beside
-/// `CounterStore` would put two members in the `Store` group and report — the
-/// same gotcha the config cookbook documents for `use_class_suffix`.
 const _oneOfEachBaseCode = '''
 import 'bases.dart';
 
@@ -419,7 +369,6 @@ class CounterStore extends Store {}
 class CounterController extends Controller {}
 ''';
 
-/// The base types [_oneOfEachBaseCode] extends, kept in their own library.
 const _baseTypesCode = '''
 abstract class Store {}
 abstract class Controller {}
@@ -450,13 +399,6 @@ import 'package:flutter/widgets.dart';
 Widget build() => Padding(child: Align(child: const Widget()));
 ''';
 
-/// A state-like class that does **not** extend Flutter's `State`, holding a
-/// disposable field that is never disposed.
-///
-/// `dispose_fields` skips it entirely by default, which is exactly the gap
-/// `state_base_classes` exists to close. Pure Dart, so it resolves under
-/// `createMockSdk` — a Flutter-typed fixture would report nothing and make
-/// every assertion here pass vacuously.
 const _customStateBaseCode = '''
 class DisposableController {
   void dispose() {}
@@ -471,15 +413,12 @@ class MyController extends DisposableController {
 }
 ''';
 
-/// A single commented-out line — the smallest block `avoid_commented_out_code`
-/// reports by default.
 const _oneLineCommentedCode = '''
 void main() {
   // print('hello');
 }
 ''';
 
-/// Two consecutive commented-out lines, which stay reported at `min_lines: 2`.
 const _twoLineCommentedCode = '''
 void main() {
   // print('hello');
@@ -487,29 +426,22 @@ void main() {
 }
 ''';
 
-/// A list literal repeating the same literal value.
 const _duplicateLiteralCode = '''
 final values = [1, 2, 1];
 ''';
 
-/// A list literal repeating the same identifier, which `ignore_literals` must
-/// still report — the asymmetric half of that option's tests.
 const _duplicateIdentifierCode = '''
 const a = 1;
 const b = 2;
 final values = [a, b, a];
 ''';
 
-/// A Bloc subclass named without the default `Bloc` suffix, but *with* a
-/// `Store` suffix — so it reports by default and falls silent once `suffix`
-/// is reconfigured.
 const _storeSuffixCode = '''
 import 'package:bloc/bloc.dart';
 
 class CounterStore extends Bloc<String, int> {}
 ''';
 
-/// A private Bloc subclass lacking the suffix, for `ignore_private`.
 const _privateBlocCode = '''
 import 'package:bloc/bloc.dart';
 
@@ -518,22 +450,18 @@ class _Counter extends Bloc<String, int> {}
 void f() => _Counter();
 ''';
 
-/// A class reaching the tracked type through `implements`, not `extends`.
 const _implementsCode = '''
 import 'package:bloc/bloc.dart';
 
 class Counter implements Repository {}
 ''';
 
-/// A class reaching the tracked type through a mixin application.
 const _mixinCode = '''
 import 'package:bloc/bloc.dart';
 
 class Counter with Trackable {}
 ''';
 
-/// A class extending an intermediate base, so the tracked type is an
-/// *indirect* ancestor.
 const _indirectCode = '''
 import 'package:bloc/bloc.dart';
 
@@ -542,8 +470,6 @@ class BaseBloc extends Bloc<String, int> {}
 class Counter extends BaseBloc {}
 ''';
 
-/// A locally declared type with no `package:` URI, for entries omitting
-/// `package:`.
 const _localTypeCode = '''
 abstract class UseCase {}
 
@@ -578,8 +504,6 @@ void main() {
     });
 
     test('combines replacement and addition', () {
-      // `classes` picks the base list, `additional_classes` extends whichever
-      // list won — so the replaced base must not reappear.
       final result = resolve(
         'rules:\n  r:\n    classes: [X]\n    additional_classes: [Y]\n',
       );
@@ -611,9 +535,7 @@ void main() {
 
     tearDown(() async => harness.tearDown());
 
-    // Options that make a rule report *more* than it does by default. Each
-    // pair proves the default is unchanged and the option genuinely widens.
-    group('widening options', () {
+    group('options that widen what a rule reports by default', () {
       group('avoid_default_tostring report_enums', () {
         test('an interpolated enum is exempt by default', () async {
           final errors = await harness.analyze(_interpolatedEnumCode);
@@ -789,23 +711,24 @@ rules:
           );
         });
 
-        test('a trailing fallthrough stays unreported', () async {
-          // Nothing to merge the dangling pattern into, so neither the rule
-          // nor the fix can act.
-          final errors = await harness.analyze(
-            _trailingFallthroughCode,
-            config: '''
+        test(
+          'a trailing fallthrough with nothing to merge into stays unreported',
+          () async {
+            final errors = await harness.analyze(
+              _trailingFallthroughCode,
+              config: '''
 rules:
   prefer_switch_expression:
     allow_fallthrough_cases: true
 ''',
-          );
+            );
 
-          expect(
-            errors.map((e) => e.code),
-            isNot(contains('prefer_switch_expression')),
-          );
-        });
+            expect(
+              errors.map((e) => e.code),
+              isNot(contains('prefer_switch_expression')),
+            );
+          },
+        );
       });
 
       group('avoid_collection_methods_with_unrelated_types strict', () {
@@ -891,8 +814,6 @@ rules:
         });
       });
 
-      // `name_pattern` moved to `prefer_immutable_state` in 0.10.0, when the
-      // name-based half was split out of the Bloc rule.
       group('avoid_complex_conditions max_operands', () {
         test('reports a condition over the configured budget', () async {
           final errors = await harness.analyze(
@@ -942,8 +863,6 @@ rules:
         });
 
         test('a higher budget leaves the same body alone', () async {
-          // The asymmetric counterpart: silence alone cannot distinguish
-          // "the option was read" from "the rule never fired".
           final errors = await harness.analyze(
             _longFunctionCode,
             config: '''
@@ -977,9 +896,6 @@ rules:
         });
 
         test('an order that omits fields does not rank them', () async {
-          // The asymmetric counterpart: with fields left out of the order,
-          // the same file must be silent — proving the option is read rather
-          // than the rule simply never firing.
           final errors = await harness.analyze(
             _memberOrderCode,
             config: '''
@@ -1010,8 +926,6 @@ rules:
         });
 
         test('leaves the class alone under the default pattern', () async {
-          // The asymmetric counterpart: silence alone cannot distinguish "the
-          // option worked" from "the rule never fired".
           final errors = await harness.analyze(
             _customStateNameCode,
             config: '''
@@ -1282,8 +1196,6 @@ rules:
     });
 
     group('prefer_single_declaration_per_file groups', () {
-      // Control: without this, every "silenced" assertion below could pass
-      // because the rule never ran at all.
       test('reports the second declaration when merely enabled', () async {
         final errors = await harness.analyze(
           _twoDeclarationsCode,
@@ -1318,8 +1230,6 @@ rules:
         );
       });
 
-      // Asymmetric partner to the test above: the same option still reports
-      // when the file holds two declarations of the configured kind.
       test('kinds still reports two of the configured kind', () async {
         final errors = await harness.analyze(
           _twoDeclarationsCode,
@@ -1356,8 +1266,6 @@ rules:
         );
       });
 
-      // Asymmetric partner: one group covering both base types collapses the
-      // budgets, so the same file now reports.
       test('a single group covering both types reports', () async {
         harness.addLibrary('bases.dart', _baseTypesCode);
 
@@ -1658,15 +1566,14 @@ rules:
     });
 
     group('state_base_classes', () {
-      // `dispose_fields` normally only looks inside a Flutter `State`
-      // subclass. A state-like base that does not extend `State` is invisible
-      // to it — that is the gap this option closes, not the intermediate
-      // `BaseState<T>` case, which `isSuperOf` already walks to.
-      test('a non-State base is ignored by default', () async {
-        final errors = await harness.analyze(_customStateBaseCode);
+      test(
+        'a state-like base that does not extend State is ignored by default',
+        () async {
+          final errors = await harness.analyze(_customStateBaseCode);
 
-        expect(errors.map((e) => e.code), isNot(contains('dispose_fields')));
-      });
+          expect(errors.map((e) => e.code), isNot(contains('dispose_fields')));
+        },
+      );
 
       test('configuring the base makes the rule apply', () async {
         final errors = await harness.analyze(
@@ -1826,8 +1733,6 @@ rules:
       });
 
       test('two properties are below the default threshold', () async {
-        // Asymmetric baseline: proves the fixture below is genuinely silent by
-        // default, so raising it to a lint is the option's doing.
         final errors = await harness.analyze(
           _twoPropertyCode,
           config: 'rules:\n  prefer_class_destructuring: true',
@@ -1871,7 +1776,7 @@ rules:
         );
       });
 
-      test('a wrong-typed threshold falls back to the default', () async {
+      test('a wrong-typed threshold falls back to the default of 3', () async {
         final errors = await harness.analyze(
           _threePropertyCode,
           config: '''
@@ -1881,7 +1786,6 @@ rules:
 ''',
         );
 
-        // Degrades to the default (3) rather than throwing or disabling.
         expect(
           errors.map((e) => e.code),
           contains('prefer_class_destructuring'),
@@ -1916,13 +1820,20 @@ rules:
         suffix: Bloc
 """;
 
-      test('reports nothing when unconfigured', () async {
-        // The rule is entirely config-driven: installing the package must not
-        // impose a naming convention.
-        final errors = await harness.analyze(_storeSuffixCode, withBloc: true);
+      test(
+        'reports nothing when unconfigured, imposing no naming convention',
+        () async {
+          final errors = await harness.analyze(
+            _storeSuffixCode,
+            withBloc: true,
+          );
 
-        expect(errors.map((e) => e.code), isNot(contains('use_class_suffix')));
-      });
+          expect(
+            errors.map((e) => e.code),
+            isNot(contains('use_class_suffix')),
+          );
+        },
+      );
 
       test('reports a class violating a configured entry', () async {
         final errors = await harness.analyze(
@@ -1973,8 +1884,6 @@ class CounterBloc extends Bloc<String, int> {}
       });
 
       test('a non-matching package pin does not match the type', () async {
-        // Asymmetric to the test above: same entry, wrong package, so the
-        // type must not resolve and nothing is reported.
         final errors = await harness.analyze(
           _storeSuffixCode,
           withBloc: true,
@@ -1992,10 +1901,8 @@ rules:
       });
 
       test(
-        'omitting package matches a type from the analyzed package',
+        'omitting package matches any library, including the analyzed package',
         () async {
-          // A locally declared type has no `package:` URI, so this only works
-          // because a null package means "any library".
           final errors = await harness.analyze(
             _localTypeCode,
             config: """
@@ -2011,24 +1918,25 @@ rules:
         },
       );
 
-      test('never reports the configured base type itself', () async {
-        // `isSuperOf` is reflexive, so without an explicit guard the base
-        // type is reported for not carrying its own affix.
-        final errors = await harness.analyze(
-          _localTypeCode,
-          config: """
+      test(
+        'never reports the configured base type itself, though isSuperOf is reflexive',
+        () async {
+          final errors = await harness.analyze(
+            _localTypeCode,
+            config: """
 rules:
   use_class_suffix:
     entries:
       - type: UseCase
         suffix: UseCase
 """,
-        );
+          );
 
-        final reported = errors.where((e) => e.code == 'use_class_suffix');
-        expect(reported, hasLength(1));
-        expect(reported.single.message, contains('FetchUser'));
-      });
+          final reported = errors.where((e) => e.code == 'use_class_suffix');
+          expect(reported, hasLength(1));
+          expect(reported.single.message, contains('FetchUser'));
+        },
+      );
 
       test('matches a type reached through implements', () async {
         final errors = await harness.analyze(
@@ -2064,18 +1972,19 @@ rules:
         expect(errors.map((e) => e.code), contains('use_class_suffix'));
       });
 
-      test('matches an indirect ancestor', () async {
-        final errors = await harness.analyze(
-          _indirectCode,
-          withBloc: true,
-          config: blocSuffix,
-        );
+      test(
+        'matches an indirect ancestor and skips the conforming intermediate',
+        () async {
+          final errors = await harness.analyze(
+            _indirectCode,
+            withBloc: true,
+            config: blocSuffix,
+          );
 
-        // Both BaseBloc (ok) and Counter (violating) derive from Bloc; only
-        // Counter should be reported.
-        final reported = errors.where((e) => e.code == 'use_class_suffix');
-        expect(reported, hasLength(1));
-      });
+          final reported = errors.where((e) => e.code == 'use_class_suffix');
+          expect(reported, hasLength(1));
+        },
+      );
 
       test('reports a class matching two entries only once', () async {
         final errors = await harness.analyze(
@@ -2263,13 +2172,13 @@ class AppCounter extends Bloc<String, int> {}
         expect(errors.map((e) => e.code), isNot(contains('use_class_prefix')));
       });
 
-      test('a suffix entry does not drive the prefix rule', () async {
-        // The two rules read different per-entry keys, so a suffix-only
-        // entry must leave use_class_prefix with nothing to enforce.
-        final errors = await harness.analyze(
-          _storeSuffixCode,
-          withBloc: true,
-          config: """
+      test(
+        'a suffix-only entry leaves the prefix rule nothing to enforce',
+        () async {
+          final errors = await harness.analyze(
+            _storeSuffixCode,
+            withBloc: true,
+            config: """
 rules:
   use_class_prefix:
     entries:
@@ -2277,10 +2186,14 @@ rules:
         package: bloc
         suffix: Bloc
 """,
-        );
+          );
 
-        expect(errors.map((e) => e.code), isNot(contains('use_class_prefix')));
-      });
+          expect(
+            errors.map((e) => e.code),
+            isNot(contains('use_class_prefix')),
+          );
+        },
+      );
     });
 
     group('prefer_moving_to_variable', () {
@@ -2316,8 +2229,6 @@ rules:
       });
 
       test('a third use reports again at the same threshold', () async {
-        // The asymmetric half: proves the option raised the bar rather than
-        // switching the rule off.
         final errors = await harness.analyze(
           _thriceRepeatedChainCode,
           config: '''
@@ -2428,7 +2339,6 @@ rules:
   });
 }
 
-/// `Themer.of(context)` twice — one invocation chain, repeated.
 const _repeatedChainCode = '''
 class Themer {
   static Themer of(Object context) => Themer();
@@ -2443,7 +2353,6 @@ int fn(Object context) {
 }
 ''';
 
-/// The same chain three times, so a threshold of one extra still reports.
 const _thriceRepeatedChainCode = '''
 class Themer {
   static Themer of(Object context) => Themer();
@@ -2459,7 +2368,6 @@ int fn(Object context) {
 }
 ''';
 
-/// A pure property chain of two links, which `min_chain_length` governs.
 const _repeatedPropertyChainCode = '''
 class Inner {
   int get value => 0;
@@ -2487,16 +2395,8 @@ class _OptionsHarness with ResourceProviderMixin {
 
   String get sdkRoot => convertPath('/sdk');
 
-  /// Writes a minimal `package:bloc` and points the package config at it.
-  ///
-  /// `createMockSdk` only supplies `dart:` libraries, so any rule keyed on a
-  /// pub package needs the package faked or its `TypeChecker` never matches —
-  /// and a rule that never fires makes every negative assertion vacuous.
   void _addBlocPackage() {
     final blocRoot = convertPath('/pkg/bloc');
-    // `state` and `emit` exist so `emit_new_bloc_state_instances` can resolve
-    // them; the suffix/prefix rules below only use these as bare type markers
-    // and are unaffected by the extra members.
     newFile(join(blocRoot, 'lib', 'bloc.dart'), '''
 class Bloc<Event, State> {
   late State state;
@@ -2632,11 +2532,6 @@ T useState<T>(T value) => value;
 ''');
   }
 
-  /// Writes an extra library beside the file under analysis.
-  ///
-  /// Needed when a rule's option refers to a base type that must *not* be
-  /// declared in the analyzed file — `TypeChecker.isSuperOf` is reflexive, so
-  /// a locally declared base counts as its own subtype.
   void addLibrary(String fileName, String content) =>
       newFile(join(packagePath, 'lib', fileName), content);
 
@@ -2662,15 +2557,7 @@ plugins:
     path: /many_lints
 ${optionsSection ?? ''}''');
 
-    // Rules are opt-in as of 1.0.0, so a test asserting a rule's *default*
-    // option behaviour still has to switch the rule on. A test that supplies
-    // either config source enables the rule through that block, since
-    // configuring a rule by name opts it in.
-    //
-    // The fallback is only written when neither source is given: a
-    // `many_lints.yaml` wins outright over the analysis_options section, so
-    // writing one unconditionally would silently defeat every test that
-    // exercises the `optionsSection` route.
+    // Edge case: a many_lints.yaml would override optionsSection
     if (config != null) {
       newFile(join(packagePath, ConfigLoader.fileName), config);
     } else if (optionsSection == null) {

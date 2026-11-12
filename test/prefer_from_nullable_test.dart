@@ -60,9 +60,6 @@ Option<String> f(String? name) => Option.fromNullable(name);
   }
 
   Future<void> test_differentValueWrappedIsFine() async {
-    // The `Some` branch wraps a different value than the condition tested, so
-    // this conditional is not a `fromNullable` in disguise. Rewriting it would
-    // change behaviour.
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
 

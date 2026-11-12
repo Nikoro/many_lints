@@ -46,11 +46,7 @@ void f() {
   list.any((e) => e > 1);
 }
 ''',
-      [
-        // any() is not defined on List in the test environment,
-        // but the lint rule should not trigger.
-        undefinedName(44, 3),
-      ],
+      [undefinedName(44, 3)],
     );
   }
 
@@ -62,11 +58,7 @@ void f() {
   list.every((e) => e > 1);
 }
 ''',
-      [
-        // every() is not defined on List in the test environment,
-        // but the lint rule should not trigger.
-        undefinedName(44, 5),
-      ],
+      [undefinedName(44, 5)],
     );
   }
 

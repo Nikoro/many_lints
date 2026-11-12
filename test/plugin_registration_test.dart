@@ -114,13 +114,6 @@ void main() {
     );
   });
 
-  // The prose in README.md and CLAUDE.md restates numbers that live in the
-  // code: preset sizes, the rule and fix totals, the per-category breakdown,
-  // and the list of assists. Nothing recomputes them, so they drift silently —
-  // the README's category table went 22 rules stale (it had no fpdart row at
-  // all) and its preset counts predated an entire rule family before this test
-  // existed. Every claim below is parsed back out of the file and compared to
-  // the registry.
   group('documentation counts match the registry', () {
     late int totalRules;
     late int totalFixes;
@@ -142,11 +135,6 @@ void main() {
     });
 
     test('preset tables list the real preset sizes', () {
-      // `none` is not derived from anything, so it is asserted as the literal
-      // it is rather than looked up.
-      // `opinionated` is deliberately smaller than the registry: rules that
-      // contradict one already in it, and rules that do nothing unconfigured,
-      // stay out of every preset. See `conflictingWithOpinionated`.
       final expected = {
         'none': 0,
         'core': coreRules.length,
@@ -155,8 +143,6 @@ void main() {
         'pedantic': pedanticRules.length,
       };
 
-      // The docs site carries the same table, and its counts drifted silently
-      // once already (31/79/156 against presets holding 37/98/162).
       final configurationPage = File(
         'docs/src/content/docs/docs/configuration.mdx',
       ).readAsStringSync();
@@ -167,7 +153,7 @@ void main() {
         ('configuration.mdx', configurationPage),
       ]) {
         expect(
-          _presetCounts(content),
+          _presetTableCounts(content),
           expected,
           reason: 'The preset table in $file is stale.',
         );
@@ -209,9 +195,6 @@ void main() {
     });
 
     test('README category table covers every rule exactly once', () {
-      // Each row links to its anchor in the generated rules catalog, so the
-      // row set and the directory set must match — a new category with no row
-      // would otherwise only show up as a wrong total.
       final rows = <String, int>{
         for (final match in RegExp(
           r'\| \[[^\]]+\]\(https://nikoro\.github\.io/many_lints/docs/rules/'
@@ -243,10 +226,6 @@ void main() {
     });
 
     test('README lists every registered assist', () {
-      // Assists are named in prose rather than by id, so this counts rows and
-      // leaves the wording free. A count is enough: the failure it guards
-      // against is adding an assist and forgetting the README, which is
-      // exactly what happened to the "Do notation" one.
       final rows = RegExp(
         r'^\| \*\*[^|]+\*\* \| [^|]+ \| [^|]+ \|$',
         multiLine: true,
@@ -294,7 +273,7 @@ void main() {
       for (final file in Directory(
         'docs/src/content/docs/docs/rules',
       ).listSync(recursive: true).whereType<File>())
-        if (_matchingSuffix(file.path, pageSuffixes) case final suffix?)
+        if (_longestMatchingSuffix(file.path, pageSuffixes) case final suffix?)
           if (file.readAsStringSync().contains('rule-badge--fix'))
             _baseName(file.path, suffix: suffix, normalizeHyphens: true),
     };
@@ -407,17 +386,19 @@ void main() {
     final pages = Directory('docs/src/content/docs/docs/rules')
         .listSync(recursive: true)
         .whereType<File>()
-        .where((file) => _matchingSuffix(file.path, pageSuffixes) != null);
+        .where(
+          (file) => _longestMatchingSuffix(file.path, pageSuffixes) != null,
+        );
     final knownUrls = <String>{
       for (final file in pages)
         '/many_lints/docs/rules/'
             '${file.path.split(Platform.pathSeparator).reversed.elementAt(1)}/'
-            '${_baseName(file.path, suffix: _matchingSuffix(file.path, pageSuffixes)!)}'
+            '${_baseName(file.path, suffix: _longestMatchingSuffix(file.path, pageSuffixes)!)}'
             '/',
     };
 
     for (final file in pages) {
-      final suffix = _matchingSuffix(file.path, pageSuffixes)!;
+      final suffix = _longestMatchingSuffix(file.path, pageSuffixes)!;
       final name = _baseName(file.path, suffix: suffix, normalizeHyphens: true);
       final content = file.readAsStringSync();
       final headings = RegExp(
@@ -496,7 +477,7 @@ void main() {
     for (final file in Directory(
       'docs/src/content/docs/docs/rules',
     ).listSync(recursive: true).whereType<File>()) {
-      final suffix = _matchingSuffix(file.path, pageSuffixes);
+      final suffix = _longestMatchingSuffix(file.path, pageSuffixes);
       if (suffix == null) continue;
 
       final name = _baseName(file.path, suffix: suffix, normalizeHyphens: true);
@@ -575,7 +556,7 @@ void main() {
       }
 
       final source = File('lib/src/rules/$name.dart').readAsStringSync();
-      final sourceOptions = _directOptionKeys(source);
+      final sourceOptions = _literalOptionKeys(source);
       directOptionsByRule[name] = sourceOptions;
       expect(
         documentedOptions,
@@ -681,12 +662,9 @@ void main() {
     expect(totalFixes, equals(107));
   });
 
-  test('assists are registered', () {
+  test('every assist is registered by id', () {
     plugin.register(registry);
 
-    // Assert the ids rather than the count: a missing `registerAssist` is
-    // invisible to an assist's own tests when they construct it directly, and
-    // a bare count says only that the number changed, not which one is gone.
     expect(
       registry.assistKinds.map((kind) => kind.id),
       unorderedEquals([
@@ -707,10 +685,6 @@ void main() {
     );
   });
 
-  // Per-rule `exclude` is applied by `ManyLintsRule`, so a rule that extends
-  // `AnalysisRule` directly silently ignores every `exclude` a user writes for
-  // it. Nothing else fails in that case — the rule's own tests never configure
-  // an exclude — so the invariant is asserted here instead.
   test('every registered rule extends ManyLintsRule', () {
     plugin.register(registry);
 
@@ -732,11 +706,7 @@ void main() {
   });
 }
 
-/// The preset sizes claimed by a Markdown preset table, keyed by preset name.
-///
-/// Both README.md and CLAUDE.md carry the same table with different prose in
-/// the last column, so only the first two columns are matched.
-Map<String, int> _presetCounts(String content) => {
+Map<String, int> _presetTableCounts(String content) => {
   for (final match in RegExp(
     r'^\| `(none|core|recommended|opinionated|pedantic)` \| *(\d+) \|',
     multiLine: true,
@@ -772,13 +742,7 @@ Set<String> _presetGuideRules(String content, String tier) {
   };
 }
 
-/// Option keys read directly by a rule.
-///
-/// Shared option readers are covered by the page/catalog comparison; this
-/// catches the common failure mode where a rule starts reading a new literal
-/// key but its page is not updated. Name/number set helpers also expose an
-/// automatically generated `additional_` key.
-Set<String> _directOptionKeys(String source) {
+Set<String> _literalOptionKeys(String source) {
   final keys = <String>{};
   final accessor = RegExp(
     r'''\.(?:boolOption|intOption|stringOption|stringListOption|patternOption|entriesOption)\(\s*['"]([^'"]+)['"]''',
@@ -805,16 +769,7 @@ Set<String> _directOptionKeys(String source) {
   return keys;
 }
 
-/// The base names of every file in [directory] ending in one of [suffixes].
-///
-/// [suffixes] is a list because a rule page is `.md` or `.mdx` depending on
-/// whether the rule takes options — a configurable rule shows its snippets in
-/// both config locations via Starlight tabs, which needs MDX. Matching only
-/// `.md` silently skipped all 52 configurable rules, so this test compared a
-/// 104-entry set against the full registry and could never pass.
-///
-/// The longest matching suffix wins, so `.mdx` is stripped as `.mdx` rather
-/// than leaving a trailing `.` behind from a shorter `.md` match.
+// Edge case: configurable rules have .mdx pages for Starlight tabs, so .md alone misses them
 Set<String> _baseNames(
   Directory directory, {
   required List<String> suffixes,
@@ -822,12 +777,11 @@ Set<String> _baseNames(
   bool normalizeHyphens = false,
 }) => {
   for (final file in directory.listSync(recursive: recursive).whereType<File>())
-    if (_matchingSuffix(file.path, suffixes) case final suffix?)
+    if (_longestMatchingSuffix(file.path, suffixes) case final suffix?)
       _baseName(file.path, suffix: suffix, normalizeHyphens: normalizeHyphens),
 };
 
-/// The longest entry of [suffixes] that [path] ends with, or `null` for none.
-String? _matchingSuffix(String path, List<String> suffixes) {
+String? _longestMatchingSuffix(String path, List<String> suffixes) {
   String? longest;
   for (final suffix in suffixes) {
     if (!path.endsWith(suffix)) continue;

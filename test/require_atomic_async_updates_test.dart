@@ -16,8 +16,6 @@ class RequireAtomicAsyncUpdatesTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_readThenAwaitThenWrite() async {
     await assertDiagnostics(
       r'''
@@ -68,8 +66,6 @@ class Counter {
       [lint(154, 25)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_readAfterAwait() async {
     await assertNoDiagnostics(r'''
@@ -136,8 +132,6 @@ class Counter {
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_otherObjectFieldIsIgnored() async {
     await assertNoDiagnostics(r'''
 class Holder {
@@ -174,9 +168,6 @@ class Counter {
   }
 
   Future<void> test_callbackNamingTheFieldIsNotADependency() async {
-    // Cancel a timer, then reassign it with a callback that touches the same
-    // field. The callback is not part of the value being written; it runs
-    // later, on its own timeline.
     await assertNoDiagnostics(r'''
 class Timer {
   Timer(this.cb);
@@ -198,9 +189,7 @@ class Widget {
 ''');
   }
 
-  Future<void> test_readAndWriteBothAfterTheSameAwait() async {
-    // Nothing suspends between the read and the write, so nothing can
-    // interleave — the shape every `dispose()`-plus-async-handler pair has.
+  Future<void> test_readAndWriteBothAfterTheSameAwaitCannotInterleave() async {
     await assertNoDiagnostics(r'''
 class Timer {
   void cancel() {}

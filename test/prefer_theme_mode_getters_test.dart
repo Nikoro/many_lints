@@ -29,8 +29,6 @@ enum ThemeMode {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void> test_equalsDark() async {
     await assertDiagnostics(
       r'''
@@ -63,8 +61,6 @@ bool isSystem(ThemeMode mode) => ThemeMode.system == mode;
       [lint(74, 24)],
     );
   }
-
-  // --- Negative cases (should NOT trigger lint) ---
 
   Future<void> test_getterAlreadyUsed() async {
     await assertNoDiagnostics(r'''
@@ -102,8 +98,6 @@ bool isDarkMode(ThemeMode mode) => switch (mode) {
   }
 }
 
-/// Older Flutter versions have no `isDark`/`isLight`/`isSystem` getters, so
-/// the rule must stay silent there.
 @reflectiveTest
 class PreferThemeModeGettersWithoutGettersTest extends ManyLintsRuleTest {
   @override
@@ -115,7 +109,7 @@ enum ThemeMode { system, light, dark }
     super.setUp();
   }
 
-  Future<void> test_noGettersOnEnum() async {
+  Future<void> test_olderFlutterWithoutGetters_noLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/material.dart';
 
@@ -124,8 +118,6 @@ bool isDarkMode(ThemeMode mode) => mode == ThemeMode.dark;
   }
 }
 
-/// Flutter 3.50 deprecates package:flutter/material.dart; a migrated project
-/// gets ThemeMode from package:material_ui instead.
 @reflectiveTest
 class PreferThemeModeGettersMaterialUiTest extends ManyLintsRuleTest {
   @override

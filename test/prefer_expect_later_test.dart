@@ -23,8 +23,6 @@ const completion = 1;
     super.setUp();
   }
 
-  // ── Positive cases: should trigger the lint ──────────────────────────
-
   Future<void> test_expectWithFutureValue() async {
     await assertDiagnostics(
       r'''
@@ -79,8 +77,6 @@ void f() {
       [lint(92, 6)],
     );
   }
-
-  // ── Negative cases: should NOT trigger the lint ──────────────────────
 
   Future<void> test_expectWithNonFutureValue() async {
     await assertNoDiagnostics(r'''

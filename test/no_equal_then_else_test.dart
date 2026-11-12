@@ -14,8 +14,6 @@ class NoEqualThenElseTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_identicalBlocks() async {
     await assertDiagnostics(
       r'''
@@ -53,8 +51,6 @@ int f(bool flag) => flag ? 1 : 1;
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_differentBranches() async {
     await assertNoDiagnostics(r'''
 void f(bool flag) {
@@ -82,8 +78,6 @@ void f(bool flag) {
 int f(bool flag) => flag ? 1 : 2;
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_elseIfChainIsIgnored() async {
     await assertNoDiagnostics(r'''

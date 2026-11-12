@@ -14,8 +14,6 @@ class PreferAddAllTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_loopWithBlockBody() async {
     await assertDiagnostics(
       r'''
@@ -57,8 +55,6 @@ class Holder {
     );
   }
 
-  // ---- Consecutive add() calls ----
-
   Future<void> test_twoConsecutiveAdds() async {
     await assertDiagnostics(
       r'''
@@ -99,8 +95,6 @@ class Holder {
       [lint(84, 12)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_singleAdd() async {
     await assertNoDiagnostics(r'''

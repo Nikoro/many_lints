@@ -17,7 +17,6 @@ class PreferSimplerPatternsNullCheckTest extends ManyLintsRuleTest {
   }
 
   Future<void> test_nullCheckWithUntypedBinding() async {
-    // `!= null && final field` should be `final field?`
     await assertDiagnostics(
       r'''
 void f(String? s) {
@@ -29,7 +28,6 @@ void f(String? s) {
   }
 
   Future<void> test_nullCheckWithTypedBinding() async {
-    // `!= null && final String field` should be `final String field`
     await assertDiagnostics(
       r'''
 void f(String? s) {
@@ -41,7 +39,6 @@ void f(String? s) {
   }
 
   Future<void> test_nullCheckWithVarBinding() async {
-    // `!= null && var field` should also trigger
     await assertDiagnostics(
       r'''
 void f(String? s) {
@@ -53,7 +50,6 @@ void f(String? s) {
   }
 
   Future<void> test_noLint_simplerNullablePattern() async {
-    // Already using the simpler `final field?` syntax
     await assertNoDiagnostics(r'''
 void f(String? s) {
   if (s case final field?) {}
@@ -62,7 +58,6 @@ void f(String? s) {
   }
 
   Future<void> test_noLint_typedBindingOnly() async {
-    // Just a typed binding without null check is fine
     await assertNoDiagnostics(r'''
 void f(String? s) {
   if (s case final String field) {}
@@ -71,7 +66,6 @@ void f(String? s) {
   }
 
   Future<void> test_noLint_relationalPatternOnly() async {
-    // Just `!= null` without binding is fine
     await assertNoDiagnostics(r'''
 void f(String? s) {
   if (s case != null) {}
@@ -80,7 +74,6 @@ void f(String? s) {
   }
 
   Future<void> test_noLint_logicalAndWithoutNullCheck() async {
-    // Logical and pattern without null check on left side
     await assertNoDiagnostics(r'''
 void f(int value) {
   if (value case > 0 && < 10) {}
@@ -89,7 +82,6 @@ void f(int value) {
   }
 
   Future<void> test_noLint_nullCheckOrPattern() async {
-    // Logical or pattern with null check is fine
     await assertNoDiagnostics(r'''
 void f(String? s) {
   if (s case != null || '') {}
@@ -98,7 +90,6 @@ void f(String? s) {
   }
 
   Future<void> test_nullCheckWithTypedBinding_int() async {
-    // Different type annotation
     await assertDiagnostics(
       r'''
 void f(int? n) {

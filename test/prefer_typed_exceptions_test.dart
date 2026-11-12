@@ -95,9 +95,8 @@ void f(int port) {
 ''');
   }
 
-  /// `Exception` is only uninformative when it *is* the type thrown; a
-  /// subclass named here has its own name for a caller to catch by.
-  Future<void> test_exception_subclass_from_a_mixin_application() async {
+  Future<void>
+  test_exception_subclass_from_a_mixin_application_is_catchable_by_name() async {
     await assertNoDiagnostics(r'''
 mixin Traced {}
 

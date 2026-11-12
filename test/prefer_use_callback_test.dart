@@ -35,8 +35,6 @@ class HookBuilder extends Widget {
     super.setUp();
   }
 
-  // --- Positive cases: should trigger the lint ---
-
   Future<void> test_useMemoizedReturningClosure() async {
     await assertDiagnostics(
       r'''
@@ -98,8 +96,6 @@ void fn() {
     );
   }
 
-  // --- Negative cases: should NOT trigger the lint ---
-
   Future<void> test_useMemoizedReturningNonFunction() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -119,7 +115,6 @@ void fn() {
   }
 
   Future<void> test_useMemoizedWithMultiStatementBlock() async {
-    // Block body with more than one statement — not a simple return
     await assertNoDiagnostics(r'''
 import 'package:flutter_hooks/flutter_hooks.dart';
 void fn() {

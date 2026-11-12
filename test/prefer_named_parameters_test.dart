@@ -28,7 +28,6 @@ void move(int x, int y, int z) {}
     );
   }
 
-  // One or two positional parameters are usually the subject of the call.
   Future<void> test_twoPositionalIsFine() async {
     await assertNoDiagnostics(r'''
 String slice(String value, int start) => value;
@@ -41,10 +40,7 @@ void move({int x = 0, int y = 0, int z = 0}) {}
 ''');
   }
 
-  // The signature belongs to the supertype, so only the override is exempt —
-  // the base declaration is the author's own and still reports, which is the
-  // asymmetric half of this pair.
-  Future<void> test_overrideIsExempt() async {
+  Future<void> test_overrideIsExemptButTheBaseReports() async {
     await assertDiagnostics(
       r'''
 class Base {
@@ -60,8 +56,6 @@ class Sub extends Base {
     );
   }
 
-  // A private constructor is not an API: it is reached from one place in the
-  // same library, usually a factory assembling injected dependencies.
   Future<void> test_privateConstructorIsExempt() async {
     await assertNoDiagnostics(r'''
 class Pipeline {
@@ -74,8 +68,6 @@ class Pipeline {
 ''');
   }
 
-  // ...but a PUBLIC constructor is an API and still reports, which is the
-  // asymmetric half of that exemption.
   Future<void> test_publicConstructorStillReports() async {
     await assertDiagnostics(
       r'''
@@ -91,15 +83,12 @@ class Pipeline {
     );
   }
 
-  // dart_frog's route contract: the parameters are the URL's path segments in
-  // order, so naming them is not the author's to decide.
-  Future<void> test_frameworkEntrypointIsExempt() async {
+  Future<void> test_dartFrogRouteEntrypointIsExempt() async {
     await assertNoDiagnostics(r'''
 void onRequest(Object context, String organizerId, String leagueId) {}
 ''');
   }
 
-  // An operator's parameters cannot be named.
   Future<void> test_operatorIsExempt() async {
     await assertNoDiagnostics(r'''
 class Vector {
@@ -109,7 +98,6 @@ class Vector {
   }
 }
 
-/// `max_positional`, with the asymmetric pair.
 @reflectiveTest
 class PreferNamedParametersBudgetTest extends ManyLintsRuleTest {
   @override
@@ -125,7 +113,6 @@ class PreferNamedParametersBudgetTest extends ManyLintsRuleTest {
     );
   }
 
-  // Two are silent by default and must report once the budget drops.
   Future<void> test_loweredBudgetReports() async {
     await assertDiagnostics(
       r'''

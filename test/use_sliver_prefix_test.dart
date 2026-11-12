@@ -58,8 +58,7 @@ class CustomScrollView extends Widget {
   const CustomScrollView({super.key, List<Widget>? slivers});
 }
 ''');
-    // Flutter 3.50 deprecates package:flutter/material.dart; the Material
-    // slivers now come from package:material_ui.
+    // Edge case: Flutter 3.50 moved the Material slivers to package:material_ui
     newPackage('material_ui').addFile('lib/material_ui.dart', r'''
 import 'package:flutter/widgets.dart';
 export 'package:flutter/widgets.dart';
@@ -70,8 +69,6 @@ class SliverAppBar extends Widget {
 ''');
     super.setUp();
   }
-
-  // --- Cases that SHOULD trigger the lint ---
 
   Future<void> test_statelessWidgetReturningSliverToBoxAdapter_lint() async {
     await assertDiagnostics(
@@ -167,8 +164,6 @@ class _MyPaddingState extends State<MyPadding> {
       [lint(46, 9)],
     );
   }
-
-  // --- Cases that should NOT trigger the lint ---
 
   Future<void> test_sliverPrefixedClass_noLint() async {
     await assertNoDiagnostics(r'''

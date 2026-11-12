@@ -19,9 +19,7 @@ class NoMagicStringTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // Reported at EVERY occurrence: each is separately editable, and showing
-  // only the first would hide the duplication the rule is about.
-  Future<void> test_repeatedStringIsReported() async {
+  Future<void> test_repeatedStringIsReportedAtEveryOccurrence() async {
     await assertDiagnostics(
       r'''
 void a() => print('x-request-id');
@@ -32,8 +30,6 @@ void c() => print('x-request-id');
     );
   }
 
-  // A single occurrence is a message or a label; naming it moves the text away
-  // from the code that uses it for no gain.
   Future<void> test_singleOccurrenceIsSilent() async {
     await assertNoDiagnostics(r'''
 void a() => print('x-request-id');
@@ -47,7 +43,6 @@ void b() => print('x-request-id');
 ''');
   }
 
-  // Short strings are separators and punctuation, not identifiers.
   Future<void> test_shortStringIsSilent() async {
     await assertNoDiagnostics(r'''
 void a() => print(', ');
@@ -65,7 +60,6 @@ const spare = 'x-request-id';
   }
 }
 
-/// `min_occurrences`, with the asymmetric pair.
 @reflectiveTest
 class NoMagicStringOccurrencesOptionTest extends ManyLintsRuleTest {
   @override
@@ -81,8 +75,6 @@ class NoMagicStringOccurrencesOptionTest extends ManyLintsRuleTest {
     );
   }
 
-  // Two occurrences are silent by default, and must report once the threshold
-  // is lowered.
   Future<void> test_loweredThresholdReports() async {
     await assertDiagnostics(
       r'''

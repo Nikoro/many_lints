@@ -14,8 +14,6 @@ class PreferAsyncCallbackTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // Positive cases - should trigger lint
-
   Future<void> test_fieldDeclaration() async {
     await assertDiagnostics(
       r'''
@@ -90,8 +88,6 @@ Future<void> Function() getCallback() {
       [lint(0, 23)],
     );
   }
-
-  // Negative cases - should NOT trigger lint
 
   Future<void> test_asyncCallbackTypedef() async {
     await assertNoDiagnostics(r'''

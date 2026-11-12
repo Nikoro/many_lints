@@ -39,16 +39,13 @@ class UserRepository {}
 ''');
   }
 
-  // The underscore is not part of the name a reader judges, so a private type
-  // is measured on the bare name.
   Future<void> test_privateNameMeasuredWithoutUnderscore() async {
     await assertNoDiagnostics(r'''
 class _Foo {}
 ''');
   }
 
-  // Type parameters are the SDK's own convention and must stay exempt.
-  Future<void> test_typeParameterIsExempt() async {
+  Future<void> test_sdkStyleTypeParameterIsExempt() async {
     await assertNoDiagnostics(r'''
 class Box<T> {
   final T value;

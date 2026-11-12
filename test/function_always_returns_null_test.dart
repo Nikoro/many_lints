@@ -16,8 +16,6 @@ class FunctionAlwaysReturnsNullTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_everyPathReturnsNull() async {
     await assertDiagnostics(
       r'''
@@ -51,8 +49,6 @@ class Repository {
       [lint(29, 4)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_someBranchReturnsValue() async {
     await assertNoDiagnostics(r'''
@@ -89,8 +85,6 @@ class Child extends Base {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_asyncBodyIsIgnored() async {
     await assertNoDiagnostics(r'''

@@ -267,9 +267,6 @@ void fn() {
   }
 
   Future<void> test_genericParameter_inferredFromArgument_notReported() async {
-    // `T` is solved *from* the element, so `List<Color>` is an upward
-    // inference, not a context type. `Box(items: const [.red])` does not
-    // compile.
     await assertNoDiagnostics(r'''
 class Color {
   const Color(this.v);

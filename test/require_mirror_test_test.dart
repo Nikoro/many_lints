@@ -39,8 +39,6 @@ class Parser {}
 ''');
   }
 
-  /// A test of the right name elsewhere in the tree still counts, so
-  /// reorganising the test folder does not turn the rule into noise.
   Future<void> test_fallbackAnywhereFindsAMovedTest() async {
     newFile(
       '$testPackageRootPath/test/unit/parsing/parser_test.dart',
@@ -75,8 +73,6 @@ const parserVersion = 3;
     );
   }
 
-  /// A file that both exports and declares is not a barrel: it has code of
-  /// its own that a test could reach.
   Future<void> test_exportPlusDeclarationIsNotABarrel() async {
     await assertDiagnostics(
       r'''
@@ -89,7 +85,6 @@ class Parser {}
   }
 }
 
-/// A nested library mirrors into the matching nested test path.
 @reflectiveTest
 class RequireMirrorTestNestedTest extends ManyLintsRuleTest {
   @override
@@ -122,7 +117,6 @@ class Version {}
   }
 }
 
-/// The rule is scoped to `lib/`; a test file has no test of its own.
 @reflectiveTest
 class RequireMirrorTestOutsideLibTest extends ManyLintsRuleTest {
   @override

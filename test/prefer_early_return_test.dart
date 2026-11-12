@@ -15,8 +15,6 @@ class PreferEarlyReturnTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_functionBodyWrappedInIf() async {
     await assertDiagnostics(
       r'''
@@ -48,8 +46,6 @@ class C {
       [lint(34, 2)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_shortBodyIsNotWorthAGuard() async {
     await assertNoDiagnostics(r'''
@@ -99,9 +95,6 @@ void f(bool ok) {
 ''');
   }
 
-  // An already-negated condition inverts into a longer positive guard, so the
-  // rewrite would read worse than the code it replaced. This is the exclusion
-  // the rule's only production hit produced.
   Future<void> test_alreadyNegatedConditionIsLeftAlone() async {
     await assertNoDiagnostics(r'''
 void f(Map<String, int> m, String k) {
@@ -125,8 +118,6 @@ void f(int a, int b) {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_patternIfBindsVariables() async {
     await assertNoDiagnostics(r'''

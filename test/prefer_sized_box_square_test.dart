@@ -30,8 +30,6 @@ class Text extends Widget {
     super.setUp();
   }
 
-  // === Tests that SHOULD trigger the lint ===
-
   Future<void> test_sameIntegerLiterals() async {
     await assertDiagnostics(
       r'''
@@ -97,8 +95,6 @@ Widget f() {
     );
   }
 
-  // === Tests that should NOT trigger the lint ===
-
   Future<void> test_differentValues() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -153,11 +149,7 @@ Widget f() {
 ''');
   }
 
-  // === Edge cases ===
-
   Future<void> test_differentVariablesSameValue() async {
-    // Different variable names — should NOT trigger even if runtime values
-    // might be the same, because source text differs.
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 Widget f() {
@@ -168,11 +160,7 @@ Widget f() {
 ''');
   }
 
-  // --- MethodInvocation path (top-level function returning SizedBox) ---
-
   Future<void> test_methodInvocation_sameValues() async {
-    // A top-level function named to return SizedBox, triggering MethodInvocation
-    // visitor with staticType = SizedBox but target == null
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';

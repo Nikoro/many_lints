@@ -46,10 +46,7 @@ class ConsumerState<T extends ConsumerWidget> {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_refReadAfterAwaitInAsyncMethod() async {
-    // Standalone async methods (not inside build) should NOT trigger
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -131,8 +128,6 @@ class MyState extends ConsumerState<ConsumerWidget> {
       [lint(293, 18), lint(319, 18)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_refReadBeforeAwait() async {
     await assertNoDiagnostics(r'''

@@ -26,8 +26,6 @@ mixin EquatableMixin {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void> test_missingOneField() async {
     await assertDiagnostics(
       r'''
@@ -101,8 +99,6 @@ class Person extends Equatable {
       [lint(155, 60)],
     );
   }
-
-  // --- Negative cases (should NOT trigger lint) ---
 
   Future<void> test_allFieldsListed() async {
     await assertNoDiagnostics(r'''
@@ -186,8 +182,6 @@ class NotEquatable {
 }
 ''');
   }
-
-  // --- Edge cases ---
 
   Future<void> test_blockBodyAllFieldsListed() async {
     await assertNoDiagnostics(r'''
