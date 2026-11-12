@@ -6,7 +6,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that adds missing fields to the Equatable `props` list.
 class ListAllEquatableFieldsFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.listAllEquatableFields',
@@ -25,13 +24,10 @@ class ListAllEquatableFieldsFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The rule reports at the `props` name token, so the covering node may be
-    // the declaration itself rather than a child of it.
     final targetNode = node.thisOrAncestorOfType<MethodDeclaration>();
     if (targetNode == null) return;
     if (!targetNode.isGetter || targetNode.name.lexeme != 'props') return;
 
-    // Navigate to enclosing class
     final enclosingBody = targetNode.parent;
     if (enclosingBody is! BlockClassBody) return;
     final classDecl = enclosingBody.parent;
@@ -40,7 +36,6 @@ class ListAllEquatableFieldsFix extends ResolvedCorrectionProducer {
     final element = classDecl.declaredFragment?.element;
     if (element == null) return;
 
-    // Collect own fields
     final ownFields = <String>[];
     for (final f in element.fields) {
       if (f.isStatic || !f.isOriginDeclaration) continue;
@@ -49,20 +44,16 @@ class ListAllEquatableFieldsFix extends ResolvedCorrectionProducer {
     }
     if (ownFields.isEmpty) return;
 
-    // Extract currently listed field names from props
     final currentNames = _extractPropsFieldNames(targetNode);
 
-    // Find missing fields
     final missingFields = ownFields
         .where((f) => !currentNames.contains(f))
         .toList();
     if (missingFields.isEmpty) return;
 
-    // Find the list literal in props
     final listLiteral = _findPropsListLiteral(targetNode);
     if (listLiteral == null) return;
 
-    // Build the replacement: existing elements + missing fields
     final existingSource = listLiteral.elements
         .map((e) => e.toSource())
         .toList();

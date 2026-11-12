@@ -7,7 +7,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../ast_node_analysis.dart';
 
-/// Fix that moves opacity from Opacity wrapper to Image's opacity parameter.
 class AvoidIncorrectImageOpacityFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidIncorrectImageOpacity',
@@ -31,12 +30,10 @@ class AvoidIncorrectImageOpacityFix extends ResolvedCorrectionProducer {
     final opacityCreation = call.node;
     final arguments = call.argumentList.arguments;
 
-    // Find the opacity value
     final opacityArg = arguments.whereType<NamedArgument>().firstWhereOrNull(
       (e) => e.name.lexeme == 'opacity',
     );
 
-    // Find the child (Image widget)
     final childArg = arguments.whereType<NamedArgument>().firstWhereOrNull(
       (e) => e.name.lexeme == 'child',
     );
@@ -44,7 +41,6 @@ class AvoidIncorrectImageOpacityFix extends ResolvedCorrectionProducer {
     if (childArg == null) return;
     final imageExpr = childArg.argumentExpression;
 
-    // Get the image's argument list
     final ArgumentList imageArgList;
     if (imageExpr is InstanceCreationExpression) {
       imageArgList = imageExpr.argumentList;
@@ -54,7 +50,6 @@ class AvoidIncorrectImageOpacityFix extends ResolvedCorrectionProducer {
       return;
     }
 
-    // Check if Image already has an opacity parameter
     final hasOpacity = imageArgList.arguments.whereType<NamedArgument>().any(
       (e) => e.name.lexeme == 'opacity',
     );
@@ -64,7 +59,6 @@ class AvoidIncorrectImageOpacityFix extends ResolvedCorrectionProducer {
     final opacityValue = opacityArg?.argumentExpression.toSource() ?? '1.0';
     final imageSource = imageExpr.toSource();
 
-    // Build the new Image source with opacity parameter added
     final imageStart = imageExpr.offset;
     final closeParenRelative =
         imageArgList.rightParenthesis.offset - imageStart;

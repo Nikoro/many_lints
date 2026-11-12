@@ -5,11 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that removes a redundant catch clause that only rethrows.
-///
-/// When the catch clause is the only one and there is no finally block,
-/// the entire try-catch is replaced with just the try body contents.
-/// Otherwise, only the catch clause is removed.
 class AvoidOnlyRethrowFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidOnlyRethrow',
@@ -37,7 +32,6 @@ class AvoidOnlyRethrowFix extends ResolvedCorrectionProducer {
     final isOnlyCatch = tryStatement.catchClauses.length == 1;
     final hasFinally = tryStatement.finallyBlock != null;
 
-    // Only catch clause with no finally: unwrap the try body
     if (isOnlyCatch && !hasFinally) {
       final bodySource = tryStatement.body.statements
           .map((s) => s.toSource())
@@ -49,7 +43,6 @@ class AvoidOnlyRethrowFix extends ResolvedCorrectionProducer {
       return;
     }
 
-    // Multiple catch clauses or has finally: remove just this catch clause
     await builder.addDartFileEdit(file, (builder) {
       builder.addDeletion(range.node(targetNode));
     });

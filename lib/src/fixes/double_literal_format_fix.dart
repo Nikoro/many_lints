@@ -6,8 +6,6 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 import 'package:many_lints/src/double_literal_parts.dart';
 
-/// Fix that rewrites a double literal with exactly one leading zero and no
-/// redundant trailing zeros.
 class DoubleLiteralFormatFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.doubleLiteralFormat',

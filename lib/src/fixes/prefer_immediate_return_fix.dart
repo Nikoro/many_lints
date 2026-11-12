@@ -5,7 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that collapses a declare-then-return pair into a single return.
 class PreferImmediateReturnFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferImmediateReturn',
@@ -41,7 +40,6 @@ class PreferImmediateReturnFix extends ResolvedCorrectionProducer {
     if (initializer == null) return;
 
     await builder.addDartFileEdit(file, (builder) {
-      // Replace both statements with a single return of the initializer.
       builder.addSimpleReplacement(
         range.startEnd(declaration, returnStatement),
         'return ${initializer.toSource()};',

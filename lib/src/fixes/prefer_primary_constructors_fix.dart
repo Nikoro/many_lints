@@ -8,37 +8,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../primary_constructor_candidate.dart';
 
-/// Fix that moves a class or enum constructor into the type header.
-///
-/// ```dart
-/// class Point extends Shape {
-///   final int x;
-///   Point(this.x, int seed) : super(seed) {
-///     log(x);
-///   }
-/// }
-/// // becomes
-/// class Point(final int x, int seed) extends Shape {
-///   this : super(seed) {
-///     log(x);
-///   }
-/// }
-/// ```
-///
-/// The whole span from the name to the end of the body is rewritten as text
-/// in **one** replacement: the header and the body change together, and
-/// editing them separately leaves stray whitespace (`class Point(...) ;`).
-///
-/// The parameter list is the constructor's own source with each `this.x`
-/// swapped for its declaring form in place, so groups, order, defaults and
-/// comments inside the list survive untouched. No comment is ever deleted: a
-/// field's leading comments move with it into the header, and so do the
-/// constructor's, unless a `this` block remains for them to stay above. (The
-/// SDK's fix drops the comment of the member following the constructor.)
-///
-/// An initializer list stays an initializer list (`this : b = b ?? a`) and
-/// is never turned into a field initializer: a `const` built from that form
-/// is falsely rejected by the 3.13.4 analyzer.
 class PreferPrimaryConstructorsFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferPrimaryConstructors',
@@ -74,7 +43,6 @@ class PreferPrimaryConstructorsFix extends ResolvedCorrectionProducer {
   }
 }
 
-/// A text edit at absolute offsets into the file.
 class _Edit {
   final int start;
   final int end;
@@ -208,8 +176,6 @@ class _Rewrite {
     return buffer.toString();
   }
 
-  /// The lines [member] occupies, together with the comment lines above it,
-  /// which the caller has already carried elsewhere.
   _Edit _wholeLines(AnnotatedNode member) {
     final start = _leadingStart(member);
     var end = member.end;
@@ -220,8 +186,6 @@ class _Rewrite {
     return _Edit(start, end, '');
   }
 
-  /// Joins removals separated only by blank lines, so the blank lines between
-  /// two removed fields go with them.
   List<_Edit> _merge(List<_Edit> removals) {
     removals.sort((a, b) => a.start.compareTo(b.start));
     final merged = <_Edit>[];
@@ -237,8 +201,6 @@ class _Rewrite {
     return merged;
   }
 
-  /// Takes one blank line along with a removal that would otherwise leave it
-  /// doubled, hanging under the `{`, or sitting above the `}`.
   List<_Edit> _tidy(List<_Edit> removals) => [
     for (final removal in removals) _tidyOne(removal),
   ];
@@ -259,8 +221,6 @@ class _Rewrite {
     return _Edit(start, end, '');
   }
 
-  /// The comments directly above [member], each on its own line so it can
-  /// precede a parameter without swallowing it.
   String _leadingComments(AnnotatedNode member) => content
       .substring(_leadingStart(member), _firstRealToken(member).offset)
       .split('\n')
@@ -269,9 +229,6 @@ class _Rewrite {
       .map((line) => '$line\n')
       .join();
 
-  /// The start of [member]'s first line, or of the comment block above it.
-  /// Everything after the line holding the previous token belongs to
-  /// [member]; a comment trailing that token stays with the previous one.
   int _leadingStart(AnnotatedNode member) {
     final first = _firstRealToken(member);
     final previousEnd = first.previous?.end ?? 0;
@@ -284,8 +241,6 @@ class _Rewrite {
     return start;
   }
 
-  /// The first token of [member] in the token stream: its first annotation,
-  /// or its first keyword. A doc comment is not in the stream.
   Token _firstRealToken(AnnotatedNode member) =>
       member.metadata.firstOrNull?.beginToken ??
       member.firstTokenAfterCommentAndMetadata;

@@ -3,11 +3,6 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
 import 'prefer_returning_shorthands_fix.dart';
 
-/// Fix that replaces explicit class constructor invocation with dot shorthand.
-///
-/// Shares the same transformation logic as [PreferReturningShorthandsFix],
-/// but uses an empty string for unnamed constructors (producing `.` instead
-/// of `.new`).
 class PreferShorthandsWithConstructorsFix extends PreferReturningShorthandsFix {
   static const _fixKind = FixKind(
     'many_lints.fix.preferShorthandsWithConstructors',

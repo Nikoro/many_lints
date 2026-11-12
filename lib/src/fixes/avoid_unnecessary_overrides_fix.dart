@@ -5,7 +5,6 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Fix that removes an unnecessary member override.
 class AvoidUnnecessaryOverridesFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidUnnecessaryOverrides',
@@ -24,19 +23,15 @@ class AvoidUnnecessaryOverridesFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The rule reports at the member-name token, so the covering node may be
-    // the declaration itself rather than a child of it.
     final targetNode = node.thisOrAncestorOfType<MethodDeclaration>();
     if (targetNode == null) return;
 
     final content = unitResult.content;
 
-    // Include the @override annotation if present
     final startOffset = targetNode.metadata.isNotEmpty
         ? targetNode.metadata.first.offset
         : targetNode.offset;
 
-    // Extend to line boundaries
     var deleteStart = startOffset;
     while (deleteStart > 0 && content[deleteStart - 1] != '\n') {
       deleteStart--;
@@ -50,7 +45,6 @@ class AvoidUnnecessaryOverridesFix extends ResolvedCorrectionProducer {
       deleteEnd++;
     }
 
-    // Also consume a preceding blank line if present
     if (deleteStart > 0 && content[deleteStart - 1] == '\n') {
       deleteStart--;
     }

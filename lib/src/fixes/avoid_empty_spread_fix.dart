@@ -5,7 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that removes a spread of an empty collection literal.
 class AvoidEmptySpreadFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidEmptySpread',
@@ -27,8 +26,6 @@ class AvoidEmptySpreadFix extends ResolvedCorrectionProducer {
     final spread = node.thisOrAncestorOfType<SpreadElement>();
     if (spread == null) return;
 
-    // The enclosing literal owns the separating commas, so delete through
-    // `nodeInList` to take the trailing comma with it.
     final elements = switch (spread.parent) {
       ListLiteral(:final elements) => elements,
       SetOrMapLiteral(:final elements) => elements,

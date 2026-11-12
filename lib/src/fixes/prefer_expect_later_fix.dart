@@ -5,7 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces `expect(future, ...)` with `await expectLater(future, ...)`.
 class PreferExpectLaterFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferExpectLater',
@@ -24,19 +23,14 @@ class PreferExpectLaterFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The covering node may be the invocation itself rather than its name
-    // identifier, so walk up instead of type-testing `node`.
     final methodInvocation = node.thisOrAncestorOfType<MethodInvocation>();
     if (methodInvocation == null) return;
 
-    // Determine if already preceded by `await`
     final parent = methodInvocation.parent;
     final alreadyAwaited =
         parent is AwaitExpression && parent.expression == methodInvocation;
 
-    // `await ` would be inserted at the same offset the method name starts
-    // at, and two edits sharing an offset raise ConflictingEditException —
-    // which FixProcessor swallows, dropping the whole fix. Emit one edit.
+    // Edge case: two edits at one offset conflict, and FixProcessor silently drops the fix
     final replacement = alreadyAwaited ? 'expectLater' : 'await expectLater';
 
     await builder.addDartFileEdit(file, (builder) {

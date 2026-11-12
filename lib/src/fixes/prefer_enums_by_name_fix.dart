@@ -8,7 +8,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../ast_node_analysis.dart';
 
-/// Fix that replaces `.firstWhere((e) => e.name == value)` with `.byName(value)`.
 class PreferEnumsByNameFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferEnumsByName',
@@ -49,7 +48,6 @@ class PreferEnumsByNameFix extends ResolvedCorrectionProducer {
     if (bodyExpr is! BinaryExpression) return;
     if (bodyExpr.operator.type != TokenType.EQ_EQ) return;
 
-    // Extract the value being compared (the non-param.name side)
     final String valueSource;
     if (_isParamNameAccess(bodyExpr.leftOperand, paramName)) {
       valueSource = bodyExpr.rightOperand.toSource();

@@ -5,12 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that rewrites a hand-written null check into `Option.fromNullable`.
-///
-/// The rule has already established that the two branches are a `Some` of the
-/// tested value and a `None`, so the whole conditional collapses to one call
-/// on that value. The tested operand is re-derived here rather than parsed out
-/// of the message, so a reworded diagnostic cannot break the fix.
 class PreferFromNullableFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferFromNullable',
@@ -46,7 +40,6 @@ class PreferFromNullableFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// The operand compared against `null`.
   Expression? _nullTestedOperand(BinaryExpression condition) {
     final left = condition.leftOperand.unParenthesized;
     final right = condition.rightOperand.unParenthesized;

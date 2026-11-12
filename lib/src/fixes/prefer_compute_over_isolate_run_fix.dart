@@ -5,10 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces `Isolate.run(callback)` with `compute(callback, null)`.
-///
-/// Transforms the callback to accept a message parameter since `compute`
-/// requires `ComputeCallback<Q, R>` which takes one argument.
 class PreferComputeOverIsolateRunFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferComputeOverIsolateRun',
@@ -45,18 +41,10 @@ class PreferComputeOverIsolateRunFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Transforms the callback to accept a message parameter.
-  ///
-  /// - `() => expr` → `(_) => expr`
-  /// - `() { body }` → `(_) { body }`
-  /// - `() async => expr` → `(_) async => expr`
-  /// - `() async { body }` → `(_) async { body }`
-  /// - `myFunction` → `(_) => myFunction()`
   String _transformCallback(Expression callback) {
     if (callback is FunctionExpression) {
       final params = callback.parameters;
       if (params != null && params.parameters.isEmpty) {
-        // Replace empty parens () with (_)
         final source = callback.toSource();
         final paramsSource = params.toSource();
         return source.replaceFirst(paramsSource, '(_)');
@@ -64,7 +52,6 @@ class PreferComputeOverIsolateRunFix extends ResolvedCorrectionProducer {
       return callback.toSource();
     }
 
-    // For identifier references (e.g., myFunction), wrap as (_) => myFunction()
     return '(_) => ${callback.toSource()}()';
   }
 }

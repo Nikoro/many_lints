@@ -4,7 +4,6 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Fix that removes commented-out code.
 class AvoidCommentedOutCodeFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidCommentedOutCode',
@@ -30,9 +29,6 @@ class AvoidCommentedOutCodeFix extends ResolvedCorrectionProducer {
     final content = unitResult.content;
     final end = offset + length;
 
-    // Extend the deletion range to include the entire line(s):
-    // - Walk backwards from offset to find the start of the line.
-    // - Walk forwards from end to include the trailing newline.
     var deleteStart = offset;
     while (deleteStart > 0 && content[deleteStart - 1] != '\n') {
       deleteStart--;
@@ -42,7 +38,6 @@ class AvoidCommentedOutCodeFix extends ResolvedCorrectionProducer {
     while (deleteEnd < content.length && content[deleteEnd] != '\n') {
       deleteEnd++;
     }
-    // Include the trailing newline itself.
     if (deleteEnd < content.length && content[deleteEnd] == '\n') {
       deleteEnd++;
     }

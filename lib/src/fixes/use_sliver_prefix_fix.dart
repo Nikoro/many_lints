@@ -5,7 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that adds the 'Sliver' prefix to a widget class name.
 class UseSliverPrefixFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.useSliverPrefix',
@@ -24,8 +23,6 @@ class UseSliverPrefixFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The rule reports at the class-name token, so there is no identifier
-    // node to replace — rename the token on the enclosing declaration.
     final declaration = node.thisOrAncestorOfType<ClassDeclaration>();
     if (declaration == null) return;
 

@@ -8,8 +8,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../rules/prefer_equatable_mixin.dart';
 
-/// Fix that replaces `extends Equatable` with `with Equatable`, or with
-/// `with EquatableMixin` on equatable 2.0; see [equatableMixinName].
 class PreferEquatableMixinFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferEquatableMixin',
@@ -49,13 +47,10 @@ class PreferEquatableMixinFix extends ResolvedCorrectionProducer {
 
     await builder.addDartFileEdit(file, (builder) {
       if (withClause != null) {
-        // Has existing `with` clause: remove `extends Equatable` and append
-        // the mixin to the existing `with` clause.
         builder.addDeletion(range.startStart(targetNode, withClause));
         final lastMixin = withClause.mixinTypes.last;
         builder.addSimpleInsertion(lastMixin.end, ', $mixin');
       } else {
-        // No `with` clause: replace `extends Equatable` with `with <mixin>`.
         builder.addSimpleReplacement(range.node(targetNode), 'with $mixin');
       }
     });

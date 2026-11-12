@@ -7,7 +7,6 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import '../ast_node_analysis.dart';
 import '../dispose_method_editing.dart';
 
-/// Fix that adds a matching removeListener() call in dispose().
 class AlwaysRemoveListenerFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.alwaysRemoveListener',
@@ -29,7 +28,6 @@ class AlwaysRemoveListenerFix extends ResolvedCorrectionProducer {
     final targetNode = node;
     if (targetNode is! MethodInvocation) return;
 
-    // Build the removeListener call source
     final target = targetNode.realTarget;
     final targetSource = target?.toSource() ?? '';
     final args = targetNode.argumentList.arguments;
@@ -40,7 +38,6 @@ class AlwaysRemoveListenerFix extends ResolvedCorrectionProducer {
         ? 'removeListener($listenerSource)'
         : '$targetSource.removeListener($listenerSource)';
 
-    // Find the enclosing class declaration
     final classDecl = enclosingClassDeclaration(targetNode);
     if (classDecl == null) return;
 

@@ -7,8 +7,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../ast_node_analysis.dart';
 
-/// Fix that replaces `SizedBox(width: x, height: x)` with
-/// `SizedBox.square(dimension: x)`.
 class PreferSizedBoxSquareFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferSizedBoxSquare',
@@ -37,8 +35,6 @@ class PreferSizedBoxSquareFix extends ResolvedCorrectionProducer {
     final widthArg = args.firstWhereOrNull((a) => a.name.lexeme == 'width');
     if (widthArg == null) return;
 
-    // Build the replacement: keep all args except width/height,
-    // replace them with dimension.
     final otherArgs = <String>[];
     for (final arg in argumentList.arguments) {
       if (arg is NamedArgument) {

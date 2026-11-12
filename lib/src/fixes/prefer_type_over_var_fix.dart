@@ -5,7 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces 'var' with an explicit type annotation.
 class PreferTypeOverVarFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferTypeOverVar',
@@ -24,17 +23,12 @@ class PreferTypeOverVarFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The node should be the 'var' keyword token
-    // We need to navigate to the VariableDeclarationList
-    // The rule reports at the `var` keyword, so the covering node is already
-    // the declaration list — `node.parent` would overshoot it.
     final parent = node.thisOrAncestorOfType<VariableDeclarationList>();
     if (parent == null) return;
 
     final variables = parent.variables;
     if (variables.isEmpty) return;
 
-    // Get the type from the first variable's initializer
     final firstVariable = variables.first;
     final initializer = firstVariable.initializer;
     if (initializer == null) return;
@@ -42,11 +36,9 @@ class PreferTypeOverVarFix extends ResolvedCorrectionProducer {
     final inferredType = initializer.staticType;
     if (inferredType == null) return;
 
-    // Get the type string representation
     final typeString = inferredType.getDisplayString();
 
     await builder.addDartFileEdit(file, (builder) {
-      // Replace 'var' keyword with the explicit type
       builder.addSimpleReplacement(range.token(parent.keyword!), typeString);
     });
   }

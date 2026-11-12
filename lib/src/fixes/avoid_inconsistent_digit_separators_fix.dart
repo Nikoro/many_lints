@@ -7,7 +7,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 import 'package:many_lints/src/digit_separator_grouping.dart';
 import 'package:many_lints/src/rule_config.dart';
 
-/// Fix that regroups a numeric literal's digits at a regular interval.
 class AvoidInconsistentDigitSeparatorsFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidInconsistentDigitSeparators',
@@ -37,8 +36,7 @@ class AvoidInconsistentDigitSeparatorsFix extends ResolvedCorrectionProducer {
     final grouping = DigitSeparatorGrouping.of(lexeme);
     if (grouping == null) return;
 
-    // The fix must regroup to the size the rule asked for, so it reads the
-    // same options the rule did rather than assuming the defaults.
+    // Edge case: regroup with the options the rule used, not with the defaults
     final config = _configFor(grouping);
     final regrouped = grouping.regrouped(config);
     if (regrouped == lexeme) return;

@@ -5,18 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces a `void` fpdart type argument with `Unit`.
-///
-/// The edit is a single token swap, so it is safe to apply in bulk across a
-/// file: `Unit` is a real value where `void` is not, and every use site that
-/// compiled against `void` still compiles against `Unit`.
-///
-/// The one thing it cannot do is fill in the *value*. A body that ends without
-/// returning anything will not compile once the type says `Unit`, and the
-/// author has to write `return unit;`. That is deliberate — the alternative is
-/// guessing where in an arbitrary body the return belongs, and a fix that
-/// rewrites control flow to satisfy a type annotation is not one anybody
-/// should apply without reading it.
 class PreferUnitOverVoidFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferUnitOverVoid',
@@ -35,13 +23,11 @@ class PreferUnitOverVoidFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The rule reports the `void` type argument itself.
     final targetNode = node.thisOrAncestorOfType<NamedType>();
     if (targetNode == null) return;
 
     await builder.addDartFileEdit(file, (builder) {
-      // `Unit` is fpdart's, and the file may name the fpdart types through a
-      // library that does not re-export it, so the import cannot be assumed.
+      // Edge case: the file may reach fpdart types through a library that does not export Unit
       builder.importLibrary(Uri.parse('package:fpdart/fpdart.dart'));
       builder.addSimpleReplacement(range.node(targetNode), 'Unit');
     });

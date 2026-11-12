@@ -7,7 +7,6 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Fix that renames a shadowing type parameter to a single letter.
 class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidGenericsShadowing',
@@ -32,20 +31,16 @@ class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
     final typeParamList = targetNode.parent;
     if (typeParamList is! TypeParameterList) return;
 
-    // Collect names already in use by sibling type parameters.
     final usedNames = <String>{
       for (final tp in typeParamList.typeParameters) tp.name.lexeme,
     };
 
-    // Also collect all NamedType identifiers in the declaring scope to avoid
-    // renaming to a name that shadows an outer type or identifier.
     final scope = _findDeclaringScope(targetNode);
     if (scope != null) {
       final scopeNames = _collectNamedTypes(scope);
       usedNames.addAll(scopeNames);
     }
 
-    // Also check top-level declaration names in the compilation unit.
     final unit = targetNode.thisOrAncestorOfType<CompilationUnit>();
     if (unit != null) {
       for (final declaration in unit.declarations) {
@@ -64,7 +59,6 @@ class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
       }
     }
 
-    // Pick a replacement name: try T, R, E, S, U, V, W, then T0, T1, ...
     final candidates = ['T', 'R', 'E', 'S', 'U', 'V', 'W'];
     final replacement = candidates.firstWhere(
       (c) => !usedNames.contains(c),
@@ -79,13 +73,11 @@ class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
     final oldName = targetNode.name.lexeme;
 
     await builder.addDartFileEdit(file, (builder) {
-      // Rename the type parameter declaration.
       builder.addSimpleReplacement(
         SourceRange(targetNode.name.offset, targetNode.name.length),
         replacement,
       );
 
-      // Rename all usages of this type parameter within the declaring scope.
       final scope = _findDeclaringScope(targetNode);
       if (scope != null) {
         final usages = _findUsages(scope, oldName);
@@ -99,8 +91,6 @@ class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Collects all [NamedType] identifier names used within [scope],
-  /// excluding the type parameters themselves.
   Set<String> _collectNamedTypes(AstNode scope) {
     final names = <String>{};
     final visitor = _NamedTypeCollector(names);
@@ -108,13 +98,6 @@ class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
     return names;
   }
 
-  /// Finds the AST node that scopes this type parameter (class, method, etc.).
-  ///
-  /// The declaration is not at a fixed depth: since analyzer 13 a class's type
-  /// parameters hang off a name-part node and a top-level function's off its
-  /// `FunctionExpression`, so walk up instead of assuming `parent.parent`.
-  /// Getting this wrong renames the declaration but leaves every usage behind,
-  /// producing code that does not compile.
   AstNode? _findDeclaringScope(TypeParameter typeParam) {
     for (
       AstNode? current = typeParam.parent;
@@ -135,8 +118,6 @@ class AvoidGenericsShadowingFix extends ResolvedCorrectionProducer {
     return null;
   }
 
-  /// Finds all [NamedType] tokens within [scope] that reference the
-  /// type parameter named [name].
   List<Token> _findUsages(AstNode scope, String name) {
     final usages = <Token>[];
     final visitor = _UsageFinder(name, usages);
@@ -160,7 +141,6 @@ class _UsageFinder extends RecursiveAstVisitor<void> {
   }
 }
 
-/// Collects all [NamedType] identifier names within a scope.
 class _NamedTypeCollector extends RecursiveAstVisitor<void> {
   final Set<String> names;
 

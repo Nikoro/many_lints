@@ -7,7 +7,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../ast_node_analysis.dart';
 
-/// Fix that replaces Align(alignment: center) with Center.
 class PreferCenterOverAlignFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferCenterOverAlign',
@@ -26,25 +25,20 @@ class PreferCenterOverAlignFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // For an unnamed constructor, `ConstructorName` and its `NamedType`
-    // child share a source range and the covering node resolves to the
-    // deeper one, so look up before type-testing.
+    // Edge case: an unnamed ConstructorName shares its range with the deeper NamedType
     final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
     if (targetNode is! ConstructorName) return;
 
     final instanceCreation = targetNode.parent;
     if (instanceCreation is! InstanceCreationExpression) return;
 
-    // Find alignment argument to remove
     final alignmentArgument = instanceCreation.argumentList.arguments
         .whereType<NamedArgument>()
         .firstWhereOrNull((e) => e.name.lexeme == 'alignment');
 
     await builder.addDartFileEdit(file, (builder) {
-      // Replace Align with Center
       builder.addSimpleReplacement(range.node(targetNode), 'Center');
 
-      // Remove alignment argument if present
       if (alignmentArgument != null) {
         builder.addDeletion(
           range.nodeInList(

@@ -5,25 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that converts a switch statement to a switch expression.
-///
-/// Transforms:
-/// ```dart
-/// switch (value) {
-///   case 1:
-///     return 'first';
-///   case 2:
-///     return 'second';
-/// }
-/// ```
-///
-/// Into:
-/// ```dart
-/// return switch (value) {
-///   1 => 'first',
-///   2 => 'second',
-/// };
-/// ```
 class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferSwitchExpression',
@@ -42,13 +23,9 @@ class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // Find the switch statement
-    // The rule reports at the `switch` keyword, so the covering node is
-    // already the statement — `node.parent` would overshoot it.
     final switchNode = node.thisOrAncestorOfType<SwitchStatement>();
     if (switchNode == null) return;
 
-    // Determine the conversion type and build the replacement
     final replacement = _buildSwitchExpression(switchNode);
     if (replacement == null) return;
 
@@ -57,15 +34,10 @@ class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Builds a switch expression from a switch statement.
-  ///
-  /// Returns null if the switch cannot be converted.
   String? _buildSwitchExpression(SwitchStatement switchStmt) {
     final members = switchStmt.members;
     if (members.isEmpty) return null;
 
-    // Check what type of conversion we need. Leading fallthrough cases have
-    // no statements of their own, so look at the first member that does.
     final firstStatement = members
         .map((m) => m.statements.firstOrNull)
         .firstWhere((s) => s != null, orElse: () => null);
@@ -78,11 +50,7 @@ class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
 
     if (!isReturnBased && !isAssignmentBased) return null;
 
-    // Build the switch expression cases.
-    //
-    // A fallthrough case (`case a:` with no body) shares the next case's
-    // body, which a switch expression writes as a single `a || b` pattern.
-    // Pending patterns accumulate until a member with a body closes them.
+    // Edge case: a fallthrough case has no body and joins the next case as one `a || b` pattern
     final casesBuffer = StringBuffer();
     final pending = <String>[];
     for (final member in members) {
@@ -101,8 +69,7 @@ class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
       casesBuffer.writeln(',');
     }
 
-    // A trailing fallthrough case has no body to fall into, so the switch is
-    // not convertible — bail rather than silently dropping it.
+    // Edge case: a trailing fallthrough case has no body to fall into
     if (pending.isNotEmpty) return null;
 
     final expression = switchStmt.expression.toSource();
@@ -111,7 +78,6 @@ class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
     if (isReturnBased) {
       return 'return $switchExpr;';
     } else if (isAssignmentBased) {
-      // Get the assignment target from the first statement
       final firstExpr = firstStatement.expression;
       final target = (firstExpr as AssignmentExpression).leftHandSide
           .toSource();
@@ -121,23 +87,12 @@ class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
     return null;
   }
 
-  /// The pattern text for [member].
-  ///
-  /// Dart 3 parses `case Foo.bar:` as a `SwitchPatternCase`; only pre-3.0
-  /// constant cases are `SwitchCase`.
   String _patternOf(SwitchMember member) => switch (member) {
     SwitchPatternCase(:final guardedPattern) => guardedPattern.toSource(),
     SwitchCase(:final expression) => expression.toSource(),
     SwitchDefault() => '_',
   };
 
-  /// Builds a single case expression for the switch expression.
-  ///
-  /// [leadingPatterns] holds the patterns of any fallthrough cases directly
-  /// above this one; they are joined with `||` so several labels sharing one
-  /// body become a single case.
-  ///
-  /// Returns null if the case cannot be converted.
   String? _buildCaseExpression(
     SwitchMember member, {
     List<String> leadingPatterns = const [],
@@ -147,8 +102,7 @@ class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
 
     var pattern = _patternOf(member);
     if (leadingPatterns.isNotEmpty) {
-      // A `default` reached by fallthrough already covers everything, so
-      // `a || _` would be redundant — collapse to the wildcard.
+      // Edge case: a default reached by fallthrough already covers everything, so `a || _` is `_`
       pattern = member is SwitchDefault
           ? '_'
           : [...leadingPatterns, pattern].join(' || ');
@@ -156,7 +110,6 @@ class PreferSwitchExpressionFix extends ResolvedCorrectionProducer {
 
     final statement = statements.first;
 
-    // Extract the value to return/assign
     String? value;
 
     if (statement is ReturnStatement && statement.expression != null) {

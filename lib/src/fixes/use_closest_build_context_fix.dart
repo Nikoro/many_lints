@@ -7,8 +7,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../flutter_type_checkers.dart';
 
-/// Fix that renames the inner closure's BuildContext parameter to match the
-/// outer context name, so the closest BuildContext is used.
 class UseClosestBuildContextFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.useClosestBuildContext',
@@ -27,29 +25,23 @@ class UseClosestBuildContextFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The rule reports the identifier referencing the outer context, but the
-    // covering node can resolve to a narrower node than that identifier.
     final SimpleIdentifier? targetNode = node
         .thisOrAncestorOfType<SimpleIdentifier>();
     if (targetNode == null) return;
 
     final outerContextName = targetNode.name;
 
-    // Walk up to find the enclosing function expression with a BuildContext param
     final closureParam = _findEnclosingBuildContextParam(targetNode);
     if (closureParam == null) return;
 
     final paramName = closureParam.name;
     if (paramName == null) return;
 
-    // Rename the inner parameter to the outer context name
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(range.token(paramName), outerContextName);
     });
   }
 
-  /// Walk up the AST to find the nearest FunctionExpression ancestor
-  /// that has a BuildContext parameter.
   FormalParameter? _findEnclosingBuildContextParam(AstNode node) {
     AstNode? current = node.parent;
     while (current != null) {
@@ -72,9 +64,7 @@ class UseClosestBuildContextFix extends ResolvedCorrectionProducer {
     final type = param.type?.type;
     if (type != null) return buildContextChecker.isExactlyType(type);
 
-    // An untyped closure parameter (`(_) { ... }`) carries no annotation, so
-    // fall back to the resolved element — this mirrors the rule, which would
-    // otherwise report a case the fix cannot act on.
+    // Edge case: an untyped closure parameter has no annotation, so the resolved type is read
     final element = param.declaredFragment?.element;
     if (element == null) return false;
 

@@ -7,7 +7,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../flutter_type_checkers.dart';
 
-/// Fix that replaces an EdgeInsets constructor with a simpler alternative.
 class PreferCorrectEdgeInsetsConstructorFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferCorrectEdgeInsetsConstructor',

@@ -6,7 +6,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that gives a discarded `BuildContext` parameter a usable name.
 class NeverDiscardBuildContextFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.neverDiscardBuildContext',
@@ -29,10 +28,7 @@ class NeverDiscardBuildContextFix extends ResolvedCorrectionProducer {
     final name = parameter?.name;
     if (parameter == null || name == null) return;
 
-    // Renaming to `context` is only safe when nothing in the enclosing scope
-    // already binds that name — otherwise the fix would shadow the very
-    // context the body currently relies on, silently changing behaviour
-    // instead of just making the parameter usable.
+    // Edge case: a `context` already in scope would be silently shadowed by the rename
     if (_scopeBindsContext(parameter)) return;
 
     await builder.addDartFileEdit(file, (builder) {
@@ -40,17 +36,6 @@ class NeverDiscardBuildContextFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Whether anything named `context` is already in scope around [parameter].
-  ///
-  /// Scans the **outermost** enclosing member rather than the immediately
-  /// enclosing body, because the name that would be shadowed usually lives
-  /// further out — a `build(BuildContext context)` whose builder callback
-  /// discards its own context is the case this rule fires on most.
-  ///
-  /// This deliberately over-approximates: a `context` declared in a sibling
-  /// branch cannot actually collide, but treating it as a collision only costs
-  /// an offered fix, whereas missing one would silently rebind the name the
-  /// body already reads.
   bool _scopeBindsContext(RegularFormalParameter parameter) {
     final scope =
         parameter.thisOrAncestorOfType<MethodDeclaration>() ??
@@ -64,7 +49,6 @@ class NeverDiscardBuildContextFix extends ResolvedCorrectionProducer {
   }
 }
 
-/// Finds a declaration of the name `context` other than [exclude].
 class _ContextBindingFinder extends RecursiveAstVisitor<void> {
   final RegularFormalParameter exclude;
   bool found = false;

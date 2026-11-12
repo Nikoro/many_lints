@@ -8,8 +8,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../ast_node_analysis.dart';
 
-/// Fix that converts a public named parameter with a `_field = field`
-/// initializer into a private named parameter (`this._field`).
 class PreferPrivateNamedParametersFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferPrivateNamedParameters',
@@ -34,12 +32,7 @@ class PreferPrivateNamedParametersFix extends ResolvedCorrectionProducer {
     final parameterName = parameter.name?.lexeme;
     if (parameterName == null) return;
 
-    // Only the same-name case is fixable. Under `only_same_name: false` the
-    // rule also reports a renamed parameter (`_id` from `identifier`), but
-    // `this._id` would rename the named argument too — a breaking change to
-    // the constructor's API that a quick fix must not make silently. The
-    // lookup below finds no initializer for `_$parameterName` in that case,
-    // so the fix simply declines and the diagnostic stays.
+    // Edge case: only same-name is fixed; `this._id` for `identifier` would rename the argument
     final fieldName = '_$parameterName';
 
     final constructor = parameter
@@ -56,7 +49,6 @@ class PreferPrivateNamedParametersFix extends ResolvedCorrectionProducer {
         );
     if (initializer == null) return;
 
-    // Rebuild the parameter, preserving `required` and any default value.
     final buffer = StringBuffer();
     if (parameter.requiredKeyword != null) buffer.write('required ');
     buffer.write('this.$fieldName');
@@ -66,8 +58,7 @@ class PreferPrivateNamedParametersFix extends ResolvedCorrectionProducer {
       );
     }
 
-    // Keep parameter metadata (annotations) intact by replacing from the
-    // first token after it.
+    // Edge case: starting at `required` or the type keeps the parameter's annotations
     final SyntacticEntity start =
         parameter.requiredKeyword ??
         parameter.constFinalOrVarKeyword ??
@@ -81,7 +72,6 @@ class PreferPrivateNamedParametersFix extends ResolvedCorrectionProducer {
       );
 
       if (constructor.initializers.length == 1) {
-        // Remove the whole `: _field = field` clause.
         builder.addDeletion(range.endEnd(constructor.parameters, initializer));
       } else {
         builder.addDeletion(

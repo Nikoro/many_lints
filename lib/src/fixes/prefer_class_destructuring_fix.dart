@@ -9,8 +9,6 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
 import '../ast_node_analysis.dart';
 
-/// Fix that introduces a class destructuring declaration to replace
-/// multiple property accesses on the same variable.
 class PreferClassDestructuringFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferClassDestructuring',
@@ -31,7 +29,6 @@ class PreferClassDestructuringFix extends ResolvedCorrectionProducer {
   Future<void> compute(ChangeBuilder builder) async {
     final targetNode = node;
 
-    // Find the variable name and enclosing block
     final String variableName;
     final DartType? variableType;
     if (targetNode is PrefixedIdentifier) {
@@ -50,11 +47,9 @@ class PreferClassDestructuringFix extends ResolvedCorrectionProducer {
     final typeName = variableType.element.name;
     if (typeName == null) return;
 
-    // Find the enclosing block
     final block = _findEnclosingBlock(targetNode);
     if (block == null) return;
 
-    // Collect all distinct property names accessed on this variable
     final collector = _FixPropertyCollector(variableName);
     for (final statement in block.statements) {
       statement.accept(collector);
@@ -67,14 +62,12 @@ class PreferClassDestructuringFix extends ResolvedCorrectionProducer {
         'final $typeName(${sortedProperties.map((p) => ':$p').join(', ')}) = '
         '$variableName;\n';
 
-    // Find the statement containing the first property access
     final firstStatement = _findContainingStatement(
       block,
       collector.firstAccess!,
     );
     if (firstStatement == null) return;
 
-    // Calculate indentation from the first statement
     final indent = indentOf(unitResult.content, firstStatement.offset);
 
     await builder.addDartFileEdit(file, (builder) {
@@ -106,7 +99,6 @@ class PreferClassDestructuringFix extends ResolvedCorrectionProducer {
   }
 }
 
-/// Collects distinct property names accessed on a specific variable.
 class _FixPropertyCollector extends RecursiveAstVisitor<void> {
   final String variableName;
   final Set<String> properties = {};
@@ -132,7 +124,7 @@ class _FixPropertyCollector extends RecursiveAstVisitor<void> {
     }
   }
 
-  // Stop at nested function boundaries
+  // Edge case: accesses inside nested functions stay outside the destructuring
   @override
   void visitFunctionExpression(FunctionExpression node) {}
 
@@ -140,7 +132,6 @@ class _FixPropertyCollector extends RecursiveAstVisitor<void> {
   void visitFunctionDeclaration(FunctionDeclaration node) {}
 
   void _addProperty(String name, AstNode accessNode) {
-    // Skip if used as method call target or assignment target
     final parent = accessNode.parent;
     if (parent is AssignmentExpression && parent.leftHandSide == accessNode) {
       return;

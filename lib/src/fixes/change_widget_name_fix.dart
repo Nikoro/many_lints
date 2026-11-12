@@ -5,7 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Generic fix that replaces a widget constructor name with another.
 class ChangeWidgetNameFix extends ResolvedCorrectionProducer {
   final String widgetName;
   final FixKind _fixKind;
@@ -16,7 +15,6 @@ class ChangeWidgetNameFix extends ResolvedCorrectionProducer {
     required FixKind fixKind,
   }) : _fixKind = fixKind;
 
-  /// Factory for creating an Align fix.
   static ChangeWidgetNameFix alignFix({
     required CorrectionProducerContext context,
   }) {
@@ -31,7 +29,6 @@ class ChangeWidgetNameFix extends ResolvedCorrectionProducer {
     );
   }
 
-  /// Factory for creating a Transform fix.
   static ChangeWidgetNameFix transformFix({
     required CorrectionProducerContext context,
   }) {
@@ -55,9 +52,7 @@ class ChangeWidgetNameFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // For an unnamed constructor, `ConstructorName` and its `NamedType`
-    // child share a source range and the covering node resolves to the
-    // deeper one, so look up before type-testing.
+    // Edge case: an unnamed ConstructorName shares its range with the deeper NamedType
     final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
     if (targetNode is! ConstructorName) return;
 

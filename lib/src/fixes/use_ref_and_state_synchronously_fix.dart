@@ -3,8 +3,6 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
 import 'insert_guard_before_statement_fix.dart';
 
-/// Fix that adds `if (!ref.mounted) return;` before ref/state access after
-/// an async gap.
 class UseRefAndStateSynchronouslyFix extends InsertGuardBeforeStatementFix {
   static const _fixKind = FixKind(
     'many_lints.fix.useRefAndStateSynchronously',

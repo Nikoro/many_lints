@@ -6,10 +6,6 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
 import '../fpdart_chain_call.dart';
 
-/// Replaces `flatMap((_) => next())` with `andThen(next)`.
-///
-/// Shares [andThenArgumentFor] with the assist of the same name, so the two
-/// cannot disagree about when a tear-off is emitted.
 class PreferAndThenFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferAndThen',
@@ -19,8 +15,6 @@ class PreferAndThenFix extends ResolvedCorrectionProducer {
 
   PreferAndThenFix({required super.context});
 
-  /// The rewrite is mechanical and semantics-preserving, so applying it
-  /// everywhere at once is safe.
   @override
   CorrectionApplicability get applicability =>
       CorrectionApplicability.automatically;

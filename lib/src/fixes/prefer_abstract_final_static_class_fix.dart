@@ -5,7 +5,6 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Fix that adds `abstract final` modifiers to a static-only class.
 class PreferAbstractFinalStaticClassFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferAbstractFinalStaticClass',
@@ -24,16 +23,13 @@ class PreferAbstractFinalStaticClassFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The rule reports at the class-name token, so the covering node is a
-    // name-part wrapper rather than the declaration itself.
     final targetNode = node.thisOrAncestorOfType<ClassDeclaration>();
     if (targetNode == null) return;
 
     final hasAbstract = targetNode.abstractKeyword != null;
     final hasFinal = targetNode.finalKeyword != null;
 
-    // `abstract final` subsumes a private no-op constructor, so the rule
-    // tolerates one — remove it here rather than leaving dead code behind.
+    // Edge case: `abstract final` turns a tolerated private no-op constructor into dead code
     final body = targetNode.body;
     final redundantConstructor = body is BlockClassBody
         ? body.members.whereType<ConstructorDeclaration>().firstOrNull
@@ -45,16 +41,13 @@ class PreferAbstractFinalStaticClassFix extends ResolvedCorrectionProducer {
       }
 
       if (!hasAbstract && !hasFinal) {
-        // Insert "abstract final " before the "class" keyword
         builder.addSimpleInsertion(
           targetNode.classKeyword.offset,
           'abstract final ',
         );
       } else if (hasAbstract && !hasFinal) {
-        // Insert "final " before the "class" keyword
         builder.addSimpleInsertion(targetNode.classKeyword.offset, 'final ');
       } else if (!hasAbstract && hasFinal) {
-        // Insert "abstract " before the "final" keyword
         builder.addSimpleInsertion(
           targetNode.finalKeyword!.offset,
           'abstract ',
@@ -63,13 +56,6 @@ class PreferAbstractFinalStaticClassFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// The range covering [node]'s own lines, plus the blank line that usually
-  /// follows a leading constructor.
-  ///
-  /// Unlike the deletion in `avoid_unnecessary_overrides_fix`, this never
-  /// consumes the *preceding* blank line: the constructor being removed is
-  /// typically the first member, so the line before it is the one holding the
-  /// class's opening brace.
   SourceRange _lineRangeOf(AstNode node) {
     final content = unitResult.content;
 
@@ -84,8 +70,7 @@ class PreferAbstractFinalStaticClassFix extends ResolvedCorrectionProducer {
     }
     if (end < content.length) end++;
 
-    // Consume one trailing blank line so removing a leading constructor does
-    // not leave the class body starting with an empty line.
+    // Edge case: take the trailing blank line, since the line before holds the opening brace
     var afterBlank = end;
     while (afterBlank < content.length && content[afterBlank] != '\n') {
       if (content[afterBlank] != ' ' && content[afterBlank] != '\t') {

@@ -5,7 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces single-field destructuring with direct property access.
 class AvoidSingleFieldDestructuringFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidSingleFieldDestructuring',
@@ -50,7 +49,6 @@ class AvoidSingleFieldDestructuringFix extends ResolvedCorrectionProducer {
 
     final replacement = '$keyword $varName = $expressionSource.$fieldName';
 
-    // Replace the entire PatternVariableDeclaration (without trailing semicolon)
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(range.node(targetNode), replacement);
     });

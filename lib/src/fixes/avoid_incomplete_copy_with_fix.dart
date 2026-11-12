@@ -4,7 +4,6 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Fix that adds missing constructor parameters to a `copyWith` method.
 class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidIncompleteCopyWith',
@@ -23,16 +22,12 @@ class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The rule reports at the copyWith name *token*. Since analyzer 13 that
-    // token is not its own node, so the covering node is already the method —
-    // walk up rather than assuming a particular depth.
     final copyWithMethod = node.thisOrAncestorOfType<MethodDeclaration>();
     if (copyWithMethod == null) return;
 
     final classNode = copyWithMethod.thisOrAncestorOfType<ClassDeclaration>();
     if (classNode == null) return;
 
-    // Find the default (unnamed) constructor
     final classBody = classNode.body;
     if (classBody is! BlockClassBody) return;
 
@@ -42,14 +37,12 @@ class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
         .firstOrNull;
     if (constructor == null) return;
 
-    // Collect constructor parameter names and their types
     final constructorParams = <String, String?>{};
     for (final param in constructor.parameters.parameters) {
       final (name, type) = _extractParamInfo(param);
       if (name != null) constructorParams[name] = type;
     }
 
-    // Collect copyWith parameter names
     final copyWithParams = <String>{};
     final parameters = copyWithMethod.parameters?.parameters;
     if (parameters != null) {
@@ -59,13 +52,11 @@ class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
       }
     }
 
-    // Find missing parameters
     final missing = constructorParams.keys.where(
       (k) => !copyWithParams.contains(k),
     );
     if (missing.isEmpty) return;
 
-    // Build new parameter strings
     final newParams = missing.map((name) {
       final type = constructorParams[name];
       if (type != null) {
@@ -75,27 +66,22 @@ class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
       return 'dynamic $name';
     });
 
-    // Find insertion point for parameters
     final parameterList = copyWithMethod.parameters;
     if (parameterList == null) return;
 
-    // Determine if using named parameters (has { })
     final hasNamedParams = parameterList.parameters.any((p) => p.isNamed);
 
     final insertParams = newParams.join(', ');
 
     await builder.addDartFileEdit(file, (builder) {
       if (hasNamedParams && parameters != null && parameters.isNotEmpty) {
-        // Insert after last existing parameter
         final lastParam = parameters.last;
         builder.addSimpleInsertion(lastParam.end, ', $insertParams');
       } else if (hasNamedParams) {
-        // Empty named params — insert between { }
         final leftBrace = parameterList.leftDelimiter;
         if (leftBrace == null) return;
         builder.addSimpleInsertion(leftBrace.end, insertParams);
       } else {
-        // No named params — wrap in { }
         final rightParen = parameterList.rightParenthesis;
         if (parameters != null && parameters.isNotEmpty) {
           final lastParam = parameters.last;
@@ -110,8 +96,6 @@ class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
   static (String?, String?) _extractParamInfo(FormalParameter param) {
     final name = param.name?.lexeme;
 
-    // Function-typed parameters (`int f(int x)`) have no usable type source,
-    // matching the previous behavior for `FunctionTypedFormalParameter`.
     if (param is RegularFormalParameter && param.functionTypedSuffix != null) {
       return (name, null);
     }
@@ -119,8 +103,7 @@ class AvoidIncompleteCopyWithFix extends ResolvedCorrectionProducer {
     final annotation = param.type?.toSource();
     if (annotation != null) return (name, annotation);
 
-    // A field formal (`this.name`) carries no annotation, so fall back to the
-    // resolved element — otherwise the generated parameter would be `dynamic`.
+    // Edge case: a field formal has no annotation, so without the element type it becomes dynamic
     final type = param.declaredFragment?.element.type;
     if (type == null) return (name, null);
 

@@ -5,10 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces one-at-a-time adding with a single `addAll` call.
-///
-/// Handles both shapes the rule reports: an add-only `for-in` loop, and a run
-/// of consecutive `add` calls on the same receiver.
 class PreferAddAllFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferAddAll',
@@ -27,7 +23,7 @@ class PreferAddAllFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The rule reports the loop itself, or the second `add` call of a run.
+    // Edge case: a run of `add` calls is reported at its second call, not at a loop
     final forStatement = node.thisOrAncestorOfType<ForStatement>();
     if (forStatement != null) {
       await _fixLoop(builder, forStatement);
@@ -65,10 +61,6 @@ class PreferAddAllFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Collapses `t.add(a); t.add(b);` into `t.addAll([a, b]);`.
-  ///
-  /// The reported node is the run's second call, so the run is re-derived
-  /// from the enclosing block rather than from the diagnostic alone.
   Future<void> _fixConsecutiveAdds(ChangeBuilder builder) async {
     final reported = node.thisOrAncestorOfType<MethodInvocation>();
     if (reported == null) return;
@@ -85,7 +77,6 @@ class PreferAddAllFix extends ResolvedCorrectionProducer {
     final index = block.statements.indexOf(statement);
     if (index < 0) return;
 
-    // Walk back to the first call of this run, then forward to the last.
     var start = index;
     while (start > 0 && _addReceiver(block.statements[start - 1]) == receiver) {
       start--;
@@ -114,11 +105,9 @@ class PreferAddAllFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Returns the source of the receiver of a lone `receiver.add(value)`.
   String? _addReceiver(Statement statement) =>
       _addInvocation(statement)?.realTarget?.toSource();
 
-  /// Returns the invocation of a lone `receiver.add(value)` statement.
   MethodInvocation? _addInvocation(Statement statement) {
     if (statement is! ExpressionStatement) return null;
 

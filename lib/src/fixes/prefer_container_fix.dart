@@ -8,7 +8,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 import '../ast_node_analysis.dart';
 import '../flutter_widget_helpers.dart';
 
-/// Fix that merges a sequence of nested widgets into a single Container.
 class PreferContainerFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferContainer',
@@ -25,14 +24,10 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
   @override
   FixKind get fixKind => _fixKind;
 
-  /// Maps widget names to the Container parameter names they contribute.
-  ///
-  /// Must stay in sync with the same-named set in `prefer_container.dart`: a
-  /// widget the rule refuses to collapse must not be collapsible here either.
   static const _widgetParamMapping = <String, List<String>>{
     'Padding': ['padding'],
     'Align': ['alignment'],
-    'Center': [], // Center contributes alignment: Alignment.center implicitly
+    'Center': [],
     'ColoredBox': ['color'],
     'DecoratedBox': ['decoration'],
     'ConstrainedBox': ['constraints'],
@@ -44,7 +39,6 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
     'FractionallySizedBox': ['widthFactor', 'heightFactor', 'alignment'],
   };
 
-  /// Widget names that are container-compatible.
   static const _containerCompatibleWidgets = {
     'Padding',
     'Align',
@@ -62,16 +56,13 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // Find the outermost widget expression
     final call = resolveWidgetCall(node);
     if (call == null) return;
     final outerWidget = call.node;
 
-    // Collect the sequence of widgets
     final sequence = _collectSequence(outerWidget);
     if (sequence.length < 3) return;
 
-    // Build the Container replacement
     final replacement = _buildContainerReplacement(sequence);
     if (replacement == null) return;
 
@@ -80,7 +71,6 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Collects the sequence of container-compatible widgets in the chain.
   static List<WidgetInfo> _collectSequence(Expression node) {
     final sequence = <WidgetInfo>[];
     Expression? current = node;
@@ -124,7 +114,6 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
     return childArg?.argumentExpression;
   }
 
-  /// Builds the Container replacement string from the widget sequence.
   static String? _buildContainerReplacement(List<WidgetInfo> sequence) {
     final params = <String>[];
     String? keySource;
@@ -145,16 +134,13 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
 
         if (argName == 'child') continue;
 
-        // Map the argument to Container's parameter
         final containerParam = _mapArgToContainerParam(widget.name, argName);
         if (containerParam != null) {
           params.add('$containerParam: ${arg.argumentExpression.toSource()}');
         }
       }
 
-      // Center implicitly adds alignment: Alignment.center
       if (widget.name == 'Center') {
-        // Only add if no explicit alignment argument was provided
         final hasAlignment = widget.argumentList.arguments
             .whereType<NamedArgument>()
             .any((e) => e.name.lexeme == 'alignment');
@@ -164,7 +150,6 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
       }
     }
 
-    // Get the child of the innermost widget
     final innermost = sequence.last;
     final innerChild = _getChildExpression(innermost.argumentList);
     if (innerChild != null) {
@@ -186,13 +171,11 @@ class PreferContainerFix extends ResolvedCorrectionProducer {
     return buffer.toString();
   }
 
-  /// Maps a widget's argument name to the corresponding Container parameter.
   static String? _mapArgToContainerParam(String widgetName, String argName) {
     return switch ((widgetName, argName)) {
       ('Padding', 'padding') => 'padding',
       ('Align', 'alignment') => 'alignment',
-      ('Align', 'widthFactor') =>
-        'widthFactor', // Align-specific, not on Container
+      ('Align', 'widthFactor') => 'widthFactor',
       ('Align', 'heightFactor') => 'heightFactor',
       ('Center', 'widthFactor') => null,
       ('Center', 'heightFactor') => null,
