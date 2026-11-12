@@ -162,6 +162,42 @@ Widget f() {
       expect(fixed, contains('Align('));
       expect(fixed, isNot(contains('Container(')));
     });
+
+    test('replaces Container with Align, keeping the alignment arg', () async {
+      final fixed = await harness.applyFix(
+        r'''
+    import 'package:flutter/flutter.dart';
+    Widget f() {
+      return Container(alignment: Alignment.center);
+    }
+    ''',
+        'prefer_align_over_container',
+        packages: {'flutter': flutterAlign},
+      );
+
+      expect(fixed, contains('return Align(alignment: Alignment.center);'));
+      expect(fixed, isNot(contains('Container(')));
+    });
+
+    test('replaces Container with Align, keeping key and child args', () async {
+      final fixed = await harness.applyFix(
+        r'''
+    import 'package:flutter/flutter.dart';
+    Widget f() {
+      return Container(key: Key('a'), alignment: Alignment.center, child: Container());
+    }
+    ''',
+        'prefer_align_over_container',
+        packages: {'flutter': flutterAlign},
+      );
+
+      expect(
+        fixed,
+        contains(
+          "return Align(key: Key('a'), alignment: Alignment.center, child: Container());",
+        ),
+      );
+    });
   });
 
   group('prefer_any_or_every', () {
@@ -374,6 +410,55 @@ Widget f() {
 
       expect(fixed, contains('Center('));
       expect(fixed, isNot(contains('Align(')));
+    });
+
+    test(
+      'replaces Align(alignment: center) with Center, dropping the arg',
+      () async {
+        final fixed = await harness.applyFix(
+          r'''
+    import 'package:flutter/flutter.dart';
+    Widget f() {
+      return Align(alignment: Alignment.center);
+    }
+    ''',
+          'prefer_center_over_align',
+          packages: {'flutter': flutterAlign},
+        );
+
+        expect(fixed, contains('return Center();'));
+        expect(fixed, isNot(contains('alignment')));
+      },
+    );
+
+    test('replaces bare Align() (implicit center) with Center()', () async {
+      final fixed = await harness.applyFix(
+        r'''
+    import 'package:flutter/flutter.dart';
+    Widget f() {
+      return Align();
+    }
+    ''',
+        'prefer_center_over_align',
+        packages: {'flutter': flutterAlign},
+      );
+
+      expect(fixed, contains('return Center();'));
+    });
+
+    test('replaces Align with Center while keeping other arguments', () async {
+      final fixed = await harness.applyFix(
+        r'''
+    import 'package:flutter/flutter.dart';
+    Widget f() {
+      return Align(alignment: Alignment.center, child: Align());
+    }
+    ''',
+        'prefer_center_over_align',
+        packages: {'flutter': flutterAlign},
+      );
+
+      expect(fixed, contains('return Center(child: Align());'));
     });
   });
 
@@ -616,5 +701,47 @@ Widget f() {
       expect(fixed, contains('ConstrainedBox('));
       expect(fixed, isNot(contains('Container(')));
     });
+
+    test('replaces Container(constraints: ...) with ConstrainedBox', () async {
+      final fixed = await harness.applyFix(
+        r'''
+    import 'package:flutter/flutter.dart';
+    Widget f() {
+      return Container(constraints: BoxConstraints());
+    }
+    ''',
+        'prefer_constrained_box_over_container',
+        packages: {'flutter': flutterConstraints},
+      );
+
+      expect(
+        fixed,
+        contains('return ConstrainedBox(constraints: BoxConstraints());'),
+      );
+      expect(fixed, isNot(contains('Container(')));
+    });
+
+    test(
+      'replaces Container with ConstrainedBox, keeping child argument',
+      () async {
+        final fixed = await harness.applyFix(
+          r'''
+    import 'package:flutter/flutter.dart';
+    Widget f() {
+      return Container(constraints: BoxConstraints(), child: Container());
+    }
+    ''',
+          'prefer_constrained_box_over_container',
+          packages: {'flutter': flutterConstraints},
+        );
+
+        expect(
+          fixed,
+          contains(
+            'return ConstrainedBox(constraints: BoxConstraints(), child: Container());',
+          ),
+        );
+      },
+    );
   });
 }
