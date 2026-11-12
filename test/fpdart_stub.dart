@@ -1,20 +1,4 @@
-/// A stand-in for `package:fpdart` 1.2.0, keyed by path relative to the
-/// package root.
-///
-/// The layout mirrors fpdart's own: each type is declared in its own
-/// `lib/src/<type>.dart` and re-exported from `lib/fpdart.dart`. That is not
-/// cosmetic. The rules' [TypeChecker]s pin *declaring* libraries
-/// (`package:fpdart/src/task_either.dart#TaskEither`), because
-/// `TypeChecker.fromUrl` matches `element.library.identifier` — where a type is
-/// declared, not where an import went through. A stub that declared everything
-/// in one barrel would resolve the names and match no checker, leaving every
-/// rule silent and every assertion vacuously true.
-///
-/// Keep this stub compiling. When it fails to resolve, `Type.Do(...)` is never
-/// rewritten from `MethodInvocation` to `InstanceCreationExpression`, so the
-/// Do-notation rules match nothing while an AST dump still looks plausible.
-/// The cheap check: extract these files to a scratch package and run
-/// `dart analyze` on it.
+// Edge case: TypeCheckers pin declaring libraries, so each type keeps its own lib/src file
 const fpdartStubFiles = <String, String>{
   'lib/src/unit.dart': r'''
 

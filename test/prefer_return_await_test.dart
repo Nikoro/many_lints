@@ -15,8 +15,6 @@ class PreferReturnAwaitTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void> test_returnFutureInTryBody() async {
     await assertDiagnostics(
       r'''
@@ -90,8 +88,6 @@ Future<String> asyncOp() async => 'result';
       [error(diag.unawaitedReturnInTryBlock, 51, 6), lint(58, 9)],
     );
   }
-
-  // --- Negative cases (should NOT trigger lint) ---
 
   Future<void> test_returnAwaitInTry() async {
     await assertNoDiagnostics(r'''
@@ -188,10 +184,8 @@ Future<String> asyncOp() async => 'result';
 ''');
   }
 
-  // --- Edge cases ---
-
-  Future<void> test_returnFutureInNestedAsyncClosure() async {
-    // The closure is its own async scope; outer try-catch shouldn't matter
+  Future<void>
+  test_returnFutureInNestedAsyncClosureIgnoresOuterTryCatch() async {
     await assertNoDiagnostics(r'''
 void f() {
   try {

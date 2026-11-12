@@ -111,8 +111,6 @@ class MultiRepositoryProvider extends Widget {
     super.setUp();
   }
 
-  // --- BlocProvider tests ---
-
   Future<void> test_nestedBlocProviders() async {
     await assertDiagnostics(
       r'''
@@ -197,8 +195,6 @@ final provider = MultiBlocProvider(
 ''');
   }
 
-  // --- BlocListener tests ---
-
   Future<void> test_nestedBlocListeners() async {
     await assertDiagnostics(
       r'''
@@ -233,8 +229,6 @@ final listener = BlocListener<BlocA, int>(
 );
 ''');
   }
-
-  // --- RepositoryProvider tests ---
 
   Future<void> test_nestedRepositoryProviders() async {
     await assertDiagnostics(
@@ -271,8 +265,6 @@ final provider = RepositoryProvider<RepoA>(
 ''');
   }
 
-  // --- Mixed types: should NOT trigger ---
-
   Future<void>
   test_blocProviderWithRepositoryProviderChild_noDiagnostic() async {
     await assertNoDiagnostics(r'''
@@ -291,8 +283,6 @@ final provider = BlocProvider<BlocA>(
 );
 ''');
   }
-
-  // --- Only outermost reports ---
 
   Future<void> test_onlyOutermostReports() async {
     await assertDiagnostics(
@@ -318,8 +308,6 @@ final provider = BlocProvider<BlocA>(
       [lint(272, 19)],
     );
   }
-
-  // --- MethodInvocation path (static factory) ---
 
   Future<void> test_methodInvocation_nestedBlocProviders() async {
     await assertDiagnostics(

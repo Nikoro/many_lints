@@ -17,8 +17,6 @@ class PreferReturningConditionTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_ifReturnTrueThenReturnFalse() async {
     await assertDiagnostics(
       r'''
@@ -46,8 +44,6 @@ bool f(int x) {
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_returnsTheConditionAlready() async {
     await assertNoDiagnostics(r'''
 bool f(int x) {
@@ -65,8 +61,8 @@ bool f(int x, bool other) {
 ''');
   }
 
-  Future<void> test_bothBranchesSameLiteral() async {
-    // That is function_always_returns_same_value, not this rule.
+  Future<void>
+  test_bothBranchesSameLiteralIsLeftToAlwaysReturnsSameValue() async {
     await assertNoDiagnostics(r'''
 bool f(int x) {
   if (x > 0) return true;
@@ -86,8 +82,6 @@ bool f(int x) {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_patternCaseBindsVariables() async {
     await assertNoDiagnostics(r'''

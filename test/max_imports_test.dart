@@ -15,29 +15,23 @@ class MaxImportsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  /// [count] prefixed imports of `dart:core`, each one used, so the
-  /// analyzer's own `unused_import` cannot fire and only this rule is
-  /// asserted.
-  String _importsOf(int count) {
+  String _usedPrefixedCoreImports(int count) {
     final imports = List.generate(
       count,
       (i) => "import 'dart:core' as c$i;",
     ).join('\n');
+    // Edge case: every import is used so the analyzer's unused_import never fires beside this rule
     final uses = List.generate(count, (i) => 'c$i.int? v$i;').join('\n');
 
     return '$imports\n$uses\n';
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_overTheDefaultBudget() async {
-    await assertDiagnostics(_importsOf(16), [lint(0, 25)]);
+    await assertDiagnostics(_usedPrefixedCoreImports(16), [lint(0, 25)]);
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_atTheDefaultBudget() async {
-    await assertNoDiagnostics(_importsOf(15));
+    await assertNoDiagnostics(_usedPrefixedCoreImports(15));
   }
 
   Future<void> test_fewImports() async {
@@ -50,11 +44,7 @@ final r = Random();
 ''');
   }
 
-  // ---- Edge cases ----
-
-  Future<void> test_exportsAreNotCountedByDefault() async {
-    // A barrel is exports by definition, so counting them would report every
-    // barrel in a project.
+  Future<void> test_barrelExportsAreNotCountedByDefault() async {
     await assertNoDiagnostics(r'''
 export 'dart:core';
 export 'dart:async';

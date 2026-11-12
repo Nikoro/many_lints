@@ -68,8 +68,6 @@ TaskEither<String, int> f(TaskEither<String, String> pipeline) =>
   }
 
   Future<void> test_callbackDoingMoreIsFine() async {
-    // The callback has a second statement, so rewriting to `chainEither`
-    // would drop it.
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
 

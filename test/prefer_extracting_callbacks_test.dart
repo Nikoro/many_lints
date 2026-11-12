@@ -57,7 +57,6 @@ final button = ElevatedButton(
     );
   }
 
-  // A short callback is a tear-off in all but spelling.
   Future<void> test_shortInlineCallbackIsFine() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -80,8 +79,6 @@ final button = ElevatedButton(onPressed: submit);
 ''');
   }
 
-  // An ordinary function call is NOT a widget, so it is silent by default —
-  // the control for the `report_functions` pair below.
   Future<void> test_functionCallIsSilentByDefault() async {
     await assertNoDiagnostics(r'''
 void schedule({void Function()? task}) {}
@@ -99,9 +96,7 @@ void run() {
 ''');
   }
 
-  // A `builder` describes a subtree; extracting it would trip
-  // `avoid_returning_widgets` instead.
-  Future<void> test_builderIsExempt() async {
+  Future<void> test_builderCallbackIsExempt() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -118,7 +113,6 @@ final b = Builder(
   }
 }
 
-/// `max_statements`, with the asymmetric pair.
 @reflectiveTest
 class PreferExtractingCallbacksThresholdTest extends ManyLintsRuleTest {
   @override
@@ -135,7 +129,6 @@ class PreferExtractingCallbacksThresholdTest extends ManyLintsRuleTest {
     );
   }
 
-  // Two statements are silent by default and must report once the budget drops.
   Future<void> test_loweredThresholdReports() async {
     await assertDiagnostics(
       r'''
@@ -165,8 +158,6 @@ final button = ElevatedButton(
   }
 }
 
-/// `report_functions`, which covers the separate
-/// `prefer-extracting-function-callbacks`.
 @reflectiveTest
 class PreferExtractingCallbacksFunctionsTest extends ManyLintsRuleTest {
   @override
@@ -183,7 +174,6 @@ class PreferExtractingCallbacksFunctionsTest extends ManyLintsRuleTest {
     );
   }
 
-  // Silent by default (see the control above), reports once switched on.
   Future<void> test_functionCallReportsWhenEnabled() async {
     await assertDiagnostics(
       r'''
@@ -204,7 +194,6 @@ void run() {
     );
   }
 
-  // The budget still applies, so a short closure stays silent either way.
   Future<void> test_shortFunctionCallbackIsStillSilent() async {
     await assertNoDiagnostics(r'''
 void schedule({void Function()? task}) {}

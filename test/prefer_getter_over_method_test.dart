@@ -17,8 +17,6 @@ class PreferGetterOverMethodTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_noArgumentExpressionMethod() async {
     await assertDiagnostics(
       r'''
@@ -30,8 +28,6 @@ class Order {
       [lint(44, 5)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_alreadyAGetter() async {
     await assertNoDiagnostics(r'''
@@ -70,8 +66,6 @@ class Order {
   }
 
   Future<void> test_overrideKeepsTheInheritedShape() async {
-    // Only the base declaration is reported; an override cannot change to a
-    // getter on its own, so flagging it would demand an impossible fix.
     await assertDiagnostics(
       r'''
 class Base {
@@ -87,8 +81,6 @@ class Order extends Base {
     );
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_asyncReadsAsWork() async {
     await assertNoDiagnostics(r'''
 class Order {
@@ -98,8 +90,6 @@ class Order {
   }
 
   Future<void> test_bodyThatCallsSomethingIsNotAPlainRead() async {
-    // `now()` and `sixDigitCode()` answer differently on each call, and a
-    // getter promises a stable property — the parentheses are correct here.
     await assertNoDiagnostics(r'''
 class Clock {
   const Clock(this._now);
@@ -119,8 +109,6 @@ int _one() => 1;
   }
 
   Future<void> test_conventionalMethodNamesKeepTheirParentheses() async {
-    // `toJson` is what every serialiser looks for and `call` is the
-    // invocation operator in all but name — neither is a free choice.
     await assertNoDiagnostics(r'''
 class Payload {
   final int id = 0;
@@ -145,7 +133,6 @@ class Store {
   }
 
   Future<void> test_genericMethodTakesTypeArguments() async {
-    // A getter cannot be invoked with type arguments.
     await assertNoDiagnostics(r'''
 class Box {
   T? valueOf<T>() => null;

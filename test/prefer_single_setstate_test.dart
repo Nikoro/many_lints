@@ -44,8 +44,6 @@ abstract class State<T extends StatefulWidget> {
     super.setUp();
   }
 
-  // --- Positive cases: should trigger lint ---
-
   Future<void> test_twoConsecutiveSetStateCalls() async {
     await assertDiagnostics(
       r'''
@@ -206,8 +204,6 @@ class _MyWidgetState extends State<MyWidget> {
       [lint(324, 34)],
     );
   }
-
-  // --- Negative cases: should NOT trigger lint ---
 
   Future<void> test_singleSetStateCall() async {
     await assertNoDiagnostics(r'''

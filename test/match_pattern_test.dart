@@ -15,7 +15,6 @@ class MatchPatternTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  /// Writes the config that gives this policy rule something to match.
   void _configure(String patterns) {
     newFile('$testPackageRootPath/many_lints.yaml', '''
 rules:
@@ -24,8 +23,6 @@ rules:
 $patterns
 ''');
   }
-
-  // ---- Silent until configured ----
 
   Future<void> test_silentWithoutConfiguration() async {
     await assertNoDiagnostics(r'''
@@ -38,8 +35,6 @@ void run() {
 void unawaited(Object? f) {}
 ''');
   }
-
-  // ---- Positive cases ----
 
   Future<void> test_methodInvocationMatches() async {
     _configure(r"""      - find: '^unawaited\((.+)\)$'
@@ -95,10 +90,7 @@ void run() {
     );
   }
 
-  // ---- Negative cases ----
-
-  Future<void> test_nodeKindIsRespected() async {
-    // A propertyAccess pattern must not match a call of the same text shape.
+  Future<void> test_propertyAccessPatternDoesNotMatchACall() async {
     _configure(r"""      - node: propertyAccess
         find: '^unawaited\(1\)$'""");
 
@@ -112,7 +104,6 @@ void run() {
   }
 
   Future<void> test_patternIsAnchoredToTheWholeNode() async {
-    // `awaited` is a substring of `unawaited`; an unanchored match would hit.
     _configure(r"""      - find: 'awaited\(1\)'""");
 
     await assertNoDiagnostics(r'''
@@ -138,7 +129,6 @@ void run() {
   }
 
   Future<void> test_invalidRegexDropsTheEntry() async {
-    // A malformed option degrades quietly: a plugin cannot report against YAML.
     _configure(r"""      - find: '^unclosed\('""");
 
     await assertNoDiagnostics(r'''
@@ -146,8 +136,8 @@ void run() {}
 ''');
   }
 
-  Future<void> test_unknownNodeKindDropsTheEntry() async {
-    // A typo must not silently retarget the pattern at calls.
+  Future<void>
+  test_unknownNodeKindDropsTheEntryRatherThanMatchingCalls() async {
     _configure(r"""      - node: statement
         find: '^banned\(\)$'""");
 

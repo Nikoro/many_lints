@@ -36,8 +36,6 @@ abstract class State<T extends StatefulWidget> {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_setStateAfterAwait() async {
     await assertDiagnostics(
       r'''
@@ -62,8 +60,6 @@ class _MyWidgetState extends State<MyWidget> {
       [lint(307, 8)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_guardedSetState() async {
     await assertNoDiagnostics(r'''
@@ -132,8 +128,6 @@ class _MyWidgetState extends State<MyWidget> {
   }
 
   Future<void> test_positiveGuardWrappingTheCall() async {
-    // `if (mounted) setState(...)` is what you write when there is nothing to
-    // do after the guard, so an early return would be noise.
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -180,7 +174,6 @@ class _MyWidgetState extends State<MyWidget> {
   }
 
   Future<void> test_positiveGuardWithAConjunction() async {
-    // Entering the branch requires `mounted`, whatever the other operand says.
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -205,8 +198,6 @@ class _MyWidgetState extends State<MyWidget> {
   }
 
   Future<void> test_earlyReturnGuardWithADisjunction() async {
-    // The return fires whenever `mounted` is false, so reaching the line
-    // below still proves the widget is mounted.
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -231,8 +222,6 @@ class _MyWidgetState extends State<MyWidget> {
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_outsideAStateClass() async {
     await assertNoDiagnostics(r'''
 class NotAState {
@@ -247,8 +236,6 @@ class NotAState {
   }
 
   Future<void> test_awaitInsideThePositiveGuardReopensTheGap() async {
-    // The guard proves `mounted` when the branch is entered; the await inside
-    // it opens a fresh gap the guard says nothing about.
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -277,7 +264,6 @@ class _MyWidgetState extends State<MyWidget> {
   }
 
   Future<void> test_elseBranchOfThePositiveGuardIsUnguarded() async {
-    // The else runs precisely when `mounted` was false.
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -331,8 +317,6 @@ class _MyWidgetState extends State<MyWidget> {
 
   Future<void>
   test_earlyReturnGuardWithAConjunctionDoesNotProveMounted() async {
-    // `if (!mounted && failed) return;` falls through while unmounted
-    // whenever `failed` is false.
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';

@@ -91,8 +91,6 @@ class Text extends Widget {
     super.setUp();
   }
 
-  // === Tests that SHOULD trigger the lint ===
-
   Future<void> test_paddingAlignSizedBox() async {
     await assertDiagnostics(
       r'''
@@ -115,8 +113,7 @@ Widget f() {
     );
   }
 
-  Future<void> test_paddingAlignCenterConflicts() async {
-    // Align and Center both map to 'alignment', so this should NOT trigger.
+  Future<void> test_alignAndCenterBothSetAlignment_noLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 Widget f() {
@@ -220,8 +217,6 @@ Widget f() {
     );
   }
 
-  // === Tests that should NOT trigger the lint ===
-
   Future<void> test_twoWidgetsOnly() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -307,11 +302,7 @@ Widget f() {
 ''');
   }
 
-  // Edge case: only the outermost widget in the chain reports
-
   Future<void> test_onlyOutermostReports() async {
-    // A chain of 4 widgets: only the outermost should report,
-    // not the inner 3-widget subsequence.
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -334,12 +325,6 @@ Widget f() {
       [lint(61, 7)],
     );
   }
-
-  // === Widgets Container cannot express ===
-  //
-  // `Container` has no `opacity`, `intrinsicHeight`, `intrinsicWidth` or
-  // `limitedBox` parameter, so collapsing a chain containing one of these
-  // would silently drop behaviour and produce code that does not compile.
 
   Future<void> test_opacityIsNotCollapsible() async {
     await assertNoDiagnostics(r'''
@@ -376,8 +361,6 @@ Widget f() {
   }
 
   Future<void> test_nonCollapsibleWidgetBreaksTheChain() async {
-    // Padding + Align are collapsible, but the Opacity between them is not, so
-    // no run of three ever forms.
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 Widget f() {
@@ -396,7 +379,6 @@ Widget f() {
   }
 
   Future<void> test_collapsibleRunBelowNonCollapsibleWidget() async {
-    // The three collapsible widgets sit below the Opacity and still report.
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -421,7 +403,6 @@ Widget f() {
   }
 
   Future<void> test_twoFractionallySizedBoxConflict() async {
-    // Two FractionallySizedBox widgets should conflict.
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 Widget f() {

@@ -136,8 +136,7 @@ class PaymentGateway {
     );
   }
 
-  Future<void> test_syncMethodIsFine() async {
-    // A synchronous failable method is Either's job, not TaskEither's.
+  Future<void> test_syncMethodIsLeftToEither() async {
     await assertNoDiagnostics(r'''
 class UserRepository {
   String load(String id) {
@@ -151,8 +150,7 @@ class UserRepository {
 ''');
   }
 
-  Future<void> test_tryFinallyIsFine() async {
-    // Cleanup, not failure handling — TaskEither does not replace it.
+  Future<void> test_tryFinallyCleanupIsFine() async {
     await assertNoDiagnostics(r'''
 class UserRepository {
   Future<String> load(String id) async {

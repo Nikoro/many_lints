@@ -16,8 +16,6 @@ class PreferAbstractFinalStaticClassTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void> test_classWithOnlyStaticFields() async {
     await assertDiagnostics(
       r'''
@@ -76,8 +74,6 @@ final class Static {
     );
   }
 
-  // --- Negative cases (should NOT trigger lint) ---
-
   Future<void> test_abstractFinalClass() async {
     await assertNoDiagnostics(r'''
 abstract final class Constants {
@@ -120,8 +116,6 @@ class Empty {}
 ''');
   }
 
-  // --- Private instantiation-guard constructor (the older idiom) ---
-
   Future<void> test_privateGuardConstructor() async {
     await assertDiagnostics(
       r'''
@@ -149,7 +143,6 @@ class MyConstants {
   }
 
   Future<void> test_privateConstructorWithParameters() async {
-    // Takes arguments, so it is a real constructor, not a guard.
     await assertNoDiagnostics(r'''
 class MyClass {
   MyClass._(int value);
@@ -194,7 +187,6 @@ class MyClass {
   }
 
   Future<void> test_privateGuardWithNoStaticMembers() async {
-    // Nothing static to hold, so this is not a static-only holder.
     await assertNoDiagnostics(r'''
 class MyClass {
   MyClass._();

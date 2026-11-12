@@ -16,8 +16,6 @@ class PreferMovingToVariableTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // --- Cases that SHOULD trigger ---
-
   Future<void> test_repeatedInvocationChain_lint() async {
     await assertDiagnostics(
       r'''
@@ -56,9 +54,6 @@ void fn(Outer outer) {
     );
   }
 
-  // --- Cases that should NOT trigger ---
-
-  /// A single link reads no worse than a variable would.
   Future<void> test_shortChain_noLint() async {
     await assertNoDiagnostics(r'''
 class Holder {
@@ -85,9 +80,7 @@ void fn(Object context) {
 ''');
   }
 
-  /// A constructor allocates a fresh instance each time, so reusing one
-  /// variable is observably different.
-  Future<void> test_instanceCreation_noLint() async {
+  Future<void> test_instanceCreationAllocatingAFreshValue_noLint() async {
     await assertNoDiagnostics(r'''
 class Thing {
   int get value => 0;
@@ -100,9 +93,7 @@ void fn() {
 ''');
   }
 
-  /// A closure may run a different number of times, so the chain cannot be
-  /// hoisted out of it.
-  Future<void> test_insideClosure_noLint() async {
+  Future<void> test_insideClosureWithUnknownRunCount_noLint() async {
     await assertNoDiagnostics(r'''
 class Theme {
   static Theme of(Object context) => Theme();

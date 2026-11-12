@@ -69,7 +69,6 @@ class MyWidget extends StatelessWidget {
 ''');
   }
 
-  // `build` is the framework's, so it cannot be private.
   Future<void> test_frameworkMemberIsExempt() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -83,9 +82,7 @@ class MyWidget extends StatelessWidget {
 ''');
   }
 
-  // A widget's fields are its constructor parameters, and public finals are
-  // the idiom the framework itself uses.
-  Future<void> test_publicFieldIsFine() async {
+  Future<void> test_publicFinalFieldIsFine() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -100,9 +97,6 @@ class MyWidget extends StatelessWidget {
 ''');
   }
 
-  // A static member is not reachable on a widget instance, so the rebuild
-  // argument does not apply. `static Future<T> show(context)` is the
-  // documented way to open a dialog, and was 14 of 16 reports on a real app.
   Future<void> test_staticEntryPointIsExempt() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -118,7 +112,6 @@ class MyDialog extends StatelessWidget {
 ''');
   }
 
-  // A non-widget class is out of scope entirely.
   Future<void> test_nonWidgetClassIsIgnored() async {
     await assertNoDiagnostics(r'''
 class Service {

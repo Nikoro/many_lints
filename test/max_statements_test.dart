@@ -15,19 +15,14 @@ class MaxStatementsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  /// A function body of [count] trivial statements.
   String _functionOf(int count) {
     final body = List.generate(count, (i) => '  var x$i = $i;').join('\n');
     return 'void f() {\n$body\n}\n';
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_overTheDefaultBudget() async {
     await assertDiagnostics(_functionOf(26), [lint(5, 1)]);
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_atTheDefaultBudget() async {
     await assertNoDiagnostics(_functionOf(25));
@@ -47,11 +42,7 @@ int f() => 1;
 ''');
   }
 
-  // ---- Edge cases ----
-
-  Future<void> test_nestedCallbackIsCountedSeparately() async {
-    // 20 statements in the function and 20 in the callback: neither alone is
-    // over budget, and they must not be summed.
+  Future<void> test_nestedCallbackIsCountedSeparatelyNotSummed() async {
     final outer = List.generate(20, (i) => '    var x$i = $i;').join('\n');
     final inner = List.generate(20, (i) => '    var y$i = $i;').join('\n');
 

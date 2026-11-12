@@ -34,7 +34,6 @@ typedef OnChanged = void Function(String label, int count);
 ''');
   }
 
-  // A single-parameter function type is unambiguous from the type alone.
   Future<void> test_singleParameterIsExemptByDefault() async {
     await assertNoDiagnostics(r'''
 typedef OnTap = void Function(String);
@@ -50,7 +49,6 @@ void listen(void Function(String, int) callback) {}
     );
   }
 
-  // A partially named signature is still missing names.
   Future<void> test_partiallyNamedStillReports() async {
     await assertDiagnostics(
       r'''
@@ -61,7 +59,6 @@ typedef OnChanged = void Function(String label, int);
   }
 }
 
-/// `min_parameters`, with the asymmetric pair.
 @reflectiveTest
 class PreferExplicitParameterNamesMinTest extends ManyLintsRuleTest {
   @override
@@ -77,7 +74,6 @@ class PreferExplicitParameterNamesMinTest extends ManyLintsRuleTest {
     );
   }
 
-  // Silent by default, reports once the threshold drops to one.
   Future<void> test_singleParameterReportsWhenConfigured() async {
     await assertDiagnostics(
       r'''

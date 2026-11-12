@@ -41,8 +41,6 @@ class Text extends Widget {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_methodCallCreatesStream() async {
     await assertDiagnostics(
       r'''
@@ -98,8 +96,6 @@ Widget build(BuildContext context) {
       [lint(227, 18)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_fieldReference() async {
     await assertNoDiagnostics(r'''

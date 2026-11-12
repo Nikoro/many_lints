@@ -44,10 +44,6 @@ class Text extends Widget {
     super.setUp();
   }
 
-  // ==============================
-  // Pattern 1: Direct SizedBox in children list
-  // ==============================
-
   Future<void> test_sizedBox_height_in_column() async {
     await assertDiagnostics(
       r'''
@@ -107,10 +103,6 @@ Widget f() {
       [lint(100, 20)],
     );
   }
-
-  // ==============================
-  // Pattern 1: Negative cases
-  // ==============================
 
   Future<void> test_no_lint_when_spacing_already_set() async {
     await assertNoDiagnostics(r'''
@@ -184,10 +176,6 @@ Widget f() {
 ''');
   }
 
-  // ==============================
-  // Pattern 2: .separatedBy() with SizedBox
-  // ==============================
-
   Future<void> test_separatedBy_with_sizedBox() async {
     await assertDiagnostics(
       r'''
@@ -219,10 +207,6 @@ Widget f() {
 ''');
   }
 
-  // ==============================
-  // Pattern 3: .expand() yielding SizedBox
-  // ==============================
-
   Future<void> test_expand_with_sizedBox_yield() async {
     await assertDiagnostics(
       r'''
@@ -246,10 +230,6 @@ Widget f() {
 ''');
   }
 
-  // ==============================
-  // Edge cases
-  // ==============================
-
   Future<void> test_sizedBox_any_axis_in_flex() async {
     await assertDiagnostics(
       r'''
@@ -262,10 +242,7 @@ Widget f() {
     );
   }
 
-  // --- MethodInvocation paths ---
-
   Future<void> test_sizedBox_staticFactory_in_column() async {
-    // SizedBox.gap() is a MethodInvocation — covers _extractSizedBoxSpacingFromExpr MethodInvocation branch
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -278,7 +255,6 @@ Widget f() {
   }
 
   Future<void> test_separatedBy_with_staticFactory_sizedBox() async {
-    // SizedBox.gap() as separator — covers MethodInvocation in _extractSizedBoxSpacingFromExpr
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -296,7 +272,6 @@ Widget f() {
   }
 
   Future<void> test_separatedBy_with_column_staticFactory() async {
-    // Column.create() is a MethodInvocation — covers _isChildrenOfFlexWidget MethodInvocation branches
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -314,8 +289,6 @@ Widget f() {
   }
 
   Future<void> test_expand_with_nested_function_no_lint() async {
-    // The nested function expression inside expand should stop recursion
-    // (covers visitFunctionExpression in _SizedBoxYieldFinder)
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 Widget f() {

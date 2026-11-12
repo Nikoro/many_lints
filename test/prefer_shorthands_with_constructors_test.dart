@@ -219,10 +219,7 @@ void f({required MyClass obj}) {
 ''');
   }
 
-  // Note: This lint cannot detect dynamic parameter types at compile time
-  // The shorthand would still work, but we cannot verify the type
   Future<void> test_typeNotInferable_dynamicParameter() async {
-    // A dynamic parameter gives `.all(8)` nothing to resolve against
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -300,7 +297,6 @@ void f() {
   }
 
   Future<void> test_method_invocation_in_list() async {
-    // Test method invocation syntax in a collection
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -314,7 +310,6 @@ void f() {
   }
 
   Future<void> test_staticMethod_namedArgument() async {
-    // Static methods are parsed as MethodInvocation (not InstanceCreationExpression)
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -328,7 +323,6 @@ Widget f() {
   }
 
   Future<void> test_staticMethod_notConfiguredClass() async {
-    // Static method on a class not in the configured list - should not lint
     await assertNoDiagnostics(r'''
 class Foo {
   static Foo create() => Foo();
@@ -341,7 +335,6 @@ void f({required Foo foo}) {
   }
 
   Future<void> test_staticMethod_notUsedAsArgument() async {
-    // Static method call not in argument position - should not lint
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -352,7 +345,6 @@ void f() {
   }
 
   Future<void> test_staticMethod_inListLiteral() async {
-    // Static method in a list literal context
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -366,7 +358,6 @@ void f() {
   }
 
   Future<void> test_inSetLiteral() async {
-    // Test SetOrMapLiteral branch in _getCollectionElementType
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -380,7 +371,6 @@ void f() {
   }
 
   Future<void> test_staticMethod_inSetLiteral() async {
-    // Static method in a set literal context (covers SetOrMapLiteral + MethodInvocation)
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -394,7 +384,6 @@ void f() {
   }
 
   Future<void> test_staticMethod_borderRadius_namedArgument() async {
-    // Static method on BorderRadius in a named argument
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -407,8 +396,8 @@ void f() {
     );
   }
 
-  Future<void> test_supertypeParameterWithoutTheConstructor_noLint() async {
-    // `.new()` would resolve against ShapeBorder, which is abstract: no shorthand exists
+  Future<void>
+  test_abstractSupertypeParameterWithoutTheConstructor_noLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -419,7 +408,6 @@ Widget f() {
   }
 
   Future<void> test_supertypeParameterWithTheConstructor_lints() async {
-    // `.all(8)` resolves against EdgeInsetsGeometry, which declares it
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -433,7 +421,6 @@ Widget f() {
   }
 
   Future<void> test_objectParameter_noLint() async {
-    // `.new()` would resolve against Object and build an Object, not a Border
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -445,9 +432,8 @@ void f() {
 ''');
   }
 
-  Future<void> test_supertypeFactoryRedirectingElsewhere_noLint() async {
-    // `.only(start: 8)` resolves to EdgeInsetsGeometry.only, which redirects
-    // to EdgeInsets.only and has no `start`
+  Future<void>
+  test_supertypeFactoryRedirectingWithoutTheNamedParameter_noLint() async {
     newFile(
       '$testPackageRootPath/many_lints.yaml',
       'rules:\n  prefer_shorthands_with_constructors:\n    additional_classes: [EdgeInsetsDirectional]\n',
@@ -495,8 +481,7 @@ Widget f() {
 ''');
   }
 
-  Future<void> test_untypedListLiteral_noLint() async {
-    // `[.all(8)]` has no context type: dot_shorthand_missing_context
+  Future<void> test_untypedListLiteralWithoutContextType_noLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 

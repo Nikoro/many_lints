@@ -33,9 +33,6 @@ const visibleForTesting = _VisibleForTesting();
     super.setUp();
   }
 
-  /// Overwrites the config file [ManyLintsRuleTest] wrote, so a test can
-  /// exercise options. Keeps `enabled: true` implicit — a rule with a config
-  /// block of its own is opted in by [ManyLintsConfig.isRuleEnabled].
   void configure(String options) {
     ConfigLoader.clearCache();
     newFile(
@@ -43,8 +40,6 @@ const visibleForTesting = _VisibleForTesting();
       'rules:\n  ${rule.name}:\n$options',
     );
   }
-
-  // --- Default behaviour: every top-level declaration counts together. ---
 
   Future<void> test_singleClass_noLint() async {
     await assertNoDiagnostics(r'''
@@ -104,8 +99,6 @@ extension B on int {}
     );
   }
 
-  /// An unnamed extension cannot be moved to a file "of its own" by name and
-  /// has no token to report against, so it is never counted.
   Future<void> test_unnamedExtension_noLint() async {
     await assertNoDiagnostics(r'''
 class A {}
@@ -120,8 +113,6 @@ class _B {}
 ''');
   }
 
-  /// Top-level functions, variables and typedefs are not declarations this
-  /// rule counts, so a file may hold any number beside its one class.
   Future<void> test_functionsAndTypedefs_neverCount() async {
     await assertNoDiagnostics(r'''
 class A {}
@@ -130,8 +121,6 @@ const x = 1;
 typedef IntList = List<int>;
 ''');
   }
-
-  // --- ignore_private ---
 
   Future<void> test_ignorePrivateFalse_countsPrivate() async {
     configure('    ignore_private: false\n');
@@ -144,8 +133,6 @@ class _B {}
       [lint(17, 2)],
     );
   }
-
-  // --- ignore_visible_for_testing ---
 
   Future<void> test_ignoreVisibleForTesting_skipsAnnotated() async {
     configure('''
@@ -163,8 +150,6 @@ class B {}
 ''');
   }
 
-  /// Asymmetric partner: with the option off, the same annotated class still
-  /// reports, so the test above cannot pass vacuously.
   Future<void> test_visibleForTestingCountedByDefault() async {
     configure('    kinds: [class]\n');
 
@@ -180,8 +165,6 @@ class B {}
       [lint(71, 1)],
     );
   }
-
-  // --- kinds ---
 
   Future<void> test_kindsClassOnly_ignoresEnum() async {
     configure('    kinds: [class]\n');
@@ -205,9 +188,6 @@ class C {}
     );
   }
 
-  /// A `kinds:` list naming nothing recognized would silently widen back to
-  /// the defaults, so the group is dropped and the rule falls back to its
-  /// default group rather than counting things the project excluded.
   Future<void> test_unknownKind_fallsBackToDefaults() async {
     configure('    kinds: [nonsense]\n');
 
@@ -219,8 +199,6 @@ class B {}
       [lint(17, 1)],
     );
   }
-
-  // --- types ---
 
   Future<void> test_typesNotifier_ignoresPlainClasses() async {
     configure('    types: [Notifier]\n');
@@ -248,8 +226,6 @@ class OtherNotifier extends Notifier<int> {}
     );
   }
 
-  /// The type narrowing matches the whole supertype hierarchy, not just a
-  /// direct `extends`.
   Future<void> test_typesMatchIndirectSubtypes() async {
     configure('    types: [BlocBase]\n');
 
@@ -278,10 +254,6 @@ class OtherNotifier extends Notifier<int> {}
     );
   }
 
-  // --- groups: independent budgets ---
-
-  /// The whole point of groups: one bloc plus one notifier is the layout the
-  /// project asked for, so neither counts against the other.
   Future<void> test_groups_independentBudgets_noLint() async {
     configure('''
     groups:
@@ -318,7 +290,6 @@ class CounterNotifier extends Notifier<int> {}
     );
   }
 
-  /// A declaration in no configured group is not counted at all.
   Future<void> test_groups_unmatchedDeclarationsIgnored() async {
     configure('''
     groups:
@@ -332,8 +303,8 @@ class Third {}
 ''');
   }
 
-  /// A group's own `message:` is appended to that group's diagnostics only.
-  Future<void> test_groups_perGroupMessage() async {
+  Future<void>
+  test_groups_perGroupMessageAppendsToItsOwnDiagnosticsOnly() async {
     configure('''
     groups:
       - types: [Bloc]
@@ -360,8 +331,6 @@ class BBloc extends Bloc<int, int> {}
     );
   }
 
-  /// Flat keys become the groups' defaults, so a shared setting is stated once
-  /// rather than repeated in every group.
   Future<void> test_groups_inheritFlatDefaults() async {
     configure('''
     ignore_private: false
@@ -380,7 +349,6 @@ class _PrivateNotifier extends Notifier<int> {}
     );
   }
 
-  /// A group may override an inherited default.
   Future<void> test_groups_overrideInheritedDefault() async {
     configure('''
     ignore_private: false
@@ -397,9 +365,7 @@ class _PrivateNotifier extends Notifier<int> {}
 ''');
   }
 
-  /// A declaration matching two groups is counted by the first only, so one
-  /// declaration is never reported twice.
-  Future<void> test_groups_overlappingCountedOnce() async {
+  Future<void> test_groups_overlappingCountedOnceByTheFirstGroup() async {
     configure('''
     groups:
       - types: [Bloc]
@@ -417,10 +383,6 @@ class BBloc extends Bloc<int, int> {}
     );
   }
 
-  // --- degenerate config ---
-
-  /// A wrong-typed option falls back to its default rather than throwing or
-  /// silently disabling the rule.
   Future<void> test_wrongTypedOption_fallsBackToDefault() async {
     configure('    ignore_private: "yes"\n');
 
@@ -430,8 +392,6 @@ class _B {}
 ''', []);
   }
 
-  /// Every group being malformed is indistinguishable from none being written,
-  /// so the rule keeps its default group rather than going silent.
   Future<void> test_allGroupsMalformed_keepsDefaultGroup() async {
     configure('''
     groups:

@@ -12,9 +12,7 @@ class PreferImmutableStateTest extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = PreferImmutableState();
-    // Faithful to the real `package:meta`: `hasImmutable` resolves through the
-    // library *name* and the `Immutable` class, so a lowercase stand-in would
-    // never be recognised as the annotation it imitates.
+    // Edge case: hasImmutable resolves by library name and the Immutable class, as in real meta
     newPackage('meta').addFile('lib/meta.dart', r'''
 library meta;
 
@@ -42,8 +40,6 @@ abstract class State<T extends StatefulWidget> {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_stateClassWithoutImmutable() async {
     await assertDiagnostics(
       r'''
@@ -53,9 +49,7 @@ class MyFeatureState {}
     );
   }
 
-  Future<void> test_noBlocDependencyRequired() async {
-    // The whole point of this rule: it covers Riverpod notifier state and any
-    // other `...State` class, in a project with no `bloc` anywhere.
+  Future<void> test_notifierStateWithNoBlocDependency() async {
     await assertDiagnostics(
       r'''
 class LoginEmailState {
@@ -77,8 +71,6 @@ class CounterInitial extends CounterState {}
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_annotatedStateClass() async {
     await assertNoDiagnostics(r'''
 import 'package:meta/meta.dart';
@@ -94,19 +86,13 @@ class MyFeature {}
 ''');
   }
 
-  Future<void> test_classNamedExactlyState() async {
-    // The bare affix is not a state class, it is the whole word.
+  Future<void> test_classNamedExactlyStateIsNotAStateClass() async {
     await assertNoDiagnostics(r'''
 class State {}
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_flutterStateSubclassIsMeantToBeMutable() async {
-    // Every Flutter `State<T>` is named `...State` and every one of them holds
-    // mutable fields by design. Reporting these would flag every
-    // StatefulWidget in a codebase.
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -122,9 +108,6 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> test_widgetNamedStateInheritsImmutable() async {
-    // `EmptyState`, `ErrorState`, `LoadingState` are ordinary widget names.
-    // `StatelessWidget` inherits `@immutable` from `Widget`, so the annotation
-    // the rule asks for is already there.
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 
@@ -136,8 +119,6 @@ class PersonPickerEmptyState extends StatelessWidget {
   }
 
   Future<void> test_classInheritingImmutableFromItsOwnBase() async {
-    // Not a Flutter concern: any base annotated `@immutable` passes the
-    // annotation down, so the subclass has nothing left to add.
     await assertNoDiagnostics(r'''
 import 'package:meta/meta.dart';
 
@@ -149,7 +130,6 @@ class LoginState extends Snapshot {}
   }
 
   Future<void> test_mutableStateClassStillReported() async {
-    // The fix must not weaken the rule for the classes it exists for.
     await assertDiagnostics(
       r'''
 class CounterState {

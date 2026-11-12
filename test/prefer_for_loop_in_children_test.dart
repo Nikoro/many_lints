@@ -16,8 +16,6 @@ class PreferForLoopInChildrenTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ===== Pattern 1: .map().toList() =====
-
   Future<void> test_mapToList_triggers() async {
     await assertDiagnostics(
       r'''
@@ -60,8 +58,6 @@ void f() {
 ''');
   }
 
-  // ===== Pattern 2: spread with .map() =====
-
   Future<void> test_spreadMap_triggers() async {
     await assertDiagnostics(
       r'''
@@ -96,8 +92,6 @@ void f() {
 ''');
   }
 
-  // ===== Pattern 3: List.generate() =====
-
   Future<void> test_listGenerate_triggers() async {
     await assertDiagnostics(
       r'''
@@ -127,8 +121,6 @@ void f() {
 }
 ''');
   }
-
-  // ===== Pattern 4: .fold() =====
 
   Future<void> test_foldWithEmptyList_triggers() async {
     await assertDiagnostics(
@@ -164,8 +156,6 @@ int add(int a, int b) => a + b;
 ''');
   }
 
-  // ===== Edge cases =====
-
   Future<void> test_forLoop_doesNotTrigger() async {
     await assertNoDiagnostics(r'''
 void f() {
@@ -184,8 +174,6 @@ void f() {
 }
 ''');
   }
-
-  // ===== Pattern 3 via MethodInvocation: .generate() edge cases =====
 
   Future<void> test_customClassGenerate_doesNotTrigger() async {
     await assertNoDiagnostics(r'''
@@ -236,10 +224,8 @@ void f() {
 ''');
   }
 
-  Future<void> test_customListClassGenerate_doesNotTrigger() async {
-    // A custom class named "List" with a generate static method.
-    // The method name is 'generate' and target name is 'List', but it does
-    // not resolve to dart:core List, so the rule should not trigger.
+  Future<void>
+  test_customListClassGenerateNotFromDartCore_doesNotTrigger() async {
     await assertNoDiagnostics(r'''
 class List {
   static List generate(int count, List Function(int) cb) {
@@ -253,7 +239,6 @@ void f() {
   }
 
   Future<void> test_customListClassGenerate_withOneArg_doesNotTrigger() async {
-    // Custom "List" class with generate that takes only one arg.
     await assertNoDiagnostics(r'''
 class List {
   static List generate(int count) {
@@ -268,7 +253,6 @@ void f() {
 
   Future<void>
   test_customListClassGenerate_withNonFunctionSecondArg_doesNotTrigger() async {
-    // Custom "List" class with generate where second arg is not a function.
     await assertNoDiagnostics(r'''
 class List {
   static List generate(int count, int seed) {
@@ -282,8 +266,6 @@ void f() {
   }
 
   Future<void> test_listGenerateViaStaticMethod_triggers() async {
-    // dart:core List.generate with a callback, as a MethodInvocation.
-    // Use show to ensure List resolves to dart:core.
     await assertDiagnostics(
       r'''
 import 'dart:core' show List;
@@ -297,8 +279,6 @@ void f() {
 
   Future<void>
   test_listGenerateViaStaticMethod_namedFunction_doesNotTrigger() async {
-    // dart:core List.generate with a named function ref (not
-    // FunctionExpression) should not trigger.
     await assertNoDiagnostics(r'''
 import 'dart:core' show List, int;
 int doubleIt(int i) => i * 2;
@@ -308,11 +288,7 @@ void f() {
 ''');
   }
 
-  // --- Cover _checkListGenerate lines 126-128,130 ---
-
   Future<void> test_listGenerate_nonFunctionSecondArg_doesNotTrigger() async {
-    // List.generate where second arg is not a FunctionExpression
-    // exercises line 128 (args[1] is! FunctionExpression)
     await assertNoDiagnostics(r'''
 int doubler(int i) => i * 2;
 void f() {
@@ -322,7 +298,6 @@ void f() {
   }
 
   Future<void> test_listGenerate_singleArg_doesNotTrigger() async {
-    // List.generate with only one arg — exercises line 127 (args.length < 2)
     await assertNoDiagnostics(r'''
 void f() {
   final result = List.filled(5, 0);
@@ -331,7 +306,6 @@ void f() {
   }
 
   Future<void> test_fold_singleArg_doesNotTrigger() async {
-    // fold with fewer than 2 args — exercises line 136
     await assertNoDiagnostics(r'''
 void f() {
   final list = [1, 2, 3];
@@ -341,7 +315,6 @@ void f() {
   }
 
   Future<void> test_fold_nonEmptyInitialList_doesNotTrigger() async {
-    // fold with non-empty initial list — exercises line 141
     await assertNoDiagnostics(r'''
 void f() {
   final list = [1, 2, 3];

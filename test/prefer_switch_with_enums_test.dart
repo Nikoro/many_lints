@@ -14,8 +14,6 @@ class PreferSwitchWithEnumsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_threeBranchChain() async {
     await assertDiagnostics(
       r'''
@@ -55,8 +53,6 @@ String describe(Status status) {
       [lint(82, 23)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_twoBranchChainBelowThreshold() async {
     await assertNoDiagnostics(r'''
@@ -151,8 +147,6 @@ String describe(Status? status) {
 ''');
   }
 
-  // ---- Comparisons combined with || ----
-
   Future<void> test_orChainInSingleCondition() async {
     await assertDiagnostics(
       r'''
@@ -215,8 +209,6 @@ bool anyActive(Status a, Status b, Status c) {
 ''');
   }
 
-  // ---- contains() over a literal collection of constants ----
-
   Future<void> test_containsOnSetLiteral() async {
     await assertDiagnostics(
       r'''
@@ -253,8 +245,7 @@ bool isKnown(Status status) {
 ''');
   }
 
-  /// A named collection is a reusable set, not an inlined branch.
-  Future<void> test_containsOnNamedCollection() async {
+  Future<void> test_containsOnNamedReusableCollection_noLint() async {
     await assertNoDiagnostics(r'''
 enum Status { active, inactive, pending }
 

@@ -63,9 +63,7 @@ class Point {
 ''');
   }
 
-  // `prefer_const_constructors_in_immutables` already owns this case, so the
-  // two rules must never both report.
-  Future<void> test_immutableAnnotatedClassIsSkipped() async {
+  Future<void> test_immutableAnnotatedClassIsLeftToTheSdkLint() async {
     await assertNoDiagnostics(r'''
 class Immutable {
   const Immutable();
@@ -82,8 +80,6 @@ class Point {
 ''');
   }
 
-  // Both of the rule's hits on a production codebase were this shape: a field
-  // initializer whose value is a call, where `const` would not compile.
   Future<void> test_initializerWithACallIsNotConstEvaluable() async {
     await assertNoDiagnostics(r'''
 class Generator {
@@ -95,8 +91,6 @@ class Generator {
   }
 
   Future<void> test_parameterInitializerIsConstEvaluable() async {
-    // A constructor parameter is legal in a const initializer, so this one
-    // must still report.
     await assertDiagnostics(
       r'''
 class Point {

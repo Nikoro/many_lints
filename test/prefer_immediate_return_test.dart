@@ -14,8 +14,6 @@ class PreferImmediateReturnTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_finalVariableThenReturn() async {
     await assertDiagnostics(
       r'''
@@ -51,8 +49,6 @@ String describe(int a) {
       [lint(27, 33)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_variableUsedTwice() async {
     await assertNoDiagnostics(r'''

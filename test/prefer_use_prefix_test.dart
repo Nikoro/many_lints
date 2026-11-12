@@ -44,8 +44,6 @@ class HookBuilder extends Widget {
     super.setUp();
   }
 
-  // --- Positive cases: should trigger the lint ---
-
   Future<void> test_topLevelFunctionCallingHook() async {
     await assertDiagnostics(
       r'''
@@ -116,8 +114,6 @@ void setupHooks() {
     );
   }
 
-  // --- Negative cases: should NOT trigger the lint ---
-
   Future<void> test_functionWithUsePrefix() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -145,8 +141,6 @@ int regularFunction() {
   }
 
   Future<void> test_buildMethodInHookWidget() async {
-    // The build method itself is not a custom hook — it's the standard
-    // widget build method. It should NOT be flagged.
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -171,8 +165,6 @@ class MyClass {
   }
 
   Future<void> test_hookBuilderBuilderCallback() async {
-    // The builder callback inside HookBuilder is not a named function,
-    // so it doesn't need the use prefix.
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';

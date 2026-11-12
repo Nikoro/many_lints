@@ -40,14 +40,10 @@ import 'package:fpdart/fpdart.dart';
 Either<String, void> compute() => throw '';
 ''');
 
-      // The left type argument must survive untouched — a fix that rewrote
-      // the whole NamedType would silently drop it.
       expect(fixed, contains('Either<String, Unit> compute()'));
     });
 
     test('adds the fpdart import when it is missing', () async {
-      // The file names the type through a library that does not re-export
-      // `Unit`, so the fix has to bring the import in itself.
       final fixed = await applyFix(r'''
 import 'package:fpdart/src/task_either.dart';
 
@@ -90,8 +86,6 @@ Option<String> f(String? name) =>
 ''');
 
       expect(fixed, contains('Option.fromNullable(name)'));
-      // The conditional is gone; `String?` in the signature still has a `?`,
-      // so assert on the branches rather than on the character.
       expect(fixed, isNot(contains('Option.of(')));
       expect(fixed, isNot(contains('.none()')));
     });
@@ -108,8 +102,6 @@ Option<String> f(String? name) =>
     });
 
     test('keeps the tested expression, not just a bare name', () async {
-      // The value under test is a property access, so a fix that assumed a
-      // simple identifier would drop the receiver.
       final fixed = await applyFix(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -155,8 +147,6 @@ Option<double> f(String input) =>
     });
 
     test('parenthesises a receiver that binds looser than "."', () async {
-      // Without parentheses `a ?? b` would become `a ?? b.toIntOption`, which
-      // parses as a different expression entirely.
       final fixed = await applyFix(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -257,8 +247,6 @@ Option<String> f(String name) =>
     });
 
     test('picks a parameter name that does not shadow one in scope', () async {
-      // `a` is already bound in the condition, so the naive first initial
-      // would shadow it and change what the predicate tests.
       final fixed = await applyFix(r'''
 import 'package:fpdart/fpdart.dart';
 

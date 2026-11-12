@@ -3,9 +3,6 @@ import 'package:test/test.dart';
 import 'fix_harness.dart';
 import 'fpdart_stub.dart';
 
-/// End-to-end tests for the text these quick fixes actually produce.
-///
-/// See [FixHarness] for why this drives a real plugin server.
 void main() {
   late FixHarness harness;
 
@@ -95,7 +92,6 @@ rules:
         message: 'Report only.'
 ''';
 
-      // The diagnostic still stands; nothing is offered to rewrite it.
       await harness.expectNoFix(
         r'''
 void unawaited(Object? f) {}
@@ -118,7 +114,6 @@ rules:
         replace: '\$1.unawaited((('
 ''';
 
-      // A wrong pattern must not turn working code into a syntax error.
       await harness.expectNoFix(
         r'''
 void unawaited(Object? f) {}

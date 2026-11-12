@@ -29,8 +29,6 @@ abstract class Bloc<E, S> {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_missingHandler() async {
     await assertDiagnostics(
       r'''
@@ -51,8 +49,6 @@ class CounterBloc extends Bloc<CounterEvent, int> {
       [lint(152, 11)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_allHandlersRegistered() async {
     await assertNoDiagnostics(r'''
@@ -108,8 +104,6 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_sealedWithNoSubclassesIsIgnored() async {
     await assertNoDiagnostics(r'''

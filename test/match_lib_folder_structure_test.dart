@@ -32,7 +32,6 @@ class UserRepository {}
   }
 }
 
-/// The asymmetric positive: a correctly named folder must stay silent.
 @reflectiveTest
 class MatchLibFolderStructureValidFolderTest extends ManyLintsRuleTest {
   @override
@@ -50,15 +49,13 @@ class UserRepository {}
 ''');
   }
 
-  // The file's own name is the SDK's `file_names` territory, not this rule's.
-  Future<void> test_fileNameIsNotChecked() async {
+  Future<void> test_fileNameIsLeftToTheSdkFileNamesLint() async {
     await assertNoDiagnostics(r'''
 class UserRepository {}
 ''');
   }
 }
 
-/// The rule is scoped to `lib/`; the same folder name elsewhere is silent.
 @reflectiveTest
 class MatchLibFolderStructureOutsideLibTest extends ManyLintsRuleTest {
   @override

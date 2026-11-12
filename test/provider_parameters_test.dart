@@ -12,9 +12,7 @@ class ProviderParametersTest extends ManyLintsRuleTest {
   void setUp() {
     rule = ProviderParameters();
 
-    // Mirrors the real package: a family is a callable object, so invoking it
-    // is a FunctionExpressionInvocation on a `Family`-typed target — which is
-    // what distinguishes a family call from a provider declaration.
+    // Edge case: a callable Family makes each family call a FunctionExpressionInvocation
     newPackage('riverpod').addFile('lib/riverpod.dart', r'''
 class ProviderBase<T> {}
 
@@ -30,8 +28,6 @@ class Provider<T> extends ProviderBase<T> {
 
     super.setUp();
   }
-
-  // --- Positive cases: should trigger lint ---
 
   Future<void> test_nonConstListArgument() async {
     await assertDiagnostics(
@@ -80,8 +76,6 @@ void fn() {
     );
   }
 
-  // --- Negative cases: should not trigger lint ---
-
   Future<void> test_constListArgument() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
@@ -123,7 +117,6 @@ void fn() {
   }
 
   Future<void> test_instanceOverridingEqualsArgument() async {
-    // A class with a real `==` compares equal across rebuilds.
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -147,8 +140,6 @@ void fn() {
   }
 
   Future<void> test_providerDeclarationNotFlagged() async {
-    // `Provider.family(...)` returns a provider type too, but its argument is
-    // the create callback — not a family parameter.
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 

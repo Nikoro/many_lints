@@ -16,8 +16,6 @@ class PreferPrivateNamedParametersTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void> test_requiredNamedParameter() async {
     await assertDiagnostics(
       r'''
@@ -80,8 +78,6 @@ class Bird {
       [lint(52, 23)],
     );
   }
-
-  // --- Negative cases (should NOT trigger lint) ---
 
   Future<void> test_parameterUsedInBody() async {
     await assertNoDiagnostics(r'''
@@ -179,8 +175,6 @@ class Bird {
 }
 ''');
   }
-
-  // --- Edge cases ---
 
   Future<void> test_languageVersionBefore312() async {
     await assertNoDiagnostics(r'''

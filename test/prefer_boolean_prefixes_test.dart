@@ -15,8 +15,6 @@ class PreferBooleanPrefixesTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_fieldNamedAsAValue() async {
     await assertDiagnostics(
       r'''
@@ -49,8 +47,6 @@ class A {
       [lint(17, 9)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_isPrefix() async {
     await assertNoDiagnostics(r'''
@@ -94,8 +90,6 @@ class A {
   }
 
   Future<void> test_overrideKeepsTheInheritedName() async {
-    // Only the base declaration is reported; the override cannot rename
-    // independently, so flagging it would demand an impossible fix.
     await assertDiagnostics(
       r'''
 class Base {
@@ -120,11 +114,7 @@ class A {
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_verbDoesNotHaveToLead() async {
-    // `localeIsDefault` asks the same question as `isDefaultLocale`; naming
-    // the subject first keeps related settings sorting together.
     await assertNoDiagnostics(r'''
 class A {
   bool localeIsDefault = false;
@@ -143,7 +133,6 @@ class A {
   }
 
   Future<void> test_prefixMustEndAtAWordBoundary() async {
-    // `island` merely starts with `is`.
     await assertDiagnostics(
       r'''
 class A {

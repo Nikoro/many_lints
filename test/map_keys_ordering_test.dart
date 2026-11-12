@@ -22,8 +22,6 @@ class MapKeysOrderingTest extends ManyLintsRuleTest {
     );
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_unorderedStringKeys() async {
     await assertDiagnostics(
       r'''
@@ -38,8 +36,6 @@ const m = {
       [lint(29, 7)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_orderedKeys() async {
     await assertNoDiagnostics(r'''
@@ -59,11 +55,7 @@ const m = {'banana': 1, 'apple': 2};
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_computedKeyMakesTheLiteralUnsortable() async {
-    // Ordering the rest around a computed key would produce an arrangement
-    // the user cannot reach.
     await assertNoDiagnostics(r'''
 String k() => 'x';
 

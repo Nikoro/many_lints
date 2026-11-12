@@ -61,8 +61,6 @@ class Gap extends Widget {
     super.setUp();
   }
 
-  // === SizedBox cases ===
-
   Future<void> test_sized_box_height_in_column() async {
     await assertDiagnostics(
       r'''
@@ -123,8 +121,6 @@ Widget f() {
     );
   }
 
-  // === SizedBox negative cases ===
-
   Future<void> test_sized_box_with_both_dimensions() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -170,8 +166,6 @@ Widget f() {
 ''');
   }
 
-  // === Padding cases ===
-
   Future<void> test_padding_bottom_in_column() async {
     await assertDiagnostics(
       r'''
@@ -208,8 +202,6 @@ Widget f() {
     );
   }
 
-  // === Padding negative cases ===
-
   Future<void> test_padding_all_in_column() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -245,8 +237,6 @@ Widget f() {
 }
 ''');
   }
-
-  // === Gap is ok ===
 
   Future<void> test_gap_in_column() async {
     await assertNoDiagnostics(r'''

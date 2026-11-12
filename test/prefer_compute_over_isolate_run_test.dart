@@ -16,8 +16,6 @@ class PreferComputeOverIsolateRunTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void> test_isolateRunWithClosure() async {
     await assertDiagnostics(
       r'''
@@ -84,8 +82,6 @@ void fn() {
       [lint(53, 21), undefinedName(61, 3)],
     );
   }
-
-  // --- Negative cases (should NOT trigger lint) ---
 
   Future<void> test_computeCall() async {
     await assertNoDiagnostics(r'''

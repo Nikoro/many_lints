@@ -17,8 +17,6 @@ class FunctionAlwaysReturnsSameValueTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_everyBranchReturnsTheSameNumber() async {
     await assertDiagnostics(
       r'''
@@ -43,8 +41,6 @@ bool f(int x) {
       [lint(5, 1)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_branchesReturnDifferentValues() async {
     await assertNoDiagnostics(r'''
@@ -88,11 +84,7 @@ class A extends Base {
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_protocolCallbackMustReturnAFixedValue() async {
-    // `onNotification` has to return `false` on every path to let the
-    // notification keep bubbling — the method exists for its side effect.
     await assertNoDiagnostics(r'''
 class A {
   bool onNotification(Object notification) {
@@ -107,8 +99,6 @@ class A {
   }
 
   Future<void> test_notificationCallbackRecognisedByShape() async {
-    // A protocol callback given a descriptive name is still one. The `bool`
-    // is a "handled" signal, so a fixed `false` is the contract being met.
     await assertNoDiagnostics(r'''
 class ScrollNotification {}
 

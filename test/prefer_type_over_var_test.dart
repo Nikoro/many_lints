@@ -82,8 +82,6 @@ class SomeClass {
     );
   }
 
-  // Negative test cases - should NOT trigger
-
   Future<void> test_finalVariable() async {
     await assertNoDiagnostics(r'''
 void fn() {

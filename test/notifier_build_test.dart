@@ -28,8 +28,6 @@ const riverpod = Riverpod();
     super.setUp();
   }
 
-  // --- Positive cases: should trigger lint ---
-
   Future<void> test_annotatedClassWithoutBuild() async {
     await assertDiagnostics(
       r'''
@@ -68,8 +66,6 @@ class Counter {}
     );
   }
 
-  // --- Negative cases: should not trigger lint ---
-
   Future<void> test_annotatedClassWithBuild() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -87,8 +83,7 @@ class Counter {}
 ''');
   }
 
-  Future<void> test_annotatedFunctionNotFlagged() async {
-    // Functional providers have no build method by design.
+  Future<void> test_functionalProviderHasNoBuildByDesign() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

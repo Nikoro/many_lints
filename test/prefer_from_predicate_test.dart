@@ -47,7 +47,6 @@ Option<int> f(int age) => Option.fromPredicate(age, (a) => a > 18);
   }
 
   Future<void> test_nullTestIsLeftToFromNullable() async {
-    // `prefer_from_nullable` owns this shape and its fix produces better code.
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -84,8 +83,6 @@ Option<int> f(int age) =>
   }
 
   Future<void> test_conditionOnAnotherValueIsFine() async {
-    // The condition tests one thing and wraps another, so this is not a
-    // predicate on the wrapped value.
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
 

@@ -32,8 +32,6 @@ class Text extends Widget {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void> test_discardedInBuilderCallback() async {
     await assertDiagnostics(
       r'''
@@ -78,8 +76,6 @@ Widget f() => LayoutBuilder(builder: (__, constraints) => Text('hi'));
     );
   }
 
-  // --- Negative cases (should NOT trigger lint) ---
-
   Future<void> test_namedContextIsFine() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -104,8 +100,6 @@ Widget build(BuildContext _context) => Text('hi');
 ''');
   }
 
-  // --- Edge cases ---
-
   Future<void> test_discardedNonContextTypeIsIgnored() async {
     await assertNoDiagnostics(r'''
 void f(int _) {}
@@ -113,8 +107,6 @@ void f(int _) {}
   }
 
   Future<void> test_subtypeOfContextIsNotExactMatch() async {
-    // Only an exact BuildContext is reported; a subclass has its own meaning
-    // and renaming it is not obviously right.
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 

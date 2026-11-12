@@ -294,8 +294,6 @@ void fn() {
 ''');
   }
 
-  // --- type_inference.dart coverage: Set literal (line 71 - SetOrMapLiteral) ---
-
   Future<void> test_setLiteral() async {
     await assertDiagnostics(
       r'''
@@ -308,11 +306,6 @@ void fn() {
       [lint(72, 12)],
     );
   }
-
-  // --- collection literals without a downward context type ---
-  // A literal in a `dynamic`/`Object?` position gets its static type inferred
-  // upward from its own elements, which is not a context type. Reporting there
-  // produces uncompilable code (`dot_shorthand_missing_context`).
 
   Future<void> test_listLiteral_dynamicParameter_notReported() async {
     await assertNoDiagnostics(r'''
@@ -352,8 +345,6 @@ void fn() {
   }
 
   Future<void> test_listLiteral_explicitTypeArgument() async {
-    // The user wrote the type argument, so it is a genuine context type and
-    // `<MyEnum>[.first]` compiles.
     await assertDiagnostics(
       r'''
 enum MyEnum { first, second }
@@ -397,9 +388,6 @@ void fn() {
   }
 
   Future<void> test_genericParameter_inferredFromArgument_notReported() async {
-    // `T` is solved *from* the element, so `List<MyEnum>` is an upward
-    // inference, not a context type. `Box(items: const [.first])` does not
-    // compile.
     await assertNoDiagnostics(r'''
 enum MyEnum { first, second }
 
@@ -427,7 +415,6 @@ void fn() {
   }
 
   Future<void> test_genericParameter_explicitTypeArgument() async {
-    // The user pinned `T`, so the parameter really does impose a context type.
     await assertDiagnostics(
       r'''
 enum MyEnum { first, second }
@@ -458,8 +445,7 @@ void fn() {
     );
   }
 
-  Future<void> test_mapLiteral_valuePosition() async {
-    // The value half must resolve to the second type argument, not the key.
+  Future<void> test_mapLiteral_valueResolvesAgainstTheValueType() async {
     await assertDiagnostics(
       r'''
 enum MyEnum { first, second }
@@ -473,8 +459,6 @@ void fn() {
   }
 
   Future<void> test_mapLiteral_valueAgainstKeyType_notReported() async {
-    // Only the key half may use a shorthand here: the value's context is
-    // `Object`, so `MyEnum.second` must be left alone.
     await assertDiagnostics(
       r'''
 enum MyEnum { first, second }
@@ -499,8 +483,6 @@ void fn() {
 ''');
   }
 
-  // --- type_inference.dart coverage: resolveReturnType via MethodDeclaration ---
-
   Future<void> test_returnInMethodDeclaration() async {
     await assertDiagnostics(
       r'''
@@ -515,8 +497,6 @@ class Foo {
       [lint(74, 12)],
     );
   }
-
-  // --- type_inference.dart coverage: resolveReturnType via ExpressionFunctionBody in method ---
 
   Future<void> test_expressionBodyInMethodDeclaration() async {
     await assertDiagnostics(

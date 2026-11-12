@@ -17,8 +17,6 @@ class PreferCorrectErrorNameTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_exceptionWithoutSuffix() async {
     await assertDiagnostics(
       r'''
@@ -36,8 +34,6 @@ class BadState extends Error {}
       [lint(6, 8)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_exceptionWithSuffix() async {
     await assertNoDiagnostics(r'''
@@ -57,8 +53,6 @@ class Widget {}
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_indirectExceptionIsStillAnException() async {
     await assertDiagnostics(
       r'''
@@ -69,9 +63,7 @@ class NotFound extends BaseException {}
     );
   }
 
-  Future<void> test_errorWinsOverException() async {
-    // A class that is both should be named for the stricter reading: an Error
-    // is a bug the caller must not catch.
+  Future<void> test_errorWinsOverExceptionAsTheStricterReading() async {
     await assertNoDiagnostics(r'''
 class WeirdError extends Error implements Exception {}
 ''');
