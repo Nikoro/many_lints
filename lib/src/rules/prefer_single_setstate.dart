@@ -8,11 +8,6 @@ import '../many_lints_rule.dart';
 import '../set_state_collection.dart';
 import '../state_base_classes.dart';
 
-/// Warns when a method in a `State` subclass contains multiple `setState` calls
-/// that could be merged into a single invocation.
-///
-/// Multiple `setState` calls cause redundant rebuilds. Merging them into one
-/// call is more efficient and keeps state mutations grouped together.
 class PreferSingleSetstate extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_single_setstate',
@@ -48,7 +43,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
-    // Verify we're inside a State subclass
     final enclosingBody = node.parent;
     if (enclosingBody is! BlockClassBody) return;
     final classDecl = enclosingBody.parent;
@@ -57,16 +51,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     final element = classDecl.declaredFragment?.element;
     if (element == null || !isStateElement(rule, element)) return;
 
-    // Collect all setState calls in this method (not inside nested closures)
     final collector = SetStateCollector();
     node.body.visitChildren(collector);
 
     final calls = collector.calls;
     if (calls.length < 2) return;
 
-    // Report on the second and subsequent setState calls
-    for (var i = 1; i < calls.length; i++) {
-      rule.reportAtNode(calls[i]);
+    for (final extraCall in calls.skip(1)) {
+      rule.reportAtNode(extraCall);
     }
   }
 }

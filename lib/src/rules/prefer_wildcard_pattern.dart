@@ -6,27 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when `Object()` is used as a pattern instead of the wildcard `_`.
-///
-/// Using `Object()` without field destructuring is equivalent to `_` but less
-/// idiomatic. The wildcard pattern `_` is clearer and more concise for matching
-/// any value.
-///
-/// **BAD:**
-/// ```dart
-/// final value = switch (object) {
-///   WithField() => 'good',
-///   Object() => 'bad',
-/// };
-/// ```
-///
-/// **GOOD:**
-/// ```dart
-/// final value = switch (object) {
-///   WithField() => 'good',
-///   _ => 'good',
-/// };
-/// ```
 class PreferWildcardPattern extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_wildcard_pattern',
@@ -85,21 +64,19 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _checkPattern(DartPattern pattern) {
-    if (pattern is ObjectPattern &&
-        pattern.type.name.lexeme == 'Object' &&
-        pattern.fields.isEmpty) {
+    if (pattern case ObjectPattern(
+      fields: [],
+      :final type,
+    ) when type.name.lexeme == 'Object') {
       rule.reportAtNode(pattern);
       return;
     }
 
-    // Walk nested patterns (e.g., Object() && somePattern)
-    if (pattern is LogicalAndPattern) {
-      _checkPattern(pattern.leftOperand);
-      _checkPattern(pattern.rightOperand);
-    }
-    if (pattern is LogicalOrPattern) {
-      _checkPattern(pattern.leftOperand);
-      _checkPattern(pattern.rightOperand);
+    if (pattern
+        case LogicalAndPattern(:final leftOperand, :final rightOperand) ||
+            LogicalOrPattern(:final leftOperand, :final rightOperand)) {
+      _checkPattern(leftOperand);
+      _checkPattern(rightOperand);
     }
   }
 }

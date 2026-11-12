@@ -6,10 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when an if-case pattern uses `!= null && final field` instead of
-/// the simpler `final field?` syntax, or `!= null && final Type field` where
-/// the null check is redundant because the type annotation already guarantees
-/// non-nullability.
 class PreferSimplerPatternsNullCheck extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_simpler_patterns_null_check',
@@ -61,9 +57,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (left is! RelationalPattern) return;
     if (left.operator.lexeme != '!=' || left.operand is! NullLiteral) return;
 
-    // At this point we have `!= null && <right>`
     if (right is DeclaredVariablePattern) {
-      // `!= null && final field` or `!= null && final Type field`
       rule.reportAtNode(pattern);
     }
   }

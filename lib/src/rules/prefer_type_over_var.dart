@@ -6,40 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a variable is declared with the `var` keyword instead of an
-/// explicit type.
-///
-/// Although `var` is shorter to write, the use of this keyword makes it
-/// difficult to understand the type of the declared variable, especially
-/// when the initializer is complex or not immediately visible.
-///
-/// ## Example
-///
-/// ❌ Bad:
-/// ```dart
-/// class SomeClass {
-///   void method() {
-///     var variable = nullableMethod();
-///   }
-/// }
-///
-/// var topLevelVariable = nullableMethod();
-///
-/// String? nullableMethod() => null;
-/// ```
-///
-/// ✅ Good:
-/// ```dart
-/// class SomeClass {
-///   void method() {
-///     String? variable = nullableMethod();
-///   }
-/// }
-///
-/// String? topLevelVariable = nullableMethod();
-///
-/// String? nullableMethod() => null;
-/// ```
 class PreferTypeOverVar extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_type_over_var',
@@ -86,7 +52,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitForStatement(ForStatement node) {
-    // Check for-loop variable declarations
     final forParts = node.forLoopParts;
     if (forParts is ForPartsWithDeclarations) {
       _checkVariableDeclarationList(forParts.variables);
@@ -94,12 +59,8 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _checkVariableDeclarationList(VariableDeclarationList variables) {
-    // Check if the keyword is 'var'
     final keyword = variables.keyword;
-    if (keyword == null) return;
-    if (keyword.lexeme != 'var') return;
-
-    // Report at the var keyword
+    if (keyword == null || keyword.lexeme != 'var') return;
     rule.reportAtToken(keyword);
   }
 }

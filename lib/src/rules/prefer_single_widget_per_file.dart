@@ -7,8 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when a file contains more than one public widget class.
-/// Private widgets (prefixed with underscore) are ignored.
 class PreferSingleWidgetPerFile extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_single_widget_per_file',
@@ -43,8 +41,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // Defaults reproduce the previous behaviour exactly: private widgets were
-    // always skipped, and `@visibleForTesting` was never considered.
     final ignorePrivateWidgets = rule.config.boolOption(
       'ignore_private_widgets',
       defaultValue: true,
@@ -75,11 +71,8 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     }
 
-    // Report all public widgets after the first one
-    if (publicWidgets.length > 1) {
-      for (var i = 1; i < publicWidgets.length; i++) {
-        rule.reportAtToken(publicWidgets[i].namePart.typeName);
-      }
+    for (final extraWidget in publicWidgets.skip(1)) {
+      rule.reportAtToken(extraWidget.namePart.typeName);
     }
   }
 }

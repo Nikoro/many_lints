@@ -131,6 +131,8 @@ A chain is only worth naming when re-evaluating it is redundant, so several shap
 
 **Repetition across separate blocks.** The rule looks within one block, so the same chain in two different methods is two independent readings.
 
+**Chains that differ only in spelling.** Chains are matched by source text, so the same value reached through a renamed local is not recognised. That costs a missed report rather than a false one.
+
 When a chain and its own prefix both repeat the same number of times, only the longest is reported — naming it subsumes the shorter one, so two diagnostics would ask for the same edit twice.
 
 ## Turning this rule off

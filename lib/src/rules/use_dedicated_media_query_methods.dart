@@ -7,7 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 
-/// Suggests using MediaQuery dedicated methods instead of MediaQuery.of().property.
 class UseDedicatedMediaQueryMethods extends ManyLintsRule {
   static const LintCode code = LintCode(
     'use_dedicated_media_query_methods',

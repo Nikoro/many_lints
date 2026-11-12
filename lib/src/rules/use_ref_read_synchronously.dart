@@ -8,12 +8,6 @@ import '../many_lints_rule.dart';
 import '../async_guard_utils.dart';
 import '../riverpod_type_checkers.dart';
 
-/// Warns when `ref.read()` is called after an `await` point inside an async
-/// callback within a ConsumerWidget or ConsumerState build method without
-/// checking if the widget is still mounted.
-///
-/// After an `await`, the widget may have been unmounted, making `ref.read()`
-/// return stale or unintended state.
 class UseRefReadSynchronously extends ManyLintsRule {
   static const LintCode code = LintCode(
     'use_ref_read_synchronously',
@@ -54,7 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodDeclaration(MethodDeclaration node) {
     if (node.name.lexeme != 'build') return;
 
-    // Navigate to the enclosing class
     final enclosingBody = node.parent;
     if (enclosingBody is! BlockClassBody) return;
     final classDecl = enclosingBody.parent;
@@ -63,21 +56,16 @@ class _Visitor extends SimpleAstVisitor<void> {
     final element = classDecl.declaredFragment?.element;
     if (element == null) return;
 
-    // Check if it's a ConsumerWidget, ConsumerState, or Hook variants
     if (!consumerWidgetChecker.isSuperOf(element) &&
         !consumerStateChecker.isSuperOf(element)) {
       return;
     }
 
-    // Find async callbacks inside the build method and check for ref.read
-    // after await points
     final finder = _AsyncCallbackFinder(rule);
     node.body.visitChildren(finder);
   }
 }
 
-/// Finds async function expressions (callbacks) inside the build method
-/// and checks each for `ref.read()` usage after `await` points.
 class _AsyncCallbackFinder extends RecursiveAstVisitor<void> {
   final UseRefReadSynchronously rule;
 
@@ -90,14 +78,11 @@ class _AsyncCallbackFinder extends RecursiveAstVisitor<void> {
       if (body is BlockFunctionBody) {
         _checkStatements(body.block.statements);
       }
-      // Don't recurse into this async body — it's been handled
       return;
     }
-    // Continue recursing into non-async lambdas
     super.visitFunctionExpression(node);
   }
 
-  /// Checks a list of statements for ref.read() usage after an await point.
   void _checkStatements(NodeList<Statement> statements) {
     var seenAwait = false;
 
@@ -107,20 +92,17 @@ class _AsyncCallbackFinder extends RecursiveAstVisitor<void> {
         continue;
       }
 
-      // After an await: check for mounted guard that resets context
       if (isMountedGuardWithReturn(statement)) {
         seenAwait = false;
         continue;
       }
 
-      // Report ref.read() usage after an await without a mounted guard
       final finder = _RefReadFinder(rule);
       statement.accept(finder);
     }
   }
 }
 
-/// Finds `ref.read(...)` calls in AST nodes.
 class _RefReadFinder extends RecursiveAstVisitor<void> {
   final UseRefReadSynchronously rule;
 
@@ -131,25 +113,23 @@ class _RefReadFinder extends RecursiveAstVisitor<void> {
     if (node.methodName.name == 'read') {
       if (_isRefTarget(node.target)) {
         rule.reportAtNode(node);
-        return; // Don't recurse — already reported
+        return;
       }
     }
     super.visitMethodInvocation(node);
   }
 
-  /// Checks if the target is `ref` or `ref!`.
   static bool _isRefTarget(Expression? target) {
     if (target case SimpleIdentifier(name: 'ref')) {
       return true;
     }
-    // Handle ref! (PostfixExpression with ! operator)
     if (target case PostfixExpression(operand: SimpleIdentifier(name: 'ref'))) {
       return true;
     }
     return false;
   }
 
-  // Stop at function boundaries — nested closures may be stored for later
+  // Edge case: a nested closure may be stored and run later, after its own mounted check
   @override
   void visitFunctionExpression(FunctionExpression node) {}
 

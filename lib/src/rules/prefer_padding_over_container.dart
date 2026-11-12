@@ -8,7 +8,6 @@ import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../flutter_type_checkers.dart';
 
-/// Suggests using Padding widget instead of Container with only padding or margin.
 class PreferPaddingOverContainer extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_padding_over_container',

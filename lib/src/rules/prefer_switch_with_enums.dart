@@ -9,16 +9,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a condition compares one enum value against several
-/// constants.
-///
-/// Three shapes are reported: an if-else chain, a single condition that
-/// `||`-chains comparisons, and `{E.a, E.b, E.c}.contains(value)`.
-///
-/// A `switch` over an enum is checked for exhaustiveness: add a constant
-/// and the compiler points at every switch that must handle it. None of
-/// these shapes gets that check, so a new constant silently falls through
-/// to the final `else` — or to nothing at all.
 class PreferSwitchWithEnums extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_switch_with_enums',
@@ -28,8 +18,7 @@ class PreferSwitchWithEnums extends ManyLintsRule {
         'handled.',
   );
 
-  /// Minimum number of chained comparisons before a switch is worth it.
-  static const _threshold = 3;
+  static const _minComparisons = 3;
 
   PreferSwitchWithEnums()
     : super(
@@ -60,20 +49,17 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitIfStatement(IfStatement node) {
-    // Only look at the head of a chain, so one chain reports once.
-    if (node.parent is IfStatement) return;
+    final isElseIfBranch = node.parent is IfStatement;
+    if (isElseIfBranch) return;
 
     String? subject;
     var comparisons = 0;
 
     for (IfStatement? current = node; current != null;) {
-      // A branch may test the same value several times with `||`, as in
-      // `v == E.a || v == E.b`. Each comparison counts toward the threshold.
       final branch = _branchComparisons(current.expression);
       if (branch == null) return;
 
       subject ??= branch.subject;
-      // Every branch must test the same value for a switch to replace it.
       if (branch.subject != subject) return;
 
       comparisons += branch.count;
@@ -82,24 +68,15 @@ class _Visitor extends SimpleAstVisitor<void> {
       current = elseStatement is IfStatement ? elseStatement : null;
     }
 
-    if (comparisons < PreferSwitchWithEnums._threshold) return;
+    if (comparisons < PreferSwitchWithEnums._minComparisons) return;
 
     rule.reportAtNode(node.expression, arguments: [subject!]);
   }
 
-  /// Reports `{E.a, E.b, E.c}.contains(value)` used as a condition.
-  ///
-  /// A membership test over a literal set of constants has the same blind
-  /// spot as an if-else chain: adding a constant changes nothing and the
-  /// compiler stays silent. Only a literal receiver is reported — a named
-  /// collection is a deliberate, reusable set, not an inlined branch.
   @override
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name != 'contains') return;
 
-    // `ignore_contains: true` limits the rule to if-else and `||` chains,
-    // leaving membership tests alone — a set literal reads well enough that
-    // some projects prefer it over a switch.
     if (rule.config.boolOption('ignore_contains', defaultValue: false)) {
       return;
     }
@@ -121,9 +98,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     };
     if (elements == null) return;
 
-    // Every element must be an enum constant, and there must be enough of
-    // them that a switch is clearer than the test.
-    if (elements.length < PreferSwitchWithEnums._threshold) return;
+    if (elements.length < PreferSwitchWithEnums._minComparisons) return;
     for (final element in elements) {
       if (element is! Expression) return;
       if (!_isEnumConstant(element)) return;
@@ -132,10 +107,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(node, arguments: [argument.toSource()]);
   }
 
-  /// Counts the enum comparisons in one branch condition.
-  ///
-  /// Handles a single `subject == E.a` and an `||` chain of them. Returns
-  /// `null` when the condition tests anything else, or mixes subjects.
   ({String subject, int count})? _branchComparisons(Expression expression) {
     if (expression is BinaryExpression && expression.operator.lexeme == '||') {
       final left = _branchComparisons(expression.leftOperand);
@@ -155,8 +126,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return (subject: subject, count: 1);
   }
 
-  /// Returns the source of the compared value when [expression] is
-  /// `subject == EnumType.constant`, or `null` otherwise.
   String? _comparedEnumSubject(Expression expression) {
     if (expression is! BinaryExpression) return null;
     if (expression.operator.lexeme != '==') return null;

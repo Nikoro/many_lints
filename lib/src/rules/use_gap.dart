@@ -11,8 +11,6 @@ import '../flutter_widget_helpers.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when SizedBox or Padding is used for spacing inside multi-child
-/// widgets. Suggests using the Gap widget instead.
 class UseGap extends ManyLintsRule {
   static const LintCode code = LintCode(
     'use_gap',
@@ -65,7 +63,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _checkSizedBox(InstanceCreationExpression node) {
-    // Must have only height or width (+ optional key), not both, not child
     final args = node.argumentList.arguments;
     String? spacingParam;
 
@@ -77,10 +74,10 @@ class _Visitor extends SimpleAstVisitor<void> {
         } else if (name == 'width' && spacingParam == null) {
           spacingParam = 'width';
         } else {
-          return; // has child, both height+width, or other params
+          return;
         }
       } else {
-        return; // positional args not expected
+        return;
       }
     }
 
@@ -89,7 +86,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final parentAxis = _findParentMultiChildAxis(node);
     if (parentAxis == null) return;
 
-    // Verify axis match: height for vertical, width for horizontal
     final axis = parentAxis.$1;
     if (axis != null) {
       if (axis == FlexAxis.vertical && spacingParam != 'height') return;
@@ -100,23 +96,19 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _checkPadding(InstanceCreationExpression node) {
-    // Must have padding param with EdgeInsets.only with a single direction
     final paddingExpr = namedArgumentValue(
       node.argumentList.arguments,
       'padding',
     );
     if (paddingExpr == null) return;
 
-    // Check for EdgeInsets.only(...)
     if (paddingExpr is! InstanceCreationExpression) return;
     final constructorName = paddingExpr.constructorName;
     if (constructorName.name?.name != 'only') return;
 
-    // Check it's EdgeInsets type
     final typeName = constructorName.type.name.lexeme;
     if (typeName != 'EdgeInsets' && typeName != 'EdgeInsetsDirectional') return;
 
-    // Must have exactly one directional argument
     final dirArgs = paddingExpr.argumentList.arguments
         .whereType<NamedArgument>()
         .where((e) => e.name.lexeme != 'key')
@@ -135,7 +127,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final parentAxis = _findParentMultiChildAxis(node);
     if (parentAxis == null) return;
 
-    // Verify axis match
     final axis = parentAxis.$1;
     if (axis != null) {
       if (axis == FlexAxis.vertical && !verticalDirs.contains(dirName)) return;
@@ -147,20 +138,13 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(node.constructorName, arguments: ['Padding']);
   }
 
-  /// Walks up the AST to find if this node is inside the `children` list
-  /// of a multi-child widget. Returns the axis if found, null otherwise.
   (FlexAxis?,)? _findParentMultiChildAxis(InstanceCreationExpression node) {
-    // Walk up: node → ListLiteral → NamedExpression(children) → ArgumentList → InstanceCreation
     var current = node.parent;
 
-    // The node should be directly inside a ListLiteral
     if (current is! ListLiteral) return null;
 
     final listLiteral = current;
 
-    // `min_children` skips short lists, where a single spacer reads fine
-    // inline. Default 1 reports every list, reproducing the previous
-    // behaviour; `prefer_spacing` exposes the same key.
     if (listLiteral.elements.length <
         rule.config.intOption('min_children', defaultValue: 1)) {
       return null;
@@ -168,18 +152,15 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     current = listLiteral.parent;
 
-    // The ListLiteral should be the value of a NamedArgument named 'children'
     if (current case NamedArgument(name: Token(lexeme: 'children'))) {
       current = current.parent;
     } else {
       return null;
     }
 
-    // Should be inside an ArgumentList
     if (current is! ArgumentList) return null;
     current = current.parent;
 
-    // Should be an InstanceCreationExpression of a multi-child widget
     if (current is! InstanceCreationExpression) return null;
 
     final parentType = current.constructorName.type;

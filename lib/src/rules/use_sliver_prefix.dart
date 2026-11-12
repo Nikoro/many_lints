@@ -11,11 +11,6 @@ import '../many_lints_rule.dart';
 import '../state_base_classes.dart';
 import '../state_class_pairing.dart';
 
-/// Warns when a widget's build method returns a sliver widget but the class
-/// name does not start with 'Sliver'.
-///
-/// Consistent naming with a 'Sliver' prefix helps developers quickly identify
-/// which widgets are sliver-based and can be used inside CustomScrollView.
 class UseSliverPrefix extends ManyLintsRule {
   static const LintCode code = LintCode(
     'use_sliver_prefix',
@@ -62,7 +57,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       final className = declaration.namePart.typeName.lexeme;
 
       if (statelessWidgetChecker.isSuperOf(element)) {
-        // StatelessWidget: check build() directly
         if (!className.startsWith('Sliver') &&
             _buildReturnsSliverWidget(declaration)) {
           rule.reportAtToken(declaration.namePart.typeName);
@@ -74,7 +68,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     }
 
-    // For StatefulWidgets, find companion State and check its build()
     for (final widget in statefulWidgets) {
       final widgetName = widget.namePart.typeName.lexeme;
       if (widgetName.startsWith('Sliver')) continue;
@@ -88,7 +81,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Checks if a class has a `build()` method that returns a sliver widget.
   static bool _buildReturnsSliverWidget(ClassDeclaration node) {
     final body = node.body;
     if (body is! BlockClassBody) return false;
@@ -105,7 +97,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return _isSliverExpression(returnExpr);
   }
 
-  /// Checks if the expression's static type is a sliver widget from Flutter.
   static bool _isSliverExpression(Expression expression) {
     final type = expression.staticType;
     if (type is! InterfaceType) return false;
@@ -113,15 +104,12 @@ class _Visitor extends SimpleAstVisitor<void> {
     final typeName = type.element.name;
     if (typeName == null) return false;
 
-    // Check if the type name starts with 'Sliver' and is from Flutter
     if (!typeName.startsWith('Sliver')) return false;
 
     final libraryUri = type.element.library.identifier;
     return _flutterLibraryPrefixes.any(libraryUri.startsWith);
   }
 
-  /// Flutter 3.50 moved the Material slivers (`SliverAppBar`) into
-  /// package:material_ui.
   static const _flutterLibraryPrefixes = [
     'package:flutter/',
     'package:material_ui/',

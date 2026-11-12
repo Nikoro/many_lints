@@ -6,13 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a local variable is declared only to be returned on the next
-/// line.
-///
-/// `final result = compute(); return result;` introduces a name that
-/// carries no information the return statement does not already give. The
-/// extra line is one more thing to read and to keep in sync when the
-/// expression changes.
 class PreferImmediateReturn extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_immediate_return',
@@ -61,39 +54,31 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (declarationStatement is! VariableDeclarationStatement) return;
 
     final variables = declarationStatement.variables.variables;
-    // `var a = 1, b = 2;` cannot be collapsed into a return.
     if (variables.length != 1) return;
 
     final variable = variables.first;
     if (variable.name.lexeme != returned.name) return;
 
-    // No initializer means there is nothing to return in its place.
     if (variable.initializer == null) return;
 
-    // A `late` declaration has semantics of its own.
     if (declarationStatement.variables.isLate) return;
 
-    // The name must resolve to this declaration, not a field or an outer
-    // variable that merely shares the identifier.
     final declaredElement = variable.declaredFragment?.element;
     if (declaredElement == null) return;
     if (returned.element != declaredElement) return;
 
-    // Any other reference in the enclosing function means the variable is
-    // doing real work.
     final function = node.thisOrAncestorOfType<FunctionBody>();
     if (function == null) return;
 
     final counter = _ReferenceCounter(declaredElement);
     function.accept(counter);
-    // One reference: the return itself.
-    if (counter.count != 1) return;
+    final isReferencedOnlyByReturn = counter.count == 1;
+    if (!isReferencedOnlyByReturn) return;
 
     rule.reportAtNode(declarationStatement, arguments: [variable.name.lexeme]);
   }
 }
 
-/// Counts references to a specific local variable.
 class _ReferenceCounter extends RecursiveAstVisitor<void> {
   final Object declaredElement;
   int count = 0;
@@ -102,8 +87,8 @@ class _ReferenceCounter extends RecursiveAstVisitor<void> {
 
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
-    // Skip the declaration's own name token.
-    if (node.parent is VariableDeclaration) return;
+    final isDeclaredName = node.parent is VariableDeclaration;
+    if (isDeclaredName) return;
     if (node.element == declaredElement) count++;
   }
 }

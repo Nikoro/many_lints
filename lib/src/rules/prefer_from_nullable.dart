@@ -7,23 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../fpdart_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when a null check is used to build an `Option` by hand.
-///
-/// `Option.fromNullable` exists for exactly this, and the conditional spells
-/// out a decision the constructor already makes. Beyond the length, the manual
-/// form has to name the value twice — once in the test and once in the `Some`
-/// — which is where the copy-paste bug lives: `x != null ? Option.of(y) : ...`
-/// compiles happily.
-///
-/// **Bad:**
-/// ```dart
-/// final option = name != null ? Option.of(name) : const Option<String>.none();
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// final option = Option.fromNullable(name);
-/// ```
 class PreferFromNullable extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_from_nullable',
@@ -63,8 +46,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final condition = node.condition.unParenthesized;
     if (condition is! BinaryExpression) return;
 
-    // Work out which branch runs when the value is non-null. `x != null`
-    // puts it in `then`; `x == null` swaps them.
     final Expression someBranch;
     final Expression noneBranch;
     switch (condition.operator.type.lexeme) {
@@ -83,18 +64,14 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (!_isNoneConstruction(noneBranch)) return;
 
-    // The `Some` branch must wrap the *same* value the condition tested;
-    // otherwise the conditional is doing something else entirely and
-    // rewriting it would change behaviour.
     final wrapped = _someConstructionArgument(someBranch);
     if (wrapped == null) return;
-    if (wrapped.toSource() != tested.toSource()) return;
+    final wrapsTestedValue = wrapped.toSource() == tested.toSource();
+    if (!wrapsTestedValue) return;
 
     rule.reportAtNode(node);
   }
 
-  /// The operand compared against `null`, or null when neither side is a
-  /// `null` literal.
   Expression? _nullTestedOperand(BinaryExpression condition) {
     final left = condition.leftOperand.unParenthesized;
     final right = condition.rightOperand.unParenthesized;
@@ -104,7 +81,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return null;
   }
 
-  /// Whether [expression] builds a `None`.
   bool _isNoneConstruction(Expression expression) {
     final target = expression.unParenthesized;
 
@@ -114,15 +90,12 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (!optionChecker.isExactly(element.enclosingElement)) return false;
 
       final name = target.constructorName.name?.name;
-      // `Option.none()` and the `None()` subclass both spell the empty case.
       return name == 'none' || name == null;
     }
 
     return false;
   }
 
-  /// The value passed to a `Some`/`Option.of` construction, or null when
-  /// [expression] is not one.
   Expression? _someConstructionArgument(Expression expression) {
     final target = expression.unParenthesized;
     if (target is! InstanceCreationExpression) return null;

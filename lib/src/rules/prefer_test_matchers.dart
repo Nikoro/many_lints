@@ -7,25 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when the second argument of `expect()` or `expectLater()` is not a
-/// `Matcher` subclass.
-///
-/// Using raw literals (e.g., `expect(x, 1)`) instead of matchers
-/// (e.g., `expect(x, equals(1))`) leads to less informative failure messages.
-///
-/// **Bad:**
-/// ```dart
-/// expect(array.length, 1);
-/// expect(value, 'hello');
-/// expect(flag, true);
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// expect(array, hasLength(1));
-/// expect(value, equals('hello'));
-/// expect(flag, isTrue);
-/// ```
 class PreferTestMatchers extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_test_matchers',
@@ -71,20 +52,15 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (args.length < 2) return;
 
     final matcherExpr = args[1];
-
-    // Skip if it's a named argument (e.g., reason: 'xxx')
     if (matcherExpr is NamedArgument) return;
 
     final matcherType = matcherExpr.argumentExpression.staticType;
     if (matcherType == null || matcherType is DynamicType) return;
-
-    // Check if the matcher type is a Matcher subclass
     if (_isMatcherType(matcherType)) return;
 
     rule.reportAtNode(matcherExpr);
   }
 
-  /// Returns true if [type] is or extends `Matcher` from package:matcher.
   static bool _isMatcherType(DartType type) {
     if (type is! InterfaceType) return false;
 

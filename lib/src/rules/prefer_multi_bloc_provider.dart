@@ -10,9 +10,6 @@ import '../bloc_type_checkers.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when nested `BlocProvider`, `BlocListener`, or `RepositoryProvider`
-/// widgets can be consolidated using `MultiBlocProvider`,
-/// `MultiBlocListener`, or `MultiRepositoryProvider`.
 class PreferMultiBlocProvider extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_multi_bloc_provider',
@@ -42,23 +39,38 @@ class PreferMultiBlocProvider extends ManyLintsRule {
   }
 }
 
-/// Maps each single-provider type checker to (multiName, singleName).
-const _providerTypes = [
-  (blocProviderChecker, 'MultiBlocProvider', 'BlocProvider'),
-  (blocListenerChecker, 'MultiBlocListener', 'BlocListener'),
-  (repositoryProviderChecker, 'MultiRepositoryProvider', 'RepositoryProvider'),
+typedef _ProviderType = ({
+  TypeChecker checker,
+  String multiName,
+  String singleName,
+});
+
+const List<_ProviderType> _providerTypes = [
+  (
+    checker: blocProviderChecker,
+    multiName: 'MultiBlocProvider',
+    singleName: 'BlocProvider',
+  ),
+  (
+    checker: blocListenerChecker,
+    multiName: 'MultiBlocListener',
+    singleName: 'BlocListener',
+  ),
+  (
+    checker: repositoryProviderChecker,
+    multiName: 'MultiRepositoryProvider',
+    singleName: 'RepositoryProvider',
+  ),
 ];
 
-/// Finds which provider type matches [staticType], or returns `null`.
-(TypeChecker, String, String)? _matchProviderType(DartType? staticType) {
+_ProviderType? _matchProviderType(DartType? staticType) {
   if (staticType == null) return null;
   for (final entry in _providerTypes) {
-    if (entry.$1.isExactlyType(staticType)) return entry;
+    if (entry.checker.isExactlyType(staticType)) return entry;
   }
   return null;
 }
 
-/// Returns the [ArgumentList] and static type of a provider-like expression.
 (ArgumentList, DartType?)? _getCallInfo(Expression node) {
   if (node is InstanceCreationExpression) {
     return (node.argumentList, node.staticType);
@@ -69,8 +81,6 @@ const _providerTypes = [
   return null;
 }
 
-/// Returns `true` if [node] is the `child:` of a parent call that matches
-/// the same provider type.
 bool _isChildOfSameProviderType(Expression node, TypeChecker checker) {
   final namedArg = node.parent;
   if (namedArg is! NamedArgument) return false;
@@ -107,12 +117,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     final match = _matchProviderType(staticType);
     if (match == null) return;
 
-    final checker = match.$1;
+    final checker = match.checker;
 
-    // Only report on the outermost nested provider
-    if (_isChildOfSameProviderType(node, checker)) return;
+    final isNestedInSameProvider = _isChildOfSameProviderType(node, checker);
+    if (isNestedInSameProvider) return;
 
-    // Check if the `child:` is also the same provider type
     final callInfo = _getCallInfo(node);
     if (callInfo == null) return;
 
@@ -122,6 +131,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     final childType = childExpr.staticType;
     if (childType == null || !checker.isExactlyType(childType)) return;
 
-    rule.reportAtNode(reportNode, arguments: [match.$2, match.$3]);
+    rule.reportAtNode(
+      reportNode,
+      arguments: [match.multiName, match.singleName],
+    );
   }
 }

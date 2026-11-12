@@ -7,16 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../state_base_classes.dart';
 
-/// Warns when `super` lifecycle methods are called in the wrong order
-/// inside a `State` subclass.
-///
-/// **Early-execution methods** (`initState`, `didUpdateWidget`, `activate`,
-/// `didChangeDependencies`, `reassemble`) must call `super` first.
-///
-/// **Late-execution methods** (`deactivate`, `dispose`) must call `super` last.
-///
-/// Calling `super` at the wrong position can lead to bugs where properties
-/// are not yet initialized or have already been disposed.
 class ProperSuperCalls extends ManyLintsRule {
   static const LintCode code = LintCode(
     'proper_super_calls',
@@ -50,7 +40,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  /// Methods where super must be called first.
   static const _superFirstMethods = {
     'initState',
     'didUpdateWidget',
@@ -59,7 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     'reassemble',
   };
 
-  /// Methods where super must be called last.
   static const _superLastMethods = {'deactivate', 'dispose'};
 
   @override
@@ -75,41 +63,36 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // Verify we're inside a State subclass
-    final enclosingClass = node.parent;
-    if (enclosingClass is! BlockClassBody) return;
-    final classDecl = enclosingClass.parent;
+    final classBody = node.parent;
+    if (classBody is! BlockClassBody) return;
+    final classDecl = classBody.parent;
     if (classDecl is! ClassDeclaration) return;
 
     final element = classDecl.declaredFragment?.element;
     if (element == null || !isStateElement(rule, element)) return;
 
-    // Must have a block body
     final body = node.body;
     if (body is! BlockFunctionBody) return;
 
     final statements = body.block.statements;
     if (statements.isEmpty) return;
 
-    // Find the super call
     final superCallIndex = _findSuperCallIndex(statements, methodName);
-    if (superCallIndex == -1) return; // No super call found — not our concern
+    if (superCallIndex == -1) return;
 
     if (shouldBeFirst && superCallIndex != 0) {
       rule.reportAtNode(
-        _extractSuperStatement(statements[superCallIndex]),
+        _reportedSuperCallNode(statements[superCallIndex]),
         arguments: [methodName, 'first'],
       );
     } else if (!shouldBeFirst && superCallIndex != statements.length - 1) {
       rule.reportAtNode(
-        _extractSuperStatement(statements[superCallIndex]),
+        _reportedSuperCallNode(statements[superCallIndex]),
         arguments: [methodName, 'last'],
       );
     }
   }
 
-  /// Returns the index of the statement containing `super.<methodName>()`,
-  /// or -1 if not found.
   static int _findSuperCallIndex(
     NodeList<Statement> statements,
     String methodName,
@@ -120,7 +103,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return -1;
   }
 
-  /// Checks if a statement is `super.<methodName>(...);`
   static bool _isSuperCall(Statement statement, String methodName) {
     if (statement is! ExpressionStatement) return false;
     final expr = statement.expression;
@@ -128,8 +110,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     return expr.target is SuperExpression && expr.methodName.name == methodName;
   }
 
-  /// Returns the node to report — the MethodInvocation inside the statement.
-  static AstNode _extractSuperStatement(Statement statement) {
+  static AstNode _reportedSuperCallNode(Statement statement) {
     if (statement is ExpressionStatement) {
       return statement.expression;
     }

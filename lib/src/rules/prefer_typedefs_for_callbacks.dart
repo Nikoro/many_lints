@@ -6,18 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when an inline function type is written where a typedef would name it.
-///
-/// `void Function(String, int, bool)` at a parameter tells the reader the
-/// shape and nothing else — what the `String` is, what the `bool` means, and
-/// whether two such parameters are the same concept. A typedef gives the
-/// signature a name that can be reused, documented and searched for.
-///
-/// Only function types with at least `min_parameters` parameters (default 2)
-/// are reported: `void Function()` and `void Function(String)` are already
-/// readable, and naming them adds indirection without adding information.
-/// Flutter's own `VoidCallback` and `ValueChanged<T>` exist for exactly the
-/// shapes that clear this bar.
 class PreferTypedefsForCallbacks extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_typedefs_for_callbacks',
@@ -53,8 +41,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitGenericFunctionType(GenericFunctionType node) {
-    // A typedef's own body is the named form this rule asks for.
-    if (node.parent is GenericTypeAlias) return;
+    final isTypedefBody = node.parent is GenericTypeAlias;
+    if (isTypedefBody) return;
 
     final minParameters = rule.config.intOption(
       'min_parameters',

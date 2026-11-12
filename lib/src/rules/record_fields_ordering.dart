@@ -7,19 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../ordering_check.dart';
 
-/// Warns when a record type's *named* fields are not in the configured order.
-///
-/// A record is structurally typed, so its named fields are a set rather than a
-/// sequence — `({int a, int b})` and `({int b, int a})` are the same type. That
-/// makes their written order pure presentation, and an inconsistent one means
-/// the same type reads differently in every place it is spelled out.
-///
-/// **Positional fields are never ordered**: their position *is* their
-/// identity, and reordering them makes a different type.
-///
-/// **Outside the `pedantic` preset, this rule reports nothing until
-/// configured.** Set `order: alphabetical` (or `by_length`, or
-/// `alphabetical_case_sensitive`) to adopt one.
 class RecordFieldsOrdering extends ManyLintsRule {
   static const LintCode code = LintCode(
     'record_fields_ordering',
@@ -57,8 +44,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final configured = rule.config.options['order'];
     if (configured is! String) return;
 
-    // Positional fields are identified by position, so only the named ones
-    // can be reordered without changing the type.
     final fields = node.namedFields?.fields;
     if (fields == null || fields.length < 2) return;
 

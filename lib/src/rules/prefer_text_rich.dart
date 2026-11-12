@@ -7,10 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when RichText is used instead of Text.rich.
-///
-/// RichText does not handle text scaling well. Prefer Text.rich
-/// for better accessibility support.
 class PreferTextRich extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_text_rich',
@@ -62,8 +58,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     final type = node.staticType;
     if (type == null || !_richTextChecker.isExactlyType(type)) return;
 
-    // Only flag direct RichText() calls, not methods on RichText instances
-    if (node.target != null) return;
+    final isBareRichTextCall = node.target == null;
+    if (!isBareRichTextCall) return;
 
     rule.reportAtNode(node.methodName);
   }

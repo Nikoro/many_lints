@@ -9,8 +9,6 @@ import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../flutter_type_checkers.dart';
 
-/// Warns when a `SizedBox` is created with identical `height` and `width`
-/// values. Use `SizedBox.square(dimension: ...)` instead for cleaner code.
 class PreferSizedBoxSquare extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_sized_box_square',
@@ -46,7 +44,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    // Skip named constructors like SizedBox.square, SizedBox.shrink, etc.
     if (node.constructorName.name != null) return;
     _check(node.staticType, node.argumentList, node.constructorName);
   }
@@ -55,8 +52,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     final type = node.staticType;
     if (type == null || !sizedBoxChecker.isExactlyType(type)) return;
-    // MethodInvocation for SizedBox() without type args — skip named
-    // constructors (target would be 'SizedBox', methodName would be 'square')
+    // Edge case: a target here means a named constructor such as `SizedBox.square`.
     if (node.target != null) return;
     _check(type, node.argumentList, node.methodName);
   }
@@ -74,14 +70,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     final widthArg = namedArgumentValue(args, 'width');
     final heightArg = namedArgumentValue(args, 'height');
 
-    // Both width and height must be present
     if (widthArg == null || heightArg == null) return;
 
-    // Check if both values are identical by comparing their source text
-    final widthSource = widthArg.toSource();
-    final heightSource = heightArg.toSource();
-
-    if (widthSource == heightSource) {
+    if (widthArg.toSource() == heightArg.toSource()) {
       rule.reportAtNode(reportNode);
     }
   }
