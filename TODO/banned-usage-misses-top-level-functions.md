@@ -126,12 +126,13 @@ should for something that has no enclosing type.
 
 ### What was probably really going on
 
-Almost certainly the cache bug in
+Almost certainly the completion problem in
 [`plugin-silently-skipped-on-large-projects.md`](plugin-silently-skipped-on-large-projects.md):
-this was verified with a whole-project `dart analyze`, which serves cached
-results with plugin diagnostics stripped on every run after the first. A rule
-that works reports nothing, which is exactly the symptom described here. Verify
-with explicit file arguments before concluding a rule is silent.
+on Dart 3.13 `dart analyze` could exit before plugin diagnostics arrived on a
+large project, and on 3.14 dart-lang/sdk#64023 can still drop them when several
+plugin isolates run. Either way a rule that works reports nothing, which is
+exactly the symptom described here. Verify with a canary diagnostic, or on a
+small set of files, before concluding a rule is silent.
 
 ### The one real gap left
 
@@ -185,8 +186,11 @@ Two things would fix it, and they are independent:
    function can be banned without touching a same-named project declaration.
    This is the more general fix and applies to the whole `banned_*` family.
 
-Neither is implemented. Both are worth their own TODO rather than being
-smuggled into this one, whose headline claim is still false.
+Both shipped in 1.3.0. Any extension member is banned as
+`Extension.member` (`FutureManyExtensions.unawaited`), and a library-qualified
+entry uses `#`, as `avoid_banned_types` does: `deny: ['dart:async#unawaited']`
+bans the SDK function without touching a same-named project declaration.
+Qualifying by the extended type (`Future.unawaited`) was not added.
 
 **In practice this specific need is now served by `match_pattern`**, which
 matches `^unawaited\((.+)\)$` — a call shape, so the trailing form cannot match

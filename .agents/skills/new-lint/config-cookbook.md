@@ -856,9 +856,9 @@ Rules:
 - **Reuse the exact `syncKey`** (`many-lints-config-file`) so all tab groups on the site
   switch together.
 - **Do not** repeat the `include:`-inheritance caveat on every rule page — it lives once
-  in `configuration.md`. The tabs make the two locations self-evident.
+  in `configuration.mdx`. The tabs make the two locations self-evident.
 - **Add the rule to the "Per-rule options" table** in
-  `docs/src/content/docs/docs/configuration.md`; that table is expected to list every
+  `docs/src/content/docs/docs/configuration.mdx`; that table is expected to list every
   configurable rule.
 
 ---

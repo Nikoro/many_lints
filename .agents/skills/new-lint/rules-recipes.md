@@ -200,7 +200,7 @@ static bool _isNegativeOne(Expression expr) {
 
 Always check both operand orders for commutative comparisons (`x == -1` or `-1 == x`).
 
-**Ref:** [avoid_collection_equality_checks.dart](../../../lib/src/rules/avoid_collection_equality_checks.dart), [prefer_contains.dart](../../../lib/src/rules/prefer_contains.dart)
+**Ref:** [avoid_collection_equality_checks.dart](../../../lib/src/rules/avoid_collection_equality_checks.dart) (the `-1` check came from `prefer_contains`, removed in 1.0.0 in favour of the SDK rule of that name)
 
 ### Check If Two Types Are Unrelated
 

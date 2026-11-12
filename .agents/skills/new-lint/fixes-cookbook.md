@@ -1121,9 +1121,9 @@ a class name token *and* a constructor name token). Only overlap is fatal.
 
 ## Testing a Fix
 
-`analyzer_testing` has **no** fix test API — still true as of 0.4.5, which
-adds only `AssistProcessorTest` (assists) beside `AnalysisRuleTest`,
-`PubPackageResolutionTest` and `SkippedTest`. That does not
+`analyzer_testing` has **no** fix test API — still true as of 0.4.5. Beside
+`AnalysisRuleTest`, `PubPackageResolutionTest` and `SkippedTest` it has only
+`AssistProcessorTest` for assists (since 0.4.3). That does not
 mean fixes cannot be tested: `PluginServer` answers `edit.getFixes`, so a real
 fix can be requested and the returned edit applied to the source.
 

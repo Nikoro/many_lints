@@ -17,8 +17,11 @@ This directory contains code assist implementations. Assists are standalone refa
   assist offers linked renames or when you want the same end-to-end guarantee
   the fix output tests give. Batches live under `test/assist_output/`.
 
-`analyzer_testing` has no assist base class either way — do not conclude from
-that that assists are untestable.
+`analyzer_testing` 0.4.3 and later also ship `AssistProcessorTest`
+(`package:analyzer_testing/correction/assist_processor.dart`, with
+`assertHasAssist` / `assertNoAssist` for a given `AssistKind`). This package's
+assist tests predate it and use the two routes above; either is fine for a new
+assist.
 
 ## Assists vs Fixes
 

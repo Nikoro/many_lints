@@ -76,7 +76,7 @@ use is the reverse check below: rules a Flutter user already has switched on.
 3. Note which rules already carry a `RuleState` (see Step 5) so an
    already-deprecated rule is not re-reported as a new finding.
 4. Cross-reference the docs page in
-   `docs/src/content/docs/docs/rules/<category>/<rule-name>.md` for the
+   `docs/src/content/docs/docs/rules/<category>/<rule-name>.md` (or `.mdx` for the pages that use tabs) for the
    human-facing rationale — the "Why use this rule" section often states the
    intent more clearly than the code does.
 
@@ -290,7 +290,7 @@ Checklist for each rule being deprecated:
 4. **Tests** — do not delete them. Update expected messages to match the new
    `problemMessage`. Add one assertion that the rule's `state.isDeprecated` is
    `true`, so the marker cannot silently regress.
-5. **Docs page** — `docs/src/content/docs/docs/rules/<category>/<rule-name>.md`:
+5. **Docs page** — `docs/src/content/docs/docs/rules/<category>/<rule-name>.md` (or `.mdx`):
    - Add a Starlight aside directly under the badges:
      ```mdx
      :::caution[Deprecated in v<version>]

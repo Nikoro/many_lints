@@ -59,7 +59,9 @@ The three ways a report went wrong, all worth checking explicitly:
 2. **The rule works; the verification was broken.** `banned_usage` was reported
    as unable to ban a top-level function. It bans them fine — 14 findings on
    the reporter's own project once re-checked with explicit file arguments. The
-   original run hit the plugin-cache bug in Step 11.5b and reported nothing.
+   original run lost its plugin diagnostics to the `dart analyze` completion
+   race (Dart 3.13, and dart-lang/sdk#64023 on 3.14; see Step 11) and reported
+   nothing.
    **A "the rule is silent" report is suspect until re-verified properly.**
 
 3. **A supporting claim was checked carelessly — including by you.** While
@@ -300,12 +302,23 @@ name there if any:
 - **`_recommendedOnlyRules`** — idiomatic, widely-agreed Dart/Flutter practice, or a
   likely-but-not-certain mistake. Must be uncontroversial: something the Dart or Flutter
   team would plausibly endorse.
-- **neither** — the rule imposes an architecture, a naming scheme, or a contested style
-  choice, has a meaningful false-positive rate, or does nothing until configured (any
-  `banned_*`-style rule). Leave it out of both sets; `preset: all` still picks it up.
+- **`_opinionatedOnlyRules`** — this package's house style: a stylistic preference that
+  reasonable codebases disagree about, kept only if real production code would change
+  what it reports.
+- **`_pedanticOnlyRules`** — uniformity and explicitness over a quiet signal: structural
+  budgets, strict naming and mechanical ordering. Option defaults for this tier go in
+  `pedanticRuleOptions`.
+- **none** — the rule imposes an architecture or a project vocabulary, assumes a package
+  (`equatable`, `gap`), contradicts a rule already in a preset (see
+  `conflictingWithOpinionated`), or does nothing until configured (any `banned_*`-style
+  rule). Leave it out of every set; users enable it by name. There is no `preset: all`.
 
-When torn, pick the lower tier. A preset must stay defensible as "safe and
-non-opinionated" — a user enabling `recommended` must not get taste imposed on them.
+The presets are cumulative: `recommended` contains `core`, `opinionated` contains
+`recommended`, and `pedantic` contains everything below it. A rule page says "on with
+`preset: X` and every preset above it" (just `preset: pedantic` for that tier).
+
+When torn, pick the lower tier. `core` and `recommended` must stay defensible as "safe
+and non-opinionated" — a user enabling `recommended` must not get taste imposed on them.
 
 `presets_test.dart` asserts every preset name is a real registered rule, so a typo or a
 later rename fails the suite rather than silently shrinking a preset.
@@ -400,8 +413,10 @@ anyway, because `PluginServer` answers `edit.getFixes` **and**
 If Step 5 created a fix, add its output-test group under `test/fix_output/`
 before proceeding.
 
-If Step 4b made the rule configurable, `ManyLintsRuleTest` **cannot** cover it —
-its `preset: all` config file is exactly what a config test needs to replace. Add a `PluginServer`-driven group
+If Step 4b made the rule configurable, a `ManyLintsRuleTest` covers the options by
+writing its own `many_lints.yaml` over the base class's `rules: {<rule>: true}` file
+inside the test. To cover how the configuration is found (the `many_lints:` section of
+`analysis_options.yaml`, nested packages), add a `PluginServer`-driven group
 following `test/rule_config_test.dart`, and remember `ConfigLoader.clearCache()`
 in `setUp` (the cache is static and survives across tests).
 

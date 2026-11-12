@@ -93,9 +93,11 @@ and [testing rules](https://github.com/dart-lang/sdk/blob/main/pkg/analysis_serv
    references. Run `dart run tool/verify_documentation.dart` to check every
    Dart/YAML snippet, synchronized config pair, and internal docs link.
 
-8. **Refresh generated catalogs** with `cd docs && bun run catalogs`. Update
-   `CHANGELOG.md` under `[Unreleased]` and review any README count changes
-   reported by `test/plugin_registration_test.dart`.
+8. **Refresh generated catalogs** with `cd docs && bun run catalogs`. Add a
+   `CHANGELOG.md` entry to the topmost section when that version has not been
+   released yet (no tag for it); otherwise start a `## [Unreleased]` section at
+   the top, which the release turns into the version heading. Review any README
+   count changes reported by `test/plugin_registration_test.dart`.
 
 ## Running Tests
 

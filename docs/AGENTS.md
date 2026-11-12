@@ -44,27 +44,33 @@ docs/
       docs/
         getting-started.mdx # Quick setup guide
         configuration.mdx   # Installation, diagnostics config, suppression
+        presets.md          # Generated preset catalog (exact rules per preset)
+        assists.md          # Code assists, with before/after pairs checked by tests
         rules.md            # Generated category index for all rules
         rules/              # Hand-maintained rule pages organized by category
-          class-naming/
-          bloc-riverpod/
-          riverpod-state/
+          architecture/
           async-safety/
+          bloc-riverpod/
+          class-naming/
+          code-organization/
+          code-quality/
+          collection-type/
+          control-flow/
+          formatting/
+          fpdart/
+          hook-rules/
+          pattern-matching/
+          resource-management/
+          riverpod-state/
+          shorthand-patterns/
+          state-management/
+          testing-rules/
+          type-annotations/
           widget-best-practices/
           widget-replacement/
-          state-management/
-          control-flow/
-          collection-type/
-          pattern-matching/
-          type-annotations/
-          code-organization/
-          shorthand-patterns/
-          hook-rules/
-          testing-rules/
-          resource-management/
-          code-quality/
   scripts/
     generate-rule-pages.mjs # Generates rule docs from Dart source + examples
+    update-documentation-catalogs.mjs # Regenerates rules.md, presets.md, the example catalog and per-page catalog lines (--check verifies)
   dist/                     # Build output (gitignored)
 ```
 
@@ -187,7 +193,10 @@ Consequences when writing or editing a page:
 ### Configurable rules use `.mdx`
 
 The 125 rules that accept options are `.mdx`, not `.md`, because every options snippet is
-shown in both supported locations via Starlight tabs:
+shown in both supported locations via Starlight tabs. Three pages of rules without
+options are `.mdx` too, for the same tabs in their configuration examples
+(`match_getter_setter_field_names`, `prefer_declaring_const_constructor`,
+`prefer_conditional_expressions`), so 128 rule pages are `.mdx` in all:
 
 ```mdx
 import { Tabs, TabItem } from '@astrojs/starlight/components';

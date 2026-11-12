@@ -18,7 +18,10 @@ Run these checks before doing anything else. If any fail, **abort immediately** 
 
 1. **Clean working tree**: Run `git status --porcelain`. If there is any output, abort — tell the user to commit or stash their changes first.
 2. **On main branch**: Run `git branch --show-current`. If the result is not `main`, abort — tell the user to switch to `main`.
-3. **In sync with remote**: Run `git fetch origin main` then compare `git rev-parse HEAD` with `git rev-parse origin/main`. If they differ, abort — tell the user to pull or push first.
+3. **In sync with remote**: Run `git fetch origin main`, then `git rev-list --left-right --count origin/main...HEAD` (behind, ahead).
+   - Behind or diverged (left count > 0): abort — tell the user to pull or rebase first.
+   - Equal: continue.
+   - Only ahead: the release may already be prepared locally but not pushed. List the commits (`git log --oneline origin/main..HEAD`) and tell the user. If `pubspec.yaml` already carries the target version and `CHANGELOG.md` already has its section, treat this as a prepared release: skip the edits in Step 4 that are already done and verify them instead of re-applying. Otherwise ask whether the unpushed commits belong in this release before continuing. Never push from this step.
 
 ## Step 3: Quality Gates
 
@@ -133,19 +136,23 @@ Allow the user to request edits to the CHANGELOG content before proceeding.
 
    **If the release changes the `analyzer` dependency**, also update the analyzer version badge in `README.md` (the `img.shields.io/badge/analyzer-<version>-blue` line — update both the `src` URL and the `alt` text) to the analyzer version from `pubspec.lock`. Additionally check that the `environment.sdk` constraint in `pubspec.yaml` and `example/pubspec.yaml` and the pinned `sdk:` version in `.github/workflows/*.yaml` satisfy the new analyzer's minimum SDK requirement — a mismatch makes CI fail at `dart pub get` after the tag is pushed. Finally, update the "Requires Dart X.Y+ (Flutter A.B+)" line in `README.md`, `docs/src/content/docs/docs/configuration.mdx`, and `docs/src/content/docs/docs/getting-started.mdx` to match the new minimum Dart SDK and the Flutter stable release that ships it.
 
-3. **`CHANGELOG.md`**: Insert the new version section at the top of the file, directly after the `# Changelog` heading. Preserve all existing content below.
+3. **`CHANGELOG.md`**: Insert the new version section at the top of the file, directly after the `# Changelog` heading. If a `## [Unreleased]` section is there, rename it to the new version heading and merge the release's entries into it instead. If the top section already is this version (a prepared release), verify it rather than adding another. Preserve all existing content below.
 
 4. **Generated counts and indexes**: derive the registered rule count from the
    `_registerWarningRule(registry, ...)` calls inside `ManyLintsPlugin.register`
-   (do not count the helper definition), then synchronize any prose or tables that state the
+   (do not count the helper definition, and subtract the `RemovedAnalysisRule`
+   tombstones for removed names such as `prefer_contains`: they are registered
+   only so old configurations get replacement guidance, and the published count
+   excludes them), then synchronize any prose or tables that state the
    total in `README.md`, the docs pages, and `example/README.md`. Verify that:
    - every registered rule has one docs page and one example;
    - the example README table contains every registered rule exactly once;
    - `docs/scripts/generate-rule-pages.mjs` categorizes every rule exactly once.
 
-   Validate these sets explicitly. Running `bun run generate` alone is not a
-   sufficient gate because the generator skips existing pages and does not fail
-   for duplicate category entries.
+   Validate these sets explicitly. `bun run generate` sets exit code 1 for an
+   uncategorized rule, a rule listed in several categories, or a category entry
+   without a rule source, but it skips pages that already exist, so it does not
+   check that existing pages and examples match the registered rules.
 
    Do NOT update version badges on rule pages (`rule-badge--version`) — those are
    historical and indicate the version that introduced each rule.
