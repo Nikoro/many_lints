@@ -56,7 +56,16 @@ Widget priceTag() => Padding(
 
 ## Known limitations
 
-The rule does not resolve the declared type of the destination parameter. In argument position it only checks the constructed expression's own type, so it reports any of the four supported classes appearing there — even when the receiving parameter is `dynamic` or `Object`, where a dot shorthand has no context type and would not compile. If a parameter is untyped, keep the explicit class name and suppress the diagnostic on that line.
+In argument position the rule reads the declared type of the receiving parameter, because that is what a dot shorthand resolves against. It reports only when that type is the constructed class, or declares a constructor or static method of the same name. `EdgeInsets.all(8)` passed to an `EdgeInsetsGeometry` parameter is reported, since `EdgeInsetsGeometry.all` exists. These are not reported:
+
+```dart
+// ShapeBorder is abstract, so `.new()` would not compile here.
+ExpansionTile(shape: const Border(), title: Text('Details'));
+
+// A dynamic parameter gives a shorthand nothing to resolve against.
+void log(dynamic value) {}
+void caller() => log(EdgeInsets.all(8));
+```
 
 ## Turning this rule off
 

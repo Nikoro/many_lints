@@ -49,7 +49,7 @@ builder pops, so a cancel path that pops without a value makes the whole call
 `Future<Null>` — and the `await` yields a null the code did not plan for:
 
 ```dart
-// package:flutter/material.dart, simplified to the signature that matters.
+// showDialog from package:material_ui, simplified to the signature that matters.
 Future<T?> showDialog<T>({required Object builder}) async => null;
 
 Future<void> confirmDelete() async {
@@ -66,7 +66,7 @@ Pin it. A builder that pops the wrong type is now a compile error, not a silent
 null at runtime:
 
 ```dart
-// package:flutter/material.dart, simplified to the signature that matters.
+// showDialog from package:material_ui, simplified to the signature that matters.
 Future<T?> showDialog<T>({required Object builder}) async => null;
 
 Future<void> confirmDelete() async {

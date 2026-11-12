@@ -19,7 +19,7 @@ Warns when a `Future` is returned without `await` inside a try-catch block in an
 
 When you write `return asyncOp()` inside a try-catch, the Future is returned to the caller without being awaited. If `asyncOp()` throws, the exception propagates to the caller instead of being caught by the local catch block. Adding `await` ensures the Future completes within the try-catch scope, so exceptions are properly caught and handled.
 
-**See also:** [Asynchronous programming](https://dart.dev/libraries/async/async-await) | [Dart lint: unnecessary_await_in_return](https://dart.dev/tools/linter-rules/unnecessary_await_in_return)
+**See also:** [Asynchronous programming](https://dart.dev/libraries/async/async-await) | [Dart lint: async_return_with_no_await](https://dart.dev/tools/linter-rules/async_return_with_no_await)
 
 ## Don't
 
@@ -97,7 +97,20 @@ Future<String> token() {
 
 Recent Dart SDKs ship a built-in `unawaited_return_in_try_block` warning that
 covers the **try body** case, so you may see two diagnostics on the same line
-there. The `catch` clause is this rule's alone.
+there.
+
+## Overlap with SDK lints
+
+From Dart 3.13 the SDK lint `async_return_with_no_await` reports a `Future`
+returned without `await` from an `async` function, in a `catch` clause and
+outside any `try` too; inside a `try` body it leaves the case to the built-in
+warning above. Together they cover everything this rule reports, so if you
+enable the lint, turn this rule off. On Dart 3.11 and
+3.12 that lint does not exist, and this rule is the only check for the `catch`
+clause.
+
+The SDK's `unnecessary_await_in_return` gave the opposite advice. Dart 3.14
+deprecates it; remove it from `analysis_options.yaml` if you still enable it.
 
 ## Configuration
 

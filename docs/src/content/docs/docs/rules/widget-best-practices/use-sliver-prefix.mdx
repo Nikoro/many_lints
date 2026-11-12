@@ -16,7 +16,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 <span class="rule-badge rule-badge--config">Configurable</span>
 <span class="rule-badge rule-badge--category">Widget Best Practices</span>
 
-Flags a widget whose `build` returns a sliver while the class name does not start with `Sliver`.
+Flags a widget whose `build` returns a sliver while the class name does not start with `Sliver`. A sliver is a `Sliver*` widget from `package:flutter` or, since Flutter 3.50 moved the Material slivers such as `SliverAppBar` there, from `package:material_ui`.
 
 Slivers and box widgets are not interchangeable, and the type system does not separate them — both are just `Widget`. Drop a sliver-returning widget into a `Column` and you get a runtime error about `RenderSliver` not being a `RenderBox`, from a stack that points into the framework rather than at your file. The name is the only signal at the call site, which is why Flutter's own framework uses it throughout. The quick fix renames the class.
 

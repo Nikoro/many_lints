@@ -26,7 +26,7 @@ The quick fix renames the declaration for you.
 ## Don't
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 // A helper that calls a hook is a hook, whatever it is called.
@@ -53,7 +53,7 @@ class CartPage extends HookWidget {
 ## Do
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 ValueNotifier<int> useCounterState() {

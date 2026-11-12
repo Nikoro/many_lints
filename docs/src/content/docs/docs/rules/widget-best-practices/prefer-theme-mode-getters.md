@@ -81,6 +81,8 @@ Widget build(BuildContext context) {
 
 **Nothing is reported before Flutter 3.44.** The rule checks that the resolved `ThemeMode` enum actually declares the getter, so an older Flutter sees no diagnostics and the quick fix can never produce non-compiling code.
 
+**Both `ThemeMode` enums are recognised.** Flutter 3.50 deprecates `package:flutter/material.dart` in favour of `package:material_ui`, which declares its own `ThemeMode`. The rule reports either one.
+
 A `switch` on `ThemeMode` is not reported — the getters do not replace exhaustive matching, and a switch is usually the better shape when all three cases matter.
 
 ## Turning this rule off

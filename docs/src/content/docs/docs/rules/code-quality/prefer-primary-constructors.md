@@ -109,11 +109,11 @@ The fix rewrites the header and the body in one edit:
 - Comments are never deleted. A field's comments, doc comment and annotations move with it into the header. The constructor's comments move there too, unless a `this` block remains for them to stay above.
 - A class body left empty becomes `;`.
 
-The quick fix works in the IDE. `dart fix --apply` in Dart 3.13 does not apply fixes from analyzer plugins.
+The quick fix works in the IDE. `dart fix --apply` does not apply fixes from analyzer plugins (checked on Dart 3.13 and 3.14.0).
 
 ### Interaction with SDK lints
 
-Turn off the SDK's `use_primary_constructors` when you use this rule. It reports the same constructors, plus every type that has none.
+Turn off the SDK's `use_primary_constructors` when you use this rule. It reports the same constructors, plus every type that has none. Dart 3.14 moved that lint to a testing state and dropped it from the published lint list, but an `analysis_options.yaml` that names it still runs it.
 
 `use_declaring_parameters`, `unnecessary_primary_constructor_body` and `empty_container_bodies` only look at code that already migrated, so they combine well with this rule. `unnecessary_type_name_in_constructor` suggests `new(this.x)` for the same constructor. Either fix leaves code this rule still converts.
 

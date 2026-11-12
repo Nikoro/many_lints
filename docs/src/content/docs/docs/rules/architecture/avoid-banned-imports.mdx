@@ -14,7 +14,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 Flags imports of libraries you ban, optionally only inside the directories you name. This is architecture enforcement: it keeps a Clean Architecture domain layer free of Flutter, stops `dart:io` reaching code that also targets the web, and confines a legacy package to the module still using it.
 
-Layering rules are the easiest architectural decision to make and the hardest to keep. A domain layer stays platform-independent only as long as nobody types `import 'package:flutter/material.dart'` — and code review catches that in the pull request it appears in, not in the fifty that follow.
+Layering rules are the easiest architectural decision to make and the hardest to keep. A domain layer stays platform-independent only as long as nobody types `import 'package:material_ui/material_ui.dart'` — and code review catches that in the pull request it appears in, not in the fifty that follow.
 
 This rule is in **no preset** and reports nothing until you add `banned:`. Every example below shows the configuration that produces it.
 
@@ -29,7 +29,9 @@ many_lints:
   rules:
     avoid_banned_imports:
       banned:
-        - deny: ['package:flutter/material.dart']
+        - deny:
+            - 'package:material_ui/material_ui.dart'
+            - 'package:flutter/material.dart'
           in: ['lib/domain/**']
           message: 'The domain layer must not depend on Flutter.'
 ```
@@ -42,7 +44,9 @@ many_lints:
 rules:
   avoid_banned_imports:
     banned:
-      - deny: ['package:flutter/material.dart']
+      - deny:
+          - 'package:material_ui/material_ui.dart'
+          - 'package:flutter/material.dart'
         in: ['lib/domain/**']
         message: 'The domain layer must not depend on Flutter.'
 ```
@@ -50,21 +54,24 @@ rules:
 </TabItem>
 </Tabs>
 
-Write the URI exactly as it appears in the import line, not as a file path. `in:` takes globs relative to the package root; omit it to ban everywhere.
+Write the URI exactly as it appears in the import line, not as a file path. Flutter 3.50 deprecates `package:flutter/material.dart` in favour of `package:material_ui`, so list both while some files still use the old import. `in:` takes globs relative to the package root; omit it to ban everywhere.
 
 ## Examples
 
 ### Keep Flutter out of the domain layer
 
 ```yaml
-- deny: ['package:flutter/material.dart', 'package:flutter/widgets.dart']
+- deny:
+    - 'package:material_ui/material_ui.dart'
+    - 'package:flutter/material.dart'
+    - 'package:flutter/widgets.dart'
   in: ['lib/domain/**']
   message: 'The domain layer must not depend on Flutter.'
 ```
 
 ```dart
 // Don't  — in lib/domain/cart.dart
-import 'package:flutter/material.dart';  // LINT
+import 'package:material_ui/material_ui.dart';  // LINT
 
 Color badgeColor(int items) => items > 0 ? Colors.red : Colors.grey;
 ```
@@ -204,7 +211,7 @@ Per entry:
 
 ## Known limitations
 
-**The URI is matched as written.** `deny: ['package:flutter/material.dart']` does not also ban `package:flutter/widgets.dart`, and a relative import is matched as the relative path you typed. List each URI, or use `deny_pattern`.
+**The URI is matched as written.** `deny: ['package:material_ui/material_ui.dart']` bans that import only: not `package:flutter/material.dart`, and not `package:flutter/widgets.dart`, which it re-exports. A relative import is matched as the relative path you typed. List each URI, or use `deny_pattern`.
 
 **Exact unless you ask otherwise.** Banning `async` does not ban `dart:async` — `deny` never matches a substring. `deny_pattern` opts into matching by shape and anchors to the whole URI, so `dart:.*` catches every `dart:` library while `legacy` matches only a library named exactly `legacy`.
 
