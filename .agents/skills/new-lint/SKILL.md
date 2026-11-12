@@ -366,8 +366,9 @@ Key conventions:
 `AnalysisRuleTest` directly. Rules are opt-in, and a rule test writes no configuration,
 so against the stock base class every assertion would run against a rule that is switched
 off — `assertDiagnostics` would find nothing and `assertNoDiagnostics` would pass
-vacuously. The base class writes `preset: all` into the test package and clears
-`ConfigLoader`'s static cache, restoring the state these tests assume.
+vacuously. The base class writes a `many_lints.yaml` enabling the rule under test
+(`rules: {<rule>: true}`) into the test package and clears `ConfigLoader`'s static
+cache, restoring the state these tests assume. There is no `preset: all`.
 
 `ManyLintsRuleTest` covers essentially every rule. The only exception is an
 end-to-end test driving a real `PluginServer` (see
@@ -449,7 +450,7 @@ You must update if you:
 - ✅ Implemented a complex visitor pattern for deep analysis
 - ✅ Created a new helper utility function
 - ✅ Had to dig into analyzer source code or documentation for APIs not covered in the cookbook
-- ✅ Found analyzer ^14.1.0 specific behaviors different from what you "know" from training data
+- ✅ Found analyzer 14 specific behaviors different from what you "know" from training data
 
 **How to update (two places):**
 

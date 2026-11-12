@@ -43,6 +43,9 @@ lib/
     test_invocation.dart  # Match test/group/setUp invocations by name (skip/solo rules)
     date_time_arithmetic.dart # Read a day-granularity DateTime.add/subtract shift
     null_check_pattern_conversion.dart # Shared `if (x != null)` guard analysis for the two null-check assists
+    banned_entry.dart     # `banned:` entries (deny, deny_pattern, in, except, message) for the banned_* family
+    module_boundary.dart  # Module directory + entry point for the two module-barrel rules
+    primary_constructor_candidate.dart # What prefer_primary_constructors reports and its fix rewrites
     rules/                # Lint rules (AnalysisRule + SimpleAstVisitor pattern)
     fixes/                # Quick fixes (ResolvedCorrectionProducer pattern)
     assists/              # Code assists (ResolvedCorrectionProducer pattern)

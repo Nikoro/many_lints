@@ -2,11 +2,11 @@
 
 ## About This Document
 
-This cookbook provides **copy-paste ready patterns** for implementing quick fixes in the `many_lints` package using **analyzer ^14.1.0**. Quick fixes are code actions that resolve lint diagnostics automatically.
+This cookbook provides **copy-paste ready patterns** for implementing quick fixes in the `many_lints` package using **analyzer ^14.5.0**. Quick fixes are code actions that resolve lint diagnostics automatically.
 
 **Target Audience:** AI agents and developers implementing quick fixes for lint rules
-**Analyzer Version:** ^14.1.0
-**Last Updated:** August 2026
+**Analyzer Version:** ^14.5.0 (API notes checked against 14.5.0 and 14.7.0)
+**Last Updated:** November 2026
 
 ---
 
@@ -18,7 +18,7 @@ This cookbook provides **copy-paste ready patterns** for implementing quick fixe
 - You discover a new ChangeBuilder API pattern not documented here
 - You find a new range factory usage pattern
 - You implement a complex multi-edit transformation
-- You discover analyzer ^14.1.0 specific fix behaviors
+- You discover analyzer 14 specific fix behaviors
 - You create a new helper method that could benefit other fixes
 - You find better ways to preserve formatting or handle edge cases
 

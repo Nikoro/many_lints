@@ -29,6 +29,8 @@ Run these checks to ensure the package is in a releasable state. If any fail, **
 3. `dart format --output=none --set-exit-if-changed .` — formatting must be clean
 4. `dart pub publish --dry-run` — package validation must pass
 5. `bun run build` from `docs/` — documentation must build successfully
+6. `dart run tool/verify_documentation.dart` — every docs snippet, config pair and internal link must check out
+7. `dart run tool/verify_examples.dart` — every example must report only its own rule (CI and `release.yaml` run both tools)
 
 ## Step 4: Analyze Commits & Determine Version
 
@@ -124,12 +126,12 @@ Allow the user to request edits to the CHANGELOG content before proceeding.
    number of occurrences; search for the old version and verify that none remain.
    The maintained locations are:
    - `README.md`
-   - `docs/src/content/docs/docs/configuration.md`
+   - `docs/src/content/docs/docs/configuration.mdx`
    - `docs/src/content/docs/docs/getting-started.mdx`
    - `example/README.md`
    - the package documentation example in `lib/many_lints.dart`
 
-   **If the release changes the `analyzer` dependency**, also update the analyzer version badge in `README.md` (the `img.shields.io/badge/analyzer-<version>-blue` line — update both the `src` URL and the `alt` text) to the analyzer version from `pubspec.lock`. Additionally check that the `environment.sdk` constraint in `pubspec.yaml` and `example/pubspec.yaml` and the pinned `sdk:` version in `.github/workflows/*.yaml` satisfy the new analyzer's minimum SDK requirement — a mismatch makes CI fail at `dart pub get` after the tag is pushed. Finally, update the "Requires Dart X.Y+ (Flutter A.B+)" line in `README.md`, `docs/src/content/docs/docs/configuration.md`, and `docs/src/content/docs/docs/getting-started.mdx` to match the new minimum Dart SDK and the Flutter stable release that ships it.
+   **If the release changes the `analyzer` dependency**, also update the analyzer version badge in `README.md` (the `img.shields.io/badge/analyzer-<version>-blue` line — update both the `src` URL and the `alt` text) to the analyzer version from `pubspec.lock`. Additionally check that the `environment.sdk` constraint in `pubspec.yaml` and `example/pubspec.yaml` and the pinned `sdk:` version in `.github/workflows/*.yaml` satisfy the new analyzer's minimum SDK requirement — a mismatch makes CI fail at `dart pub get` after the tag is pushed. Finally, update the "Requires Dart X.Y+ (Flutter A.B+)" line in `README.md`, `docs/src/content/docs/docs/configuration.mdx`, and `docs/src/content/docs/docs/getting-started.mdx` to match the new minimum Dart SDK and the Flutter stable release that ships it.
 
 3. **`CHANGELOG.md`**: Insert the new version section at the top of the file, directly after the `# Changelog` heading. Preserve all existing content below.
 

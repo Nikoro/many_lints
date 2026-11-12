@@ -2,12 +2,12 @@
 
 ## About This Document
 
-This cookbook covers **making a lint rule configurable** in the `many_lints` package using **analyzer ^14.1.0** and **analysis_server_plugin ^0.3.20** — per-rule `exclude` patterns and free-form options (modes), e.g. `prefer_single_widget_per_file: {ignore_visible_for_testing: false}`.
+This cookbook covers **making a lint rule configurable** in the `many_lints` package using **analyzer ^14.5.0** and **analysis_server_plugin ^0.3.24** — per-rule `exclude` patterns and free-form options (modes), e.g. `prefer_single_widget_per_file: {ignore_visible_for_testing: false}`.
 
 **Target Audience:** AI agents and developers adding configuration to lint rules
-**Analyzer Version:** ^14.1.0
-**Plugin Version:** ^0.3.20
-**Last Updated:** August 2026
+**Analyzer Version:** ^14.5.0 (API notes checked against 14.5.0 and 14.7.0)
+**Plugin Version:** ^0.3.24 (checked against 0.3.24 and 0.3.26)
+**Last Updated:** November 2026
 
 > **Read this before designing any configuration.** The analyzer's own options system **cannot** carry per-rule options. Several obvious-looking approaches produce user-visible warnings or silently do nothing. The [Constraints](#constraints-what-the-analyzer-cannot-do) section explains exactly why, with source citations — do not re-derive it.
 
@@ -62,7 +62,7 @@ This cookbook covers **making a lint rule configurable** in the `many_lints` pac
 
 ## Constraints: What the Analyzer Cannot Do
 
-All verified 2026-08-08 by reading analyzer 14.1.0 / analysis_server_plugin 0.3.20 sources and confirming empirically with `dart analyze`.
+All verified 2026-08-08 by reading analyzer 14.1.0 / analysis_server_plugin 0.3.20 sources and confirming empirically with `dart analyze`; re-checked 2026-11-12 against analyzer 14.5.0 and 14.7.0 and analysis_server_plugin 0.3.24 and 0.3.26.
 
 ### ❌ Per-rule options in `analysis_options.yaml` do not exist
 
@@ -77,7 +77,7 @@ plugins:
 
 Why:
 
-- `RuleConfig` (aliased `DiagnosticConfig`, `analyzer/src/lint/config.dart:134`) has exactly three fields — `name`, `group`, `severity`. No options field, and its constructor is private (`RuleConfig._`), so it cannot be subclassed to add one.
+- `RuleConfig` (aliased `DiagnosticConfig`, `analyzer/src/lint/config.dart:134`) has exactly three fields — `name`, `group`, `severity`. No options field. Its constructor was private (`RuleConfig._`) up to analyzer 14.1 and is public from 14.5, but that changes nothing: the options parser is the only code that creates one, and it passes only those three values.
 - `_parseRuleConfig` accepts **only YAML scalars** (`bool` or a severity `String`) and returns `null` for a map. Worse, a nested map is reinterpreted as a rule **group**, so `my_rule: {opt: false}` is read as a group named `my_rule` containing a rule named `opt`.
 - `_validateDiagnostics` hard-rejects any non-scalar value under `diagnostics:`, making the above an outright reported error.
 
@@ -243,10 +243,10 @@ The alternative — a `ResolvedRuleConfig.of(context, rule.name)` guard at the t
 
 `message:` has to *modify* diagnostics rather than drop them, and the obvious route — wrap the incoming reporter's listener — does not compile. `DiagnosticReporter` stores its listener in a private `_diagnosticListener` field with **no accessor**, so an existing reporter is opaque; you cannot get at what it forwards to.
 
-Two other dead ends, both checked against analyzer 14.1.0:
+Two other dead ends, both checked against analyzer 14.1.0 and again against 14.5.0 and 14.7.0:
 
 - **Overriding `reportAtNode` and friends on the rule.** `AnalysisRule.reportAt*` delegate to private `_reportAt*` helpers that read the private `_reporter` field directly. Not virtual, not interceptable.
-- **Wrapping the listener at construction.** Only the driver builds the original reporter (`PluginServer` at `plugin_server.dart:400`, `LibraryAnalyzer` at `library_analyzer.dart:452`); a rule never sees the listener.
+- **Wrapping the listener at construction.** Only the driver builds the original reporter (`PluginServer` in `plugin_server.dart`, the analyzer in `src/dart/analysis/file_analysis.dart`), and `PluginServer` hands a rule only the finished reporter (`rule.reporter = currentUnit.diagnosticReporter`); a rule never sees the listener.
 
 What does work is subclassing the reporter, because every reporting path funnels through one public, overridable method:
 
@@ -527,8 +527,9 @@ member, walking `allSupertypes`, so banning `Iterable.first` also catches a
 `List` receiver. Matching the *static receiver* type instead would let any
 subclass slip past.
 
-Two shapes are easy to miss: the unnamed constructor has an empty
-`ConstructorElement.name` (normalize it to `new` so `Random.new` is writable),
+Two shapes are easy to miss: the unnamed constructor's
+`ConstructorElement.name` is `new` (verified on analyzer 14.7.0; still map a
+null or empty name to `new` so `Random.new` is writable),
 and a `target.member` read parses as `PropertyAccess` **except** when the
 target is a simple identifier, where it is a `PrefixedIdentifier` — register
 both or tear-offs are missed.

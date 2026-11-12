@@ -2,13 +2,13 @@
 
 ## 📚 About This Document
 
-This cookbook provides **copy-paste ready patterns** for implementing lint rules in the `many_lints` package using **analyzer ^14.1.0**. Instead of searching through existing rules or diving into analyzer source code, consult this guide first.
+This cookbook provides **copy-paste ready patterns** for implementing lint rules in the `many_lints` package using **analyzer ^14.5.0**. Instead of searching through existing rules or diving into analyzer source code, consult this guide first.
 
 For common recipes (specific use-case patterns), see [rules-recipes.md](rules-recipes.md).
 
 **Target Audience:** AI agents and developers implementing new lint rules
-**Analyzer Version:** ^14.1.0
-**Last Updated:** August 2026
+**Analyzer Version:** ^14.5.0 (API notes checked against 14.5.0 and 14.7.0)
+**Last Updated:** November 2026
 
 ---
 
@@ -21,7 +21,7 @@ For common recipes (specific use-case patterns), see [rules-recipes.md](rules-re
 - ✅ You need to research AST traversal techniques beyond what's documented
 - ✅ You find a new type checking method or pattern
 - ✅ You implement a complex visitor pattern not shown in examples
-- ✅ You discover analyzer ^14.1.0 specific APIs different from older versions
+- ✅ You discover analyzer 14 specific APIs different from older versions
 - ✅ You create a new helper utility that could benefit other rules
 
 **Also update the lean quick reference** at `lib/src/rules/AGENTS.md` with a brief mention of the new pattern.
@@ -72,7 +72,7 @@ Quick navigation to common patterns:
 - [Reporting Issues & Quick Fixes](#-reporting--quick-fixes)
 - [Resolving a Name to Its Declaration](#-resolving-a-name-to-its-declaration)
 - [Utility Functions](#-utility-functions)
-- [Analyzer 14.1.0 APIs](#-analyzer-1410-specific-apis)
+- [Analyzer 14 APIs](#-analyzer-14-specific-apis)
 - [Quick Reference Cards](#-quick-reference-cards)
 
 For recipes and testing, see [rules-recipes.md](rules-recipes.md).
@@ -1066,15 +1066,15 @@ FunctionBody? maybeHookBuilderBody(InstanceCreationExpression node)
 
 ---
 
-## 🔧 Analyzer 14.1.0 Specific APIs
+## 🔧 Analyzer 14 Specific APIs
 
 ### Renamed AST nodes: `NamedArgument`, `FormalParameterDefaultClause`
 
 Two node names that most training data and every pre-14 example still uses **do
-not exist** in analyzer 14.1.0. They fail as `type_test_with_undefined_name`,
+not exist** in analyzer 14. They fail as `type_test_with_undefined_name`,
 which reads like a missing import and is not:
 
-| Pre-14 name | analyzer 14.1.0 | Where it appears |
+| Pre-14 name | analyzer 14 | Where it appears |
 |---|---|---|
 | `NamedExpression` | **`NamedArgument`** | the wrapper around a named argument, `f(a: 8)` |
 | `DefaultFormalParameter` | **`FormalParameterDefaultClause`** | a parameter's default, `{int a = 7}` |
@@ -1107,7 +1107,7 @@ The `Impl` suffix in the output is the implementation class; test against the
 public interface (`FormalParameterDefaultClause`), not the `Impl`.
 
 Grepping `lib/dart/ast/ast.dart` for these names is **not** a reliable check —
-in 14.1.0 that file is largely a barrel, so a name can be absent from it and
+in analyzer 14 that file is largely a barrel, so a name can be absent from it and
 still exist. `lib/dart/ast/visitor.g.dart` lists the real `visitX` methods and
 is the better index.
 
@@ -1233,7 +1233,7 @@ if (element is EnumElement &&
 
 **Reference:** [prefer_theme_mode_getters.dart](../../../lib/src/rules/prefer_theme_mode_getters.dart)
 
-### New Element Access (analyzer ^14.1.0)
+### New Element Access (analyzer 14)
 
 **Old API (pre-10.0):**
 ```dart
@@ -1296,9 +1296,9 @@ if (type != null) {
 
 **Reference:** Multiple rules use this pattern
 
-### InstanceElement Member Access (analyzer 14.1.0)
+### InstanceElement Member Access (analyzer 14)
 
-**⚠️ Important:** In analyzer 14.1.0, `InstanceElement` has `getters`, `methods`, `fields` — NOT `accessors`.
+**⚠️ Important:** In analyzer 14, `InstanceElement` has `getters`, `methods`, `fields` — NOT `accessors`.
 
 ```dart
 // Access class members via element
@@ -1376,7 +1376,7 @@ Element _canonicalElement(Element element) => switch (element) {
 ```
 
 Note `GetterElement.variable` / `SetterElement.variable` are **non-nullable** in
-analyzer 14.1.0 — a `?` null-check pattern there is a "will have no effect"
+analyzer 14 — a `?` null-check pattern there is a "will have no effect"
 warning.
 
 Canonicalize **before** predicate checks too, not after: an `isStatic` test that
@@ -1401,7 +1401,9 @@ shared supertype carrying one, and the subtypes split into two shapes:
 | `TopLevelVariableDeclaration` | no name of its own; walk `variables.variables` |
 
 Writing `Foo(:final name) || Bar(:final name)` across the two groups fails to
-compile twice over — `undefined_getter` on the `namePart` half, then
+compile twice over — `undefined_getter` on the `namePart` half (the analyzer in
+Dart 3.14 is 14.5; analyzer 14.6 and later split that diagnostic into
+`undefined_*_read` / `undefined_*_write` names), then
 `inconsistent_pattern_variable_logical_or` because the binding types differ
 (`Token` vs `Token?`). Match the groups separately:
 
@@ -1483,7 +1485,7 @@ own lint (`error(diag.todo, offset, length)`), importing
 
 ### Pattern Matching Features
 
-Analyzer 14.1.0 works well with Dart 3 pattern matching:
+Analyzer 14 works well with Dart 3 pattern matching:
 
 ```dart
 // Destructuring in patterns

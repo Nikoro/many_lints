@@ -186,7 +186,7 @@ Consequences when writing or editing a page:
 
 ### Configurable rules use `.mdx`
 
-The 123 rules that accept options are `.mdx`, not `.md`, because every options snippet is
+The 125 rules that accept options are `.mdx`, not `.md`, because every options snippet is
 shown in both supported locations via Starlight tabs:
 
 ```mdx
