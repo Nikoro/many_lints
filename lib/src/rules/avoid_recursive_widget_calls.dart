@@ -10,14 +10,6 @@ import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 import '../state_base_classes.dart';
 
-/// Warns when a widget's `build` method instantiates the widget itself
-/// unconditionally.
-///
-/// Building `MyWidget` from inside `MyWidget.build` recurses forever and
-/// overflows the stack as soon as the widget is mounted.
-///
-/// Recursion guarded by a condition is a legitimate way to render trees, so
-/// only *unconditional* self-instantiation is reported.
 class AvoidRecursiveWidgetCalls extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_recursive_widget_calls',
@@ -58,18 +50,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     final element = node.declaredFragment?.element;
     if (element == null) return;
 
-    // The type whose construction counts as recursion. For a StatelessWidget
-    // that is the class itself; for a State it is the widget it belongs to.
-    final InterfaceElement target;
-    if (widgetChecker.isSuperOf(element)) {
-      target = element;
-    } else if (isStateElement(rule, element)) {
-      final widget = _stateWidgetType(node);
-      if (widget == null) return;
-      target = widget;
-    } else {
-      return;
-    }
+    final builtWidget = _widgetBuiltBy(node, element);
+    if (builtWidget == null) return;
 
     final body = node.body;
     if (body is! BlockClassBody) return;
@@ -77,11 +59,19 @@ class _Visitor extends SimpleAstVisitor<void> {
     for (final member in body.members) {
       if (member is! MethodDeclaration) continue;
       if (member.name.lexeme != 'build') continue;
-      member.body.visitChildren(_SelfBuildFinder(rule, target));
+      member.body.visitChildren(_SelfBuildFinder(rule, builtWidget));
     }
   }
 
-  /// Resolves `State<MyWidget>` to the `MyWidget` element.
+  InterfaceElement? _widgetBuiltBy(
+    ClassDeclaration node,
+    InterfaceElement element,
+  ) {
+    if (widgetChecker.isSuperOf(element)) return element;
+    if (isStateElement(rule, element)) return _stateWidgetType(node);
+    return null;
+  }
+
   InterfaceElement? _stateWidgetType(ClassDeclaration node) {
     final superclass = node.extendsClause?.superclass;
     final typeArguments = superclass?.typeArguments?.arguments;
@@ -93,11 +83,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Finds unconditional construction of [target] inside a build body.
-///
-/// Skips anything nested in a conditional or a closure: `if (depth > 0)
-/// MyWidget(...)` terminates, and a widget built lazily inside a
-/// `builder:` callback is only constructed on demand.
 class _SelfBuildFinder extends RecursiveAstVisitor<void> {
   final AvoidRecursiveWidgetCalls rule;
   final InterfaceElement target;
@@ -112,8 +97,9 @@ class _SelfBuildFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    // A constructor call without type arguments parses as a MethodInvocation.
+    // Edge case: a constructor call without type arguments can parse as a method call
     _check(node);
+
     super.visitMethodInvocation(node);
   }
 
@@ -124,7 +110,6 @@ class _SelfBuildFinder extends RecursiveAstVisitor<void> {
     rule.reportAtNode(node, arguments: [target.name ?? '']);
   }
 
-  // A conditional makes the recursion terminable — not our business.
   @override
   void visitIfStatement(IfStatement node) {}
 
@@ -140,7 +125,6 @@ class _SelfBuildFinder extends RecursiveAstVisitor<void> {
   @override
   void visitSwitchExpression(SwitchExpression node) {}
 
-  // Lazily-built children (builder callbacks) are constructed on demand.
   @override
   void visitFunctionExpression(FunctionExpression node) {}
 }

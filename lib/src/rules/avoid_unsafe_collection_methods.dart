@@ -8,16 +8,6 @@ import '../ast_node_analysis.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when an operation that throws on an empty collection is used
-/// without an emptiness check.
-///
-/// `first`, `last`, `single` and `reduce` all throw a `StateError` on an
-/// empty iterable. The stack trace points into `dart:core`, so the crash
-/// reads as a framework bug rather than a missing guard.
-///
-/// Detection is intentionally narrow: only a directly named collection —
-/// a local, parameter, or field — with no emptiness check anywhere in the
-/// enclosing function is reported.
 class AvoidUnsafeCollectionMethods extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unsafe_collection_methods',
@@ -57,18 +47,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   static const _iterableChecker = TypeChecker.fromUrl('dart:core#Iterable');
 
-  /// Properties that throw on an empty iterable.
   static const _unsafeProperties = {'first', 'last', 'single'};
 
-  /// Methods that throw on an empty iterable.
-  ///
-  /// `singleWhere` is deliberately excluded: it throws when no element
-  /// matches, which an emptiness guard would not prevent.
   static const _unsafeMethods = {'reduce'};
 
   @override
   void visitPrefixedIdentifier(PrefixedIdentifier node) {
-    // `items.first` where `items` is a simple identifier.
     _check(node, node.prefix, node.identifier.name, _unsafeProperties);
   }
 
@@ -94,9 +78,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   ) {
     if (!unsafeMembers.contains(memberName)) return;
 
-    // The receiver must be a plain name we can look for in guards. A chained
-    // expression (`a.where(...).first`) has no name to match against, so it
-    // is left alone rather than guessed at.
     final receiverName = switch (target) {
       SimpleIdentifier(:final name) => name,
       _ => null,
@@ -107,15 +88,12 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (targetType == null) return;
     if (!_iterableChecker.isAssignableFromType(targetType)) return;
 
-    // A collection literal with elements is provably non-empty.
     if (_isNonEmptyLiteral(target)) return;
 
     final enclosingFunction = enclosingOfType<FunctionBody>(node);
     if (enclosingFunction == null) return;
 
-    // Any emptiness check on this receiver anywhere in the function is
-    // treated as a guard. This over-accepts (the check may be in an
-    // unrelated branch) on purpose, to keep false positives near zero.
+    // Edge case: a check in an unrelated branch counts too, to keep false positives near zero
     final guardFinder = _EmptinessCheckFinder(receiverName);
     enclosingFunction.accept(guardFinder);
     if (guardFinder.found) return;
@@ -130,7 +108,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   };
 }
 
-/// Looks for any emptiness or length check mentioning [receiverName].
 class _EmptinessCheckFinder extends RecursiveAstVisitor<void> {
   final String receiverName;
   bool found = false;

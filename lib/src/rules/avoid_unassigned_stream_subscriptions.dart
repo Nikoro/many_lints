@@ -7,10 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a `Stream.listen()` call is not assigned to a variable.
-///
-/// Without storing the returned `StreamSubscription`, you cannot cancel it
-/// later, which may lead to memory leaks.
 class AvoidUnassignedStreamSubscriptions extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unassigned_stream_subscriptions',
@@ -48,18 +44,13 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name != 'listen') return;
 
-    // Check that the return type is StreamSubscription
     final returnType = node.staticType;
     if (returnType is! InterfaceType) return;
     if (!_isStreamSubscription(returnType)) return;
 
-    // Only flag if used as an expression statement (not assigned, not returned,
-    // not passed as an argument, etc.)
-    if (node.parent is! ExpressionStatement) return;
+    final isDiscarded = node.parent is ExpressionStatement;
+    if (!isDiscarded) return;
 
-    // `ignored_instances` exempts receivers whose subscriptions are managed
-    // elsewhere — a stream owned by a bus or service that outlives the caller
-    // and is torn down centrally.
     final ignored = rule.config.stringListOption('ignored_instances');
     if (ignored.isNotEmpty) {
       final receiver = node.realTarget?.toSource();

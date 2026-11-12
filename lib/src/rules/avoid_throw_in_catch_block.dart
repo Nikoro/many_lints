@@ -6,30 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a `throw` expression is used inside a catch block.
-///
-/// Calling `throw` inside a catch block loses the original stack trace
-/// and exception context. Use `rethrow` to re-throw the original exception,
-/// or `Error.throwWithStackTrace()` to throw a new exception while
-/// preserving the stack trace.
-///
-/// **Bad:**
-/// ```dart
-/// try {
-///   networkDataProvider();
-/// } on Object {
-///   throw RepositoryException();
-/// }
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// try {
-///   networkDataProvider();
-/// } catch (_, stack) {
-///   Error.throwWithStackTrace(RepositoryException(), stack);
-/// }
-/// ```
 class AvoidThrowInCatchBlock extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_throw_in_catch_block',
@@ -84,13 +60,8 @@ class _ThrowFinder extends RecursiveAstVisitor<void> {
   }
 
   @override
-  void visitFunctionExpression(FunctionExpression node) {
-    // Don't traverse into nested functions/closures —
-    // a throw inside a closure is not in the catch block's scope.
-  }
+  void visitFunctionExpression(FunctionExpression node) {}
 
   @override
-  void visitFunctionDeclaration(FunctionDeclaration node) {
-    // Don't traverse into nested function declarations.
-  }
+  void visitFunctionDeclaration(FunctionDeclaration node) {}
 }

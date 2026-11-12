@@ -7,33 +7,6 @@ import 'package:analyzer/dart/ast/token.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when an `if`/`else` or a conditional expression tests a negated
-/// condition, so the reader meets the branches in the harder order.
-///
-/// ```dart
-/// if (!user.isActive) {
-///   showInactive();
-/// } else {
-///   showActive();
-/// }
-/// ```
-///
-/// The `else` here is the positive case, which means the reader has to hold a
-/// negation to know what the second branch is *for*. Swapping the branches
-/// states each one directly.
-///
-/// Only reported when there is an `else` to swap with. A bare `if (!x)` is a
-/// guard, which is the clearest form there is — and [PreferEarlyReturn]
-/// actively asks for it, so reporting it here would set the two rules
-/// fighting.
-///
-/// `!=` counts as a negation by default, since `if (a != b) ... else ...` has
-/// the same inverted shape — but never against `null` or `0`. `x != null` is
-/// the null check the language is built around, and `byPoints != 0 ? ... : ...`
-/// is the comparator tie-break idiom; both state a positive fact, and both
-/// turned up as false positives on a production codebase.
-///
-/// Set `report_not_equal: false` to skip `!=` entirely and report only `!`.
 class AvoidNegatedConditions extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_negated_conditions',
@@ -72,14 +45,11 @@ class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitIfStatement(IfStatement node) {
     final elseStatement = node.elseStatement;
-    // No `else` means this is a guard, which is the shape to prefer.
     if (elseStatement == null) return;
 
-    // `else if` chains encode an ordered sequence of tests; swapping the first
-    // pair would reorder the whole chain rather than flip one branch.
     if (elseStatement is IfStatement) return;
 
-    // A pattern `if` binds variables the swapped branch could not see.
+    // Edge case: pattern variables are scoped to the then-branch, so swapping would unbind them
     if (node.caseClause != null) return;
 
     if (!_isNegated(node.expression)) return;
@@ -103,12 +73,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (expression is BinaryExpression &&
         expression.operator.type == TokenType.BANG_EQ) {
-      // `x != null` and `x != 0` are how Dart states a positive fact — the
-      // first is the null check the language is built around, the second the
-      // comparator tie-break idiom (`byPoints != 0 ? byPoints : ...`). Both
-      // came out of a production run as false positives, and inverting either
-      // reads worse. Only a comparison against some other value has the
-      // inverted shape this rule is about.
       if (_isNullOrZero(expression.rightOperand) ||
           _isNullOrZero(expression.leftOperand)) {
         return false;
@@ -120,8 +84,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return false;
   }
 
-  /// Whether [expression] is `null` or the integer `0`, the two right-hand
-  /// sides that make `!=` read as a positive assertion rather than a negation.
   bool _isNullOrZero(Expression expression) => switch (expression) {
     NullLiteral() => true,
     IntegerLiteral(:final value) => value == 0,

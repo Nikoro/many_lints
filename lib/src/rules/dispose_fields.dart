@@ -8,13 +8,6 @@ import '../disposal_utils.dart';
 import '../many_lints_rule.dart';
 import '../state_base_classes.dart';
 
-/// Warns when a widget State field that has a disposal method (`dispose`,
-/// `close`, or `cancel`) is not cleaned up in the `dispose()` method.
-///
-/// Disposable resources such as `AnimationController`, `TextEditingController`,
-/// `StreamController`, `StreamSubscription`, `FocusNode`, `Timer`, etc. must
-/// be properly disposed/closed/cancelled in `dispose()` to prevent memory
-/// leaks.
 class DisposeFields extends ManyLintsRule {
   static const LintCode code = LintCode(
     'dispose_fields',
@@ -54,11 +47,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final element = node.declaredFragment?.element;
     if (element == null) return;
 
-    // Only `State` subclasses are scanned, so `state_base_classes` is the
-    // knob that matters here: point it at `Bloc`, `Cubit`, or any disposable
-    // base and this rule covers their fields too. A narrowing `ignore_blocs` is
-    // the mirror image — it narrows a rule that already scans blocs, which
-    // this one does not do until configured to.
     if (!isStateElement(rule, element)) return;
 
     final body = node.body;
@@ -66,20 +54,16 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final members = body.members;
 
-    // Collect all cleanup calls made in dispose()
     final disposeMethod = members
         .whereType<MethodDeclaration>()
         .where((m) => m.name.lexeme == 'dispose')
         .firstOrNull;
 
-    // Resolved once per class and shared by both the collector and the field
-    // scan below: if the two used different lists, a configured method would
-    // mark a field as needing cleanup but never count as cleaning it up.
-    final methods = resolveCleanupMethods(rule);
+    final cleanupMethods = resolveCleanupMethods(rule);
 
     final cleanedUpTargets = <String, Set<String>>{};
     if (disposeMethod != null) {
-      final collector = _CleanupCallCollector(methods);
+      final collector = _CleanupCallCollector(cleanupMethods);
       disposeMethod.body.visitChildren(collector);
       for (final call in collector.calls) {
         cleanedUpTargets
@@ -88,7 +72,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     }
 
-    // Check each field declaration
     for (final fieldDecl in members.whereType<FieldDeclaration>()) {
       if (fieldDecl.isStatic) continue;
 
@@ -96,18 +79,19 @@ class _Visitor extends SimpleAstVisitor<void> {
         final type = variable.declaredFragment?.element.type;
         if (type == null) continue;
 
-        final expectedCleanup = findCleanupMethod(type, methods: methods);
+        final expectedCleanup = findCleanupMethod(
+          type,
+          methods: cleanupMethods,
+        );
         if (expectedCleanup == null) continue;
 
         final fieldName = variable.name.lexeme;
 
-        // Check if the field is cleaned up in dispose()
         final calledMethods = cleanedUpTargets[fieldName];
         if (calledMethods != null && calledMethods.contains(expectedCleanup)) {
           continue;
         }
 
-        // Also check with `this.` prefix
         final thisCalledMethods = cleanedUpTargets['this.$fieldName'];
         if (thisCalledMethods != null &&
             thisCalledMethods.contains(expectedCleanup)) {
@@ -123,7 +107,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Represents a cleanup call like `fieldName.dispose()`.
 class _CleanupCall {
   final String targetSource;
   final String methodName;
@@ -131,11 +114,9 @@ class _CleanupCall {
   _CleanupCall({required this.targetSource, required this.methodName});
 }
 
-/// Collects all cleanup calls within a method body.
 class _CleanupCallCollector extends RecursiveAstVisitor<void> {
   final List<_CleanupCall> calls = [];
 
-  /// The cleanup method names to recognise, resolved from configuration.
   final List<String> methods;
 
   _CleanupCallCollector(this.methods);
@@ -154,7 +135,6 @@ class _CleanupCallCollector extends RecursiveAstVisitor<void> {
     super.visitMethodInvocation(node);
   }
 
-  // Stop at function boundaries to avoid false positives from nested closures
   @override
   void visitFunctionExpression(FunctionExpression node) {}
 

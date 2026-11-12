@@ -8,11 +8,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
 
-/// Warns when a `Notifier` or `AsyncNotifier` subclass declares public
-/// properties (getters, fields, or setters) other than the standard `state`.
-///
-/// All state should be consolidated into the `state` property using a dedicated
-/// model class, rather than exposing multiple public properties on the notifier.
 class AvoidPublicNotifierProperties extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_public_notifier_properties',
@@ -73,8 +68,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (name.startsWith('_')) continue;
       if (name == 'state') continue;
 
-      // A `final` field cannot be reassigned, so it is not leaked mutable
-      // state — there is nothing to consolidate into `state`.
       if (variable.isFinal || variable.isConst) continue;
 
       final element = variable.declaredFragment?.element;
@@ -98,12 +91,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtToken(member.name);
   }
 
-  /// Whether [element] is really part of the notifier's outside surface.
-  ///
-  /// Members annotated with `@override`, `@protected`,
-  /// `@visibleForOverriding` or `@visibleForTesting` are deliberately exposed
-  /// for a narrower audience, so they are not the accidental public state this
-  /// rule looks for.
   static bool _isVisibleOutsideTheNotifier(Element? element) {
     if (element == null) return false;
     if (!element.isPublic) return false;

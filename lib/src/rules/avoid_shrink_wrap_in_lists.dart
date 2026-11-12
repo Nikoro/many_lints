@@ -9,11 +9,6 @@ import '../ast_node_analysis.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when a `ListView` uses `shrinkWrap: true`.
-///
-/// Using `shrinkWrap` in lists is expensive performance-wise because the
-/// list must be fully laid out to determine its size. Prefer using slivers
-/// via `CustomScrollView` with `SliverList` for better performance.
 class AvoidShrinkWrapInLists extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_shrink_wrap_in_lists',

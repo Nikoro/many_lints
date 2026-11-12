@@ -6,16 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a class declares a constructor identical to the default one.
-///
-/// `class A { A(); }` writes out exactly what Dart provides when no
-/// constructor is declared at all: no parameters, no initializers, no body,
-/// no documentation. The line adds nothing a reader can act on.
-///
-/// A constructor that is `const`, named, private, or annotated is doing
-/// something the implicit one cannot, and is left alone — as is any class with
-/// a second constructor, where declaring the unnamed one is what keeps it
-/// available.
 class AvoidUnnecessaryConstructor extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_constructor',
@@ -55,17 +45,13 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final constructors = body.members.whereType<ConstructorDeclaration>();
 
-    // With a second constructor present, the unnamed one has to be declared to
-    // exist at all — Dart only supplies it when no constructor is written.
+    // Edge case: with a second constructor, Dart no longer supplies the unnamed one
     if (constructors.length != 1) return;
 
     final constructor = constructors.first;
 
-    // A named constructor is never the implicit one.
     if (constructor.name != null) return;
 
-    // `const A();` lets callers write `const A()`, which the implicit
-    // constructor does not allow.
     if (constructor.constKeyword != null) return;
 
     if (constructor.factoryKeyword != null) return;
@@ -73,11 +59,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (constructor.initializers.isNotEmpty) return;
     if (constructor.redirectedConstructor != null) return;
 
-    // A documented or annotated constructor carries information, even empty.
     if (constructor.documentationComment != null) return;
     if (constructor.metadata.isNotEmpty) return;
 
-    // Both spellings of "does nothing" count: `A();` and `A() {}`.
     final hasNoBody = switch (constructor.body) {
       EmptyFunctionBody() => true,
       BlockFunctionBody(:final block) => block.statements.isEmpty,

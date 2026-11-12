@@ -9,15 +9,6 @@ import 'package:analyzer/error/error.dart';
 import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when a function, method, or getter returns a Widget or Widget subclass.
-///
-/// Extracting widgets to helper methods is a Flutter anti-pattern because
-/// Flutter rebuilds the widget tree by calling the function every time,
-/// which prevents framework optimizations. Instead, extract widgets into
-/// separate widget classes.
-///
-/// The `build()` override method is exempted since it is the standard
-/// way to build widgets.
 class AvoidReturningWidgets extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_returning_widgets',
@@ -36,12 +27,6 @@ class AvoidReturningWidgets extends ManyLintsRule {
   @override
   LintCode get diagnosticCode => code;
 
-  /// Annotations of the functional-widget generators, which turn an annotated
-  /// function into a real widget class — so the function is a widget
-  /// declaration rather than a helper, and reporting it asks for a rewrite the
-  /// generator already performs.
-  ///
-  /// These are the defaults for this rule.
   static const defaultIgnoredAnnotations = {
     'FunctionalWidget',
     'swidget',
@@ -54,9 +39,6 @@ class AvoidReturningWidgets extends ManyLintsRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    // Registered on the unit rather than on each declaration: the tear-off
-    // exemption needs to know whether a declaration is referenced by name
-    // elsewhere in the file, which a per-declaration visit cannot see.
     registry.addCompilationUnit(this, _Visitor(this));
   }
 }
@@ -74,14 +56,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Collects the names of functions and methods that are passed as values
-/// rather than called.
-///
-/// A `SimpleIdentifier` naming a declaration is a tear-off unless it is the
-/// callee of an invocation or the left side of an assignment. Matching by name
-/// rather than by element is deliberate: it costs a false exemption when two
-/// declarations in one file share a name, which is far cheaper than the false
-/// positive it prevents.
 class _TearOffCollector extends RecursiveAstVisitor<void> {
   final names = <String>{};
 
@@ -89,15 +63,10 @@ class _TearOffCollector extends RecursiveAstVisitor<void> {
   void visitSimpleIdentifier(SimpleIdentifier node) {
     final parent = node.parent;
 
-    // `foo()` — an invocation, not a tear-off.
     if (parent is MethodInvocation && parent.methodName == node) return;
-    // The declaration's own name token.
     if (parent is MethodDeclaration && parent.name == node.token) return;
     if (parent is FunctionDeclaration && parent.name == node.token) return;
-    // `foo: ...` in a named argument is the label, not a reference.
     if (parent is Label) return;
-    // `x.foo` where foo is the property being accessed, not torn off, unless
-    // the whole access is itself a value — which the parent check below covers.
     if (parent is PropertyAccess && parent.propertyName == node) {
       if (parent.parent is! ArgumentList) return;
     }
@@ -116,7 +85,6 @@ class _DeclarationVisitor extends RecursiveAstVisitor<void> {
   void visitMethodDeclaration(MethodDeclaration node) {
     super.visitMethodDeclaration(node);
 
-    // Exempt build() overrides
     if (node.name.lexeme == 'build') return;
 
     _checkReturnType(
@@ -158,30 +126,18 @@ class _DeclarationVisitor extends RecursiveAstVisitor<void> {
       return;
     }
 
-    // A declaration handed to a builder (`Builder(builder: _row)`) is invoked
-    // by the framework at its own point in the tree, so it does not collapse a
-    // subtree into the caller's rebuild — which is the cost this rule exists to
-    // prevent. Only a declaration that is *called* to build inline is reported.
-    //
-    // Getters are excluded: `=> _body` reads the getter rather than tearing it
-    // off, so a bare reference to one is the inline build this rule targets.
+    // Edge case: `=> _body` reads a getter instead of tearing it off, so it still builds inline
     if (!isGetter && tearOffNames.contains(nameToken.lexeme)) return;
 
     final type = returnType.type;
     if (type == null) return;
 
-    // `allow_nullable: true` exempts `Widget?` returns, where the null case
-    // usually means "render nothing" rather than a widget-building helper.
     if (rule.config.boolOption('allow_nullable', defaultValue: false) &&
         returnType.question != null) {
       return;
     }
 
-    // Handle nullable types: Widget? -> check the underlying type
-    final effectiveType = type is InterfaceType ? type : null;
-    if (effectiveType == null) return;
-
-    if (widgetChecker.isAssignableFromType(effectiveType)) {
+    if (type is InterfaceType && widgetChecker.isAssignableFromType(type)) {
       rule.reportAtToken(nameToken);
     }
   }

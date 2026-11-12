@@ -8,16 +8,6 @@ import '../async_guard_utils.dart';
 import '../bloc_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when a bloc emits state after an `await` without checking
-/// `isClosed`.
-///
-/// A bloc can be closed while an asynchronous handler is suspended — the
-/// user navigates away, the provider disposes. Emitting into a closed bloc
-/// throws a `StateError`, and because the throw happens inside a detached
-/// future it usually surfaces as an unhandled error rather than a crash at
-/// the call site.
-///
-/// Guard the emit with `if (isClosed) return;` after each await.
 class CheckIsNotClosedAfterAsyncGap extends ManyLintsRule {
   static const LintCode code = LintCode(
     'check_is_not_closed_after_async_gap',
@@ -65,14 +55,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (member is MethodDeclaration) {
         _checkFunctionBody(member.body);
       } else if (member is ConstructorDeclaration) {
-        // Handlers registered via `on<E>((event, emit) async { ... })`.
         member.body.visitChildren(_HandlerFinder(this));
       }
     }
   }
 
-  /// Scans [body]'s statements in order, tracking whether an await has been
-  /// seen without an intervening `isClosed` guard.
   void _checkFunctionBody(FunctionBody body) {
     if (body is! BlockFunctionBody) return;
     if (!body.isAsynchronous) return;
@@ -84,15 +71,12 @@ class _Visitor extends SimpleAstVisitor<void> {
     var seenAwait = false;
 
     for (final statement in statements) {
-      // An early-return guard resets the tracking: past this point the
-      // bloc is known to be open.
       if (seenAwait && isClosedGuardWithReturn(statement)) {
         seenAwait = false;
         continue;
       }
 
-      // `if (!isClosed) { ... }` guards its own body instead. Skip the
-      // statement entirely, but keep the flag set for whatever follows it.
+      // Edge case: `if (!isClosed)` guards only its own body, so the gap stays open after it
       if (seenAwait && isNegatedClosedGuard(statement)) {
         continue;
       }
@@ -108,7 +92,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Finds `on<E>(...)` handler callbacks so their bodies can be scanned.
 class _HandlerFinder extends RecursiveAstVisitor<void> {
   final _Visitor visitor;
 
@@ -134,29 +117,17 @@ class _HandlerFinder extends RecursiveAstVisitor<void> {
   }
 }
 
-/// Finds `emit(...)` calls, which are the operations that throw on a closed
-/// bloc.
-///
-/// Stops at function boundaries: a nested closure runs on its own schedule
-/// and its guards cannot be reasoned about from here.
 class _EmitFinder extends RecursiveAstVisitor<void> {
   final CheckIsNotClosedAfterAsyncGap rule;
 
   _EmitFinder(this.rule);
 
-  /// Whether [name] emits state: Bloc's own `emit`, plus any wrapper the
-  /// project named in `additional_methods`.
-  ///
-  /// A helper like `safeEmit(...)` that forwards to `emit` has exactly the
-  /// same after-close hazard, but only the project knows it exists. Default
-  /// `[]` keeps `emit` as the only name.
   bool _emitsState(String name) =>
       name == 'emit' ||
       rule.config.stringListOption('additional_methods').contains(name);
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    // Cubit form: `emit(...)` resolves to the inherited method.
     if (_emitsState(node.methodName.name)) {
       final target = node.target;
       if (target == null || target is ThisExpression) {
@@ -169,8 +140,7 @@ class _EmitFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
-    // Bloc form: `emit` is the handler's Emitter parameter, so calling it
-    // parses as an invocation of a function-typed expression.
+    // Edge case: a Bloc handler's Emitter is a callable parameter, so `emit(...)` parses here
     if (node.function case SimpleIdentifier(
       name: final name,
     ) when _emitsState(name)) {

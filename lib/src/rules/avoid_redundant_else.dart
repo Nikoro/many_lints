@@ -6,12 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when an `else` follows a then-branch that always exits.
-///
-/// If the then-branch ends in `return`, `throw`, `continue` or `break`,
-/// control can never reach the `else` from it. Keeping the branch adds a
-/// level of indentation for the entire remainder of the method without
-/// changing behaviour.
 class AvoidRedundantElse extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_redundant_else',
@@ -51,8 +45,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final elseKeyword = node.elseKeyword;
     if (elseKeyword == null) return;
 
-    // `else if` chains read as a single decision; unwinding them into
-    // sequential ifs usually hurts rather than helps.
     if (node.elseStatement is IfStatement) return;
 
     if (!_alwaysExits(node.thenStatement)) return;
@@ -60,17 +52,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtToken(elseKeyword);
   }
 
-  /// Whether [statement] always transfers control out of the branch.
   bool _alwaysExits(Statement statement) => switch (statement) {
     ReturnStatement() || BreakStatement() || ContinueStatement() => true,
-
-    // `throw` as a statement is an ExpressionStatement wrapping a throw.
     ExpressionStatement(:final expression) => expression is ThrowExpression,
-
-    // A block exits when its last statement does. An empty block does not.
     Block(:final statements) =>
       statements.isNotEmpty && _alwaysExits(statements.last),
-
     _ => false,
   };
 }

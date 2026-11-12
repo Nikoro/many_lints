@@ -10,13 +10,6 @@ import '../many_lints_rule.dart';
 import '../disposal_utils.dart';
 import '../riverpod_type_checkers.dart';
 
-/// Warns when an instance with a `dispose` method is created inside a Riverpod
-/// provider callback or Notifier `build()` method without a corresponding
-/// `ref.onDispose()` call to clean it up.
-///
-/// Failing to properly dispose of resources can lead to memory leaks. When
-/// objects with cleanup logic are created within providers but never cleaned
-/// up, they retain memory unnecessarily.
 class DisposeProvidedInstances extends ManyLintsRule {
   static const LintCode code = LintCode(
     'dispose_provided_instances',
@@ -44,10 +37,8 @@ class DisposeProvidedInstances extends ManyLintsRule {
     RuleContext context,
   ) {
     final visitor = _Visitor(this);
-    // For Provider((ref) => ...) callbacks
     registry.addInstanceCreationExpression(this, visitor);
     registry.addMethodInvocation(this, visitor);
-    // For Notifier/AsyncNotifier build() methods
     registry.addMethodDeclaration(this, visitor);
   }
 }
@@ -57,11 +48,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  // --- Provider callback detection ---
-
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    // Provider<T>((ref) => ...) or Provider<T>.autoDispose((ref) => ...)
     if (!_isProviderConstruction(node.staticType)) return;
     final callback = _extractProviderCallback(node.argumentList);
     if (callback == null) return;
@@ -70,14 +58,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    // Provider((ref) => ...) without type args is parsed as MethodInvocation
+    // Edge case: an untyped `Provider((ref) => ...)` parses as a method invocation
     if (!_isProviderConstruction(node.staticType)) return;
     final callback = _extractProviderCallback(node.argumentList);
     if (callback == null) return;
     _checkCallbackBody(callback);
   }
-
-  // --- Notifier build() detection ---
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
@@ -94,10 +80,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     _checkFunctionBody(node.body);
   }
 
-  // --- Shared analysis logic ---
-
-  /// Extracts the first positional argument as a FunctionExpression from
-  /// a provider constructor's argument list.
   static FunctionExpression? _extractProviderCallback(
     ArgumentList argumentList,
   ) {
@@ -108,12 +90,10 @@ class _Visitor extends SimpleAstVisitor<void> {
     return null;
   }
 
-  /// Checks whether [type] is a Riverpod Provider type.
   static bool _isProviderConstruction(DartType? type) {
     if (type is! InterfaceType) return false;
     final name = type.element.name;
     if (name == null) return false;
-    // Match common Riverpod provider types
     return _providerTypeNames.contains(name);
   }
 
@@ -141,29 +121,19 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _checkFunctionBody(FunctionBody body) {
-    // Resolved once and shared by both collectors: detecting a disposable and
-    // recognising its disposal must use the same list, or a configured method
-    // would be reported as never disposed.
-    final methods = resolveCleanupMethods(rule);
+    final cleanupMethods = resolveCleanupMethods(rule);
 
-    // Collect all ref.onDispose(...) calls
-    final onDisposeCalls = _OnDisposeCollector(methods);
+    final onDisposeCalls = _OnDisposeCollector(cleanupMethods);
     body.visitChildren(onDisposeCalls);
     final disposedSources = onDisposeCalls.disposedSources;
 
-    // Find all variable declarations with disposable types
-    final varFinder = _DisposableVariableFinder(methods);
+    final varFinder = _DisposableVariableFinder(cleanupMethods);
     body.visitChildren(varFinder);
 
     for (final variable in varFinder.variables) {
       final name = variable.name;
       final cleanupMethod = variable.cleanupMethod;
 
-      // Check if ref.onDispose is called with this variable's cleanup method
-      // Common patterns:
-      //   ref.onDispose(instance.dispose)
-      //   ref.onDispose(() => instance.dispose())
-      //   ref.onDispose(() { instance.dispose(); })
       if (disposedSources.contains('$name.$cleanupMethod') ||
           disposedSources.contains(name)) {
         continue;
@@ -174,7 +144,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Info about a variable with a disposable type found in the body.
 class _DisposableVariable {
   final String name;
   final Token nameToken;
@@ -187,11 +156,9 @@ class _DisposableVariable {
   });
 }
 
-/// Collects variable declarations whose types have cleanup methods.
 class _DisposableVariableFinder extends RecursiveAstVisitor<void> {
   final List<_DisposableVariable> variables = [];
 
-  /// The cleanup method names to recognise, resolved from configuration.
   final List<String> methods;
 
   _DisposableVariableFinder(this.methods);
@@ -217,7 +184,6 @@ class _DisposableVariableFinder extends RecursiveAstVisitor<void> {
     super.visitVariableDeclaration(node);
   }
 
-  // Stop at nested function boundaries
   @override
   void visitFunctionExpression(FunctionExpression node) {}
 
@@ -225,19 +191,9 @@ class _DisposableVariableFinder extends RecursiveAstVisitor<void> {
   void visitFunctionDeclaration(FunctionDeclaration node) {}
 }
 
-/// Collects sources disposed via `ref.onDispose(...)`.
-///
-/// Detects patterns like:
-/// - `ref.onDispose(instance.dispose)` → records `instance.dispose`
-/// - `ref.onDispose(instance.close)` → records `instance.close`
-/// - `ref.onDispose(() => instance.dispose())` → records `instance`
-/// - `ref.onDispose(() { instance.dispose(); })` → records `instance`
 class _OnDisposeCollector extends RecursiveAstVisitor<void> {
-  /// Set of source patterns that are disposed.
-  /// Contains entries like `instance.dispose` (tear-off) or `instance` (lambda).
   final Set<String> disposedSources = {};
 
-  /// The cleanup method names to recognise, resolved from configuration.
   final List<String> methods;
 
   _OnDisposeCollector(this.methods);
@@ -257,15 +213,12 @@ class _OnDisposeCollector extends RecursiveAstVisitor<void> {
     if (args.isEmpty) return;
     final arg = args.first;
 
-    // ref.onDispose(instance.dispose) — tear-off
     if (arg is PrefixedIdentifier) {
-      // e.g., instance.dispose → record both forms
       disposedSources.add(arg.toSource());
       disposedSources.add(arg.prefix.name);
       return;
     }
 
-    // ref.onDispose(instance.dispose) via PropertyAccess (chained)
     if (arg is PropertyAccess) {
       final target = arg.target;
       if (target is SimpleIdentifier) {
@@ -275,8 +228,6 @@ class _OnDisposeCollector extends RecursiveAstVisitor<void> {
       return;
     }
 
-    // ref.onDispose(() => instance.dispose())
-    // ref.onDispose(() { instance.dispose(); })
     if (arg is FunctionExpression) {
       final callFinder = _CleanupCallFinder(methods);
       arg.body.visitChildren(callFinder);
@@ -285,23 +236,11 @@ class _OnDisposeCollector extends RecursiveAstVisitor<void> {
       }
     }
   }
-
-  // Stop at nested function boundaries
-  @override
-  void visitFunctionExpression(FunctionExpression node) {
-    // But still visit the function expression if it's an argument to onDispose
-    // This is handled via _extractDisposedSource above, so just visit normally
-    // for other cases
-    super.visitFunctionExpression(node);
-  }
 }
 
-/// Finds cleanup method calls (dispose/close/cancel) inside a lambda and
-/// records the target variable name.
 class _CleanupCallFinder extends RecursiveAstVisitor<void> {
   final Set<String> sources = {};
 
-  /// The cleanup method names to recognise, resolved from configuration.
   final List<String> methods;
 
   _CleanupCallFinder(this.methods);
@@ -312,7 +251,6 @@ class _CleanupCallFinder extends RecursiveAstVisitor<void> {
       final target = node.realTarget;
       if (target != null) {
         sources.add(target.toSource());
-        // Also record tear-off form
         sources.add('${target.toSource()}.${node.methodName.name}');
       }
     }

@@ -7,38 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a comment marks work that was never done.
-///
-/// A `TODO` marks a known missing case that ships anyway. That has always been
-/// true; what changed is how cheap the marker became. Leaving one is the
-/// fastest way for generated code to look finished — it reads as
-/// work-in-progress rather than as a defect, and nothing downstream fails on
-/// it.
-///
-/// The escape hatch that keeps this from being merely annoying is
-/// `require_reference`, on by default: a marker naming a tracked issue passes,
-/// a bare one does not. That turns "I will get to it" into something a person
-/// who is not you can find, which is the entire difference between a note and
-/// a plan.
-///
-/// ## How this differs from the SDK's `flutter_style_todos`
-///
-/// That rule enforces the *shape* `TODO(username): message` and has no opinion
-/// on whether the TODO should exist. It also accepts a username, which
-/// identifies who has context, not whether the work is tracked anywhere. This
-/// rule asks the other question, and the default
-/// [reference_pattern] accepts either an issue number or a URL. The two
-/// compose without conflict.
-///
-/// **BAD:**
-/// ```dart
-/// // TODO: handle the 409 conflict case          // LINT
-/// ```
-///
-/// **GOOD:**
-/// ```dart
-/// // TODO(#42): handle the 409 conflict case
-/// ```
 class AvoidTodoComments extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_todo_comments',
@@ -65,16 +33,13 @@ class AvoidTodoComments extends ManyLintsRule {
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
-  /// The markers reported by default.
   static const _defaultMarkers = {'TODO', 'FIXME', 'HACK', 'XXX'};
 
-  /// Accepts an issue number or a URL, in either the parenthesised Flutter
-  /// style or after the colon.
-  ///
-  /// Deliberately permissive about placement and strict about content: what
-  /// matters is that a tracked identifier is present, not where the author put
-  /// it.
   static final _defaultReference = RegExp(r'#\d+|https?://\S+|[A-Z]+-\d+');
+
+  static final _commentDelimiter = RegExp(r'^(///?/?|/\*+)');
+
+  static final _leadingWordCharacter = RegExp(r'^[A-Za-z0-9_]');
 
   final AvoidTodoComments rule;
 
@@ -114,22 +79,15 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// The marker [text] opens with, or `null`.
-  ///
-  /// Anchoring at the start of the comment body is what separates a marker
-  /// from prose that happens to contain the word — "the TODO above explains
-  /// why" is a comment about a marker, not one.
   String? _markerIn(String text, Set<String> markers) {
-    // Strip the comment delimiter and any leading whitespace, handling `//`,
-    // `///` and `/*` alike.
-    final body = text.replaceFirst(RegExp(r'^(///?/?|/\*+)'), '').trimLeft();
+    final body = text.replaceFirst(_commentDelimiter, '').trimLeft();
 
     for (final marker in markers) {
       if (!body.startsWith(marker)) continue;
 
-      // Require a boundary so `TODOS.md` and `HACKATHON` are not markers.
       final rest = body.substring(marker.length);
-      if (rest.isEmpty || !RegExp(r'^[A-Za-z0-9_]').hasMatch(rest)) {
+      final continuesWord = _leadingWordCharacter.hasMatch(rest);
+      if (!continuesWord) {
         return marker;
       }
     }
@@ -137,10 +95,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return null;
   }
 
-  /// Every comment token in the unit, in source order.
-  ///
-  /// Comments are not AST nodes: each hangs off the token that follows it, so
-  /// the only way to see all of them is to walk the token stream.
   Iterable<Token> _comments(CompilationUnit node) sync* {
     Token? token = node.beginToken;
     while (token != null) {

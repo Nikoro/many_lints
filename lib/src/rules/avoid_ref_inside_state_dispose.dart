@@ -7,11 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
 
-/// Warns when `ref` is accessed inside the `dispose()` method of a
-/// `ConsumerState` (or similar Riverpod state) class.
-///
-/// At disposal time, providers may already be disposed and accessing them can
-/// lead to unexpected errors or inconsistent behaviour.
 class AvoidRefInsideStateDispose extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_ref_inside_state_dispose',
@@ -51,7 +46,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodDeclaration(MethodDeclaration node) {
     if (node.name.lexeme != 'dispose') return;
 
-    // Navigate to the enclosing class
     final enclosingBody = node.parent;
     if (enclosingBody is! BlockClassBody) return;
     final classDecl = enclosingBody.parent;
@@ -60,21 +54,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     final element = classDecl.declaredFragment?.element;
     if (element == null || !consumerStateChecker.isSuperOf(element)) return;
 
-    // Search for any `ref` usage inside dispose body
     final finder = _RefUsageFinder(rule);
     node.body.visitChildren(finder);
   }
 }
 
-/// Recursively searches for `ref` usages inside a dispose body.
-///
-/// Detects:
-/// - `ref.read(...)`, `ref.watch(...)`, `ref.listen(...)`, etc.
-/// - Bare `ref` identifier
-/// - `ref` as a property access target
-///
-/// Stops at nested function boundaries to avoid false positives from closures
-/// that may be invoked outside of dispose.
 class _RefUsageFinder extends RecursiveAstVisitor<void> {
   final AvoidRefInsideStateDispose rule;
 
@@ -87,30 +71,31 @@ class _RefUsageFinder extends RecursiveAstVisitor<void> {
       return;
     }
 
-    // Skip when `ref` is part of a PrefixedIdentifier or PropertyAccess
-    // (those visitors handle reporting instead)
-    final parent = node.parent;
-    if (parent is PrefixedIdentifier && parent.prefix == node) return;
-    if (parent is PropertyAccess && parent.target == node) return;
-    if (parent is MethodInvocation && parent.target == node) return;
+    if (_isReportedByEnclosingAccess(node)) return;
 
     rule.reportAtNode(node);
     super.visitSimpleIdentifier(node);
   }
 
+  bool _isReportedByEnclosingAccess(SimpleIdentifier node) =>
+      switch (node.parent) {
+        PrefixedIdentifier(:final prefix) => prefix == node,
+        PropertyAccess(:final target) => target == node,
+        MethodInvocation(:final target) => target == node,
+        _ => false,
+      };
+
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    // ref.read(...), ref.watch(...), ref.listen(...)
     if (node.target case SimpleIdentifier(name: 'ref')) {
       rule.reportAtNode(node);
-      return; // Don't recurse into children — already reported
+      return;
     }
     super.visitMethodInvocation(node);
   }
 
   @override
   void visitPrefixedIdentifier(PrefixedIdentifier node) {
-    // ref.someProperty
     if (node.prefix.name == 'ref') {
       rule.reportAtNode(node);
       return;
@@ -120,7 +105,6 @@ class _RefUsageFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitPropertyAccess(PropertyAccess node) {
-    // this.ref or other chained property access
     if (node.target case SimpleIdentifier(name: 'ref')) {
       rule.reportAtNode(node);
       return;
@@ -128,7 +112,6 @@ class _RefUsageFinder extends RecursiveAstVisitor<void> {
     super.visitPropertyAccess(node);
   }
 
-  // Stop at function boundaries — closures may be stored for later invocation
   @override
   void visitFunctionExpression(FunctionExpression node) {}
 

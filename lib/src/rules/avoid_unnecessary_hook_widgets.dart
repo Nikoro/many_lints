@@ -9,7 +9,6 @@ import '../ast_node_analysis.dart';
 import '../hook_detection.dart';
 import '../hook_type_checkers.dart';
 
-/// Warns when a HookWidget does not use any hooks in the build method.
 class AvoidUnnecessaryHookWidgets extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_hook_widgets',

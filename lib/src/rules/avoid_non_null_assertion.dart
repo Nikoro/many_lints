@@ -11,40 +11,6 @@ import '../type_checker.dart';
 
 const _mapChecker = TypeChecker.fromUrl('dart:core#Map');
 
-/// Warns on every use of the null-assertion (`!`) operator.
-///
-/// `!` is an unchecked assertion, not a check: it tells the compiler a value is
-/// non-null and throws at runtime when that turns out to be wrong. The type
-/// system stops helping at exactly the point the value is most likely to be
-/// null, so a mistake surfaces as a `TypeError` in production rather than as an
-/// analysis error.
-///
-/// This is deliberately stricter than the SDK's own `unnecessary_null_checks`
-/// and `null_check_on_nullable_type_parameter`, which flag only *redundant* or
-/// unsound bangs. This rule takes the position that a nullable value should be
-/// narrowed — with `?.`, `??`, a null check, or pattern matching — rather than
-/// asserted away.
-///
-/// Reading a known-present entry out of a `Map` is exempt: `map[key]!` is the
-/// idiomatic spelling, because `Map`'s index operator is nullable by design
-/// regardless of what the map contains.
-///
-/// **Bad:**
-/// ```dart
-/// user!.name;
-/// config.timeout!.inSeconds;
-/// fetch()!.close();
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// user?.name;
-/// config.timeout?.inSeconds;
-/// if (user != null) user.name;
-///
-/// // Exempt: Map's index operator returns null for a missing key.
-/// translations['title']!.toUpperCase();
-/// ```
 class AvoidNonNullAssertion extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_non_null_assertion',
@@ -82,8 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitPostfixExpression(PostfixExpression node) {
-    // `!` is the only postfix operator that is a null assertion; `++` and `--`
-    // arrive here too.
     if (node.operator.type != TokenType.BANG) return;
 
     var operand = node.operand;
@@ -91,10 +55,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       operand = operand.expression;
     }
 
-    // `map[key]!` is idiomatic: `Map.operator []` is declared to return a
-    // nullable value whatever the map holds, so lower presets exempt it. The
-    // pedantic preset disables this exception because its contract is to ban
-    // every postfix bang, including the conventional map spelling.
     final ignoreMapIndexes = rule.config.boolOption(
       'ignore_map_indexes',
       defaultValue: true,
@@ -105,11 +65,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // `ignore_checked_fields: true` accepts a bang on a field that a preceding
-    // `if (field != null)` already proved non-null. The default reports it:
-    // promotion does not apply to fields, so the bang is genuinely the thing
-    // making the code compile, and it can still throw if another isolate or a
-    // getter mutates the field in between.
     final ignoreCheckedFields = rule.config.boolOption(
       'ignore_checked_fields',
       defaultValue: false,
@@ -119,17 +74,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(node);
   }
 
-  /// Whether [node] indexes a `Map`.
   static bool _isMapIndex(IndexExpression node) {
     final targetType = node.realTarget.staticType;
     return targetType != null && _mapChecker.isAssignableFromType(targetType);
   }
 
-  /// Whether [operand] names a field that an enclosing `if (x != null)` guards.
-  ///
-  /// Only the *condition* of an enclosing `if` is inspected, and the bang must
-  /// sit inside the branch that condition proves non-null — the `then` branch
-  /// for `!=`, the `else` branch for `==`.
   static bool _isGuardedByNullCheck(AstNode node, Expression operand) {
     final target = _canonicalElement(operand);
     if (target == null) return false;
@@ -137,8 +86,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     AstNode? current = node.parent;
     var child = node;
     while (current != null) {
-      // A closure may run long after the guard, so a guard outside it proves
-      // nothing about the field at the time the closure body executes.
+      // Edge case: a closure may run long after the guard, when the field is null again
       if (current is FunctionExpression || current is FunctionBody) {
         return false;
       }
@@ -163,7 +111,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return false;
   }
 
-  /// The `==` / `!=` operator of a plain `x == null` comparison, else `null`.
   static String? _nullCheckOperator(Expression condition) {
     if (condition is! BinaryExpression) return null;
     final operator = condition.operator.lexeme;
@@ -171,8 +118,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return _nullCheckedOperand(condition) == null ? null : operator;
   }
 
-  /// The non-`null` side of a null comparison, or `null` when [condition] is
-  /// not one.
   static Expression? _nullCheckedOperand(Expression condition) {
     if (condition is! BinaryExpression) return null;
     return switch ((condition.leftOperand, condition.rightOperand)) {
@@ -182,8 +127,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     };
   }
 
-  /// The element [expression] refers to, canonicalized so a read and a write of
-  /// the same storage compare equal.
   static Element? _canonicalElement(Expression? expression) {
     var target = expression;
     while (target is ParenthesizedExpression) {

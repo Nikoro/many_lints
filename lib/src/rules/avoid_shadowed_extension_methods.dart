@@ -8,23 +8,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when an extension declares a member that the extended type already
-/// has.
-///
-/// Extension members are resolved statically and lose to instance members
-/// every time. An extension method whose name matches one on the type it
-/// extends can therefore never be called through normal syntax — the instance
-/// member always wins, silently.
-///
-/// The result is code that reads as if the extension applies and behaves as if
-/// it does not.
-///
-/// **Bad:**
-/// ```dart
-/// extension on String {
-///   String toUpperCase() => '!'; // never called; String.toUpperCase wins
-/// }
-/// ```
 class AvoidShadowedExtensionMethods extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_shadowed_extension_methods',
@@ -66,8 +49,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final extendedType = node.onClause?.extendedType.type;
     if (extendedType is! InterfaceType) return;
 
-    // An extension's body is a `BlockClassBody`, the same sealed type a class
-    // uses — there is no separate extension-body type.
     final body = node.body;
     if (body is! BlockClassBody) return;
 
@@ -98,7 +79,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Whether [type] or any of its supertypes already declares [name].
   bool _declaredOn(InterfaceType type, String name) {
     if (_hasMember(type.element, name)) return true;
 

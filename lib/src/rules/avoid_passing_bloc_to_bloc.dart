@@ -7,12 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../bloc_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when a Bloc/Cubit class receives another Bloc/Cubit as a constructor
-/// parameter, creating a direct dependency between blocs.
-///
-/// Blocs should only receive information through events and from injected
-/// repositories. Direct bloc-to-bloc dependencies bypass the event-driven
-/// architecture and create tight coupling.
 class AvoidPassingBlocToBloc extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_passing_bloc_to_bloc',
@@ -52,10 +46,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     final element = node.declaredFragment?.element;
     if (element == null) return;
 
-    // Only check classes that extend BlocBase (Bloc or Cubit)
     if (!blocBaseChecker.isSuperOf(element)) return;
 
-    // Skip the BlocBase/Bloc/Cubit classes themselves
     if (blocBaseChecker.isExactly(element)) return;
 
     final body = node.body;
@@ -75,14 +67,12 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _checkParameter(FormalParameter param) {
-    // Get the resolved type of the parameter
     final paramElement = param.declaredFragment?.element;
     if (paramElement == null) return;
 
     final paramType = paramElement.type;
     if (!blocBaseChecker.isAssignableFromType(paramType)) return;
 
-    // Report at the parameter name
     final nameToken = param.name;
     if (nameToken != null) {
       rule.reportAtToken(nameToken);

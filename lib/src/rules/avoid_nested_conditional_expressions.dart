@@ -6,14 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a conditional expression is nested inside another one.
-///
-/// `a ? b : (c ? d : e)` packs a decision tree onto one line, and the reader
-/// has to track which `?` each `:` belongs to. A `switch` expression or an
-/// early return says the same thing with the branches lined up.
-///
-/// The depth is configurable through `max_depth`, defaulting to `1` — one
-/// conditional, no nesting.
 class AvoidNestedConditionalExpressions extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_nested_conditional_expressions',
@@ -42,7 +34,6 @@ class AvoidNestedConditionalExpressions extends ManyLintsRule {
   }
 }
 
-/// One conditional, no nesting.
 const _defaultMaxDepth = 1;
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -57,8 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       defaultValue: _defaultMaxDepth,
     );
 
-    // Report at the outermost conditional only, so one nested chain produces
-    // one diagnostic rather than one per level.
     if (_enclosingConditional(node) != null) return;
 
     final depth = _depthOf(node);
@@ -67,7 +56,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(node, arguments: ['$depth', '$maxDepth']);
   }
 
-  /// The nearest conditional this one sits inside, ignoring parentheses.
   ConditionalExpression? _enclosingConditional(ConditionalExpression node) {
     for (
       AstNode? current = node.parent;
@@ -80,7 +68,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return null;
   }
 
-  /// How many conditionals deep this expression goes.
   int _depthOf(Expression expression) {
     final unwrapped = switch (expression) {
       ParenthesizedExpression(:final expression) => expression,

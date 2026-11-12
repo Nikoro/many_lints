@@ -7,19 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 
-/// Warns when a class or mixin overrides a member without adding
-/// implementation or changing the signature.
-///
-/// Detects:
-/// - Methods that only call `super.method(...)` with identical arguments
-/// - Getters that only return `super.getter`
-/// - Setters that only assign `super.setter = value`
-/// - Abstract redeclarations without implementation changes
-///
-/// Mirrors the exemptions of the SDK's `unnecessary_overrides` rule: an
-/// override is not reported when it adds a documentation comment, an
-/// annotation other than `@override`, or a `covariant` parameter, nor when
-/// the member is `noSuchMethod`.
 class AvoidUnnecessaryOverrides extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_overrides',
@@ -76,15 +63,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Whether this override has a legitimate reason to exist beyond
-  /// delegation, matching the exemptions of the SDK's `unnecessary_overrides`.
-  ///
-  /// An override is exempt when it:
-  /// - is `noSuchMethod`, which is special-cased by the language;
-  /// - carries a documentation comment the super member does not provide;
-  /// - carries an annotation other than `@override` (`@protected`,
-  ///   `@visibleForTesting`, `@mustCallSuper`, …), which changes its contract;
-  /// - marks a parameter `covariant`, which narrows the accepted type.
   static bool _isExempt(MethodDeclaration member) {
     if (member.name.lexeme == 'noSuchMethod') return true;
     if (member.documentationComment != null) return true;
@@ -92,7 +70,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return _hasCovariantParameter(member);
   }
 
-  /// Whether any of the member's parameters is marked `covariant`.
   static bool _hasCovariantParameter(MethodDeclaration member) {
     final parameters = member.parameters?.parameters;
     if (parameters == null) return false;
@@ -102,7 +79,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   void _checkMethodDeclaration(MethodDeclaration member) {
     final memberName = member.name.lexeme;
 
-    // Abstract redeclaration — no body at all (EmptyFunctionBody)
     if (!member.isComplete) {
       rule.reportAtNode(member, arguments: [memberName]);
       return;
@@ -123,8 +99,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Checks if a method only calls `super.methodName(...)` passing through
-  /// all parameters in the same order.
   static bool _isOnlySuperCall(MethodDeclaration method, String methodName) {
     final body = method.body;
 
@@ -146,14 +120,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (expression == null) return false;
 
-    // Regular method call: super.methodName(args)
     if (expression is MethodInvocation) {
       return expression.target is SuperExpression &&
           expression.methodName.name == methodName &&
           _areArgsPassThrough(method.parameters, expression.argumentList);
     }
 
-    // Operator override: super == other, super + other, etc.
     if (method.isOperator && expression is BinaryExpression) {
       return expression.leftOperand is SuperExpression &&
           expression.operator.lexeme == methodName &&
@@ -163,8 +135,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return false;
   }
 
-  /// Checks if a binary operator's right operand is just the method's
-  /// single parameter passed through.
   static bool _isSingleParamPassThrough(
     FormalParameterList? params,
     Expression operand,
@@ -178,8 +148,6 @@ class _Visitor extends SimpleAstVisitor<void> {
         operand.name == paramName;
   }
 
-  /// Checks if the arguments in the call match the method's parameters
-  /// exactly (same order, same names for positional, same names for named).
   static bool _areArgsPassThrough(
     FormalParameterList? params,
     ArgumentList args,
@@ -199,13 +167,10 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (paramName == null) return false;
 
       if (arg is NamedArgument) {
-        // Named argument: name must match and value must be a simple identifier
-        // with the same name as the parameter.
         if (arg.name.lexeme != paramName) return false;
         final expr = arg.argumentExpression;
         if (expr is! SimpleIdentifier || expr.name != paramName) return false;
       } else if (arg is SimpleIdentifier) {
-        // Positional argument: must be a simple identifier with the same name.
         if (arg.name != paramName) return false;
       } else {
         return false;
@@ -215,7 +180,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return true;
   }
 
-  /// Checks if a getter only returns `super.getter`.
   static bool _isUnnecessaryGetter(
     MethodDeclaration method,
     String getterName,
@@ -238,7 +202,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return _isSuperPropertyAccess(expression, getterName);
   }
 
-  /// Checks if a setter only assigns `super.setter = value`.
   static bool _isUnnecessarySetter(
     MethodDeclaration method,
     String setterName,
@@ -259,11 +222,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (expression == null) return false;
     if (expression is! AssignmentExpression) return false;
 
-    // Left-hand side must be super.setterName
     final lhs = expression.leftHandSide;
     if (!_isSuperPropertyAccess(lhs, setterName)) return false;
 
-    // Right-hand side must be the setter's parameter
     final param = method.parameters?.parameters.firstOrNull;
     if (param == null) return false;
     final paramName = param.name?.lexeme;
@@ -273,8 +234,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return rhs is SimpleIdentifier && rhs.name == paramName;
   }
 
-  /// Checks if an expression is `super.name` (either PropertyAccess or
-  /// PrefixedIdentifier form).
   static bool _isSuperPropertyAccess(Expression expression, String name) {
     if (expression is PropertyAccess) {
       return expression.target is SuperExpression &&

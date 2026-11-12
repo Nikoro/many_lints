@@ -7,29 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when nothing in a `while` loop's body can change its condition.
-///
-/// If no variable the condition reads is ever assigned inside the loop, the
-/// condition evaluates the same way forever: the loop either never runs or
-/// never stops. Both are bugs — usually a forgotten increment, or the wrong
-/// variable being advanced.
-///
-/// **Bad:**
-/// ```dart
-/// var i = 0;
-/// while (i < items.length) {
-///   print(items[i]); // `i` is never advanced — infinite loop
-/// }
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// var i = 0;
-/// while (i < items.length) {
-///   print(items[i]);
-///   i++;
-/// }
-/// ```
 class AvoidUnmodifiedLoopCondition extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unmodified_loop_condition',
@@ -74,24 +51,18 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitDoStatement(DoStatement node) => _check(node.condition, node.body);
 
   void _check(Expression condition, Statement body) {
-    // `while (true)` with a `break` is the idiomatic infinite loop, not a bug.
     if (condition is BooleanLiteral) return;
 
     final reads = _ConditionReadCollector();
     condition.accept(reads);
 
-    // A condition that consults something other than plain variables — a
-    // method call, a property, an `await` — may observe outside change on each
-    // iteration, so nothing can be concluded from assignments alone.
     if (reads.hasOpaqueRead) return;
     if (reads.found.isEmpty) return;
 
     final mutations = _MutationCollector();
     body.accept(mutations);
 
-    // Any jump out of the loop makes non-termination escapable, and a jump
-    // that depends on runtime state is beyond this rule's reach.
-    if (mutations.hasEscape) return;
+    if (mutations.hasExitOrClosure) return;
 
     for (final element in reads.found) {
       if (mutations.assigned.contains(element)) return;
@@ -101,10 +72,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Collects the variables a loop condition reads.
-///
-/// [hasOpaqueRead] records that the condition also consults something whose
-/// value this rule cannot track, in which case its conclusion is unsafe.
 class _ConditionReadCollector extends RecursiveAstVisitor<void> {
   final Set<Element> found = {};
   bool hasOpaqueRead = false;
@@ -113,9 +80,7 @@ class _ConditionReadCollector extends RecursiveAstVisitor<void> {
   void visitSimpleIdentifier(SimpleIdentifier node) {
     final element = node.element;
 
-    // Locals and parameters are the only storage whose every mutation is
-    // visible in the loop body. A field can be changed by any method the body
-    // calls, so treating it as unmodified would be a false positive.
+    // Edge case: a field can change in any method the body calls, so only locals are tracked
     if (element is LocalVariableElement || element is FormalParameterElement) {
       found.add(element!);
 
@@ -152,11 +117,9 @@ class _ConditionReadCollector extends RecursiveAstVisitor<void> {
   }
 }
 
-/// Collects variables assigned in a loop body, and whether the body can exit
-/// by other means.
 class _MutationCollector extends RecursiveAstVisitor<void> {
   final Set<Element> assigned = {};
-  bool hasEscape = false;
+  bool hasExitOrClosure = false;
 
   void _recordTarget(Expression target, {Element? writeElement}) {
     final element = switch (target) {
@@ -191,16 +154,15 @@ class _MutationCollector extends RecursiveAstVisitor<void> {
   }
 
   @override
-  void visitBreakStatement(BreakStatement node) => hasEscape = true;
+  void visitBreakStatement(BreakStatement node) => hasExitOrClosure = true;
 
   @override
-  void visitReturnStatement(ReturnStatement node) => hasEscape = true;
+  void visitReturnStatement(ReturnStatement node) => hasExitOrClosure = true;
 
   @override
-  void visitThrowExpression(ThrowExpression node) => hasEscape = true;
+  void visitThrowExpression(ThrowExpression node) => hasExitOrClosure = true;
 
-  /// A closure may be invoked later and mutate anything it captures, so its
-  /// mere presence makes the analysis unsafe.
   @override
-  void visitFunctionExpression(FunctionExpression node) => hasEscape = true;
+  void visitFunctionExpression(FunctionExpression node) =>
+      hasExitOrClosure = true;
 }

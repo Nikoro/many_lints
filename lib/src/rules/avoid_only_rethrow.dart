@@ -6,34 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a catch clause contains only a `rethrow` statement.
-///
-/// Such catch clauses are redundant because they don't handle exceptions —
-/// they simply re-throw them. Either add meaningful exception handling or
-/// remove the catch clause entirely.
-///
-/// **Bad:**
-/// ```dart
-/// try {
-///   doSomething();
-/// } catch (e) {
-///   rethrow;
-/// }
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// // Option 1: Add exception handling
-/// try {
-///   doSomething();
-/// } catch (e) {
-///   logger.error(e);
-///   rethrow;
-/// }
-///
-/// // Option 2: Remove redundant catch clause
-/// doSomething();
-/// ```
 class AvoidOnlyRethrow extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_only_rethrow',
@@ -68,12 +40,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitTryStatement(TryStatement node) {
-    // `exclude` needs no guard here: `ManyLintsRule` discards diagnostics for
-    // excluded files at the reporter.
-    //
-    // `ignore_typed_catches: true` limits the rule to untyped `catch (e)`
-    // clauses, leaving `on SomeError catch (e) { rethrow; }` alone — that
-    // form narrows which exceptions propagate, so it is not always redundant.
     final ignoreTyped = rule.config.boolOption(
       'ignore_typed_catches',
       defaultValue: false,

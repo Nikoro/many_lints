@@ -7,38 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when an `async` closure is passed where a `void`-returning function
-/// is expected.
-///
-/// `void Function()` accepts an `async` closure: the returned `Future` is
-/// assigned to `void` and dropped. Nothing awaits it, so the caller continues
-/// before the work finishes, and an error thrown inside it becomes an
-/// unhandled async error instead of something the caller can catch.
-///
-/// This is the only shape where the mismatch compiles. For any other return
-/// type — `int Function()`, `String Function()` — the analyzer already rejects
-/// `Future<int>` as not assignable, so there is nothing left for a lint to
-/// catch. `dynamic` and `Object` returns accept the future *as a value*, which
-/// the callee can still store or await, so they are not reported either.
-///
-/// **Bad:**
-/// ```dart
-/// void schedule(void Function() task) { ... }
-///
-/// schedule(() async {
-///   await save(); // nothing awaits this; errors surface as unhandled
-/// });
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// void schedule(Future<void> Function() task) { ... }
-/// ```
-///
-/// Flutter's `onPressed` and friends are `void`-returning by design and are
-/// commonly given `async` bodies, so they are ignored by default. Set
-/// `ignore_widget_callbacks: false` when a project wants to audit those
-/// fire-and-forget handlers too.
 class AvoidPassingAsyncWhenSyncExpected extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_passing_async_when_sync_expected',
@@ -75,8 +43,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  /// Common Flutter callbacks that are `void` by contract and idiomatically
-  /// given `async` bodies. Reported only when the user opts in.
   static const _widgetCallbacks = {
     'onPressed',
     'onTap',
@@ -93,27 +59,15 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitFunctionExpression(FunctionExpression node) {
     if (!node.body.isAsynchronous) return;
 
-    // `async*` returns a Stream — a different shape, not this rule's concern.
     if (node.body.isGenerator) return;
 
-    // Only an argument position carries a parameter type to compare against.
-    // A positional argument is the expression itself; a named one is wrapped
-    // in a `NamedArgument`. Both expose `correspondingParameter`.
-    final Argument argument;
-    switch (node.parent) {
-      case ArgumentList():
-        argument = node;
-      case final NamedArgument named when named.argumentExpression == node:
-        argument = named;
-      default:
-        return;
-    }
+    final argument = _asArgument(node);
+    if (argument == null) return;
 
     final parameter = argument.correspondingParameter;
     final parameterType = parameter?.type;
     if (parameterType is! FunctionType) return;
 
-    // Only `void` both accepts an async closure and silently drops it.
     if (parameterType.returnType is! VoidType) return;
 
     final parameterName = parameter?.name ?? '';
@@ -124,8 +78,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // Flutter handlers are fire-and-forget by contract and commonly async.
-    // A project can opt into auditing them when it has its own error boundary.
     final ignoreWidgetCallbacks = rule.config.boolOption(
       'ignore_widget_callbacks',
       defaultValue: true,
@@ -137,4 +89,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     rule.reportAtNode(node, arguments: [parameterName]);
   }
+
+  Argument? _asArgument(FunctionExpression node) => switch (node.parent) {
+    ArgumentList() => node,
+    final NamedArgument named when named.argumentExpression == node => named,
+    _ => null,
+  };
 }

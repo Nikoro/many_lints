@@ -9,9 +9,6 @@ import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../flutter_type_checkers.dart';
 
-/// Warns when a widget that supports a `padding` parameter is wrapped in a
-/// `Padding` widget. The padding should be passed directly to the child widget
-/// instead.
 class AvoidWrappingInPadding extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_wrapping_in_padding',
@@ -60,20 +57,16 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _check(ArgumentList argumentList, AstNode reportNode) {
-    // Find the child argument
     final childExpr = namedArgumentValue(argumentList.arguments, 'child');
     if (childExpr == null) return;
 
-    // Get the child widget's type name and argument list
     final (childTypeName, childArgList) = _getChildInfo(childExpr);
     if (childTypeName == null || childArgList == null) return;
 
-    // Check if the child widget's type has a 'padding' named parameter
     final childType = childExpr.staticType;
     if (childType is! InterfaceType) return;
     if (!_hasPaddingParam(childType)) return;
 
-    // Check the child doesn't already have a padding argument set
     if (childArgList.arguments.whereType<NamedArgument>().any(
       (e) => e.name.lexeme == 'padding',
     )) {
@@ -83,7 +76,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(reportNode, arguments: [childTypeName]);
   }
 
-  /// Returns the type name and argument list of the child expression.
   static (String?, ArgumentList?) _getChildInfo(Expression expr) {
     if (expr is InstanceCreationExpression) {
       return (expr.constructorName.type.name.lexeme, expr.argumentList);
@@ -94,7 +86,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return (null, null);
   }
 
-  /// Checks whether any constructor on the type has a `padding` named param.
   static bool _hasPaddingParam(InterfaceType type) {
     for (final constructor in type.element.constructors) {
       for (final param in constructor.formalParameters) {

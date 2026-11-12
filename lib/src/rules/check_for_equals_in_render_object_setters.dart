@@ -7,33 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when a `RenderObject` setter does not compare the new value with the
-/// current one before marking the object dirty.
-///
-/// A setter that unconditionally calls `markNeedsLayout` or `markNeedsPaint`
-/// schedules work even when nothing changed. `updateRenderObject` runs on
-/// every rebuild and assigns every property, so an unguarded setter turns each
-/// rebuild into a full relayout of that subtree.
-///
-/// At best this is wasted frames; when the layout itself triggers another
-/// rebuild it becomes an endless loop.
-///
-/// **Bad:**
-/// ```dart
-/// set color(Color value) {
-///   _color = value;
-///   markNeedsPaint(); // runs even when the value is unchanged
-/// }
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// set color(Color value) {
-///   if (_color == value) return;
-///   _color = value;
-///   markNeedsPaint();
-/// }
-/// ```
 class CheckForEqualsInRenderObjectSetters extends ManyLintsRule {
   static const LintCode code = LintCode(
     'check_for_equals_in_render_object_setters',
@@ -74,8 +47,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     packageName: 'flutter',
   );
 
-  /// The methods that schedule pipeline work; calling one is what makes an
-  /// unguarded setter expensive.
   static const _markDirtyMethods = {
     'markNeedsLayout',
     'markNeedsPaint',
@@ -116,10 +87,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     body.accept(marks);
     if (!marks.found) return;
 
-    // Any comparison of the incoming value counts as a guard. This
-    // deliberately over-accepts: the shapes vary (`==`, `identical`, a
-    // `!=` early return, a nested field check), and a false positive on a
-    // setter that *is* guarded is worse than missing an exotic one.
+    // Edge case: any comparison counts, since a false report on a guarded setter costs more
     final guards = _EqualityGuardFinder();
     body.accept(guards);
     if (guards.found) return;
@@ -128,7 +96,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Finds a call to one of the mark-dirty methods on this object.
 class _MarkDirtyFinder extends RecursiveAstVisitor<void> {
   final Set<String> markMethods;
   bool found = false;
@@ -146,7 +113,6 @@ class _MarkDirtyFinder extends RecursiveAstVisitor<void> {
   }
 }
 
-/// Detects any equality comparison or `identical` call in a setter body.
 class _EqualityGuardFinder extends RecursiveAstVisitor<void> {
   bool found = false;
 

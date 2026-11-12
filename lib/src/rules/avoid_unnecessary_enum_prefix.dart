@@ -6,12 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when an enum constant repeats the enum's own name.
-///
-/// `enum Status { statusActive }` reads as `Status.statusActive` at every call
-/// site, where the type already says `Status`. The prefix is a habit carried
-/// over from languages whose enum constants share one namespace; Dart scopes
-/// them to the enum, so it buys nothing and lengthens every use.
 class AvoidUnnecessaryEnumPrefix extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_enum_prefix',
@@ -52,20 +46,16 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     for (final constant in node.body.constants) {
       final name = constant.name.lexeme;
-
-      // The constant must start with the enum name *and* carry something
-      // after it: a constant named exactly `status` is not a prefixed name,
-      // it is the whole word.
-      if (name.length <= prefix.length) continue;
-      if (!name.startsWith(prefix)) continue;
-
-      // The character after the prefix must begin a new word, or `statusable`
-      // would count as prefixed by `status`.
-      final next = name[prefix.length];
-      if (next != next.toUpperCase()) continue;
+      if (!_isPrefixedWord(name, prefix)) continue;
 
       rule.reportAtToken(constant.name, arguments: [name, enumName]);
     }
+  }
+
+  bool _isPrefixedWord(String name, String prefix) {
+    if (name.length <= prefix.length || !name.startsWith(prefix)) return false;
+    final firstLetterAfterPrefix = name[prefix.length];
+    return firstLetterAfterPrefix == firstLetterAfterPrefix.toUpperCase();
   }
 
   String _lowerFirst(String value) =>

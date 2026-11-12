@@ -85,6 +85,8 @@ The skipped names are `onPressed`, `onTap`, `onLongPress`, `onChanged`, `onSubmi
 
 ## Known limitations
 
+An `async*` closure returns a `Stream`, not a dropped `Future`, so it is not reported.
+
 Only arguments are checked. A closure assigned to a variable of type `void Function()` is not reported — the same hazard exists, but the assignment is explicit enough that the author chose the type deliberately.
 
 Flutter's `onPressed`, `onTap` and similar handlers are `void`-returning by design and are idiomatically given `async` bodies. They are ignored by default. Set `ignore_widget_callbacks: false` if your project has an error boundary for those futures and wants to audit every fire-and-forget handler.

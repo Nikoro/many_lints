@@ -6,20 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a pattern variable declaration destructures only a single field.
-///
-/// Single-field destructuring adds unnecessary complexity compared to direct
-/// property access. Use regular variable declarations instead:
-///
-/// ```dart
-/// // Bad
-/// final SomeClass(:value) = input;
-/// final (:length) = [1, 2, 3];
-///
-/// // Good
-/// final value = input.value;
-/// final length = [1, 2, 3].length;
-/// ```
 class AvoidSingleFieldDestructuring extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_single_field_destructuring',
