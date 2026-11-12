@@ -6,17 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a no-argument method just reads a value and should be a getter.
-///
-/// `order.getTotal()` and `order.total` return the same thing, but only the
-/// second reads as a property of the order. Effective Dart's rule is that a
-/// member doing no real work and taking no arguments is a getter; the empty
-/// parentheses otherwise suggest something happens when you call it.
-///
-/// Only a method whose body is a single expression is considered — one that
-/// runs statements may well be doing the work the parentheses imply. A method
-/// returning `void`, an operator, an override and anything taking parameters
-/// are all left alone.
 class PreferGetterOverMethod extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_getter_over_method',
@@ -44,12 +33,7 @@ class PreferGetterOverMethod extends ManyLintsRule {
   }
 }
 
-/// Methods whose call syntax is fixed by a convention outside this codebase.
-///
-/// `toJson` is what every serialiser looks for, `call` is the invocation
-/// operator in all but name, and `copyWith`/`toList` are established shapes a
-/// reader expects to see invoked.
-const _conventionalMethods = <String>{
+const _methodsInvokedByConvention = <String>{
   'toJson',
   'toMap',
   'call',
@@ -65,8 +49,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  /// Whether the body runs any code beyond reading fields.
-  bool _invokesSomething(FunctionBody body) {
+  bool _isMoreThanFieldReads(FunctionBody body) {
     final visitor = _InvocationFinder();
     body.accept(visitor);
     return visitor.found;
@@ -76,50 +59,39 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodDeclaration(MethodDeclaration node) {
     if (node.isGetter || node.isSetter || node.isOperator) return;
 
-    // Names whose parentheses are a convention rather than a choice.
-    if (_conventionalMethods.contains(node.name.lexeme)) return;
+    if (_methodsInvokedByConvention.contains(node.name.lexeme)) return;
 
-    // An override must keep the shape the supertype declared.
-    if (node.metadata.any((a) => a.name.name == 'override')) return;
+    final mustKeepSupertypeShape = node.metadata.any(
+      (a) => a.name.name == 'override',
+    );
+    if (mustKeepSupertypeShape) return;
 
-    // A generic method is invoked with type arguments, which a getter cannot
-    // take.
-    if (node.typeParameters != null) return;
+    final takesTypeArguments = node.typeParameters != null;
+    if (takesTypeArguments) return;
 
     if (node.parameters?.parameters.isNotEmpty ?? true) return;
 
-    // `void` says the member is called for an effect, which is exactly what a
-    // getter must not be.
     final returnType = node.returnType;
-    if (returnType is NamedType && returnType.name.lexeme == 'void') return;
+    final isCalledForEffect =
+        returnType is NamedType && returnType.name.lexeme == 'void';
+    if (isCalledForEffect) return;
     if (returnType == null) return;
 
-    // Only an expression body is a plain read. A block body may be doing the
-    // work the parentheses promise.
     if (node.body is! ExpressionFunctionBody) return;
 
-    // An async member returns a Future the caller awaits, which reads as work
-    // rather than as a property.
     if (node.body.isAsynchronous || node.body.isGenerator) return;
 
-    // A Stream is something you subscribe to, not a property you read, so
-    // `watchUser()` keeps its parentheses.
-    if (returnType is NamedType &&
-        const {'Stream', 'Future'}.contains(returnType.name.lexeme)) {
-      return;
-    }
+    final returnsSubscribableOrAwaitable =
+        returnType is NamedType &&
+        const {'Stream', 'Future'}.contains(returnType.name.lexeme);
+    if (returnsSubscribableOrAwaitable) return;
 
-    // A body that calls something is not a plain read: `Clock.now()` and
-    // `sixDigitCode()` answer differently on each call, and a getter promises
-    // a stable property. Only a body built from field reads and operators
-    // qualifies.
-    if (_invokesSomething(node.body)) return;
+    if (_isMoreThanFieldReads(node.body)) return;
 
     rule.reportAtToken(node.name, arguments: [node.name.lexeme]);
   }
 }
 
-/// Detects any call in a body, which makes it more than a property read.
 class _InvocationFinder extends RecursiveAstVisitor<void> {
   bool found = false;
 

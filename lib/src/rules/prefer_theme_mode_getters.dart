@@ -9,19 +9,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when a `ThemeMode` value is compared with `==`/`!=` against a
-/// `ThemeMode` constant instead of using the dedicated getters added in
-/// Flutter 3.44 (`isDark`, `isLight`, `isSystem`).
-///
-/// **Bad:**
-/// ```dart
-/// if (themeMode == ThemeMode.dark) { ... }
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// if (themeMode.isDark) { ... }
-/// ```
 class PreferThemeModeGetters extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_theme_mode_getters',
@@ -55,9 +42,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  // Flutter 3.50 deprecates package:flutter/material.dart in favour of
-  // package:material_ui, which declares its own ThemeMode.
-  static const _themeModeChecker = TypeChecker.any([
+  static const _flutterOrMaterialUiThemeModeChecker = TypeChecker.any([
     TypeChecker.fromName('ThemeMode', packageName: 'flutter'),
     TypeChecker.fromName('ThemeMode', packageName: 'material_ui'),
   ]);
@@ -81,18 +66,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     final getter = _getters[constantName];
     if (getter == null) return;
 
-    // Only report when the resolved ThemeMode enum actually declares the
-    // getter (added in Flutter 3.44) so the fix cannot break older projects.
     final enumElement = _themeModeElement(node);
-    if (enumElement == null ||
-        !enumElement.getters.any((g) => g.name == getter)) {
-      return;
-    }
+    final themeModeDeclaresGetter =
+        enumElement?.getters.any((g) => g.name == getter) ?? false;
+    if (!themeModeDeclaresGetter) return;
 
     rule.reportAtNode(node, arguments: [constantName, getter]);
   }
 
-  /// Returns the constant name if [expression] is `ThemeMode.<constant>`.
   static String? _themeModeConstantName(Expression expression) {
     if (expression case PrefixedIdentifier(
       prefix: SimpleIdentifier(name: 'ThemeMode'),
@@ -103,7 +84,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return null;
   }
 
-  /// Resolves the `ThemeMode` enum element from either operand.
   static EnumElement? _themeModeElement(BinaryExpression node) {
     for (final operand in [node.leftOperand, node.rightOperand]) {
       final type = operand.staticType;
@@ -116,5 +96,5 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   static bool _isThemeMode(DartType? type) =>
-      type != null && _themeModeChecker.isExactlyType(type);
+      type != null && _flutterOrMaterialUiThemeModeChecker.isExactlyType(type);
 }

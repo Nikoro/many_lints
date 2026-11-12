@@ -22,6 +22,12 @@ lib/parser.dart             ->   test/parser_test.dart
 The message says a test file is *missing*, not that the code is untested — the
 rule cannot tell the difference.
 
+It cannot show a test was written first (that needs git history, and is
+gameable) or that the test exercises anything (that is coverage's job). What it
+shows is that no production file shipped without somebody creating a place for
+its tests, which is the half that matters in practice: the common failure is not
+a weak test but no test at all.
+
 This rule is in **no preset**. Whether a project mirrors its test tree is a
 project decision, so it must be enabled by name.
 
@@ -232,6 +238,10 @@ export 'order.dart';
 // lib/src/util/_helpers.dart — nothing public, so no surface a test can target
 String _slugify(String value) => value.toLowerCase();
 ```
+
+Demanding a test for a file of private helpers would only produce empty test
+files, which is worse than no rule. Barrels are detected from the AST, not the
+filename, because a barrel is not always named after its directory.
 
 ```dart
 // lib/src/core/version_impl.dart — a part file; its library is checked instead

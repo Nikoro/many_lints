@@ -84,7 +84,7 @@ class APIV2Gateway {}
 
 ### Entrypoint functions are skipped, not reported
 
-`main`, `onRequest` and `middleware` are names the language or a framework demands, which therefore cannot name the file. They are skipped and the scan moves to the next declaration:
+`main`, `onRequest` and `middleware` are names the language or a framework demands, which therefore cannot name the file: `main` is the language's own, and `onRequest` and `middleware` are dart_frog's route contract, where the file's path is the API. They are skipped and the scan moves to the next declaration:
 
 ```dart
 // user_repository_test.dart — accepted; `main` is skipped, and there is

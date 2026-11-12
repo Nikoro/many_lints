@@ -165,6 +165,9 @@ parameter.
 The `==` check only asks whether an override exists, not whether it is correct.
 A class that declares `operator ==` and compares by identity anyway passes.
 
+A redirecting constructor is followed to the class it builds, and an extension
+type is judged by its representation type, since it has no `==` of its own.
+
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with

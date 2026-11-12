@@ -8,28 +8,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a constructor declares a public named parameter whose only
-/// purpose is to initialize a private field with the same name.
-///
-/// Since Dart 3.12 a named initializing formal can be private directly
-/// (`Foo({required this._name})`); callers still pass the public name
-/// (`Foo(name: ...)`), so the initializer-list boilerplate is unnecessary.
-///
-/// **Bad:**
-/// ```dart
-/// class Bird {
-///   final String _petName;
-///   Bird({required String petName}) : _petName = petName;
-/// }
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// class Bird {
-///   final String _petName;
-///   Bird({required this._petName});
-/// }
-/// ```
 class PreferPrivateNamedParameters extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_private_named_parameters',
@@ -75,24 +53,12 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (initializer is! ConstructorFieldInitializer) continue;
 
       final fieldName = initializer.fieldName.name;
-      // Only `_name` -> `name` (single leading underscore, non-private rest).
-      if (!fieldName.startsWith('_')) continue;
-      final publicName = fieldName.substring(1);
-      if (publicName.isEmpty || publicName.startsWith('_')) continue;
+      final publicName = _publicNameOf(fieldName);
+      if (publicName == null) continue;
 
       final value = initializer.expression;
       if (value is! SimpleIdentifier) continue;
 
-      // By default only `_name` initialized from a parameter literally called
-      // `name` is reported, because that is the case `this._name` converts
-      // without touching call sites.
-      //
-      // `only_same_name: false` widens the rule to a renamed parameter
-      // (`_id` initialized from `identifier`). Adopting the shorthand there
-      // also renames the named argument, so it is a breaking change to the
-      // constructor's API — hence opt-in, and the quick fix declines it (see
-      // `prefer_private_named_parameters_fix.dart`), leaving the edit to the
-      // author.
       final onlySameName = rule.config.boolOption(
         'only_same_name',
         defaultValue: true,
@@ -101,21 +67,20 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       final parameter = _findNamedParameter(node, value.name);
       if (parameter == null) continue;
-
-      // The declared parameter type must match the field type exactly,
-      // otherwise `this._name` would change the parameter's type.
       if (!_typeMatchesField(parameter, initializer)) continue;
-
-      // The parameter must not be referenced anywhere else in the
-      // constructor (other initializers, asserts, body, default values).
-      if (_countParameterReferences(node, parameter) != 1) continue;
+      if (!_isReferencedOnce(node, parameter)) continue;
 
       rule.reportAtNode(parameter, arguments: [fieldName]);
     }
   }
 
-  /// Finds a plain named parameter with the given [name], or `null` if it
-  /// doesn't exist or is already an initializing/super formal.
+  static String? _publicNameOf(String fieldName) {
+    if (!fieldName.startsWith('_')) return null;
+    final publicName = fieldName.substring(1);
+    if (publicName.isEmpty || publicName.startsWith('_')) return null;
+    return publicName;
+  }
+
   static FormalParameter? _findNamedParameter(
     ConstructorDeclaration node,
     String name,
@@ -124,15 +89,12 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (parameter.name?.lexeme != name) continue;
       if (!parameter.isNamed) return null;
       if (parameter is! RegularFormalParameter) return null;
-      // Converting a function-typed parameter would lose its signature.
       if (parameter.functionTypedSuffix != null) return null;
       return parameter;
     }
     return null;
   }
 
-  /// Whether the parameter's declared type is the same as the initialized
-  /// field's type (an untyped parameter always matches).
   static bool _typeMatchesField(
     FormalParameter parameter,
     ConstructorFieldInitializer initializer,
@@ -147,17 +109,16 @@ class _Visitor extends SimpleAstVisitor<void> {
     return fieldType != null && parameterType == fieldType;
   }
 
-  /// Counts identifier references to [parameter] within the constructor.
-  static int _countParameterReferences(
+  static bool _isReferencedOnce(
     ConstructorDeclaration node,
     FormalParameter parameter,
   ) {
     final element = parameter.declaredFragment?.element;
-    if (element == null) return 2; // Unresolved - be conservative.
+    if (element == null) return false;
 
     final counter = _ReferenceCounter(element);
     node.accept(counter);
-    return counter.count;
+    return counter.count == 1;
   }
 }
 

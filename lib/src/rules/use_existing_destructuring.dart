@@ -7,19 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a property is accessed directly on an object that already has a
-/// destructuring declaration in the same scope. The property should be added
-/// to the existing destructuring instead.
-///
-/// ```dart
-/// // Bad
-/// final SomeClass(:value) = variable;
-/// print(variable.another);
-///
-/// // Good
-/// final SomeClass(:value, :another) = variable;
-/// print(another);
-/// ```
 class UseExistingDestructuring extends ManyLintsRule {
   static const LintCode code = LintCode(
     'use_existing_destructuring',
@@ -67,8 +54,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final destructurings = <_DestructuringInfo>[];
 
     for (final statement in node.statements) {
-      // First, check property accesses in this statement against
-      // already-collected destructurings
       if (destructurings.isNotEmpty) {
         final finder = _PropertyAccessFinder(destructurings);
         statement.accept(finder);
@@ -80,7 +65,6 @@ class _Visitor extends SimpleAstVisitor<void> {
         }
       }
 
-      // Then, collect new destructuring declarations from this statement
       if (statement is PatternVariableDeclarationStatement) {
         final decl = statement.declaration;
         final info = _extractDestructuringInfo(decl, statement.offset);
@@ -91,7 +75,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Extracts destructuring info from a PatternVariableDeclaration.
   static _DestructuringInfo? _extractDestructuringInfo(
     PatternVariableDeclaration decl,
     int statementOffset,
@@ -99,7 +82,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final pattern = decl.pattern;
     final expression = decl.expression;
 
-    // Get the source variable name and element
     final String sourceName;
     final Element? sourceElement;
 
@@ -107,14 +89,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       sourceName = expression.name;
       sourceElement = expression.element;
     } else {
-      // Only support simple identifier sources (not method calls, etc.)
       return null;
     }
 
-    // Only handle local variables and parameters
     if (sourceElement is! LocalElement) return null;
 
-    // Extract destructured field names
     final fields = <String>{};
 
     if (pattern is ObjectPattern) {
@@ -148,7 +127,6 @@ typedef _PropertyAccessMatch = ({
   String propertyName,
 });
 
-/// Finds property accesses on variables that have existing destructurings.
 class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
   final List<_DestructuringInfo> destructurings;
   final List<_PropertyAccessMatch> matches = [];
@@ -163,7 +141,7 @@ class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
       propertyName: node.identifier.name,
       accessNode: node,
     )) {
-      return; // Don't recurse into children if matched
+      return;
     }
     super.visitPrefixedIdentifier(node);
   }
@@ -184,35 +162,27 @@ class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
     super.visitPropertyAccess(node);
   }
 
-  // Stop at nested function boundaries
   @override
   void visitFunctionExpression(FunctionExpression node) {}
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {}
 
-  /// Returns true if a match was found.
   bool _checkPropertyAccess({
     required String targetName,
     required Element? targetElement,
     required String propertyName,
     required AstNode accessNode,
   }) {
-    // Skip if the parent is an assignment target (writing, not reading)
-    final parent = accessNode.parent;
-    if (parent is AssignmentExpression && parent.leftHandSide == accessNode) {
-      return false;
-    }
+    if (_isAssignmentTarget(accessNode)) return false;
 
     for (final info in destructurings) {
-      // Match by element identity when possible, fall back to name
       final isMatch = targetElement != null
           ? targetElement == info.sourceElement
           : targetName == info.sourceName;
 
       if (!isMatch) continue;
 
-      // Only flag if the property is NOT already destructured
       if (info.destructuredFields.contains(propertyName)) continue;
 
       matches.add((
@@ -223,5 +193,10 @@ class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
       return true;
     }
     return false;
+  }
+
+  static bool _isAssignmentTarget(AstNode node) {
+    final parent = node.parent;
+    return parent is AssignmentExpression && parent.leftHandSide == node;
   }
 }

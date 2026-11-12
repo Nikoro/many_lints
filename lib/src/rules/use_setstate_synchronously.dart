@@ -8,21 +8,6 @@ import '../async_guard_utils.dart';
 import '../many_lints_rule.dart';
 import '../state_base_classes.dart';
 
-/// Warns when `setState` is called after an `await` without a `mounted` guard.
-///
-/// This is a real crash, not a style preference. Between the `await` and the
-/// line after it the widget can be disposed — the user navigated back, a
-/// parent rebuilt without this child, a list item scrolled out of a
-/// `ListView`. Calling `setState` on a disposed `State` throws
-/// "setState() called after dispose()", and it does so only under the timing
-/// that makes it hard to reproduce and easy to ship.
-///
-/// The guard the framework expects is `if (!mounted) return;` between the
-/// `await` and the `setState`.
-///
-/// This is the `State` counterpart to `use_ref_read_synchronously`, and it
-/// shares that rule's async-gap machinery. It applies inside any `State`
-/// subclass, including additional bases named through `state_base_classes`.
 class UseSetstateSynchronously extends ManyLintsRule {
   static const LintCode code = LintCode(
     'use_setstate_synchronously',
@@ -67,8 +52,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Walks every block in a `State`, reporting a `setState` that follows an
-/// `await` with no `mounted` guard in between.
 class _SetStateAfterAwaitFinder extends RecursiveAstVisitor<void> {
   _SetStateAfterAwaitFinder(this.rule);
 
@@ -76,8 +59,6 @@ class _SetStateAfterAwaitFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitBlock(Block node) {
-    // Statements are scanned in order, so the analysis is "has an await
-    // happened above this line, and has nothing re-established mounted since".
     var afterAwait = false;
 
     for (final statement in node.statements) {
@@ -86,12 +67,7 @@ class _SetStateAfterAwaitFinder extends RecursiveAstVisitor<void> {
         continue;
       }
 
-      // `if (mounted) setState(...)` guards its then-branch as well as an
-      // early return guards the lines below it, so nothing in that branch is
-      // reported here. The branch is still visited by `super.visitBlock`
-      // below, which re-opens the gap if the branch itself awaits — the else
-      // branch, meanwhile, runs only when the guard failed, so it stays
-      // subject to the check.
+      // Edge case: the else branch of a mounted guard runs while unmounted, so it stays checked
       if (afterAwait && isPositiveMountedGuard(statement)) {
         final guard = statement as IfStatement;
         final elseStatement = guard.elseStatement;
@@ -103,31 +79,18 @@ class _SetStateAfterAwaitFinder extends RecursiveAstVisitor<void> {
 
       if (afterAwait) _reportSetStateIn(statement);
 
-      // Checked after reporting: an `await` on the same line as the setState
-      // (`setState(...); await x;`) does not put the setState after a gap.
+      // Edge case: a setState in the same statement as the await runs before the gap
       if (containsAwait(statement)) afterAwait = true;
     }
 
     super.visitBlock(node);
   }
 
-  /// Reports only the `setState` calls in a `mounted`-guarded branch that a
-  /// *new* await inside that branch has un-guarded again.
-  ///
-  /// The guard proves `mounted` at the moment the branch is entered, and that
-  /// holds until the branch suspends. Anything before the first await is safe;
-  /// anything after it faces a fresh gap the guard says nothing about.
-  ///
-  /// A branch that is a `Block` is left to `visitBlock`, which already applies
-  /// exactly this reasoning starting from a clean slate.
   void _reportGuardedBranch(Statement branch) {
     if (branch is Block) return;
     if (containsAwait(branch)) _reportSetStateIn(branch);
   }
 
-  /// Reports a `setState` call anywhere in [statement], excluding one written
-  /// inside a nested closure — that closure runs on its own timeline, and its
-  /// body is visited as its own block.
   void _reportSetStateIn(Statement statement) {
     final finder = _SetStateFinder();
     statement.accept(finder);
@@ -138,7 +101,6 @@ class _SetStateAfterAwaitFinder extends RecursiveAstVisitor<void> {
   }
 }
 
-/// Collects unqualified `setState(...)` calls, not descending into closures.
 class _SetStateFinder extends RecursiveAstVisitor<void> {
   final invocations = <MethodInvocation>[];
 
@@ -147,12 +109,11 @@ class _SetStateFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    // `target == null` keeps this to the enclosing State's own setState: an
-    // `other.setState(...)` is not this widget's lifecycle to guard.
-    if (node.methodName.name == 'setState' && node.target == null) {
-      invocations.add(node);
-    }
+    if (_isOwnSetState(node)) invocations.add(node);
 
     super.visitMethodInvocation(node);
   }
+
+  bool _isOwnSetState(MethodInvocation node) =>
+      node.methodName.name == 'setState' && node.target == null;
 }

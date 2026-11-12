@@ -9,31 +9,6 @@ import '../ast_node_analysis.dart';
 import '../fpdart_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when an fpdart type is parameterised with `void` instead of `Unit`.
-///
-/// `void` is not a value in Dart: you cannot pass it, store it, or feed it to
-/// the next step of a pipeline. A `TaskEither<Failure, void>` therefore stops
-/// composing — `flatMap` on it has nothing meaningful to bind, and callers end
-/// up unwrapping to `null` and re-deriving success from that.
-///
-/// `Unit` is fpdart's answer: a real type with exactly one value, which says
-/// "succeeded, with nothing to report" while staying chainable.
-///
-/// **Bad:**
-/// ```dart
-/// TaskEither<Failure, void> save(User user) => ...;
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// TaskEither<Failure, Unit> save(User user) => ...;
-/// ```
-///
-/// ## Options
-///
-/// - `ignore_overrides`: when `true` (the default), a member marked
-///   `@override` is not reported — its signature is fixed by the supertype, so
-///   the fix belongs there instead.
 class PreferUnitOverVoid extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_unit_over_void',
@@ -91,7 +66,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Whether [node] sits in the signature of an `@override` member.
   bool _isInOverride(AstNode node) {
     final method = enclosingOfType<MethodDeclaration>(node);
     return method != null && hasOverrideAnnotation(method);

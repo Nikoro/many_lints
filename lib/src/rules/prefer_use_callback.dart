@@ -8,10 +8,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 
-/// Warns when `useMemoized` is used to memoize a function expression.
-///
-/// `useCallback` is specifically designed for memoizing callbacks and is more
-/// semantically correct than wrapping a function in `useMemoized`.
 class PreferUseCallback extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_use_callback',
@@ -55,11 +51,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final factory = args.first;
     if (factory is! FunctionExpression) return;
-
-    // Check if the factory returns a function type
-    if (_returnsFunction(factory)) {
-      rule.reportAtNode(node);
-    }
+    if (_returnsFunction(factory)) rule.reportAtNode(node);
   }
 
   static bool _returnsFunction(FunctionExpression factory) {

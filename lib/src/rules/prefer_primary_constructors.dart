@@ -7,32 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../primary_constructor_candidate.dart';
 
-/// Warns when a class or enum declares a generative constructor that can
-/// move into the type header as a Dart 3.13 primary constructor.
-///
-/// **Bad:**
-/// ```dart
-/// class Point {
-///   final int x;
-///   final int y;
-///   Point(this.x, this.y);
-///
-///   double get length => sqrt(x * x + y * y);
-/// }
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// class Point(final int x, final int y) {
-///   double get length => sqrt(x * x + y * y);
-/// }
-/// ```
-///
-/// Stricter than the SDK's `use_primary_constructors` where it matters and
-/// quieter where it does not: a type that declares no constructor is never
-/// reported, because converting it only adds an empty `()` to the header.
-/// What counts as convertible lives in [PrimaryConstructorCandidate], shared
-/// with the fix, so every report comes with a working rewrite.
 class PreferPrimaryConstructors extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_primary_constructors',

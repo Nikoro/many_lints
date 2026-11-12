@@ -11,13 +11,6 @@ import '../flutter_type_checkers.dart';
 import '../flutter_widget_helpers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when SizedBox widgets are used for spacing inside Row, Column, or Flex
-/// children instead of using the `spacing` argument (Flutter 3.27+).
-///
-/// Detects three patterns:
-/// 1. Direct SizedBox in children list with uniform spacing
-/// 2. `.separatedBy()` with SizedBox
-/// 3. `.expand()` with generator yielding SizedBox
 class PreferSpacing extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_spacing',
@@ -53,6 +46,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
+  static const _smallestListWithOneSpacer = 3;
+
   static const _flexWidgets = [
     (columnChecker, FlexAxis.vertical),
     (rowChecker, FlexAxis.horizontal),
@@ -77,11 +72,10 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // Handle flex widget constructor calls parsed as MethodInvocation
+    // Edge case: `Row(...)` can reach the AST as a method invocation.
     _checkFlexWidget(node.staticType, node.argumentList);
   }
 
-  /// Checks a flex widget (Row/Column/Flex) for SizedBox spacers in children.
   void _checkFlexWidget(DartType? staticType, ArgumentList argumentList) {
     if (staticType == null) return;
 
@@ -90,34 +84,27 @@ class _Visitor extends SimpleAstVisitor<void> {
     );
     if (match == null) return;
 
-    // Check that the widget doesn't already have a spacing argument
     final hasSpacingArg = argumentList.arguments.whereType<NamedArgument>().any(
       (arg) => arg.name.lexeme == 'spacing',
     );
     if (hasSpacingArg) return;
 
-    // Find the children argument
     final childrenExpr = namedArgumentValue(argumentList.arguments, 'children');
     if (childrenExpr == null) return;
 
-    // Pattern 1: Direct list literal with SizedBox spacers
     if (childrenExpr is ListLiteral) {
-      _checkDirectSizedBoxInList(childrenExpr, match.$2);
+      _checkUniformSpacersInList(childrenExpr, match.$2);
     }
   }
 
-  /// Pattern 1: Direct SizedBox widgets used as spacers in a children list.
-  /// Only triggers when all SizedBox spacers have the same value (uniform).
-  void _checkDirectSizedBoxInList(ListLiteral list, FlexAxis? parentAxis) {
+  void _checkUniformSpacersInList(ListLiteral list, FlexAxis? parentAxis) {
     final elements = list.elements;
-    // Below this many children a spacer reads fine inline; 3 is the smallest
-    // list that can hold two widgets separated by one spacer.
-    if (elements.length <
-        rule.config.intOption('min_children', defaultValue: 3)) {
-      return;
-    }
+    final minChildren = rule.config.intOption(
+      'min_children',
+      defaultValue: _smallestListWithOneSpacer,
+    );
+    if (elements.length < minChildren) return;
 
-    // Collect all SizedBox spacers and their values
     final sizedBoxes = <Expression>[];
     String? uniformValue;
     bool isUniform = true;
@@ -125,22 +112,19 @@ class _Visitor extends SimpleAstVisitor<void> {
     for (final element in elements) {
       if (element is! Expression) continue;
 
-      final spacingInfo = _extractSizedBoxSpacingFromExpr(element);
-      if (spacingInfo == null) continue;
+      final spacer = _sizedBoxSpacer(element);
+      if (spacer == null) continue;
 
-      // Check axis match
-      if (parentAxis != null) {
-        if (parentAxis == FlexAxis.vertical && spacingInfo.$1 != 'height') {
-          continue;
-        }
-        if (parentAxis == FlexAxis.horizontal && spacingInfo.$1 != 'width') {
-          continue;
-        }
+      if (parentAxis == FlexAxis.vertical && spacer.dimension != 'height') {
+        continue;
+      }
+      if (parentAxis == FlexAxis.horizontal && spacer.dimension != 'width') {
+        continue;
       }
 
       sizedBoxes.add(element);
 
-      final value = spacingInfo.$2;
+      final value = spacer.value;
       if (uniformValue == null) {
         uniformValue = value;
       } else if (uniformValue != value) {
@@ -155,7 +139,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Pattern 2: `.separatedBy(SizedBox(...))` on a list used as children.
   void _checkSeparatedBy(MethodInvocation node) {
     if (!_isChildrenOfFlexWidget(node)) return;
 
@@ -164,12 +147,11 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final separatorArg = args.first;
     if (separatorArg is! Expression) return;
-    if (_extractSizedBoxSpacingFromExpr(separatorArg) == null) return;
+    if (_sizedBoxSpacer(separatorArg) == null) return;
 
     rule.reportAtNode(node);
   }
 
-  /// Pattern 3: `.expand((w) sync* { yield SizedBox(...); yield w; })`
   void _checkExpand(MethodInvocation node) {
     if (!_isChildrenOfFlexWidget(node)) return;
 
@@ -190,18 +172,16 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Checks if a node is used as the `children` argument of a Row/Column/Flex.
   bool _isChildrenOfFlexWidget(Expression node) {
-    // Walk up through chained method calls like .skip(1).toList()
-    // where our node is the target (receiver) of subsequent calls
     AstNode topOfChain = node;
-    while (topOfChain.parent is MethodInvocation) {
-      final parent = topOfChain.parent! as MethodInvocation;
-      if (parent.target != topOfChain) break;
+    for (
+      var parent = node.parent;
+      parent is MethodInvocation && parent.target == topOfChain;
+      parent = parent.parent
+    ) {
       topOfChain = parent;
     }
 
-    // Should be a NamedArgument(children: ...)
     final namedArg = topOfChain.parent;
     if (namedArg is! NamedArgument) return false;
     if (namedArg.name.lexeme != 'children') return false;
@@ -211,7 +191,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final parentExpr = argList.parent;
 
-    // Check parent doesn't already have spacing arg
     final parentArgs = switch (parentExpr) {
       InstanceCreationExpression() => parentExpr.argumentList.arguments,
       MethodInvocation() => parentExpr.argumentList.arguments,
@@ -224,7 +203,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     );
     if (hasSpacingArg) return false;
 
-    // Check if parent is a flex widget
     final parentType = switch (parentExpr) {
       InstanceCreationExpression() => parentExpr.staticType,
       MethodInvocation() => parentExpr.staticType,
@@ -235,24 +213,18 @@ class _Visitor extends SimpleAstVisitor<void> {
     return _flexWidgets.any((e) => e.$1.isExactlyType(parentType));
   }
 
-  /// Extracts spacing info from an expression that might be a SizedBox.
-  /// Handles both InstanceCreationExpression and MethodInvocation forms.
-  /// Returns (paramName, valueSource) or null.
-  static (String, String)? _extractSizedBoxSpacingFromExpr(Expression expr) {
-    if (expr is InstanceCreationExpression) {
-      if (!isExpressionExactlyType(expr, sizedBoxChecker)) return null;
-      return _extractSizedBoxSpacing(expr.argumentList.arguments);
-    }
-    if (expr is MethodInvocation) {
-      if (!isExpressionExactlyType(expr, sizedBoxChecker)) return null;
-      return _extractSizedBoxSpacing(expr.argumentList.arguments);
-    }
-    return null;
+  static _Spacer? _sizedBoxSpacer(Expression expr) {
+    final arguments = switch (expr) {
+      InstanceCreationExpression(:final argumentList) => argumentList,
+      MethodInvocation(:final argumentList) => argumentList,
+      _ => null,
+    };
+    if (arguments == null) return null;
+    if (!isExpressionExactlyType(expr, sizedBoxChecker)) return null;
+    return _spacerFromArguments(arguments.arguments);
   }
 
-  /// Extracts spacing info from SizedBox arguments.
-  /// Returns (paramName, valueSource) or null if not a pure spacer.
-  static (String, String)? _extractSizedBoxSpacing(NodeList<Argument> args) {
+  static _Spacer? _spacerFromArguments(NodeList<Argument> args) {
     String? spacingParam;
     String? spacingValue;
 
@@ -266,32 +238,33 @@ class _Visitor extends SimpleAstVisitor<void> {
           spacingParam = name;
           spacingValue = argumentExpression.toSource();
         } else {
-          return null; // has child, both dimensions, or other params
+          return null;
         }
       } else {
-        return null; // positional args not expected
+        return null;
       }
     }
 
     if (spacingParam == null || spacingValue == null) return null;
-    return (spacingParam, spacingValue);
+    return (dimension: spacingParam, value: spacingValue);
   }
 }
 
-/// Recursively searches for `yield SizedBox(...)` expressions.
+typedef _Spacer = ({String dimension, String value});
+
 class _SizedBoxYieldFinder extends RecursiveAstVisitor<void> {
   bool foundSizedBoxYield = false;
 
   @override
   void visitYieldStatement(YieldStatement node) {
     final expr = node.expression;
-    if (_Visitor._extractSizedBoxSpacingFromExpr(expr) != null) {
+    if (_Visitor._sizedBoxSpacer(expr) != null) {
       foundSizedBoxYield = true;
     }
     super.visitYieldStatement(node);
   }
 
-  // Stop at nested function boundaries
+  // Edge case: a nested closure yields into its own generator, not the expand callback.
   @override
   void visitFunctionExpression(FunctionExpression node) {}
 }

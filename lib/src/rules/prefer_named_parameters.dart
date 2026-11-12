@@ -6,19 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a declaration takes more than a few positional parameters.
-///
-/// `move(3, 4, 5, 6)` tells the reader nothing, and swapping two arguments of
-/// the same type compiles cleanly and fails at runtime. Named parameters put
-/// the meaning at the call site, where it is read.
-///
-/// The threshold matters more than the principle: one or two positional
-/// parameters are usually the subject of the call (`substring(0, 4)`,
-/// `Point(x, y)`) and naming them is noise, so the default budget is 2.
-///
-/// Exempt by default: an `@override`, whose signature belongs to the
-/// supertype; an operator, whose parameters cannot be named; and a
-/// single-parameter constructor of the type it wraps.
 class PreferNamedParameters extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_named_parameters',
@@ -54,11 +41,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  /// Names whose positional signature a framework dictates.
-  ///
-  /// `onRequest` and `middleware` are dart_frog's route contract, where the
-  /// parameters are the URL's path segments in order — naming them is not the
-  /// author's to decide. `main` takes its arguments from the platform.
   static const _defaultIgnoredNames = {'main', 'onRequest', 'middleware'};
 
   @override
@@ -81,18 +63,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitConstructorDeclaration(ConstructorDeclaration node) {
-    // A private constructor is not an API: it is reached from one place in the
-    // same library, usually a factory assembling injected dependencies
-    // (`Pipeline._(this._storage, this._adapter, this._policy)`). Naming those
-    // adds ceremony at the one call site that already knows the order. With
-    // `onRequest`, these were 22 of 28 reports on a real codebase.
-    if (rule.config.boolOption(
-          'ignore_private_constructors',
-          defaultValue: true,
-        ) &&
-        (node.name?.lexeme.startsWith('_') ?? false)) {
-      return;
-    }
+    final ignorePrivateConstructors = rule.config.boolOption(
+      'ignore_private_constructors',
+      defaultValue: true,
+    );
+    final isPrivateConstructor = node.name?.lexeme.startsWith('_') ?? false;
+    if (ignorePrivateConstructors && isPrivateConstructor) return;
 
     _check(node.parameters);
   }

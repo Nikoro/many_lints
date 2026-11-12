@@ -9,33 +9,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_inference.dart';
 
-/// Suggests using dot shorthands instead of explicit enum prefixes.
-///
-/// **BAD:**
-/// ```dart
-/// enum MyEnum { first, second }
-/// void fn(MyEnum? e) {
-///   switch (e) {
-///     case MyEnum.first:  // LINT
-///       print(e);
-///   }
-///   final MyEnum another = MyEnum.first; // LINT
-///   if (e == MyEnum.first) {} // LINT
-/// }
-/// ```
-///
-/// **GOOD:**
-/// ```dart
-/// enum MyEnum { first, second }
-/// void fn(MyEnum? e) {
-///   switch (e) {
-///     case .first:
-///       print(e);
-///   }
-///   final MyEnum another = .first;
-///   if (e == .first) {}
-/// }
-/// ```
 class PreferShorthandsWithEnums extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_shorthands_with_enums',
@@ -86,25 +59,20 @@ class _Visitor extends SimpleAstVisitor<void> {
     Expression prefixExpression,
     SimpleIdentifier identifier,
   ) {
-    // The static type of the full expression should be an enum type
     final nodeType = node.staticType;
     if (nodeType is! InterfaceType) return;
 
     final enumElement = nodeType.element;
     if (enumElement is! EnumElement) return;
 
-    // Verify the prefix is a simple identifier matching the enum name
     if (prefixExpression is! SimpleIdentifier) return;
     if (prefixExpression.name != enumElement.name) return;
 
-    // Check if context type makes the enum type inferable
     final contextType = inferContextType(node);
     if (contextType == null) return;
 
-    // The shorthand is valid when the context type matches the enum type
     if (!isTypeCompatible(contextType, enumElement)) return;
 
-    // Report the lint
     rule.reportAtNode(node);
   }
 }

@@ -6,9 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when an expression duplicates the initializer of an existing variable
-/// in the same scope. Suggests reusing the variable instead of repeating the
-/// expression.
 class UseExistingVariable extends ManyLintsRule {
   static const LintCode code = LintCode(
     'use_existing_variable',
@@ -44,13 +41,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitBlock(Block node) {
-    // Collect final/const variable declarations with their initializer source
-    // Then scan for duplicate expressions appearing after each declaration
     final variables = <_VariableInfo>[];
 
     for (final statement in node.statements) {
-      // First, check if any existing variable initializers are duplicated
-      // in this statement
       if (variables.isNotEmpty) {
         final finder = _DuplicateExpressionFinder(variables);
         statement.accept(finder);
@@ -59,7 +52,6 @@ class _Visitor extends SimpleAstVisitor<void> {
         }
       }
 
-      // Then, collect new variable declarations from this statement
       if (statement is VariableDeclarationStatement) {
         final isFinalOrConst =
             statement.variables.isFinal || statement.variables.isConst;
@@ -70,11 +62,8 @@ class _Visitor extends SimpleAstVisitor<void> {
           if (initializer == null) continue;
 
           final source = initializer.toSource();
-          // Skip trivial expressions (single identifiers, literals)
           if (_isTrivialExpression(initializer)) continue;
-          // Skip expressions whose re-evaluation is meaningful (allocation,
-          // await, cascade) — reusing the variable would change behaviour.
-          if (_isSideEffectingExpression(initializer)) continue;
+          if (_producesFreshValueEachTime(initializer)) continue;
 
           variables.add((
             name: variable.name.lexeme,
@@ -85,41 +74,20 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Returns true for expressions whose re-evaluation may be the point.
-  ///
-  /// Source-text equality cannot tell "this value was already computed" from
-  /// "this deliberately produces a fresh one". Re-running an allocation or an
-  /// `await` is observably different from reusing the earlier result:
-  ///
-  /// ```dart
-  /// final old = Database.forTesting(connection);
-  /// await old.close();
-  /// final upgraded = Database.forTesting(connection); // must not be reported
-  /// ```
-  ///
-  /// Reusing `old` there would operate on a closed connection. Property chains
-  /// and ordinary method calls stay reportable — they are the case the rule
-  /// exists for.
-  static bool _isSideEffectingExpression(Expression expression) {
+  static bool _producesFreshValueEachTime(Expression expression) {
     return switch (expression) {
-      // Allocates a new instance every time it is evaluated.
       InstanceCreationExpression() => true,
-      // Re-runs asynchronous work, and its result may be single-use.
       AwaitExpression() => true,
-      // Mutates its target: `[]..add(1)` builds a distinct list each time.
       CascadeExpression() => true,
-      ParenthesizedExpression(:final expression) => _isSideEffectingExpression(
+      ParenthesizedExpression(:final expression) => _producesFreshValueEachTime(
         expression,
       ),
       _ => false,
     };
   }
 
-  /// Returns true for expressions that are too simple to warrant a lint.
   static bool _isTrivialExpression(Expression expression) {
-    // Single identifiers (variable references)
     if (expression is SimpleIdentifier) return true;
-    // Literals
     if (expression is IntegerLiteral ||
         expression is DoubleLiteral ||
         expression is BooleanLiteral ||
@@ -127,11 +95,9 @@ class _Visitor extends SimpleAstVisitor<void> {
         expression is NullLiteral) {
       return true;
     }
-    // Parenthesized trivial expressions
     if (expression is ParenthesizedExpression) {
       return _isTrivialExpression(expression.expression);
     }
-    // Prefix expression on a literal (e.g., -1)
     if (expression is PrefixExpression) {
       return _isTrivialExpression(expression.operand);
     }
@@ -150,10 +116,7 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
   _DuplicateExpressionFinder(this.variables);
 
   @override
-  void visitSimpleIdentifier(SimpleIdentifier node) {
-    // Skip simple identifiers — they're trivial
-    // (also avoids matching sub-expressions of larger matches)
-  }
+  void visitSimpleIdentifier(SimpleIdentifier node) {}
 
   @override
   void visitPrefixedIdentifier(PrefixedIdentifier node) {
@@ -257,22 +220,19 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
     super.visitParenthesizedExpression(node);
   }
 
-  // Stop at nested function boundaries — different execution context
   @override
   void visitFunctionExpression(FunctionExpression node) {}
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {}
 
-  /// Checks if [expression] matches any known variable initializer.
-  /// Returns true if a match is found (to stop recursion into children).
   bool _checkExpression(Expression expression) {
     if (_Visitor._isTrivialExpression(expression)) return false;
     final source = expression.toSource();
     for (final variable in variables) {
       if (source == variable.initializerSource) {
         matches.add((node: expression, variableName: variable.name));
-        return true; // Don't recurse — we matched the whole expression
+        return true;
       }
     }
     return false;

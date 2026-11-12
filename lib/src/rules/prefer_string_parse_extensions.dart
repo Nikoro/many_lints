@@ -7,38 +7,13 @@ import 'package:analyzer/error/error.dart';
 import '../fpdart_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// The `tryParse` receivers fpdart ships an extension for, mapped to the
-/// getter that replaces the whole expression.
-const _parseGetters = {
+const _optionGettersByParsedType = {
   'int': 'toIntOption',
   'double': 'toDoubleOption',
   'num': 'toNumOption',
   'bool': 'toBoolOption',
 };
 
-/// Warns when `Option.fromNullable(int.tryParse(s))` is written by hand.
-///
-/// fpdart defines `'42'.toIntOption` as exactly that expression, plus
-/// `toDoubleOption`, `toNumOption`, `toBoolOption` and the `...Either`
-/// variants that take a failure. Writing the composition out puts the parse
-/// and its null handling at opposite ends of the line, which is where the
-/// mismatch hides: `Option.fromNullable(int.tryParse(a))` inside a pipeline
-/// that meant to parse `b` reads as correct.
-///
-/// **Bad:**
-/// ```dart
-/// final parsed = Option.fromNullable(int.tryParse(input));
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// final parsed = input.toIntOption;
-/// ```
-///
-/// ## Options
-///
-/// - `additional_parsers`: extra `Type.tryParse` receivers to recognise, for
-///   projects that define their own `toXOption` extension alongside fpdart's.
 class PreferStringParseExtensions extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_string_parse_extensions',
@@ -95,14 +70,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     rule.reportAtNode(node, arguments: [parsed.getter, parsed.receiver]);
   }
 
-  /// The `Type.tryParse(...)` shape of [expression], or null when it is
-  /// something else.
   ({String receiver, String getter})? _parseCall(Expression expression) {
     if (expression is! MethodInvocation) return null;
     if (expression.methodName.name != 'tryParse') return null;
 
-    // A second argument (`radix:`) changes what the call does, and no
-    // extension covers it.
+    // Edge case: a `radix:` argument has no extension counterpart.
     if (expression.argumentList.arguments.length != 1) return null;
 
     final target = expression.realTarget;
@@ -110,7 +82,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final receiver = target.name;
     final getters = {
-      ..._parseGetters,
+      ..._optionGettersByParsedType,
       for (final extra in rule.config.stringListOption('additional_parsers'))
         extra: 'to${extra[0].toUpperCase()}${extra.substring(1)}Option',
     };

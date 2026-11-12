@@ -8,12 +8,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_inference.dart';
 
-/// Suggests using `List.of()` / `Set.of()` instead of `List.from()` /
-/// `Set.from()` when the argument type is already assignable to the target
-/// element type.
-///
-/// `.of()` enforces type safety at compile time, while `.from()` allows
-/// potentially unsafe downcasting checked only at runtime.
 class PreferIterableOf extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_iterable_of',
@@ -54,7 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    // Handles: List<int>.from(source), Set<int>.from(source)
     final constructorName = node.constructorName;
     final name = constructorName.name;
     if (name == null || name.name != 'from') return;
@@ -67,7 +60,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    // Handles: List.from(source), Set.from(source) (no explicit type args)
     if (node.methodName.name != 'from') return;
 
     final target = node.target;
@@ -90,36 +82,29 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final sourceArg = positionalArgs.first;
 
-    // Get the target type (the result type, e.g. List<int>)
     if (resultType is! InterfaceType) return;
 
-    // Get the target element type (the T in List<T> or Set<T>)
     final targetTypeArgs = resultType.typeArguments;
     if (targetTypeArgs.isEmpty) return;
     final targetElementType = targetTypeArgs.first;
 
-    // If target element type is dynamic, .from() and .of() are equivalent
-    if (targetElementType is DynamicType) {
+    final fromAndOfAreEquivalent = targetElementType is DynamicType;
+    if (fromAndOfAreEquivalent) {
       rule.reportAtNode(node, arguments: [typeName]);
       return;
     }
 
-    // Get the source argument's static type
     final sourceType = sourceArg.staticType;
     if (sourceType is! InterfaceType) return;
 
-    // Extract the source element type from Iterable<T>
     final sourceElementType = iterableElementType(sourceType);
     if (sourceElementType == null) return;
 
-    // If source element type is assignable to target element type,
-    // .of() is safe and preferred
     if (_isAssignable(sourceElementType, targetElementType)) {
       rule.reportAtNode(node, arguments: [typeName]);
     }
   }
 
-  /// Checks if [source] is assignable to [target].
   bool _isAssignable(DartType source, DartType target) {
     if (source is DynamicType) return true;
     if (source == target) return true;

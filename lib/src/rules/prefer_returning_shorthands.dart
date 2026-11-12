@@ -9,31 +9,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_inference.dart';
 
-/// Suggests returning dot shorthands from an expression function body.
-///
-/// Function and method declarations already have an explicit return type and in
-/// cases when that type is the same as the returned instance, the instance can be
-/// simplified to a dot shorthand without reducing readability.
-///
-/// **BAD:**
-/// ```dart
-/// SomeClass getInstance() => SomeClass('val');
-///
-/// SomeClass getInstance() => SomeClass.named('val');
-///
-/// SomeClass getInstance(bool flag) =>
-///     flag ? SomeClass('value') : SomeClass.named('val');
-/// ```
-///
-/// **GOOD:**
-/// ```dart
-/// SomeClass getInstance() => .new('val');
-///
-/// SomeClass getInstance() => .named('val');
-///
-/// SomeClass getInstance(bool flag) =>
-///     flag ? .new('value') : .named('val');
-/// ```
 class PreferReturningShorthands extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_returning_shorthands',
@@ -80,7 +55,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitConstructorDeclaration(ConstructorDeclaration node) {
-    // For constructors, the return type is the containing class
     final classNode = node.parent?.parent;
     if (classNode is! ClassDeclaration) return;
 
@@ -91,16 +65,9 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   void _checkFunctionBody(FunctionBody body, DartType? returnType) {
-    // Only check expression function bodies (arrow functions)
     if (body is! ExpressionFunctionBody) return;
-
-    // Return type must be specified
-    if (returnType == null) return;
-
-    // Don't suggest shorthands for non-interface types (including dynamic)
     if (returnType is! InterfaceType) return;
 
-    // Check the expression
     _checkExpression(body.expression, returnType);
   }
 
@@ -108,8 +75,9 @@ class _Visitor extends SimpleAstVisitor<void> {
     switch (expression) {
       case InstanceCreationExpression():
         _checkInstanceCreation(expression, returnType);
+      // Edge case: `SomeClass.named(...)` can reach the AST as a method invocation.
       case MethodInvocation():
-        _checkMethodInvocation(expression, returnType);
+        _checkNamedConstructorInvocation(expression, returnType);
       case ConditionalExpression():
         _checkExpression(expression.thenExpression, returnType);
         _checkExpression(expression.elseExpression, returnType);
@@ -122,39 +90,28 @@ class _Visitor extends SimpleAstVisitor<void> {
     InstanceCreationExpression node,
     InterfaceType returnType,
   ) {
-    // Get the class element
     final typeName = node.constructorName.type;
     final typeElement = typeName.element;
     if (typeElement is! InterfaceElement) return;
-
-    // Check if the instance type matches the return type (ignoring nullability)
     if (!isTypeCompatible(returnType, typeElement)) return;
 
-    // Report the lint
     rule.reportAtNode(node.constructorName);
   }
 
-  void _checkMethodInvocation(MethodInvocation node, InterfaceType returnType) {
-    // Check if this is a named constructor invocation (e.g., SomeClass.named)
-    // These can appear as method invocations in the AST
-    if (node.target is! SimpleIdentifier) return;
+  void _checkNamedConstructorInvocation(
+    MethodInvocation node,
+    InterfaceType returnType,
+  ) {
+    final target = node.target;
+    if (target is! SimpleIdentifier) return;
 
-    final target = node.target as SimpleIdentifier;
-
-    // Get the static type to verify it's actually a constructor call
     final staticType = node.staticType;
     if (staticType is! InterfaceType) return;
 
     final typeElement = staticType.element;
-
-    // Verify the target name matches the class name
     if (target.name != typeElement.name) return;
-
-    // Check if the instance type matches the return type
     if (!isTypeCompatible(returnType, typeElement)) return;
 
-    // Report the lint - we report at the target but the fix will handle
-    // the entire "ClassName.constructorName" range
     rule.reportAtToken(target.token);
   }
 }

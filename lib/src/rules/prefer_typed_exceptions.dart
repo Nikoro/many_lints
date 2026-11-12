@@ -8,39 +8,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a throw does not name a type a caller could catch selectively.
-///
-/// A bare `Exception('upload failed')` cannot be caught by kind. Every
-/// `catch` downstream either swallows everything or re-inspects the message
-/// string, and message matching breaks the moment somebody improves the
-/// wording — a silent break, since the `catch` still compiles and still runs.
-///
-/// This is concrete for anything that maps failures onto behaviour: a CLI
-/// choosing an exit code, a client deciding whether to retry, a UI choosing
-/// between "check your connection" and "that file is not valid". None of those
-/// questions can be answered about a value whose only distinguishing feature
-/// is prose.
-///
-/// The SDK's `only_throw_errors` covers the adjacent case — throwing a value
-/// that is neither `Error` nor `Exception`, like a bare string — but it is
-/// satisfied by `Exception(...)`, which is where most of the real damage is.
-/// This rule covers both, so enabling it alone is sufficient.
-///
-/// A handful of SDK types are allowed by default because their type already
-/// says what went wrong: [ArgumentError] and friends are as specific as a
-/// hand-written class would be. `allow` replaces that list.
-///
-/// **BAD:**
-/// ```dart
-/// throw Exception('upload failed');   // LINT — nothing can catch just this
-/// throw 'upload failed';              // LINT — not even an Exception
-/// ```
-///
-/// **GOOD:**
-/// ```dart
-/// throw const UploadFailure('upload failed');
-/// throw ArgumentError.value(port, 'port', 'must be positive');
-/// ```
 class PreferTypedExceptions extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_typed_exceptions',
@@ -71,11 +38,7 @@ class PreferTypedExceptions extends ManyLintsRule {
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
-  /// SDK types whose own name already identifies the failure.
-  ///
-  /// Each of these is as catchable as a hand-written class, so demanding a
-  /// wrapper around them would add a type without adding information.
-  static const _defaultAllow = {
+  static const _defaultSelfDescribingSdkTypes = {
     'ArgumentError',
     'AssertionError',
     'ConcurrentModificationError',
@@ -87,8 +50,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     'UnsupportedError',
   };
 
-  /// The types that carry no information beyond their message.
-  static const _untypedThrows = {'Exception', 'Error'};
+  static const _messageOnlyCoreThrowables = {'Exception', 'Error'};
 
   final PreferTypedExceptions rule;
 
@@ -96,8 +58,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitThrowExpression(ThrowExpression node) {
-    // `rethrow` is its own node, so anything reaching here is a value being
-    // thrown for the first time.
     final type = node.expression.staticType;
     if (type == null || type is DynamicType) return;
 
@@ -108,29 +68,23 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
 
     final name = element.name;
-    // A type declared by the project is as specific as it chose to be, and
-    // naming it is exactly what this rule asks for.
-    if (!element.library.isDartCore) {
+    final isOutsideDartCore = !element.library.isDartCore;
+    if (isOutsideDartCore) {
       if (!_isThrowable(element)) {
         rule.reportAtNode(node, arguments: [type.getDisplayString()]);
       }
       return;
     }
 
-    // Everything below is an SDK type, where the question is whether its own
-    // name identifies the failure. `allow` is the list of those that do; the
-    // rest — `Exception`, `Error`, and non-throwables like `String` — leave
-    // the caller nothing to catch by.
-    final allow = rule.config.nameSetOption(
+    final selfDescribingSdkTypes = rule.config.nameSetOption(
       'allow',
-      defaultValue: _defaultAllow,
+      defaultValue: _defaultSelfDescribingSdkTypes,
     );
-    if (name != null && allow.contains(name)) return;
+    if (name != null && selfDescribingSdkTypes.contains(name)) return;
 
     rule.reportAtNode(node, arguments: [name ?? type.getDisplayString()]);
   }
 
-  /// Whether [element] is, or implements, `Error` or `Exception`.
   bool _isThrowable(InterfaceElement element) {
     if (_isCoreThrowable(element)) return true;
 
@@ -140,5 +94,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   bool _isCoreThrowable(InterfaceElement element) =>
-      element.library.isDartCore && _untypedThrows.contains(element.name);
+      element.library.isDartCore &&
+      _messageOnlyCoreThrowables.contains(element.name);
 }

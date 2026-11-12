@@ -8,7 +8,6 @@ import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../flutter_type_checkers.dart';
 
-/// Suggests using Transform widget instead of Container with only transform.
 class PreferTransformOverContainer extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_transform_over_container',

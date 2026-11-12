@@ -6,22 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when `void Function()` is used instead of `VoidCallback`.
-///
-/// The `VoidCallback` typedef from `dart:ui` is a cleaner and more readable
-/// alternative to the verbose `void Function()` type annotation.
-///
-/// ## Example
-///
-/// ❌ Bad:
-/// ```dart
-/// void fn(void Function() callback) {}
-/// ```
-///
-/// ✅ Good:
-/// ```dart
-/// void fn(VoidCallback callback) {}
-/// ```
 class PreferVoidCallback extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_void_callback',
@@ -56,19 +40,15 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitGenericFunctionType(GenericFunctionType node) {
-    // Skip typedef definitions (e.g., typedef VoidCallback = void Function())
-    if (node.parent is GenericTypeAlias) return;
+    final isTypedefBody = node.parent is GenericTypeAlias;
+    if (isTypedefBody) return;
 
-    // Must have no type parameters (no generic function)
-    if (node.typeParameters != null) return;
+    final isGeneric = node.typeParameters != null;
+    final hasParameters = node.parameters.parameters.isNotEmpty;
+    if (isGeneric || hasParameters) return;
 
-    // Must have no parameters: Function()
-    if (node.parameters.parameters.isNotEmpty) return;
-
-    // Return type must be void
     final returnType = node.returnType;
-    if (returnType is! NamedType) return;
-    if (returnType.name.lexeme != 'void') return;
+    if (returnType is! NamedType || returnType.name.lexeme != 'void') return;
 
     rule.reportAtNode(node);
   }
