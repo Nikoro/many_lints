@@ -7,8 +7,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../ast_node_analysis.dart';
 
-/// Fix that converts ConsumerWidget to StatelessWidget
-/// or ConsumerStatefulWidget to StatefulWidget and removes unused ref parameter.
 class AvoidUnnecessaryConsumerWidgetsFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.convertConsumerWidgetToStatelessWidget',
@@ -27,9 +25,6 @@ class AvoidUnnecessaryConsumerWidgetsFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The rule reports at the class-name token. Since analyzer 13 that token
-    // sits under a `ClassNamePart`, so `node.parent` is not the declaration —
-    // walk up to it instead.
     final classDecl = node.thisOrAncestorOfType<ClassDeclaration>();
     if (classDecl == null) return;
 
@@ -37,8 +32,7 @@ class AvoidUnnecessaryConsumerWidgetsFix extends ResolvedCorrectionProducer {
     if (superclass == null) return;
 
     final superclassName = superclass.name.lexeme;
-    // A `HookConsumerWidget` drops only the Riverpod half: its `build` still
-    // calls hooks, so it becomes a `HookWidget`, not a `StatelessWidget`.
+    // Edge case: its build still calls hooks, so it keeps HookWidget instead of StatelessWidget
     final replacement = switch (superclassName) {
       'ConsumerWidget' => 'StatelessWidget',
       'ConsumerStatefulWidget' => 'StatefulWidget',
@@ -47,7 +41,6 @@ class AvoidUnnecessaryConsumerWidgetsFix extends ResolvedCorrectionProducer {
     };
     if (replacement == null) return;
 
-    // Find the build method and its ref parameter
     final body = classDecl.body;
     if (body is! BlockClassBody) return;
 
@@ -60,10 +53,8 @@ class AvoidUnnecessaryConsumerWidgetsFix extends ResolvedCorrectionProducer {
     );
 
     await builder.addDartFileEdit(file, (builder) {
-      // Replace superclass name
       builder.addSimpleReplacement(range.node(superclass), replacement);
 
-      // Remove ref parameter if found
       if (refParam != null && buildMethod != null) {
         builder.addDeletion(
           range.nodeInList(buildMethod.parameters!.parameters, refParam),

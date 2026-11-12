@@ -6,13 +6,6 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 import 'package:many_lints/src/date_time_arithmetic.dart';
 
-/// Fix that rewrites day arithmetic onto the `DateTime` constructor, which
-/// normalises against the calendar and so preserves the wall-clock time.
-///
-/// Deliberately narrow: it only fires when the receiver is a simple identifier
-/// and the shift is a plain integer literal number of days. Evaluating the
-/// receiver twice would be wrong for anything with a side effect, and a
-/// non-literal amount cannot be folded into the `day` argument as text.
 class AvoidDstUnsafeDateArithmeticFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidDstUnsafeDateArithmetic',
@@ -40,7 +33,7 @@ class AvoidDstUnsafeDateArithmeticFix extends ResolvedCorrectionProducer {
     final days = shift.literalDays;
     if (days == null) return;
 
-    // Re-reading the receiver is only safe when it is a plain variable.
+    // Edge case: the receiver is read several times, so only a side-effect-free one is safe
     final receiver = shift.receiver.unParenthesized;
     if (receiver is! SimpleIdentifier) return;
     final target = receiver.name;

@@ -5,7 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces a duplicated expression with the existing variable name.
 class UseExistingVariableFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.useExistingVariable',
@@ -35,12 +34,9 @@ class UseExistingVariableFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Walks up to the enclosing block and finds the final/const variable
-  /// whose initializer matches the target expression's source.
   static String? _findMatchingVariable(Expression expression) {
     final expressionSource = expression.toSource();
 
-    // Walk up to find the enclosing Block
     AstNode? current = expression.parent;
     while (current != null && current is! Block) {
       current = current.parent;
@@ -50,7 +46,6 @@ class UseExistingVariableFix extends ResolvedCorrectionProducer {
     final targetOffset = expression.offset;
 
     for (final statement in current.statements) {
-      // Only consider statements before the target expression
       if (statement.offset >= targetOffset) break;
 
       if (statement is! VariableDeclarationStatement) continue;

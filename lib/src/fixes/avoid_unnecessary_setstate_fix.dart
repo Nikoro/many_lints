@@ -5,8 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that removes the unnecessary `setState` call and inlines its body
-/// statements directly.
 class AvoidUnnecessarySetstateFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidUnnecessarySetstate',
@@ -25,12 +23,9 @@ class AvoidUnnecessarySetstateFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The rule reports the whole `setState(...)` call, so the covering node
-    // is already the invocation rather than its name identifier.
     final invocation = node.thisOrAncestorOfType<MethodInvocation>();
     if (invocation == null) return;
 
-    // Get the callback argument
     final args = invocation.argumentList.arguments;
     if (args.isEmpty) return;
 
@@ -39,11 +34,9 @@ class AvoidUnnecessarySetstateFix extends ResolvedCorrectionProducer {
 
     final body = callback.body;
 
-    // Expression body: setState(() => expr) → expr;
     if (body is ExpressionFunctionBody) {
       final exprSource = body.expression.toSource();
 
-      // Find the ExpressionStatement that contains the MethodInvocation
       final statement = invocation.parent;
       if (statement is! ExpressionStatement) return;
 
@@ -53,23 +46,19 @@ class AvoidUnnecessarySetstateFix extends ResolvedCorrectionProducer {
       return;
     }
 
-    // Block body: setState(() { stmts }) → stmts
     if (body is BlockFunctionBody) {
       final statements = body.block.statements;
 
-      // Find the ExpressionStatement that contains the MethodInvocation
       final statement = invocation.parent;
       if (statement is! ExpressionStatement) return;
 
       if (statements.isEmpty) {
-        // Empty setState — just remove the whole statement
         await builder.addDartFileEdit(file, (builder) {
           builder.addDeletion(range.node(statement));
         });
         return;
       }
 
-      // Extract the inner statements as source
       final innerSource = statements.map((s) => s.toSource()).join('\n    ');
 
       await builder.addDartFileEdit(file, (builder) {

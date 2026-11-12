@@ -5,7 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces a body-wrapping `if` with an inverted early-return guard.
 class PreferEarlyReturnFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferEarlyReturn',
@@ -34,18 +33,12 @@ class PreferEarlyReturnFix extends ResolvedCorrectionProducer {
     final wrapped = thenBlock.statements;
     if (wrapped.isEmpty) return;
 
-    // The wrapped statements move one level out, so their source is taken as a
-    // whole range — spanning any blank lines and comments between them — and
-    // de-indented in one step. `indentSourceLeftRight` preserves the relative
-    // indentation inside a multi-line statement, which re-indenting each
-    // statement separately would flatten.
+    // Edge case: one range keeps relative indentation that per-statement re-indenting flattens
     final bodyRange = range.startEnd(wrapped.first, wrapped.last);
     final body = utils.indentSourceLeftRight(
       '${utils.getRangeText(bodyRange)}${utils.endOfLine}',
     );
 
-    // `invertCondition` is the analyzer's own inversion, so `a && b` becomes
-    // `a || !b` rather than `!(a && b)`.
     final guard = 'if (${utils.invertCondition(statement.expression)}) return;';
 
     await builder.addDartFileEdit(file, (builder) {

@@ -5,8 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces `BlocProvider.of<T>(context)` with `context.read<T>()`
-/// (or `context.watch<T>()` when `listen: true`).
 class PreferBlocExtensionsFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferBlocExtensions',
@@ -32,20 +30,16 @@ class PreferBlocExtensionsFix extends ResolvedCorrectionProducer {
     if (target is! SimpleIdentifier) return;
     if (targetNode.methodName.name != 'of') return;
 
-    // Determine context argument and listen flag
     final args = targetNode.argumentList.arguments;
     if (args.isEmpty) return;
 
-    // First positional argument is the context
     final contextArg = args.first;
     if (contextArg is NamedArgument) return;
     final contextSource = contextArg.toSource();
 
-    // Check for listen: true
     final hasListen = _hasListenTrue(targetNode.argumentList);
     final extensionMethod = hasListen ? 'watch' : 'read';
 
-    // Preserve type arguments
     final typeArgs = targetNode.typeArguments?.toSource() ?? '';
 
     final replacement = '$contextSource.$extensionMethod$typeArgs()';

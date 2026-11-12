@@ -10,17 +10,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 import '../pattern_entry.dart';
 import '../rule_config.dart';
 
-/// Applies the `replace:` template of the `match_pattern` entry that reported.
-///
-/// The template comes from the project's own configuration, so this fix is
-/// held to guard rails the hand-written fixes do not need:
-///
-/// - **Opt-in.** An entry with no `replace:` offers nothing.
-/// - **Parsed before offering.** A template that produces source which does
-///   not parse is dropped and the diagnostic is left alone, so a wrong pattern
-///   cannot turn working code into a syntax error.
-/// - **Never bulk-applied.** [applicability] is `singleLocation`, so
-///   `dart fix --apply` will not sweep a hand-written regex across a project.
 class MatchPatternFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.matchPattern',
@@ -30,10 +19,6 @@ class MatchPatternFix extends ResolvedCorrectionProducer {
 
   MatchPatternFix({required super.context});
 
-  /// A configured rewrite is only ever offered where it was reported.
-  ///
-  /// The template is an unreviewed regex substitution rather than a shape this
-  /// package understands, so bulk application is exactly the footgun to avoid.
   @override
   CorrectionApplicability get applicability =>
       CorrectionApplicability.singleLocation;
@@ -50,9 +35,7 @@ class MatchPatternFix extends ResolvedCorrectionProducer {
     final replacement = _resolveReplacement(target, source);
     if (replacement == null) return;
 
-    // A template that produces unparsable source is dropped rather than
-    // offered: the diagnostic still stands, and the author is not handed a
-    // lightbulb that breaks the file.
+    // Edge case: an unparsable expansion would offer a fix that breaks the file
     if (!_parses(replacement)) return;
 
     await builder.addDartFileEdit(file, (builder) {
@@ -60,8 +43,6 @@ class MatchPatternFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Re-resolves the rule's `patterns:` for this file and expands the template
-  /// of the entry matching [source].
   String? _resolveReplacement(AstNode target, String source) {
     final resolved = ResolvedRuleConfig.forPath(
       packageRoot: unitResult.session.analysisContext.contextRoot.root,
@@ -92,11 +73,6 @@ class MatchPatternFix extends ResolvedCorrectionProducer {
     return entry.replacementFor(source);
   }
 
-  /// Whether [replacement] parses as a Dart expression.
-  ///
-  /// Wrapped in a trivial declaration because the analyzer parses compilation
-  /// units, not bare expressions. Syntax errors anywhere in the wrapper can
-  /// only come from the replacement.
   static bool _parses(String replacement) {
     final result = parseString(
       content: 'void _p() { $replacement; }',

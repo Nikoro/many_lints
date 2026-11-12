@@ -5,8 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that simplifies `!= null && final field` to `final field?`
-/// or removes the redundant `!= null &&` when a type annotation is present.
 class PreferSimplerPatternsNullCheckFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferSimplerPatternsNullCheck',
@@ -35,10 +33,8 @@ class PreferSimplerPatternsNullCheckFix extends ResolvedCorrectionProducer {
 
     final String replacement;
     if (hasTypeAnnotation) {
-      // `!= null && final String field` → `final String field`
       replacement = right.toSource();
     } else {
-      // `!= null && final field` → `final field?`
       replacement = '${right.toSource()}?';
     }
 

@@ -8,8 +8,6 @@ import '../ast_node_analysis.dart';
 import '../dispose_method_editing.dart';
 import '../disposal_utils.dart';
 
-/// Fix that adds the appropriate cleanup call (dispose/close/cancel)
-/// for an undisposed field in the dispose() method.
 class DisposeFieldsFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.disposeFields',
@@ -28,11 +26,8 @@ class DisposeFieldsFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The diagnostic is reported at the variable name token.
-    // The node is the SimpleIdentifier inside a VariableDeclaration.
     final targetNode = node;
 
-    // Walk up to find the VariableDeclaration
     final varDecl = enclosingOfType<VariableDeclaration>(targetNode);
     if (varDecl == null) return;
 
@@ -45,7 +40,6 @@ class DisposeFieldsFix extends ResolvedCorrectionProducer {
 
     final disposeCall = '$fieldName.$cleanupMethod()';
 
-    // Find the enclosing class declaration
     final classDecl = enclosingClassDeclaration(targetNode);
     if (classDecl == null) return;
 

@@ -7,7 +7,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../set_state_collection.dart';
 
-/// Fix that merges multiple `setState` calls into a single invocation.
 class PreferSingleSetstateFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferSingleSetstate',
@@ -29,7 +28,6 @@ class PreferSingleSetstateFix extends ResolvedCorrectionProducer {
     final targetNode = node;
     if (targetNode is! MethodInvocation) return;
 
-    // Find the enclosing method to collect all setState calls
     final method = _findEnclosingMethod(targetNode);
     if (method == null) return;
 
@@ -39,7 +37,6 @@ class PreferSingleSetstateFix extends ResolvedCorrectionProducer {
     final calls = collector.calls;
     if (calls.length < 2) return;
 
-    // Build merged body from all setState callbacks
     final bodyParts = <String>[];
     for (final call in calls) {
       final args = call.argumentList.arguments;
@@ -63,14 +60,11 @@ class PreferSingleSetstateFix extends ResolvedCorrectionProducer {
     final mergedSetState = 'setState(() {\n      $mergedBody\n    })';
 
     await builder.addDartFileEdit(file, (builder) {
-      // Replace the first setState call with the merged version
       builder.addSimpleReplacement(range.node(calls.first), mergedSetState);
 
-      // Remove all subsequent setState calls (as ExpressionStatements)
       for (var i = 1; i < calls.length; i++) {
         final statement = calls[i].parent;
         if (statement is ExpressionStatement) {
-          // Delete the full statement including any preceding whitespace/newline
           final content = unitResult.content;
           var start = statement.offset;
           while (start > 0 &&

@@ -7,7 +7,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../ast_node_analysis.dart';
 
-/// Fix that replaces RichText with Text.rich.
 class PreferTextRichFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferTextRich',
@@ -32,17 +31,14 @@ class PreferTextRichFix extends ResolvedCorrectionProducer {
 
     final arguments = call.argumentList.arguments;
 
-    // Find the `text` argument (the TextSpan)
     final textArgument = arguments.whereType<NamedArgument>().firstWhereOrNull(
       (e) => e.name.lexeme == 'text',
     );
 
     if (textArgument == null) return;
 
-    // Build the replacement: Text.rich(textSpan, otherArgs...)
     final textSpanSource = textArgument.argumentExpression.toSource();
 
-    // Collect other arguments (excluding `text`)
     final otherArgs = <String>[];
     for (final arg in arguments) {
       if (arg == textArgument) continue;

@@ -7,7 +7,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../ast_node_analysis.dart';
 
-/// Fix that replaces SizedBox or Padding with Gap widget for spacing.
 class UseGapFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.useGap',
@@ -26,9 +25,7 @@ class UseGapFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // For an unnamed constructor, `ConstructorName` and its `NamedType`
-    // child share a source range and the covering node resolves to the
-    // deeper one, so look up before type-testing.
+    // Edge case: an unnamed ConstructorName shares its range with the deeper NamedType
     final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
     if (targetNode is! ConstructorName) return;
 
@@ -48,7 +45,6 @@ class UseGapFix extends ResolvedCorrectionProducer {
     ChangeBuilder builder,
     InstanceCreationExpression node,
   ) async {
-    // Find the spacing value from height or width argument
     final spacingArg = node.argumentList.arguments
         .whereType<NamedArgument>()
         .firstWhereOrNull(
@@ -68,7 +64,6 @@ class UseGapFix extends ResolvedCorrectionProducer {
     ChangeBuilder builder,
     InstanceCreationExpression node,
   ) async {
-    // Extract the padding value from EdgeInsets.only
     final paddingArg = node.argumentList.arguments
         .whereType<NamedArgument>()
         .firstWhereOrNull((e) => e.name.lexeme == 'padding');
@@ -78,7 +73,6 @@ class UseGapFix extends ResolvedCorrectionProducer {
     final paddingExpr = paddingArg.argumentExpression;
     if (paddingExpr is! InstanceCreationExpression) return;
 
-    // Get the single direction argument and its value
     final dirArgs = paddingExpr.argumentList.arguments
         .whereType<NamedArgument>()
         .where((e) => e.name.lexeme != 'key')
@@ -89,7 +83,6 @@ class UseGapFix extends ResolvedCorrectionProducer {
     final dirName = dirArgs.first.name.lexeme;
     final valueSource = dirArgs.first.argumentExpression.toSource();
 
-    // Extract the child widget
     final childArg = node.argumentList.arguments
         .whereType<NamedArgument>()
         .firstWhereOrNull((e) => e.name.lexeme == 'child');
@@ -98,7 +91,6 @@ class UseGapFix extends ResolvedCorrectionProducer {
 
     final childSource = childArg.argumentExpression.toSource();
 
-    // Determine if Gap goes before or after the child
     final gapBefore =
         dirName == 'top' || dirName == 'left' || dirName == 'start';
 

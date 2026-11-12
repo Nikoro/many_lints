@@ -5,7 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that inverts a negated condition and swaps the two branches with it.
 class AvoidNegatedConditionsFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidNegatedConditions',
@@ -24,8 +23,6 @@ class AvoidNegatedConditionsFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The diagnostic is reported at the condition, so the statement or
-    // expression that owns it is one step up.
     final ifStatement = node.thisOrAncestorOfType<IfStatement>();
     if (ifStatement != null && _ownsCondition(ifStatement.expression)) {
       return _fixIfStatement(builder, ifStatement);
@@ -37,11 +34,6 @@ class AvoidNegatedConditionsFix extends ResolvedCorrectionProducer {
     }
   }
 
-  /// Whether [condition] is the expression the diagnostic was reported at.
-  ///
-  /// Without this, a negated `if` nested inside another negated `if`'s branch
-  /// would be rewritten through its outer ancestor, moving code the diagnostic
-  /// never pointed at.
   bool _ownsCondition(Expression condition) =>
       condition == node || condition.offset == node.offset;
 
@@ -56,8 +48,7 @@ class AvoidNegatedConditionsFix extends ResolvedCorrectionProducer {
 
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(range.node(statement.expression), inverted);
-      // The two branch bodies swap wholesale. Replacing each with the other's
-      // text keeps both correctly indented, since they sit at the same level.
+      // Edge case: both branches sit at the same depth, so swapping their text keeps indentation
       builder.addSimpleReplacement(
         range.node(statement.thenStatement),
         utils.getNodeText(elseStatement),

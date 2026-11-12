@@ -8,7 +8,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../type_checker.dart';
 
-/// Fix that gives an `async` declaration a non-nullable `Future` return type.
 class PreferCorrectFutureReturnTypeFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferCorrectFutureReturnType',

@@ -5,8 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces `BorderRadius.circular(r)` with
-/// `BorderRadius.all(Radius.circular(r))`.
 class PreferConstBorderRadiusFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferConstBorderRadius',

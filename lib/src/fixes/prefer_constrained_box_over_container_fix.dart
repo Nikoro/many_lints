@@ -5,7 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces Container(constraints: ...) with ConstrainedBox(constraints: ...).
 class PreferConstrainedBoxOverContainerFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferConstrainedBoxOverContainer',
@@ -24,9 +23,7 @@ class PreferConstrainedBoxOverContainerFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // For an unnamed constructor, `ConstructorName` and its `NamedType`
-    // child share a source range and the covering node resolves to the
-    // deeper one, so look up before type-testing.
+    // Edge case: an unnamed ConstructorName shares its range with the deeper NamedType
     final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
     if (targetNode is! ConstructorName) return;
 

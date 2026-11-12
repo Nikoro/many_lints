@@ -4,8 +4,6 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Fix that generates `==` and `hashCode` overrides for a class whose parent
-/// already defines custom equality.
 class PreferOverridingParentEqualityFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferOverridingParentEquality',
@@ -24,8 +22,6 @@ class PreferOverridingParentEqualityFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The rule reports at the class-name token, so the covering node is a
-    // name-part wrapper rather than the declaration itself.
     final targetNode = node.thisOrAncestorOfType<ClassDeclaration>();
     if (targetNode == null) return;
 
@@ -34,21 +30,18 @@ class PreferOverridingParentEqualityFix extends ResolvedCorrectionProducer {
 
     final className = targetNode.namePart.typeName.lexeme;
 
-    // Gather instance fields
     final instanceFields = element.fields
         .where((f) => !f.isStatic && f.isOriginDeclaration)
         .toList();
 
     final fieldNames = instanceFields.map((f) => f.name).toList();
 
-    // Build the override code
     final equalsBody = _buildEqualsBody(className, fieldNames);
     final hashCodeBody = _buildHashCodeBody(fieldNames);
 
     final body = targetNode.body;
     if (body is! BlockClassBody) return;
 
-    // Check which overrides are already present
     final hasEquals = body.members.any(
       (m) => m is MethodDeclaration && m.isOperator && m.name.lexeme == '==',
     );
@@ -59,7 +52,6 @@ class PreferOverridingParentEqualityFix extends ResolvedCorrectionProducer {
 
     if (hasEquals && hasHashCode) return;
 
-    // Insert before the closing brace
     final insertOffset = body.rightBracket.offset;
 
     final buffer = StringBuffer();

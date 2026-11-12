@@ -3,9 +3,6 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
 import 'prefer_shorthands_with_enums_fix.dart';
 
-/// Fix that replaces explicit class prefix with dot shorthand for static fields.
-///
-/// Shares the same transformation logic as [PreferShorthandsWithEnumsFix].
 class PreferShorthandsWithStaticFieldsFix extends PreferShorthandsWithEnumsFix {
   static const _fixKind = FixKind(
     'many_lints.fix.preferShorthandsWithStaticFields',

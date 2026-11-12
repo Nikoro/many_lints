@@ -7,8 +7,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../ast_node_analysis.dart';
 
-/// Fix that removes the unnecessary GestureDetector and replaces it with its
-/// child widget.
 class AvoidUnnecessaryGestureDetectorFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidUnnecessaryGestureDetector',
@@ -32,7 +30,6 @@ class AvoidUnnecessaryGestureDetectorFix extends ResolvedCorrectionProducer {
     final gestureDetectorExpr = call.node;
     final arguments = call.argumentList.arguments;
 
-    // Find the child argument
     final childArg = arguments.whereType<NamedArgument>().firstWhereOrNull(
       (e) => e.name.lexeme == 'child',
     );

@@ -7,7 +7,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../ast_node_analysis.dart';
 
-/// Fix that replaces `Expanded(child: SizedBox())` with `Spacer()`.
 class AvoidExpandedAsSpacerFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidExpandedAsSpacer',
@@ -41,17 +40,14 @@ class AvoidExpandedAsSpacerFix extends ResolvedCorrectionProducer {
       return;
     }
 
-    // Check for flex argument
     final flexArg = arguments.whereType<NamedArgument>().firstWhereOrNull(
       (e) => e.name.lexeme == 'flex',
     );
 
-    // Check for key argument
     final keyArg = arguments.whereType<NamedArgument>().firstWhereOrNull(
       (e) => e.name.lexeme == 'key',
     );
 
-    // Build replacement
     final buffer = StringBuffer();
     buffer.write('${constPrefix}Spacer(');
 

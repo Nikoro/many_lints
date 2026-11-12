@@ -7,7 +7,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../ast_node_analysis.dart';
 
-/// Fix that replaces functional list building with collection-for syntax.
 class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferForLoopInChildren',
@@ -28,33 +27,28 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
   Future<void> compute(ChangeBuilder builder) async {
     final targetNode = node;
 
-    // Pattern 1: iterable.map((e) => ...).toList()
     if (targetNode is MethodInvocation &&
         targetNode.methodName.name == 'toList') {
       await _fixMapToList(builder, targetNode);
       return;
     }
 
-    // Pattern 2: ...iterable.map((e) => ...) in a spread
     if (targetNode is SpreadElement) {
       await _fixSpreadMap(builder, targetNode);
       return;
     }
 
-    // Pattern 3: List.generate() — MethodInvocation
     if (targetNode is MethodInvocation &&
         targetNode.methodName.name == 'generate') {
       await _fixListGenerate(builder, targetNode);
       return;
     }
 
-    // Pattern 3: List<Widget>.generate() — InstanceCreationExpression
     if (targetNode is InstanceCreationExpression) {
       await _fixListGenerateInstance(builder, targetNode);
       return;
     }
 
-    // Pattern 4: iterable.fold([], ...)
     if (targetNode is MethodInvocation &&
         targetNode.methodName.name == 'fold') {
       await _fixFold(builder, targetNode);
@@ -62,7 +56,6 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
     }
   }
 
-  /// Fix: `iterable.map((e) => expr).toList()` → `[for (final e in iterable) expr]`
   Future<void> _fixMapToList(
     ChangeBuilder builder,
     MethodInvocation toListNode,
@@ -96,14 +89,12 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Fix: `[..., ...iterable.map((e) => expr), ...]` → replace spread with for element
   Future<void> _fixSpreadMap(
     ChangeBuilder builder,
     SpreadElement spread,
   ) async {
     var expr = spread.expression;
 
-    // Unwrap optional .toList()
     if (expr is MethodInvocation && expr.methodName.name == 'toList') {
       expr = expr.target!;
     }
@@ -136,7 +127,6 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Fix: `List.generate(n, (i) => expr)` → `[for (var i = 0; i < n; i++) expr]`
   Future<void> _fixListGenerate(
     ChangeBuilder builder,
     MethodInvocation node,
@@ -166,7 +156,6 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Fix: `List<T>.generate(n, (i) => expr)` → `[for (var i = 0; i < n; i++) expr]`
   Future<void> _fixListGenerateInstance(
     ChangeBuilder builder,
     InstanceCreationExpression node,
@@ -196,8 +185,6 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Fix: `iterable.fold([], (list, e) { ... })` → `[for (final e in iterable) ...]`
-  /// Note: fold patterns are complex; only fix simple cases.
   Future<void> _fixFold(ChangeBuilder builder, MethodInvocation node) async {
     final iterable = node.target;
     if (iterable == null) return;
@@ -215,7 +202,6 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
     final elementName = elementParam.name?.lexeme ?? '_';
     final iterableSource = iterable.toSource();
 
-    // Try to extract the expression being added
     final addExpr = _extractFoldAddExpression(callback.body);
     if (addExpr == null) return;
 
@@ -227,14 +213,10 @@ class PreferForLoopInChildrenFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Tries to extract the expression from a fold callback body like:
-  /// `(list, e) { list.add(Expr(e)); return list; }`
-  /// Returns the source of the expression added, or null.
   static String? _extractFoldAddExpression(FunctionBody body) {
     if (body is! BlockFunctionBody) return null;
 
     final statements = body.block.statements;
-    // Expect exactly: list.add(expr); return list;
     if (statements.length != 2) return null;
 
     final addStatement = statements.first;

@@ -6,8 +6,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that adds the accessed property to the existing destructuring pattern
-/// and replaces the property access with the destructured variable name.
 class UseExistingDestructuringFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.useExistingDestructuring',
@@ -28,7 +26,6 @@ class UseExistingDestructuringFix extends ResolvedCorrectionProducer {
   Future<void> compute(ChangeBuilder builder) async {
     final targetNode = node;
 
-    // Extract the property name and source variable
     final String propertyName;
     final String sourceName;
 
@@ -44,11 +41,9 @@ class UseExistingDestructuringFix extends ResolvedCorrectionProducer {
       return;
     }
 
-    // Find the destructuring declaration in the enclosing block
     final pattern = _findDestructuringPattern(targetNode, sourceName);
     if (pattern == null) return;
 
-    // Find the last field in the pattern to insert after it
     final NodeList<PatternField> fields;
     if (pattern is ObjectPattern) {
       fields = pattern.fields;
@@ -63,21 +58,16 @@ class UseExistingDestructuringFix extends ResolvedCorrectionProducer {
     final lastField = fields.last;
 
     await builder.addDartFileEdit(file, (builder) {
-      // 1. Add the new field to the destructuring pattern
       builder.addSimpleInsertion(lastField.end, ', :$propertyName');
 
-      // 2. Replace the property access with the variable name
       builder.addSimpleReplacement(range.node(targetNode), propertyName);
     });
   }
 
-  /// Finds the destructuring pattern for the given source variable in the
-  /// enclosing block.
   static DartPattern? _findDestructuringPattern(
     AstNode node,
     String sourceName,
   ) {
-    // Walk up to find the enclosing Block
     AstNode? current = node.parent;
     while (current != null && current is! Block) {
       current = current.parent;
@@ -94,7 +84,6 @@ class UseExistingDestructuringFix extends ResolvedCorrectionProducer {
       final expression = decl.expression;
 
       if (expression is SimpleIdentifier && expression.name == sourceName) {
-        // Verify it's a local variable/parameter
         if (expression.element is! LocalElement) continue;
         return decl.pattern;
       }

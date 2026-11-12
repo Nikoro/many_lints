@@ -7,8 +7,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 
 import '../ast_node_analysis.dart';
 
-/// Fix that removes the wrapping Padding widget and moves the padding value
-/// to the child widget's padding parameter.
 class AvoidWrappingInPaddingFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidWrappingInPadding',
@@ -32,13 +30,11 @@ class AvoidWrappingInPaddingFix extends ResolvedCorrectionProducer {
     final paddingWidget = call.node;
     final paddingArgList = call.argumentList;
 
-    // Find the padding argument from the Padding widget
     final paddingArg = paddingArgList.arguments
         .whereType<NamedArgument>()
         .firstWhereOrNull((e) => e.name.lexeme == 'padding');
     if (paddingArg == null) return;
 
-    // Find the child argument
     final childArg = paddingArgList.arguments
         .whereType<NamedArgument>()
         .firstWhereOrNull((e) => e.name.lexeme == 'child');
@@ -46,7 +42,6 @@ class AvoidWrappingInPaddingFix extends ResolvedCorrectionProducer {
 
     final childExpr = childArg.argumentExpression;
 
-    // Get child's argument list and source prefix
     final (childArgList, childPrefix) = switch (childExpr) {
       InstanceCreationExpression() => (
         childExpr.argumentList,
@@ -57,20 +52,16 @@ class AvoidWrappingInPaddingFix extends ResolvedCorrectionProducer {
     };
     if (childArgList == null || childPrefix == null) return;
 
-    // Extract the padding value source
     final paddingValueSource = paddingArg.argumentExpression.toSource();
 
-    // Find the key argument if present (from the Padding widget)
     final keyArg = paddingArgList.arguments
         .whereType<NamedArgument>()
         .firstWhereOrNull((e) => e.name.lexeme == 'key');
 
-    // Build the new argument list for the child widget
     final existingArgs = childArgList.arguments
         .map((a) => a.toSource())
         .toList();
 
-    // Add the key from Padding if the child doesn't already have one
     if (keyArg != null) {
       final childHasKey = childArgList.arguments.whereType<NamedArgument>().any(
         (e) => e.name.lexeme == 'key',
@@ -80,7 +71,6 @@ class AvoidWrappingInPaddingFix extends ResolvedCorrectionProducer {
       }
     }
 
-    // Add the padding argument
     existingArgs.add('padding: $paddingValueSource');
 
     final newSource = '$childPrefix(${existingArgs.join(', ')})';

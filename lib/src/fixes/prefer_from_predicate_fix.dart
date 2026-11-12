@@ -6,17 +6,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that rewrites a predicate conditional into `Option.fromPredicate`.
-///
-/// The conditional's condition becomes the lambda body with the wrapped value
-/// substituted for the lambda's parameter, so
-/// `age > 18 ? Option.of(age) : none()` becomes
-/// `Option.fromPredicate(age, (a) => a > 18)`.
-///
-/// The substitution is what makes this worth doing rather than emitting
-/// `(_) => age > 18`: the point of `fromPredicate` is that the predicate reads
-/// as a test *on the value*, which a closure over the original variable does
-/// not.
 class PreferFromPredicateFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferFromPredicate',
@@ -44,9 +33,7 @@ class PreferFromPredicateFix extends ResolvedCorrectionProducer {
     final valueSource = wrapped.toSource();
     final parameter = _parameterName(conditional, valueSource);
 
-    // Rewrite the condition with the lambda's parameter standing in for the
-    // value. Edits are collected first and applied back-to-front so earlier
-    // replacements do not shift later offsets.
+    // Edge case: splice back-to-front so earlier replacements do not shift later offsets
     final condition = conditional.condition.unParenthesized;
     final occurrences = _occurrencesOf(condition, valueSource);
     if (occurrences.isEmpty) return;
@@ -69,7 +56,6 @@ class PreferFromPredicateFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// The value passed to the `Some`/`Option.of` branch.
   Expression? _someArgument(Expression expression) {
     final target = expression.unParenthesized;
     if (target is! InstanceCreationExpression) return null;
@@ -81,11 +67,6 @@ class PreferFromPredicateFix extends ResolvedCorrectionProducer {
     return argument is Expression ? argument : null;
   }
 
-  /// A lambda parameter name that nothing in the conditional already binds.
-  ///
-  /// The obvious first initial is usually free, but a condition like
-  /// `a > b` would shadow `b` if the value were `bananas`, so the name is
-  /// checked against every identifier in the expression before being used.
   String _parameterName(ConditionalExpression conditional, String value) {
     final taken = _IdentifierCollector();
     conditional.accept(taken);
@@ -101,7 +82,6 @@ class PreferFromPredicateFix extends ResolvedCorrectionProducer {
     }
   }
 
-  /// Every node in [condition] whose source is exactly [source].
   List<AstNode> _occurrencesOf(Expression condition, String source) {
     final finder = _OccurrenceFinder(source);
     condition.accept(finder);
@@ -109,7 +89,6 @@ class PreferFromPredicateFix extends ResolvedCorrectionProducer {
   }
 }
 
-/// Collects every identifier name appearing in an expression.
 class _IdentifierCollector extends RecursiveAstVisitor<void> {
   final names = <String>{};
 
@@ -119,8 +98,6 @@ class _IdentifierCollector extends RecursiveAstVisitor<void> {
   }
 }
 
-/// Finds the nodes matching a given source text, outermost first and without
-/// overlapping.
 class _OccurrenceFinder extends RecursiveAstVisitor<void> {
   final String source;
   final occurrences = <AstNode>[];

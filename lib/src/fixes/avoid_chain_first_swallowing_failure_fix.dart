@@ -10,25 +10,6 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
 import '../fpdart_type_checkers.dart';
 
-/// Rewrites `x.chainFirst(effect)` to
-/// `x.flatMap((value) => effect(value).map((_) => value))`, so a failing
-/// effect fails the pipeline instead of being swallowed.
-///
-/// Two callback shapes are rewritten:
-///
-/// - a **tear-off** (`save`, `repo.save`, `this.save`) becomes a lambda that
-///   calls it;
-/// - a **one-expression lambda** (`(user) => save(user)`) keeps its parameter
-///   and gets `.map((_) => user)` appended to its body, parenthesised when the
-///   body binds looser than `.`. A wildcard parameter is renamed, since the
-///   body must now return it.
-///
-/// Anything else — a block body, explicit type arguments, a callback computed
-/// by an expression — is left alone: rewriting it would either change when
-/// that expression is evaluated or need a guess at the types.
-///
-/// This changes behaviour on purpose (that is the point of the rule), so it is
-/// offered one location at a time and never applied in bulk.
 class AvoidChainFirstSwallowingFailureFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidChainFirstSwallowingFailure',
@@ -73,7 +54,6 @@ class AvoidChainFirstSwallowingFailureFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// The fpdart `chainFirst` call at or above [node].
   MethodInvocation? _chainFirstAt(AstNode? node) {
     for (var current = node; current != null; current = current.parent) {
       if (current is! MethodInvocation) continue;
@@ -89,7 +69,6 @@ class AvoidChainFirstSwallowingFailureFix extends ResolvedCorrectionProducer {
     return null;
   }
 
-  /// Wraps a tear-off in a lambda that calls it and keeps the value.
   void Function(DartFileEditBuilder)? _tearOffEdit(Expression tearOff) {
     final name = _freshName(tearOff);
 
@@ -99,7 +78,6 @@ class AvoidChainFirstSwallowingFailureFix extends ResolvedCorrectionProducer {
     );
   }
 
-  /// Appends `.map((_) => parameter)` to a one-expression lambda's body.
   void Function(DartFileEditBuilder)? _lambdaEdit(FunctionExpression lambda) {
     if (lambda.typeParameters != null) return null;
 
@@ -137,7 +115,6 @@ class AvoidChainFirstSwallowingFailureFix extends ResolvedCorrectionProducer {
     };
   }
 
-  /// `value`, or `value2`, `value3`... when [scope] already names it.
   String _freshName(AstNode scope) {
     final finder = _IdentifierNames();
     scope.accept(finder);
@@ -151,7 +128,6 @@ class AvoidChainFirstSwallowingFailureFix extends ResolvedCorrectionProducer {
   }
 }
 
-/// Collects every simple identifier name under a node.
 class _IdentifierNames extends RecursiveAstVisitor<void> {
   final names = <String>{};
 

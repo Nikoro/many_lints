@@ -5,10 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces explicit class constructor invocation with dot shorthand.
-///
-/// Transforms `SomeClass('val')` into `.new('val')` and
-/// `SomeClass.named('val')` into `.named('val')`.
 class PreferReturningShorthandsFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferReturningShorthands',
@@ -25,18 +21,13 @@ class PreferReturningShorthandsFix extends ResolvedCorrectionProducer {
   @override
   FixKind get fixKind => _fixKind;
 
-  /// The fallback name when a constructor has no explicit name.
-  /// Override in subclasses for different behavior.
   String get unnamedConstructorReplacement => 'new';
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // For an unnamed constructor, `ConstructorName` and its `NamedType`
-    // child share a source range and the covering node resolves to the
-    // deeper one, so look up before type-testing.
+    // Edge case: an unnamed ConstructorName shares its range with the deeper NamedType
     final targetNode = node.thisOrAncestorOfType<ConstructorName>() ?? node;
 
-    // Handle MethodInvocation case (e.g., SomeClass.named)
     if (targetNode is SimpleIdentifier) {
       final parent = targetNode.parent;
       if (parent is MethodInvocation && parent.target == targetNode) {
@@ -53,7 +44,6 @@ class PreferReturningShorthandsFix extends ResolvedCorrectionProducer {
       }
     }
 
-    // Handle ConstructorName case (for new expressions)
     if (targetNode is ConstructorName) {
       final constructorNameText =
           targetNode.name?.name ?? unnamedConstructorReplacement;

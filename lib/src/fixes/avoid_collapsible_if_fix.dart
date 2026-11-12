@@ -6,7 +6,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that merges two nested `if` statements into one with `&&`.
 class AvoidCollapsibleIfFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidCollapsibleIf',
@@ -35,9 +34,7 @@ class AvoidCollapsibleIfFix extends ResolvedCorrectionProducer {
         '${_operand(outer.expression)} && ${_operand(inner.expression)}';
 
     await builder.addDartFileEdit(file, (builder) {
-      // Replace the outer condition with the conjunction...
       builder.addSimpleReplacement(range.node(outer.expression), merged);
-      // ...then replace the whole then-branch with the inner one's body.
       builder.addSimpleReplacement(
         range.node(outer.thenStatement),
         inner.thenStatement.toSource(),
@@ -45,8 +42,6 @@ class AvoidCollapsibleIfFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Wraps an operand in parentheses when `&&` would otherwise bind more
-  /// tightly than the expression's own operator.
   String _operand(Expression expression) {
     final source = expression.toSource();
     return switch (expression) {

@@ -1,5 +1,5 @@
-// Ported from riverpod_lint (MIT, Copyright (c) 2023 Remi Rousselet).
-// See the NOTICE file at the repository root.
+// SPDX-FileCopyrightText: 2023 Remi Rousselet
+// SPDX-License-Identifier: MIT
 
 import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analysis_server_plugin/edit/dart/dart_fix_kind_priority.dart';
@@ -7,7 +7,6 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Fix that adds a stub `build` method to a `@riverpod` class.
 class NotifierBuildFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.notifierBuild',
@@ -26,7 +25,6 @@ class NotifierBuildFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The rule reports at the class name token.
     final classDeclaration = node.thisOrAncestorOfType<ClassDeclaration>();
     if (classDeclaration == null) return;
 

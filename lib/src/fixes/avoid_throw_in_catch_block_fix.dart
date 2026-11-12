@@ -6,8 +6,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_dart.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces `throw` in a catch block with
-/// `Error.throwWithStackTrace()` to preserve the original stack trace.
 class AvoidThrowInCatchBlockFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.avoidThrowInCatchBlock',
@@ -36,7 +34,6 @@ class AvoidThrowInCatchBlockFix extends ResolvedCorrectionProducer {
     final stackTraceName = catchClause.stackTraceParameter?.name.lexeme;
 
     if (stackTraceName != null) {
-      // Stack trace parameter already exists — just replace the throw
       await builder.addDartFileEdit(file, (builder) {
         builder.addSimpleReplacement(
           range.node(targetNode),
@@ -44,17 +41,14 @@ class AvoidThrowInCatchBlockFix extends ResolvedCorrectionProducer {
         );
       });
     } else {
-      // Need to add the stack trace parameter to the catch clause
       const stackParam = 'stackTrace';
 
       await builder.addDartFileEdit(file, (builder) {
-        // Replace throw expression
         builder.addSimpleReplacement(
           range.node(targetNode),
           'Error.throwWithStackTrace($thrownExpr, $stackParam)',
         );
 
-        // Add stack trace parameter to catch clause
         _addStackTraceParameter(builder, catchClause, stackParam);
       });
     }
@@ -68,15 +62,11 @@ class AvoidThrowInCatchBlockFix extends ResolvedCorrectionProducer {
     final exceptionParam = catchClause.exceptionParameter;
 
     if (exceptionParam != null) {
-      // Has exception parameter: `catch (e)` → `catch (e, stackTrace)`
       builder.addSimpleInsertion(exceptionParam.end, ', $stackParam');
     } else if (catchClause.catchKeyword != null) {
-      // Has `catch` keyword but no params (shouldn't normally happen)
-      // `catch` → `catch (_, stackTrace)`
       final catchKeyword = catchClause.catchKeyword!;
       builder.addSimpleInsertion(catchKeyword.end, ' (_, $stackParam)');
     } else {
-      // Only `on Type` without `catch`: `on Type {` → `on Type catch (_, stackTrace) {`
       final body = catchClause.body;
       builder.addSimpleInsertion(
         body.leftBracket.offset,

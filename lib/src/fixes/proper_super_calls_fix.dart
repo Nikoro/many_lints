@@ -5,7 +5,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that moves the `super` lifecycle call to the correct position.
 class ProperSuperCallsFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.properSuperCalls',
@@ -54,11 +53,9 @@ class ProperSuperCallsFix extends ResolvedCorrectionProducer {
     final superSource = statement.toSource();
 
     await builder.addDartFileEdit(file, (builder) {
-      // Delete the super call from its current position (including newline)
       final deleteStart = statement.offset;
       var deleteEnd = statement.end;
 
-      // Consume trailing whitespace/newline
       final content = unitResult.content;
       while (deleteEnd < content.length &&
           (content[deleteEnd] == ' ' ||
@@ -69,7 +66,6 @@ class ProperSuperCallsFix extends ResolvedCorrectionProducer {
         if (content[deleteEnd - 1] == '\n') break;
       }
 
-      // Also consume leading whitespace on the same line
       var adjustedStart = deleteStart;
       while (adjustedStart > 0 &&
           (content[adjustedStart - 1] == ' ' ||
@@ -80,16 +76,13 @@ class ProperSuperCallsFix extends ResolvedCorrectionProducer {
       builder.addDeletion(range.startOffsetEndOffset(adjustedStart, deleteEnd));
 
       if (shouldBeFirst) {
-        // Insert at beginning of block (after opening brace)
         final firstStatement = statements.first;
-        // Get indentation from first statement
         final indent = _getIndentation(content, firstStatement.offset);
         builder.addSimpleInsertion(
           firstStatement.offset,
           '$superSource\n$indent',
         );
       } else {
-        // Insert at end of block (before closing brace)
         final lastStatement = statements.last;
         final indent = _getIndentation(content, lastStatement.offset);
         builder.addSimpleInsertion(lastStatement.end, '\n$indent$superSource');
@@ -105,7 +98,6 @@ class ProperSuperCallsFix extends ResolvedCorrectionProducer {
     'reassemble',
   };
 
-  /// Extracts the leading whitespace before an offset.
   static String _getIndentation(String content, int offset) {
     var start = offset;
     while (start > 0 &&

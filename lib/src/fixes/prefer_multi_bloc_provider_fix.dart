@@ -8,8 +8,6 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 import '../ast_node_analysis.dart';
 import '../bloc_type_checkers.dart';
 
-/// Fix that converts nested BlocProvider / BlocListener / RepositoryProvider
-/// into MultiBlocProvider / MultiBlocListener / MultiRepositoryProvider.
 class PreferMultiBlocProviderFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferMultiBlocProvider',
@@ -41,7 +39,6 @@ class PreferMultiBlocProviderFix extends ResolvedCorrectionProducer {
     final outerType = outerCall.staticType;
     if (outerType == null) return;
 
-    // Find which provider type
     final match = _providerTypes
         .where((e) => e.$1.isExactlyType(outerType))
         .firstOrNull;
@@ -50,7 +47,6 @@ class PreferMultiBlocProviderFix extends ResolvedCorrectionProducer {
     final checker = match.$1;
     final multiName = match.$2;
 
-    // Collect all consecutive nested providers and the final child
     final providers = <Expression>[];
     Expression current = outerCall;
 
@@ -69,11 +65,9 @@ class PreferMultiBlocProviderFix extends ResolvedCorrectionProducer {
 
     if (providers.length < 2) return;
 
-    // The innermost child (non-provider) is the child of the last provider
     final innermostChild = _findChildExpression(providers.last);
     if (innermostChild == null) return;
 
-    // Build each provider entry (without its child: arg)
     final providerEntries = <String>[];
     for (final provider in providers) {
       providerEntries.add(_buildProviderWithoutChild(provider));
@@ -95,7 +89,6 @@ class PreferMultiBlocProviderFix extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Builds a provider source without the `child:` argument.
   static String _buildProviderWithoutChild(Expression node) {
     final String constructorSource;
     final ArgumentList argumentList;
@@ -119,7 +112,6 @@ class PreferMultiBlocProviderFix extends ResolvedCorrectionProducer {
     return '$constructorSource($args)';
   }
 
-  /// Extracts the `child:` expression from a provider call.
   static Expression? _findChildExpression(Expression node) {
     final ArgumentList argumentList;
     if (node is InstanceCreationExpression) {
