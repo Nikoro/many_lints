@@ -8,24 +8,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when multiple properties of the same object are accessed separately
-/// and could be consolidated using Dart 3 class destructuring.
-///
-/// When 3 or more distinct properties are accessed on the same variable,
-/// suggest using destructuring syntax instead:
-///
-/// ```dart
-/// // Bad
-/// final a = obj.x;
-/// final b = obj.y;
-/// print(obj.z);
-///
-/// // Good
-/// final SomeClass(:x, :y, :z) = obj;
-/// final a = x;
-/// final b = y;
-/// print(z);
-/// ```
 class PreferClassDestructuring extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_class_destructuring',
@@ -35,9 +17,6 @@ class PreferClassDestructuring extends ManyLintsRule {
         'Use a destructuring declaration to extract all properties at once.',
   );
 
-  /// Default minimum number of distinct property accesses to trigger the lint.
-  ///
-  /// Configurable per project via the `min_occurrences` option.
   static const _defaultMinOccurrences = 3;
 
   PreferClassDestructuring()
@@ -68,21 +47,18 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitBlock(Block node) {
-    // Collect property accesses grouped by target variable
     final collector = _PropertyAccessCollector();
     for (final statement in node.statements) {
       statement.accept(collector);
     }
 
-    // Resolved per visit, not cached: rule instances are reused across
-    // package roots.
+    // Edge case: rule instances are reused across package roots, so options are read per visit
     final minOccurrences = rule.config.intOption(
       'min_occurrences',
       defaultValue: PreferClassDestructuring._defaultMinOccurrences,
     );
     final ignoredTypes = rule.config.stringListOption('ignored_types');
 
-    // Report variables with enough distinct property accesses
     for (final entry in collector.accessesByVariable.entries) {
       final variableName = entry.key;
       final info = entry.value;
@@ -91,16 +67,11 @@ class _Visitor extends SimpleAstVisitor<void> {
         continue;
       }
 
-      // Only suggest destructuring for interface types (classes, enums, etc.)
       final targetType = info.targetType;
       if (targetType is! InterfaceType) continue;
 
-      // `ignored_types` exempts types where destructuring reads worse than
-      // repeated access — a context or theme object accessed for several
-      // unrelated properties.
       if (ignoredTypes.contains(targetType.element.name)) continue;
 
-      // Report at the first property access occurrence
       rule.reportAtNode(
         info.firstAccess!,
         arguments: [info.properties.length.toString(), variableName],
@@ -109,7 +80,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Tracks property access info for a variable.
 class _VariableAccessInfo {
   final Set<String> properties = {};
   final DartType? targetType;
@@ -123,10 +93,6 @@ class _VariableAccessInfo {
   }
 }
 
-/// Collects property accesses within a block, grouped by target variable.
-///
-/// Only collects simple property reads (not method calls, not assignments).
-/// Stops at nested function boundaries to avoid mixing scopes.
 class _PropertyAccessCollector extends RecursiveAstVisitor<void> {
   final Map<String, _VariableAccessInfo> accessesByVariable = {};
 
@@ -139,7 +105,6 @@ class _PropertyAccessCollector extends RecursiveAstVisitor<void> {
       propertyName: node.identifier.name,
       accessNode: node,
     );
-    // Don't recurse into children — we already processed both parts
   }
 
   @override
@@ -154,11 +119,8 @@ class _PropertyAccessCollector extends RecursiveAstVisitor<void> {
         accessNode: node,
       );
     }
-    // Don't recurse into target — we already processed it
-    // But do recurse into the property name in case of chaining
   }
 
-  // Stop at nested function boundaries
   @override
   void visitFunctionExpression(FunctionExpression node) {}
 
@@ -172,16 +134,13 @@ class _PropertyAccessCollector extends RecursiveAstVisitor<void> {
     required String propertyName,
     required AstNode accessNode,
   }) {
-    // Only track local variables and parameters (not fields, top-level, etc.)
     if (targetElement is! LocalElement) return;
 
-    // Skip if the parent is an assignment target (writing, not reading)
     final parent = accessNode.parent;
     if (parent is AssignmentExpression && parent.leftHandSide == accessNode) {
       return;
     }
 
-    // Skip method calls — only track field/getter accesses
     if (parent is MethodInvocation && parent.target == accessNode) return;
 
     final info = accessesByVariable.putIfAbsent(

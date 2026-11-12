@@ -8,25 +8,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a value read out of a decoded JSON map is cast to a
-/// non-nullable type.
-///
-/// `jsonDecode` produces `Map<String, dynamic>`, and a missing key yields
-/// `null`. Casting that `null` to a non-nullable type throws a `TypeError`
-/// that names only the types involved — not the key — so the actual cause is
-/// invisible in the crash report.
-///
-/// **Bad:**
-/// ```dart
-/// User.fromJson(Map<String, dynamic> json)
-///   : name = json['name'] as String; // throws if the key is absent
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// User.fromJson(Map<String, dynamic> json)
-///   : name = json['name'] as String? ?? '';
-/// ```
 class PreferCorrectJsonCasts extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_correct_json_casts',
@@ -65,7 +46,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitAsExpression(AsExpression node) {
-    // Only an index read can be absent; `json.length as int` cannot.
     final expression = node.expression;
     if (expression is! IndexExpression) return;
 
@@ -73,19 +53,15 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (targetType is! InterfaceType) return;
     if (!targetType.isDartCoreMap) return;
 
-    // A JSON map is `Map<String, dynamic>`. A map with a precise value type
-    // cannot silently yield null for a present key, so the hazard is specific
-    // to dynamic-valued maps.
+    // Edge case: a precisely typed map cannot yield null for a present key
     final valueType = targetType.typeArguments.elementAtOrNull(1);
     if (valueType is! DynamicType) return;
 
     final castType = node.type.type;
     if (castType == null) return;
 
-    // A nullable cast is exactly the fix this rule asks for.
     if (castType.nullabilitySuffix == NullabilitySuffix.question) return;
 
-    // `dynamic` and `Object` accept null, so neither throws here.
     if (castType is DynamicType || castType.isDartCoreObject) return;
 
     rule.reportAtNode(node, arguments: [castType.getDisplayString()]);

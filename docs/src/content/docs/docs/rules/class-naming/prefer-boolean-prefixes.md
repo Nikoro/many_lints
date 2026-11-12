@@ -82,6 +82,10 @@ class Matcher {
 
 Only a single lowercase word qualifies, so `emailSent` is still reported.
 
+### Private names read without the underscore
+
+`_isReady` passes and `_ready` is reported, exactly as `isReady` and `ready` would be: the underscore carries no information about the question.
+
 ### Three declarations are never reported
 
 An `@override` takes its name from the base declaration, a setter from the getter it pairs with, and a private field backing an accessor from the storage rather than the question:

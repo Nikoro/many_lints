@@ -6,8 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a class containing only static members is not marked as
-/// `abstract final`, which would prevent instantiation and inheritance.
 class PreferAbstractFinalStaticClass extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_abstract_final_static_class',
@@ -44,50 +42,21 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    // Skip if already abstract final
     if (node.abstractKeyword != null && node.finalKeyword != null) return;
-
-    // Skip classes with other modifiers that make abstract final inappropriate
-    if (node.sealedKeyword != null ||
-        node.baseKeyword != null ||
-        node.interfaceKeyword != null ||
-        node.mixinKeyword != null) {
-      return;
-    }
-
-    // A primary constructor is an instance constructor in the class header:
-    // the class is meant to be instantiated, even when every member in its
-    // body is static. Only `class Constants._()`, private and without
-    // parameters, is the old instantiation guard.
-    if (node.namePart
-        case PrimaryConstructorDeclaration(
-          :final formalParameters,
-          :final constructorName,
-        )
-        when formalParameters.parameters.isNotEmpty ||
-            !(constructorName?.name.lexeme.startsWith('_') ?? false)) {
-      return;
-    }
+    if (_hasConflictingModifier(node)) return;
+    if (_hasInstantiablePrimaryConstructor(node)) return;
 
     final body = node.body;
     if (body is! BlockClassBody) return;
 
     final members = body.members;
-
-    // Skip empty classes
     if (members.isEmpty) return;
 
     var hasStaticMember = false;
 
-    // Check that all members are static
     for (final member in members) {
       switch (member) {
         case ConstructorDeclaration():
-          // A trivial private constructor is the older idiom for the very
-          // thing this rule suggests — guarding against instantiation. It is
-          // made redundant by `abstract final`, so allow it (and let the fix
-          // delete it). Any other constructor means the class is meant to be
-          // instantiated.
           if (!_isInstantiationGuard(member)) return;
         case MethodDeclaration(:final isStatic):
           if (!isStatic) return;
@@ -96,23 +65,32 @@ class _Visitor extends SimpleAstVisitor<void> {
           if (!isStatic) return;
           hasStaticMember = true;
         default:
-          // Unknown member type — be conservative
           return;
       }
     }
 
-    // A class holding nothing but a private constructor is not a static
-    // holder; leave it alone.
     if (!hasStaticMember) return;
 
     rule.reportAtNode(node);
   }
 
-  /// Whether [node] is an empty, parameterless private constructor whose only
-  /// purpose is to prevent instantiation, e.g. `MyConstants._();`.
-  ///
-  /// Anything richer — parameters, initializers, a redirection or a body — is
-  /// doing real work that `abstract final` would not preserve.
+  static bool _hasConflictingModifier(ClassDeclaration node) =>
+      node.sealedKeyword != null ||
+      node.baseKeyword != null ||
+      node.interfaceKeyword != null ||
+      node.mixinKeyword != null;
+
+  static bool _hasInstantiablePrimaryConstructor(ClassDeclaration node) =>
+      switch (node.namePart) {
+        PrimaryConstructorDeclaration(
+          :final formalParameters,
+          :final constructorName,
+        ) =>
+          formalParameters.parameters.isNotEmpty ||
+              !(constructorName?.name.lexeme.startsWith('_') ?? false),
+        _ => false,
+      };
+
   static bool _isInstantiationGuard(ConstructorDeclaration node) {
     if (node.name?.lexeme.startsWith('_') != true) return false;
     if (node.factoryKeyword != null) return false;

@@ -7,18 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a function executes more statements than the configured budget.
-///
-/// This is the counterpart to `avoid_long_functions`, measuring what the
-/// function *does* rather than how much room it takes. The two disagree in
-/// exactly the useful cases: a function of twenty short statements is long by
-/// lines and long by work, while one holding a single wide widget tree is long
-/// by lines only, and splitting it would help nobody.
-///
-/// The limit is `max_statements`, defaulting to 25. Statements are counted
-/// through nested blocks, so a loop body counts toward the function that owns
-/// it, but a nested function expression is counted on its own — a callback is
-/// separate work, not more of the enclosing function's.
 class MaxStatements extends ManyLintsRule {
   static const LintCode code = LintCode(
     'max_statements',
@@ -50,7 +38,6 @@ class MaxStatements extends ManyLintsRule {
   }
 }
 
-/// Enough for a function doing one thing thoroughly.
 const _defaultMaxStatements = 25;
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -60,17 +47,21 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) =>
-      _check(node.functionExpression.body, node.name);
+      _reportIfOverBudget(node.functionExpression.body, node.name);
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) =>
-      _check(node.body, node.name);
+      _reportIfOverBudget(node.body, node.name);
 
   @override
   void visitConstructorDeclaration(ConstructorDeclaration node) =>
-      _check(node.body, node.name, fallback: node);
+      _reportIfOverBudget(node.body, node.name, fallback: node);
 
-  void _check(FunctionBody body, Token? name, {AstNode? fallback}) {
+  void _reportIfOverBudget(
+    FunctionBody body,
+    Token? name, {
+    AstNode? fallback,
+  }) {
     if (body is! BlockFunctionBody) return;
 
     final maxStatements = rule.config.intOption(
@@ -93,23 +84,12 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Counts executable statements, descending through blocks but not into
-/// nested function bodies.
 class _StatementCounter extends RecursiveAstVisitor<void> {
   int count = 0;
 
+  // Edge case: a callback is separate work, not more of the enclosing function's
   @override
-  void visitFunctionExpression(FunctionExpression node) {
-    // A callback is its own unit of work, and is measured when the rule
-    // reaches its own declaration.
-  }
-
-  @override
-  void visitBlock(Block node) {
-    // A block is punctuation, not work; its statements are counted as they
-    // are visited.
-    super.visitBlock(node);
-  }
+  void visitFunctionExpression(FunctionExpression node) {}
 
   @override
   void visitExpressionStatement(ExpressionStatement node) {

@@ -9,12 +9,6 @@ import '../async_builder_utils.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when a `FutureBuilder` receives a newly created `Future`.
-///
-/// `build()` may run many times per second. Creating the future inline means
-/// a fresh one is built on every rebuild, so the `FutureBuilder` restarts
-/// from `ConnectionState.waiting` and the underlying work — often a network
-/// request — is repeated.
 class PassExistingFutureToFutureBuilder extends ManyLintsRule {
   static const LintCode code = LintCode(
     'pass_existing_future_to_future_builder',
@@ -65,7 +59,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    // A constructor call without type arguments parses as a MethodInvocation.
+    // Edge case: a constructor call without type arguments parses as a method call
     _check(node, node.argumentList);
   }
 

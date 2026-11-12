@@ -6,17 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a file under `lib/` sits in a folder whose name is not
-/// `lower_snake_case`.
-///
-/// A folder name becomes part of every `package:` URI that imports through it,
-/// so it is public API in a way a local variable name is not. `CamelCase` or
-/// `kebab-case` folders also break on case-insensitive filesystems: a folder
-/// renamed from `Models` to `models` is invisible to git on macOS, and the
-/// import keeps resolving locally while failing in CI.
-///
-/// The SDK's `file_names` rule checks the *file*; nothing in the SDK checks
-/// the directories above it, which is the gap this fills.
 class MatchLibFolderStructure extends ManyLintsRule {
   static const LintCode code = LintCode(
     'match_lib_folder_structure',
@@ -58,20 +47,19 @@ class _Visitor extends SimpleAstVisitor<void> {
     final root = rule.config.stringOption('root', defaultValue: 'lib');
     if (!path.startsWith('$root/')) return;
 
-    // Drop the root and the file itself; what is left is the folders between
-    // them, which are what this rule is about.
     final segments = path.split('/');
-    final folders = segments.sublist(1, segments.length - 1);
+    final foldersBetweenRootAndFile = segments.sublist(1, segments.length - 1);
 
-    for (final folder in folders) {
-      if (_validFolder.hasMatch(folder)) continue;
+    final firstInvalidFolder = foldersBetweenRootAndFile
+        .where((folder) => !_validFolder.hasMatch(folder))
+        .firstOrNull;
+    if (firstInvalidFolder == null) return;
 
-      // Reported once per file, at the first offending folder: a second
-      // diagnostic on the same path would be fixed by the same rename, and
-      // every file in the folder already reports it once.
-      rule.reportAtOffset(0, 0, arguments: [folder, _toSnakeCase(folder)]);
-      return;
-    }
+    rule.reportAtOffset(
+      0,
+      0,
+      arguments: [firstInvalidFolder, _toSnakeCase(firstInvalidFolder)],
+    );
   }
 
   String _toSnakeCase(String folder) {

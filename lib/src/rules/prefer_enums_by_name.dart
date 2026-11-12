@@ -9,8 +9,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 
-/// Suggests using `.byName()` instead of `.firstWhere((e) => e.name == value)`
-/// on enum values.
 class PreferEnumsByName extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_enums_by_name',
@@ -47,27 +45,22 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name != 'firstWhere') return;
 
-    // Check that the target is .values on an enum type
     if (!_isEnumValues(node.target)) return;
 
-    // Get the firstWhere callback argument
     final args = node.argumentList.arguments;
     if (args.isEmpty) return;
 
     final callback = args.first;
     if (callback is! FunctionExpression) return;
 
-    // Check that the callback has exactly one parameter
     final params = callback.parameters?.parameters;
     if (params == null || params.length != 1) return;
     final paramName = params.first.name?.lexeme;
     if (paramName == null) return;
 
-    // Extract the body expression
     final bodyExpr = maybeGetSingleReturnExpression(callback.body);
     if (bodyExpr == null) return;
 
-    // Check for pattern: param.name == value  or  value == param.name
     if (bodyExpr is! BinaryExpression) return;
     if (bodyExpr.operator.type != TokenType.EQ_EQ) return;
 
@@ -77,7 +70,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Checks if [target] is `SomeEnum.values` where `SomeEnum` is an enum.
   static bool _isEnumValues(Expression? target) {
     if (target case PrefixedIdentifier(
       identifier: SimpleIdentifier(name: 'values'),
@@ -95,8 +87,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     return false;
   }
 
-  /// Checks if [expr] is `paramName.name` — accessing the `.name` property
-  /// on the callback parameter.
   static bool _isParamNameAccess(Expression expr, String paramName) {
     if (expr case PrefixedIdentifier(
       prefix: SimpleIdentifier(name: final prefix),

@@ -9,21 +9,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a function with a nullable return type returns `null` on every
-/// path.
-///
-/// Such a function has no reachable non-null result, so every caller is forced
-/// to null-check a value that can never be anything else. It is usually an
-/// unfinished implementation or a leftover from a refactor that removed the
-/// real return.
-///
-/// **Bad:**
-/// ```dart
-/// String? lookup(String key) {
-///   if (key.isEmpty) return null;
-///   return null; // nothing can ever come back
-/// }
-/// ```
 class FunctionAlwaysReturnsNull extends ManyLintsRule {
   static const LintCode code = LintCode(
     'function_always_returns_null',
@@ -62,33 +47,30 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
-    // An override must keep its inherited signature, so the author may have no
-    // freedom to change it.
     if (node.metadata.any((a) => a.name.name == 'override')) return;
 
-    _check(node.body, node.returnType, node.name);
+    _reportIfAlwaysNull(node.body, node.returnType, node.name);
   }
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) =>
-      _check(node.functionExpression.body, node.returnType, node.name);
+      _reportIfAlwaysNull(
+        node.functionExpression.body,
+        node.returnType,
+        node.name,
+      );
 
-  void _check(FunctionBody body, TypeAnnotation? returnType, Token name) {
-    // A missing annotation means the type is inferred as `Null`, which the
-    // analyzer surfaces on its own terms; requiring one keeps this rule to
-    // code the author explicitly typed.
+  void _reportIfAlwaysNull(
+    FunctionBody body,
+    TypeAnnotation? returnType,
+    Token name,
+  ) {
     final type = returnType?.type;
     if (type == null) return;
 
-    // Only nullable, non-void returns are candidates. `void` and `Future<void>`
-    // already say "no value", and a non-nullable return that yields null is a
-    // compile error the analyzer handles.
     if (type is VoidType) return;
     if (type.nullabilitySuffix != NullabilitySuffix.question) return;
 
-    // A `Future<T?>`/`Iterable<T?>` body returns the wrapper, not the value,
-    // so the "always null" reading does not apply to async or generator
-    // bodies.
     if (body.isAsynchronous || body.isGenerator) return;
 
     switch (body) {
@@ -98,21 +80,16 @@ class _Visitor extends SimpleAstVisitor<void> {
         final finder = _ReturnFinder();
         block.accept(finder);
 
-        // No return at all means the function falls off the end, which the
-        // analyzer already reports as a missing return.
         if (finder.returns.isEmpty) return;
 
-        // A bare `return;` in a nullable-returning function is legal and
-        // yields null, so it counts as a null return here.
-        if (finder.returns.every(
-          (expression) => expression == null || _isNullLiteral(expression),
-        )) {
-          rule.reportAtToken(name);
-        }
+        if (finder.returns.every(_yieldsNull)) rule.reportAtToken(name);
       default:
         return;
     }
   }
+
+  bool _yieldsNull(Expression? returned) =>
+      returned == null || _isNullLiteral(returned);
 
   bool _isNullLiteral(Expression expression) => switch (expression) {
     NullLiteral() => true,
@@ -121,8 +98,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   };
 }
 
-/// Collects the expressions of every `return` in a body, stopping at nested
-/// functions so a closure's returns are not attributed to the outer function.
 class _ReturnFinder extends RecursiveAstVisitor<void> {
   final List<Expression?> returns = [];
 
@@ -130,6 +105,7 @@ class _ReturnFinder extends RecursiveAstVisitor<void> {
   void visitReturnStatement(ReturnStatement node) =>
       returns.add(node.expression);
 
+  // Edge case: a nested closure's returns belong to the closure, not the enclosing function
   @override
   void visitFunctionExpression(FunctionExpression node) {}
 }

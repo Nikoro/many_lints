@@ -6,23 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when `Isolate.run()` is used instead of `compute()`.
-///
-/// `Isolate.run()` lacks web platform support, making `compute()` from
-/// `package:flutter/foundation.dart` the preferred alternative for
-/// cross-platform Flutter applications.
-///
-/// ## Example
-///
-/// ❌ Bad:
-/// ```dart
-/// final result = await Isolate.run(() => expensiveWork());
-/// ```
-///
-/// ✅ Good:
-/// ```dart
-/// final result = await compute((_) => expensiveWork(), null);
-/// ```
 class PreferComputeOverIsolateRun extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_compute_over_isolate_run',
@@ -64,7 +47,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (target is! SimpleIdentifier) return;
     if (target.name != 'Isolate') return;
 
-    // Verify the target resolves to dart:isolate's Isolate class
     final element = target.element;
     if (element == null) return;
     final library = element.library;

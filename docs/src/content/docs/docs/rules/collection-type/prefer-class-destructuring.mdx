@@ -105,6 +105,10 @@ rules:
 
 **Distinct properties, not total reads.** Reading `user.name` five times counts as one property, so it does not reach the threshold on its own.
 
+**Only class-like types are reported.** A variable whose static type is not an interface type (a function, a record, `dynamic`) is left alone.
+
+**Writes do not count.** `user.name = value` is an assignment target, not a read.
+
 **Method calls are not property accesses.** `user.toString()` and `user.copyWith(...)` do not count toward the total.
 
 **Each block is counted separately.** Accesses split across a body and a nested closure are not pooled, since the collector stops at function boundaries.

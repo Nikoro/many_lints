@@ -7,31 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../bloc_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when `emit` is handed the current state object instead of a new
-/// instance.
-///
-/// `BlocBase.emit` compares the incoming state to the current one with `==`
-/// and drops it when they are equal. Passing `state` back — directly, or after
-/// mutating a field on it — is therefore a no-op: no listener rebuilds, and
-/// the UI silently keeps showing the old data.
-///
-/// The failure is quiet. Nothing throws, the handler runs to completion, and
-/// the bug looks like a rendering problem rather than a state one.
-///
-/// **Bad:**
-/// ```dart
-/// void refresh() {
-///   state.items.add(item);
-///   emit(state); // dropped — same instance, so `==` holds
-/// }
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// void refresh() {
-///   emit(state.copyWith(items: [...state.items, item]));
-/// }
-/// ```
 class EmitNewBlocStateInstances extends ManyLintsRule {
   static const LintCode code = LintCode(
     'emit_new_bloc_state_instances',
@@ -75,9 +50,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final body = node.body;
     if (body is! BlockClassBody) return;
 
-    // A wrapper such as `safeEmit(...)` that forwards to `emit` has the same
-    // no-op hazard, but only the project knows it exists. Default `[]` keeps
-    // `emit` as the only name, matching the sibling bloc rules.
     final emitNames = {
       'emit',
       ...rule.config.stringListOption('additional_methods'),
@@ -87,7 +59,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Finds `emit(...)` calls whose argument is the current state.
 class _EmitFinder extends RecursiveAstVisitor<void> {
   final EmitNewBlocStateInstances rule;
   final Set<String> emitNames;
@@ -98,29 +69,27 @@ class _EmitFinder extends RecursiveAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     super.visitMethodInvocation(node);
 
-    // Cubit form: `emit(...)` resolves to the inherited method.
     if (!emitNames.contains(node.methodName.name)) return;
 
     final target = node.target;
     if (target != null && target is! ThisExpression) return;
 
-    _check(node.argumentList);
+    _reportCurrentStateArgument(node.argumentList);
   }
 
   @override
   void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
     super.visitFunctionExpressionInvocation(node);
 
-    // Bloc form: `emit` is the handler's `Emitter` parameter, so calling it
-    // parses as an invocation of a function-typed expression.
+    // Edge case: a Bloc handler's `emit` is an `Emitter` parameter, invoked as a function value
     if (node.function case SimpleIdentifier(
       :final name,
     ) when emitNames.contains(name)) {
-      _check(node.argumentList);
+      _reportCurrentStateArgument(node.argumentList);
     }
   }
 
-  void _check(ArgumentList argumentList) {
+  void _reportCurrentStateArgument(ArgumentList argumentList) {
     final arguments = argumentList.arguments;
     if (arguments.length != 1) return;
 
@@ -130,12 +99,6 @@ class _EmitFinder extends RecursiveAstVisitor<void> {
     if (_isCurrentState(argument)) rule.reportAtNode(argument);
   }
 
-  /// Whether [expression] is the current state itself rather than a value
-  /// derived from it.
-  ///
-  /// Only the bare reads `state` and `this.state` qualify. Anything built from
-  /// the state — `state.copyWith(...)`, `state + 1`, `state.items.first` — is
-  /// a different object and is left alone.
   bool _isCurrentState(Expression expression) => switch (expression) {
     SimpleIdentifier(name: 'state') => true,
     PropertyAccess(
@@ -146,10 +109,4 @@ class _EmitFinder extends RecursiveAstVisitor<void> {
     ParenthesizedExpression(:final expression) => _isCurrentState(expression),
     _ => false,
   };
-
-  // Note: `visitFunctionExpression` is deliberately *not* overridden to stop
-  // traversal, unlike the after-await rules in this package. Those stop at a
-  // closure because its guards cannot be reasoned about from the enclosing
-  // scope; here there is nothing to reason about — `emit(state)` is a no-op
-  // whenever it runs, so a callback body is worth descending into.
 }

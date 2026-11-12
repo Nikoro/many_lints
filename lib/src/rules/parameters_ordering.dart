@@ -7,28 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../ordering_check.dart';
 
-/// Warns when a function's *named* parameters are not in the configured order.
-///
-/// A long named-parameter list is a lookup table with the same problem as a
-/// long map literal: without an order, checking whether a parameter already
-/// exists means reading all of them, and a new one gets appended at the end
-/// beside the near-duplicate nobody saw.
-///
-/// Only named parameters are ordered. Positional parameters are ordered by
-/// meaning and by the call sites that depend on them — sorting those would
-/// change every caller and break the code.
-///
-/// **Outside the `pedantic` preset, this rule reports nothing until
-/// configured**, since a widget constructor deliberately leads with its most
-/// important parameters. Set
-/// `order: alphabetical` (or `by_length`, or `alphabetical_case_sensitive`)
-/// where a mechanical order is wanted.
-///
-/// `required` and optional parameters are ordered as independent groups by
-/// default. Their relative placement belongs to the SDK's
-/// `always_put_required_named_parameters_first`; set `group_required: false`
-/// to sort all named parameters together instead.
-/// `min_parameters` (default 5) keeps short signatures out of it.
 class ParametersOrdering extends ManyLintsRule {
   static const LintCode code = LintCode(
     'parameters_ordering',
@@ -57,7 +35,6 @@ class ParametersOrdering extends ManyLintsRule {
   }
 }
 
-/// Below this, the whole signature is read at once and order is free.
 const _defaultMinParameters = 5;
 
 class _Visitor extends SimpleAstVisitor<void> {
@@ -91,8 +68,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // Required and optional are sorted as two independent runs. The SDK's
-    // always_put_required_named_parameters_first owns their relative placement.
     _report(named.where((p) => p.isRequired).toList(growable: false), mode);
     _report(named.where((p) => !p.isRequired).toList(growable: false), mode);
   }
@@ -101,8 +76,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final names = <String>[];
     for (final parameter in parameters) {
       final name = parameter.name?.lexeme;
-      // A parameter with no name token cannot be ordered, and its position
-      // relative to the others is not something the rule can judge.
       if (name == null) return;
       names.add(name);
     }

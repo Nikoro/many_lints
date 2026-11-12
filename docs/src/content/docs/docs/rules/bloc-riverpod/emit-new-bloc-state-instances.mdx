@@ -84,6 +84,8 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 }
 ```
 
+An `emit(state)` inside a nested closure, such as a stream listener or a `then` callback, is reported too: the call is a no-op whenever it runs.
+
 ### A project wrapper around `emit`
 
 If your blocs emit through a helper, name it so the same no-op is caught there:

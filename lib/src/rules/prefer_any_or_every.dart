@@ -7,7 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Suggests using .any() or .every() instead of .where().isEmpty/.isNotEmpty.
 class PreferAnyOrEvery extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_any_or_every',

@@ -8,7 +8,6 @@ import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../flutter_type_checkers.dart';
 
-/// Suggests using ConstrainedBox widget instead of Container with only constraints.
 class PreferConstrainedBoxOverContainer extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_constrained_box_over_container',

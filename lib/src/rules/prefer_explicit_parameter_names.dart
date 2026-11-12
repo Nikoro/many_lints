@@ -6,19 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a function-typed parameter or typedef declares unnamed
-/// parameters.
-///
-/// `void Function(String, int)` tells a reader the types and nothing else. At
-/// the point where someone writes the callback, `(String, int)` gives them two
-/// anonymous values to guess at — is the `int` an index, a count, an id?
-/// `void Function(String label, int count)` answers that in the signature,
-/// where the answer belongs, and IDEs echo those names into the closure they
-/// generate.
-///
-/// A single-parameter function type is exempt by default: `void Function(T)`
-/// is unambiguous from the type alone, and naming it adds nothing. Set
-/// `min_parameters: 1` to report those too.
 class PreferExplicitParameterNames extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_explicit_parameter_names',
@@ -59,8 +46,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final parameters = node.parameters.parameters;
     if (parameters.length < minParameters) return;
 
-    // A parameter with no name has an empty one rather than a null one, so the
-    // emptiness of the token is the test.
+    // Edge case: an unnamed parameter has an empty name token rather than a null one
     final unnamed = parameters.where((p) => p.name?.lexeme.isEmpty ?? true);
     if (unnamed.isEmpty) return;
 

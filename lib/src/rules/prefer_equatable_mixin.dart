@@ -8,13 +8,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when a class directly extends `Equatable` instead of mixing it in.
-/// Mixing it in preserves the ability to extend another base class while
-/// keeping all equatable features.
-///
-/// The mixin is named after the resolved `package:equatable`: equatable 2.1
-/// and later declare `Equatable` as a mixin class (3.0 removed the deprecated
-/// `EquatableMixin`), and 2.0 only has `EquatableMixin`.
 class PreferEquatableMixin extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_equatable_mixin',
@@ -74,12 +67,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// The name to mix in instead of extending [equatable], as [library] sees
-/// package:equatable, or `null` when that version offers neither.
-///
-/// `Equatable` itself when it is a mixin class (equatable 2.1 and later,
-/// where `EquatableMixin` is deprecated, and 3.0, where it is gone), else
-/// `EquatableMixin` when an import of [equatable] also exports it (2.0).
 String? equatableMixinName(ClassElement equatable, LibraryElement library) {
   if (equatable.isMixinClass) return 'Equatable';
   for (final fragment in library.fragments) {

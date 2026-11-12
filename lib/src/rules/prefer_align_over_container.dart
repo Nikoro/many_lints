@@ -8,7 +8,6 @@ import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../flutter_type_checkers.dart';
 
-/// Suggests using Align widget instead of Container with only alignment.
 class PreferAlignOverContainer extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_align_over_container',

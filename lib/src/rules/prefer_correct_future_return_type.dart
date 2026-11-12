@@ -9,13 +9,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when an `async` declaration does not expose a non-nullable `Future`.
-///
-/// An `async` body always returns a future at runtime, but broad declarations
-/// such as `dynamic`, `Object`, `FutureOr<T>` or a nullable `Future<T>?` hide
-/// that fact from callers. A precise `Future<T>` return type makes the async
-/// contract visible and prevents callers from accidentally treating the
-/// result as an immediate value.
 class PreferCorrectFutureReturnType extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_correct_future_return_type',

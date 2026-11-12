@@ -6,23 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when `Future<void> Function()` is used instead of `AsyncCallback`.
-///
-/// The `AsyncCallback` typedef from `package:flutter/foundation.dart` is a
-/// cleaner and more readable alternative to the verbose
-/// `Future<void> Function()` type annotation.
-///
-/// ## Example
-///
-/// ❌ Bad:
-/// ```dart
-/// void fn(Future<void> Function() callback) {}
-/// ```
-///
-/// ✅ Good:
-/// ```dart
-/// void fn(AsyncCallback callback) {}
-/// ```
 class PreferAsyncCallback extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_async_callback',
@@ -59,21 +42,16 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitGenericFunctionType(GenericFunctionType node) {
-    // Skip typedef definitions (e.g., typedef AsyncCallback = Future<void> Function())
     if (node.parent is GenericTypeAlias) return;
 
-    // Must have no type parameters (no generic function)
     if (node.typeParameters != null) return;
 
-    // Must have no parameters: Function()
     if (node.parameters.parameters.isNotEmpty) return;
 
-    // Return type must be Future<void>
     final returnType = node.returnType;
     if (returnType is! NamedType) return;
     if (returnType.name.lexeme != 'Future') return;
 
-    // Must have exactly one type argument: <void>
     final typeArgs = returnType.typeArguments;
     if (typeArgs == null) return;
     if (typeArgs.arguments.length != 1) return;

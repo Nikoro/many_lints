@@ -106,6 +106,8 @@ rules:
 
 ## Known limitations
 
+**Every occurrence is reported**, not only the first. Each one is a separate edit, and hiding the others would hide the very duplication the rule is about.
+
 **Two occurrences never report** at the default `min_occurrences: 3`.
 
 **Strings shorter than `min_length` (3) are ignored** — separators and punctuation rather than identifiers.

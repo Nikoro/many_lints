@@ -9,11 +9,6 @@ import '../async_builder_utils.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when a `StreamBuilder` receives a newly created `Stream`.
-///
-/// Creating the stream inline means a new subscription is opened on every
-/// rebuild while the previous one is discarded, which loses buffered events
-/// and leaks the old subscription.
 class PassExistingStreamToStreamBuilder extends ManyLintsRule {
   static const LintCode code = LintCode(
     'pass_existing_stream_to_stream_builder',
@@ -64,7 +59,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    // A constructor call without type arguments parses as a MethodInvocation.
+    // Edge case: a constructor call without type arguments parses as a method call
     _check(node, node.argumentList);
   }
 

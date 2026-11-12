@@ -6,29 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a `Function` type does not specify the return type and arguments.
-///
-/// Not specifying the return type and the list of arguments can lead to
-/// hard-to-spot bugs since the `Function` type effectively makes the
-/// declaration dynamic and disables type checks.
-///
-/// ## Example
-///
-/// ❌ Bad:
-/// ```dart
-/// class SomeWidget {
-///   final Function onTap;
-///   const SomeWidget(this.onTap);
-/// }
-/// ```
-///
-/// ✅ Good:
-/// ```dart
-/// class SomeWidget {
-///   final void Function() onTap;
-///   const SomeWidget(this.onTap);
-/// }
-/// ```
 class PreferExplicitFunctionType extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_explicit_function_type',
@@ -63,23 +40,16 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitNamedType(NamedType node) {
-    // Check if the type name is 'Function'
+    // Edge case: an explicit `void Function()` is a GenericFunctionType, not visited here
     final typeName = node.name;
     if (typeName.lexeme != 'Function') return;
 
-    // If it's from dart:core and has no type arguments, it's the non-explicit form
-    // GenericFunctionType is used for explicit function types like `void Function()`
-    // NamedType with name 'Function' is the non-explicit form
-
-    // Make sure this is actually the Function type from dart:core
     final element = node.element;
     if (element == null) return;
 
-    // Check if it's the built-in Function type
     final library = element.library;
     if (library?.isDartCore != true) return;
 
-    // This is the non-explicit Function type, report it
     rule.reportAtNode(node);
   }
 }

@@ -8,41 +8,6 @@ import 'package:analyzer/error/error.dart';
 import '../fpdart_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when a function body runs several fpdart pipelines separately instead
-/// of chaining them.
-///
-/// `flatMap` carries the error channel through the whole pipeline: any step
-/// that fails short-circuits the rest, and the failure handling is written
-/// once, at the fold. Running each step with its own `.run()` throws that away
-/// — every intermediate result has to be unwrapped by hand, each failure
-/// branch rebuilt, and one forgotten `if` silently continues with a value that
-/// was never produced.
-///
-/// That imperative shape is the exact thing `TaskEither` exists to delete; a
-/// body with several `.run()` calls is usually a chain that was never joined
-/// up.
-///
-/// **Bad:**
-/// ```dart
-/// Future<Either<Failure, Deal>> best() async {
-///   final area = await getArea().run();
-///   if (area case Right(value: final a)) {
-///     return getRestaurant(a.id).run();
-///   }
-///   return Left(const AreaFailure());
-/// }
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// TaskEither<Failure, Deal> best() =>
-///     getArea().flatMap((a) => getRestaurant(a.id));
-/// ```
-///
-/// ## Options
-///
-/// - `min_sequence`: how many `.run()` calls a body may contain before it is
-///   reported. Defaults to `2` — one is a boundary, two is a chain.
 class PreferChainingOverIntermediateRun extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_chaining_over_intermediate_run',
@@ -94,26 +59,16 @@ class _Visitor extends SimpleAstVisitor<void> {
     final minSequence = rule.config.intOption('min_sequence', defaultValue: 2);
     if (collector.calls.length < minSequence) return;
 
-    // Report the member's name rather than each call: the fix is to restructure
-    // the body as one chain, which is a single edit at this level. Reporting
-    // every `.run()` would suggest the opposite — that each one is separately
-    // wrong.
     rule.reportAtToken(name, arguments: ['${collector.calls.length}']);
   }
 }
 
-/// Collects `.run()` calls on fpdart types, not descending into closures.
-///
-/// A closure has its own boundary: a callback passed to a widget or a handler
-/// legitimately runs its own pipeline, and counting those against the
-/// enclosing member would report a body that is already correct.
 class _RunCallCollector extends RecursiveAstVisitor<void> {
   final calls = <MethodInvocation>[];
 
+  // Edge case: a closure runs its own pipeline, so its `.run()` calls are not the member's
   @override
-  void visitFunctionExpression(FunctionExpression node) {
-    // Deliberately does not descend.
-  }
+  void visitFunctionExpression(FunctionExpression node) {}
 
   @override
   void visitMethodInvocation(MethodInvocation node) {

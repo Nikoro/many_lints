@@ -8,7 +8,6 @@ import '../many_lints_rule.dart';
 import '../ast_node_analysis.dart';
 import '../type_checker.dart';
 
-/// Suggests using Center widget instead of Align with center alignment.
 class PreferCenterOverAlign extends ManyLintsRule {
   static const LintCode code = LintCode(
     'prefer_center_over_align',
@@ -63,7 +62,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     }
 
-    // Align with no alignment parameter defaults to center
+    // Edge case: an omitted alignment defaults to Alignment.center
     if (!hasAlignmentArgument) {
       rule.reportAtNode(node.constructorName);
     }

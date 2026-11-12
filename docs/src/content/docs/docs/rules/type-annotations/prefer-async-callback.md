@@ -15,7 +15,7 @@ sidebar:
 
 Flags `Future<void> Function()` written where the `AsyncCallback` typedef from `package:flutter/foundation.dart` would say the same thing. The quick fix replaces the type and adds the import.
 
-Only the exact shape is reported: no parameters, and a `Future<void>` return. `Future<int> Function()` and `Future<void> Function(int)` are left alone — there is no typedef for them.
+Only the exact shape is reported: no parameters, and a `Future<void>` return. `Future<int> Function()` and `Future<void> Function(int)` are left alone — there is no typedef for them. A `typedef` whose body is `Future<void> Function()` is a declaration of such a name, so it is never reported.
 
 ## Don't
 
