@@ -56,11 +56,15 @@ Widget priceTag() => Padding(
 
 ## Known limitations
 
-In argument position the rule reads the declared type of the receiving parameter, because that is what a dot shorthand resolves against. It reports only when that type is the constructed class, or declares a constructor or static method of the same name. `EdgeInsets.all(8)` passed to an `EdgeInsetsGeometry` parameter is reported, since `EdgeInsetsGeometry.all` exists. These are not reported:
+In argument position the rule reads the declared type of the receiving parameter, because that is what a dot shorthand resolves against. It reports only when that type is the constructed class, or declares a factory constructor or static method of the same name. `EdgeInsets.all(8)` passed to an `EdgeInsetsGeometry` parameter is reported, since the factory `EdgeInsetsGeometry.all` exists. A generative constructor of another type does not count, because the shorthand would build that type instead. These are not reported:
 
 ```dart
 // ShapeBorder is abstract, so `.new()` would not compile here.
 ExpansionTile(shape: const Border(), title: Text('Details'));
+
+// `.new()` would build an Object, not a Border.
+void keep(Object value) {}
+void store() => keep(const Border());
 
 // A dynamic parameter gives a shorthand nothing to resolve against.
 void log(dynamic value) {}

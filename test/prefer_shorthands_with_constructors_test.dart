@@ -422,4 +422,17 @@ Widget f() {
       [lint(89, 14)],
     );
   }
+
+  Future<void> test_objectParameter_noLint() async {
+    // `.new()` would resolve against Object and build an Object, not a Border
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+void take(Object value) {}
+
+void f() {
+  take(const Border());
+}
+''');
+  }
 }

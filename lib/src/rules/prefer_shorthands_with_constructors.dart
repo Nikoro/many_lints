@@ -270,11 +270,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (contextType is! InterfaceType) return false;
     final context = contextType.element;
     if (context == classElement) return true;
-    final isAbstract = context is ClassElement && context.isAbstract;
+    // A generative constructor of a supertype builds the supertype itself
+    // (`Object.new` for an `Object` parameter), so only a factory can stand in.
     final constructorFound = context.constructors.any(
       (constructor) =>
-          (constructor.name ?? 'new') == name &&
-          (!isAbstract || constructor.isFactory),
+          (constructor.name ?? 'new') == name && constructor.isFactory,
     );
     if (constructorFound) return true;
     final method = context.getMethod(name);

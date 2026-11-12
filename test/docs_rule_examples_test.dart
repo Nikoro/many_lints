@@ -114,13 +114,13 @@ void main() {
 
 /// The floor for how many pages this suite drives, raised as stubs grow.
 ///
-/// 170 of 261 pages are checked today. The rest are skipped for reasons
+/// 171 of 264 pages are checked today. The rest are skipped for reasons
 /// [_skipReason] names out loud, and the `coverage` test prints every one, so
 /// the gap is visible rather than implied. Most are rules keyed to Flutter,
 /// Riverpod, Bloc or hooks types the stubs do not carry: widening a stub moves
 /// pages from skipped to checked and this number goes up. Lowering it means
 /// coverage shrank, and needs a reason.
-const _minimumCheckedPages = 170;
+const _minimumCheckedPages = 171;
 
 /// Why [page] cannot be driven through the harness, or null when it can.
 String? _skipReason(_Page page) {

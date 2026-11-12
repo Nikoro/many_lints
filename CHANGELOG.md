@@ -109,7 +109,10 @@
   parameter's declared type instead of the argument's own type. It suggested
   `.new()` for `shape: const Border()`, where the parameter is the abstract
   `ShapeBorder` and the shorthand does not compile. A `dynamic` parameter is
-  no longer reported.
+  no longer reported, and neither is a parameter whose type only has a
+  generative constructor of that name: for `take(Object value)`,
+  `take(const Border())` was reported although `.new()` would build an
+  `Object`. A supertype's factory constructor or static method still counts.
 - `avoid_conditional_hooks`, `avoid_hooks_outside_build`,
   `avoid_misused_hooks`, `avoid_unnecessary_hook_widgets` and
   `prefer_use_prefix` no longer treat resolved Dart and Flutter SDK functions,
