@@ -32,8 +32,6 @@ abstract class AsyncNotifier<State> {
     super.setUp();
   }
 
-  // --- Positive cases: should trigger lint ---
-
   Future<void> test_notifierConstructorWithBody() async {
     await assertDiagnostics(
       r'''
@@ -130,8 +128,6 @@ class Counter extends Notifier<int> {
       [lint(115, 27)],
     );
   }
-
-  // --- Negative cases: should NOT trigger lint ---
 
   Future<void> test_noConstructor() async {
     await assertNoDiagnostics(r'''

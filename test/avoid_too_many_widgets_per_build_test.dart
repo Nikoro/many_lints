@@ -38,8 +38,6 @@ class Builder extends Widget {
     super.setUp();
   }
 
-  /// A `build` returning a Column of [count] Texts, so the widget total is
-  /// [count] + 1.
   String _buildWith(int count) {
     final children = List.generate(
       count,
@@ -64,13 +62,9 @@ $children
 ''';
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_overTheDefaultBudget() async {
     await assertDiagnostics(_buildWith(20), [lint(134, 5)]);
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_atTheDefaultBudget() async {
     await assertNoDiagnostics(_buildWith(19));
@@ -99,11 +93,7 @@ class NotAWidget {
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_builderClosureIsCountedSeparately() async {
-    // 15 widgets in the method and 15 in the builder: neither alone is over
-    // budget, and they must not be summed.
     final outer = List.generate(14, (i) => "        Text('$i'),").join('\n');
     final inner = List.generate(
       14,
@@ -136,8 +126,6 @@ $inner
   }
 
   Future<void> test_widgetReturningHelperIsAlsoMeasured() async {
-    // Measured on the return type, not the name, so an extracted helper does
-    // not escape the budget just by being called something else.
     final children = List.generate(20, (i) => "        Text('$i'),").join('\n');
 
     await assertDiagnostics(

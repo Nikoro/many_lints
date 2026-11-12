@@ -17,8 +17,6 @@ class AvoidUnnecessaryEnumPrefixTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_constantRepeatsEnumName() async {
     await assertDiagnostics(
       r'''
@@ -37,8 +35,6 @@ enum Status { statusActive, archived }
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_unprefixedConstants() async {
     await assertNoDiagnostics(r'''
 enum Status { active, archived }
@@ -46,20 +42,16 @@ enum Status { active, archived }
   }
 
   Future<void> test_constantEqualToEnumName() async {
-    // `Status.status` is not a prefixed name, it is the whole word.
     await assertNoDiagnostics(r'''
 enum Status { status, active }
 ''');
   }
 
   Future<void> test_prefixMustEndAtAWordBoundary() async {
-    // `statusable` merely starts with the same letters.
     await assertNoDiagnostics(r'''
 enum Status { statusable, active }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_unrelatedNameSharingLeadingLetters() async {
     await assertNoDiagnostics(r'''

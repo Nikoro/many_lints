@@ -14,8 +14,6 @@ class AvoidConstantSwitchesTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ── Positive cases (should trigger lint) ──────────────────────────
-
   Future<void> test_switchStatementOnIntLiteral() async {
     await assertDiagnostics(
       r'''
@@ -138,8 +136,6 @@ void f() {
       [lint(21, 2)],
     );
   }
-
-  // ── Negative cases (should NOT trigger lint) ──────────────────────
 
   Future<void> test_switchStatementOnParameter_noLint() async {
     await assertNoDiagnostics(r'''

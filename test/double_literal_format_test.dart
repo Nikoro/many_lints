@@ -15,8 +15,6 @@ class DoubleLiteralFormatTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_missingLeadingZero() async {
     await assertDiagnostics(
       r'''
@@ -53,8 +51,6 @@ final x = 1.50e10;
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_wellFormedLiteral() async {
     await assertNoDiagnostics(r'''
 final x = 0.5;
@@ -78,8 +74,6 @@ final x = 500;
 final x = 0.0;
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_digitSeparatorsAreLeftToTheOtherRule() async {
     await assertNoDiagnostics(r'''

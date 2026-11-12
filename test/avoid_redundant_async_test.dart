@@ -15,8 +15,6 @@ class AvoidRedundantAsyncTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_returnsExistingFutureFromBlock() async {
     await assertDiagnostics(
       r'''
@@ -36,8 +34,6 @@ Future<int> f(Future<int> value) async => value;
       [lint(12, 1)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_asyncWithAwait() async {
     await assertNoDiagnostics(r'''
@@ -75,11 +71,7 @@ Stream<int> f() async* {
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_asyncVoidWouldChangeTheSignature() async {
-    // Dropping `async` here turns `Future<void>` into `void`, which is a
-    // signature change rather than a cleanup.
     await assertNoDiagnostics(r'''
 Future<void> f() async {
   print('x');

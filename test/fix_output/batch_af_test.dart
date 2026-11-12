@@ -2,9 +2,6 @@ import 'package:test/test.dart';
 
 import '../fix_harness.dart';
 
-/// End-to-end tests for the text these quick fixes actually produce.
-///
-/// See [FixHarness] for why this drives a real plugin server.
 void main() {
   late FixHarness harness;
 
@@ -222,10 +219,10 @@ class Child extends Parent {
 ''', 'prefer_overriding_parent_equality');
 
         expect(fixed, contains('int get hashCode => value.hashCode;'));
-        // Only one operator== should remain (the original, untouched).
+        const parentAndChildOriginalEquals = 2;
         expect(
           RegExp(r'operator ==').allMatches(fixed).length,
-          2, // one in Parent, one in Child (the original)
+          parentAndChildOriginalEquals,
         );
       },
     );

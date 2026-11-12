@@ -17,8 +17,6 @@ class AvoidUnnecessaryReturnTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_trailingReturnInVoidFunction() async {
     await assertDiagnostics(
       r'''
@@ -57,8 +55,6 @@ Future<void> f(int x) async {
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_earlyReturnSkipsStatements() async {
     await assertNoDiagnostics(r'''
 void f(int x) {
@@ -92,10 +88,7 @@ Future<int> f(int x) async {
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_omittedReturnTypeIsNotVoid() async {
-    // An omitted type means `dynamic`, where `return;` may be deliberate.
     await assertNoDiagnostics(r'''
 f(int x) {
   print(x);

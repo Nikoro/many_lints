@@ -16,8 +16,6 @@ class AvoidConstantConditionsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ── Positive cases (should trigger lint) ──────────────────────────
-
   Future<void> test_twoIntLiterals() async {
     await assertDiagnostics(
       r'''
@@ -196,8 +194,6 @@ void f() {
     );
   }
 
-  // ── Negative cases (should NOT trigger lint) ──────────────────────
-
   Future<void> test_variableAndLiteral_noLint() async {
     await assertNoDiagnostics(r'''
 void f(int x) {
@@ -241,7 +237,6 @@ void f(List<int> list) {
   }
 
   Future<void> test_additionOperator_noLint() async {
-    // Non-comparison operators should not trigger.
     await assertNoDiagnostics(r'''
 void f() {
   1 + 2;

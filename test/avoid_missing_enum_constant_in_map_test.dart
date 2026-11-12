@@ -16,8 +16,6 @@ class AvoidMissingEnumConstantInMapTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_missingOneConstant() async {
     await assertDiagnostics(
       r'''
@@ -57,8 +55,6 @@ final labels = {
       [lint(49, 30)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_allConstantsPresent() async {
     await assertNoDiagnostics(r'''

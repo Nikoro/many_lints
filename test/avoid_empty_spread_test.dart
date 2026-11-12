@@ -14,8 +14,6 @@ class AvoidEmptySpreadTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_emptyListSpread() async {
     await assertDiagnostics(
       r'''
@@ -48,8 +46,6 @@ List<int> build() {
       [lint(33, 10)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_nonEmptySpread() async {
     await assertNoDiagnostics(r'''

@@ -21,8 +21,6 @@ class Config {
     super.setUp();
   }
 
-  // ── Positive cases (should trigger lint) ──
-
   Future<void> test_integerLiteralInForIn() async {
     await assertDiagnostics(
       r'''
@@ -146,8 +144,6 @@ void f() {
       [lint(114, 20)],
     );
   }
-
-  // ── Negative cases (should NOT trigger lint) ──
 
   Future<void> test_outsideLoop() async {
     await assertNoDiagnostics(r'''

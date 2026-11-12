@@ -28,7 +28,6 @@ void f() {
     );
   }
 
-  /// The SDK's `empty_catches` permits this shape; this rule is a superset.
   Future<void> test_empty_catch_with_wildcard() async {
     await assertDiagnostics(
       r'''
@@ -42,7 +41,6 @@ void f() {
     );
   }
 
-  /// Also permitted by `empty_catches`, and also reported here by default.
   Future<void> test_comment_only_body() async {
     await assertDiagnostics(
       r'''

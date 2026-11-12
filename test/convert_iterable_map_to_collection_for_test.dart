@@ -41,10 +41,9 @@ class ConvertIterableMapToCollectionForTest extends PubPackageResolutionTest {
     if (change.edits.isEmpty) return null;
 
     var result = content;
-    // Apply edits in reverse order to maintain offsets
-    final edits = change.edits.first.edits.toList()
+    final editsFromLastToFirst = change.edits.first.edits.toList()
       ..sort((a, b) => b.offset.compareTo(a.offset));
-    for (final edit in edits) {
+    for (final edit in editsFromLastToFirst) {
       result = result.replaceRange(
         edit.offset,
         edit.offset + edit.length,

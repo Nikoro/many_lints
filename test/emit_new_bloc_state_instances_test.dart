@@ -38,8 +38,6 @@ abstract class Cubit<S> extends BlocBase<S> {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_cubitEmitsStateDirectly() async {
     await assertDiagnostics(
       r'''
@@ -90,8 +88,6 @@ class MyBloc extends Bloc<int, int> {
       [lint(135, 5)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_emitsDerivedValue() async {
     await assertNoDiagnostics(r'''
@@ -158,8 +154,6 @@ class NotABloc {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_emitOnAnotherObjectIsIgnored() async {
     await assertNoDiagnostics(r'''

@@ -61,8 +61,6 @@ class Timer {
     super.setUp();
   }
 
-  // --- Positive cases: should trigger lint ---
-
   Future<void> test_textEditingControllerNotDisposed() async {
     await assertDiagnostics(
       r'''
@@ -305,8 +303,6 @@ class _MyWidgetState extends State<MyWidget> {
       [lint(203, 11)],
     );
   }
-
-  // --- Negative cases: should NOT trigger lint ---
 
   Future<void> test_controllerProperlyDisposed() async {
     await assertNoDiagnostics(r'''

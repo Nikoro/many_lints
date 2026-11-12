@@ -17,8 +17,6 @@ class AvoidUnnecessaryExtendsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_extendsObject() async {
     await assertDiagnostics(
       r'''
@@ -27,8 +25,6 @@ class A extends Object {}
       [lint(8, 14)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_noExtendsClause() async {
     await assertNoDiagnostics(r'''
@@ -43,10 +39,7 @@ class A extends Base {}
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_userDeclaredObjectIsMeaningful() async {
-    // A local `Object` shadows dart:core's, so extending it is a real choice.
     await assertNoDiagnostics(r'''
 class Object {}
 class A extends Object {}

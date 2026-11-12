@@ -16,8 +16,6 @@ class AvoidUnusedAfterNullCheckTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_checkedButWrongVariableUsed() async {
     await assertDiagnostics(
       r'''
@@ -45,8 +43,6 @@ void f(String? a, String b) {
       [lint(36, 9)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_checkedVariableUsed() async {
     await assertNoDiagnostics(r'''
@@ -91,8 +87,6 @@ void f(bool flag, String b) {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_fieldIsIgnored() async {
     await assertNoDiagnostics(r'''

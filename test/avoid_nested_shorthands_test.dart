@@ -15,7 +15,6 @@ class AvoidNestedShorthandsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  /// Declarations shared by most tests.
   static const _declarations = r'''
 class SomeClass {
   final Label value;
@@ -51,15 +50,11 @@ void fn() {
   print(a);
 }
 ''',
-      // Three levels: `.new(version: .new(.blank))` inside the outer `.new`,
-      // `.new(.blank)` inside that, and `.blank` inside that. Each is reported
-      // by its own direct parent.
       [lint(514, 27), lint(528, 12), lint(533, 6)],
     );
   }
 
   Future<void> test_nestedInsideExplicitOuterConstructor() async {
-    // The outer type is named, so only the inner shorthand loses its anchor.
     await assertDiagnostics(
       '''
 $_declarations
@@ -86,8 +81,6 @@ void fn() {
   }
 
   Future<void> test_nestedInsideStaticMethodShorthand() async {
-    // A static method resolves to `DotShorthandInvocation`, not
-    // `DotShorthandConstructorInvocation` — the rule must register both.
     await assertDiagnostics(
       '''
 $_declarations
@@ -114,9 +107,6 @@ void fn() {
   }
 
   Future<void> test_nestedBuriedInSubExpression() async {
-    // `.blank` is not a direct argument of the outer shorthand — it sits inside
-    // a nested explicit constructor call — but it is just as unreadable, so the
-    // deep search must find it.
     await assertDiagnostics(
       '''
 $_declarations
@@ -140,7 +130,6 @@ void fn() {
   }
 
   Future<void> test_noLint_siblingShorthandsNotNested() async {
-    // Two shorthands in the same statement, neither inside the other.
     await assertNoDiagnostics('''
 $_declarations
 void fn() {

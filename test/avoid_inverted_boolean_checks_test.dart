@@ -16,8 +16,6 @@ class AvoidInvertedBooleanChecksTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_negatedGreaterThan() async {
     await assertDiagnostics(
       r'''
@@ -50,8 +48,6 @@ bool check(int a, int b) {
       [lint(36, 9)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_directComparison() async {
     await assertNoDiagnostics(r'''

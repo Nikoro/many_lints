@@ -169,8 +169,6 @@ Widget f() {
 ''');
   }
 
-  // --- MethodInvocation path (static factory) ---
-
   Future<void> test_methodInvocation_noHandlers() async {
     await assertDiagnostics(
       r'''

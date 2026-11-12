@@ -47,8 +47,6 @@ class HookConsumerWidget extends Widget {
     super.setUp();
   }
 
-  // --- Positive cases: should trigger the lint ---
-
   Future<void> test_hookInsideIfStatement() async {
     await assertDiagnostics(
       r'''
@@ -174,8 +172,6 @@ Widget f(bool condition) {
     );
   }
 
-  // --- Negative cases: should NOT trigger the lint ---
-
   Future<void> test_unconditionalHookCall() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -248,7 +244,6 @@ class MyWidget extends HookWidget {
   }
 
   Future<void> test_hookInsideNestedClosure() async {
-    // Hooks inside closures (callbacks) are a different scope, not flagged
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -280,8 +275,6 @@ class MyWidget extends HookWidget {
 ''');
   }
 
-  // --- HookConsumerWidget tests ---
-
   Future<void> test_hookConsumerWidgetInsideIf() async {
     await assertDiagnostics(
       r'''
@@ -303,8 +296,6 @@ class MyWidget extends HookConsumerWidget {
       [lint(317, 11)],
     );
   }
-
-  // --- IfElement tests (collection if) ---
 
   Future<void> test_hookInsideIfElementThen() async {
     await assertDiagnostics(
@@ -348,8 +339,6 @@ class MyWidget extends HookWidget {
     );
   }
 
-  // --- FunctionExpressionInvocation test ---
-
   Future<void> test_functionExpressionInvocationInBuild() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -365,8 +354,6 @@ class MyWidget extends HookWidget {
 ''');
   }
 
-  // --- Non-short-circuit binary expression test ---
-
   Future<void> test_nonShortCircuitBinaryExpression() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -381,8 +368,6 @@ class MyWidget extends HookWidget {
 }
 ''');
   }
-
-  // --- Nested function declaration test ---
 
   Future<void> test_hookInsideNestedFunctionDeclaration() async {
     await assertNoDiagnostics(r'''
@@ -400,8 +385,6 @@ class MyWidget extends HookWidget {
 }
 ''');
   }
-
-  // --- Logical || operator tests ---
 
   Future<void> test_hookInsideLogicalOr() async {
     await assertDiagnostics(
@@ -421,8 +404,6 @@ class MyWidget extends HookWidget {
       [lint(256, 24)],
     );
   }
-
-  // --- Switch expression tests ---
 
   Future<void> test_hookInsideSwitchExpression() async {
     await assertDiagnostics(

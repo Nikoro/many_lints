@@ -15,7 +15,6 @@ class AvoidAdHocLeftTypeTest extends FpdartRuleTest {
     super.setUp();
   }
 
-  /// Writes the config that switches this policy rule on.
   void _configure({String extra = ''}) {
     newFile('$testPackageRootPath/many_lints.yaml', '''
 rules:
@@ -27,7 +26,6 @@ $extra
   }
 
   Future<void> test_silentWithoutConfiguration() async {
-    // The control: unconfigured, the rule reports nothing at all.
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
 

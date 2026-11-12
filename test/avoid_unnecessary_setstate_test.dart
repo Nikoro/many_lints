@@ -63,8 +63,6 @@ class SizedBox extends Widget {
     super.setUp();
   }
 
-  // --- Positive cases: should trigger lint ---
-
   Future<void> test_setStateInInitState() async {
     await assertDiagnostics(
       r'''
@@ -242,8 +240,6 @@ class _MyWidgetState extends State<MyWidget> {
       [lint(292, 40), lint(338, 40)],
     );
   }
-
-  // --- Negative cases: should NOT trigger lint ---
 
   Future<void> test_setStateInCustomMethod() async {
     await assertNoDiagnostics(r'''

@@ -51,8 +51,6 @@ class ValueNotifier<T> extends ChangeNotifier {
     super.setUp();
   }
 
-  // --- Positive cases: should trigger lint ---
-
   Future<void> test_addListenerInInitState_noDispose() async {
     await assertDiagnostics(
       r'''
@@ -254,8 +252,6 @@ class _MyWidgetState extends State<MyWidget> {
     );
   }
 
-  // --- Negative cases: should NOT trigger lint ---
-
   Future<void> test_matchingRemoveListenerInDispose() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -422,9 +418,6 @@ class _MyWidgetState extends State<MyWidget> {
   }
 
   Future<void> test_addListenerInsideLambda_ignored() async {
-    // Tests visitFunctionExpression stopAtFunctions (lines 176-178)
-    // addListener inside a lambda in initState should still be caught
-    // because stopAtFunctions stops recursion into nested functions
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
@@ -454,7 +447,6 @@ class _MyWidgetState extends State<MyWidget> {
   }
 
   Future<void> test_addListenerInsideLocalFunction_ignored() async {
-    // Tests visitFunctionDeclaration stopAtFunctions (lines 181-184)
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
@@ -484,8 +476,6 @@ class _MyWidgetState extends State<MyWidget> {
   }
 
   Future<void> test_sameTargetSameListener_equality() async {
-    // Tests _ListenerCall equality (lines 139-143) — same target and
-    // listener should match
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
@@ -523,8 +513,6 @@ class _MyWidgetState extends State<MyWidget> {
   }
 
   Future<void> test_duplicateRemoveListenerInDispose_noLint() async {
-    // Tests _ListenerCall equality (lines 139-143) — when dispose() has two
-    // identical removeListener calls, the Set deduplication uses == and hashCode
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
@@ -559,8 +547,6 @@ class _MyWidgetState extends State<MyWidget> {
   }
 
   Future<void> test_differentTargets_differentListeners() async {
-    // Tests _ListenerCall equality — different target, same listener
-    // should NOT match (exercises lines 139-143 equality operator)
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';

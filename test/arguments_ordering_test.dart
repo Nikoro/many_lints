@@ -46,7 +46,6 @@ void g() {
   }
 
   Future<void> test_positionalArgumentsAreNeverOrdered() async {
-    // Their order is the call's meaning; reordering changes what it does.
     await assertNoDiagnostics(r'''
 void f(int a, int b, int c, int d, int e) {}
 

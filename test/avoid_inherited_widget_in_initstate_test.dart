@@ -36,8 +36,6 @@ class MediaQuery extends InheritedWidget {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_themeOfInInitState() async {
     await assertDiagnostics(
       r'''
@@ -78,8 +76,6 @@ BuildContext get context => throw '';
       [lint(172, 27)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_themeOfInDidChangeDependencies() async {
     await assertNoDiagnostics(r'''

@@ -72,13 +72,10 @@ Option<String> f() => a().flat^Map(
     );
 ''');
 
-      // One group per extracted step, so Tab walks the names.
       expect(result.linkedGroups, hasLength(2));
     });
 
     test('keeps a non-lifting last step as an extraction', () async {
-      // The innermost callback returns a pipeline rather than `Option.of(x)`,
-      // so it stays a `$(...)` extraction instead of being unwrapped.
       final result = await applyAssist(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -133,9 +130,6 @@ TaskEither<String, int> f() => TaskEither.Do(($) {
     });
 
     test('handles the README shopping example end to end', () async {
-      // The chain has work on both sides of the nest: `.alt(...)` folded into
-      // the first step's source, and `.getOrElse(...)` left untouched after
-      // the block.
       final result = await applyAssist(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -181,8 +175,6 @@ String goShopping() => Option.Do(($) {
     });
 
     test('is offered from anywhere in the nest', () async {
-      // The cursor sits on the *inner* flatMap, but the assist rewrites the
-      // whole nest from its outermost call.
       final result = await applyAssist(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -237,8 +229,6 @@ Option<String> f() => Option.Do(($) {
     });
 ''');
 
-      // `Do` lifts its own result, so a plain `return x` has to be re-wrapped
-      // to keep the chain well-typed.
       expect(source, r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -257,7 +247,6 @@ Option<String> f() => a().flatMap(
     });
 
     test('round-trips the forward assist output', () async {
-      // What convert_flat_map_to_do_notation emits must convert straight back.
       final source = await applyAssist(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -296,10 +285,10 @@ Option<String> goShopping() => goToShoppingCenter().flatMap(
 ''');
     });
 
-    test('strips the await of an async block', () async {
-      // `TaskEither.Do` extracts with `await $(...)`; the await belongs to the
-      // block, not to the step, so it must not survive into the chain.
-      final source = await applyAssist(r'''
+    test(
+      'strips the await that belongs to an async block, not to its step',
+      () async {
+        final source = await applyAssist(r'''
 import 'package:fpdart/fpdart.dart';
 
 TaskEither<String, int> a() => TaskEither.of(1);
@@ -312,7 +301,7 @@ TaskEither<String, int> f() => TaskEither.Do(($) async {
     });
 ''');
 
-      expect(source, r'''
+        expect(source, r'''
 import 'package:fpdart/fpdart.dart';
 
 TaskEither<String, int> a() => TaskEither.of(1);
@@ -324,11 +313,10 @@ TaskEither<String, int> f() => a().flatMap(
   ),
 );
 ''');
-    });
+      },
+    );
 
     test('keeps a returned extraction unwrapped', () async {
-      // `return $(c())` is already a pipeline, so it becomes the chain's tail
-      // directly rather than being wrapped in another `Option.of`.
       final source = await applyAssist(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -343,8 +331,6 @@ Option<String> f() => Option.Do(($) {
     });
 ''');
 
-      // The last step stays `c()`, not `Option.of(c())` — the returned
-      // pipeline is already wrapped.
       expect(source, r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -389,9 +375,6 @@ Option<String> f() => a().flatMap(
     });
 
     test('declines a block that is not straight-line bindings', () async {
-      // An `if` in the body has no direct `flatMap` equivalent — the
-      // continuation would have to be duplicated into both arms — so the
-      // assist must not be offered at all.
       final ids = await harness.assistIds(
         r'''
 import 'package:fpdart/fpdart.dart';
@@ -413,8 +396,6 @@ Option<String> f() => Option.Do(($) {
     });
 
     test('declines when a binding mixes extraction with computation', () async {
-      // `$(a()).length` is not a bare step, so unfolding it would change what
-      // the binding means.
       final ids = await harness.assistIds(
         r'''
 import 'package:fpdart/fpdart.dart';
@@ -435,8 +416,6 @@ Option<int> f() => Option.Do(($) {
     test(
       'declines when the result mixes extraction with computation',
       () async {
-        // `$(b()) + first` extracts inside a larger expression; the tail of a
-        // flatMap chain has nowhere to put that extra step.
         final ids = await harness.assistIds(
           r'''
 import 'package:fpdart/fpdart.dart';
@@ -514,10 +493,10 @@ Either<Failure, User> parseUser(String json) {
 ''');
     });
 
-    test('expands TaskEither.tryCatch inside a lazy TaskEither', () async {
-      // Hoisting the `try` into the enclosing function would run the effect
-      // eagerly, so it has to stay inside `TaskEither(() async { ... })`.
-      final source = await applyAssist(r'''
+    test(
+      'expands TaskEither.tryCatch inside a lazy TaskEither so the effect stays lazy',
+      () async {
+        final source = await applyAssist(r'''
 import 'package:fpdart/fpdart.dart';
 
 class Failure {
@@ -534,7 +513,7 @@ TaskEither<Failure, User> fetchUser(String id) => TaskEither.tryC^atch(
     );
 ''');
 
-      expect(source, r'''
+        expect(source, r'''
 import 'package:fpdart/fpdart.dart';
 
 class Failure {
@@ -553,12 +532,10 @@ TaskEither<Failure, User> fetchUser(String id) => TaskEither(() async {
       }
     });
 ''');
-    });
+      },
+    );
 
     test('drops an unused stack trace from the catch clause', () async {
-      // `onError` may declare a stack trace it never reads; `catch` may not —
-      // that earns an `unused_catch_stack` warning, so the expanded code would
-      // arrive with a fresh lint the original could not have had.
       final source = await applyAssist(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -598,8 +575,6 @@ TaskEither<Failure, User> fetchUser(String id) => TaskEither(() async {
     });
 
     test('expands Option.tryCatch with a parameterless catch', () async {
-      // `Option.tryCatch` has no `onError` — there is no error to carry — so
-      // the clause takes nothing and the failure branch is `none()`.
       final source = await applyAssist(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -629,8 +604,6 @@ Option<User> tryParse(String json) {
     });
 
     test('expands a block body that only returns the tryCatch', () async {
-      // `{ return Either.tryCatch(...); }` is the same shape written the long
-      // way, so it converts to the same block rather than being declined.
       final source = await applyAssist(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -671,11 +644,10 @@ Either<Failure, User> parseUser(String json) {
 ''');
     });
 
-    test('declines mid-pipeline, where a statement has nowhere to go', () async {
-      // `try` is a statement; a `tryCatch` feeding `.flatMap` is an expression
-      // in the middle of a chain, and the only expression-level equivalent is
-      // an immediately-invoked closure.
-      final ids = await idsAt(r'''
+    test(
+      'declines mid-pipeline, where a statement has nowhere to go',
+      () async {
+        final ids = await idsAt(r'''
 import 'package:fpdart/fpdart.dart';
 
 class Failure {
@@ -693,8 +665,9 @@ Either<Failure, User> parseUser(String json) => Either.tryC^atch(
     ).flatMap(validate);
 ''');
 
-      expect(ids, isNot(contains(assistId)));
-    });
+        expect(ids, isNot(contains(assistId)));
+      },
+    );
 
     test('declines a tear-off onError, which has no body to move', () async {
       final ids = await idsAt(r'''
@@ -717,9 +690,6 @@ Either<Failure, User> parseUser(String json) =>
     });
 
     test('declines a cursor inside an unrelated nested closure', () async {
-      // `_enclosingTryCatch` walks up from the cursor. Without a function
-      // boundary it sails out of this inner closure and offers to expand the
-      // enclosing `tryCatch`, which is not the code the cursor is in.
       final ids = await idsAt(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -804,9 +774,6 @@ TaskEither<Failure, User> getUser(String id) => TaskEither(() async {
     });
 
     test('converts an Either method so it can host an await', () async {
-      // The whole point of this direction: `Either` cannot contain an
-      // `await`, `TaskEither` can. Every existing `return left(...)` stays
-      // valid because the block is transplanted rather than rewritten.
       final source = await applyAssist(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -833,9 +800,6 @@ TaskEither<Failure, User> parse(String raw) => TaskEither(() async {
     });
 
     test('keeps a multi-statement block on separate lines', () async {
-      // `toSource()` discards line breaks, so a block has to be copied from
-      // the original text; collapsing a body onto one line would be a
-      // silently mangled refactor rather than a failed one.
       final source = await applyAssist(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -864,8 +828,6 @@ TaskEither<Failure, User> parse(String raw) => TaskEither(() async {
     });
 
     test('does not add a redundant async to a delegating body', () async {
-      // `=> src(id)` already evaluates to a `Future<Either>`, so it is
-      // already the thunk `TaskEither` wants.
       final source = await applyAssist(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -917,10 +879,10 @@ class Repository {
 ''');
     });
 
-    test('keeps the written type arguments verbatim', () async {
-      // Reading the resolved type would expand aliases into names that may
-      // not be in scope where the replacement lands.
-      final source = await applyAssist(r'''
+    test(
+      'keeps the written type arguments verbatim instead of expanding aliases',
+      () async {
+        final source = await applyAssist(r'''
 import 'package:fpdart/fpdart.dart';
 
 typedef AppFailure = String;
@@ -930,7 +892,7 @@ class User {}
 Either<AppFailure, User> par^se(String raw) => right(User());
 ''');
 
-      expect(source, r'''
+        expect(source, r'''
 import 'package:fpdart/fpdart.dart';
 
 typedef AppFailure = String;
@@ -939,7 +901,8 @@ class User {}
 
 TaskEither<AppFailure, User> parse(String raw) => TaskEither(() async => right(User()));
 ''');
-    });
+      },
+    );
 
     test('declines a plain Future that holds no Either', () async {
       final ids = await idsAt(r'''
@@ -952,8 +915,6 @@ Future<User> get^User(String id) async => User();
     });
 
     test('declines a function with no written return type', () async {
-      // The replacement edits the return type in place; there is nothing to
-      // edit when it was never written.
       final ids = await idsAt(r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -975,8 +936,6 @@ class User {}
 Future<Option<User>> fin^d(String id) async => none();
 ''');
 
-      // The body was written `async => none()`, so the `async` is what makes
-      // it a `Future<Option>` and has to survive into the thunk.
       expect(
         source,
         contains(
@@ -1084,8 +1043,6 @@ class Test {
     });
 
     test('rewrites plain reads alongside the bangs', () async {
-      // Leaving a bare `field` behind would mix the nullable original with the
-      // promoted pattern variable, which reads as two different values.
       final source = await applyAssist(r'''
 class Test {
   String? field;
@@ -1159,8 +1116,6 @@ class Test {
       expect(result.linkedGroups, hasLength(1));
     });
 
-    // `x == null` guards the *else*, and the early-return form promotes the
-    // code after the `if` — neither is one `case` pattern.
     test('declines an == null check', () async {
       final ids = await idsAt(r'''
 class Test {
@@ -1178,8 +1133,6 @@ class Test {
       expect(ids, isNot(contains(assistId)));
     });
 
-    // Re-evaluating a call as the pattern subject could run side effects a
-    // second time, or return a different value.
     test('declines a method call as the checked expression', () async {
       final ids = await idsAt(r'''
 class Test {
@@ -1283,9 +1236,6 @@ class Holder {
       expect(result.linkedGroups, hasLength(1));
     });
 
-    // Without the inner bang the branch does not assert the field is non-null,
-    // so narrowing the condition would change behaviour the author never asked
-    // for. That case belongs to the semantics-preserving assist instead.
     test('declines when the inner field is not asserted', () async {
       final ids = await idsAt(r'''
 class UserData {
@@ -1304,7 +1254,6 @@ class Holder {
 ''');
 
       expect(ids, isNot(contains(assistId)));
-      // The safe conversion is still available here.
       expect(ids, contains('many_lints.assist.convertNullCheckToPattern'));
     });
 
@@ -1330,8 +1279,6 @@ class Holder {
       expect(ids, isNot(contains(assistId)));
     });
 
-    // `UserData<String>(:final name?)` would need the arguments spelled out,
-    // and guessing them produces code that does not compile.
     test('declines a generic type', () async {
       final ids = await idsAt(r'''
 class Box<T> {
@@ -1354,15 +1301,6 @@ class Holder {
   });
 
   group('convert_iterable_map_to_collection_for', () {
-    // The assist's own transformation logic is covered thoroughly in
-    // `test/convert_iterable_map_to_collection_for_test.dart`, which drives
-    // `CorrectionProducerContext` directly. That route constructs the assist
-    // itself, so it passes whether or not the assist is registered with the
-    // plugin — a missing `registerAssist` would be invisible to all ten of
-    // those tests.
-    //
-    // This group closes that gap: one end-to-end pass through a real
-    // `PluginServer`, proving the assist is actually offered to an editor.
     test('is offered through the plugin server', () async {
       final result = await harness.applyAssist(r'''
 void f(List<int> values) {
@@ -1599,7 +1537,6 @@ extension <E> on Iterable<E> {
         'many_lints.assist.convertReduceToSequenceList',
         multiFilePackages: {'fpdart': fpdartStubFiles},
       );
-      // The plugin reports no compile errors, so resolve the result too.
       expect(await harness.compileErrors(result.source), isEmpty);
       return result.source;
     }
@@ -1613,8 +1550,6 @@ extension <E> on Iterable<E> {
 TaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>
     tasks.reduce^((acc, t) => acc.flatMap((_) => t));''');
 
-      // Always the Seq variant: the reduce is inherently sequential. `.last`
-      // keeps the reduce's result: the last task's value.
       expect(
         source,
         converted(r'''
@@ -1629,8 +1564,6 @@ TaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>
 TaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>
     tasks.reduce^((acc, t) => acc.flatMap((_) => t));''');
 
-      // A control for the check above: the shape the assist produced before
-      // returns a List where the reduce returned the last value.
       expect(
         await harness.compileErrors(
           converted(r'''
@@ -1837,7 +1770,6 @@ TaskEither<String, String> f(TaskEither<String, String> p) =>
     });
 
     test('round-trips the andThen narrowing assist', () async {
-      // The two directions must agree, the way the Do-notation pair does.
       final narrowed = await harness.applyAssist(
         r'''
 import 'package:fpdart/fpdart.dart';
@@ -1865,11 +1797,11 @@ TaskEither<String, int> f(TaskEither<String, String> p) =>
       expect(expanded, contains('p.flatMap((_) => logout())'));
     });
 
-    test('is not offered for chainFirst', () async {
-      // Expanding it honestly needs the orElse, and the short form silently
-      // drops the failure-swallowing. Neither output is worth offering.
-      final offered = await harness.assistIds(
-        r'''
+    test(
+      'is not offered for chainFirst, whose honest expansion needs orElse',
+      () async {
+        final offered = await harness.assistIds(
+          r'''
 import 'package:fpdart/fpdart.dart';
 
 TaskEither<String, int> audit(String user) => throw UnimplementedError();
@@ -1877,11 +1809,12 @@ TaskEither<String, int> audit(String user) => throw UnimplementedError();
 TaskEither<String, String> f(TaskEither<String, String> p) =>
     p.chainFir^st(audit);
 ''',
-        multiFilePackages: {'fpdart': fpdartStubFiles},
-      );
+          multiFilePackages: {'fpdart': fpdartStubFiles},
+        );
 
-      expect(offered, isNot(contains('many_lints.assist.expandToFlatMap')));
-    });
+        expect(offered, isNot(contains('many_lints.assist.expandToFlatMap')));
+      },
+    );
 
     test('is not offered for a non-fpdart map', () async {
       final offered = await harness.assistIds(r'''

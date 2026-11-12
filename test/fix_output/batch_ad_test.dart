@@ -2,9 +2,6 @@ import 'package:test/test.dart';
 
 import '../fix_harness.dart';
 
-/// End-to-end tests for the text these quick fixes actually produce.
-///
-/// See [FixHarness] for why this drives a real plugin server.
 void main() {
   late FixHarness harness;
 
@@ -60,7 +57,6 @@ class Counter {
 
       expect(fixed, contains('dynamic build() {'));
       expect(fixed, contains('int get value => 0;'));
-      // The stub is inserted right after the opening brace, before members.
       expect(
         fixed.indexOf('dynamic build()'),
         lessThan(fixed.indexOf('int get value')),
@@ -111,8 +107,6 @@ class MyConstants {
 
       expect(fixed, contains('abstract final class MyConstants {'));
       expect(fixed, isNot(contains('MyConstants._()')));
-      // The class body should start straight at the static member, with no
-      // blank line left where the constructor used to be.
       expect(fixed, contains('class MyConstants {\n  static const foo = 1;'));
     });
 
@@ -169,41 +163,41 @@ Widget f() {
       expect(fixed, isNot(contains('Container(')));
     });
 
-    // test('replaces Container with Align, keeping the alignment arg', () async {
-    //   final fixed = await harness.applyFix(
-    //     r'''
-    // import 'package:flutter/flutter.dart';
-    // Widget f() {
-    //   return Container(alignment: Alignment.center);
-    // }
-    // ''',
-    //     'prefer_align_over_container',
-    //     packages: {'flutter': flutterAlign},
-    //   );
-    //
-    //   expect(fixed, contains('return Align(alignment: Alignment.center);'));
-    //   expect(fixed, isNot(contains('Container(')));
-    // });
-    //
-    // test('replaces Container with Align, keeping key and child args', () async {
-    //   final fixed = await harness.applyFix(
-    //     r'''
-    // import 'package:flutter/flutter.dart';
-    // Widget f() {
-    //   return Container(key: Key('a'), alignment: Alignment.center, child: Container());
-    // }
-    // ''',
-    //     'prefer_align_over_container',
-    //     packages: {'flutter': flutterAlign},
-    //   );
-    //
-    //   expect(
-    //     fixed,
-    //     contains(
-    //       "return Align(key: Key('a'), alignment: Alignment.center, child: Container());",
-    //     ),
-    //   );
-    // });
+    test('replaces Container with Align, keeping the alignment arg', () async {
+      final fixed = await harness.applyFix(
+        r'''
+    import 'package:flutter/flutter.dart';
+    Widget f() {
+      return Container(alignment: Alignment.center);
+    }
+    ''',
+        'prefer_align_over_container',
+        packages: {'flutter': flutterAlign},
+      );
+
+      expect(fixed, contains('return Align(alignment: Alignment.center);'));
+      expect(fixed, isNot(contains('Container(')));
+    });
+
+    test('replaces Container with Align, keeping key and child args', () async {
+      final fixed = await harness.applyFix(
+        r'''
+    import 'package:flutter/flutter.dart';
+    Widget f() {
+      return Container(key: Key('a'), alignment: Alignment.center, child: Container());
+    }
+    ''',
+        'prefer_align_over_container',
+        packages: {'flutter': flutterAlign},
+      );
+
+      expect(
+        fixed,
+        contains(
+          "return Align(key: Key('a'), alignment: Alignment.center, child: Container());",
+        ),
+      );
+    });
   });
 
   group('prefer_any_or_every', () {
@@ -418,54 +412,54 @@ Widget f() {
       expect(fixed, isNot(contains('Align(')));
     });
 
-    // test(
-    //   'replaces Align(alignment: center) with Center, dropping the arg',
-    //   () async {
-    //     final fixed = await harness.applyFix(
-    //       r'''
-    // import 'package:flutter/flutter.dart';
-    // Widget f() {
-    //   return Align(alignment: Alignment.center);
-    // }
-    // ''',
-    //       'prefer_center_over_align',
-    //       packages: {'flutter': flutterAlign},
-    //     );
-    //
-    //     expect(fixed, contains('return Center();'));
-    //     expect(fixed, isNot(contains('alignment')));
-    //   },
-    // );
-    //
-    // test('replaces bare Align() (implicit center) with Center()', () async {
-    //   final fixed = await harness.applyFix(
-    //     r'''
-    // import 'package:flutter/flutter.dart';
-    // Widget f() {
-    //   return Align();
-    // }
-    // ''',
-    //     'prefer_center_over_align',
-    //     packages: {'flutter': flutterAlign},
-    //   );
-    //
-    //   expect(fixed, contains('return Center();'));
-    // });
-    //
-    // test('replaces Align with Center while keeping other arguments', () async {
-    //   final fixed = await harness.applyFix(
-    //     r'''
-    // import 'package:flutter/flutter.dart';
-    // Widget f() {
-    //   return Align(alignment: Alignment.center, child: Align());
-    // }
-    // ''',
-    //     'prefer_center_over_align',
-    //     packages: {'flutter': flutterAlign},
-    //   );
-    //
-    //   expect(fixed, contains('return Center(child: Align());'));
-    // });
+    test(
+      'replaces Align(alignment: center) with Center, dropping the arg',
+      () async {
+        final fixed = await harness.applyFix(
+          r'''
+    import 'package:flutter/flutter.dart';
+    Widget f() {
+      return Align(alignment: Alignment.center);
+    }
+    ''',
+          'prefer_center_over_align',
+          packages: {'flutter': flutterAlign},
+        );
+
+        expect(fixed, contains('return Center();'));
+        expect(fixed, isNot(contains('alignment')));
+      },
+    );
+
+    test('replaces bare Align() (implicit center) with Center()', () async {
+      final fixed = await harness.applyFix(
+        r'''
+    import 'package:flutter/flutter.dart';
+    Widget f() {
+      return Align();
+    }
+    ''',
+        'prefer_center_over_align',
+        packages: {'flutter': flutterAlign},
+      );
+
+      expect(fixed, contains('return Center();'));
+    });
+
+    test('replaces Align with Center while keeping other arguments', () async {
+      final fixed = await harness.applyFix(
+        r'''
+    import 'package:flutter/flutter.dart';
+    Widget f() {
+      return Align(alignment: Alignment.center, child: Align());
+    }
+    ''',
+        'prefer_center_over_align',
+        packages: {'flutter': flutterAlign},
+      );
+
+      expect(fixed, contains('return Center(child: Align());'));
+    });
   });
 
   group('prefer_class_destructuring', () {
@@ -708,46 +702,46 @@ Widget f() {
       expect(fixed, isNot(contains('Container(')));
     });
 
-    // test('replaces Container(constraints: ...) with ConstrainedBox', () async {
-    //   final fixed = await harness.applyFix(
-    //     r'''
-    // import 'package:flutter/flutter.dart';
-    // Widget f() {
-    //   return Container(constraints: BoxConstraints());
-    // }
-    // ''',
-    //     'prefer_constrained_box_over_container',
-    //     packages: {'flutter': flutterConstraints},
-    //   );
-    //
-    //   expect(
-    //     fixed,
-    //     contains('return ConstrainedBox(constraints: BoxConstraints());'),
-    //   );
-    //   expect(fixed, isNot(contains('Container(')));
-    // });
-    //
-    // test(
-    //   'replaces Container with ConstrainedBox, keeping child argument',
-    //   () async {
-    //     final fixed = await harness.applyFix(
-    //       r'''
-    // import 'package:flutter/flutter.dart';
-    // Widget f() {
-    //   return Container(constraints: BoxConstraints(), child: Container());
-    // }
-    // ''',
-    //       'prefer_constrained_box_over_container',
-    //       packages: {'flutter': flutterConstraints},
-    //     );
-    //
-    //     expect(
-    //       fixed,
-    //       contains(
-    //         'return ConstrainedBox(constraints: BoxConstraints(), child: Container());',
-    //       ),
-    //     );
-    //   },
-    // );
+    test('replaces Container(constraints: ...) with ConstrainedBox', () async {
+      final fixed = await harness.applyFix(
+        r'''
+    import 'package:flutter/flutter.dart';
+    Widget f() {
+      return Container(constraints: BoxConstraints());
+    }
+    ''',
+        'prefer_constrained_box_over_container',
+        packages: {'flutter': flutterConstraints},
+      );
+
+      expect(
+        fixed,
+        contains('return ConstrainedBox(constraints: BoxConstraints());'),
+      );
+      expect(fixed, isNot(contains('Container(')));
+    });
+
+    test(
+      'replaces Container with ConstrainedBox, keeping child argument',
+      () async {
+        final fixed = await harness.applyFix(
+          r'''
+    import 'package:flutter/flutter.dart';
+    Widget f() {
+      return Container(constraints: BoxConstraints(), child: Container());
+    }
+    ''',
+          'prefer_constrained_box_over_container',
+          packages: {'flutter': flutterConstraints},
+        );
+
+        expect(
+          fixed,
+          contains(
+            'return ConstrainedBox(constraints: BoxConstraints(), child: Container());',
+          ),
+        );
+      },
+    );
   });
 }

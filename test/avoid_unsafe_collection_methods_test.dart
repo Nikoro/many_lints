@@ -16,8 +16,6 @@ class AvoidUnsafeCollectionMethodsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_firstOnParameter() async {
     await assertDiagnostics(
       r'''
@@ -47,8 +45,7 @@ int onlyItem(Iterable<int> items) {
   return items.single;
 }
 ''',
-      // The test SDK's minimal Iterable declares no `single` getter, so the
-      // resolution error is expected alongside the lint.
+      // Edge case: the mock SDK Iterable lacks single and reduce, so the name is undefined
       [lint(45, 12), undefinedName(51, 6)],
     );
   }
@@ -60,7 +57,6 @@ int total(Iterable<int> items) {
   return items.reduce((a, b) => a + b);
 }
 ''',
-      // The test SDK's minimal Iterable declares no `reduce` method.
       [lint(42, 29), undefinedName(48, 6)],
     );
   }
@@ -88,8 +84,6 @@ int firstItem() {
       [lint(52, 11)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_guardedByIsNotEmpty() async {
     await assertNoDiagnostics(r'''

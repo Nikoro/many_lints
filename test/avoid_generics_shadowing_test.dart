@@ -16,8 +16,6 @@ class AvoidGenericsShadowingTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void> test_classShadowsClass() async {
     await assertDiagnostics(
       r'''
@@ -136,8 +134,6 @@ class Foo<MyId> {}
       [lint(42, 4)],
     );
   }
-
-  // --- Negative cases (should NOT trigger lint) ---
 
   Future<void> test_noShadowing_singleLetter() async {
     await assertNoDiagnostics(r'''

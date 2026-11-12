@@ -3,8 +3,6 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:many_lints/src/ast_node_analysis.dart';
 import 'package:test/test.dart';
 
-/// Parses [code] and returns the first expression found in the first
-/// function body.
 Expression _parseExpression(String code) {
   final result = parseString(content: 'void f() { $code; }');
   final unit = result.unit;
@@ -14,7 +12,6 @@ Expression _parseExpression(String code) {
   return stmt.expression;
 }
 
-/// Parses [code] as a top-level function and returns its body.
 FunctionBody _parseFunctionBody(String fnCode) {
   final result = parseString(content: fnCode);
   final unit = result.unit;
@@ -22,7 +19,6 @@ FunctionBody _parseFunctionBody(String fnCode) {
   return fn.functionExpression.body;
 }
 
-/// Parses [code] and returns the first class declaration.
 ClassDeclaration _parseClass(String code) {
   final result = parseString(content: code);
   return result.unit.declarations.first as ClassDeclaration;
@@ -54,7 +50,6 @@ class MyClass {
   group('negateExpression', () {
     test('removes double negation', () {
       final expr = _parseExpression('!x');
-      // The expression is PrefixExpression with BANG
       expect(negateExpression(expr), 'x');
     });
 

@@ -81,8 +81,6 @@ class Text extends Widget {
     super.setUp();
   }
 
-  // --- Cases that SHOULD trigger the lint ---
-
   Future<void> test_listViewWithShrinkWrapTrue() async {
     await assertDiagnostics(
       r'''
@@ -159,8 +157,6 @@ final widget = ListView.custom(shrinkWrap: true);
       [lint(70, 16)],
     );
   }
-
-  // --- Cases that should NOT trigger the lint ---
 
   Future<void> test_listViewWithoutShrinkWrap() async {
     await assertNoDiagnostics(r'''

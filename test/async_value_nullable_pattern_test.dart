@@ -37,8 +37,6 @@ class AsyncError<T> extends AsyncValue<T> {
     super.setUp();
   }
 
-  // --- Positive cases: should trigger lint ---
-
   Future<void> test_nullableValueType() async {
     await assertDiagnostics(
       r'''
@@ -93,11 +91,7 @@ void fn(AsyncValue<int?> asyncValue) {
     );
   }
 
-  // --- Negative cases: should not trigger lint ---
-
   Future<void> test_nonNullableValueType() async {
-    // A non-nullable value can never be legitimately null, so the `?` pattern
-    // is precise.
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -113,8 +107,6 @@ void fn(AsyncValue<int> asyncValue) {
   }
 
   Future<void> test_asyncDataNotFlagged() async {
-    // `AsyncData.hasValue` is always true, so the null check carries the
-    // meaning here.
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 

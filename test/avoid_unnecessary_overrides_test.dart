@@ -16,8 +16,6 @@ class AvoidUnnecessaryOverridesTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ── Methods ──────────────────────────────────────────────────────────
-
   Future<void> test_methodOnlySuperCallNoArgs_block() async {
     await assertDiagnostics(
       r'''
@@ -183,8 +181,6 @@ class Child extends Base {
 ''');
   }
 
-  // ── Getters ──────────────────────────────────────────────────────────
-
   Future<void> test_getterOnlyReturnsSuperGetter_expression() async {
     await assertDiagnostics(
       r'''
@@ -247,8 +243,6 @@ class Child extends Base {
 }
 ''');
   }
-
-  // ── Setters ──────────────────────────────────────────────────────────
 
   Future<void> test_setterOnlyDelegatesToSuper_expression() async {
     await assertDiagnostics(
@@ -315,8 +309,6 @@ class Child extends Base {
 ''');
   }
 
-  // ── Abstract redeclarations ──────────────────────────────────────────
-
   Future<void> test_abstractMethodRedeclaration() async {
     await assertDiagnostics(
       r'''
@@ -365,8 +357,6 @@ abstract class Child extends Base {
     );
   }
 
-  // ── Mixin ────────────────────────────────────────────────────────────
-
   Future<void> test_mixinUnnecessaryOverride() async {
     await assertDiagnostics(
       r'''
@@ -382,8 +372,6 @@ mixin MyMixin on Base {
       [lint(58, 38)],
     );
   }
-
-  // ── Edge cases ───────────────────────────────────────────────────────
 
   Future<void> test_emptyMethodBody() async {
     await assertNoDiagnostics(r'''
@@ -413,8 +401,6 @@ class Child extends Base {
       [lint(105, 61)],
     );
   }
-
-  // ── Exemptions (mirroring SDK unnecessary_overrides) ─────────────────
 
   Future<void> test_docCommentIsExempt() async {
     await assertNoDiagnostics(r'''

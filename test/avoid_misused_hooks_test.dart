@@ -58,8 +58,6 @@ T useMemoized<T>(T Function() factory) => factory();
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_hookInForLoop() async {
     await assertDiagnostics(
       r'''
@@ -146,8 +144,6 @@ class MyWidget extends HookWidget {
       [lint(241, 11)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_hookAtTopLevelOfBuild() async {
     await assertNoDiagnostics(r'''

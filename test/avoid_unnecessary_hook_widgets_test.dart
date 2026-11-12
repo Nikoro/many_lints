@@ -127,10 +127,6 @@ Widget f() {
 ''');
   }
 
-  /// Overlap with `avoid_unnecessary_consumer_widgets`, which also reports a
-  /// `HookConsumerWidget`. The two rules answer different questions — "does it
-  /// use hooks?" versus "does it use ref?" — so both firing on a widget that
-  /// uses neither is correct, and each reports at a different node.
   Future<void> test_hookConsumerWidget_withoutHooks() async {
     await assertDiagnostics(
       r'''

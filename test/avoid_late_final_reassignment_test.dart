@@ -17,8 +17,6 @@ class AvoidLateFinalReassignmentTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_assignedTwiceInOneBlock() async {
     await assertDiagnostics(
       r'''
@@ -51,8 +49,6 @@ class A {
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_assignedOnce() async {
     await assertNoDiagnostics(r'''
 class A {
@@ -66,7 +62,6 @@ class A {
   }
 
   Future<void> test_assignedInOppositeBranches() async {
-    // This is exactly how a `late final` is meant to be initialised.
     await assertNoDiagnostics(r'''
 class A {
   late final int value;
@@ -107,8 +102,6 @@ class A {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_differentLateFinalFields() async {
     await assertNoDiagnostics(r'''

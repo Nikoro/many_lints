@@ -16,8 +16,6 @@ class AvoidNotEncodableInToJsonTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_dateTimeValue() async {
     await assertDiagnostics(
       r'''
@@ -70,8 +68,6 @@ class Event {
       [lint(128, 9)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_primitiveValues() async {
     await assertNoDiagnostics(r'''
@@ -136,8 +132,6 @@ class User {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_dynamicValueIsAllowed() async {
     await assertNoDiagnostics(r'''

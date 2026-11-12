@@ -15,8 +15,6 @@ class AvoidDeepNestingTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_fiveLevelsOfNesting() async {
     await assertDiagnostics(
       r'''
@@ -37,8 +35,6 @@ void f(List<List<int>> rows, bool flag) {
       [lint(152, 5)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_fourLevelsIsWithinBudget() async {
     await assertNoDiagnostics(r'''
@@ -63,11 +59,7 @@ void f(int n) {
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_elseIfChainIsNotNesting() async {
-    // An else-if chain is written flat and reads flat, so a long dispatch
-    // must not be reported as deep nesting.
     await assertNoDiagnostics(r'''
 String f(int n) {
   if (n == 1) {
@@ -87,8 +79,6 @@ String f(int n) {
   }
 
   Future<void> test_nestedFunctionStartsItsOwnCount() async {
-    // Two levels here plus three inside the callback is not five: the
-    // callback's body is not reached through the enclosing nest.
     await assertNoDiagnostics(r'''
 void f(List<int> xs, bool flag) {
   if (flag) {
@@ -107,8 +97,6 @@ void f(List<int> xs, bool flag) {
   }
 
   Future<void> test_reportsOnceForOneFunction() async {
-    // Two separate six-level nests in one function still report once, at the
-    // first statement past the budget.
     await assertDiagnostics(
       r'''
 void f(bool a, bool b, bool c, bool d, bool e) {

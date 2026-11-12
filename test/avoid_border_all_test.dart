@@ -96,11 +96,7 @@ final border = Border.fromBorderSide(
 ''');
   }
 
-  // === Tests for visitMethodInvocation path (lines 65-74) ===
-
   Future<void> test_borderFactoryAll_noArgs_triggers() async {
-    // BorderFactory.all() is a static method returning Border,
-    // parsed as MethodInvocation (not InstanceCreationExpression)
     await assertDiagnostics(
       r'''
 import 'package:flutter/painting.dart';
@@ -121,7 +117,6 @@ final border = BorderFactory.all(color: Color(0xFF000000));
   }
 
   Future<void> test_methodInvocation_notAll_noLint() async {
-    // Method name is not 'all' — should not trigger
     await assertNoDiagnostics(r'''
 import 'package:flutter/painting.dart';
 final border = Border.fromBorderSide(BorderSide());
@@ -129,8 +124,6 @@ final border = Border.fromBorderSide(BorderSide());
   }
 
   Future<void> test_methodInvocation_nonSimpleIdentifierTarget_noLint() async {
-    // Target is not a SimpleIdentifier (e.g., chained method call)
-    // — line 70 early return
     await assertNoDiagnostics(r'''
 import 'package:flutter/painting.dart';
 Border getFactory() => Border();

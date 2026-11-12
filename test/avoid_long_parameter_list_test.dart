@@ -17,8 +17,6 @@ class AvoidLongParameterListTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_fivePositionalParameters() async {
     await assertDiagnostics(
       r'''
@@ -28,8 +26,6 @@ void f(int a, int b, int c, int d, int e) {}
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_fourPositionalIsWithinBudget() async {
     await assertNoDiagnostics(r'''
 void f(int a, int b, int c, int d) {}
@@ -37,8 +33,6 @@ void f(int a, int b, int c, int d) {}
   }
 
   Future<void> test_namedParametersScaleFurther() async {
-    // Named parameters are labelled at the call site and do not depend on
-    // order, so a widget constructor with several is not the problem.
     await assertNoDiagnostics(r'''
 void f({
   int? a,
@@ -59,7 +53,6 @@ void f() {}
   }
 
   Future<void> test_overrideCannotChangeItsSignature() async {
-    // Only the base declaration is reported; an override has to match it.
     await assertDiagnostics(
       r'''
 class Base {

@@ -75,8 +75,6 @@ void useEffect(void Function()? Function() effect) {}
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_hookInEventHandler() async {
     await assertDiagnostics(
       r'''
@@ -171,8 +169,6 @@ class MyState extends State<MyWidget> {
       [lint(192, 11)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_hookInHookWidgetBuild() async {
     await assertNoDiagnostics(r'''

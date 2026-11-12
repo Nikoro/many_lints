@@ -136,8 +136,6 @@ Widget f() {
 ''');
   }
 
-  // --- MethodInvocation path (static factory) ---
-
   Future<void> test_methodInvocation_opacityWrappingImage() async {
     await assertDiagnostics(
       r'''

@@ -14,8 +14,6 @@ class AvoidCatchErrorTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void> test_catchErrorOnFuture() async {
     await assertDiagnostics(
       r'''
@@ -66,8 +64,6 @@ void f(Future<String> pending) {
     );
   }
 
-  // --- Negative cases (should NOT trigger lint) ---
-
   Future<void> test_tryCatchIsFine() async {
     await assertNoDiagnostics(r'''
 Future<int> load() async => 1;
@@ -104,11 +100,7 @@ void f() {
 ''');
   }
 
-  // --- Edge cases ---
-
   Future<void> test_catchErrorOnFutureSubtype() async {
-    // A user type implementing Future still routes through the same untyped
-    // callback, so it is worth reporting.
     await assertDiagnostics(
       r'''
 abstract class MyFuture implements Future<int> {}

@@ -16,8 +16,6 @@ class AvoidCollectionMethodsWithUnrelatedTypesTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ── List.contains with unrelated type ──────────────────────────────
-
   Future<void> test_listContainsWithUnrelatedType() async {
     await assertDiagnostics(
       r'''
@@ -36,8 +34,6 @@ void f(List<int> list) {
 }
 ''');
   }
-
-  // ── Set.contains with unrelated type ───────────────────────────────
 
   Future<void> test_setContainsWithUnrelatedType() async {
     await assertDiagnostics(
@@ -58,8 +54,6 @@ void f(Set<int> set) {
 ''');
   }
 
-  // ── Map.containsKey with unrelated type ────────────────────────────
-
   Future<void> test_mapContainsKeyWithUnrelatedType() async {
     await assertDiagnostics(
       r'''
@@ -78,8 +72,6 @@ void f(Map<int, String> map) {
 }
 ''');
   }
-
-  // ── Map.containsValue with unrelated type ──────────────────────────
 
   Future<void> test_mapContainsValueWithUnrelatedType() async {
     await assertDiagnostics(
@@ -100,8 +92,6 @@ void f(Map<int, String> map) {
 ''');
   }
 
-  // ── Map index access with unrelated key type ───────────────────────
-
   Future<void> test_mapIndexWithUnrelatedKeyType() async {
     await assertDiagnostics(
       r'''
@@ -121,8 +111,6 @@ void f(Map<int, String> map) {
 ''');
   }
 
-  // ── List.remove with unrelated type ────────────────────────────────
-
   Future<void> test_listRemoveWithUnrelatedType() async {
     await assertDiagnostics(
       r'''
@@ -133,8 +121,6 @@ void f(List<int> list) {
       [lint(27, 16)],
     );
   }
-
-  // ── Map.remove with unrelated key type ─────────────────────────────
 
   Future<void> test_mapRemoveWithUnrelatedKeyType() async {
     await assertDiagnostics(
@@ -147,8 +133,6 @@ void f(Map<int, String> map) {
     );
   }
 
-  // ── Set.lookup with unrelated type ─────────────────────────────────
-
   Future<void> test_setLookupWithUnrelatedType() async {
     await assertDiagnostics(
       r'''
@@ -159,8 +143,6 @@ void f(Set<int> set) {
       [lint(25, 15)],
     );
   }
-
-  // ── Subtype is related (no lint) ───────────────────────────────────
 
   Future<void> test_subtypeIsRelated() async {
     await assertNoDiagnostics(r'''
@@ -178,8 +160,6 @@ void f(List<int> list, num value) {
 ''');
   }
 
-  // ── Dynamic argument skipped ───────────────────────────────────────
-
   Future<void> test_dynamicArgument_noLint() async {
     await assertNoDiagnostics(r'''
 void f(List<int> list, dynamic value) {
@@ -188,8 +168,6 @@ void f(List<int> list, dynamic value) {
 ''');
   }
 
-  // ── Generic type parameter skipped ─────────────────────────────────
-
   Future<void> test_genericTypeParameter_noLint() async {
     await assertNoDiagnostics(r'''
 void f<T>(List<int> list, T value) {
@@ -197,8 +175,6 @@ void f<T>(List<int> list, T value) {
 }
 ''');
   }
-
-  // ── Iterable.contains with unrelated type ──────────────────────────
 
   Future<void> test_iterableContainsWithUnrelatedType() async {
     await assertDiagnostics(
@@ -211,8 +187,6 @@ void f(Iterable<int> iter) {
     );
   }
 
-  // ── Non-collection method — no lint ────────────────────────────────
-
   Future<void> test_nonCollectionMethod_noLint() async {
     await assertNoDiagnostics(r'''
 void f(List<int> list) {
@@ -220,8 +194,6 @@ void f(List<int> list) {
 }
 ''');
   }
-
-  // --- Cover Map supertype walk (lines 178-181) ---
 
   Future<void> test_customMapSubtype_containsKeyWithUnrelatedType() async {
     await assertDiagnostics(
@@ -237,8 +209,6 @@ void f(IntStringMap map) {
       [lint(142, 20)],
     );
   }
-
-  // --- Cover Iterable supertype walk (lines 196-199) ---
 
   Future<void> test_customIterableSubtype_containsWithUnrelatedType() async {
     await assertDiagnostics(

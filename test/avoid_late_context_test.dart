@@ -30,8 +30,6 @@ class Theme {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_lateFieldReadsContext() async {
     await assertDiagnostics(
       r'''
@@ -61,8 +59,6 @@ class MyState extends State<MyWidget> {
       [lint(135, 29)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_nonLateFieldIsIgnored() async {
     await assertNoDiagnostics(r'''
@@ -104,8 +100,6 @@ class MyState extends State<MyWidget> {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_outsideStateIsIgnored() async {
     await assertNoDiagnostics(r'''

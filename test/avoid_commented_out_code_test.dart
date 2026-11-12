@@ -14,8 +14,6 @@ class AvoidCommentedOutCodeTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void> test_singleLineCommentedOutCode() async {
     await assertDiagnostics(
       r'''
@@ -70,8 +68,6 @@ void f() {}
     );
   }
 
-  // --- Negative cases (should NOT trigger lint) ---
-
   Future<void> test_regularComment() async {
     await assertNoDiagnostics(r'''
 // This is a regular descriptive comment
@@ -121,8 +117,6 @@ void f() {}
 ''');
   }
 
-  // --- Edge cases ---
-
   Future<void> test_commentWithAnnotation() async {
     await assertDiagnostics(
       r'''
@@ -143,8 +137,6 @@ void f() {}
       [lint(0, 10)],
     );
   }
-
-  // --- Coverage for uncovered lines ---
 
   Future<void> test_commentedOutReturnStatement() async {
     await assertDiagnostics(
@@ -196,8 +188,6 @@ void f() {}
     );
   }
 
-  /// A blank line ends a group, so these are two separate findings rather
-  /// than one span covering the gap.
   Future<void> test_separatedCommentGroups() async {
     await assertDiagnostics(
       r'''
@@ -210,9 +200,6 @@ void f() {}
     );
   }
 
-  /// Prose comments elsewhere in the file must not merge into a code block
-  /// and dilute it below the code-line ratio, which silenced the diagnostic
-  /// entirely.
   Future<void> test_proseInLaterClassDoesNotSuppress() async {
     await assertDiagnostics(
       r'''
@@ -235,8 +222,6 @@ class GoodExamples {
     );
   }
 
-  /// A trailing comment and the comment on the next line are separated by
-  /// code, so they are not one group.
   Future<void> test_trailingCommentNotGroupedWithNextLine() async {
     await assertDiagnostics(
       r'''
@@ -281,10 +266,7 @@ void f() {}
     );
   }
 
-  // --- Cover _cascadePattern (line 231) ---
-
   Future<void> test_commentedOutCascadeOnly() async {
-    // A single cascade line — exercises _cascadePattern match at line 231
     await assertDiagnostics(
       r'''
 // ..removeAll(items);
@@ -294,21 +276,14 @@ void f() {}
     );
   }
 
-  // --- Prose starting with a keyword-like word ---
-
-  Future<void> test_proseStartingWithOverride() async {
-    // The code-keyword list anchors on `@override`; bare `override` opens
-    // ordinary English and must not be treated as commented-out code.
+  Future<void> test_proseStartingWithBareOverrideIsNotCode() async {
     await assertNoDiagnostics(r'''
 // override this method in subclasses to customize the behaviour
 void f() {}
 ''');
   }
 
-  // --- Cover EOF token comment processing (line 51 area) ---
-
   Future<void> test_commentedOutCodeAfterEofToken() async {
-    // Comments after the last real token but before EOF
     await assertDiagnostics(
       r'''
 void f() {}

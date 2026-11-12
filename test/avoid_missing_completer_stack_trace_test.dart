@@ -16,8 +16,6 @@ class AvoidMissingCompleterStackTraceTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_completeErrorWithoutStackTrace() async {
     await assertDiagnostics(
       r'''
@@ -53,8 +51,6 @@ void f(Completer<int> completer) {
       [lint(132, 26)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_stackTracePassed() async {
     await assertNoDiagnostics(r'''
@@ -110,8 +106,6 @@ void f(NotACompleter target) {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_closureInsideCatchIsNotCredited() async {
     await assertNoDiagnostics(r'''

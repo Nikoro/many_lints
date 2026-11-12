@@ -17,10 +17,7 @@ class AvoidHighCyclomaticComplexityTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_manyIfStatements() async {
-    // 10 ifs + 1 = 11, over the default of 10.
     final body = List.generate(
       10,
       (i) => '  if (n == $i) print($i);',
@@ -37,7 +34,6 @@ $body
   }
 
   Future<void> test_logicalOperatorsCount() async {
-    // Ten `&&` operators plus the entry path is a complexity of 11.
     await assertDiagnostics(
       r'''
 bool f(bool a, bool b, bool c, bool d, bool e, bool g, bool h, bool i, bool j,
@@ -48,8 +44,6 @@ bool f(bool a, bool b, bool c, bool d, bool e, bool g, bool h, bool i, bool j,
       [lint(5, 1)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_straightLineCode() async {
     final body = List.generate(30, (i) => '  var x$i = $i;').join('\n');
@@ -71,11 +65,7 @@ int f(int n) {
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_exhaustiveEnumSwitchCountsAsOne() async {
-    // Twelve cases the compiler proves exhaustive are one decision, not twelve
-    // — otherwise the rule reports the exhaustive matching Dart 3 encourages.
     await assertNoDiagnostics(r'''
 enum Suit { a, b, c, d, e, f, g, h, i, j, k, l }
 
@@ -121,8 +111,6 @@ String f(int n) {
     );
   }
 
-  // `==` and `copyWith` grow one branch per field, not per decision, and were
-  // the majority of the rule's hits on a production codebase.
   Future<void> test_equalsOperatorIsFieldCountShaped() async {
     await assertNoDiagnostics(r'''
 class C {
@@ -172,8 +160,6 @@ class C {
 ''');
   }
 
-  // A validating constructor's checks are real, independent decisions, so it
-  // must still report — this was a true positive on the same codebase.
   Future<void> test_validatingConstructorStillReports() async {
     await assertDiagnostics(
       r'''
