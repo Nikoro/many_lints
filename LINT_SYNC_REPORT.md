@@ -1,14 +1,33 @@
 # Official Lint Sync Report
 
-Generated: 2026-08-18 · Source: [`pkg/linter/tool/machine/rules.json`](https://github.com/dart-lang/sdk/blob/a51710497d1a0f28d0c601064c0a2d2a1f7ea0c1/pkg/linter/tool/machine/rules.json) @ `a51710497d1a0f28d0c601064c0a2d2a1f7ea0c1`
-SDK rules compared: 232 stable, 6 deprecated (238 candidates; 12 experimental and 14 removed excluded) · many_lints active rules: 251
+Generated: 2026-11-12 · Source: [`pkg/linter/tool/machine/rules.json`](https://github.com/dart-lang/sdk/blob/3.14.0/pkg/linter/tool/machine/rules.json) @ tag `3.14.0` (commit `fa8c1270c374c1346931583a17c3b7f278d3822d`)
+SDK rules compared: 233 stable, 6 deprecated (239 candidates; 11 experimental and 14 removed excluded) · many_lints active rules: 264
 
-Comparison method: brace-matched extraction of all 251 active `LintCode` declarations,
-an exact-name pass, then a semantic pass over each rule's message and class
-documentation. The machine-readable catalog and the current
+Comparison method: brace-matched extraction of all 264 `LintCode` declarations
+(one per rule file, count asserted), an exact-name pass against every name in
+the 3.14.0 file, then a semantic pass. Rules unchanged since the
+2026-08-18 report (source `a51710497d`) keep their verdicts; the 13 rules added
+in 1.1.0 to 1.3.0 and every SDK change between that source and the 3.14.0 tag
+were classified fresh. The released SDK tag is the source, not `main`, because
+this report backs a release. The current
 [`flutter_lints/flutter.yaml`](https://github.com/flutter/packages/blob/main/packages/flutter_lints/lib/flutter.yaml)
-were fetched successfully. Full implementations and official tests were read
-before assigning the `SUPERSET` verdict.
+still only enables SDK rules.
+
+## What changed in the SDK since the last report
+
+Between the 2026-08-18 source and the 3.14.0 tag:
+
+| SDK rule | Change | Effect on many_lints |
+|---|---|---|
+| `future_sync_value` | new, `stable` since 3.14, `nonPerformant`, has fix | No counterpart in many_lints. It flags `Future.value(x)` for a plain value and suggests `Future.syncValue`. |
+| `unnecessary_this_alias` | new, `experimental` since 3.14 | No counterpart. Only reports with the `this-promotion` experiment enabled (it stayed silent on a plain 3.14.0 run). |
+| `migrate_design_widgets` | `experimental` → `stable` (since 3.13, `flutter` category) | No counterpart; listed under Gaps. It drives the Flutter 3.50 `material_ui` / `cupertino_ui` migration. |
+| `unnecessary_await_in_return` | `stable` → `deprecated` | Enabling it now reports `deprecated_lint`. It advised the opposite of `prefer_return_await` inside a `try`; that conflict is gone. The rule page no longer links it. |
+| `use_primary_constructors` | `experimental` (3.13.0 file) → internal `testing` state, so it is missing from the 3.14.0 file | Still runs when named in `analysis_options.yaml` on 3.14.0 (checked). See Watch. |
+
+No other SDK rule changed state between the two sources. The `sets` field is
+empty in every entry of the 3.11.0, 3.13.0 and 3.14.0 files, so set membership
+below comes from `package:lints` and `flutter_lints` YAML.
 
 ## Summary
 
@@ -16,16 +35,20 @@ before assigning the `SUPERSET` verdict.
 |---|---|
 | DUPLICATE | 0 |
 | SUPERSET | 1 |
-| SUBSET | 8 |
-| ADJACENT | 13 |
-| WATCH | 2 |
-| UNIQUE | 227 |
+| SUBSET | 10 |
+| ADJACENT | 14 |
+| WATCH | 3 |
+| UNIQUE | 236 |
 
-The removed `prefer_contains` and `avoid_unnecessary_overrides_in_state` names
-remain registered as tombstones so the analyzer can direct existing
-configurations to the SDK rules.
+`prefer_type_over_var` is counted once, under WATCH (the previous report listed
+it under both ADJACENT and WATCH). The removed `prefer_contains` and
+`avoid_unnecessary_overrides_in_state` names remain registered as tombstones;
+`prefer_contains` is the only exact-name match with an SDK rule, and it is
+intentional.
 
 ## Action deferred until the minimum SDK reaches Dart 3.13
+
+The minimum SDK is still `^3.11.0` in 1.3.0, so nothing here is actionable yet.
 
 ### SUPERSET
 
@@ -34,17 +57,16 @@ configurations to the SDK rules.
   (`stable`, since Dart 3.13, `hasFix`)
   - Ours: "Missing await on returned Future inside try-catch block."
   - SDK: "Return with no await."
-  - The SDK rule reports every `Future`/`FutureOr` returned without `await`
-    from an `async` function, including returns inside a `catch`, and also
-    covers expression-bodied functions. Its official visitor test deliberately
-    does not emit the lint inside the `try` body because the analyzer already
-    emits `unawaited_return_in_try_catch` there. Together, the SDK lint and
-    analyzer diagnostic cover every node our narrower visitor reports and
-    more.
-  - Do not deprecate this rule in 1.0.0: many_lints still supports Dart 3.11,
-    where the replacement does not exist. Re-evaluate as soon as the package's
-    minimum SDK reaches 3.13; until then, users on Dart 3.13 should not enable
-    both rules.
+  - The SDK rule reports every `Future` returned without `await` from an
+    `async` function, in a `catch` clause and outside any `try`. Inside a
+    `try` body it stays silent because the analyzer's own
+    `unawaited_return_in_try_block` warning reports there. Checked on 3.14.0:
+    a `try` return got only `unawaited_return_in_try_block`, a `catch` return
+    and an expression body got `async_return_with_no_await`. Together they
+    cover every node ours reports, and more.
+  - Do not deprecate while many_lints supports Dart 3.11 and 3.12, where the
+    replacement does not exist. The rule page now tells Dart 3.13+ users to
+    turn ours off if they enable the SDK lint.
 
 ## Resolved for 1.0.0
 
@@ -139,14 +161,21 @@ configurations to the SDK rules.
   two rules report the same misplaced constructor. Users should choose
   `member_ordering` or the narrower SDK rule, not enable both.
 
+- **`prefer_typed_exceptions`** (1.1.0) vs SDK `only_throw_errors` — the SDK
+  rule accepts any `Exception` or `Error` subtype, so `throw Exception('...')`
+  passes it. Ours also reports that, because a caller cannot catch it
+  selectively. The rule page names the SDK rule.
+- **`avoid_empty_catch`** (1.1.0) vs SDK `empty_catches` — the SDK rule allows
+  `catch (_) {}` and a body holding only a comment; ours reports both unless
+  `allow_with_comment` restores the SDK policy. The rule page names the SDK
+  rule.
+
 ### ADJACENT — no action
 
 `avoid_only_rethrow` (SDK `use_rethrow_when_possible` targets `throw e;`, ours
 targets a catch body that is *only* `rethrow;`), `avoid_collection_equality_checks`
 (SDK `unrelated_type_equality_checks` is about unrelated *types*; ours is about
-collections of the same type having no deep equality), `prefer_type_over_var`
-(conflicts with SDK `omit_local_variable_types`; closest analogue
-`always_specify_types` is a Flutter-repo style rule the user opts into),
+collections of the same type having no deep equality),
 `prefer_align_over_container` / `prefer_padding_over_container` /
 `prefer_constrained_box_over_container` / `prefer_transform_over_container`
 (SDK covers only the `Color` → `ColoredBox`, `Decoration` → `DecoratedBox`,
@@ -158,35 +187,54 @@ sync-void parameter, not an `async void` declaration), `avoid_future_ignore`
 (intentional error suppression through `Future.ignore()`, not an unawaited
 future), `prefer_declaring_const_constructor` (makes a constructor const while
 excluding the immutable case the SDK owns), `no_equal_switch_case` (equal case
-bodies rather than duplicate case values), and `parameters_ordering`
+bodies rather than duplicate case values), `parameters_ordering`
 (alphabetical ordering within required/optional groups; the SDK separately
-owns required-before-optional placement).
+owns required-before-optional placement), `avoid_todo_comments` (1.1.0; SDK
+`flutter_style_todos` enforces the shape of a TODO, ours asks whether the
+marker names a tracked issue) and `prefer_module_barrel_imports` (1.3.0; SDK
+`implementation_imports` forbids another package's `lib/src`, ours enforces a
+module's own entry point, including inside one package).
 
 ### Resolved 2026-08-13 (Dart 3.13)
 
-- **`prefer_primary_constructors`** vs the six lints Dart 3.13 added. Checked
-  empirically, not from the docs: the SDK's `use_declaring_parameters` visits
-  `PrimaryConstructorDeclaration` nodes **only**, so it never fires on a class
-  that has yet to adopt one — it polishes already-migrated classes, while ours
-  suggests migrating. No overlap.
-
-  `unnecessary_type_name_in_constructor` *does* fire on the same legacy
-  classes, but suggests the weaker `new(this.x)` form rather than collapsing
-  the class; our docs page tells users adopting our rule to turn that one off.
+- `use_declaring_parameters` visits `PrimaryConstructorDeclaration` nodes
+  only, so it polishes already-migrated classes while
+  `prefer_primary_constructors` suggests migrating. No overlap.
+  `unnecessary_type_name_in_constructor` fires on the same legacy classes but
+  suggests the weaker `new(this.x)` form; the rule page covers it.
   `prefer_private_named_parameters` remains without a direct SDK counterpart.
 
-## Watch (SDK rule still experimental — no action this cycle)
+## Watch (SDK rule not stable — no action this cycle)
 
+- **`prefer_primary_constructors`** — SDK `use_primary_constructors` reports
+  the same constructors, plus every class and enum that declares none (it
+  wants `enum E() {`). In the 3.14.0 SDK it is in the internal `testing`
+  state and absent from `rules.json`, so it cannot displace ours. Since 1.3.0
+  ours covers every convertible class and enum, and the rule page tells users
+  not to enable both.
 - **`prefer_type_over_var`** — SDK `var_with_no_type_annotation`
-  (`experimental`) is the closest thing to a direct replacement. Re-check when
-  it stabilises.
+  (`experimental`) is the closest thing to a direct replacement. It also
+  conflicts with the stable `omit_local_variable_types`. Re-check when it
+  stabilises.
 - **`avoid_redundant_async`** — SDK `unnecessary_async` (`experimental`) has
   the same core goal. Ours applies stricter return-compatibility checks before
   suggesting removal; re-evaluate both visitors if the SDK rule stabilises.
 
+## Candidates for the owner (no change made in 1.3.0)
+
+Nothing is deprecated or removed in 1.3.0. Decisions to make later:
+
+1. **`prefer_return_await`**: deprecate in favour of `async_return_with_no_await`
+   in the release that raises the minimum SDK to 3.13. Raising it would also
+   let the package take `analyzer` 14.6+ and `analysis_server_plugin` 0.3.25+.
+2. **`prefer_primary_constructors`**: no action while the SDK rule is in
+   `testing`. If `use_primary_constructors` becomes `stable` with the
+   constructor-less cases still reported, keep ours and document the
+   difference; if it stops reporting them, reconsider.
+
 ## Gaps — Flutter-category SDK rules we do not cover
 
-Not defects; candidates for `/new-lint`. All `stable`:
+Coverage information, not a backlog. All `stable`:
 
 | SDK rule | Description |
 |---|---|
@@ -197,20 +245,18 @@ Not defects; candidates for `/new-lint`. All `stable`:
 | `avoid_web_libraries_in_flutter` | Avoid web-only libraries outside web plugins |
 | `sized_box_shrink_expand` | Use `SizedBox.shrink`/`.expand` |
 | `sort_child_properties_last` | Sort `child` last in widget creations |
+| `migrate_design_widgets` | Import design widgets from `package:material_ui` / `package:cupertino_ui` (new to `stable` in this cycle) |
 
-Note these are all in the `flutter_lints` orbit already, so most users will
-have them on. Adding our own versions would create exactly the duplication this
-report exists to prevent — treat the table as coverage information, not a
-backlog.
+Five of these are in `flutter_lints/flutter.yaml`, so most Flutter users
+already have them on. Adding our own versions would create exactly the
+duplication this report exists to prevent.
 
 ## Notes
 
-- The current `flutter_lints/flutter.yaml` still only enables SDK rules and
-  defines none of its own, so it adds no name collisions beyond `rules.json`.
-- 227 rules have no SDK counterpart at all — the Riverpod, Bloc, hooks,
-  widget-replacement, banned-* / architecture, and shorthand families are
-  entirely unique to this package.
-- There are no exact-name collisions among the 251 active source rules. Two
-  additional registered names are removed-rule tombstones; `prefer_contains`
-  intentionally keeps its former name so old configurations receive migration
-  guidance.
+- `flutter_lints/flutter.yaml` still only enables SDK rules and defines none
+  of its own, so it adds no name collisions beyond `rules.json`.
+- 236 rules have no SDK counterpart at all — the Riverpod, Bloc, hooks, fpdart,
+  widget-replacement, banned-* / architecture, test-hygiene and shorthand
+  families are entirely unique to this package.
+- The only exact-name match among the 264 active rules and 2 tombstones is the
+  intentional `prefer_contains` tombstone.

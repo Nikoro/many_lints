@@ -26,16 +26,20 @@ curl -fsSL https://raw.githubusercontent.com/dart-lang/sdk/main/pkg/linter/tool/
   -o /tmp/dart_lint_rules.json
 ```
 
-Each entry has these fields (verified 2026-08-09, 262 rules):
+For a release, compare against the SDK users actually have: replace `main` with
+the stable tag (`3.14.0`), and record that tag in the report. `main` carries
+lints that no released SDK has yet.
+
+Each entry has these fields (verified 2026-11-12 on the 3.14.0 tag, 264 rules):
 
 | Field | Meaning |
 |---|---|
 | `name` | snake_case rule name |
 | `description` | one-line summary |
 | `categories` | e.g. `["style"]`, `["errorProne"]`, `["flutter"]` |
-| `state` | `stable` \| `experimental` \| `deprecated` \| `removed` |
+| `state` | `stable` \| `experimental` \| `deprecated` \| `removed`. A rule in the SDK's internal `testing` state is left out of the file entirely: `use_primary_constructors` is missing from the 3.14.0 file although Dart 3.14.0 still runs it when enabled |
 | `incompatible` | rules that conflict with it |
-| `sets` | which of `core` / `recommended` / `flutter` include it |
+| `sets` | present but empty in every entry (checked on the 3.11.0, 3.13.0 and 3.14.0 tags). Read set membership from `package:lints` `core.yaml` / `recommended.yaml` and `flutter_lints` `flutter.yaml` instead |
 | `fixStatus` | `hasFix` / `noFix` / … |
 | `details` | full markdown docs, including `**BAD:**` / `**GOOD:**` samples |
 | `sinceDartSdk` | SDK version that introduced it |
@@ -43,8 +47,8 @@ Each entry has these fields (verified 2026-08-09, 262 rules):
 If the fetch fails (offline, moved file), fall back in this order and say which
 source you used in the report:
 1. `https://raw.githubusercontent.com/dart-lang/sdk/stable/pkg/linter/tool/machine/rules.json`
-2. WebFetch on `https://dart.dev/tools/linter-rules` (degraded: no `details`, no
-   `sets`, so semantic matching in Step 3 will be weaker — flag this).
+2. WebFetch on `https://dart.dev/tools/linter-rules` (degraded: no `details`,
+   so semantic matching in Step 3 will be weaker — flag this).
 
 **Filter before comparing.** Only rules with `state` of `stable` or
 `deprecated` are candidates for displacing one of ours. A rule the SDK has
@@ -58,7 +62,7 @@ not in `rules.json`:
 curl -fsSL https://raw.githubusercontent.com/flutter/packages/main/packages/flutter_lints/lib/flutter.yaml
 ```
 
-As of 2026-08-09 this file only *enables* SDK rules and defines none of its own,
+As of 2026-11-12 this file only *enables* SDK rules and defines none of its own,
 so it adds no collisions beyond what `rules.json` already covers. Check it
 anyway — that could change — but do not expect new rule names from it. Its real
 use is the reverse check below: rules a Flutter user already has switched on.
@@ -102,7 +106,7 @@ equal the number of rule files (one `LintCode` per rule in this package). If it
 does not, stop and fix the extraction — a short inventory produces a
 false-clean report, which is worse than no report.
 
-Read the rule sources in batches with parallel tool calls; do not read all 138
+Read the rule sources in batches with parallel tool calls; do not read all 264
 files one at a time. Reserve full reads for the rules that reach a `DUPLICATE`
 or `SUPERSET` verdict in Step 3 — those verdicts must be backed by the visitor
 logic, never by the message text alone.
@@ -245,7 +249,7 @@ a release where their config keeps working while they migrate.
 The analyzer has a first-class mechanism for this — do not invent one.
 `AnalysisRule` accepts a `state:` parameter of type `RuleState`
 (`package:analyzer/analysis_rule/rule_state.dart`), and our `ManyLintsRule` base
-class already forwards it via `super.state`. Verified against analyzer 14.1.0:
+class already forwards it via `super.state`. Verified against analyzer 14.1.0, 14.5.0 and 14.7.0:
 
 ```dart
 import 'package:analyzer/analysis_rule/rule_state.dart';
