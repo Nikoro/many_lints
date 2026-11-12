@@ -109,8 +109,7 @@ The report lands on the *second* occurrence, and the quick fix removes that sect
 
 ## Configuration
 
-This rule is in the **`core`** preset, so it is on with `preset: core`,
-`preset: recommended` or `preset: opinionated`.
+This rule is in the **`core`** preset, so it is on with `preset: core` and every preset above it.
 
 To turn it off:
 

@@ -56,7 +56,8 @@
   header, and never deletes a comment.
 - Requires `analyzer` ^14.5.0, `analyzer_plugin` ^0.14.18 and
   `analysis_server_plugin` ^0.3.24 (was ^14.1.0, ^0.14.14 and ^0.3.20), the
-  versions matching the analyzer in Dart 3.14.0. `analysis_server_plugin`
+  newest releases that still allow Dart 3.11 (the next ones need 3.13; Dart
+  3.14.0 itself carries `analyzer` 14.6.0-dev). `analysis_server_plugin`
   0.3.23 and later run faster when every enabled rule only needs the parsed
   AST. The minimum Dart SDK stays 3.11; on Dart 3.13 and later the analysis
   server can resolve up to `analyzer` 14.7.0.

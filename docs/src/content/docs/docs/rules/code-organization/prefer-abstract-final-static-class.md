@@ -19,7 +19,7 @@ Without those modifiers the class can be instantiated and subclassed. `AppColors
 
 A quick fix adds the modifiers.
 
-This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` or `preset: pedantic`.
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and every preset above it.
 
 :::caution[Contradicts an SDK rule]
 The SDK rule [`avoid_classes_with_only_static_members`](https://dart.dev/tools/linter-rules/avoid_classes_with_only_static_members) gives the **opposite** advice: it says not to create such a class at all, and to use top-level functions and constants instead — Dart has real top-level declarations, unlike Java.

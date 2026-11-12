@@ -153,8 +153,7 @@ rules.
 
 ## Configuration
 
-This rule is in the **`recommended`** preset, so it is on with `preset: recommended`
-or `preset: opinionated`.
+This rule is in the **`recommended`** preset, so it is on with `preset: recommended` and every preset above it.
 
 To turn it off:
 

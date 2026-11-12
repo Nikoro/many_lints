@@ -121,7 +121,7 @@ A `continue` inside a `switch` case within the loop body is not the loop body's 
 ## Turning this rule off
 
 This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated` or `preset: pedantic`, or by name:
+`preset: opinionated` and every preset above it, or by name:
 
 ```yaml
 # many_lints.yaml

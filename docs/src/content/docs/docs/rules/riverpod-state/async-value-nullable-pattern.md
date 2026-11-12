@@ -104,8 +104,7 @@ void onData(AsyncValue<int?> asyncValue) {
 
 ## Configuration
 
-This rule is in the **`core`** preset, so it is on with `preset: core`,
-`preset: recommended` or `preset: opinionated`.
+This rule is in the **`core`** preset, so it is on with `preset: core` and every preset above it.
 
 To turn it off:
 

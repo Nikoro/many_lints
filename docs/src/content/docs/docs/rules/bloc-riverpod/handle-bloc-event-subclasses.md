@@ -100,7 +100,7 @@ Only the event type argument of `extends Bloc<E, S>` is read. A Bloc that reache
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
+`preset: recommended` and every preset above it. Add it to `preset: core` with
 `handle_bloc_event_subclasses: true`.
 
 To turn it off:

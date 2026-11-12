@@ -17,7 +17,7 @@ Flags `shrinkWrap: true` on a `ListView`.
 
 Shrink-wrapping makes the list measure **every** child up front, off-screen ones included, so it can size itself. That is exactly the lazy layout a `ListView` exists to provide. On a long list it is visible jank; on a very long one it is an ANR.
 
-This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and `preset: pedantic`. No configuration.
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and every preset above it. No configuration.
 
 **See also:** [ScrollView.shrinkWrap](https://api.flutter.dev/flutter/widgets/ScrollView/shrinkWrap.html)
 

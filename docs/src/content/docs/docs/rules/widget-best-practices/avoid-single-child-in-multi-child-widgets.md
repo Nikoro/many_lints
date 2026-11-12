@@ -15,7 +15,7 @@ A `Column` with one child does the same thing as the child on its own, plus a la
 
 Reported for `Column`, `Row`, `Wrap`, `Flex`, `SliverList`, `SliverMainAxisGroup`, `SliverCrossAxisGroup`, `SliverChildListDelegate`, and `MultiSliver` from `sliver_tools`.
 
-This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and `preset: pedantic`. No configuration.
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and every preset above it. No configuration.
 
 **See also:** [Column](https://api.flutter.dev/flutter/widgets/Column-class.html) | [Row](https://api.flutter.dev/flutter/widgets/Row-class.html)
 

@@ -115,7 +115,7 @@ The quick fix declines to hoist an `else` body that declares a variable, since t
 ## Configuration
 
 This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
+`preset: opinionated` and every preset above it, or by name:
 
 ```yaml
 # many_lints.yaml

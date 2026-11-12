@@ -92,7 +92,7 @@ class Draft {
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`.
+`preset: recommended` and every preset above it.
 
 To turn it off:
 

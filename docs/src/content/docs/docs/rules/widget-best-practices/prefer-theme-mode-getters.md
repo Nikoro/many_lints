@@ -15,7 +15,7 @@ sidebar:
 
 Flags a `ThemeMode` compared with `==` or `!=` against `ThemeMode.dark`, `ThemeMode.light` or `ThemeMode.system`. Flutter 3.44 added `isDark`, `isLight` and `isSystem`, which say the same thing without the repeated `ThemeMode.` noise. The quick fix rewrites the comparison.
 
-This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and `preset: pedantic`. No configuration.
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and every preset above it. No configuration.
 
 **See also:** [Flutter 3.44.0 release notes](https://docs.flutter.dev/release/release-notes/release-notes-3.44.0)
 

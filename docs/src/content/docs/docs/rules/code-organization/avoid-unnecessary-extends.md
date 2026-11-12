@@ -13,7 +13,7 @@ Flags a class that explicitly extends `dart:core`'s `Object`.
 
 Every Dart class extends `Object` already, so the clause states the default while looking like a decision. A reader who sees an `extends` expects the superclass to matter, and has to recall that this one does not.
 
-This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` or `preset: pedantic`.
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and every preset above it.
 
 **See also:** [`Object`](https://api.dart.dev/stable/dart-core/Object-class.html)
 

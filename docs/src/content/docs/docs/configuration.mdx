@@ -325,6 +325,16 @@ Use `analysis_options.yaml` for the normal single-file setup. Choose standalone
 `many_lints.yaml` only when you deliberately want plugin configuration separated. If you
 create both, `many_lints.yaml` wins outright; they are not merged.
 
+:::note[Two limitations worth knowing]
+The `rules:` block cannot live *inside* `plugins: many_lints:`. The analyzer accepts
+only enable/disable and severity there, and reports any other key as an unsupported
+option — which is why the configuration sits either one level up or in its own file.
+
+The top-level `many_lints:` section is also **not** inherited through `include:`,
+because the analyzer never parses it. If you share a base `analysis_options.yaml`
+across packages, use a `many_lints.yaml` in each package instead.
+:::
+
 ### What `exclude` accepts
 
 Every rule supports `exclude`. Each `exclude` sits under one rule and affects only that
@@ -374,16 +384,6 @@ rules:
 :::caution[If you create both]
 `many_lints.yaml` wins outright and the `analysis_options.yaml` section is ignored —
 the two are **not** merged.
-:::
-
-:::note[Two limitations worth knowing]
-The `rules:` block cannot live *inside* `plugins: many_lints:`. The analyzer accepts
-only enable/disable and severity there, and reports any other key as an unsupported
-option — which is why the configuration sits either one level up or in its own file.
-
-The top-level `many_lints:` section is also **not** inherited through `include:`,
-because the analyzer never parses it. If you share a base `analysis_options.yaml`
-across packages, use Option B in each package instead.
 :::
 
 ## Limiting a rule to certain paths

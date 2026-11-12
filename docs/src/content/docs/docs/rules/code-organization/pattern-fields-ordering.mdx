@@ -107,8 +107,8 @@ String describe(Object o) => switch (o) {
 };
 
 // Don't — a destructuring declaration
-void unpack(({int width, int height}) box) {
-  final (:height, :width) = (width: box.width, height: box.height);
+void unpack(({int height, int width}) box) {
+  final (:width, :height) = box;
   print('$width x $height');
 }
 ```
@@ -127,13 +127,13 @@ String describe(Object o) => switch (o) {
   _ => 'other',
 };
 
-void unpack(({int width, int height}) box) {
-  final (:height, :width) = (height: box.height, width: box.width);
+void unpack(({int height, int width}) box) {
+  final (:height, :width) = box;
   print('$width x $height');
 }
 ```
 
-Note the second case: `(:height, :width)` is already alphabetical, so it is the *record literal* on the right that had to move.
+Only the pattern is ordered. A record literal such as `(width: 1, height: 2)` is not checked by this rule, and [`record_fields_ordering`](/many_lints/docs/rules/code-organization/record-fields-ordering/) only orders record type annotations.
 
 ### The `:name` shorthand is ordered by that name
 

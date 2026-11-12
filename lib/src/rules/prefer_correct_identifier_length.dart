@@ -18,8 +18,8 @@ import '../many_lints_rule.dart';
 ///
 /// `min_length` defaults to 2 and `max_length` to 40. The conventional short
 /// names are exempt out of the box — loop counters, coordinates, the `e` of a
-/// catch clause — through `allow_names`, which *adds* to that built-in set
-/// rather than replacing it.
+/// catch clause. `allow_names` *replaces* that built-in set, and
+/// `additional_allow_names` extends it.
 ///
 /// Only declarations this codebase controls are checked: locals, parameters,
 /// fields, top-level variables and their declarations. An override is skipped,

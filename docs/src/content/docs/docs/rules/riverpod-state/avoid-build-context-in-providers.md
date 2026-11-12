@@ -66,7 +66,7 @@ class ArticleList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = Localizations.localeOf(context);
     final articles = ref.watch(articlesProvider(locale.languageCode));
-    return Text('${articles.valueOrNull?.length}');
+    return Text('${articles.value?.length}');
   }
 }
 ```
@@ -123,7 +123,7 @@ context wrapped in some project-specific holder, is not reported.
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
+`preset: recommended` and every preset above it. Add it to `preset: core` with
 `avoid_build_context_in_providers: true`.
 
 To turn it off:

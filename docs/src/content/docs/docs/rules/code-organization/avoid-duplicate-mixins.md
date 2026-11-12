@@ -15,7 +15,7 @@ Flags a `with` clause that lists the same mixin more than once.
 
 Duplicates arrive through merges, and through a rename that collapses two once-distinct names onto one.
 
-This rule is in the **`recommended`** preset, so it is on with `preset: recommended`, `preset: opinionated` or `preset: pedantic`.
+This rule is in the **`recommended`** preset, so it is on with `preset: recommended` and every preset above it.
 
 **See also:** [Mixins](https://dart.dev/language/mixins)
 

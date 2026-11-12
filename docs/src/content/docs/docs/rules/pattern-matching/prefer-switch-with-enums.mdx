@@ -42,14 +42,17 @@ String describe(Status status) {
 ```
 
 Add `archived` to the enum and this function silently returns `''` for it. The
-same blind spot applies to comparisons joined by `||`, and to a membership test
-over a set literal:
+same blind spot applies to comparisons joined by `||` in an `if` condition, and
+to a membership test over a set literal:
 
 ```dart
 bool isOpen(Status status) {
-  return status == Status.active ||
+  if (status == Status.active ||
       status == Status.inactive ||
-      status == Status.pending;
+      status == Status.pending) {
+    return true;
+  }
+  return false;
 }
 
 bool isKnown(Status status) {
@@ -77,6 +80,7 @@ bool isOpen(Status status) => switch (status) {
 
 The rule requires the whole condition to be replaceable, so it stays silent when:
 
+- The `||` chain is not an `if` condition. `return a == E.x || a == E.y || a == E.z;` is not reported.
 - Fewer than three enum comparisons are involved — a short chain is not worth restructuring. Comparisons joined by `||` count individually, so `a == E.x || a == E.y` in one branch plus `a == E.z` in the next reaches the threshold.
 - The branches test different subjects, or mix an enum comparison with an unrelated condition.
 - The enum is nullable, since a `null` case needs handling a plain switch over constants does not give.
@@ -88,7 +92,7 @@ Operand order does not matter: `Status.active == status` is recognised the same 
 ## Turning this rule off
 
 This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
+`preset: opinionated` and every preset above it, or by name:
 
 ```yaml
 # many_lints.yaml

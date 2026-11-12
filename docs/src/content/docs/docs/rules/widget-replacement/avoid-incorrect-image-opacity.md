@@ -111,7 +111,7 @@ decision, so nothing is offered automatically.
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
+`preset: recommended` and every preset above it. Add it to `preset: core` with
 `avoid_incorrect_image_opacity: true`.
 
 To turn it off:

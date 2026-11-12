@@ -19,7 +19,7 @@ Inside that scope the name no longer means the class. Every annotation reading `
 
 A quick fix renames the parameter to a free single letter.
 
-This rule is in the **`recommended`** preset, so it is on with `preset: recommended`, `preset: opinionated` or `preset: pedantic`.
+This rule is in the **`recommended`** preset, so it is on with `preset: recommended` and every preset above it.
 
 **See also:** [Dart language - Generics](https://dart.dev/language/generics) | [Dart lint: avoid_shadowing_type_parameters](https://dart.dev/tools/linter-rules/avoid_shadowing_type_parameters)
 

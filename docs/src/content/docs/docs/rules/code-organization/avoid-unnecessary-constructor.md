@@ -13,7 +13,7 @@ Flags an empty unnamed constructor that writes out exactly what Dart supplies wh
 
 `class A { A(); }` has no parameters, no initializers, no body and no documentation. The line adds nothing a reader can act on, and it invites the assumption that construction does something.
 
-This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` or `preset: pedantic`.
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and every preset above it.
 
 ## Don't
 

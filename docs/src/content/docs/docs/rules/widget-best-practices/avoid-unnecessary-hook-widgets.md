@@ -17,7 +17,7 @@ Flags a `HookWidget` whose `build` calls no hook, and a `HookBuilder` whose `bui
 
 `HookWidget` installs a hook-management layer over the normal widget lifecycle. With no hooks that layer is pure overhead, and the class advertises state management that is not there. The quick fix rewrites the superclass to `StatelessWidget`.
 
-This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and `preset: pedantic`. No configuration.
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and every preset above it. No configuration.
 
 **See also:** [flutter_hooks](https://pub.dev/packages/flutter_hooks)
 

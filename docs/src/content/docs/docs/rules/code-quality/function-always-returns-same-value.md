@@ -71,7 +71,7 @@ class ScrollLogger {
 ## Turning this rule off
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`.
+`preset: recommended` and every preset above it.
 
 To disable this rule:
 

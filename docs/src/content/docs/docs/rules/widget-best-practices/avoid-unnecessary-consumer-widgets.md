@@ -19,7 +19,7 @@ A consumer subscribes to the provider container and joins the dependency graph w
 
 Covers `ConsumerWidget`, `ConsumerStatefulWidget` and `HookConsumerWidget`. The quick fix rewrites the base class and removes the unused `ref` parameter.
 
-This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and `preset: pedantic`. No configuration.
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and every preset above it. No configuration.
 
 **See also:** [Riverpod consumers](https://riverpod.dev/docs/concepts2/consumers)
 

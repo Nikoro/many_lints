@@ -85,7 +85,7 @@ other tests run.
 ## Turning this rule off
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended`, `preset: opinionated` or `preset: pedantic`. Add it to
+`preset: recommended` and every preset above it. Add it to
 `preset: core` with `avoid_focused_tests: true`.
 
 To turn it off:

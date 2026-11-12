@@ -141,7 +141,7 @@ was already broken.
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
+`preset: recommended` and every preset above it. Add it to `preset: core` with
 `avoid_expanded_as_spacer: true`.
 
 To turn it off:

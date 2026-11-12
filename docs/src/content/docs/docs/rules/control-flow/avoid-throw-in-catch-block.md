@@ -128,7 +128,7 @@ The quick fix rewrites `throw X` to `Error.throwWithStackTrace(X, stackTrace)`, 
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
+`preset: recommended` and every preset above it. Add it to `preset: core` with
 `avoid_throw_in_catch_block: true`.
 
 To turn it off:

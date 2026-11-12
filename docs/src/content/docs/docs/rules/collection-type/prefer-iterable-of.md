@@ -82,7 +82,7 @@ final ints = List<int>.from(mixed);
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
+`preset: recommended` and every preset above it. Add it to `preset: core` with
 `prefer_iterable_of: true`.
 
 To turn it off:

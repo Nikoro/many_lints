@@ -119,7 +119,7 @@ class ProfileNotifier extends Notifier<String> {
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
+`preset: recommended` and every preset above it. Add it to `preset: core` with
 `avoid_notifier_constructors: true`.
 
 To turn it off:

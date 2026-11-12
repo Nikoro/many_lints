@@ -143,7 +143,7 @@ field of some unrelated class you happened to call `ref` is not.
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
+`preset: recommended` and every preset above it. Add it to `preset: core` with
 `avoid_ref_watch_outside_build: true`.
 
 To turn it off:

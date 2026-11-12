@@ -36,7 +36,7 @@ class ResultsView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final results = ref.watch(searchProvider(['sale', 'new'])); // LINT
-    return Text('${results.valueOrNull?.length}');
+    return Text('${results.value?.length}');
   }
 }
 ```
@@ -89,7 +89,7 @@ class ReportView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final report = ref.watch(reportProvider(DateRange(from, to))); // LINT
-    return Text('${report.valueOrNull?.total}');
+    return Text('${report.value?.total}');
   }
 }
 ```
@@ -137,7 +137,7 @@ class ReportView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final report = ref.watch(reportProvider(DateRange(from, to)));
-    return Text('${report.valueOrNull?.total}');
+    return Text('${report.value?.total}');
   }
 }
 ```
@@ -168,7 +168,7 @@ A class that declares `operator ==` and compares by identity anyway passes.
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
+`preset: recommended` and every preset above it. Add it to `preset: core` with
 `provider_parameters: true`.
 
 To turn it off:

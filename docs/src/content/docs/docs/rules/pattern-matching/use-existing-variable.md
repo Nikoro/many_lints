@@ -134,7 +134,7 @@ the point — silence the line with `// ignore: many_lints/use_existing_variable
 ## Configuration
 
 This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
+`preset: opinionated` and every preset above it, or by name:
 
 ```yaml
 # many_lints.yaml

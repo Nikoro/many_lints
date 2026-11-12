@@ -118,7 +118,7 @@ the render — it is purely a simplification.
 ## Configuration
 
 This rule is in the **`opinionated`** preset, so it is on with
-`preset: opinionated`, or by name:
+`preset: opinionated` and every preset above it, or by name:
 
 ```yaml
 # many_lints.yaml

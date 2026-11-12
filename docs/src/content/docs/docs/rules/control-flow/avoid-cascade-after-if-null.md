@@ -112,7 +112,7 @@ The quick fix wraps the if-null expression, producing `(a ?? B())..m()`. That is
 ## Configuration
 
 This rule is in the **`recommended`** preset, so it is on with
-`preset: recommended` or `preset: opinionated`. Add it to `preset: core` with
+`preset: recommended` and every preset above it. Add it to `preset: core` with
 `avoid_cascade_after_if_null: true`.
 
 To turn it off:

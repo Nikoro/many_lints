@@ -19,7 +19,7 @@ Collection-for allocates no intermediate iterable, sits inline in the `children:
 
 A quick fix rewrites each shape.
 
-This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` or `preset: pedantic`.
+This rule is in the **`opinionated`** preset, so it is on with `preset: opinionated` and every preset above it.
 
 **See also:** [Flutter - Flex.children](https://api.flutter.dev/flutter/widgets/Flex/children.html) | [Dart collection elements](https://dart.dev/language/collections#control-flow-operators)
 
