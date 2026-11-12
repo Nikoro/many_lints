@@ -1,12 +1,31 @@
 # Changelog
 
-## [1.3.0] - 2026-11-11
+## [1.3.0] - 2026-11-12
 
 ### Added
 
+- `prefer_module_barrel_imports` and `require_module_barrel` (architecture, in
+  no preset). A module is a directory directly below a `module_roots` entry
+  (default `[lib]`), and its public entry point is the file named after that
+  directory, such as `lib/users/users.dart`. `prefer_module_barrel_imports`
+  reports a relative or package import, including each conditional-import
+  branch, that reaches into another module without going through that file.
+  Its `package_entry_points` option names the entry point that other packages
+  and same-package code outside `lib/` must use, and reports code inside
+  `lib/` that imports its own package's entry point. `require_module_barrel`
+  reports every file of a module that has no entry point. Both skip generated
+  files; `require_module_barrel` also skips part files. Neither has a quick
+  fix.
+- `avoid_chain_first_swallowing_failure` (fpdart, `pedantic` preset) reports
+  `chainFirst` on `Either`, `TaskEither` and `IOEither`. fpdart's `chainFirst`
+  ends in `orElse((l) => right(b))`, so a failing effect is turned back into
+  success: a check chained this way cannot reject and a failed write goes
+  unnoticed. A quick fix rewrites `x.chainFirst(effect)` to
+  `x.flatMap((value) => effect(value).map((_) => value))` for a tear-off or a
+  one-expression lambda. `ignore_tests` (default `true`) skips `test/`.
 - `banned:` entries take an `except:` list of globs, in every rule of the
-  `avoid_banned_*` family, `banned_usage` included. It lifts that entry alone
-  in the named paths, so `deny: ['Uuid.new']`, `in: ['lib/**']`, `except:
+  `avoid_banned_*` family and in `banned_usage`. It lifts that entry alone in
+  the named paths, so `deny: ['Uuid.new']`, `in: ['lib/**']`, `except:
   ['lib/core/ids/uuid_provider.dart']` allows one file to construct a `Uuid`
   while every other entry still applies there. Before, the only carve-out was
   the rule-wide `exclude:`, which lifts every entry of the rule.
@@ -18,22 +37,54 @@
   `systemClock`. Library spellings are matched by `deny:` only, so existing
   `deny_pattern:` entries match exactly what they did before.
 
-- `prefer_module_barrel_imports` and `require_module_barrel` (architecture, in
-  no preset). A module is a directory directly below a configured
-  `module_roots` entry (default `[lib]`), and its public entry point is the
-  file named after that directory, such as `lib/users/users.dart`.
-  `prefer_module_barrel_imports` reports a relative or package import into
-  another module that bypasses that file; `package_entry_points` names the
-  entry point other packages must use. `require_module_barrel` reports a
-  module that has no entry point at all.
+### Changed
 
-- `avoid_chain_first_swallowing_failure` (fpdart, `pedantic` preset) reports
-  `chainFirst` on `Either`, `TaskEither` and `IOEither`. fpdart's `chainFirst`
-  ends in `orElse((l) => right(b))`, so a failing effect is turned back into
-  success: a check chained this way cannot reject and a failed write goes
-  unnoticed. A quick fix rewrites `x.chainFirst(effect)` to
-  `x.flatMap((value) => effect(value).map((_) => value))` for a tear-off or a
-  one-expression lambda. `ignore_tests` (default `true`) skips `test/`.
+- The `pedantic` preset gains `avoid_chain_first_swallowing_failure` and now
+  has 243 rules (was 242). No rule left any preset, and `core`, `recommended`
+  and `opinionated` are unchanged. The two module-barrel rules are in no
+  preset.
+- `prefer_primary_constructors` (`opinionated` preset) now covers every class
+  and enum whose one generative constructor can move into the header: with
+  methods, other fields, a superclass, `super.x` and plain parameters, an
+  initializer list, a body, a mutable field (`var`), a named constructor,
+  factories or redirecting constructors beside it. Projects on `opinionated`
+  or `pedantic` with Dart 3.13 language features will see new findings. A type
+  that declares no constructor is still never reported, which makes it a
+  drop-in replacement for the SDK's `use_primary_constructors` without the
+  empty `()` it asks for. The fix moves an initializer list and a body into a
+  `this` block, carries field comments, doc comments and annotations into the
+  header, and never deletes a comment.
+- Requires `analyzer` ^14.5.0, `analyzer_plugin` ^0.14.18 and
+  `analysis_server_plugin` ^0.3.24 (was ^14.1.0, ^0.14.14 and ^0.3.20), the
+  versions matching the analyzer in Dart 3.14.0. `analysis_server_plugin`
+  0.3.23 and later run faster when every enabled rule only needs the parsed
+  AST. The minimum Dart SDK stays 3.11; on Dart 3.13 and later the analysis
+  server can resolve up to `analyzer` 14.7.0.
+- The example app imports `package:material_ui` instead of
+  `package:flutter/material.dart`, which Flutter 3.50 deprecates, and so needs
+  Flutter 3.47 or later. The package itself does not depend on Flutter.
+- Every rule page on the documentation site was rewritten around how to use
+  the rule: the configuration a rule needs comes first, and each Don't example
+  is code the rule reports. The test suite now runs each page's Don't example
+  against the rule (pages whose rule needs types the test stubs do not carry
+  are listed as skipped), and runs every before/after pair on the assists
+  page. Pages that described a rule wrongly were corrected, among them:
+  `prefer_typedefs_for_callbacks` (`min_parameters` is where reporting starts,
+  so the default 2 reports a two-parameter type), `prefer_correct_identifier_length`
+  (`allow_names` replaces the built-in exemptions; `additional_allow_names`
+  extends them), `prefer_typed_exceptions` (`allow` applies only to
+  `dart:core` types), `prefer_explicit_parameter_names` and
+  `prefer_single_declaration_per_file` (the `pedantic` preset sets
+  `min_parameters: 1` and `ignore_private: false`), `avoid_removed_fpdart_api`
+  (now a table of exactly what is reported), `prefer_container` (the rewrite
+  can change what is drawn) and `use_gap` (names the `opinionated` rule it
+  contradicts).
+- Rule pages updated for Dart 3.14 and Flutter 3.50: `prefer_return_await`
+  links the SDK's `async_return_with_no_await` instead of the now deprecated
+  `unnecessary_await_in_return` and explains when to use which;
+  `prefer_shorthands_with_constructors` no longer claims to ignore the
+  parameter type; Flutter examples import `package:material_ui` or
+  `package:flutter/widgets.dart`.
 
 ### Fixed
 
@@ -49,7 +100,6 @@
   comment reference (`[DateTime.now]`) is no longer reported, and a bare-name
   entry no longer matches a local function, local variable or parameter that
   shares the name.
-
 - `prefer_theme_mode_getters` and `use_sliver_prefix` recognise the types of
   `package:material_ui`. Flutter 3.50 deprecates
   `package:flutter/material.dart` in favour of that package, which declares
@@ -60,15 +110,11 @@
   `.new()` for `shape: const Border()`, where the parameter is the abstract
   `ShapeBorder` and the shorthand does not compile. A `dynamic` parameter is
   no longer reported.
-- The "Expand 'tryCatch' into 'try'/'catch'" assist is no
-  longer offered from inside an unrelated closure nested in its arguments.
-- The "Convert to collection-for" assist writes `for (` with a space, as
-  `dart format` does.
-
-- Hook rules exclude resolved Dart and Flutter SDK functions, including
-  `usePathUrlStrategy()` from `flutter_web_plugins`, from hook-name detection.
-  Custom hooks remain checked, including functions with the same name.
-
+- `avoid_conditional_hooks`, `avoid_hooks_outside_build`,
+  `avoid_misused_hooks`, `avoid_unnecessary_hook_widgets` and
+  `prefer_use_prefix` no longer treat resolved Dart and Flutter SDK functions,
+  such as `usePathUrlStrategy()` from `flutter_web_plugins`, as hooks. A
+  project's own hook with the same name is still checked.
 - `prefer_abstract_final_static_class` no longer reports a class whose primary
   constructor declares parameters (`class const Key._(final String value) {
   static Key parse(...) }`). The fields live in the header, so the class is
@@ -85,25 +131,10 @@
   the results, so the tasks after a failure still run. The lightbulb now reads
   "Convert to 'sequenceListSeq' (runs every task after a failure)" and ranks
   below the exact conversions, like the `chainFirst` assist.
-
-### Changed
-
-- `prefer_primary_constructors` now covers every class and enum whose one
-  generative constructor can move into the header: with methods, other
-  fields, a superclass, `super.x` and plain parameters, an initializer list, a
-  body, a mutable field (`var`), a named constructor, factories or redirecting
-  constructors beside it. A type that declares no constructor is still never
-  reported, which makes it a drop-in replacement for the SDK's
-  `use_primary_constructors` without the empty `()` it asks for. The fix moves
-  an initializer list and a body into a `this` block, carries field comments,
-  doc comments and annotations into the header, and never deletes a comment.
-
-- Requires `analyzer` ^14.5.0, `analyzer_plugin` ^0.14.18 and
-  `analysis_server_plugin` ^0.3.24 (was ^14.1.0, ^0.14.14 and ^0.3.20), the
-  versions matching the analyzer in Dart 3.14.0. `analysis_server_plugin`
-  0.3.23 and later run faster when every enabled rule only needs the parsed
-  AST. The minimum Dart SDK stays 3.11; on Dart 3.13 and later the analysis
-  server can resolve up to `analyzer` 14.7.0.
+- The "Expand 'tryCatch' into 'try'/'catch'" assist is no longer offered from
+  inside an unrelated closure nested in its arguments.
+- The "Convert to collection-for" assist writes `for (` with a space, as
+  `dart format` does.
 
 ### Notes
 
@@ -125,6 +156,8 @@
   `analysis_options.yaml`; earlier SDKs ignore it with a
   `plugins_in_inner_options` warning. Each such member gets its own plugin
   isolate and is therefore subject to #64023.
+- `dart fix --apply` still does not apply fixes from analyzer plugins on Dart
+  3.14.0; use the IDE quick fixes.
 
 ## [1.2.0] - 2026-08-27
 
