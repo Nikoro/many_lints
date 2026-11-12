@@ -1,6 +1,6 @@
 ---
 title: prefer_equatable_mixin
-description: "Prefer using EquatableMixin instead of extending Equatable."
+description: "Prefer mixing in Equatable instead of extending it."
 sidebar:
   badge:
     text: "Fix"
@@ -13,7 +13,14 @@ sidebar:
 <span class="rule-badge rule-badge--fix">Fix</span>
 <span class="rule-badge rule-badge--category">Type Annotations</span>
 
-Flags a class that extends `Equatable` from `package:equatable` instead of mixing in `EquatableMixin`. Both give the same value equality; only one leaves the `extends` slot free.
+Flags a class that extends `Equatable` from `package:equatable` instead of mixing it in. Both give the same value equality; only one leaves the `extends` slot free.
+
+What to mix in depends on the equatable version your package resolves, and the message and quick fix follow it:
+
+| equatable | Mix in |
+| --- | --- |
+| 2.1 and later, including 3.0 | `with Equatable`. 2.1 deprecated `EquatableMixin` and 3.0 removed it. |
+| 2.0 | `with Equatable`. `Equatable` is not a mixin class there. |
 
 ## Don't
 
@@ -39,7 +46,7 @@ class CartItem extends Equatable {
 ```dart
 import 'package:equatable/equatable.dart';
 
-class CartItem with EquatableMixin {
+class CartItem with Equatable {
   CartItem(this.sku, this.quantity);
 
   final String sku;
@@ -52,7 +59,7 @@ class CartItem with EquatableMixin {
 
 ### The point: `extends` stays available
 
-With the mixin, the same model can join a hierarchy without giving up equality:
+Mixed in, the same model can join a hierarchy without giving up equality:
 
 ```dart
 import 'package:equatable/equatable.dart';
@@ -63,7 +70,7 @@ abstract class DomainEntity {
   final String id;
 }
 
-class CartItem extends DomainEntity with EquatableMixin {
+class CartItem extends DomainEntity with Equatable {
   CartItem(super.id, this.sku, this.quantity);
 
   final String sku;
@@ -88,14 +95,14 @@ abstract class BaseEntity extends Equatable {
 }
 
 // Do
-abstract class BaseEntity with EquatableMixin {
+abstract class BaseEntity with Equatable {
   const BaseEntity();
 }
 ```
 
 ### Not reported
 
-Only `extends Equatable` is reported. A class that already uses the mixin, and
+Only `extends Equatable` is reported. A class that already mixes it in, and
 a class extending something else entirely, are left alone.
 
 **See also:** [equatable package](https://pub.dev/packages/equatable)

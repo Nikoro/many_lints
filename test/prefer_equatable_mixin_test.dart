@@ -111,4 +111,80 @@ abstract class BaseEntity extends Equatable {
       [lint(70, 17)],
     );
   }
+
+  // --- equatable versions ---
+
+  Future<void> test_equatable2_0SuggestsEquatableMixin() async {
+    await assertDiagnostics(
+      r'''
+import 'package:equatable/equatable.dart';
+
+class Person extends Equatable {
+  const Person();
+  @override
+  List<Object?> get props => [];
 }
+''',
+      [lint(57, 17, correctionContains: "'with EquatableMixin'")],
+    );
+  }
+
+  Future<void> test_equatable3SuggestsEquatableAsAMixin() async {
+    newFile('/package/equatable/lib/equatable.dart', _equatable3);
+    await assertDiagnostics(
+      r'''
+import 'package:equatable/equatable.dart';
+
+class Person extends Equatable {
+  const Person();
+  @override
+  List<Object?> get props => [];
+}
+''',
+      [lint(57, 17, correctionContains: "'with Equatable'")],
+    );
+  }
+
+  Future<void>
+  test_equatable2_1SuggestsEquatableOverTheDeprecatedMixin() async {
+    newFile('/package/equatable/lib/equatable.dart', '''
+$_equatable3
+@Deprecated('use Equatable as a mixin instead')
+mixin EquatableMixin {
+  List<Object?> get props;
+}
+''');
+    await assertDiagnostics(
+      r'''
+import 'package:equatable/equatable.dart';
+
+class Person extends Equatable {
+  const Person();
+  @override
+  List<Object?> get props => [];
+}
+''',
+      [lint(57, 17, correctionContains: "'with Equatable'")],
+    );
+  }
+
+  Future<void> test_equatable3ClassMixingInEquatable() async {
+    newFile('/package/equatable/lib/equatable.dart', _equatable3);
+    await assertNoDiagnostics(r'''
+import 'package:equatable/equatable.dart';
+
+class Person with Equatable {
+  const Person();
+  @override
+  List<Object?> get props => [];
+}
+''');
+  }
+}
+
+const _equatable3 = '''
+abstract mixin class Equatable {
+  const Equatable();
+  List<Object?> get props;
+}
+''';

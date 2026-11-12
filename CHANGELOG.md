@@ -175,6 +175,11 @@
   literal the rule now reads the literal's context type instead of its
   inferred type, so `final paddings = [EdgeInsets.all(8)];`, where `[.all(8)]`
   has no context to resolve against, is no longer reported.
+- `prefer_equatable_mixin` and its fix follow the equatable version the
+  package resolves. equatable 3.0 removed `EquatableMixin` and 2.1 deprecated
+  it, so the advice `with EquatableMixin` did not compile on 3.0. When
+  `Equatable` is a mixin class (2.1 and later) the rule now suggests and the
+  fix writes `with Equatable`; on 2.0 it still suggests `with EquatableMixin`.
 - `prefer_module_barrel_imports` allows an import of any of a package's
   `package_entry_points`; with `package:ext/ext.dart` and
   `package:ext/testing.dart` configured, `package:ext/testing.dart` was

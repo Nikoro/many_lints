@@ -227,6 +227,34 @@ class Person extends Equatable with Loggable {
       expect(fixed, contains('class Person with Loggable, EquatableMixin {'));
       expect(fixed, isNot(contains('extends Equatable')));
     });
+
+    test('mixes in Equatable itself on equatable 3', () async {
+      final fixed = await harness.applyFix(
+        r'''
+import 'package:equatable/equatable.dart';
+
+class Person extends Equatable {
+  const Person(this.name);
+  final String name;
+
+  @override
+  List<Object?> get props => [name];
+}
+''',
+        'prefer_equatable_mixin',
+        packages: {
+          'equatable': '''
+abstract mixin class Equatable {
+  const Equatable();
+  List<Object?> get props;
+}
+''',
+        },
+      );
+
+      expect(fixed, contains('class Person with Equatable {'));
+      expect(fixed, isNot(contains('EquatableMixin')));
+    });
   });
 
   group('prefer_expect_later', () {

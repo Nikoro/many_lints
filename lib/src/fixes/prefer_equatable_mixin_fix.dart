@@ -1,16 +1,20 @@
 import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analysis_server_plugin/edit/dart/dart_fix_kind_priority.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that replaces `extends Equatable` with `with EquatableMixin`.
+import '../rules/prefer_equatable_mixin.dart';
+
+/// Fix that replaces `extends Equatable` with `with Equatable`, or with
+/// `with EquatableMixin` on equatable 2.0; see [equatableMixinName].
 class PreferEquatableMixinFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferEquatableMixin',
     DartFixKindPriority.standard,
-    "Replace with 'with EquatableMixin'",
+    "Replace with 'with {0}'",
   );
 
   PreferEquatableMixinFix({required super.context});
@@ -23,6 +27,11 @@ class PreferEquatableMixinFix extends ResolvedCorrectionProducer {
   FixKind get fixKind => _fixKind;
 
   @override
+  List<String> get fixArguments => [_mixin ?? 'Equatable'];
+
+  String? _mixin;
+
+  @override
   Future<void> compute(ChangeBuilder builder) async {
     final targetNode = node;
     if (targetNode is! ExtendsClause) return;
@@ -30,22 +39,24 @@ class PreferEquatableMixinFix extends ResolvedCorrectionProducer {
     final classDecl = targetNode.parent;
     if (classDecl is! ClassDeclaration) return;
 
+    final superclass = targetNode.superclass.element;
+    if (superclass is! ClassElement) return;
+    final mixin = equatableMixinName(superclass, unitResult.libraryElement);
+    if (mixin == null) return;
+    _mixin = mixin;
+
     final withClause = classDecl.withClause;
 
     await builder.addDartFileEdit(file, (builder) {
       if (withClause != null) {
         // Has existing `with` clause: remove `extends Equatable` and append
-        // EquatableMixin to the existing `with` clause.
+        // the mixin to the existing `with` clause.
         builder.addDeletion(range.startStart(targetNode, withClause));
         final lastMixin = withClause.mixinTypes.last;
-        builder.addSimpleInsertion(lastMixin.end, ', EquatableMixin');
+        builder.addSimpleInsertion(lastMixin.end, ', $mixin');
       } else {
-        // No `with` clause: replace `extends Equatable` with
-        // `with EquatableMixin`.
-        builder.addSimpleReplacement(
-          range.node(targetNode),
-          'with EquatableMixin',
-        );
+        // No `with` clause: replace `extends Equatable` with `with <mixin>`.
+        builder.addSimpleReplacement(range.node(targetNode), 'with $mixin');
       }
     });
   }

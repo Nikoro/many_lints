@@ -245,7 +245,7 @@ The same `rules:` block can instead live under a top-level `many_lints:` key in
 | `prefer_do_notation` | Deeply nested flatMap callbacks read flatter as a Do block. | — |
 | `prefer_early_return` | Replace a body-wrapping if with an early-return guard. | Yes |
 | `prefer_enums_by_name` | Use .byName() instead of .firstWhere() to look up enum values by name. | Yes |
-| `prefer_equatable_mixin` | Prefer using EquatableMixin instead of extending Equatable. | Yes |
+| `prefer_equatable_mixin` | Prefer mixing in Equatable instead of extending it. | Yes |
 | `prefer_expect_later` | Use 'expectLater' instead of 'expect' when testing Futures. | Yes |
 | `prefer_explicit_function_type` | Prefer explicit function type annotations over the bare 'Function' type. | Yes |
 | `prefer_explicit_parameter_names` | Name the parameters of a function type. | — |
