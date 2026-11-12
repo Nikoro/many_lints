@@ -1,0 +1,14 @@
+include = [
+  "lib/**",
+  "test/**",
+  "tool/**",
+  "docs/scripts/**",
+  "docs/astro.config.mjs",
+  ".githooks/**",
+]
+exclude = [
+  "example/**",
+  "docs/src/**",
+  "coverage",
+]
+public_doc_paths = ["lib/many_lints.dart"]

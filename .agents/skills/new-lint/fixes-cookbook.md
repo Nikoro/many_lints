@@ -72,12 +72,11 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that [brief description of what it does].
 class MyFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
-    'many_lints.fix.myFix',               // Unique ID (camelCase)
-    DartFixKindPriority.standard,          // Priority level
-    'Human-readable action description',   // User-facing message
+    'many_lints.fix.myFix',
+    DartFixKindPriority.standard,
+    'Human-readable action description',
   );
 
   MyFix({required super.context});
@@ -91,13 +90,8 @@ class MyFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // Safe default: walk up to the semantic target. See
-    // "Do Not Assume the Shape of node" below.
     final targetNode = node.thisOrAncestorOfType<ExpectedType>();
     if (targetNode == null) return;
-
-    // Validation and navigation
-    // ...
 
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(range.node(targetNode), 'replacement');
@@ -105,6 +99,12 @@ class MyFix extends ResolvedCorrectionProducer {
   }
 }
 ```
+
+The `FixKind` arguments are a unique id (`many_lints.fix.<camelCase>`), the
+priority and the user-facing action message. The safe default in `compute` is
+to walk up to the semantic target (see
+[Do Not Assume the Shape of `node`](#do-not-assume-the-shape-of-node)), then
+validate and navigate before building the edit.
 
 **When to use:** Ordinary single-rule fixes
 **Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart), [prefer_explicit_function_type_fix.dart](../../../lib/src/fixes/prefer_explicit_function_type_fix.dart)
@@ -126,7 +126,6 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
     required FixKind fixKind,
   }) : _fixKind = fixKind;
 
-  // Factory for Bloc suffix
   static AddSuffixFix blocFix({required CorrectionProducerContext context}) {
     return AddSuffixFix._(
       context: context,
@@ -139,7 +138,6 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
     );
   }
 
-  // Factory for Cubit suffix
   static AddSuffixFix cubitFix({required CorrectionProducerContext context}) {
     return AddSuffixFix._(
       context: context,
@@ -161,10 +159,18 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // Shared fix logic using suffix parameter
+    final declaration = node.thisOrAncestorOfType<ClassDeclaration>();
+    if (declaration == null) return;
+    final nameToken = declaration.namePart.typeName;
+    await builder.addDartFileEdit(file, (builder) {
+      builder.addSimpleInsertion(nameToken.end, suffix);
+    });
   }
 }
 ```
+
+Each factory supplies its own `FixKind`; `compute` holds the shared logic,
+parameterised by `suffix`.
 
 **When to use:** Multiple related lint rules with similar fix logic
 **Reference:** [add_affix_fix.dart](../../../lib/src/fixes/add_affix_fix.dart) (Bloc, Cubit, Notifier), [change_widget_name_fix.dart](../../../lib/src/fixes/change_widget_name_fix.dart) (HookWidget, ConsumerWidget)
@@ -177,8 +183,9 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
 
 **ID:** `'many_lints.fix.<camelCaseDescription>'`
 
+Good examples:
+
 ```dart
-// Good examples
 'many_lints.fix.preferCenterOverAlign'
 'many_lints.fix.addBlocSuffix'
 'many_lints.fix.convertToSwitchExpression'
@@ -192,7 +199,7 @@ class AddSuffixFix extends ResolvedCorrectionProducer {
 ```dart
 static const _fixKind = FixKind(
   'many_lints.fix.myFix',
-  DartFixKindPriority.standard,  // <- This is the standard choice
+  DartFixKindPriority.standard,
   'Fix description',
 );
 ```
@@ -206,18 +213,18 @@ static const _fixKind = FixKind(
 
 User-facing string, concise and action-oriented:
 
+Good examples:
+
 ```dart
-// Good examples
 'Replace with Center'
 'Add Bloc suffix'
 'Convert to switch expression'
 'Use any() instead of where().isNotEmpty'
 'Replace SizedBox with Gap'
-
-// Avoid
-'Fix the issue'  // Too vague
-'This will make the code better'  // Not action-oriented
 ```
+
+Avoid vague (`'Fix the issue'`) or not action-oriented
+(`'This will make the code better'`) descriptions.
 
 ---
 
@@ -236,10 +243,10 @@ silently broke 27 fixes at once.
 Future<void> compute(ChangeBuilder builder) async {
   final targetNode = node.thisOrAncestorOfType<ConstructorName>();
   if (targetNode == null) return;
-
-  // targetNode is a ConstructorName regardless of how the rule reported it
 }
 ```
+
+`targetNode` is a `ConstructorName` regardless of how the rule reported it.
 
 **Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart), [use_gap_fix.dart](../../../lib/src/fixes/use_gap_fix.dart)
 
@@ -250,13 +257,17 @@ Future<void> compute(ChangeBuilder builder) async {
 Walk up here too. `node.parent` assumes an exact depth that the reported range
 does not guarantee:
 
+Breaks when the rule uses `reportAtToken`: `node` is already the declaration,
+or a name-part wrapper, so `.parent` overshoots or misses.
+
 ```dart
-// ✘ Breaks when the rule uses reportAtToken — node is already the declaration,
-//   or a name-part wrapper, so .parent overshoots or misses.
 final classDecl = node.parent;
 if (classDecl is! ClassDeclaration) return;
+```
 
-// ✔ Depth-independent.
+Depth-independent:
+
+```dart
 final classDecl = node.thisOrAncestorOfType<ClassDeclaration>();
 if (classDecl == null) return;
 ```
@@ -401,13 +412,11 @@ await builder.addDartFileEdit(file, (builder) {
 
 ```dart
 await builder.addDartFileEdit(file, (builder) {
-  // Edit 1: Replace widget name
   builder.addSimpleReplacement(
     range.node(superclass),
     'StatelessWidget',
   );
 
-  // Edit 2: Remove unused parameter
   if (refParam != null && buildMethod != null) {
     builder.addDeletion(
       range.nodeInList(buildMethod.parameters!.parameters, refParam),
@@ -415,6 +424,8 @@ await builder.addDartFileEdit(file, (builder) {
   }
 });
 ```
+
+The first edit replaces the widget name, the second removes the unused parameter.
 
 **When to use:** Fix requires multiple changes
 **Reference:** [avoid_unnecessary_consumer_widgets_fix.dart](../../../lib/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart)
@@ -495,8 +506,8 @@ final resolvedInvocation =
     node.thisOrAncestorOfType<MethodInvocation>();
 if (resolvedInvocation == null) return;
 
-if (resolvedInvocation.parent?.parent is PropertyAccess) {
-  // Handle chained property access
+if (resolvedInvocation.parent?.parent case final PropertyAccess chainedAccess) {
+  replaceChainedAccess(chainedAccess);
 }
 ```
 
@@ -554,15 +565,12 @@ Full transformation in [prefer_switch_expression_fix.dart](../../../lib/src/fixe
 ```dart
 @override
 Future<void> compute(ChangeBuilder builder) async {
-  // 1. Resolve the semantic target from the reported range
   final switchNode = node.thisOrAncestorOfType<SwitchStatement>();
   if (switchNode == null) return;
 
-  // 2. Determine conversion type (return-based vs assignment-based)
   final builtExpression = _buildSwitchExpression(switchNode);
   if (builtExpression == null) return;
 
-  // 3. Single replacement for entire statement
   await builder.addDartFileEdit(file, (builder) {
     builder.addSimpleReplacement(
       range.node(switchNode),
@@ -574,7 +582,6 @@ Future<void> compute(ChangeBuilder builder) async {
 String? _buildSwitchExpression(SwitchStatement stmt) {
   final StringBuffer buffer = StringBuffer();
 
-  // Iteratively build cases
   for (final member in stmt.members) {
     final caseExpr = _buildCaseExpression(member);
     if (caseExpr == null) return null;
@@ -584,6 +591,10 @@ String? _buildSwitchExpression(SwitchStatement stmt) {
   return 'switch (${stmt.expression.toSource()}) {\n$buffer}';
 }
 ```
+
+The steps: resolve the semantic target from the reported range, decide the
+conversion type (return-based or assignment-based) while building the
+expression, then replace the whole statement in a single edit.
 
 **Key techniques:**
 - Helper methods for readability
@@ -597,13 +608,11 @@ String? _buildSwitchExpression(SwitchStatement stmt) {
 From [avoid_unnecessary_consumer_widgets_fix.dart](../../../lib/src/fixes/avoid_unnecessary_consumer_widgets_fix.dart):
 
 ```dart
-// Step 1: Replace superclass
 builder.addSimpleReplacement(
   range.node(superclass),
   'StatelessWidget',
 );
 
-// Step 2: Remove unused parameter
 if (refParam != null) {
   builder.addDeletion(
     range.nodeInList(buildMethod.parameters!.parameters, refParam),
@@ -622,29 +631,17 @@ if (refParam != null) {
 From [use_gap_fix.dart](../../../lib/src/fixes/use_gap_fix.dart):
 
 ```dart
-// Dispatch based on widget type
-final typeName = element.name;
-
-if (typeName == 'SizedBox') {
-  await _fixSizedBox(builder, instanceCreation);
-} else if (typeName == 'Padding') {
-  await _fixPadding(builder, instanceCreation);
-}
-
-// Different argument structures need different handling
-Future<void> _fixSizedBox(...) {
-  final widthArg = findArg('width');
-  final heightArg = findArg('height');
-  // Logic specific to SizedBox
-}
-
-Future<void> _fixPadding(...) {
-  final paddingArg = findArg('padding');
-  // Logic specific to Padding
+switch (element.name) {
+  case 'SizedBox':
+    await _fixSizedBox(builder, instanceCreation);
+  case 'Padding':
+    await _fixPadding(builder, instanceCreation);
 }
 ```
 
-**Use helper methods for different transformation strategies**
+**Use helper methods for different transformation strategies.** The widget type
+decides the dispatch because each widget has a different argument structure:
+`_fixSizedBox` reads `width` and `height`, `_fixPadding` reads `padding`.
 
 ---
 
@@ -654,8 +651,9 @@ When multiple fixes share nearly identical logic, use inheritance to avoid dupli
 
 ### Pattern: Override a Single Getter
 
+The base fix holds the shared logic:
+
 ```dart
-/// Base fix with shared logic
 class PreferReturningShorthandsFix extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.preferReturningShorthands',
@@ -665,16 +663,20 @@ class PreferReturningShorthandsFix extends ResolvedCorrectionProducer {
 
   PreferReturningShorthandsFix({required super.context});
 
-  /// Override this in subclasses for different behavior
   String get unnamedConstructorReplacement => 'new';
 
   @override
   FixKind get fixKind => _fixKind;
 
-  // ... shared compute() logic using unnamedConstructorReplacement
+  @override
+  Future<void> compute(ChangeBuilder builder) async {
+    final replacement = unnamedConstructorReplacement;
+    await builder.addDartFileEdit(file, (builder) {
+      builder.addSimpleReplacement(range.node(node), '.$replacement');
+    });
+  }
 }
 
-/// Subclass overrides only the differing behavior
 class PreferShorthandsWithConstructorsFix extends PreferReturningShorthandsFix {
   static const _fixKind = FixKind(
     'many_lints.fix.preferShorthandsWithConstructors',
@@ -692,6 +694,9 @@ class PreferShorthandsWithConstructorsFix extends PreferReturningShorthandsFix {
 }
 ```
 
+The subclass overrides only the differing getter (`unnamedConstructorReplacement`)
+and its own `fixKind`; `compute` stays in the base class.
+
 **Current inheritance relationships:**
 - `PreferShorthandsWithConstructorsFix` extends `PreferReturningShorthandsFix` (overrides `unnamedConstructorReplacement`)
 - `PreferShorthandsWithStaticFieldsFix` extends `PreferShorthandsWithEnumsFix` (overrides `fixKind`)
@@ -706,14 +711,14 @@ class PreferShorthandsWithConstructorsFix extends PreferReturningShorthandsFix {
 
 **From [disposal_utils.dart](../../../lib/src/disposal_utils.dart):**
 
+`findCleanupMethod` names the cleanup method a type supports (`dispose`,
+`close` or `cancel`); `cleanupMethods` is the ordered list of those names.
+
 ```dart
 import 'package:many_lints/src/disposal_utils.dart';
 
-// Find which cleanup method a type supports (dispose, close, cancel)
 final cleanupMethod = findCleanupMethod(fieldType);
-
-// Access the ordered list of cleanup method names
-const cleanupMethods = ['dispose', 'close', 'cancel'];
+final firstChoice = cleanupMethods.first;
 ```
 
 **When to use:** Fixes that generate cleanup calls (e.g., `dispose_fields_fix`, `dispose_provided_instances_fix`).
@@ -734,8 +739,11 @@ const cleanupMethods = ['dispose', 'close', 'cancel'];
 extension IterableExtension<T> on Iterable<T> {
   T? firstWhereOrNull(bool Function(T element) test);
 }
+```
 
-// Usage:
+Usage:
+
+```dart
 final arg = arguments
     .whereType<NamedArgument>()
     .firstWhereOrNull((e) => e.name.lexeme == 'alignment');
@@ -754,14 +762,17 @@ bool isInstanceCreationExpressionOnlyUsingParameter(
   required String parameter,
   Set<String> ignoredParameters = const {},
 })
+```
 
-// Usage:
+Usage: the condition holds when only `padding` is set (`key` and `child` are ignored).
+
+```dart
 if (isInstanceCreationExpressionOnlyUsingParameter(
   node,
   parameter: 'padding',
   ignoredParameters: {'key', 'child'},
 )) {
-  // Only 'padding' is set (key/child ignored)
+  replaceWithPadding(node);
 }
 ```
 
@@ -773,12 +784,9 @@ if (isInstanceCreationExpressionOnlyUsingParameter(
 
 ```dart
 Expression? maybeGetSingleReturnExpression(FunctionBody body)
-
-// Returns expression from:
-// => expr
-// { return expr; }
-// Otherwise returns null
 ```
+
+Yields the expression of `=> expr` or `{ return expr; }`, otherwise `null`.
 
 **Reference:** Used in various fixes
 
@@ -814,13 +822,13 @@ final replacement = 'MediaQuery.$method($context)${shouldAddQuestionMark ? '?' :
 
 [add_affix_fix.dart](../../../lib/src/fixes/add_affix_fix.dart) uses the shared
 `computeEditDistance` helper from `lib/src/text_distance.dart` to strip
-misspelled suffixes:
+misspelled suffixes, for example removing "Blac" (misspelled "Bloc") before
+adding the correct suffix:
 
 ```dart
-// Usage: Remove "Blac" (misspelled "Bloc") before adding correct suffix
 final distance = computeEditDistance(existingSuffix, correctSuffix);
 if (distance <= threshold) {
-  // Strip and replace
+  name = name.substring(0, name.length - existingSuffix.length);
 }
 ```
 
@@ -833,19 +841,15 @@ if (distance <= threshold) {
 ```dart
 @override
 Future<void> compute(ChangeBuilder builder) async {
-  // Validate step 1
   final targetNode = node.thisOrAncestorOfType<ExpectedType>();
   if (targetNode == null) return;
 
-  // Validate step 2
   final parent = targetNode.parent;
   if (parent is! ExpectedParent) return;
 
-  // Validate step 3
   final argument = findArgument('name');
   if (argument == null) return;
 
-  // All validations passed - apply fix
   await builder.addDartFileEdit(...);
 }
 ```
@@ -880,14 +884,14 @@ import 'package:many_lints/src/fixes/my_rule_fix.dart';
 class ManyLintsPlugin extends Plugin {
   @override
   void register(PluginRegistry registry) {
-    // Register the rule
     _registerWarningRule(registry, MyRule());
 
-    // Register fix for the rule's LintCode
     registry.registerFixForRule(MyRule.code, MyRuleFix.new);
   }
 }
 ```
+
+The fix is registered against the rule's `LintCode`.
 
 **Note:** Use `.new` tear-off syntax for constructor reference
 
@@ -918,16 +922,13 @@ Future<void> compute(ChangeBuilder builder) async {
   final targetNode = node.thisOrAncestorOfType<MethodInvocation>();
   if (targetNode == null) return;
 
-  // Build the statement to insert
   final removeCall = '${target}.removeListener(${listener})';
 
-  // Find enclosing class
   final classDecl = _findEnclosingClass(targetNode);
   if (classDecl == null) return;
   final body = classDecl.body;
   if (body is! BlockClassBody) return;
 
-  // Find existing target method
   final disposeMethod = body.members
       .whereType<MethodDeclaration>()
       .where((m) => m.name.lexeme == 'dispose')
@@ -935,22 +936,18 @@ Future<void> compute(ChangeBuilder builder) async {
 
   await builder.addDartFileEdit(file, (builder) {
     if (disposeMethod != null) {
-      // Insert into existing method
       final disposeBody = disposeMethod.body;
       if (disposeBody is BlockFunctionBody) {
         final block = disposeBody.block;
         final superDispose = _findSuperDispose(block);
 
         if (superDispose != null) {
-          // Insert before super.dispose()
           builder.addSimpleInsertion(superDispose.offset, '    $removeCall;\n');
         } else {
-          // Insert at end of body
           builder.addSimpleInsertion(block.rightBracket.offset, '    $removeCall;\n  ');
         }
       }
     } else {
-      // Create new method at end of class body
       builder.addSimpleInsertion(body.rightBracket.offset,
         '\n\n  @override\n  void dispose() {\n    $removeCall;\n    super.dispose();\n  }\n',
       );
@@ -977,6 +974,9 @@ static Statement? _findSuperDispose(Block block) {
 ```
 
 **Key details:**
+- An existing `dispose()` gets the statement before `super.dispose()`, or at
+  the end of its body when there is no super call; otherwise a new override is
+  appended at the end of the class body
 - Use `body.rightBracket.offset` for insertion before the closing `}` of a class or block
 - `Statement.offset` gives the start position for inserting before a specific statement
 - For method creation, include proper indentation and newlines in the string
@@ -1003,12 +1003,11 @@ Future<void> compute(ChangeBuilder builder) async {
 
   final content = unitResult.content;
 
-  // Extend deletion to full lines
   var deleteStart = offset;
   while (deleteStart > 0 && content[deleteStart - 1] != '\n') deleteStart--;
   var deleteEnd = offset + length;
   while (deleteEnd < content.length && content[deleteEnd] != '\n') deleteEnd++;
-  if (deleteEnd < content.length) deleteEnd++; // include trailing \n
+  if (deleteEnd < content.length) deleteEnd++;
 
   await builder.addDartFileEdit(file, (builder) {
     builder.addDeletion(SourceRange(deleteStart, deleteEnd - deleteStart));
@@ -1016,6 +1015,7 @@ Future<void> compute(ChangeBuilder builder) async {
 }
 ```
 
+- The deletion is extended to full lines, including the trailing newline
 - `diagnosticOffset` / `diagnosticLength` are available on `ResolvedCorrectionProducer`
 - `unitResult.content` provides the full source text for line-boundary calculations
 - Use `SourceRange` from `package:analyzer/source/source_range.dart`
@@ -1037,17 +1037,18 @@ void _addStackTraceParameter(
   final exceptionParam = catchClause.exceptionParameter;
 
   if (exceptionParam != null) {
-    // Has exception parameter: `catch (e)` → `catch (e, stackTrace)`
     builder.addSimpleInsertion(exceptionParam.end, ', $stackParam');
   } else if (catchClause.catchKeyword != null) {
-    // Has `catch` keyword but no params
     builder.addSimpleInsertion(catchClause.catchKeyword!.end, ' (_, $stackParam)');
   } else {
-    // Only `on Type` without `catch`: add `catch (_, stackTrace)` before body
     builder.addSimpleInsertion(catchClause.body.leftBracket.offset, 'catch (_, $stackParam) ');
   }
 }
 ```
+
+The three branches: `catch (e)` becomes `catch (e, stackTrace)`; a `catch`
+keyword without parameters gets `(_, stackTrace)`; a bare `on Type` gets
+`catch (_, stackTrace)` inserted before the body.
 
 - `CatchClause.exceptionParameter` → `CatchClauseParameter?`
 - `CatchClause.stackTraceParameter` → `CatchClauseParameter?`
@@ -1073,13 +1074,17 @@ consequences:
   that token, so `node` is a name-part wrapper or the declaration itself —
   never a `SimpleIdentifier`, which no longer wraps names since analyzer 13.
 
+Silently never fires. It compiles, registers and shows up in the fix list, but
+`compute()` returns at the first line and produces zero edits:
+
 ```dart
-// ✘ Silently never fires. Compiles, registers, shows up in the fix list —
-//   but compute() returns at the first line and produces zero edits.
 final targetNode = node;
 if (targetNode is! ConstructorName) return;
+```
 
-// ✔ Safe default: walk up instead.
+Safe default, walk up instead:
+
+```dart
 final targetNode = node.thisOrAncestorOfType<ConstructorName>();
 if (targetNode == null) return;
 ```
@@ -1102,12 +1107,17 @@ did not apply. Only an output test catches it, which is why every fix needs one.
 range — and `FixProcessor` catches it, logs it, and silently discards the fix.
 Same symptom as above: offered in the list, does nothing.
 
+The insertion offset equals where `methodName` starts, so the edits conflict
+and the fix is lost:
+
 ```dart
-// ✘ The insertion offset equals where methodName starts → conflict → fix lost.
 builder.addSimpleReplacement(range.node(invocation.methodName), 'expectLater');
 builder.addSimpleInsertion(invocation.offset, 'await ');
+```
 
-// ✔ One edit carrying both changes.
+One edit carrying both changes:
+
+```dart
 builder.addSimpleReplacement(
   range.node(invocation.methodName),
   'await expectLater',
@@ -1205,12 +1215,16 @@ to `lib/<name>.dart`, not to Flutter's real `widgets.dart` path.
 
 Assert the **text the fix produced**, not merely that something changed:
 
+Good, pins the actual result:
+
 ```dart
-// Good — pins the actual result.
 expect(fixed, contains("values.addAll(['first', 'second']);"));
 expect(fixed, isNot(contains("values.add('first');")));
+```
 
-// Weak — passes even if the fix mangles the code.
+Weak, passes even if the fix mangles the code:
+
+```dart
 expect(fixed, isNot(equals(original)));
 ```
 

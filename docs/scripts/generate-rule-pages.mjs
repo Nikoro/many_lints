@@ -1,18 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * Generates documentation pages for each lint rule from source code.
- *
- * Data sources:
- * - lib/src/rules/*.dart         → rule name, problem message, correction message
- * - lib/many_lints.dart          → which rules have quick fixes
- * - example/lib/*_example.dart   → code examples
- *
- * Usage:
- *   node docs/scripts/generate-rule-pages.mjs           # skip existing files
- *   node docs/scripts/generate-rule-pages.mjs --force    # overwrite all files
- */
-
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
 import { join, basename } from 'path';
 
@@ -22,8 +9,6 @@ const EXAMPLES_DIR = join(ROOT, 'example', 'lib');
 const PLUGIN_FILE = join(ROOT, 'lib', 'many_lints.dart');
 const OUTPUT_DIR = join(ROOT, 'docs', 'src', 'content', 'docs', 'docs', 'rules');
 const FORCE = process.argv.includes('--force');
-
-// ── Category mapping ──────────────────────────────────────────────────────────
 
 const CATEGORIES = {
   'class-naming': {
@@ -392,7 +377,6 @@ const CATEGORIES = {
   },
 };
 
-// Build reverse lookup: rule_name → { categorySlug, categoryLabel }
 const ruleCategoryMap = {};
 const duplicateCategoryRules = [];
 for (const [slug, cat] of Object.entries(CATEGORIES)) {
@@ -405,19 +389,14 @@ for (const [slug, cat] of Object.entries(CATEGORIES)) {
   }
 }
 
-// ── Parse rule source files ───────────────────────────────────────────────────
-
 function parseRuleFile(filePath) {
   const content = readFileSync(filePath, 'utf-8');
 
-  // Match the LintCode block — extract everything between LintCode( and the closing );
   const lintCodeBlock = content.match(/LintCode\(([\s\S]*?)\);/);
   if (!lintCodeBlock) return null;
 
   const block = lintCodeBlock[1];
 
-  // Extract all quoted strings (both single and double quotes) with their positions
-  // to parse positional and named arguments
   const stringPattern = /(['"])((?:(?!\1).)*)\1/g;
   const allStrings = [];
   let m;
@@ -427,14 +406,11 @@ function parseRuleFile(filePath) {
 
   if (allStrings.length < 2) return null;
 
-  // First string is the rule name
   const name = allStrings[0].value;
 
-  // Find where correctionMessage: starts
   const correctionIdx = block.indexOf('correctionMessage:');
   if (correctionIdx === -1) return null;
 
-  // Problem message = all adjacent strings between name and correctionMessage:
   const problemParts = [];
   const correctionParts = [];
 
@@ -455,16 +431,12 @@ function parseRuleFile(filePath) {
   };
 }
 
-// ── Parse fix registrations ───────────────────────────────────────────────────
-
 function parseFixRegistrations() {
   const content = readFileSync(PLUGIN_FILE, 'utf-8');
   const fixRules = new Set();
 
-  // Match: registerFixForRule(ClassName.code, ...)
   const matches = content.matchAll(/registerFixForRule\(\s*(\w+)\.code/g);
   for (const match of matches) {
-    // Convert PascalCase class name to snake_case rule name
     const className = match[1];
     const snakeName = className
       .replace(/([A-Z])/g, '_$1')
@@ -476,15 +448,11 @@ function parseFixRegistrations() {
   return fixRules;
 }
 
-// ── Read example files ────────────────────────────────────────────────────────
-
 function readExampleFile(ruleName) {
   const examplePath = join(EXAMPLES_DIR, `${ruleName}_example.dart`);
   if (!existsSync(examplePath)) return null;
   return readFileSync(examplePath, 'utf-8').trim();
 }
-
-// ── Generate markdown page ────────────────────────────────────────────────────
 
 function generatePage(rule, categoryLabel, hasFix, example) {
   const badgePart = hasFix
@@ -536,8 +504,6 @@ rules:
 `;
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
-
 function main() {
   console.log('Generating rule documentation pages...\n');
 
@@ -568,9 +534,6 @@ function main() {
     const outDir = join(OUTPUT_DIR, category.slug);
     const baseName = rule.name.replace(/_/g, '-');
     const outFile = join(outDir, `${baseName}.md`);
-    // Configurable rules are hand-maintained as .mdx (they use Starlight <Tabs>
-    // to show both config file locations), so check both extensions before
-    // deciding a page is missing — otherwise we'd emit a duplicate .md.
     const existing = ['.md', '.mdx']
       .map((ext) => join(outDir, `${baseName}${ext}`))
       .find(existsSync);

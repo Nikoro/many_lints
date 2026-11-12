@@ -1,14 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * Keeps the generated parts of the hand-written documentation in sync.
- *
- * - Appends a Related rules section to every rule page.
- * - Regenerates the exact, category-grouped contents of every preset.
- *
- * Rule prose remains hand-written. Run this after adding, moving, or renaming a
- * rule, then review the resulting relations like any other documentation diff.
- */
 
 import {
   existsSync,
@@ -76,8 +67,6 @@ const CATEGORY_LABELS = {
   'widget-replacement': 'Widget replacement',
 };
 
-// Explicitly model rules whose fixes choose different outcomes for the same
-// code. These must not be presented as merely adjacent suggestions.
 const OPPOSITES = {
   prefer_container: [
     'prefer_align_over_container',
@@ -95,9 +84,6 @@ const OPPOSITES = {
   prefer_wildcard_pattern: ['avoid_wildcard_cases_with_enums'],
 };
 
-// Shared groups give domain knowledge more weight than lexical similarity.
-// They need not cover every rule: category and name similarity provide a
-// conservative fallback for the long tail.
 const RELATED_GROUPS = [
   ['avoid_banned_annotations', 'avoid_banned_exports', 'avoid_banned_imports', 'avoid_banned_names', 'avoid_banned_types', 'banned_usage'],
   ['arguments_ordering', 'initializers_ordering', 'map_keys_ordering', 'member_ordering', 'parameters_ordering'],

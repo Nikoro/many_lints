@@ -13,7 +13,7 @@ AstNode? current = node.parent;
 while (current != null) {
   if (current is FunctionExpression || current is FunctionDeclaration ||
       current is MethodDeclaration) {
-    return false; // Stop at function boundaries
+    return false;
   }
   if (current is TargetNodeType) return true;
   current = current.parent;
@@ -120,13 +120,9 @@ static bool _isInsideLoopBody(AstNode node) {
 
 ### Check If an Identifier Refers to a Constant
 
-Local variables resolve to `VariableElement`, top-level/static fields resolve to `PropertyAccessorElement` (synthetic getter). Handle both:
+Local variables resolve to `VariableElement`, top-level/static fields resolve to `PropertyAccessorElement` (synthetic getter). Handle both. Prefer `isConstantIdentifier(id)` from `lib/src/constant_expression.dart`; the manual form it implements:
 
 ```dart
-import 'package:many_lints/src/constant_expression.dart';
-
-// Use isConstantIdentifier(id) from constant_expression.dart
-// Or implement manually:
 static bool _isConstantIdentifier(SimpleIdentifier id) {
   final element = id.element;
   if (element is VariableElement) {
@@ -167,7 +163,7 @@ void visitBinaryExpression(BinaryExpression node) {
   if (op != TokenType.EQ_EQ && op != TokenType.BANG_EQ) return;
   final leftType = node.leftOperand.staticType;
   final rightType = node.rightOperand.staticType;
-  // Analyze operand types...
+  if (leftType == null || rightType == null) return;
 }
 ```
 
@@ -259,7 +255,7 @@ void visitMethodInvocation(MethodInvocation node) {
   final args = node.argumentList.arguments;
   if (args.isEmpty) return;
   final argType = args.first.staticType;
-  // Check against collection type parameters...
+  if (argType == null) return;
 }
 ```
 
@@ -267,33 +263,31 @@ void visitMethodInvocation(MethodInvocation node) {
 
 ### Traverse Token Stream for Comment Analysis
 
-Comments are attached to tokens via `precedingComments`, NOT as AST nodes. Use `addCompilationUnit`:
+Comments are attached to tokens via `precedingComments`, NOT as AST nodes. Use `addCompilationUnit`. Doc comments (`///`) are also `SINGLE_LINE_COMMENT`; check `lexeme.startsWith('///')` to tell them apart. Always check the EOF token's preceding comments too, or comments trailing at the end of the file are missed:
 
 ```dart
 @override
 void visitCompilationUnit(CompilationUnit node) {
   Token? token = node.beginToken;
   while (token != null && !token.isEof) {
-    Token? comment = token.precedingComments;
-    while (comment != null) {
-      if (comment.type == TokenType.SINGLE_LINE_COMMENT) {
-        // Process comment. Doc comments (///) are also SINGLE_LINE_COMMENT
-        // — check lexeme.startsWith('///') to distinguish
-      }
-      comment = comment.next;
-    }
+    _checkComments(token.precedingComments);
     token = token.next;
   }
-  // Always check EOF token's preceding comments (trailing comments at file end)
-  if (token != null && token.isEof) {
-    Token? comment = token.precedingComments;
-    while (comment != null) { comment = comment.next; }
-  }
+  if (token != null && token.isEof) _checkComments(token.precedingComments);
 }
 
-// For non-AST constructs, report at offset:
-rule.reportAtOffset(token.offset, token.length);
+void _checkComments(Token? comment) {
+  while (comment != null) {
+    if (comment.type == TokenType.SINGLE_LINE_COMMENT &&
+        !comment.lexeme.startsWith('///')) {
+      rule.reportAtOffset(comment.offset, comment.length);
+    }
+    comment = comment.next;
+  }
+}
 ```
+
+Report non-AST constructs with `rule.reportAtOffset(offset, length)`.
 
 **Ref:** [avoid_commented_out_code.dart](../../../lib/src/rules/avoid_commented_out_code.dart)
 
@@ -362,12 +356,12 @@ for (final declaration in compilationUnit.declarations) {
 
 ### Visit TypeParameter Declarations Across a File
 
-Use `addCompilationUnit` + `RecursiveAstVisitor` to find all `TypeParameter` nodes:
+Use `addCompilationUnit` + `RecursiveAstVisitor` to find all `TypeParameter` nodes. Collect file context (such as the top-level names above) first. `TypeParameter.parent` is the `TypeParameterList`, whose `parent` is the declaring scope (`ClassDeclaration` and so on):
 
 ```dart
 @override
 void visitCompilationUnit(CompilationUnit node) {
-  // Collect context (e.g., top-level names)...
+  final topLevelNames = _collectTopLevelNames(node);
   final checker = _TypeParameterChecker(rule, topLevelNames);
   node.visitChildren(checker);
 }
@@ -375,9 +369,7 @@ void visitCompilationUnit(CompilationUnit node) {
 class _TypeParameterChecker extends RecursiveAstVisitor<void> {
   @override
   void visitTypeParameter(TypeParameter node) {
-    final name = node.name.lexeme;
-    // TypeParameter.parent is TypeParameterList
-    // TypeParameterList.parent is the declaring scope (ClassDeclaration, etc.)
+    if (topLevelNames.contains(node.name.lexeme)) rule.reportAtToken(node.name);
     super.visitTypeParameter(node);
   }
 }
@@ -387,7 +379,7 @@ class _TypeParameterChecker extends RecursiveAstVisitor<void> {
 
 ### Analyze If-Case Patterns (Dart 3 Pattern Matching)
 
-Register `addIfStatement`. When using if-case syntax, `caseClause` is non-null:
+Register `addIfStatement`. When using if-case syntax, `caseClause` is non-null. Both operands of a `LogicalAndPattern` are `DartPattern`s. A `RelationalPattern` has `operator.lexeme` (`'!='`, `'=='`, `'>'`, ...) and `operand` (an `Expression`); a `DeclaredVariablePattern` has `keyword` (`Token?`, `final` or `var`), `type` (`TypeAnnotation?`) and `name` (`Token`):
 
 ```dart
 @override
@@ -397,18 +389,11 @@ void visitIfStatement(IfStatement node) {
   final pattern = caseClause.guardedPattern.pattern;
   final whenClause = caseClause.guardedPattern.whenClause;
 
-  if (pattern is LogicalAndPattern) {
-    final left = pattern.leftOperand;   // DartPattern
-    final right = pattern.rightOperand; // DartPattern
-    if (left is RelationalPattern) {
-      // left.operator.lexeme → '!=', '==', '>', etc.
-      // left.operand → Expression
-    }
-    if (right is DeclaredVariablePattern) {
-      // right.keyword → Token? ('final', 'var')
-      // right.type → TypeAnnotation?
-      // right.name → Token
-    }
+  if (pattern case LogicalAndPattern(
+    leftOperand: RelationalPattern(operator: Token(lexeme: '!=')),
+    rightOperand: DeclaredVariablePattern(:final name),
+  ) when whenClause == null) {
+    rule.reportAtToken(name);
   }
 }
 ```
@@ -520,7 +505,7 @@ void visitTryStatement(TryStatement node) {
 }
 ```
 
-**For deep search inside catch blocks**, use `RecursiveAstVisitor` with function boundary stopping:
+**For deep search inside catch blocks**, use `RecursiveAstVisitor` with function boundary stopping (the empty `visitFunctionExpression` / `visitFunctionDeclaration` overrides):
 
 ```dart
 for (final catchClause in node.catchClauses) {
@@ -538,7 +523,6 @@ class _ThrowFinder extends RecursiveAstVisitor<void> {
     super.visitThrowExpression(node);
   }
 
-  // Stop at function boundaries:
   @override void visitFunctionExpression(FunctionExpression node) {}
   @override void visitFunctionDeclaration(FunctionDeclaration node) {}
 }
@@ -640,10 +624,13 @@ for (final supertype in element.allSupertypes) {
   if (supertype.element.name == 'Object') continue;
   final hasEqualsOp = supertype.methods.any((m) => m.name == '==' && !m.isAbstract);
   final hasHashCode = supertype.getters.any((g) => g.name == 'hashCode' && !g.isAbstract);
-  if (hasEqualsOp && hasHashCode) { /* ancestor overrides equality */ }
+  if (hasEqualsOp && hasHashCode) return true;
 }
+```
 
-// Current class via AST:
+Current class via AST:
+
+```dart
 final overridesEquals = body.members.any(
   (m) => m is MethodDeclaration && m.isOperator && m.name.lexeme == '==',
 );
@@ -847,7 +834,6 @@ class _IdentifierFinder extends RecursiveAstVisitor<void> {
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
     if (node.name == 'mounted') {
-      // Exclude when already handled by PrefixedIdentifier/PropertyAccess
       final parent = node.parent;
       if (parent is PrefixedIdentifier && parent.identifier == node) return;
       if (parent is PropertyAccess && parent.propertyName == node) return;
@@ -869,6 +855,8 @@ class _IdentifierFinder extends RecursiveAstVisitor<void> {
   }
 }
 ```
+
+`visitSimpleIdentifier` skips the identifier inside a `PrefixedIdentifier` or `PropertyAccess`, which the other two visitors already report.
 
 **Ref:** [avoid_mounted_in_setstate.dart](../../../lib/src/rules/avoid_mounted_in_setstate.dart)
 
@@ -932,7 +920,7 @@ static bool _areArgsPassThrough(FormalParameterList? params, ArgumentList args) 
 
 ### Detect Method Calls Inside Specific Lifecycle Methods
 
-Register `addMethodInvocation`. Walk parent chain to find enclosing lifecycle method, stopping at function boundaries. For `build`, exempt closures in event handler callbacks:
+Register `addMethodInvocation`. Walk parent chain to find enclosing lifecycle method, stopping at function boundaries. For `build`, exempt closures in event handler callbacks (closures passed as named arguments such as `onPressed`):
 
 ```dart
 static MethodDeclaration? _findEnclosingLifecycleMethod(AstNode node) {
@@ -950,7 +938,6 @@ static MethodDeclaration? _findEnclosingLifecycleMethod(AstNode node) {
   return null;
 }
 
-// Exempt closures passed as named args (event handlers like onPressed):
 static bool _isInsideEventHandlerCallback(AstNode node) {
   AstNode? current = node.parent;
   while (current != null) {
@@ -1032,16 +1019,15 @@ Check if a field's type has specific methods by walking its interface and all su
 import '../disposal_utils.dart';
 
 final cleanupMethod = findCleanupMethod(fieldType);
-if (cleanupMethod != null) {
-  // This type is disposable
-}
+if (cleanupMethod != null) rule.reportAtNode(field);
 ```
 
 <details>
 <summary>Implementation reference (for understanding, not copy-paste)</summary>
 
+`cleanupMethods` is ordered: the first match wins.
+
 ```dart
-/// Ordered list — first match wins
 const cleanupMethods = ['dispose', 'close', 'cancel'];
 
 String? findCleanupMethod(DartType type) {
@@ -1087,9 +1073,9 @@ while (topOfChain.parent is MethodInvocation) {
   if (parent.target != topOfChain) break;
   topOfChain = parent;
 }
-// topOfChain is now the outermost call in the chain
-// topOfChain.parent is the context where the result is used
 ```
+
+After the loop `topOfChain` is the outermost call in the chain, and `topOfChain.parent` is the context where the result is used.
 
 **When to use:** Detecting if a chained expression result (e.g., `list.expand(...).skip(1).toList()`) is used in a specific context (e.g., as the `children` argument of a widget).
 
@@ -1097,17 +1083,15 @@ while (topOfChain.parent is MethodInvocation) {
 
 ### Handle Both InstanceCreationExpression and MethodInvocation for Constructors
 
-Without explicit type arguments or `const`/`new`, constructors are parsed as `MethodInvocation` (not `InstanceCreationExpression`). Use `staticType` for type checking instead of element checks:
+Without explicit type arguments or `const`/`new`, constructors are parsed as `MethodInvocation` (not `InstanceCreationExpression`). Use `staticType` for type checking instead of checking the constructor element, and register both visitors that delegate to shared logic:
 
 ```dart
-// Instead of checking the constructor element:
 void _checkWidget(DartType? staticType, ArgumentList argumentList) {
   if (staticType == null) return;
   if (!_checker.isExactlyType(staticType)) return;
-  // Process argumentList...
+  if (argumentList.arguments.isEmpty) return;
 }
 
-// Register both visitors and delegate to shared logic:
 @override
 void visitInstanceCreationExpression(InstanceCreationExpression node) {
   _checkWidget(node.staticType, node.argumentList);
@@ -1133,7 +1117,6 @@ void visitMethodDeclaration(MethodDeclaration node) {
   final methodName = node.name.lexeme;
   if (!_targetMethods.contains(methodName)) return;
 
-  // Navigate to enclosing class
   final enclosingBody = node.parent;
   if (enclosingBody is! BlockClassBody) return;
   final classDecl = enclosingBody.parent;
@@ -1142,17 +1125,14 @@ void visitMethodDeclaration(MethodDeclaration node) {
   final element = classDecl.declaredFragment?.element;
   if (element == null || !_stateChecker.isSuperOf(element)) return;
 
-  // Must have block body with statements
   final body = node.body;
   if (body is! BlockFunctionBody) return;
   final statements = body.block.statements;
   if (statements.isEmpty) return;
 
-  // Find super.<methodName>() by index
   final superIndex = _findSuperCallIndex(statements, methodName);
   if (superIndex == -1) return;
 
-  // Check position: first for init-like, last for cleanup-like
   if (shouldBeFirst && superIndex != 0) {
     rule.reportAtNode(statements[superIndex]);
   } else if (!shouldBeFirst && superIndex != statements.length - 1) {
@@ -1172,6 +1152,8 @@ static int _findSuperCallIndex(NodeList<Statement> stmts, String name) {
   return -1;
 }
 ```
+
+`shouldBeFirst` is true for init-like methods (super call first) and false for cleanup-like ones (super call last).
 
 **When to use:** Rules that validate statement ordering within specific methods (lifecycle, setup/teardown).
 
@@ -1204,7 +1186,6 @@ class _NestedClosureFinder extends RecursiveAstVisitor<void> {
     if (innerParam != null) {
       final innerName = innerParam.name?.lexeme;
       if (innerName != outerName) {
-        // Inner closure shadows the type but not the name — check for outer usage
         final usageFinder = _UsageFinder(rule, outerName);
         node.body.visitChildren(usageFinder);
       }
@@ -1224,7 +1205,6 @@ class _UsageFinder extends RecursiveAstVisitor<void> {
     super.visitSimpleIdentifier(node);
   }
 
-  // Stop at nested closures that also shadow the type
   @override
   void visitFunctionExpression(FunctionExpression node) {
     if (_hasParamOfType(node.parameters?.parameters, _checker)) return;
@@ -1233,16 +1213,16 @@ class _UsageFinder extends RecursiveAstVisitor<void> {
 }
 ```
 
-**Resolving untyped parameters:** When closure params have no type annotation (e.g., `(_)` inferred from context), use the resolved element type:
+An inner closure that shadows the type but not the name is searched for uses of the outer variable; `_UsageFinder` stops at nested closures that also shadow the type.
+
+**Resolving untyped parameters:** When closure params have no type annotation (e.g., `(_)` inferred from context), try the explicit type annotation first, then fall back to the resolved element type:
 
 ```dart
 static bool _isTargetType(FormalParameter param) {
-  // Try explicit type annotation first
   if (param is RegularFormalParameter) {
     final type = param.type?.type;
     if (type != null) return _checker.isExactlyType(type);
   }
-  // Fall back to resolved element type (for untyped params)
   final element = param.declaredFragment?.element;
   if (element != null) return _checker.isExactlyType(element.type);
   return false;
@@ -1292,7 +1272,6 @@ class _PropertyAccessCollector extends RecursiveAstVisitor<void> {
     }
   }
 
-  // Stop at nested functions
   @override void visitFunctionExpression(FunctionExpression node) {}
   @override void visitFunctionDeclaration(FunctionDeclaration node) {}
 
@@ -1300,7 +1279,6 @@ class _PropertyAccessCollector extends RecursiveAstVisitor<void> {
               String propertyName, AstNode accessNode) {
     if (targetElement is! LocalElement) return;
 
-    // Skip assignments and method call targets
     final parent = accessNode.parent;
     if (parent is AssignmentExpression && parent.leftHandSide == accessNode) return;
     if (parent is MethodInvocation && parent.target == accessNode) return;
@@ -1316,6 +1294,7 @@ class _PropertyAccessCollector extends RecursiveAstVisitor<void> {
 - `SimpleIdentifier.element` (not `.staticElement`) resolves the referenced element
 - `LocalElement` is the supertype of both `LocalVariableElement` and `FormalParameterElement`
 - Handle both `PrefixedIdentifier` (simple `obj.prop`) and `PropertyAccess` (chained `a.b.prop`)
+- Skip assignment targets and method call targets; stop at nested functions
 
 **Ref:** [prefer_class_destructuring.dart](../../../lib/src/rules/prefer_class_destructuring.dart)
 
@@ -1329,7 +1308,6 @@ void visitBlock(Block node) {
   final variables = <_VariableInfo>[];
 
   for (final statement in node.statements) {
-    // First: check for duplicates against already-collected variables
     if (variables.isNotEmpty) {
       final finder = _DuplicateExpressionFinder(variables);
       statement.accept(finder);
@@ -1338,7 +1316,6 @@ void visitBlock(Block node) {
       }
     }
 
-    // Then: collect new final/const variable initializers
     if (statement is VariableDeclarationStatement) {
       if (!statement.variables.isFinal && !statement.variables.isConst) continue;
       for (final variable in statement.variables.variables) {
@@ -1360,10 +1337,9 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
 
   _DuplicateExpressionFinder(this.variables);
 
-  // Override per-expression-type visitors and call _checkExpression():
   @override
   void visitPrefixedIdentifier(PrefixedIdentifier node) {
-    if (_checkExpression(node)) return; // Stop recursion on match
+    if (_checkExpression(node)) return;
     super.visitPrefixedIdentifier(node);
   }
 
@@ -1379,10 +1355,6 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
     super.visitMethodInvocation(node);
   }
 
-  // ... (override all relevant expression types: InstanceCreation, Index,
-  //      Binary, Conditional, ListLiteral, etc.)
-
-  // Stop at nested function boundaries
   @override void visitFunctionExpression(FunctionExpression node) {}
   @override void visitFunctionDeclaration(FunctionDeclaration node) {}
 
@@ -1403,7 +1375,8 @@ class _DuplicateExpressionFinder extends RecursiveAstVisitor<void> {
 - Process statements **in order** so variables are only checked against *later* expressions
 - Use `toSource()` for reliable text-based comparison (not semantic equality)
 - Skip trivial expressions (identifiers, literals, negated literals) to avoid noise
-- Override expression-type visitors individually (not `visitExpression`) to check at the right AST level
+- Override expression-type visitors individually (not `visitExpression`) to check at the right AST level, and cover every relevant type the same way: `InstanceCreationExpression`, `IndexExpression`, `BinaryExpression`, `ConditionalExpression`, `ListLiteral` and so on
+- Stop at nested function boundaries
 - Return `true` from `_checkExpression()` to suppress child recursion (avoids sub-expression matches when the whole expression already matched)
 
 **Ref:** [use_existing_variable.dart](../../../lib/src/rules/use_existing_variable.dart)
@@ -1422,31 +1395,29 @@ void registerManyLintsProcessors(RuleVisitorRegistry registry, RuleContext conte
 @override
 void visitPatternVariableDeclaration(PatternVariableDeclaration node) {
   final pattern = node.pattern;
+  final initializer = node.expression;
+  final keyword = node.keyword;
 
-  // ObjectPattern: `final SomeClass(:value) = input;`
   if (pattern is ObjectPattern) {
-    final fields = pattern.fields;           // NodeList<PatternField>
-    final typeName = pattern.type.name.lexeme; // e.g., "SomeClass"
-    for (final field in fields) {
-      final name = field.effectiveName;       // String? — the property name
-      final innerPattern = field.pattern;     // DartPattern (usually DeclaredVariablePattern)
+    final typeName = pattern.type.name.lexeme;
+    for (final field in pattern.fields) {
+      final propertyName = field.effectiveName;
+      final innerPattern = field.pattern;
       if (innerPattern is DeclaredVariablePattern) {
-        final varName = innerPattern.name.lexeme; // The bound variable name
+        final boundName = innerPattern.name.lexeme;
       }
     }
   }
 
-  // RecordPattern: `final (:length) = record;`
   if (pattern is RecordPattern) {
-    final fields = pattern.fields;            // NodeList<PatternField>
-    // Same field access as ObjectPattern
+    for (final field in pattern.fields) {
+      final propertyName = field.effectiveName;
+    }
   }
-
-  // Access the right-hand side expression and keyword:
-  final expression = node.expression;         // Expression (e.g., `input`)
-  final keyword = node.keyword;               // Token (`final` or `var`)
 }
 ```
+
+`ObjectPattern` is `final SomeClass(:value) = input;` (`typeName` is `SomeClass`); `RecordPattern` is `final (:length) = record;` and has the same field access. `field.effectiveName` is the property name (`String?`), `field.pattern` is usually a `DeclaredVariablePattern` whose `name` is the bound variable. `node.expression` is the right-hand side (`input`) and `node.keyword` the `final` or `var` token.
 
 **Key AST types:**
 - `PatternVariableDeclaration` — the full declaration (keyword + pattern + `=` + expression)
@@ -1468,7 +1439,6 @@ void visitBlock(Block node) {
   final destructurings = <_DestructuringInfo>[];
 
   for (final statement in node.statements) {
-    // First, check property accesses against existing destructurings
     if (destructurings.isNotEmpty) {
       final finder = _PropertyAccessFinder(destructurings);
       statement.accept(finder);
@@ -1477,7 +1447,6 @@ void visitBlock(Block node) {
       }
     }
 
-    // Then, collect new destructuring declarations
     if (statement is PatternVariableDeclarationStatement) {
       final decl = statement.declaration;
       final expression = decl.expression;
@@ -1492,7 +1461,7 @@ void visitBlock(Block node) {
           if (name != null) fields.add(name);
         }
       }
-      // ... store sourceName, sourceElement, fields
+      destructurings.add(_DestructuringInfo(expression.name, expression.element, fields));
     }
   }
 }
@@ -1513,20 +1482,18 @@ class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
     super.visitPropertyAccess(node);
   }
 
-  // Stop at nested function boundaries
   @override void visitFunctionExpression(FunctionExpression node) {}
   @override void visitFunctionDeclaration(FunctionDeclaration node) {}
 
   void _check(String targetName, Element? targetElement,
-              String propertyName, AstNode accessNode) {
-    // Match by element identity, skip assignments, skip already-destructured fields
-  }
+              String propertyName, AstNode accessNode) {}
 }
 ```
 
 **Key points:**
 - Use `expression.element` (not `.staticElement`) on `SimpleIdentifier` to get the referenced element
-- Match source by element identity (`targetElement == info.sourceElement`) for reliability
+- Check property accesses against earlier destructurings first, then collect the statement's own destructuring
+- `_check` matches the source by element identity (`targetElement == info.sourceElement`) for reliability, skips assignments and skips fields that are already destructured; the finder stops at nested function boundaries
 - Only track `LocalElement` sources (parameters and local variables)
 - Handle both `PrefixedIdentifier` (simple `obj.prop`) and `PropertyAccess` (chained access)
 - `PatternField.effectiveName` returns the property name being destructured
@@ -1535,7 +1502,7 @@ class _PropertyAccessFinder extends RecursiveAstVisitor<void> {
 
 ### Inspect Constructors Within a Class Declaration
 
-Register `addClassDeclaration`. Iterate `BlockClassBody.members` for `ConstructorDeclaration` nodes. Check constructor body (non-empty `BlockFunctionBody`) and initializer list (`initializers`), excluding `SuperConstructorInvocation`:
+Register `addClassDeclaration`. Iterate `BlockClassBody.members` for `ConstructorDeclaration` nodes. Check constructor body (non-empty `BlockFunctionBody`) and initializer list (`initializers`), excluding `SuperConstructorInvocation` (a `super()` forwarding call is not a real initializer):
 
 ```dart
 @override
@@ -1553,7 +1520,6 @@ void visitClassDeclaration(ClassDeclaration node) {
         member.body is BlockFunctionBody &&
         (member.body as BlockFunctionBody).block.statements.isNotEmpty;
 
-    // Filter out super() forwarding calls — only flag real initializers
     final hasInitializers = member.initializers.any(
       (i) => i is! SuperConstructorInvocation,
     );
@@ -1579,15 +1545,13 @@ Register `addGenericFunctionType` to visit explicit function type annotations. K
 ```dart
 @override
 void visitGenericFunctionType(GenericFunctionType node) {
-  // Skip typedef definitions (the GenericFunctionType inside a typedef is the definition itself)
   if (node.parent is GenericTypeAlias) return;
 
-  final returnType = node.returnType;       // TypeAnnotation? (e.g., NamedType for 'Future<void>')
-  final params = node.parameters;           // FormalParameterList (e.g., '()')
-  final typeParams = node.typeParameters;   // TypeParameterList? (e.g., '<T>')
-  final isNullable = node.question != null; // Token? for trailing '?'
+  final returnType = node.returnType;
+  final params = node.parameters;
+  final typeParams = node.typeParameters;
+  final isNullable = node.question != null;
 
-  // Example: match Future<void> Function()
   if (returnType is NamedType && returnType.name.lexeme == 'Future') {
     final typeArgs = returnType.typeArguments;
     if (typeArgs != null && typeArgs.arguments.length == 1) {
@@ -1605,7 +1569,8 @@ void visitGenericFunctionType(GenericFunctionType node) {
 **Key notes:**
 - `GenericFunctionType` represents `ReturnType Function(Params)` syntax in type annotations
 - Bare `Function` (without return/params) is `NamedType`, NOT `GenericFunctionType`
-- Skip `node.parent is GenericTypeAlias` to avoid flagging typedef definitions
+- `returnType` is a `TypeAnnotation?` (a `NamedType` for `Future<void>`), `parameters` a `FormalParameterList` (`()`), `typeParameters` a `TypeParameterList?` (`<T>`); the example matches `Future<void> Function()`
+- Skip `node.parent is GenericTypeAlias`: the `GenericFunctionType` inside a typedef is the definition itself
 - `node.question` is the `?` token for nullable function types like `void Function()?`
 - Length of `Future<void> Function()` is **23 characters** (not 24)
 
@@ -1624,7 +1589,6 @@ void visitMethodInvocation(MethodInvocation node) {
   if (target is! SimpleIdentifier) return;
   if (target.name != 'Isolate') return;
 
-  // Verify the target resolves to dart:isolate's Isolate class
   final element = target.element;
   if (element == null) return;
   final library = element.library;
@@ -1669,8 +1633,11 @@ static (String?, ArgumentList?) _getChildInfo(Expression expr) {
   }
   return (null, null);
 }
+```
 
-// Then check the static type:
+Then check the static type:
+
+```dart
 final childType = childExpr.staticType;
 if (childType is! InterfaceType) return;
 if (!_hasPaddingParam(childType)) return;
@@ -1693,11 +1660,9 @@ registry.addMethodInvocation(this, visitor);
 registry.addInstanceCreationExpression(this, visitor);
 registry.addListLiteral(this, visitor);
 
-// Pattern 1: iterable.map((e) => ...).toList()
 @override
 void visitMethodInvocation(MethodInvocation node) {
   if (node.methodName.name == 'toList') {
-    // Skip if inside a spread — Pattern 2 handles that case
     if (node.parent is SpreadElement) return;
     final target = node.target;
     if (target is! MethodInvocation) return;
@@ -1708,13 +1673,11 @@ void visitMethodInvocation(MethodInvocation node) {
   }
 }
 
-// Pattern 2: [...iterable.map((e) => ...)] in list literals
 @override
 void visitListLiteral(ListLiteral node) {
   for (final element in node.elements) {
     if (element is SpreadElement) {
       var expr = element.expression;
-      // Unwrap optional .toList()
       if (expr is MethodInvocation && expr.methodName.name == 'toList') {
         expr = expr.target!;
       }
@@ -1725,12 +1688,9 @@ void visitListLiteral(ListLiteral node) {
     }
   }
 }
-
-// Pattern 3: List.generate(n, (i) => ...) — MethodInvocation without type args
-// Also handle List<T>.generate() as InstanceCreationExpression with type args
-
-// Pattern 4: iterable.fold([], (list, e) { ... }) — empty list literal as first arg
 ```
+
+`visitMethodInvocation` covers `iterable.map((e) => ...).toList()` and skips it inside a spread, which `visitListLiteral` handles: `[...iterable.map((e) => ...)]`, with an optional `.toList()` unwrapped. The same visitors also detect `List.generate(n, (i) => ...)` and `iterable.fold([], (list, e) { ... })` (an empty list literal as the first argument).
 
 **Key points:**
 - `List.generate()` without type args → `MethodInvocation`; with type args → `InstanceCreationExpression`
@@ -1748,7 +1708,7 @@ Register `addMethodDeclaration`. Check `node.body.isAsynchronous`. Get block sta
 @override
 void visitMethodDeclaration(MethodDeclaration node) {
   if (!node.body.isAsynchronous) return;
-  // Verify enclosing class type...
+  if (!_isInTargetClass(node)) return;
   final body = node.body;
   if (body is! BlockFunctionBody) return;
 
@@ -1759,13 +1719,11 @@ void visitMethodDeclaration(MethodDeclaration node) {
       continue;
     }
 
-    // Check for a guard pattern that resets context
     if (_isMountedGuardWithReturn(statement)) {
       seenAwait = false;
       continue;
     }
 
-    // Report target usages after the async gap
     final finder = _TargetFinder(rule);
     statement.accept(finder);
   }
@@ -1814,7 +1772,7 @@ static bool _isMountedGuardWithReturn(Statement statement) {
 
 **Key points:**
 - Use `body.isAsynchronous` to skip non-async methods early
-- Track `seenAwait` as a sequential flag — reset on mounted guard detection
+- Track `seenAwait` as a sequential flag; a mounted guard resets the context, and `_TargetFinder` reports target usages after the async gap
 - `_AwaitFinder` and `_TargetFinder` both stop at function boundaries to skip closures
 - For target detection, handle all identifier forms: `MethodInvocation` (ref.read), `PrefixedIdentifier` (ref.prop), `SimpleIdentifier` (bare ref), `AssignmentExpression` (state = x), `PropertyAccess` (this.ref.prop)
 - Exclude `ref.mounted` from being flagged (it's the guard itself)
@@ -1842,7 +1800,7 @@ class _ConditionalCallFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitIfStatement(IfStatement node) {
-    node.expression.accept(this); // condition is not conditional
+    node.expression.accept(this);
     _conditionalDepth++;
     node.thenStatement.accept(this);
     node.elseStatement?.accept(this);
@@ -1879,7 +1837,6 @@ class _ConditionalCallFinder extends RecursiveAstVisitor<void> {
     }
   }
 
-  // Stop at nested function boundaries
   @override void visitFunctionExpression(FunctionExpression node) {}
   @override void visitFunctionDeclaration(FunctionDeclaration node) {}
 }
@@ -1908,9 +1865,11 @@ void visitPostfixExpression(PostfixExpression node) {
   while (operand is ParenthesizedExpression) {
     operand = operand.expression;
   }
-  // `operand` is the expression the bang asserts on.
+  rule.reportAtNode(operand);
 }
 ```
+
+`operand` is the expression the bang asserts on.
 
 Import `TokenType` from `package:analyzer/dart/ast/token.dart` (not the
 `_fe_analyzer_shared` implementation path).
@@ -1991,8 +1950,9 @@ For example, Dart 3.11 rejects an unbounded generic async return type:
 
 ```dart
 T load<T>() async => throw '';
-// illegal_async_return_type — do not add a second lint here
 ```
+
+The analyzer reports `illegal_async_return_type` here; do not add a second lint.
 
 `prefer_correct_future_return_type` therefore covers legal broad async return
 types (`dynamic`, `Object`, `FutureOr<T>`, and `Future<T>?`) but deliberately

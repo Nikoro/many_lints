@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec bash "$(git rev-parse --show-toplevel)/tool/comment_gate.sh" commit-msg "$1"

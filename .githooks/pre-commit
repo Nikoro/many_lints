@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+gate="$(git rev-parse --show-toplevel)/tool/comment_gate.sh"
+bash "$gate" staged
+exec bash "$gate" check

@@ -17,7 +17,13 @@ cd many_lints
 dart pub get
 ```
 
-3. Verify everything works:
+3. Install the git hooks (and the comment checker, when you have access to it):
+
+```sh
+tool/setup.sh
+```
+
+4. Verify everything works:
 
 ```sh
 dart format --enable-experiment=primary-constructors --output=none --set-exit-if-changed .
@@ -27,6 +33,17 @@ dart run tool/verify_examples.dart
 dart test
 cd docs && bun install && bun run build
 ```
+
+## Comment Policy
+
+Code describes itself through names, so practically no comments are needed. Tool
+directives, `///` docs in `lib/many_lints.dart` and one-line `// Edge case: <why>` or
+`// Workaround: <issue URL> <why>` notes (at most 3 per file) are allowed. Knowledge
+about a rule belongs on its documentation page.
+
+Maintainers check this with `comment_gate`, a private tool. `tool/setup.sh` installs it
+together with the git hooks. Without access to it the hooks print a notice and skip
+the check, and a maintainer runs it before merging.
 
 ## Testing a Local Checkout in Another Project
 

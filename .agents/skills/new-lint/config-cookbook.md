@@ -216,8 +216,6 @@ The only difference when writing a rule: override `registerManyLintsProcessors` 
 import '../many_lints_rule.dart';
 
 class MyRule extends ManyLintsRule {
-  // ...
-
   @override
   void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
@@ -263,10 +261,11 @@ Rebuild with `Diagnostic.forValues`, preserving `diagnosticCode`. The code is wh
 ### How exclusion resolves internally
 
 ```dart
-final relative = packageRoot.relativeIfContains(path);   // e.g. 'test/foo.dart'
+final relative = packageRoot.relativeIfContains(path);
 Glob('/', pattern).matches(relative.replaceAll(r'\', '/'));
 ```
 
+`relative` is a package-relative path such as `'test/foo.dart'`.
 `relativeIfContains` is the same helper analyzer's own `LocatedGlob.matches` uses, so glob semantics match analyzer's exclude handling. `Glob` comes from `analyzer/src/util/glob.dart` (an implementation import — hence `ignore_for_file: implementation_imports` in `rule_config.dart`).
 
 The path comes from the reporter's own `source.fullName`, which is always the file being reported on. That sidesteps a trap in the context-based route: `RuleContext.isInLibDir` and `isInTestDirectory` are computed from `definingUnit` and **misreport for part files**, so they are not a substitute for path matching.
@@ -280,11 +279,6 @@ The path comes from the reporter's own `source.fullName`, which is always the fi
 ```dart
   @override
   void visitTryStatement(TryStatement node) {
-    // No exclude guard needed: `ManyLintsRule` handles it at the reporter.
-
-    // `ignore_typed_catches: true` limits the rule to untyped `catch (e)`
-    // clauses, leaving `on SomeError catch (e) { rethrow; }` alone — that
-    // form narrows which exceptions propagate, so it is not always redundant.
     final ignoreTyped = rule.config.boolOption(
       'ignore_typed_catches',
       defaultValue: false,
@@ -292,10 +286,15 @@ The path comes from the reporter's own `source.fullName`, which is always the fi
 
     for (final catchClause in node.catchClauses) {
       if (ignoreTyped && catchClause.exceptionType != null) continue;
-      // ... existing detection
+      _checkCatchClause(catchClause);
     }
   }
 ```
+
+No exclude guard is needed: `ManyLintsRule` handles it at the reporter.
+`ignore_typed_catches: true` limits the rule to untyped `catch (e)` clauses,
+leaving `on SomeError catch (e) { rethrow; }` alone: that form narrows which
+exceptions propagate, so it is not always redundant.
 
 `rule.config` is refreshed per file, so read it inside the callback rather than caching it in the visitor's constructor.
 
@@ -332,11 +331,15 @@ This package uses one fixed vocabulary. **Do not invent a new key shape for a ne
 ```dart
 config.boolOption('ignore_typed_catches', defaultValue: false)
 config.intOption('max_count', defaultValue: 10)
-config.stringListOption('allowed_names')            // defaults to const []
-config.nameSetOption('classes', defaultValue: _defaults)   // replace + append
-config.patternOption('name_pattern', defaultValue: _default)  // RegExp?
-config.entriesOption('banned')                      // List<Map<String, Object?>>
+config.stringListOption('allowed_names')
+config.nameSetOption('classes', defaultValue: _defaults)
+config.patternOption('name_pattern', defaultValue: _default)
+config.entriesOption('banned')
 ```
+
+`stringListOption` defaults to `const []`, `nameSetOption` reads a replace and
+an append key (below), `patternOption` yields a `RegExp?`, and `entriesOption`
+yields a `List<Map<String, Object?>>`.
 
 `patternOption` returns `null` (or your default) when the key is absent, is not a string, or fails to compile — an invalid regex must not take down analysis. Apply the result with `matchesWholeValue` from `rule_config.dart`, which anchors by checking the match span; see the banned-* section below for why naive `'^$p\$'` concatenation is wrong.
 
@@ -376,7 +379,7 @@ is precisely the layout the project asked for.
 
 ```dart
 final groups = readDeclarationGroups(rule.config);
-final seen = List.filled(groups.length, 0);   // one counter per group
+final seenPerGroup = List.filled(groups.length, 0);
 ```
 
 ### Flat keys are the same feature, less verbosely
@@ -558,13 +561,13 @@ When a rule exempts types by name (`ignored_types`, `state_base_classes`, …), 
 - a **default** should be pinned to the package that declares it, so a project class of the same name cannot silently switch the rule off;
 - a **user addition** must be matched bare, because a type declared in the analyzed package has no `package:` URI to pin against.
 
-Model the defaults as a `Map<String, TypeChecker>` rather than a `Set<String>`, and fall back to `TypeChecker.fromName` for anything not in it:
+Model the defaults as a `Map<String, TypeChecker>` rather than a `Set<String>`, and fall back to `TypeChecker.fromName` for anything not in it. Here `widgetChecker` pins `package:flutter`, `mockChecker` `package:mocktail` or `package:mockito`, and `fakeChecker` `package:test_api`:
 
 ```dart
 static const Map<String, TypeChecker> defaultIgnoredTypes = {
-  'Widget': widgetChecker,   // package:flutter
-  'Mock': mockChecker,       // package:mocktail | package:mockito
-  'Fake': fakeChecker,       // package:test_api
+  'Widget': widgetChecker,
+  'Mock': mockChecker,
+  'Fake': fakeChecker,
 };
 
 bool _isIgnoredType(ClassElement element) {
@@ -750,12 +753,16 @@ See `test/rule_options_test.dart` for the working version. This is what makes en
 
 **2. Pair every negative test with an asymmetric positive one.** A test that only asserts silence cannot distinguish "exclusion worked" from "the rule never fired":
 
+Negative, the pattern matches the file, so the rule is silent:
+
 ```dart
-// Negative: pattern matches the file → silence
 config: 'rules:\n  my_rule:\n    exclude: [lib/**]'
 expect(codes, isNot(contains('my_rule')));
+```
 
-// Positive: pattern does NOT match the file → still reports
+Positive, the pattern does not match the file, so it still reports:
+
+```dart
 config: 'rules:\n  my_rule:\n    exclude: [test/**]'
 expect(codes, contains('my_rule'));
 ```

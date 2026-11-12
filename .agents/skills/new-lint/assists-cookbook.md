@@ -96,22 +96,13 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/assist/assist.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
-
-// Optional imports
 import 'package:analyzer_plugin/utilities/range_factory.dart';
-import 'package:many_lints/src/type_checker.dart';
-import 'package:many_lints/src/ast_node_analysis.dart';
 
-/// Assist that [brief description of what it does].
-///
-/// Example:
-/// Before: `iterable.map((e) => e * 2).toList()`
-/// After:  `[for (final e in iterable) e * 2]`
 class MyAssist extends ResolvedCorrectionProducer {
   static const _assistKind = AssistKind(
-    'many_lints.assist.myAssist',  // Unique ID (camelCase)
-    30,                              // Priority (0-100, lower = higher)
-    'Description shown in IDE',     // User-facing label
+    'many_lints.assist.myAssist',
+    30,
+    'Description shown in IDE',
   );
 
   MyAssist({required super.context});
@@ -125,39 +116,19 @@ class MyAssist extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // 1. Find target node at cursor position
-    final targetNode = node;
-
-    // 2. Navigate to the right AST structure
-    MethodInvocation? methodInvocation;
-    AstNode? current = targetNode;
-    while (current != null) {
-      if (current is MethodInvocation) {
-        methodInvocation = current;
-        break;
-      }
-      current = current.parent;
-    }
-
-    if (methodInvocation == null) return;  // Not applicable
-
-    // 3. Check applicability with pattern matching
+    final methodInvocation = node.thisOrAncestorOfType<MethodInvocation>();
+    if (methodInvocation == null) return;
     if (!_isApplicable(methodInvocation)) return;
 
-    // 4. Perform transformation
     await _performTransformation(methodInvocation, builder);
   }
 
-  bool _isApplicable(MethodInvocation node) {
-    // Detailed checks for when assist should be available
-    return true;  // Replace with actual logic
-  }
+  bool _isApplicable(MethodInvocation node) => node.methodName.name == 'map';
 
   Future<void> _performTransformation(
     MethodInvocation node,
     ChangeBuilder builder,
   ) async {
-    // Apply the code transformation
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(
         range.node(node),
@@ -167,6 +138,16 @@ class MyAssist extends ResolvedCorrectionProducer {
   }
 }
 ```
+
+The steps are always the same: find the target node from the cursor (`node`),
+walk to the AST structure the assist rewrites, return early when it does not
+apply, then transform. Import `package:many_lints/src/type_checker.dart` and
+`package:many_lints/src/ast_node_analysis.dart` when the assist needs them. The
+`AssistKind` arguments are the unique camelCase id, the priority (0-100, lower
+is higher) and the label shown in the IDE. Assists carry no doc comments; a
+before/after pair for the assist belongs on `docs/src/content/docs/docs/assists.md`
+(for example `iterable.map((e) => e * 2).toList()` becomes
+`[for (final e in iterable) e * 2]`).
 
 **Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
 
@@ -178,8 +159,9 @@ class MyAssist extends ResolvedCorrectionProducer {
 
 **ID:** `'many_lints.assist.<camelCaseDescription>'`
 
+Good ids:
+
 ```dart
-// Good examples
 'many_lints.assist.convertIterableMapToCollectionFor'
 'many_lints.assist.convertToAsync'
 'many_lints.assist.extractWidget'
@@ -193,10 +175,12 @@ class MyAssist extends ResolvedCorrectionProducer {
 ```dart
 static const _assistKind = AssistKind(
   'many_lints.assist.myAssist',
-  30,  // <- Standard priority for refactorings
+  30,
   'Convert to collection-for',
 );
 ```
+
+`30` is the standard priority for refactorings.
 
 **Guidelines:**
 - **0-20**: High priority (common, frequently used refactorings)
@@ -207,17 +191,17 @@ static const _assistKind = AssistKind(
 
 User-facing label in IDE, clear and action-oriented:
 
+Good labels:
+
 ```dart
-// Good examples
 'Convert to collection-for'
 'Extract to method'
 'Wrap with Builder'
 'Convert to async/await'
-
-// Avoid
-'Helper for converting'  // Not action-oriented
-'Use collection-for syntax'  // Vague
 ```
+
+Avoid `'Helper for converting'` (not action-oriented) and
+`'Use collection-for syntax'` (vague).
 
 ---
 
@@ -230,10 +214,7 @@ User-facing label in IDE, clear and action-oriented:
 ```dart
 @override
 Future<void> compute(ChangeBuilder builder) async {
-  final targetNode = node;  // Node at cursor
-
-  // Walk up until we find the right type
-  AstNode? current = targetNode;
+  AstNode? current = node;
   MethodInvocation? methodInvocation;
 
   while (current != null) {
@@ -244,9 +225,13 @@ Future<void> compute(ChangeBuilder builder) async {
     current = current.parent;
   }
 
-  if (methodInvocation == null) return;  // Assist not applicable
+  if (methodInvocation == null) return;
 }
 ```
+
+`node` is the node at the cursor; walk up until the right type appears and
+return when none does. `node.thisOrAncestorOfType<MethodInvocation>()` is the
+one-line form of the same walk.
 
 **When to use:** Cursor could be anywhere within the target construct
 **Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
@@ -255,24 +240,20 @@ Future<void> compute(ChangeBuilder builder) async {
 
 ### Checking Multiple Parent Levels
 
-```dart
-// Check if .map() is chained with .toList() or .toSet()
-final parent = methodInvocation.parent;
-PropertyAccess? propertyAccess;
+Is `.map()` chained with `.toList()` or `.toSet()`? Both
+`(iterable.map(...)).toList()` and `iterable.map(...).toList()` must match:
 
-if (parent is ParenthesizedExpression) {
-  // Handle: (iterable.map(...)).toList()
-  propertyAccess = parent.parent.tryCast<PropertyAccess>();
-} else {
-  // Handle: iterable.map(...).toList()
-  propertyAccess = parent.tryCast<PropertyAccess>();
-}
+```dart
+final parent = methodInvocation.parent;
+final propertyAccess = parent is ParenthesizedExpression
+    ? parent.parent.tryCast<PropertyAccess>()
+    : parent.tryCast<PropertyAccess>();
 
 final toListOrSet = propertyAccess?.propertyName.name;
 final isToList = toListOrSet == 'toList';
 final isToSet = toListOrSet == 'toSet';
 
-if (!isToList && !isToSet) return;  // Not applicable
+if (!isToList && !isToSet) return;
 ```
 
 **Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
@@ -287,10 +268,8 @@ if (!isToList && !isToSet) return;  // Not applicable
 
 ```dart
 bool _isApplicable(MethodInvocation node) {
-  // Check method name
   if (node.methodName.name != 'map') return false;
 
-  // Pattern match the entire structure
   if (node case MethodInvocation(
     target: Expression(staticType: final targetType?),
     methodName: SimpleIdentifier(name: 'map'),
@@ -303,13 +282,7 @@ bool _isApplicable(MethodInvocation node) {
       ],
     ),
   )) {
-    // Type check
-    if (!_iterableChecker.isAssignableFromType(targetType)) {
-      return false;
-    }
-
-    // Additional checks
-    return true;
+    return _iterableChecker.isAssignableFromType(targetType);
   }
 
   return false;
@@ -332,12 +305,7 @@ class MyAssist extends ResolvedCorrectionProducer {
     final targetType = node.target?.staticType;
     if (targetType == null) return false;
 
-    // Check if target is Iterable
-    if (!_iterableChecker.isAssignableFromType(targetType)) {
-      return false;
-    }
-
-    return true;
+    return _iterableChecker.isAssignableFromType(targetType);
   }
 }
 ```
@@ -361,23 +329,22 @@ Future<void> compute(ChangeBuilder builder) async {
   await _performTransformation(methodInvocation, builder);
 }
 
-MethodInvocation? _findMethodInvocation() {
-  // Navigation logic
-}
+MethodInvocation? _findMethodInvocation() =>
+    node.thisOrAncestorOfType<MethodInvocation>();
 
-bool _isApplicable(MethodInvocation node) {
-  // Validation logic
-}
+bool _isApplicable(MethodInvocation node) => node.methodName.name == 'map';
 
 Future<void> _performTransformation(
   MethodInvocation node,
   ChangeBuilder builder,
 ) async {
-  // Transformation logic
+  await builder.addDartFileEdit(file, (builder) {
+    builder.addSimpleReplacement(range.node(node), 'transformed code');
+  });
 }
 ```
 
-**Separates concerns for readability**
+**Separates navigation, validation and transformation for readability**
 
 ---
 
@@ -391,7 +358,7 @@ Future<void> _performTransformation(
 import 'package:many_lints/src/ast_node_analysis.dart';
 
 final returnExpr = maybeGetSingleReturnExpression(functionBody);
-if (returnExpr == null) return;  // Can't convert complex function
+if (returnExpr == null) return;
 
 final returnSource = returnExpr.toSource();
 ```
@@ -403,16 +370,13 @@ final returnSource = returnExpr.toSource();
 ### Building Replacement Code
 
 ```dart
-// Determine collection delimiters
 final openBracket = isToList ? '[' : '{';
 final closeBracket = isToList ? ']' : '}';
 
-// Extract components
 final targetSource = target.toSource();
 final paramName = parameter.name?.lexeme ?? 'e';
 final bodySource = returnExpr.toSource();
 
-// Build final replacement
 final replacement = '$openBracket'
     'for (final $paramName in $targetSource) '
     '$bodySource'
@@ -429,19 +393,16 @@ final replacement = '$openBracket'
 
 ```dart
 await builder.addDartFileEdit(file, (builder) {
-  // Get offsets
   final targetOffset = target.offset;
   final targetEnd = target.end;
   final nodeStart = propertyAccess?.offset ?? methodInvocation.offset;
   final nodeEnd = propertyAccess?.end ?? methodInvocation.end;
 
-  // Replace prefix (before target)
   builder.addSimpleReplacement(
     SourceRange(nodeStart, targetOffset - nodeStart),
     openBracket + 'for (final $paramName in ',
   );
 
-  // Replace suffix (after target)
   builder.addSimpleReplacement(
     SourceRange(targetEnd, nodeEnd - targetEnd),
     ') $bodySource$closeBracket',
@@ -449,7 +410,7 @@ await builder.addDartFileEdit(file, (builder) {
 });
 ```
 
-**Two replacements preserve the middle (target) unchanged!**
+**Two replacements, one before and one after the target, preserve the target unchanged.**
 **Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
 
 ---
@@ -514,18 +475,18 @@ await builder.addDartFileEdit(file, (builder) {
 
 ```dart
 Expression? maybeGetSingleReturnExpression(FunctionBody body)
-
-// Returns expression from:
-// => expr
-// { return expr; }
-// Otherwise returns null
 ```
+
+Yields the expression of `=> expr` and `{ return expr; }` bodies, and null for
+any other body.
 
 **Usage in assists:**
 ```dart
 final returnExpr = maybeGetSingleReturnExpression(functionBody);
-if (returnExpr == null) return;  // Complex function, can't convert
+if (returnExpr == null) return;
 ```
+
+A null result means the function is too complex to convert.
 
 **Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
 
@@ -548,13 +509,12 @@ extension IterableExtension<T> on Iterable<T> {
 **Import:** `package:many_lints/src/type_checker.dart`
 
 ```dart
-// Check types in assists
 static const _iterableChecker = TypeChecker.fromUrl('dart:core#Iterable');
 
-if (_iterableChecker.isAssignableFromType(type)) {
-  // Type is Iterable or subtype
-}
+final isIterable = _iterableChecker.isAssignableFromType(type);
 ```
+
+`isAssignableFromType` holds for `Iterable` and every subtype.
 
 **Reference:** [convert_iterable_map_to_collection_for.dart](../../../lib/src/assists/convert_iterable_map_to_collection_for.dart)
 
@@ -579,17 +539,24 @@ enum _Combinator {
   andThen(name: 'andThen', arity: 1),
   map(name: 'map', arity: 1),
   filterOrElse(name: 'filterOrElse', arity: 2);
-  // ...
-  static _Combinator? byName(String name) { /* ... */ }
+
+  const _Combinator({required this.name, required this.arity});
+
+  final String name;
+  final int arity;
+
+  static _Combinator? byName(String name) =>
+      values.where((combinator) => combinator.name == name).firstOrNull;
 }
 
-// One compute(), dispatching on which combinator the cursor sits on.
 final replacement = switch (combinator) {
   _Combinator.andThen => _expandAndThen(arguments),
   _Combinator.map => _expandMap(arguments, wrapper),
   _Combinator.filterOrElse => _expandFilterOrElse(arguments, wrapper),
 };
 ```
+
+One `compute()` dispatches on the combinator the cursor sits on.
 
 **Always add a round-trip test.** Narrow, then expand, and assert you are back where you started. It is the cheapest way to catch the two directions drifting apart.
 
@@ -602,12 +569,13 @@ final replacement = switch (combinator) {
 ```dart
 static const _assistKind = AssistKind(
   'many_lints.assist.convertFlatMapToChainFirst',
-  // Below the exact conversions: this one asks the author to accept a
-  // change in behaviour, so it should not sit above assists that do not.
   29,
   "Convert to 'chainFirst' (ignores the effect's failure)",
 );
 ```
+
+Priority `29` sits below the exact conversions: this assist asks the author to
+accept a change in behaviour, so it must not rank above assists that do not.
 
 The alternative — a neutral label plus a doc-comment warning — hides the cost exactly where the decision is made.
 
@@ -665,14 +633,12 @@ import 'package:many_lints/src/assists/my_assist.dart';
 class ManyLintsPlugin extends Plugin {
   @override
   void register(PluginRegistry registry) {
-    // Register rules...
-    // Register fixes...
-
-    // Register assists (standalone)
     registry.registerAssist(MyAssist.new);
   }
 }
 ```
+
+Assists are registered after the rules and fixes, standalone.
 
 **Note:**
 - Use `.new` tear-off syntax
@@ -702,7 +668,9 @@ Reach for route 2 when the assist offers linked renames, or when you want the sa
 
 ```dart
 final offered = await harness.assistIds(r'''
-...p.chainFir^st(audit);
+void f(TaskEither<String, int> p, TaskEither<String, Unit> Function(int) audit) {
+  p.chainFir^st(audit);
+}
 ''', multiFilePackages: {'fpdart': fpdartStubFiles});
 
 expect(offered, isNot(contains('many_lints.assist.expandToFlatMap')));
@@ -719,9 +687,6 @@ An assist declining a shape it cannot safely transform is part of its contract, 
 **Fix:** supply the missing member in the fixture itself.
 
 ```dart
-// The test SDK's minimal `Iterable` declares no `reduce`, so the fixture
-// supplies one. The assist resolves types rather than names, so an
-// unresolved call would make it decline for the wrong reason.
 extension <E> on Iterable<E> {
   E reduce(E Function(E value, E element) combine) => throw '';
 }
@@ -770,7 +735,6 @@ class MyAssistTest extends PubPackageResolutionTest {
     final change = builder.sourceChange;
     if (change.edits.isEmpty) return null;
 
-    // Apply edits in reverse offset order
     var result = content;
     final edits = change.edits.first.edits.toList()
       ..sort((a, b) => b.offset.compareTo(a.offset));
@@ -793,6 +757,9 @@ class MyAssistTest extends PubPackageResolutionTest {
 }
 ```
 
+Apply the edits in reverse offset order so an earlier edit does not shift the
+offsets of a later one.
+
 ---
 
 ## Best Practices
@@ -809,7 +776,6 @@ class MyAssistTest extends PubPackageResolutionTest {
    ```dart
    if (node case MethodInvocation(
      methodName: SimpleIdentifier(name: 'map'),
-     // ...
    )) { }
    ```
 
@@ -830,9 +796,8 @@ class MyAssistTest extends PubPackageResolutionTest {
    final userCode = expression.toSource();
    ```
 
-6. **Handle edge cases**
+6. **Handle edge cases** such as parenthesized expressions
    ```dart
-   // Handle parenthesized expressions
    if (parent is ParenthesizedExpression) {
      parent = parent.parent;
    }

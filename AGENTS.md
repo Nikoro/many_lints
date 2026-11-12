@@ -162,8 +162,12 @@ Notes say why, never what. Rules, fixes, assists and helpers carry no doc commen
 users read the docs site and the rule's `problemMessage` / `correctionMessage`, so
 knowledge about a rule belongs on its page under `docs/src/content/docs/docs/rules/`.
 Comments inside test fixture strings are code under test and are exempt. The checker
-is `comment_gate` (`~/Projects/comment_gate`, see its README for every rule); the
-project configuration for it is still to come.
+is `comment_gate` (private, `git@github.com:Nikoro/comment_gate.git`; its README holds
+every rule). `tool/setup.sh` clones it into `.tools/comment_gate` and points
+`core.hooksPath` at `.githooks`: pre-commit runs `comment_gate staged` and `check`,
+commit-msg runs `comment_gate commit-msg` (a kept note needs a `Notes-reviewed:` trailer).
+`comment_gate.toml` sets the scope. Knowledge that does not fit a note goes to the
+docs site, `docs/AGENTS.md` or `findings/`, never lost with the comment.
 
 ## Key Helpers
 

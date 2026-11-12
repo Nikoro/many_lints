@@ -1,6 +1,2 @@
-/// Re-exports `many_lints.dart` for analysis_server_plugin discovery.
-///
-/// This file exists because analysis_server_plugin looks for `lib/main.dart`.
-library;
-
+// Edge case: analysis_server_plugin discovers a plugin only through lib/main.dart
 export 'package:many_lints/many_lints.dart';

@@ -161,15 +161,12 @@ class RuleName extends ManyLintsRule {
   @override
   LintCode get diagnosticCode => code;
 
-  // `ManyLintsRule` implements `registerNodeProcessors` itself to wire up
-  // per-rule `exclude`, so rules override this hook instead.
   @override
   void registerManyLintsProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
     final visitor = _Visitor(this);
-    // Register the AST nodes you want to visit
     registry.addInstanceCreationExpression(this, visitor);
   }
 }
@@ -181,13 +178,16 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    // Your lint logic here
     if (shouldReportLint) {
       rule.reportAtNode(node);
     }
   }
 }
 ```
+
+`ManyLintsRule` implements `registerNodeProcessors` itself to wire up per-rule
+`exclude`, so rules override `registerManyLintsProcessors` instead. Register
+there the AST nodes the rule visits; the lint logic lives in the visitor.
 
 **Reference:** [use_class_suffix.dart](../../../lib/src/rules/use_class_suffix.dart)
 
@@ -234,28 +234,28 @@ static const _strictChecker = TypeChecker.all([
 **Check if element is exactly this type (no inheritance):**
 ```dart
 if (_blocChecker.isExactly(element)) {
-  // Element IS Bloc, not a subclass
+  rule.reportAtNode(node);
 }
 ```
 
 **Check if type is exactly this type:**
 ```dart
 if (_iterableChecker.isExactlyType(type)) {
-  // Type IS Iterable<T>, not a subtype
+  rule.reportAtNode(node);
 }
 ```
 
 **Check if element is a subtype (inheritance check):**
 ```dart
 if (_blocChecker.isSuperOf(element)) {
-  // Element extends/implements Bloc
+  rule.reportAtNode(node);
 }
 ```
 
 **Check if type is assignable from (includes subtypes):**
 ```dart
 if (_iterableChecker.isAssignableFromType(targetType)) {
-  // targetType is compatible with Iterable
+  rule.reportAtNode(node);
 }
 ```
 
@@ -268,9 +268,8 @@ Use the helper function from [ast_node_analysis.dart](../../../lib/src/ast_node_
 ```dart
 import 'package:many_lints/src/ast_node_analysis.dart';
 
-// Check if an expression has a specific static type
 if (isExpressionExactlyType(expression, _widgetChecker)) {
-  // Expression's static type is exactly Widget
+  rule.reportAtNode(expression);
 }
 ```
 
@@ -294,6 +293,15 @@ bool isExpressionExactlyType(Expression expression, TypeChecker checker) {
 
 Register specific AST node types you want to visit:
 
+| Registration | Visits |
+|---|---|
+| `addClassDeclaration` | class declarations |
+| `addInstanceCreationExpression` | widget/object instantiation (`Container()`, `MyClass()`) |
+| `addMethodInvocation` | method calls (`list.map()`, `object.doSomething()`) |
+| `addPropertyAccess` | property access (`object.isEmpty`, `myVar.length`) |
+| `addPrefixedIdentifier` | prefixed identifiers (`Class.field`, `prefix.identifier`) |
+| `addSwitchStatement` | switch statements |
+
 ```dart
 @override
 void registerManyLintsProcessors(
@@ -301,23 +309,11 @@ void registerManyLintsProcessors(
   RuleContext context,
 ) {
   final visitor = _Visitor(this);
-
-  // For analyzing class declarations
   registry.addClassDeclaration(this, visitor);
-
-  // For widget/object instantiation (Container(), MyClass())
   registry.addInstanceCreationExpression(this, visitor);
-
-  // For method calls (list.map(), object.doSomething())
   registry.addMethodInvocation(this, visitor);
-
-  // For property access (object.isEmpty, myVar.length)
   registry.addPropertyAccess(this, visitor);
-
-  // For prefixed identifiers (Class.field, prefix.identifier)
   registry.addPrefixedIdentifier(this, visitor);
-
-  // For switch statements
   registry.addSwitchStatement(this, visitor);
 }
 ```
@@ -333,13 +329,12 @@ void visitClassDeclaration(ClassDeclaration node) {
   final body = node.body;
   if (body is! BlockClassBody) return;
 
-  // Find a specific method by name
   final buildMethod = body.members
       .whereType<MethodDeclaration>()
       .firstWhereOrNull((m) => m.name.lexeme == 'build');
 
   if (buildMethod != null) {
-    // Process the method
+    rule.reportAtToken(buildMethod.name);
   }
 }
 ```
@@ -356,7 +351,7 @@ void visitInstanceCreationExpression(InstanceCreationExpression node) {
   final element = constructorName.element;
 
   if (element?.name == 'Container') {
-    // Process Container widget
+    rule.reportAtNode(node.constructorName);
   }
 }
 ```
@@ -366,8 +361,7 @@ void visitInstanceCreationExpression(InstanceCreationExpression node) {
 final arguments = node.argumentList.arguments;
 for (final arg in arguments.whereType<NamedArgument>()) {
   if (arg.name.lexeme == 'alignment') {
-    final value = arg.argumentExpression;
-    // Process alignment argument
+    rule.reportAtNode(arg.argumentExpression);
   }
 }
 ```
@@ -388,7 +382,6 @@ Modern pattern matching for complex AST checks:
 ```dart
 @override
 void visitPropertyAccess(PropertyAccess node) {
-  // Check for .where().isEmpty pattern
   if (node case PropertyAccess(
     propertyName: SimpleIdentifier(name: final property && ('isEmpty' || 'isNotEmpty')),
     target: MethodInvocation(
@@ -397,11 +390,12 @@ void visitPropertyAccess(PropertyAccess node) {
       argumentList: ArgumentList(arguments: [_]),
     ),
   ) when _iterableChecker.isAssignableFromType(targetType)) {
-    // Report: prefer .any() or .every() instead of .where().isEmpty
     rule.reportAtNode(node);
   }
 }
 ```
+
+This reports `.where(...).isEmpty` / `.isNotEmpty`, which `.any()` or `.every()` replaces.
 
 **Reference:** [prefer_any_or_every.dart](../../../lib/src/rules/prefer_any_or_every.dart)
 
@@ -413,7 +407,6 @@ if (children case final ListLiteral list) {
   if (list.elements.length == 1) {
     final element = list.elements.first;
 
-    // Check element type with pattern matching
     bool checkExpression(CollectionElement expression) {
       return switch (expression) {
         Expression() => true,
@@ -426,7 +419,6 @@ if (children case final ListLiteral list) {
     }
 
     if (checkExpression(element)) {
-      // Single child in multi-child widget
       rule.reportAtNode(node);
     }
   }
@@ -445,27 +437,26 @@ if (children case final ListLiteral list) {
 
 **From [type_inference.dart](../../../lib/src/type_inference.dart):**
 
+| Function | Result |
+|---|---|
+| `inferContextType(expression)` | the expected type from the expression's context (variables, assignments, returns, etc.) |
+| `resolveReturnType(node)` | the return type of the enclosing function/method |
+| `resolveSwitchExpressionType(node)` | the switch expression type |
+| `resolvePatternContextType(node)` | the pattern context type (for switch patterns) |
+| `resolveCollectionElementType(collectionNode)` | the element type of `List<T>`, `Set<T>` |
+| `isTypeCompatible(contextType, targetElement)` | whether the context type matches the target interface element, ignoring nullability |
+
 ```dart
 import '../type_inference.dart';
 
-// Infers expected type from expression context (variables, assignments, returns, etc.)
 final contextType = inferContextType(expression);
-
-// Resolves return type from function/method
 final returnType = resolveReturnType(node);
-
-// Gets switch expression type
 final switchType = resolveSwitchExpressionType(node);
-
-// Gets pattern context type (for switch patterns)
 final patternType = resolvePatternContextType(node);
-
-// Gets collection element type from List<T>, Set<T>
 final elementType = resolveCollectionElementType(collectionNode);
 
-// Checks type compatibility (ignores nullability)
 if (isTypeCompatible(contextType, targetElement)) {
-  // Context type matches target interface element
+  rule.reportAtNode(expression);
 }
 ```
 
@@ -494,27 +485,15 @@ DartType? _getContextType(Expression node) {
   final parent = node.parent;
 
   return switch (parent) {
-    // Variable declaration: final SomeClass x = value;
     VariableDeclaration(parent: VariableDeclarationList(:final type?)) =>
       type.type,
-
-    // Assignment: x = value;
     AssignmentExpression(:final leftHandSide) =>
       leftHandSide.staticType,
-
-    // Binary expression (comparison): e == value
     BinaryExpression(:final leftOperand, :final rightOperand) =>
       node == rightOperand ? leftOperand.staticType : rightOperand.staticType,
-
-    // Switch case
     SwitchCase() => _getSwitchExpressionType(parent),
-
-    // Return statement
     ReturnStatement() => _getReturnType(parent),
-
-    // Parenthesized expression: pass through
     ParenthesizedExpression() => _getContextType(parent),
-
     _ => null,
   };
 }
@@ -538,7 +517,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    // Process only instance creation expressions
     if (condition) {
       rule.reportAtNode(node);
     }
@@ -568,7 +546,6 @@ class _IdentifierVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
-// Usage: Check if parameter is used in method body
 bool _isParameterUsed(AstNode? body, String paramName) {
   if (body == null) return false;
 
@@ -619,35 +596,36 @@ class _IdentifierVisitor extends RecursiveAstVisitor<void> {
 
 **Different reporting methods:**
 
+| Call | Highlights |
+|---|---|
+| `rule.reportAtNode(node)` | the entire node (whole expression) |
+| `rule.reportAtToken(classDecl.namePart.typeName)` | a specific token, e.g. just the class name |
+| `rule.reportAtNode(node.constructorName)` | the constructor name only |
+| `rule.reportAtNode(node, arguments: [value1, value2])` | the node, with message interpolation arguments |
+| `rule.reportAtOffset(offset, length)` | an arbitrary offset, for non-AST constructs like comments |
+
 ```dart
-// Report at entire node (highlights whole expression)
 rule.reportAtNode(node);
-
-// Report at specific token (e.g., just the class name)
 rule.reportAtToken(classDecl.namePart.typeName);
-
-// Report at constructor name only
 rule.reportAtNode(node.constructorName);
-
-// Report with message interpolation arguments
 rule.reportAtNode(node, arguments: [value1, value2]);
-
-// Report at arbitrary offset (for non-AST constructs like comments)
 rule.reportAtOffset(offset, length);
 ```
 
-**Use in LintCode:**
+**Use in LintCode:** `{0}`, `{1}` are placeholders filled from `arguments` when reporting:
 ```dart
 static const LintCode code = LintCode(
   'rule_name',
-  'The class {0} should have {1} suffix.',  // {0}, {1} are placeholders
+  'The class {0} should have {1} suffix.',
   correctionMessage: 'Add the {1} suffix to the class name.',
 );
-
-// Later when reporting:
-rule.reportAtNode(node, arguments: ['MyClass', 'Bloc']);
-// Results in: "The class MyClass should have Bloc suffix."
 ```
+
+```dart
+rule.reportAtNode(node, arguments: ['MyClass', 'Bloc']);
+```
+
+This reports "The class MyClass should have Bloc suffix."
 
 **Reference:** Various rules
 
@@ -685,13 +663,10 @@ class MyFix extends ResolvedCorrectionProducer {
     if (targetNode is! InstanceCreationExpression) return;
 
     await builder.addDartFileEdit(file, (builder) {
-      // Simple replacement
       builder.addSimpleReplacement(
         range.node(targetNode),
         'newCode',
       );
-
-      // Or delete from list
       builder.addDeletion(
         range.nodeInList(argumentList.arguments, argumentToRemove),
       );
@@ -700,25 +675,20 @@ class MyFix extends ResolvedCorrectionProducer {
 }
 ```
 
+The edit callback shows a simple replacement and a deletion from a list; a real fix uses whichever it needs.
+
 **Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart)
 
 ### Using Range Factory
 
 **Common range patterns:**
 
-```dart
-// Range of entire node
-range.node(node)
-
-// Range of a node in a list (includes trailing comma)
-range.nodeInList(list, elementNode)
-
-// Range between two tokens
-range.startOffsetEndOffset(startToken.offset, endToken.end)
-
-// Range of a token
-range.token(token)
-```
+| Call | Range |
+|---|---|
+| `range.node(node)` | the entire node |
+| `range.nodeInList(list, elementNode)` | a node in a list, including its trailing comma |
+| `range.startOffsetEndOffset(startToken.offset, endToken.end)` | between two tokens |
+| `range.token(token)` | a token |
 
 **Reference:** [prefer_center_over_align_fix.dart](../../../lib/src/fixes/prefer_center_over_align_fix.dart)
 
@@ -750,7 +720,6 @@ no `node` getter, and there is no element→AST hop across libraries, so a rule
 that needs a declaration's *body* must search the units it was handed:
 
 ```dart
-/// The AST node declaring [element], searched across the library's units.
 AstNode? _findDeclaration(Element element, RuleContext context) {
   for (final unit in context.allUnits) {
     final finder = _DeclarationFinder(element);
@@ -774,10 +743,10 @@ class _DeclarationFinder extends RecursiveAstVisitor<void> {
 }
 ```
 
-To use it, the visitor needs the context, so pass it in at registration:
+To use it, the visitor needs the context, so pass it in at registration, in `registerManyLintsProcessors`:
 
 ```dart
-final visitor = _Visitor(this, context);   // registerManyLintsProcessors
+final visitor = _Visitor(this, context);
 ```
 
 **Read a constant through `constructorInvocation`, not its private fields.**
@@ -790,9 +759,10 @@ final invocation = variable?.computeConstantValue()?.constructorInvocation;
 for (final MapEntry(key: name, value: argument)
     in invocation.namedArguments.entries) {
   final literal = argument.toIntValue();
-  // classify exactly as you would a literal at the call site
 }
 ```
+
+Classify each `literal` exactly as you would a literal at the call site.
 
 **A local variable needs neither.** Its initializer is in the enclosing
 function, and `computeConstantValue()` does not reach a non-const `final`
@@ -864,18 +834,17 @@ import '../type_inference.dart';
 
 @override
 void visitPrefixedIdentifier(PrefixedIdentifier node) {
-  // Get the expected type from context
   final contextType = inferContextType(node);
   if (contextType == null) return;
 
-  // Check if it matches our target
   final enumElement = node.staticType?.element as EnumElement;
   if (isTypeCompatible(contextType, enumElement)) {
-    // Context type makes the enum prefix unnecessary
     rule.reportAtNode(node);
   }
 }
 ```
+
+A compatible context type makes the enum prefix unnecessary, so the rule reports it.
 
 **Reference:** [prefer_shorthands_with_enums.dart](../../../lib/src/rules/prefer_shorthands_with_enums.dart), [prefer_shorthands_with_static_fields.dart](../../../lib/src/rules/prefer_shorthands_with_static_fields.dart)
 
@@ -889,15 +858,12 @@ int computeEditDistance(String a, String b)
 ```
 Computes the Levenshtein edit distance between two strings (minimum number of single-character edits needed to change one string into another).
 
-**Usage example:**
+**Usage example:** a suffix within distance 2 of the expected one is likely a typo, which the fix strips and replaces.
 ```dart
 import '../text_distance.dart';
 
-// Check if a suffix is a typo
 final distance = computeEditDistance('Blok', 'Bloc');
-if (distance > 0 && distance <= 2) {
-  // Likely a typo - strip and replace
-}
+final isLikelyTypo = distance > 0 && distance <= 2;
 ```
 
 **Reference:** [add_affix_fix.dart](../../../lib/src/fixes/add_affix_fix.dart)
@@ -927,10 +893,11 @@ if (isInstanceCreationExpressionOnlyUsingParameter(
   parameter: 'padding',
   ignoredParameters: {'key', 'child'},
 )) {
-  // Container only uses padding (plus key/child which we ignore)
   rule.reportAtNode(node.constructorName);
 }
 ```
+
+This reports a `Container` that only uses `padding` (plus `key`/`child`, which are ignored).
 
 **Reference:** [prefer_padding_over_container.dart](../../../lib/src/rules/prefer_padding_over_container.dart)
 
@@ -1001,17 +968,15 @@ Builds the replacement string for converting `.where().isEmpty` to `.every()`. U
 
 **IMPORTANT:** Use these shared utilities instead of reimplementing cleanup method detection. Extracted from `dispose_fields` and `dispose_provided_instances` rules/fixes.
 
+`findCleanupMethod(fieldType)` names the cleanup method a type supports (`dispose`, `close` or `cancel`), or returns null for a type that is not disposable. `cleanupMethods` is the ordered list of those names.
+
 ```dart
 import '../disposal_utils.dart';
 
-// Find which cleanup method a type supports (dispose, close, or cancel)
 final cleanupMethod = findCleanupMethod(fieldType);
 if (cleanupMethod != null) {
-  // This type is disposable — use cleanupMethod as the method name
+  rule.reportAtNode(field);
 }
-
-// Access the ordered list of cleanup method names
-const cleanupMethods = ['dispose', 'close', 'cancel'];
 ```
 
 **When to use:** Any rule or fix that detects/generates cleanup calls for disposable types.
@@ -1024,7 +989,6 @@ const cleanupMethods = ['dispose', 'close', 'cancel'];
 ```dart
 import '../flutter_widget_helpers.dart';
 
-// Enum for flex axis direction (vertical or horizontal)
 enum FlexAxis { vertical, horizontal }
 ```
 
@@ -1038,12 +1002,12 @@ enum FlexAxis { vertical, horizontal }
 ```dart
 import '../riverpod_type_checkers.dart';
 
-// TypeChecker that matches all Riverpod Notifier base classes
-// (Notifier, AsyncNotifier, AutoDisposeNotifier, etc.)
 if (notifierChecker.isSuperOf(element)) {
-  // This class extends a Riverpod Notifier
+  rule.reportAtNode(node);
 }
 ```
+
+`notifierChecker` matches all Riverpod Notifier base classes (`Notifier`, `AsyncNotifier`, `AutoDisposeNotifier`, etc.).
 
 **When to use:** Rules that need to detect Riverpod Notifier subclasses.
 **Reference:** [riverpod_type_checkers.dart](../../../lib/src/riverpod_type_checkers.dart), [avoid_notifier_constructors.dart](../../../lib/src/rules/avoid_notifier_constructors.dart), [dispose_provided_instances.dart](../../../lib/src/rules/dispose_provided_instances.dart)
@@ -1084,10 +1048,10 @@ parent is the default clause, whose parent is the `RegularFormalParameter`.
 
 **Do not guess a node's parent chain — ask the analyzer.** A throwaway script
 under the package (so `package:analyzer` resolves) settles it in one run, and
-is faster than grepping a generated AST barrel:
+is faster than grepping a generated AST barrel. Save it as
+`tool/tmp/probe_ast.dart` and run `dart run tool/tmp/probe_ast.dart`:
 
 ```dart
-// dart run tool/tmp/probe_ast.dart
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
@@ -1100,8 +1064,9 @@ class V extends RecursiveAstVisitor<void> {
 }
 
 void main() => parseString(content: 'void f({int a = 7}) {}').unit.accept(V());
-// 7 -> FormalParameterDefaultClauseImpl / RegularFormalParameterImpl
 ```
+
+It prints `7 -> FormalParameterDefaultClauseImpl / RegularFormalParameterImpl`.
 
 The `Impl` suffix in the output is the implementation class; test against the
 public interface (`FormalParameterDefaultClause`), not the `Impl`.
@@ -1165,7 +1130,7 @@ void visitConstructorDeclaration(ConstructorDeclaration node) {
       !unit.featureSet.isEnabled(Feature.private_named_parameters)) {
     return;
   }
-  // ...
+  rule.reportAtNode(node);
 }
 ```
 
@@ -1177,12 +1142,12 @@ Tests can exercise the gate with a `// @dart=3.11` header line.
 
 `ClassDeclaration` has **no** `name` field. The name lives in `namePart`, a
 sealed `ClassNamePart` that is *either* the plain name *or* a
-`PrimaryConstructorDeclaration`:
+`PrimaryConstructorDeclaration`. For `class Point { ... }` the `namePart` is the
+plain name part; for `class Point(final int x);` it **is** a
+`PrimaryConstructorDeclaration`, so a class already migrated is skipped with:
 
 ```dart
-// `class Point { ... }`             -> namePart is the plain name part
-// `class Point(final int x);`       -> namePart IS a PrimaryConstructorDeclaration
-if (node.namePart is PrimaryConstructorDeclaration) return; // already migrated
+if (node.namePart is PrimaryConstructorDeclaration) return;
 ```
 
 `PrimaryConstructorDeclaration` carries `constKeyword`, `constructorName`,
@@ -1195,13 +1160,14 @@ The body is a sealed `ClassBody`: `EmptyClassBody` (`;`) or `BlockClassBody`
 **⚠️ `this.x` is a `FieldFormalParameter`, its own node type.** There is no
 `thisKeyword` getter on `RegularFormalParameter`. So "every parameter is an
 initializing formal" is a type test, which conveniently rejects a plain `int x`
-*and* a `super.x` at once:
+*and* a `super.x` at once. A function-typed `this.cb(int)` has no primary
+constructor spelling, so it is rejected too; `parameter.name` is non-nullable here:
 
 ```dart
 for (final parameter in constructor.parameters.parameters) {
-  if (parameter is! FieldFormalParameter) return;    // rejects int x / super.x
-  if (parameter.functionTypedSuffix != null) return; // this.cb(int) has no spelling
-  final name = parameter.name.lexeme;                // non-nullable here
+  if (parameter is! FieldFormalParameter) return;
+  if (parameter.functionTypedSuffix != null) return;
+  final name = parameter.name.lexeme;
 }
 ```
 
@@ -1227,17 +1193,19 @@ the **resolved element** for the member instead of guessing from versions:
 final element = interfaceType.element;
 if (element is EnumElement &&
     element.getters.any((g) => g.name == 'isDark')) {
-  // Safe to suggest `.isDark` - the getter exists in the user's Flutter.
+  rule.reportAtNode(node);
 }
 ```
+
+Suggesting `.isDark` is safe only when the getter exists in the user's Flutter.
 
 **Reference:** [prefer_theme_mode_getters.dart](../../../lib/src/rules/prefer_theme_mode_getters.dart)
 
 ### New Element Access (analyzer 14)
 
-**Old API (pre-10.0):**
+**Old API (pre-10.0, deprecated):**
 ```dart
-final element = node.element;  // Deprecated
+final element = node.element;
 ```
 
 **New API (10.1.0+):**
@@ -1259,9 +1227,11 @@ void visitClassDeclaration(ClassDeclaration node) {
   final isBase = node.baseKeyword != null;
   final isInterface = node.interfaceKeyword != null;
   final isMixin = node.mixinKeyword != null;
-  final classToken = node.classKeyword; // Always non-null
+  final classToken = node.classKeyword;
 }
 ```
+
+`classKeyword` is always non-null.
 
 **⚠️ Important:** Use `node.body` (not deprecated `node.members`) to access class members:
 ```dart
@@ -1289,10 +1259,11 @@ rule.reportAtToken(classNameToken);
 ```dart
 final type = expression.staticType;
 if (type != null) {
-  final displayName = type.getDisplayString();
-  // Use in messages: "Type $displayName is not allowed"
+  rule.reportAtNode(expression, arguments: [type.getDisplayString()]);
 }
 ```
+
+Use the display string in messages, e.g. `'Type {0} is not allowed.'`.
 
 **Reference:** Multiple rules use this pattern
 
@@ -1300,32 +1271,26 @@ if (type != null) {
 
 **⚠️ Important:** In analyzer 14, `InstanceElement` has `getters`, `methods`, `fields` — NOT `accessors`.
 
+Access class members via the element: `methods` is a `List<MethodElement>`,
+`getters` a `List<GetterElement>` (replacing the old `accessors`), `fields` a
+`List<FieldElement>`.
+
 ```dart
-// Access class members via element
 final element = node.declaredFragment?.element;
 if (element == null) return;
 
-// Methods (List<MethodElement>)
-for (final method in element.methods) {
-  if (method.name == '==') { ... }
-}
-
-// Getters (List<GetterElement>) — replaces old 'accessors'
-for (final getter in element.getters) {
-  if (getter.name == 'hashCode') { ... }
-}
-
-// Fields (List<FieldElement>)
+final declaresEquality = element.methods.any((method) => method.name == '==');
+final declaresHashCode = element.getters.any((getter) => getter.name == 'hashCode');
 final instanceFields = element.fields
     .where((f) => !f.isStatic && f.isOriginDeclaration);
 ```
 
-**Similarly on `InterfaceType`:**
+**Similarly on `InterfaceType`**, which also has `methods`, `getters` and an
+`element` (an `InterfaceElement`):
 ```dart
-// InterfaceType also has methods, getters, element
-for (final method in type.methods) { ... }
-for (final getter in type.getters) { ... }
-final el = type.element;  // InterfaceElement
+final typeMethods = type.methods;
+final typeGetters = type.getters;
+final interfaceElement = type.element;
 ```
 
 **⚠️ Key differences from older analyzer versions:**
@@ -1353,10 +1318,11 @@ void visitAssignmentExpression(AssignmentExpression node) {
   };
   if (target == null) return;
 
-  // `writeElement` covers `x = 1` and `x += 1`; fall back for safety.
   final element = node.writeElement ?? target.element;
 }
 ```
+
+`writeElement` covers `x = 1` and `x += 1`; `target.element` is only a fallback.
 
 `writeElement` is declared on `CompoundAssignmentExpression`, which **is**
 exported from `package:analyzer/dart/ast/ast.dart` — no implementation import
@@ -1485,15 +1451,15 @@ own lint (`error(diag.todo, offset, length)`), importing
 
 ### Pattern Matching Features
 
-Analyzer 14 works well with Dart 3 pattern matching:
+Analyzer 14 works well with Dart 3 pattern matching, for example destructuring
+a `Container` creation:
 
 ```dart
-// Destructuring in patterns
 if (node case InstanceCreationExpression(
   constructorName: ConstructorName(:final element?),
   argumentList: ArgumentList(:final arguments),
-) when element.name == 'Container') {
-  // Process Container with destructured properties
+) when element.name == 'Container' && arguments.isEmpty) {
+  rule.reportAtNode(node);
 }
 ```
 

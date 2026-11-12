@@ -99,11 +99,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-// Add if needed:
-// import 'package:many_lints/src/type_checker.dart';
-// import 'package:many_lints/src/ast_node_analysis.dart';
-
-/// <doc comment describing what the rule does>
 class <RuleClass> extends ManyLintsRule {
   static const LintCode code = LintCode(
     '<lint_name>',
@@ -120,15 +115,10 @@ class <RuleClass> extends ManyLintsRule {
   @override
   LintCode get diagnosticCode => code;
 
-  // Note: `registerManyLintsProcessors`, not `registerNodeProcessors` —
-  // `ManyLintsRule` implements the latter to wire up per-rule `exclude`.
   @override
   void registerManyLintsProcessors(RuleVisitorRegistry registry, RuleContext context) {
     final visitor = _Visitor(this);
-    // Register for the appropriate AST node type, e.g.:
-    // registry.addInstanceCreationExpression(this, visitor);
-    // registry.addClassDeclaration(this, visitor);
-    // registry.addMethodInvocation(this, visitor);
+    registry.add<NodeType>(this, visitor);
   }
 }
 
@@ -137,18 +127,28 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  // Use TypeChecker for type checks:
-  // static const _checker = TypeChecker.fromName('WidgetName', packageName: 'flutter');
-
   @override
   void visit<NodeType>(<NodeType> node) {
-    // Detection logic here
-    // Report with: rule.reportAtNode(node) or rule.reportAtToken(node.name)
+    rule.reportAtNode(node);
   }
 }
 ```
 
 Key conventions:
+- Override `registerManyLintsProcessors`, not `registerNodeProcessors`:
+  `ManyLintsRule` implements the latter to wire up per-rule `exclude`.
+- Register the visitor for the node type the rule inspects
+  (`registry.addInstanceCreationExpression`, `addClassDeclaration`,
+  `addMethodInvocation`, ...), and report with `rule.reportAtNode(node)` or
+  `rule.reportAtToken(node.name)` after the detection logic.
+- Import `package:many_lints/src/type_checker.dart` for a
+  `static const _checker = TypeChecker.fromName('WidgetName', packageName: 'flutter');`
+  and `package:many_lints/src/ast_node_analysis.dart` for the shared AST helpers when needed.
+- No doc comments on the rule class or its members, and practically no comments:
+  follow the comment policy (root `AGENTS.md` `## Comments`, `CONTRIBUTING.md`
+  "Comment policy"). What a rule reports and why belongs in the `LintCode`
+  `problemMessage` / `correctionMessage` and on the rule's page under
+  `docs/src/content/docs/docs/rules/`.
 - Rule class name: PascalCase version of lint name (e.g., `use_class_suffix` -> `UseClassSuffix`)
 - Use `TypeChecker.fromName()` or `TypeChecker.fromUrl()` for type checks
 - Use Dart 3.0+ pattern matching for AST analysis
@@ -247,7 +247,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import 'package:analyzer_plugin/utilities/range_factory.dart';
 
-/// Fix that <description of what the fix does>.
 class <FixClass> extends ResolvedCorrectionProducer {
   static const _fixKind = FixKind(
     'many_lints.fix.<lintNameCamelCase>',
@@ -265,16 +264,20 @@ class <FixClass> extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // nodeCovering returns the deepest matching node. Walk up to the semantic
-    // target instead of type-testing node or node.parent directly.
     final targetNode = node.thisOrAncestorOfType<RelevantAstNode>();
     if (targetNode == null) return;
-    // Apply fix using builder.addDartFileEdit(file, (builder) { ... });
+    await builder.addDartFileEdit(file, (builder) {
+      builder.addSimpleReplacement(range.node(targetNode), '<replacement>');
+    });
   }
 }
 ```
 
 Key conventions:
+- `node` (from `nodeCovering`) is the deepest matching node. Walk up to the
+  semantic target with `thisOrAncestorOfType` instead of type-testing `node` or
+  `node.parent` directly.
+- No doc comment on the fix class; the `FixKind` message is its user-facing text.
 - Fix class name: PascalCase rule name + `Fix` suffix (e.g., `PreferCenterOverAlignFix`)
 - FixKind ID: `many_lints.fix.<lintNameInCamelCase>`
 - Use `range.node()` for replacing nodes, `range.nodeInList()` for removing from argument lists
@@ -342,14 +345,12 @@ class <RuleClass>Test extends ManyLintsRuleTest {
   @override
   void setUp() {
     rule = <RuleClass>();
-    // Mock external packages if needed:
-    // newPackage('package_name').addFile('lib/file.dart', r'''
-    //   class SomeClass {}
-    // ''');
+    newPackage('package_name').addFile('lib/file.dart', r'''
+class SomeClass {}
+''');
     super.setUp();
   }
 
-  // Test cases that SHOULD trigger the lint:
   Future<void> test_<descriptive_case_name>() async {
     await assertDiagnostics(
       r'''
@@ -359,7 +360,6 @@ class <RuleClass>Test extends ManyLintsRuleTest {
     );
   }
 
-  // Test cases that should NOT trigger the lint:
   Future<void> test_<descriptive_valid_case>() async {
     await assertNoDiagnostics(r'''
 <code that should not trigger the lint>
@@ -372,7 +372,10 @@ Key conventions:
 - Test class name: `<RuleClass>Test`
 - Use `assertDiagnostics(code, [lint(offset, length)])` for code that triggers the lint
 - Use `assertNoDiagnostics(code)` for code that should NOT trigger the lint
-- Use `newPackage('name').addFile()` to mock external package dependencies
+- Use `newPackage('name').addFile()` in `setUp` to mock external package
+  dependencies; drop it when the rule needs none
+- Name tests by behaviour: a reporting case and a silent case are told apart by
+  `assertDiagnostics` vs `assertNoDiagnostics` and the test name, not by comments
 - Include at least: 2 positive cases (triggers lint), 2 negative cases (no lint), 1 edge case
 
 🚨 Extend `ManyLintsRuleTest` (from `test/many_lints_rule_test_base.dart`), **not**
@@ -582,14 +585,12 @@ sidebar:
 ## Don't
 
 ```dart
-// Bad example with comment explaining why it's wrong
 <code that triggers the lint>
 ```
 
 ## Do
 
 ```dart
-// Good example
 <correct code>
 ```
 
@@ -732,5 +733,10 @@ Run the following commands from the project root to ensure everything works:
    Enable the rule with a temporary `many_lints.yaml` at the target package
    root, and delete it afterwards.
 6. Run `bun run build` from `docs/` as the final gate.
+7. Commit through the hooks that `tool/setup.sh` installs: they run
+   comment_gate on the staged files (comment rules, notes per file and per
+   commit, `Notes-reviewed:` trailers for kept notes). Run
+   `tool/comment_gate.sh check` to see every violation in scope first; see
+   "Comment policy" in `CONTRIBUTING.md`.
 
 If any check fails or reports issues, fix it and re-run the affected checks until all are fully clean.

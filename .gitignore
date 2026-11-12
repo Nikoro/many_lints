@@ -38,3 +38,6 @@ doc/
 docs/node_modules/
 docs/dist/
 docs/.astro/
+
+# Contributor tool checkouts (tool/setup.sh)
+.tools/
