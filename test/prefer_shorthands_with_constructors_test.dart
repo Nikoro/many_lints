@@ -46,7 +46,16 @@ class Border extends ShapeBorder {
 abstract class EdgeInsetsGeometry {
   const EdgeInsetsGeometry();
   const factory EdgeInsetsGeometry.all(double value) = EdgeInsets.all;
+  const factory EdgeInsetsGeometry.only({double left, double top, double right, double bottom}) = EdgeInsets.only;
+  factory EdgeInsetsGeometry.symmetric({double vertical = 0, double horizontal = 0}) => EdgeInsets.symmetric(vertical: vertical, horizontal: horizontal);
+  static EdgeInsetsGeometry lerp(EdgeInsets? a, EdgeInsets? b, double t) => EdgeInsets.all(0);
 }
+
+class EdgeInsetsDirectional extends EdgeInsetsGeometry {
+  const EdgeInsetsDirectional.only({double start = 0, double top = 0, double end = 0, double bottom = 0});
+}
+
+void takePaddings(List<EdgeInsets> paddings) {}
 
 class ExpansionTile extends Widget {
   ExpansionTile({ShapeBorder? shape, EdgeInsetsGeometry? tilePadding});
@@ -434,5 +443,93 @@ void f() {
   take(const Border());
 }
 ''');
+  }
+
+  Future<void> test_supertypeFactoryRedirectingElsewhere_noLint() async {
+    // `.only(start: 8)` resolves to EdgeInsetsGeometry.only, which redirects
+    // to EdgeInsets.only and has no `start`
+    newFile(
+      '$testPackageRootPath/many_lints.yaml',
+      'rules:\n  prefer_shorthands_with_constructors:\n    additional_classes: [EdgeInsetsDirectional]\n',
+    );
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+Widget f() {
+  return ExpansionTile(tilePadding: EdgeInsetsDirectional.only(start: 8));
+}
+''');
+  }
+
+  Future<void>
+  test_supertypeFactoryRedirectingToTheSameConstructor_lints() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+Widget f() {
+  return ExpansionTile(tilePadding: EdgeInsets.only(left: 8));
+}
+''',
+      [lint(89, 15)],
+    );
+  }
+
+  Future<void> test_supertypeNonRedirectingFactory_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+Widget f() {
+  return ExpansionTile(tilePadding: EdgeInsets.symmetric(horizontal: 8));
+}
+''');
+  }
+
+  Future<void> test_supertypeStaticMethod_noLint() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+Widget f() {
+  return ExpansionTile(tilePadding: EdgeInsets.lerp(null, null, 0.5));
+}
+''');
+  }
+
+  Future<void> test_untypedListLiteral_noLint() async {
+    // `[.all(8)]` has no context type: dot_shorthand_missing_context
+    await assertNoDiagnostics(r'''
+import 'package:flutter/widgets.dart';
+
+void f() {
+  final paddings = [EdgeInsets.all(8)];
+  final unique = {EdgeInsets.all(8)};
+}
+''');
+  }
+
+  Future<void> test_explicitlyTypedListLiteral_lints() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+void f() {
+  final paddings = <EdgeInsets>[EdgeInsets.all(8)];
+}
+''',
+      [lint(83, 14)],
+    );
+  }
+
+  Future<void> test_listLiteralArgument_lints() async {
+    await assertDiagnostics(
+      r'''
+import 'package:flutter/widgets.dart';
+
+void f() {
+  takePaddings([EdgeInsets.all(8)]);
+}
+''',
+      [lint(67, 14)],
+    );
   }
 }

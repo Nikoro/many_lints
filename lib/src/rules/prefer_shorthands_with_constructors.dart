@@ -203,46 +203,32 @@ class _Visitor extends SimpleAstVisitor<void> {
   /// dot shorthand resolves against; the expression's own type would claim a
   /// shorthand exists when the parameter is a supertype that lacks it.
   DartType? _getContextType(Expression node) {
-    AstNode? current = node.parent;
-
-    while (current != null) {
-      switch (current) {
-        case NamedArgument():
-        case ArgumentList():
-          final argument = _outermost(node);
-          return switch (argument.parent) {
-            final NamedArgument named => named.correspondingParameter?.type,
-            _ => argument.correspondingParameter?.type,
-          };
-        case ListLiteral():
-        case SetOrMapLiteral():
-          return _getCollectionElementType(current);
-        case ParenthesizedExpression():
-          // Continue checking parent
-          current = current.parent;
-          continue;
-        default:
-          return null;
-      }
-    }
-
-    return null;
-  }
-
-  /// Gets the element type from a collection literal's context.
-  DartType? _getCollectionElementType(AstNode collectionNode) {
-    final collectionType = switch (collectionNode) {
-      ListLiteral(:final staticType) ||
-      SetOrMapLiteral(:final staticType) => staticType,
+    final expression = _outermost(node);
+    return switch (expression.parent) {
+      final NamedArgument named => named.correspondingParameter?.type,
+      ArgumentList() => expression.correspondingParameter?.type,
+      VariableDeclaration(parent: VariableDeclarationList(:final type?)) =>
+        type.type,
+      final TypedLiteral literal => _elementContextType(literal),
       _ => null,
     };
+  }
 
-    if (collectionType is! InterfaceType) return null;
-
-    final typeArgs = collectionType.typeArguments;
-    if (typeArgs.isEmpty) return null;
-
-    return typeArgs.first;
+  /// The type a list or set literal's elements are inferred against: its
+  /// explicit type argument, else the element type of the literal's own
+  /// context. The literal's inferred type does not count, since
+  /// `final paddings = [EdgeInsets.all(8)]` infers `List<EdgeInsets>` from
+  /// the very element a shorthand would replace.
+  DartType? _elementContextType(TypedLiteral literal) {
+    final explicit = literal.typeArguments?.arguments;
+    if (explicit != null) {
+      return explicit.length == 1 ? explicit.first.type : null;
+    }
+    final context = _getContextType(literal);
+    if (context is! InterfaceType || context.typeArguments.length != 1) {
+      return null;
+    }
+    return context.typeArguments.first;
   }
 
   /// The argument expression itself, past any wrapping parentheses.
@@ -258,10 +244,12 @@ class _Visitor extends SimpleAstVisitor<void> {
     return current;
   }
 
-  /// Whether `.name(...)` would resolve against [contextType]: the same class,
-  /// or a supertype that declares a usable constructor or a static method of
-  /// that name (Flutter's `EdgeInsetsGeometry.all`, but not an abstract
-  /// `ShapeBorder` for `Border()`).
+  /// Whether `.name(...)` would resolve against [contextType] to the same
+  /// constructor or static member: the same class, or a supertype whose
+  /// factory of that name redirects to this class's constructor (Flutter's
+  /// `EdgeInsetsGeometry.all = EdgeInsets.all`). A supertype's static method
+  /// or non-redirecting factory may build something else, and its
+  /// `EdgeInsetsGeometry.only` lacks `EdgeInsetsDirectional.only`'s `start`.
   bool _shorthandResolves(
     DartType contextType,
     InterfaceElement classElement,
@@ -270,14 +258,24 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (contextType is! InterfaceType) return false;
     final context = contextType.element;
     if (context == classElement) return true;
-    // A generative constructor of a supertype builds the supertype itself
-    // (`Object.new` for an `Object` parameter), so only a factory can stand in.
-    final constructorFound = context.constructors.any(
-      (constructor) =>
-          (constructor.name ?? 'new') == name && constructor.isFactory,
-    );
-    if (constructorFound) return true;
-    final method = context.getMethod(name);
-    return method != null && method.isStatic;
+    final target = _constructorNamed(classElement, name);
+    final factory = _constructorNamed(context, name);
+    if (target == null || factory == null || !factory.isFactory) return false;
+    final visited = <ConstructorElement>{};
+    for (
+      var redirected = factory.redirectedConstructor?.baseElement;
+      redirected != null && visited.add(redirected);
+      redirected = redirected.redirectedConstructor?.baseElement
+    ) {
+      if (redirected == target.baseElement) return true;
+    }
+    return false;
+  }
+
+  ConstructorElement? _constructorNamed(InterfaceElement type, String name) {
+    for (final constructor in type.constructors) {
+      if ((constructor.name ?? 'new') == name) return constructor;
+    }
+    return null;
   }
 }

@@ -56,7 +56,7 @@ Widget priceTag() => Padding(
 
 ## Known limitations
 
-In argument position the rule reads the declared type of the receiving parameter, because that is what a dot shorthand resolves against. It reports only when that type is the constructed class, or declares a factory constructor or static method of the same name. `EdgeInsets.all(8)` passed to an `EdgeInsetsGeometry` parameter is reported, since the factory `EdgeInsetsGeometry.all` exists. A generative constructor of another type does not count, because the shorthand would build that type instead. These are not reported:
+In argument position the rule reads the declared type of the receiving parameter, because that is what a dot shorthand resolves against. It reports only when that type is the constructed class, or declares a factory constructor of the same name that redirects to the constructed class's constructor. `EdgeInsets.all(8)` passed to an `EdgeInsetsGeometry` parameter is reported, since `EdgeInsetsGeometry.all` redirects to `EdgeInsets.all`. A generative constructor, a static method or a non-redirecting factory of another type does not count, because the shorthand would call that member instead, with its own parameters and result. In a list or set literal the rule reads the element type the literal is given by its context: explicit type arguments, a typed variable or a parameter. An untyped `final paddings = [EdgeInsets.all(8)];` is not reported, because `[.all(8)]` would have no type to resolve against. These are not reported:
 
 ```dart
 // ShapeBorder is abstract, so `.new()` would not compile here.
@@ -69,6 +69,16 @@ void store() => keep(const Border());
 // A dynamic parameter gives a shorthand nothing to resolve against.
 void log(dynamic value) {}
 void caller() => log(EdgeInsets.all(8));
+
+// `.only(start: 8)` would call EdgeInsetsGeometry.only, which redirects to
+// EdgeInsets.only and has no `start` parameter.
+Padding(
+  padding: EdgeInsetsDirectional.only(start: 8),
+  child: Text('Details'),
+);
+
+// An untyped literal gives its elements no context type.
+final paddings = [EdgeInsets.all(8)];
 ```
 
 ## Turning this rule off

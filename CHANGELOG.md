@@ -112,7 +112,8 @@
   no longer reported, and neither is a parameter whose type only has a
   generative constructor of that name: for `take(Object value)`,
   `take(const Border())` was reported although `.new()` would build an
-  `Object`. A supertype's factory constructor or static method still counts.
+  `Object`. A supertype's factory constructor counts only when it redirects
+  to the reported class's constructor of the same name.
 - `avoid_conditional_hooks`, `avoid_hooks_outside_build`,
   `avoid_misused_hooks`, `avoid_unnecessary_hook_widgets` and
   `prefer_use_prefix` no longer treat resolved Dart and Flutter SDK functions,
@@ -156,6 +157,15 @@
   parameter, and a field reading a same-named static constant stopped
   compiling. The correction message names the type instead of suggesting a
   made-up `X(final int x)`.
+- `prefer_shorthands_with_constructors` no longer reports a constructor whose
+  shorthand would call a different supertype member. With `additional_classes:
+  [EdgeInsetsDirectional]`, `padding: EdgeInsetsDirectional.only(start: 8)`
+  was reported, but `.only(start: 8)` resolves to `EdgeInsetsGeometry.only`,
+  which redirects to `EdgeInsets.only` and has no `start`. A supertype's static
+  method or non-redirecting factory no longer counts. In a list or set
+  literal the rule now reads the literal's context type instead of its
+  inferred type, so `final paddings = [EdgeInsets.all(8)];`, where `[.all(8)]`
+  has no context to resolve against, is no longer reported.
 - `prefer_module_barrel_imports` allows an import of any of a package's
   `package_entry_points`; with `package:ext/ext.dart` and
   `package:ext/testing.dart` configured, `package:ext/testing.dart` was
