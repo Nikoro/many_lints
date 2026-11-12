@@ -59,4 +59,31 @@ class RequireModuleBarrelTest extends ManyLintsRuleTest {
     newFile('$testPackageLibPath/root.dart', "part 'orders/model.dart';");
     await assertNoDiagnostics("part of '../root.dart';\nclass Order {}");
   }
+
+  Future<void> test_libSrcIsNotAModule() async {
+    _fileName = 'src/helper.dart';
+    await assertNoDiagnostics('class Helper {}');
+  }
+
+  Future<void> test_moduleRootsUnderLibSrc() async {
+    _fileName = 'src/orders/model.dart';
+    newFile(
+      '$testPackageRootPath/many_lints.yaml',
+      'rules:\n  require_module_barrel:\n    module_roots: [lib/src]\n',
+    );
+    await assertDiagnostics('class Order {}', [
+      lint(0, 5, messageContainsAll: ['lib/src/orders/orders.dart']),
+    ]);
+  }
+
+  Future<void> test_moduleRootTrailingSlash() async {
+    _fileName = 'features/orders/model.dart';
+    newFile(
+      '$testPackageRootPath/many_lints.yaml',
+      'rules:\n  require_module_barrel:\n    module_roots: [lib/features/]\n',
+    );
+    await assertDiagnostics('class Order {}', [
+      lint(0, 5, messageContainsAll: ['lib/features/orders/orders.dart']),
+    ]);
+  }
 }

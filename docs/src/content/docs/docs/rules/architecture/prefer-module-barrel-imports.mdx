@@ -38,7 +38,12 @@ User? selectedUser;
 ```
 
 Both relative and package imports are checked, including every conditional-import
-branch. Generated source files are skipped. Imports into unconfigured external
+branch, and so are exports that reach into another module. A barrel exporting
+files of its own module is fine. Generated source files are skipped.
+
+A directory named `src` directly below a module root is not a module: `lib/src`
+is pub's private implementation directory. To organise modules under `lib/src`,
+set `module_roots: [lib/src]`. Imports into unconfigured external
 packages are unaffected. Missing import targets remain the analyzer's concern.
 
 There is no quick fix: a barrel might not export the required names, or might
@@ -74,8 +79,8 @@ rules:
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `module_roots` | List of strings | `[lib]` | Package-relative parent directories of modules. The longest matching root wins. |
-| `package_entry_points` | List of strings | `[]` | Package URIs required for external consumers and same-package files outside `lib`. Inside `lib`, importing that package's own umbrella is reported to prevent an import back into the umbrella. |
+| `module_roots` | List of strings | `[lib]` | Package-relative parent directories of modules. The longest matching root wins. Trailing slashes and backslashes are ignored, so `lib/features/` means `lib/features`. |
+| `package_entry_points` | List of strings | `[]` | Package URIs required for external consumers and same-package files outside `lib`. A package can have several; importing any of them is allowed, and the message names them all. Inside `lib`, importing your own package's entry point is reported to prevent an import back into the umbrella. A path dependency stored inside your package root is another package. |
 
 Use `include` and `exclude` to scope approved exceptions. An empty or wrongly
 typed `module_roots` uses `[lib]`. An entry point is a convention, not a proof of

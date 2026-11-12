@@ -32,6 +32,9 @@ export 'model.dart';
 ```
 
 Generated files, part files, and files directly in a module root are skipped.
+A directory named `src` directly below a module root is not a module: `lib/src`
+is pub's private implementation directory. To organise modules under `lib/src`,
+set `module_roots: [lib/src]`.
 The diagnostic appears at the first token of each checked file in the module.
 Use `prefer_module_barrel_imports` as well to check how callers import it.
 
@@ -63,7 +66,7 @@ rules:
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `module_roots` | List of strings | `[lib]` | Package-relative parent directories of modules. The longest matching root wins. |
+| `module_roots` | List of strings | `[lib]` | Package-relative parent directories of modules. The longest matching root wins. Trailing slashes and backslashes are ignored, so `lib/features/` means `lib/features`. |
 
 An empty or wrongly typed list uses `[lib]`. Configure `include` and `exclude`
 for generated directories or modules that intentionally have no entry point.

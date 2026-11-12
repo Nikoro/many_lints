@@ -1,3 +1,4 @@
+import 'package:analyzer_testing/package_config_file_builder.dart';
 import 'package:many_lints/src/rules/prefer_module_barrel_imports.dart';
 import 'package:test_reflective_loader/test_reflective_loader.dart';
 
@@ -22,11 +23,31 @@ class PreferModuleBarrelImportsTest extends ManyLintsRuleTest {
       _outsideLib ? '$testPackageRootPath/test' : super.testPackageLibPath;
 
   @override
+  void writeTestPackageConfig2({
+    PackageConfigFileBuilder? config,
+    String? languageVersion,
+  }) {
+    super.writeTestPackageConfig2(
+      config: (config ?? PackageConfigFileBuilder())
+        ..add(
+          name: 'inner',
+          rootFolder: getFolder('$testPackageRootPath/packages/inner'),
+        ),
+      languageVersion: languageVersion,
+    );
+  }
+
+  @override
   void setUp() {
     rule = PreferModuleBarrelImports();
     newPackage('external')
       ..addFile('lib/internal.dart', 'class External {}')
-      ..addFile('lib/external.dart', "export 'internal.dart';");
+      ..addFile('lib/external.dart', "export 'internal.dart';")
+      ..addFile('lib/testing.dart', "export 'internal.dart';");
+    newFile(
+      '$testPackageRootPath/packages/inner/lib/inner.dart',
+      'class Inner {}',
+    );
     super.setUp();
     newFile('$testPackageLibPath/users/model.dart', 'class User {}');
     newFile('$testPackageLibPath/users/users.dart', "export 'model.dart';");
@@ -200,5 +221,100 @@ class PreferModuleBarrelImportsTest extends ManyLintsRuleTest {
   Future<void> test_generatedImportIgnored() async {
     _fileName = 'orders/page.g.dart';
     await assertNoDiagnostics("import '../users/model.dart';\nUser? user;");
+  }
+
+  Future<void> test_anyConfiguredEntryPointOfThePackageAllowed() async {
+    newFile(
+      '$testPackageRootPath/many_lints.yaml',
+      'rules:\n  prefer_module_barrel_imports:\n    package_entry_points: [package:external/external.dart, package:external/testing.dart]\n',
+    );
+    await assertNoDiagnostics(
+      "import 'package:external/testing.dart';\nExternal? value;",
+    );
+  }
+
+  Future<void> test_internalImportNamesEveryEntryPoint() async {
+    newFile(
+      '$testPackageRootPath/many_lints.yaml',
+      'rules:\n  prefer_module_barrel_imports:\n    package_entry_points: [package:external/external.dart, package:external/testing.dart]\n',
+    );
+    await assertDiagnostics(
+      "import 'package:external/internal.dart';\nExternal? value;",
+      [
+        lint(
+          7,
+          32,
+          messageContainsAll: [
+            "'package:external/external.dart' or 'package:external/testing.dart'",
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> test_pathDependencyInsidePackageRootIsAnotherPackage() async {
+    _fileName = 'b/use.dart';
+    newFile(
+      '$testPackageRootPath/many_lints.yaml',
+      'rules:\n  prefer_module_barrel_imports:\n    package_entry_points: [package:inner/inner.dart]\n',
+    );
+    await assertNoDiagnostics(
+      "import 'package:inner/inner.dart';\nInner? value;",
+    );
+  }
+
+  Future<void> test_ownPackageEntryPointMessageNamesIt() async {
+    newFile('$testPackageLibPath/test.dart', "export 'users/users.dart';");
+    newFile(
+      '$testPackageRootPath/many_lints.yaml',
+      'rules:\n  prefer_module_barrel_imports:\n    package_entry_points: [package:test/test.dart]\n',
+    );
+    await assertDiagnostics("import 'package:test/test.dart';\nUser? user;", [
+      lint(
+        7,
+        24,
+        messageContainsAll: ["own entry point 'package:test/test.dart'"],
+      ),
+    ]);
+  }
+
+  Future<void> test_libSrcIsNotAModule() async {
+    newFile('$testPackageLibPath/src/helper.dart', 'class Helper {}');
+    await assertNoDiagnostics("import '../src/helper.dart';\nHelper? helper;");
+  }
+
+  Future<void> test_moduleRootsUnderLibSrc() async {
+    newFile('$testPackageLibPath/src/users/model.dart', 'class SrcUser {}');
+    newFile(
+      '$testPackageRootPath/many_lints.yaml',
+      'rules:\n  prefer_module_barrel_imports:\n    module_roots: [lib, lib/src]\n',
+    );
+    await assertDiagnostics(
+      "import '../src/users/model.dart';\nSrcUser? user;",
+      [lint(7, 25)],
+    );
+  }
+
+  Future<void> test_exportCrossingModuleBoundary() async {
+    await assertDiagnostics("export '../users/model.dart';", [lint(7, 21)]);
+  }
+
+  Future<void> test_exportOfOwnModuleFileFromBarrel() async {
+    _fileName = 'orders/orders.dart';
+    await assertNoDiagnostics("export 'model.dart';");
+  }
+
+  Future<void> test_moduleRootTrailingSlashAndBackslash() async {
+    newFile('$testPackageLibPath/features/users/model.dart', 'class User {}');
+    newFile(
+      '$testPackageRootPath/many_lints.yaml',
+      'rules:\n  prefer_module_barrel_imports:\n    module_roots: [lib, "lib\\\\features/"]\n',
+    );
+    await assertDiagnostics(
+      "import '../features/users/model.dart';\nUser? user;",
+      [
+        lint(7, 30, messageContainsAll: ['lib/features/users/users.dart']),
+      ],
+    );
   }
 }

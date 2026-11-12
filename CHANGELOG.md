@@ -138,6 +138,20 @@
   inside an unrelated closure nested in its arguments.
 - The "Convert to collection-for" assist writes `for (` with a space, as
   `dart format` does.
+- `prefer_module_barrel_imports` allows an import of any of a package's
+  `package_entry_points`; with `package:ext/ext.dart` and
+  `package:ext/testing.dart` configured, `package:ext/testing.dart` was
+  reported, and the message now names every entry point of that package. A
+  path dependency stored inside the package root (`packages/inner`) is treated
+  as another package instead of as the package's own umbrella, and importing
+  the package's own entry point from `lib/` gets its own message instead of a
+  placeholder. The rule also checks `export` directives that reach into
+  another module.
+- `prefer_module_barrel_imports` and `require_module_barrel` no longer treat
+  `lib/src` as a module needing `lib/src/src.dart`: a `src` directory directly
+  below a module root is pub's private implementation directory. Projects that
+  keep modules there set `module_roots: [lib/src]`. A `module_roots` entry
+  with a trailing slash or backslashes (`lib/features/`) now matches.
 
 ### Notes
 

@@ -9,17 +9,31 @@ class ModuleBoundary {
   final String entryPoint;
 
   static ModuleBoundary? forPath(String path, RuleConfig config) {
-    final configured = config.stringListOption('module_roots');
+    final configured = [
+      for (final root in config.stringListOption('module_roots'))
+        if (_normalize(root) case final normalized when normalized.isNotEmpty)
+          normalized,
+    ];
     final roots = configured.isEmpty ? ['lib'] : configured;
     final matches = roots.where((root) => path.startsWith('$root/')).toList()
       ..sort((a, b) => b.length.compareTo(a.length));
     for (final root in matches) {
       final segments = path.substring(root.length + 1).split('/');
-      if (segments.length < 2) return null;
+      // Edge case: `src` below a root is pub's private implementation
+      // directory, not a feature module.
+      if (segments.length < 2 || segments.first == 'src') return null;
       final directory = '$root/${segments.first}';
       return ModuleBoundary(directory, '$directory/${segments.first}.dart');
     }
     return null;
+  }
+
+  static String _normalize(String root) {
+    var normalized = root.replaceAll(r'\', '/');
+    while (normalized.endsWith('/')) {
+      normalized = normalized.substring(0, normalized.length - 1);
+    }
+    return normalized;
   }
 
   static String? relativeTo(Folder root, String path) {
