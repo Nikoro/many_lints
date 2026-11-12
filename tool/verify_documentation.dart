@@ -111,7 +111,7 @@ void main() {
           );
         }
       } on YamlException {
-        // The individual-fence check above reports the more useful location.
+        // Edge case: the per-fence check above reports a more useful location
       }
     }
 

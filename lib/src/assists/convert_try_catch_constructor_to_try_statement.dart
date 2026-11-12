@@ -8,7 +8,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import '../ast_node_analysis.dart';
 import '../fpdart_type_checkers.dart';
 
-/// Which fpdart wrapper a `tryCatch` belongs to, and how it unfolds.
 enum _Wrapper {
   either(success: 'right', failure: 'left'),
   taskEither(success: 'right', failure: 'left'),
@@ -16,75 +15,11 @@ enum _Wrapper {
 
   const _Wrapper({required this.success, required this.failure});
 
-  /// The top-level constructor function for a success value.
-  ///
-  /// fpdart ships lowercase shorthands (`right`, `some`) alongside the
-  /// `Either.right` / `Option.of` factories. They are used here because they
-  /// read as the plain constructors they are and infer both type arguments
-  /// from the enclosing return type.
   final String success;
 
-  /// The top-level constructor function for the failure value.
   final String failure;
 }
 
-/// Expands `Either.tryCatch` / `TaskEither.tryCatch` / `Option.tryCatch` into
-/// an explicit `try`/`catch`.
-///
-/// **`Either.tryCatch`**:
-///
-/// ```dart
-/// Either<Failure, User> parseUser(String json) => Either.tryCatch(
-///       () => User.fromJson(jsonDecode(json)),
-///       (error, stackTrace) => Failure.parse(error, stackTrace),
-///     );
-/// ```
-///
-/// becomes
-///
-/// ```dart
-/// Either<Failure, User> parseUser(String json) {
-///   try {
-///     return right(User.fromJson(jsonDecode(json)));
-///   } catch (error, stackTrace) {
-///     return left(Failure.parse(error, stackTrace));
-///   }
-/// }
-/// ```
-///
-/// **`TaskEither.tryCatch`** keeps the laziness that makes it a `TaskEither`
-/// at all, so the `try` moves inside the `TaskEither(() async { ... })`
-/// constructor rather than into the enclosing function's body:
-///
-/// ```dart
-/// TaskEither<Failure, User> fetchUser(String id) => TaskEither(() async {
-///       try {
-///         return right(await api.getUser(id));
-///       } catch (error, stackTrace) {
-///         return left(Failure.from(error));
-///       }
-///     });
-/// ```
-///
-/// **`Option.tryCatch`** has no `onError` — there is nothing to carry — so the
-/// catch clause takes no parameters and yields `none()`.
-///
-/// ## Why only a whole function body converts
-///
-/// `try` is a *statement*, so it needs somewhere to live. When the `tryCatch`
-/// is the entire body of a function the expression body becomes a block and
-/// the statement has a home. Mid-pipeline — `Either.tryCatch(...).flatMap(f)`
-/// — there is no such place, and the only expression-level equivalent is an
-/// immediately-invoked closure, which is worse than what it replaces. The
-/// assist is therefore offered only on a whole body and declines otherwise.
-///
-/// ## Why an assist rather than a quick fix
-///
-/// `tryCatch` is the better form nearly always: it is shorter, it cannot
-/// forget to wrap a branch, and it composes. Expanding it is a situational
-/// choice — usually to add logging, retries, or per-exception-type handling
-/// that the single `onError` callback cannot express — so it belongs on a
-/// deliberate gesture and not on a diagnostic.
 class ConvertTryCatchConstructorToTryStatement
     extends ResolvedCorrectionProducer {
   static const _assistKind = AssistKind(
@@ -110,8 +45,6 @@ class ConvertTryCatchConstructorToTryStatement
     final wrapper = _wrapperOf(invocation);
     if (wrapper == null) return;
 
-    // `try` is a statement, so the call has to be a whole function body for
-    // there to be anywhere to put it.
     final body = _bodyExpandedBy(invocation);
     if (body == null) return;
 
@@ -122,8 +55,6 @@ class ConvertTryCatchConstructorToTryStatement
     final run = _callbackAt(arguments, 0);
     if (run == null) return;
 
-    // `run` is called with no arguments; one that declares parameters is not
-    // the shape `tryCatch` accepts and would not compile.
     if (_parameterCountOf(run) != 0) return;
 
     final success = maybeGetSingleReturnExpression(run.body);
@@ -134,9 +65,6 @@ class ConvertTryCatchConstructorToTryStatement
         : _errorCatchClause(arguments, wrapper);
     if (catchClause == null) return;
 
-    // `TaskEither.tryCatch` takes a `Future<R> Function()`, so the value the
-    // callback produces has to be awaited before it can be wrapped in an
-    // `Either`. The other two are synchronous.
     final awaitKeyword = wrapper == _Wrapper.taskEither ? 'await ' : '';
     final returned = '${wrapper.success}($awaitKeyword${success.toSource()})';
 
@@ -158,8 +86,6 @@ class ConvertTryCatchConstructorToTryStatement
     });
   }
 
-  /// The expanded body for `Either` and `Option`: the enclosing function grows
-  /// a block containing the `try`.
   String _blockBody(String returned, _CatchClause clause, String indent) =>
       '{\n'
       '$indent  try {\n'
@@ -169,15 +95,6 @@ class ConvertTryCatchConstructorToTryStatement
       '$indent  }\n'
       '$indent}';
 
-  /// The expanded body for `TaskEither`.
-  ///
-  /// The `try` moves *inside* a `TaskEither(() async { ... })` rather than into
-  /// the enclosing function, because hoisting it out would run the effect
-  /// eagerly and defeat the point of the type.
-  ///
-  /// The whole body is rewritten, so it has to be spelled the way the body it
-  /// replaces was: `=> ...;` for an expression body, `{ return ...; }` for a
-  /// block one.
   String _taskEitherBody(
     String returned,
     _CatchClause clause,
@@ -196,7 +113,6 @@ class ConvertTryCatchConstructorToTryStatement
     return isBlock ? '{\n$indent  return $task;\n$indent}' : '=> $task;';
   }
 
-  /// The leading whitespace of the line containing [offset].
   String _leadingWhitespaceOf(int offset) {
     final content = unitResult.content;
     if (offset <= 0) return '';
@@ -212,12 +128,6 @@ class ConvertTryCatchConstructorToTryStatement
     return content.substring(lineStart, end);
   }
 
-  /// The `tryCatch` invocation the cursor sits in.
-  ///
-  /// Stops at a function boundary that is not itself an argument of the
-  /// `tryCatch` being sought. Without that, a cursor inside the `run` or
-  /// `onError` callback of an *inner* call would keep walking out to an
-  /// enclosing `tryCatch` and expand the wrong one.
   InstanceCreationExpression? _enclosingTryCatch() {
     for (AstNode? current = node; current != null; current = current.parent) {
       if (current is InstanceCreationExpression &&
@@ -225,9 +135,7 @@ class ConvertTryCatchConstructorToTryStatement
         return current;
       }
 
-      // A closure the cursor sits inside ends the search unless it is an
-      // argument of the very call being looked for, which the next iterations
-      // will reach.
+      // Edge case: an enclosing closure that is an argument of tryCatch is reached later
       if (current is FunctionExpression && !_isArgumentOfTryCatch(current)) {
         return null;
       }
@@ -236,7 +144,6 @@ class ConvertTryCatchConstructorToTryStatement
     return null;
   }
 
-  /// Whether [expression] is written directly as an argument of a `tryCatch`.
   bool _isArgumentOfTryCatch(FunctionExpression expression) {
     final argumentList = expression.parent;
     if (argumentList is! ArgumentList) return false;
@@ -246,12 +153,6 @@ class ConvertTryCatchConstructorToTryStatement
         invocation.constructorName.name?.name == 'tryCatch';
   }
 
-  /// Which fpdart wrapper [invocation] constructs, or null when it is not an
-  /// fpdart `tryCatch` at all.
-  ///
-  /// Resolving the constructor's own class rather than reading the written
-  /// name keeps a user-defined `tryCatch` from matching, and keeps an aliased
-  /// import from failing to.
   _Wrapper? _wrapperOf(InstanceCreationExpression invocation) {
     final element = invocation.constructorName.element;
     if (element == null) return null;
@@ -264,12 +165,9 @@ class ConvertTryCatchConstructorToTryStatement
     return null;
   }
 
-  /// The function body [invocation] makes up in its entirety, or null when it
-  /// is only part of a larger expression.
   FunctionBody? _bodyExpandedBy(InstanceCreationExpression invocation) {
     final parent = invocation.parent;
 
-    // `=> Either.tryCatch(...)`
     if (parent is ExpressionFunctionBody &&
         parent.expression == invocation &&
         !parent.isAsynchronous &&
@@ -277,8 +175,6 @@ class ConvertTryCatchConstructorToTryStatement
       return parent;
     }
 
-    // `{ return Either.tryCatch(...); }` — a block body whose only statement
-    // is the return, which is the same shape written the long way.
     if (parent is ReturnStatement && parent.expression == invocation) {
       final block = parent.parent;
       if (block is Block && block.statements.length == 1) {
@@ -294,25 +190,17 @@ class ConvertTryCatchConstructorToTryStatement
     return null;
   }
 
-  /// The callback argument at [index], if it is written inline.
-  ///
-  /// A tear-off (`Failure.from`) is not a [FunctionExpression], so it has no
-  /// parameter names or body to move into a `catch`; those decline.
   FunctionExpression? _callbackAt(NodeList<Argument> arguments, int index) {
     final argument = arguments[index].argumentExpression.unParenthesized;
     return argument is FunctionExpression ? argument : null;
   }
 
-  /// How many parameters [callback] declares.
   int _parameterCountOf(FunctionExpression callback) =>
       callback.parameters?.parameters.length ?? 0;
 
-  /// The `catch (...)` clause for `Option`, which carries no error value.
   _CatchClause? _optionCatchClause(_Wrapper wrapper) =>
       _CatchClause(source: 'catch (_)', result: '${wrapper.failure}()');
 
-  /// The `catch (...)` clause for `Either` / `TaskEither`, built from the
-  /// `onError` callback's own parameter names and body.
   _CatchClause? _errorCatchClause(
     NodeList<Argument> arguments,
     _Wrapper wrapper,
@@ -336,10 +224,7 @@ class ConvertTryCatchConstructorToTryStatement
         : null;
     if (parameters.length == 2 && stackName == null) return null;
 
-    // Declaring a stack trace the body never reads earns an immediate
-    // `unused_catch_stack` warning — the expanded code would arrive with a new
-    // lint on it. `onError` has no such rule, so this is not a case the
-    // original could hit.
+    // Edge case: a stack trace the body never reads would raise unused_catch_stack
     final keepsStack =
         stackName != null && _referencesName(onError.body, stackName);
 
@@ -353,7 +238,6 @@ class ConvertTryCatchConstructorToTryStatement
     );
   }
 
-  /// Whether [body] mentions [name].
   bool _referencesName(FunctionBody body, String name) {
     final finder = _IdentifierFinder(name);
     body.accept(finder);
@@ -361,18 +245,14 @@ class ConvertTryCatchConstructorToTryStatement
   }
 }
 
-/// A generated `catch` clause and the value its body returns.
 class _CatchClause {
-  /// The clause itself, e.g. `catch (error, stackTrace)`.
   final String source;
 
-  /// The wrapped failure the clause returns, e.g. `left(Failure.from(error))`.
   final String result;
 
   const _CatchClause({required this.source, required this.result});
 }
 
-/// Reports whether a subtree references a given name.
 class _IdentifierFinder extends RecursiveAstVisitor<void> {
   final String name;
   bool found = false;

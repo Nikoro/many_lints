@@ -7,22 +7,11 @@ import 'package:analyzer/dart/element/type.dart';
 import 'many_lints_rule.dart';
 import 'type_checker.dart';
 
-/// Shared implementation of the "`Future<X>` should be the lazy fpdart type"
-/// rules.
-///
-/// `avoid_future_of_either` and `avoid_future_of_option` are one mechanism
-/// applied to two types, but they ship as separate rules on purpose: a rule
-/// name is a claim about what it reports, and a project that wants only the
-/// `Either` half should not have to accept the `Option` half to get it.
-/// Sharing the base keeps that split from costing anything in duplicated
-/// analysis.
 abstract class FutureOfFpdartRule extends ManyLintsRule {
   FutureOfFpdartRule({required super.name, required super.description});
 
-  /// The synchronous wrapper this rule looks for inside a `Future`.
   TypeChecker get wrappedChecker;
 
-  /// The fpdart type that already means "async [wrappedChecker]".
   String get replacementType;
 
   @override
@@ -59,8 +48,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // A generator yields many values; a single lazy wrapper cannot stand in
-    // for a stream of them.
     if (body.isGenerator) return;
 
     if (returnType == null) return;
@@ -68,8 +55,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final type = returnType.type;
     if (type is! InterfaceType) return;
 
-    // Exactly `Future`, not `FutureOr` — the latter may complete
-    // synchronously, so it is a different shape with a different fix.
+    // Edge case: FutureOr may complete synchronously, so it gets a different fix
     if (!_futureChecker.isExactlyType(type)) return;
 
     final argument = type.typeArguments.singleOrNull;

@@ -1,12 +1,5 @@
 import 'dart:io';
 
-/// Verifies that every runnable example triggers only the rule named by its
-/// file.
-///
-/// The example package intentionally enables many_lints diagnostics, so a
-/// normal `dart analyze example` exits non-zero and produces many expected
-/// infos. This wrapper rejects analyzer errors and warnings while treating the
-/// intended plugin infos as success.
 Future<void> main() async {
   final result = await Process.run(Platform.resolvedExecutable, [
     'analyze',
@@ -33,15 +26,11 @@ Future<void> main() async {
     return;
   }
 
-  const pathOnlyRules = {
-    // These depend on the analyzed file's path. Their examples explain the
-    // required layout because renaming/moving the files would break the
-    // one-example-per-rule convention checked by the test suite.
+  const filePathDependentRules = {
+    // Edge case: moving these examples would break the one-example-per-rule convention
     'match_lib_folder_structure',
     'prefer_correct_test_file_name',
-    // Reports a library under `lib/` with no mirrored test file. The example
-    // package has no test tree at all, so the example suppresses the rule in
-    // its own header and documents the required layout instead.
+    // Edge case: the example package has no test tree, so its example suppresses the rule
     'require_mirror_test',
   };
   final examples = Directory('example/lib').listSync().whereType<File>().where(
@@ -57,7 +46,7 @@ Future<void> main() async {
       fileName.length - '_example.dart'.length,
     );
     expectedRuleByFile[fileName] = ruleName;
-    if (pathOnlyRules.contains(ruleName)) continue;
+    if (filePathDependentRules.contains(ruleName)) continue;
 
     final hasOwnDiagnostic = diagnostics.any(
       (diagnostic) =>
@@ -95,7 +84,7 @@ Future<void> main() async {
   stdout.writeln(
     'Verified ${examples.length} isolated examples: no analyzer '
     'errors/warnings or cross-rule diagnostics, and '
-    '${examples.length - pathOnlyRules.length} runnable rule demonstrations.',
+    '${examples.length - filePathDependentRules.length} runnable rule demonstrations.',
   );
 }
 

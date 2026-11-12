@@ -2,36 +2,17 @@ import 'package:analyzer/dart/analysis/features.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 
-/// A class or enum whose one generative constructor can move into the type
-/// header as a Dart 3.13 primary constructor.
-///
-/// Shared by `prefer_primary_constructors` and its fix so the two cannot
-/// disagree about what is convertible: the rule reports exactly the
-/// declarations the fix knows how to rewrite.
-///
-/// Unlike the SDK's `use_primary_constructors`, a type that declares **no**
-/// constructor is never a candidate. Converting one only adds an empty `()`
-/// to the header (`enum Sport() {`, `abstract interface class Gateway() {`),
-/// which says nothing a reader did not already know.
 class PrimaryConstructorCandidate {
-  /// The class or enum declaration.
   final CompilationUnitMember declaration;
 
-  /// The plain name part (`Point<T>`) that becomes the primary constructor.
   final ClassNamePart namePart;
 
-  /// The members of the declaration body.
   final NodeList<ClassMember> members;
 
-  /// The constructor that moves into the header.
   final ConstructorDeclaration constructor;
 
-  /// Every `this.x` parameter of [constructor], mapped to the field it
-  /// initializes. Each becomes a declaring parameter and its field goes away.
   final Map<FieldFormalParameter, FieldDeclaration> declaringFields;
 
-  /// Whether [declaration] is an enum, whose constructor is implicitly
-  /// `const` and must not spell it in the header.
   final bool isEnum;
 
   const PrimaryConstructorCandidate._({
@@ -43,7 +24,6 @@ class PrimaryConstructorCandidate {
     required this.isEnum,
   });
 
-  /// Reads [node] as a convertible class or enum, or returns `null`.
   static PrimaryConstructorCandidate? tryRead(CompilationUnitMember node) {
     final unit = node.thisOrAncestorOfType<CompilationUnit>();
     if (unit == null ||
@@ -72,7 +52,7 @@ class PrimaryConstructorCandidate {
         return null;
     }
 
-    // Already migrated. The SDK's `use_declaring_parameters` owns that case.
+    // Edge case: the SDK's use_declaring_parameters owns already migrated classes
     if (namePart is PrimaryConstructorDeclaration) return null;
 
     final constructor = _soleNonRedirectingGenerative(members);
@@ -93,8 +73,7 @@ class PrimaryConstructorCandidate {
       return null;
     }
 
-    // A non-late instance field initializer sees the primary constructor's
-    // parameters, so a name it shares with one would change what it means.
+    // Edge case: a field initializer sees primary parameters, so a shared name changes meaning
     final parameterNames = {
       for (final parameter in parameters)
         if (parameter.name case final name?) name.lexeme,
@@ -117,8 +96,6 @@ class PrimaryConstructorCandidate {
       declaringFields[parameter] = field;
     }
 
-    // A declaration of several fields moves only when the constructor
-    // declares every one of them; splitting it is a bigger edit than this.
     for (final field in declaringFields.values.toSet()) {
       final declared = declaringFields.values.where((f) => f == field).length;
       if (declared != field.fields.variables.length) return null;
@@ -134,15 +111,9 @@ class PrimaryConstructorCandidate {
     );
   }
 
-  /// Whether the constructor keeps work to do after its parameters moved: an
-  /// initializer list or a non-empty body, which live on in a `this` block.
   bool get needsThisBlock =>
       constructor.initializers.isNotEmpty || _hasBlockBody(constructor);
 
-  /// The only generative constructor that does not redirect, when every other
-  /// constructor is a factory or redirects. Beside a primary constructor any
-  /// second generative constructor must redirect, so two real ones cannot
-  /// convert.
   static ConstructorDeclaration? _soleNonRedirectingGenerative(
     NodeList<ClassMember> members,
   ) {
@@ -165,9 +136,7 @@ class PrimaryConstructorCandidate {
     FieldFormalParameter parameter,
     FieldDeclaration field,
   ) {
-    // `this.cb(int)` has no declaring-parameter spelling, and an explicit type
-    // on `this.x` may be narrower than the field's, so moving it changes the
-    // field's type.
+    // Edge case: an explicit type on `this.x` may be narrower than the field type
     if (parameter.functionTypedSuffix != null) return false;
     if (parameter.type != null) return false;
 
@@ -204,8 +173,6 @@ class PrimaryConstructorCandidate {
       block.statements.isEmpty && block.rightBracket.precedingComments == null;
 }
 
-/// Finds an identifier in scope position (not a member name after `.` or a
-/// named-argument label) spelled like one of [names].
 class _NameReferenceFinder extends RecursiveAstVisitor<void> {
   _NameReferenceFinder(this.names);
 

@@ -9,45 +9,8 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 import '../ast_node_analysis.dart';
 import '../fpdart_type_checkers.dart';
 
-/// One extracted step of a would-be `Do` block.
 typedef _Step = ({String name, String source});
 
-/// Converts a chain of nested `flatMap` callbacks into a `Do` block.
-///
-/// **Example**:
-///
-/// ```dart
-/// goToShoppingCenter().flatMap(
-///   (market) => market.buyBanana().flatMap(
-///         (banana) => market.buyApple().flatMap(
-///               (apple) => Option.of('$banana, $apple'),
-///             ),
-///       ),
-/// );
-/// ```
-///
-/// With the cursor on any `flatMap` in that nest, the assist produces:
-///
-/// ```dart
-/// Option.Do(($) {
-///   final market = $(goToShoppingCenter());
-///   final banana = $(market.buyBanana());
-///   final apple = $(market.buyApple());
-///   return '$banana, $apple';
-/// });
-/// ```
-///
-/// ## Why an assist rather than a quick fix
-///
-/// The generated names come from the callbacks' own parameters, which are
-/// usually good but occasionally single letters. Every one is emitted as a
-/// linked edit position, so accepting the assist drops the cursor on the first
-/// name with the rest reachable by Tab — the rename is part of applying it,
-/// not a follow-up chore.
-///
-/// That interaction only exists because the user invoked this deliberately. As
-/// a fix hanging off [PreferDoNotation] it would invite "apply all", which is
-/// the one way to get a file full of `final a = ...` in a single keystroke.
 class ConvertFlatMapToDoNotation extends ResolvedCorrectionProducer {
   static const _assistKind = AssistKind(
     'many_lints.assist.convertFlatMapToDoNotation',
@@ -78,8 +41,6 @@ class ConvertFlatMapToDoNotation extends ResolvedCorrectionProducer {
     final wrapper = _wrapperName(wrapperType);
     if (wrapper == null) return;
 
-    // The chain's first step is whatever the outermost `flatMap` was called
-    // on; every later step is one callback deeper.
     final steps = <_Step>[];
     final firstName = _parameterNameOf(outermost);
     if (firstName == null) return;
@@ -87,14 +48,9 @@ class ConvertFlatMapToDoNotation extends ResolvedCorrectionProducer {
 
     final returned = _collectSteps(outermost, steps);
     if (returned == null) return;
-    // Fewer than two steps is not a nest; `Do` would only add ceremony.
     if (steps.length < 2) return;
 
-    // The nest usually starts mid-line (`goShopping() => x.flatMap(`), so the
-    // block's body has to be indented relative to that line's *leading
-    // whitespace* — not to everything before the node, which `indentOf`
-    // returns and which would prefix every generated line with the code that
-    // happened to precede the call.
+    // Edge case: the nest often starts mid-line, so indent from the line's leading whitespace
     final indent = _leadingWhitespaceOf(outermost.offset);
     final body = StringBuffer('$wrapper.Do((\$) {\n');
     for (final step in steps) {
@@ -106,9 +62,7 @@ class ConvertFlatMapToDoNotation extends ResolvedCorrectionProducer {
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(range.node(outermost), body.toString());
 
-      // Offer every generated name for renaming in one pass. Offsets are
-      // computed against the replacement text, which starts at the node's own
-      // offset.
+      // Edge case: offsets count from the replacement text, which starts at the node offset
       var cursor = outermost.offset + '$wrapper.Do((\$) {\n'.length;
       for (final step in steps) {
         final nameOffset = cursor + indent.length + 2 + 'final '.length;
@@ -124,7 +78,6 @@ class ConvertFlatMapToDoNotation extends ResolvedCorrectionProducer {
     });
   }
 
-  /// The leading whitespace of the line containing [offset].
   String _leadingWhitespaceOf(int offset) {
     final content = unitResult.content;
     if (offset <= 0) return '';
@@ -140,7 +93,6 @@ class ConvertFlatMapToDoNotation extends ResolvedCorrectionProducer {
     return content.substring(lineStart, end);
   }
 
-  /// The outermost `flatMap` of the nest the cursor sits in.
   MethodInvocation? _outermostFlatMap() {
     MethodInvocation? outermost;
 
@@ -153,7 +105,6 @@ class ConvertFlatMapToDoNotation extends ResolvedCorrectionProducer {
     return outermost;
   }
 
-  /// Whether [node] is `flatMap` on an fpdart type.
   bool _isFpdartFlatMap(MethodInvocation node) {
     if (node.methodName.name != 'flatMap') return false;
 
@@ -162,7 +113,6 @@ class ConvertFlatMapToDoNotation extends ResolvedCorrectionProducer {
         anyFpdartChecker.isAssignableFromType(targetType);
   }
 
-  /// The single parameter name of [node]'s callback.
   String? _parameterNameOf(MethodInvocation node) {
     final arguments = node.argumentList.arguments;
     if (arguments.length != 1) return null;
@@ -176,7 +126,6 @@ class ConvertFlatMapToDoNotation extends ResolvedCorrectionProducer {
     return parameters.first.name?.lexeme;
   }
 
-  /// The body [node]'s callback evaluates to.
   Expression? _callbackBodyOf(MethodInvocation node) {
     final arguments = node.argumentList.arguments;
     if (arguments.length != 1) return null;
@@ -187,13 +136,6 @@ class ConvertFlatMapToDoNotation extends ResolvedCorrectionProducer {
     return maybeGetSingleReturnExpression(callback.body);
   }
 
-  /// Walks the nest, appending each step, and returns the source of what the
-  /// innermost callback produces.
-  ///
-  /// The innermost step is the one place this cannot be purely mechanical: a
-  /// callback ending in `Option.of(x)` becomes `return x`, because `Do` wraps
-  /// the block's result itself. Anything else stays a step and is extracted —
-  /// `return $(market.buyPear())`.
   String? _collectSteps(MethodInvocation node, List<_Step> steps) {
     final body = _callbackBodyOf(node);
     if (body == null) return null;
@@ -211,7 +153,6 @@ class ConvertFlatMapToDoNotation extends ResolvedCorrectionProducer {
     return _unwrapLift(inner);
   }
 
-  /// `Option.of(x)` → `x`; anything else → `$(expr)`.
   String? _unwrapLift(Expression expression) {
     if (expression is InstanceCreationExpression) {
       final constructorName = expression.constructorName;
@@ -232,7 +173,6 @@ class ConvertFlatMapToDoNotation extends ResolvedCorrectionProducer {
     return '\$(${expression.toSource()})';
   }
 
-  /// The fpdart wrapper's name, for the `<Type>.Do` the block opens with.
   String? _wrapperName(DartType type) =>
       type is InterfaceType && anyFpdartChecker.isAssignableFromType(type)
       ? type.element.name

@@ -9,53 +9,10 @@ import '../fpdart_chain_call.dart';
 import '../fpdart_type_checkers.dart';
 import '../type_checker.dart';
 
-/// Converts a hand-rolled `reduce` over a list of tasks into
-/// `TaskEither.sequenceListSeq`.
-///
-/// ```dart
-/// tasks.reduce((acc, t) => acc.flatMap((_) => t))
-/// ```
-///
-/// becomes
-///
-/// ```dart
-/// TaskEither.sequenceListSeq(tasks).map((values) => values.last)
-/// ```
-///
-/// Offered for `Task`, `TaskOption` and `TaskEither`, the fpdart 1.2.0 types
-/// that declare `sequenceListSeq`.
-///
-/// ## This one changes behaviour, and says so
-///
-/// The conversion is **not** exact. The `reduce` chains each task onto the
-/// accumulator with `flatMap`, so it stops at the first failure: the tasks
-/// after it never run. fpdart declares `sequenceListSeq` through
-/// `traverseListWithIndexSeq`, which runs every task through
-/// `Task.traverseListWithIndexSeq` and only then folds the results with
-/// `Either.sequenceList`. Every task runs, even after one has failed; the
-/// result is still the first failure.
-///
-/// For tasks without side effects the two agree. For writes they do not: a
-/// failed step no longer stops the steps after it. So the lightbulb names the
-/// difference instead of offering a plain "convert to", and the assist sits
-/// below the exact conversions, as the `chainFirst` one does.
-///
-/// One smaller difference: `reduce` throws on an empty iterable where
-/// `sequenceListSeq` succeeds with an empty list, whose `.last` then throws
-/// when the task runs.
-///
-/// ## Always the `Seq` variant
-///
-/// `sequenceList` runs its tasks **concurrently**; `sequenceListSeq` runs them
-/// in order. A `reduce` that chains each element onto the accumulator is
-/// inherently sequential — element two cannot start until element one
-/// finishes — so only the `Seq` variant keeps the order. Offering the
-/// concurrent one would change when effects run, and in what order.
 class ConvertReduceToSequenceList extends ResolvedCorrectionProducer {
   static const _assistKind = AssistKind(
     'many_lints.assist.convertReduceToSequenceList',
-    // Below the exact conversions, beside `chainFirst`: this one asks the
-    // author to accept a change in behaviour.
+    // Edge case: ranked below the exact conversions because it changes behaviour
     29,
     "Convert to 'sequenceListSeq' (runs every task after a failure)",
   );
@@ -63,7 +20,6 @@ class ConvertReduceToSequenceList extends ResolvedCorrectionProducer {
   static const _iterableChecker = TypeChecker.fromUrl('dart:core#Iterable');
   static const _listChecker = TypeChecker.fromUrl('dart:core#List');
 
-  /// The fpdart 1.2.0 types that declare a static `sequenceListSeq`.
   static const _sequencedChecker = TypeChecker.any([
     taskChecker,
     taskOptionChecker,
@@ -92,8 +48,7 @@ class ConvertReduceToSequenceList extends ResolvedCorrectionProducer {
 
     if (!_chainsAccumulator(reduce)) return;
 
-    // `sequenceListSeq` takes a `List`, and yields every value where the
-    // `reduce` yields the last one; `.last` keeps the result type.
+    // Edge case: sequenceListSeq yields every value where reduce yields only the last
     final source = switch (list.staticType) {
       final type? when _listChecker.isAssignableFromType(type) =>
         list.toSource(),
@@ -107,7 +62,6 @@ class ConvertReduceToSequenceList extends ResolvedCorrectionProducer {
     });
   }
 
-  /// The `reduce` invocation at or above the cursor.
   MethodInvocation? _enclosingReduce() {
     for (AstNode? current = node; current != null; current = current.parent) {
       if (current is MethodInvocation && current.methodName.name == 'reduce') {
@@ -118,18 +72,11 @@ class ConvertReduceToSequenceList extends ResolvedCorrectionProducer {
     return null;
   }
 
-  /// The name of the fpdart wrapper held by [list], or `null` when [list] is
-  /// not an iterable of one.
-  ///
-  /// Returns the wrapper's *element* name — `TaskEither` — because the
-  /// replacement calls a static on it.
   String? _sequencedWrapperOf(Expression list) {
     final type = list.staticType;
     if (type is! InterfaceType) return null;
     if (!_iterableChecker.isAssignableFromType(type)) return null;
 
-    // The element type comes from the `Iterable<E>` in the supertype chain,
-    // so a `List<TaskEither<..>>` resolves the same as a bare `Iterable`.
     final element = _elementTypeOf(type);
     if (element is! InterfaceType) return null;
     if (!_sequencedChecker.isExactlyType(element)) return null;
@@ -137,7 +84,6 @@ class ConvertReduceToSequenceList extends ResolvedCorrectionProducer {
     return element.element.name;
   }
 
-  /// The `E` of the `Iterable<E>` [type] implements, or `null`.
   DartType? _elementTypeOf(InterfaceType type) {
     for (final candidate in [type, ...type.allSupertypes]) {
       if (!_iterableChecker.isExactlyType(candidate)) continue;
@@ -149,10 +95,6 @@ class ConvertReduceToSequenceList extends ResolvedCorrectionProducer {
     return null;
   }
 
-  /// Whether [reduce]'s callback is `(acc, next) => acc.flatMap((_) => next)`.
-  ///
-  /// Anything else is a different fold and must not be rewritten: the shape is
-  /// what makes the conversion exact.
   bool _chainsAccumulator(MethodInvocation reduce) {
     final arguments = reduce.argumentList.arguments;
     if (arguments.length != 1) return false;
@@ -173,16 +115,13 @@ class ConvertReduceToSequenceList extends ResolvedCorrectionProducer {
     final chain = readFpdartFlatMap(body.expression);
     if (chain == null || chain.invocation != body.expression) return false;
 
-    // The receiver must be the accumulator...
     final target = chain.invocation.realTarget;
     if (target is! SimpleIdentifier || target.name != accumulator) return false;
 
-    // ...the callback must ignore the accumulated value...
     final chained = chain.body;
     if (chained == null) return false;
     if (!parameterIsUnused(chain.parameter, chained)) return false;
 
-    // ...and it must return the element being folded in, unchanged.
     return chained is SimpleIdentifier && chained.name == next;
   }
 }

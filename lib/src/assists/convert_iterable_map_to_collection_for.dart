@@ -7,24 +7,6 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import '../type_checker.dart';
 import '../ast_node_analysis.dart';
 
-/// Converts an iterable call to `Iterable.map` with an optional
-/// collect `Iterable.toList`/`Iterable.toSet` to a collection-for idiom.
-///
-/// **Example**:
-///
-/// ```dart
-/// final iterable = [1, 2, 3];
-/// final someList = iterable.map((e) => e * 2).toList();
-/// final someSet = iterable.map((e) => e / 2).toSet();
-/// ```
-///
-/// When assist is applied to `someList` and `someSet` the result is
-///
-/// ```dart
-/// final iterable = [1, 2, 3];
-/// final someList = [for (final e in iterable) e * 2];
-/// final someSet = {for (final e in iterable) e / 2};
-/// ```
 class ConvertIterableMapToCollectionFor extends ResolvedCorrectionProducer {
   static const _assistKind = AssistKind(
     'many_lints.assist.convertIterableMapToCollectionFor',
@@ -43,11 +25,9 @@ class ConvertIterableMapToCollectionFor extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // Find the MethodInvocation at the current location
     final targetNode = node;
     MethodInvocation? methodInvocation;
 
-    // Walk up the tree to find a MethodInvocation
     AstNode? current = targetNode;
     while (current != null) {
       if (current is MethodInvocation) {

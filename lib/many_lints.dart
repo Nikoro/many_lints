@@ -26,7 +26,6 @@ import 'package:analysis_server_plugin/src/plugin_server.dart';
 import 'package:analysis_server_plugin/src/registry.dart' as plugin_registry;
 import 'package:analyzer/analysis_rule/analysis_rule.dart';
 
-// Rules
 import 'package:many_lints/src/rules/always_remove_listener.dart';
 import 'package:many_lints/src/rules/always_pass_global_key.dart';
 import 'package:many_lints/src/rules/avoid_bloc_public_methods.dart';
@@ -292,7 +291,6 @@ import 'package:many_lints/src/rules/use_sliver_prefix.dart';
 import 'package:many_lints/src/rules/avoid_catch_error.dart';
 import 'package:many_lints/src/rules/never_discard_build_context.dart';
 
-// Fixes
 import 'package:many_lints/src/fixes/always_remove_listener_fix.dart';
 import 'package:many_lints/src/fixes/dispose_fields_fix.dart';
 import 'package:many_lints/src/fixes/match_pattern_fix.dart';
@@ -398,7 +396,6 @@ import 'package:many_lints/src/fixes/prefer_use_callback_fix.dart';
 import 'package:many_lints/src/fixes/prefer_use_prefix_fix.dart';
 import 'package:many_lints/src/fixes/use_sliver_prefix_fix.dart';
 
-// Assists
 import 'package:many_lints/src/assists/convert_do_notation_to_flat_map.dart';
 import 'package:many_lints/src/assists/convert_flat_map_to_do_notation.dart';
 import 'package:many_lints/src/assists/convert_iterable_map_to_collection_for.dart';
@@ -430,8 +427,6 @@ class ManyLintsPlugin extends Plugin {
 
   @override
   void register(PluginRegistry registry) {
-    // Every rule is registered opt-in: nothing reports until the project
-    // selects a preset or enables the rule by name. See lib/src/presets.dart.
     _registerWarningRule(registry, AlwaysRemoveListener());
     _registerWarningRule(registry, AvoidBlocPublicMethods());
     _registerWarningRule(registry, AvoidPassingBlocToBloc());
@@ -696,9 +691,12 @@ class ManyLintsPlugin extends Plugin {
     _registerWarningRule(registry, PreferUseCallback());
     _registerWarningRule(registry, PreferUsePrefix());
     _registerWarningRule(registry, UseSliverPrefix());
+    _registerRemovedRules(registry);
+    _registerFixes(registry);
+    _registerAssists(registry);
+  }
 
-    // Keep removed names registered so existing configurations receive the
-    // analyzer's replacement guidance instead of an unknown-rule warning.
+  void _registerRemovedRules(PluginRegistry registry) {
     _registerWarningRule(
       registry,
       RemovedAnalysisRule(
@@ -717,8 +715,9 @@ class ManyLintsPlugin extends Plugin {
         replacedBy: 'unnecessary_overrides',
       ),
     );
+  }
 
-    // Register fixes for rules
+  void _registerFixes(PluginRegistry registry) {
     registry.registerFixForRule(
       AlwaysRemoveListener.code,
       AlwaysRemoveListenerFix.new,
@@ -1094,8 +1093,9 @@ class ManyLintsPlugin extends Plugin {
       PreferMultiBlocProvider.code,
       PreferMultiBlocProviderFix.new,
     );
+  }
 
-    // Register assists
+  void _registerAssists(PluginRegistry registry) {
     registry.registerAssist(ConvertDoNotationToFlatMap.new);
     registry.registerAssist(ConvertFlatMapToDoNotation.new);
     registry.registerAssist(ConvertIterableMapToCollectionFor.new);

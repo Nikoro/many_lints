@@ -8,54 +8,8 @@ import 'package:analyzer_plugin/utilities/range_factory.dart';
 import '../fpdart_do_notation.dart';
 import '../fpdart_type_checkers.dart';
 
-/// One extracted step of a `Do` block: `final <name> = $(<source>);`.
 typedef _Step = ({String name, String source});
 
-/// Converts a `Do` block back into a chain of nested `flatMap` callbacks.
-///
-/// The inverse of [ConvertFlatMapToDoNotation]. Given:
-///
-/// ```dart
-/// Option.Do(($) {
-///   final market = $(goToShoppingCenter());
-///   final banana = $(market.buyBanana());
-///   final apple = $(market.buyApple());
-///   return '$banana, $apple';
-/// });
-/// ```
-///
-/// with the cursor anywhere in the block, the assist produces:
-///
-/// ```dart
-/// goToShoppingCenter().flatMap(
-///   (market) => market.buyBanana().flatMap(
-///     (banana) => market.buyApple().flatMap(
-///       (apple) => Option.of('$banana, $apple'),
-///     ),
-///   ),
-/// );
-/// ```
-///
-/// ## Why only the straight-line shape converts
-///
-/// `Do` is imperative: its body may branch, loop, or extract conditionally,
-/// and `$` may be called anywhere an expression is allowed. `flatMap` is a
-/// fixed chain of continuations, so translating the general case would mean a
-/// CPS transform — turning `if`/`for` into combinator calls and duplicating the
-/// continuation into every arm.
-///
-/// This assist therefore recognises exactly the shape [ConvertFlatMapToDoNotation]
-/// emits — a run of `final <name> = $(<expr>);` bindings followed by a single
-/// `return` — and declines everything else rather than silently mangling it.
-/// That covers round-tripping and the great majority of hand-written blocks; a
-/// block that does more is one where `Do` is genuinely the better notation.
-///
-/// ## Why an assist rather than a quick fix
-///
-/// There is no rule to hang it on. `Do` notation is the *preferred* form here —
-/// `prefer_do_notation` pushes the other way — so going back to `flatMap` is a
-/// deliberate, situational choice (matching surrounding code, or stepping out
-/// of a block whose imperative shape was never needed), never a diagnostic.
 class ConvertDoNotationToFlatMap extends ResolvedCorrectionProducer {
   static const _assistKind = AssistKind(
     'many_lints.assist.convertDoNotationToFlatMap',
@@ -93,8 +47,6 @@ class ConvertDoNotationToFlatMap extends ResolvedCorrectionProducer {
       steps.add(step);
     }
 
-    // A single step is `Type.Do(($) => ...)` in disguise; rewriting it as a
-    // `flatMap` chain of length one has no chain to speak of.
     if (steps.isEmpty) return;
 
     final result = _readResult(invocation, block.result, wrapper);
@@ -108,7 +60,6 @@ class ConvertDoNotationToFlatMap extends ResolvedCorrectionProducer {
     });
   }
 
-  /// Builds the nested `flatMap` chain, one level of indentation per step.
   String _buildChain(List<_Step> steps, String result, String indent) {
     final buffer = StringBuffer();
 
@@ -128,7 +79,6 @@ class ConvertDoNotationToFlatMap extends ResolvedCorrectionProducer {
     return buffer.toString();
   }
 
-  /// The leading whitespace of the line containing [offset].
   String _leadingWhitespaceOf(int offset) {
     final content = unitResult.content;
     if (offset <= 0) return '';
@@ -144,12 +94,6 @@ class ConvertDoNotationToFlatMap extends ResolvedCorrectionProducer {
     return content.substring(lineStart, end);
   }
 
-  /// The outermost `Do` block the cursor sits in.
-  ///
-  /// Walking up rather than taking the innermost match mirrors
-  /// [ConvertFlatMapToDoNotation]: converting an inner block first would leave
-  /// the outer one holding a `flatMap` chain it cannot re-flatten, so the whole
-  /// nest is the unit of work.
   DoInvocation? _outermostDo() {
     DoInvocation? outermost;
 
@@ -163,11 +107,6 @@ class ConvertDoNotationToFlatMap extends ResolvedCorrectionProducer {
     return outermost;
   }
 
-  /// Splits the block body into its bindings and its single trailing `return`.
-  ///
-  /// Returns null unless the body is a block of statements ending in a
-  /// `return` with a value — an expression-bodied callback has no bindings to
-  /// unfold, and a body without a final `return` produces nothing to chain to.
   ({List<Statement> bindings, Expression result})? _statementsOf(
     DoInvocation invocation,
   ) {
@@ -189,11 +128,6 @@ class ConvertDoNotationToFlatMap extends ResolvedCorrectionProducer {
     );
   }
 
-  /// Reads `final <name> = $(<expr>);` out of [statement].
-  ///
-  /// Anything else — a plain expression statement, a multi-variable
-  /// declaration, a binding whose initialiser is not an extraction — makes the
-  /// block unconvertible, so this returns null and the assist declines.
   _Step? _readBinding(DoInvocation invocation, Statement statement) {
     if (statement is! VariableDeclarationStatement) return null;
 
@@ -210,16 +144,10 @@ class ConvertDoNotationToFlatMap extends ResolvedCorrectionProducer {
     return (name: variable.name.lexeme, source: source);
   }
 
-  /// The pipeline inside `$(<expr>)`, or `await $(<expr>)` in an async block.
-  ///
-  /// Returns null when [expression] is not a bare extraction — `$(a()) + 1`
-  /// mixes extraction with computation, which has no direct `flatMap`
-  /// equivalent as a chain step.
   String? _extractedSource(DoInvocation invocation, Expression expression) {
     var inner = expression.unParenthesized;
 
-    // `TaskEither.Do` and `Task.Do` take an async callback whose extractions
-    // read `await $(...)`; the `await` belongs to the block, not to the step.
+    // Edge case: in async Do blocks the `await` before `$(...)` belongs to the block
     if (inner is AwaitExpression) {
       if (!invocation.isAsync) return null;
       inner = inner.expression.unParenthesized;
@@ -238,13 +166,6 @@ class ConvertDoNotationToFlatMap extends ResolvedCorrectionProducer {
     return argument is Expression ? argument.toSource() : null;
   }
 
-  /// The chain's innermost expression, re-wrapped when the block returned a
-  /// plain value.
-  ///
-  /// `Do` lifts its own result, so `return x` has to become `Type.of(x)` to
-  /// keep the chain well-typed — the exact inverse of the forward assist's
-  /// unwrapping. A `return $(pipeline())` is already wrapped and passes
-  /// through unchanged.
   String? _readResult(
     DoInvocation invocation,
     Expression result,
@@ -253,29 +174,24 @@ class ConvertDoNotationToFlatMap extends ResolvedCorrectionProducer {
     final extracted = _extractedSource(invocation, result);
     if (extracted != null) return extracted;
 
-    // A returned extraction is the only legal use of `$` in the result; if `$`
-    // appears anywhere else in there, the expression mixes extraction with
-    // computation and cannot become a chain step.
+    // Edge case: `$` outside a returned extraction mixes extraction with computation
     if (_containsExtractorCall(invocation, result)) return null;
 
     return '$wrapper.of(${result.toSource()})';
   }
 
-  /// Whether [expression] contains a call to the block's extraction function.
   bool _containsExtractorCall(DoInvocation invocation, Expression expression) {
     final finder = _ExtractorCallFinder(invocation);
     expression.accept(finder);
     return finder.found;
   }
 
-  /// The fpdart wrapper's name, for the `<Type>.of` the chain may end with.
   String? _wrapperName(DartType type) =>
       type is InterfaceType && anyFpdartChecker.isAssignableFromType(type)
       ? type.element.name
       : null;
 }
 
-/// Reports whether a subtree calls the block's extraction function anywhere.
 class _ExtractorCallFinder extends DoBodyVisitor {
   bool found = false;
 
