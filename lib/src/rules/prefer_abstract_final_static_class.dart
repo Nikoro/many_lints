@@ -55,12 +55,17 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // A primary constructor that declares parameters is an instance
-    // constructor in the class header: the class is meant to be instantiated,
-    // even when every member in its body is static.
-    if (node.namePart case PrimaryConstructorDeclaration(
-      :final formalParameters,
-    ) when formalParameters.parameters.isNotEmpty) {
+    // A primary constructor is an instance constructor in the class header:
+    // the class is meant to be instantiated, even when every member in its
+    // body is static. Only `class Constants._()`, private and without
+    // parameters, is the old instantiation guard.
+    if (node.namePart
+        case PrimaryConstructorDeclaration(
+          :final formalParameters,
+          :final constructorName,
+        )
+        when formalParameters.parameters.isNotEmpty ||
+            !(constructorName?.name.lexeme.startsWith('_') ?? false)) {
       return;
     }
 

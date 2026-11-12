@@ -124,7 +124,9 @@
   static Key parse(...) }`). The fields live in the header, so the class is
   instantiable even when every member in its body is static. A parameterless
   private primary constructor (`class Constants._()`) is still the old
-  instantiation guard and is still reported.
+  instantiation guard and is still reported. A public primary constructor
+  without parameters is no longer reported either: for `class Registry() {
+  static int count = 0; }`, the fix made `Registry()` a compile error.
 - `avoid_dst_unsafe_date_arithmetic` traces a UTC local into the closures that
   capture it. `final now = clock.now().toUtc(); task.andThen(() =>
   check(now.subtract(window)))` was reported, because the search for the

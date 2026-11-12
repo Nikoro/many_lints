@@ -271,4 +271,24 @@ class Constants._() {
       [lint(0, 52)],
     );
   }
+
+  Future<void> test_publicParameterlessPrimaryConstructor() async {
+    await assertNoDiagnostics(r'''
+class Registry() {
+  static int count = 0;
+}
+
+final r = Registry();
+''');
+  }
+
+  Future<void> test_publicNamedParameterlessPrimaryConstructor() async {
+    await assertNoDiagnostics(r'''
+class Registry.create() {
+  static int count = 0;
+}
+
+final r = Registry.create();
+''');
+  }
 }

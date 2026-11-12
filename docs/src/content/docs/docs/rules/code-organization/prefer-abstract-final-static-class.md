@@ -122,6 +122,33 @@ abstract final class ApiRoutes {
 
 Only a *trivial* private constructor is treated this way — parameterless, no `const`, no `factory`, no initializers, no redirect and an empty body. Anything richer is doing real work, so the class is left alone.
 
+### Primary constructors
+
+A primary constructor in the class header counts like any other constructor. Only `class Constants._()`, private and without parameters, is the instantiation guard, and it is reported:
+
+```dart
+// Don't
+class Constants._() {
+  static const name = 'app';
+}
+```
+
+Any other primary constructor means the class is meant to be built, so it is left alone. That includes a public one without parameters, because `abstract final` would make `Registry()` a compile error:
+
+```dart
+// Accepted — the class is constructed
+class Registry() {
+  static int count = 0;
+}
+
+final registry = Registry();
+
+// Accepted — the fields live in the header
+class const StorageKey._(final String value) {
+  static StorageKey parse(String value) => StorageKey._(value);
+}
+```
+
 ## Known limitations
 
 **Any non-trivial constructor exempts the class.** A public one, or a private one taking parameters or running a body, means the class is meant to be constructed, so the rule steps back.
