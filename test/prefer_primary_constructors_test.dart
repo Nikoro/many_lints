@@ -338,6 +338,64 @@ class Point(final int x, final int y);
 ''');
   }
 
+  Future<void> test_fieldInitializerSeesSameNamedParameter() async {
+    await assertNoDiagnostics(r'''
+int limit = 3;
+
+class P {
+  final List<int> items = List.filled(limit, 0);
+  final int max;
+  P(int limit) : max = limit * 2;
+}
+''');
+  }
+
+  Future<void> test_fieldInitializerSeesSameNamedStaticMember() async {
+    await assertNoDiagnostics(r'''
+class Config {
+  static const Duration defaultTimeout = Duration(seconds: 1);
+  final Duration fallback = defaultTimeout;
+  final Duration timeout;
+  Config({Duration? defaultTimeout}) : timeout = defaultTimeout ?? const Duration(seconds: 2);
+}
+''');
+  }
+
+  Future<void> test_lateFieldInitializerAndMemberNamesDoNotBlock() async {
+    await assertDiagnostics(
+      r'''
+int limit = 3;
+
+class P {
+  late final List<int> items = List.filled(max, 0);
+  final int size = '$limit'.length;
+  final int max;
+  P(this.max, {int length = 0});
+}
+''',
+      [lint(22, 1)],
+    );
+  }
+
+  Future<void> test_correctionNamesTheType() async {
+    await assertDiagnostics(
+      r'''
+class FakeTime {
+  final int year;
+  FakeTime(this.year);
+}
+''',
+      [
+        lint(
+          6,
+          8,
+          correctionContains:
+              "Move the constructor of 'FakeTime' into the type header",
+        ),
+      ],
+    );
+  }
+
   // --- Edge case: the language-feature gate ---
 
   Future<void> test_notReportedBeforeDart313() async {

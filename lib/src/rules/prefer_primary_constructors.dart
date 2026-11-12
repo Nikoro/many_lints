@@ -38,8 +38,8 @@ class PreferPrimaryConstructors extends ManyLintsRule {
     'prefer_primary_constructors',
     "'{0}' can declare its constructor in the type header.",
     correctionMessage:
-        'Move it into the header as a primary constructor, for example '
-        '{0}(final int x).',
+        "Move the constructor of '{0}' into the type header as a primary "
+        'constructor.',
   );
 
   PreferPrimaryConstructors()

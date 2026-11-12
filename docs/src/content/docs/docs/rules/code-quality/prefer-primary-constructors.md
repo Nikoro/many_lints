@@ -95,7 +95,8 @@ Not reported, because the rewrite has no faithful form:
 - a `this.x` whose field is `late`, `covariant`, `external` or `abstract`,
 - `int this.x` (an explicit type may be narrower than the field's) and `this.cb(int v)`,
 - `final int a, b;` when the constructor declares only some of them,
-- a `mixin class` whose constructor is not trivial.
+- a `mixin class` whose constructor is not trivial,
+- a class whose non-`late` instance field initializer uses a name that one of the constructor's parameters also has. In a primary constructor those initializers see the parameters, so `final items = List.filled(limit, 0);` beside `P(int limit)` would start reading the parameter instead of a top-level or static `limit`.
 
 **The library must be on language version 3.13 or later.** A file pinned to an older version is skipped.
 

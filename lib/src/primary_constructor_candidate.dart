@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/analysis/features.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 
 /// A class or enum whose one generative constructor can move into the type
 /// header as a Dart 3.13 primary constructor.
@@ -92,6 +93,14 @@ class PrimaryConstructorCandidate {
       return null;
     }
 
+    // A non-late instance field initializer sees the primary constructor's
+    // parameters, so a name it shares with one would change what it means.
+    final parameterNames = {
+      for (final parameter in parameters)
+        if (parameter.name case final name?) name.lexeme,
+    };
+    if (_initializersReferToAny(members, parameterNames)) return null;
+
     final fieldsByName = <String, FieldDeclaration>{};
     for (final field in members.whereType<FieldDeclaration>()) {
       if (field.isStatic) continue;
@@ -171,6 +180,21 @@ class PrimaryConstructorCandidate {
     return list.variables.every((v) => v.initializer == null);
   }
 
+  static bool _initializersReferToAny(
+    NodeList<ClassMember> members,
+    Set<String> names,
+  ) {
+    if (names.isEmpty) return false;
+    final finder = _NameReferenceFinder(names);
+    for (final field in members.whereType<FieldDeclaration>()) {
+      if (field.isStatic || field.fields.isLate) continue;
+      for (final variable in field.fields.variables) {
+        variable.initializer?.accept(finder);
+      }
+    }
+    return finder.found;
+  }
+
   static bool _hasBlockBody(ConstructorDeclaration constructor) {
     final body = constructor.body;
     return body is BlockFunctionBody && !_isEmptyBlock(body.block);
@@ -178,4 +202,28 @@ class PrimaryConstructorCandidate {
 
   static bool _isEmptyBlock(Block block) =>
       block.statements.isEmpty && block.rightBracket.precedingComments == null;
+}
+
+/// Finds an identifier in scope position (not a member name after `.` or a
+/// named-argument label) spelled like one of [names].
+class _NameReferenceFinder extends RecursiveAstVisitor<void> {
+  _NameReferenceFinder(this.names);
+
+  final Set<String> names;
+  bool found = false;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (!names.contains(node.name)) return;
+    final parent = node.parent;
+    final isMemberName = switch (parent) {
+      PropertyAccess(:final propertyName) => propertyName == node,
+      PrefixedIdentifier(:final identifier) => identifier == node,
+      MethodInvocation(:final methodName, :final target) =>
+        methodName == node && target != null,
+      Label() => true,
+      _ => false,
+    };
+    if (!isMemberName) found = true;
+  }
 }

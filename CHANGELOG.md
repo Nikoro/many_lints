@@ -148,6 +148,14 @@
   6000-line file took 42 s with scoped entries against 30 s without. The
   globs are now compiled once per entry and matched only for an entry that
   denies the name.
+- `prefer_primary_constructors` and its fix leave a class alone when a
+  non-`late` instance field initializer uses a name one of the constructor's
+  parameters also has. Such initializers see a primary constructor's
+  parameters, so with `int limit = 3;`, `final items = List.filled(limit,
+  0);` beside `P(int limit)` switched from the top-level `limit` to the
+  parameter, and a field reading a same-named static constant stopped
+  compiling. The correction message names the type instead of suggesting a
+  made-up `X(final int x)`.
 - `prefer_module_barrel_imports` allows an import of any of a package's
   `package_entry_points`; with `package:ext/ext.dart` and
   `package:ext/testing.dart` configured, `package:ext/testing.dart` was
