@@ -97,7 +97,8 @@
   (`Clock.instance = clock`, `count++`), constructor redirection
   (`super.system()`, `this()`, `factory A() = B.named`), or a top-level
   function's tear-off and a top-level variable's read when banned by bare name.
-  An extension's static member can be banned as `Extension.member`. A doc
+  Any extension member, static or instance, can be banned as
+  `Extension.member`. A doc
   comment reference (`[DateTime.now]`) is no longer reported, and a bare-name
   entry no longer matches a local function, local variable or parameter that
   shares the name.

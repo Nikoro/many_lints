@@ -558,6 +558,18 @@ int f(List<int> values) => values.first;
     );
   }
 
+  Future<void> test_extensionInstanceMember() async {
+    _deny(['Doubling.twice']);
+    const code = '''
+extension Doubling on int {
+  int get twice => this * 2;
+}
+
+int f() => 3.twice;
+''';
+    await _expectAt(code, [('twice', 1)]);
+  }
+
   Future<void> test_subtypeConstructorsAndStaticsAreNotTheBannedMember() async {
     _deny(['Clock.new', 'Clock.now', 'Clock.fixed']);
     await assertNoDiagnostics('''

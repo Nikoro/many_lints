@@ -50,7 +50,7 @@ rules:
 </TabItem>
 </Tabs>
 
-Members are written `Type.member`, matched on the type that **declares** the member. The unnamed constructor is spelled `new`. A static member of an extension is written `Extension.member`.
+Members are written `Type.member`, matched on the type that **declares** the member. The unnamed constructor is spelled `new`. A member of an extension, static or instance, is written `Extension.member`: `deny: ['Doubling.twice']` reports `3.twice` for `extension Doubling on int`.
 
 ## What counts as a use
 
