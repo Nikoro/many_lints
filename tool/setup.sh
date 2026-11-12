@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
-readonly checkout=.tools/comment_gate
-readonly repository=git@github.com:Nikoro/comment_gate.git
+readonly checkout=.tools/commit_gate
+readonly repository=git@github.com:Nikoro/commit_gate.git
 
-checkout_comment_gate() {
+checkout_commit_gate() {
   if [[ ! -d "$checkout/.git" ]]; then
     mkdir -p .tools
     if ! GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' \
@@ -14,12 +14,12 @@ checkout_comment_gate() {
     fi
   fi
   if [[ -n "$(git -C "$checkout" status --porcelain)" ]]; then
-    printf >&2 'The comment_gate checkout in %s is modified.\n' "$checkout"
+    printf >&2 'The commit_gate checkout in %s is modified.\n' "$checkout"
     exit 1
   fi
   git -C "$checkout" fetch --quiet origin main
   git -C "$checkout" checkout --quiet --detach FETCH_HEAD
 }
 
-checkout_comment_gate
+checkout_commit_gate
 git config core.hooksPath .githooks

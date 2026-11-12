@@ -41,7 +41,7 @@ directives, `///` docs in `lib/many_lints.dart` and one-line `// Edge case: <why
 `// Workaround: <issue URL> <why>` notes (at most 3 per file) are allowed. Knowledge
 about a rule belongs on its documentation page.
 
-Maintainers check this with `comment_gate`, a private tool. `tool/setup.sh` installs it
+Maintainers check this with `commit_gate`, a private tool. `tool/setup.sh` installs it
 together with the git hooks. Without access to it the hooks print a notice and skip
 the check, and a maintainer runs it before merging.
 

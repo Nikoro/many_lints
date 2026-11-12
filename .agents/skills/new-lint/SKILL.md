@@ -734,9 +734,9 @@ Run the following commands from the project root to ensure everything works:
    root, and delete it afterwards.
 6. Run `bun run build` from `docs/` as the final gate.
 7. Commit through the hooks that `tool/setup.sh` installs: they run
-   comment_gate on the staged files (comment rules, notes per file and per
+   commit_gate on the staged files (comment rules, notes per file and per
    commit, `Notes-reviewed:` trailers for kept notes). Run
-   `tool/comment_gate.sh check` to see every violation in scope first; see
+   `tool/commit_gate.sh check` to see every violation in scope first; see
    "Comment policy" in `CONTRIBUTING.md`.
 
 If any check fails or reports issues, fix it and re-run the affected checks until all are fully clean.

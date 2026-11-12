@@ -1,6 +1,6 @@
 # Code Assists — Quick Reference
 
-**Comments:** assists carry no doc comments and practically no comments; follow the [comment policy](../../../AGENTS.md#comments) (`comment_gate`, see `~/Projects/comment_gate` README; project config to come).
+**Comments:** assists carry no doc comments and practically no comments; follow the [comment policy](../../../AGENTS.md#comments) (`commit_gate`, see `~/Projects/commit_gate` README; project config to come).
 
 This directory contains code assist implementations. Assists are standalone refactoring actions, independent of lint diagnostics.
 
