@@ -2,9 +2,6 @@ import 'package:test/test.dart';
 
 import '../fix_harness.dart';
 
-/// End-to-end tests for the text these quick fixes actually produce.
-///
-/// See [FixHarness] for why this drives a real plugin server.
 void main() {
   late FixHarness harness;
 
@@ -483,11 +480,10 @@ void process<Config>(Config c) {}
       },
     );
 
-    test('renames a type parameter that shadows a top-level class', () async {
-      // Method-level type parameters attach directly to the
-      // MethodDeclaration, so both the declaration and the parameter's
-      // usages (here, the return type) get renamed correctly.
-      final fixed = await harness.applyFix(r'''
+    test(
+      'renames a method type parameter and its usages, not the shadowed class',
+      () async {
+        final fixed = await harness.applyFix(r'''
 class AnotherClass {}
 
 class SomeClass {
@@ -497,11 +493,11 @@ class SomeClass {
 }
 ''', 'avoid_generics_shadowing');
 
-      expect(fixed, contains('T anotherMethod<T>() {'));
-      expect(fixed, isNot(contains('AnotherClass anotherMethod')));
-      // The unrelated top-level class must stay untouched.
-      expect(fixed, contains('class AnotherClass {}'));
-    });
+        expect(fixed, contains('T anotherMethod<T>() {'));
+        expect(fixed, isNot(contains('AnotherClass anotherMethod')));
+        expect(fixed, contains('class AnotherClass {}'));
+      },
+    );
 
     test('picks a fallback letter when T is already in use', () async {
       final fixed = await harness.applyFix(r'''

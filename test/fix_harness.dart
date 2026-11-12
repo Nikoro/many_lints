@@ -19,17 +19,6 @@ import 'package:many_lints/many_lints.dart';
 import 'package:many_lints/src/rule_config.dart';
 import 'package:test/test.dart';
 
-/// Drives a real `PluginServer` so a quick fix can be checked by the text it
-/// actually produces.
-///
-/// `analyzer_testing` has no fix test API (still true as of 0.4.5), but the
-/// plugin server answers `edit.getFixes`, so the returned edit can be applied
-/// to the source and compared. Without this, a fix that silently produces
-/// nothing — or produces code that does not compile — looks identical to a
-/// working one.
-///
-/// Pass [packages] to `applyFix` for rules that only match types from another
-/// package; `flutterWidgets` below is a ready-made minimal `package:flutter`.
 class FixHarness with ResourceProviderMixin {
   final channel = _FakeChannel();
 
@@ -43,28 +32,6 @@ class FixHarness with ResourceProviderMixin {
 
   String get sdkRoot => convertPath('/sdk');
 
-  /// Analyses [content], applies the fix offered for [ruleName], and returns
-  /// the resulting source.
-  ///
-  /// [packages] maps a package name to the source of its `lib/<name>.dart`,
-  /// for rules that only fire on types from another package.
-  ///
-  /// [multiFilePackages] maps a package name to several of its files, keyed by
-  /// path relative to the package root (`'lib/src/option.dart'`). Use it when a
-  /// rule's [TypeChecker]s pin *declaring* libraries rather than a barrel:
-  /// `package:fpdart/src/task_either.dart#TaskEither` cannot be satisfied by a
-  /// single `lib/fpdart.dart`, so a one-file stub would leave the rule silent
-  /// and every assertion vacuous.
-  ///
-  /// [manyLintsConfig] is written to `many_lints.yaml` at the package root,
-  /// for fixes whose behaviour depends on per-rule configuration.
-  ///
-  /// When it is omitted, an explicit `enabled: true` for [ruleName] is written
-  /// instead. Rules are opt-in as of 1.0.0, so without that the rule under test
-  /// never reports and there is no diagnostic for a fix to attach to. Enabling
-  /// the one rule by name rather than selecting a preset keeps rules that sit
-  /// in no preset testable. A test that passes its own config is responsible
-  /// for enabling the rule it exercises.
   Future<String> applyFix(
     String content,
     String ruleName, {
@@ -108,20 +75,9 @@ class FixHarness with ResourceProviderMixin {
     );
     final result = protocol.EditGetFixesResult.fromResponse(response);
 
-    // The offset may carry diagnostics from several rules; keep only the
-    // fixes attached to the one under test, and apply a single change so
-    // overlapping edits from other rules cannot corrupt the output.
-    //
-    // The server also offers its own "Ignore ..." fixes for every diagnostic.
-    // Those come first in the list and would silently pass any test that only
-    // checks "something changed", so drop them and keep the rule's own fix.
-    final candidates = result.fixes
-        .where((errorFixes) => errorFixes.error.code == ruleName)
-        .expand((errorFixes) => errorFixes.fixes)
-        .where((fix) => !fix.change.message.startsWith('Ignore '))
-        .toList();
+    final ruleOwnFixes = _ruleOwnFixes(result, ruleName);
 
-    final change = candidates.firstOrNull?.change;
+    final change = ruleOwnFixes.firstOrNull?.change;
 
     if (change == null) {
       fail(
@@ -142,21 +98,6 @@ class FixHarness with ResourceProviderMixin {
     return _applyEdits(content, edits);
   }
 
-  /// Analyses [content], applies the assist named [assistId] at the offset
-  /// marked by `^` in the source, and returns the resulting text.
-  ///
-  /// Assists are driven by cursor position rather than by a diagnostic, so the
-  /// caret is written into the fixture itself and stripped before analysis.
-  /// That keeps the offset visible next to the code it selects instead of
-  /// living as a magic number in the expectation.
-  ///
-  /// `analyzer_testing` has no assist API any more than it has a fix one, but
-  /// the plugin server answers `edit.getAssists`, so the returned change can be
-  /// applied and compared exactly like a fix.
-  ///
-  /// Returns the new source plus the linked edit groups the assist offered, so
-  /// a test can assert on which names it made renameable, and the lightbulb
-  /// label, for an assist whose label has to warn about a behaviour change.
   Future<
     ({
       String source,
@@ -222,12 +163,6 @@ class FixHarness with ResourceProviderMixin {
     );
   }
 
-  /// The errors the analyzer itself reports for [source], written over the
-  /// file of the previous [applyFix] or [applyAssist] in the same package.
-  ///
-  /// The plugin server reports only plugin diagnostics, so a produced edit
-  /// that does not compile looks fine to it. This resolves the file with a
-  /// plain [AnalysisContextCollection] over the same packages and mock SDK.
   Future<List<String>> compileErrors(String source) async {
     newFile(filePath, source);
     final collection = AnalysisContextCollection(
@@ -251,13 +186,6 @@ class FixHarness with ResourceProviderMixin {
     }
   }
 
-  /// The ids of every assist offered at the `^` cursor in [content].
-  ///
-  /// [applyAssist] fails the test when the assist it names is not offered,
-  /// which is right for the positive cases but makes "this must *not* be
-  /// offered here" awkward to state. An assist that declines a shape it cannot
-  /// safely transform is part of its contract, so that case deserves a
-  /// first-class assertion rather than a caught failure.
   Future<List<String>> assistIds(
     String content, {
     Map<String, String> packages = const {},
@@ -289,21 +217,6 @@ class FixHarness with ResourceProviderMixin {
     return [for (final assist in result.assists) ?assist.change.id];
   }
 
-  /// Analyses [content] with [ruleName] enabled and returns the codes of every
-  /// diagnostic reported on it.
-  ///
-  /// Unlike [applyFix] and [expectNoFix] this never fails on its own: a caller
-  /// that wants "the rule reported" asserts on the result. That is what lets it
-  /// answer the opposite question too — whether a snippet a documentation page
-  /// presents as *bad* is in fact reported at all.
-  ///
-  /// [enabledRules] switches on additional rules, for asking whether a snippet
-  /// trips a rule other than the one whose page it appears on.
-  ///
-  /// [manyLintsConfig] supplies the whole `many_lints.yaml`, for rules that
-  /// stay silent until configured — several ordering rules return early unless
-  /// an `order:` is set, so a bare `enabled: true` would report nothing and
-  /// make the assertion vacuous.
   Future<List<String>> diagnosticsFor(
     String content,
     String ruleName, {
@@ -341,18 +254,6 @@ class FixHarness with ResourceProviderMixin {
     return [for (final e in reported) e.code];
   }
 
-  /// Writes the analysed package: options, config, dependencies and the file
-  /// under test.
-  ///
-  /// Asserts that [ruleName] reports on [content] but offers **no** fix.
-  ///
-  /// The mirror of [applyFix], for a rule whose fix is deliberately withheld:
-  /// `match_pattern` offers nothing when an entry has no `replace:`, and drops
-  /// a replacement whose result would not parse. Both are guard rails, and a
-  /// guard rail nothing asserts on is one nobody notices breaking.
-  ///
-  /// Still requires the diagnostic, so this cannot pass by the rule having
-  /// gone silent — that would make it a much weaker test than it looks.
   Future<void> expectNoFix(
     String content,
     String ruleName, {
@@ -396,24 +297,17 @@ class FixHarness with ResourceProviderMixin {
     );
     final result = protocol.EditGetFixesResult.fromResponse(response);
 
-    final candidates = result.fixes
-        .where((errorFixes) => errorFixes.error.code == ruleName)
-        .expand((errorFixes) => errorFixes.fixes)
-        .where((fix) => !fix.change.message.startsWith('Ignore '))
-        .toList();
+    final ruleOwnFixes = _ruleOwnFixes(result, ruleName);
 
     expect(
-      candidates,
+      ruleOwnFixes,
       isEmpty,
       reason:
           'Expected no $ruleName fix, but one was offered: '
-          '${candidates.map((f) => f.change.message).toList()}',
+          '${ruleOwnFixes.map((f) => f.change.message).toList()}',
     );
   }
 
-  /// Shared by [applyFix] and [applyAssist] so the two cannot drift on how a
-  /// package is laid out — a difference there would show up as one of them
-  /// mysteriously resolving a dependency the other does not.
   void _writePackage(
     String content, {
     required Map<String, String> packages,
@@ -429,8 +323,6 @@ plugins:
 
     newFile(
       join(packagePath, ConfigLoader.fileName),
-      // Assists are not rules and are never gated, so they need no `rules:`
-      // block at all — only a fix's underlying rule has to be switched on.
       manyLintsConfig ??
           (ruleName == null ? 'rules: {}\n' : 'rules:\n  $ruleName: true\n'),
     );
@@ -455,9 +347,7 @@ plugins:
   }
 
   Future<void> setUp() async {
-    // The config cache is static and keyed by package root, which every
-    // harness instance reuses — without this, one test's `many_lints.yaml`
-    // leaks into the next.
+    // Edge case: the static config cache is keyed by the package root every harness reuses
     ConfigLoader.clearCache();
 
     createMockSdk(resourceProvider: resourceProvider, root: getFolder(sdkRoot));
@@ -479,13 +369,22 @@ plugins:
     channel.close();
   }
 
-  /// Applies [edits] to [content], last offset first so earlier offsets stay
-  /// valid.
+  List<protocol.PrioritizedSourceChange> _ruleOwnFixes(
+    protocol.EditGetFixesResult result,
+    String ruleName,
+  ) => result.fixes
+      .where((errorFixes) => errorFixes.error.code == ruleName)
+      .expand((errorFixes) => errorFixes.fixes)
+      // Edge case: the server's own Ignore fixes come first and would pass any test that something changed
+      .where((fix) => !fix.change.message.startsWith('Ignore '))
+      .toList();
+
   String _applyEdits(String content, List<protocol.SourceEdit> edits) {
-    final ordered = [...edits]..sort((a, b) => b.offset.compareTo(a.offset));
+    final lastOffsetFirst = [...edits]
+      ..sort((a, b) => b.offset.compareTo(a.offset));
 
     var result = content;
-    for (final edit in ordered) {
+    for (final edit in lastOffsetFirst) {
       result = result.replaceRange(
         edit.offset,
         edit.offset + edit.length,

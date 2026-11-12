@@ -2,9 +2,6 @@ import 'package:test/test.dart';
 
 import '../fix_harness.dart';
 
-/// End-to-end tests for the text these quick fixes actually produce.
-///
-/// See [FixHarness] for why this drives a real plugin server.
 void main() {
   late FixHarness harness;
 
@@ -82,7 +79,6 @@ class CounterBlok extends Bloc<String, int> {}
     });
 
     test('uses the suffix of the entry the class actually matches', () async {
-      // Two entries, so a wrong lookup would append 'Bloc' to a Cubit.
       final fixed = await harness.applyFix(
         r'''
 import 'package:bloc/bloc.dart';
@@ -748,10 +744,6 @@ Widget f() => Builder(builder: (BuildContext _) => Text('hi'));
     });
 
     test('offers no fix when the name would shadow an outer context', () async {
-      // Renaming here would rebind `context` for the closure body, changing
-      // which element the existing lookups resolve against. The rule still
-      // reports — only the automatic edit is withheld, so `applyFix` finds
-      // nothing to apply.
       await expectLater(
         harness.applyFix(
           r'''

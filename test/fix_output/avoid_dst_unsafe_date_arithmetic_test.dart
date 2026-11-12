@@ -2,10 +2,6 @@ import 'package:test/test.dart';
 
 import '../fix_harness.dart';
 
-/// End-to-end tests for the text `avoid_dst_unsafe_date_arithmetic`'s quick
-/// fix actually produces.
-///
-/// See [FixHarness] for why this drives a real plugin server.
 void main() {
   late FixHarness harness;
 
@@ -56,24 +52,23 @@ void f(DateTime d) {
       expect(fixed, contains('d.day + 2'));
     });
 
-    // The fix deliberately declines a non-identifier receiver rather than
-    // duplicating a possibly side-effecting expression eight times. The
-    // harness fails when the named fix is missing, so that is the assertion.
-    test('offers no fix when the receiver is not a simple identifier', () {
-      expect(
-        harness.applyFix(r'''
+    test(
+      'offers no fix for a receiver that may have side effects when repeated',
+      () {
+        expect(
+          harness.applyFix(r'''
 void f() {
   DateTime.now().add(const Duration(days: 1));
 }
 ''', 'avoid_dst_unsafe_date_arithmetic'),
-        throwsA(isA<TestFailure>()),
-      );
-    });
+          throwsA(isA<TestFailure>()),
+        );
+      },
+    );
   });
 }
 
-/// The mock `dart:core` ships a `DateTime` with almost no members. Extend it so
-/// the rule resolves — otherwise `applyFix` fails with "no diagnostic".
+// Edge case: the mock dart:core DateTime has almost no members, so the rule would not resolve
 void _extendMockDateTime(FixHarness harness) {
   final corePath = '${harness.sdkRoot}/lib/core/core.dart';
   final coreSource = harness.getFile(corePath).readAsStringSync();

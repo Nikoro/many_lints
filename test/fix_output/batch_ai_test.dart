@@ -2,10 +2,6 @@ import 'package:test/test.dart';
 
 import '../fix_harness.dart';
 
-/// End-to-end tests for the text the `prefer_primary_constructors` fix
-/// actually produces.
-///
-/// See [FixHarness] for why this drives a real plugin server.
 void main() {
   late FixHarness harness;
 
@@ -35,7 +31,6 @@ class Point {
     test(
       'keeps the constructor parameter order, not the field order',
       () async {
-        // Reordering would silently break every positional call site.
         final fixed = await harness.applyFix(r'''
 class Pair {
   final int first;

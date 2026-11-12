@@ -2,9 +2,6 @@ import 'package:test/test.dart';
 
 import '../fix_harness.dart';
 
-/// End-to-end tests for the text these quick fixes actually produce.
-///
-/// See [FixHarness] for why this drives a real plugin server.
 void main() {
   late FixHarness harness;
 
@@ -410,8 +407,6 @@ String describe(int a) {
     };
 
     test('adds @immutable and imports package:meta to a Cubit state', () async {
-      // The state class is found through the `Cubit<State>` type argument;
-      // this rule no longer matches on the name alone.
       final fixed = await harness.applyFix(
         r'''
   import 'package:bloc/bloc.dart';

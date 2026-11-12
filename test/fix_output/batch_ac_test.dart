@@ -2,9 +2,6 @@ import 'package:test/test.dart';
 
 import '../fix_harness.dart';
 
-/// End-to-end tests for the text these quick fixes actually produce.
-///
-/// See [FixHarness] for why this drives a real plugin server.
 void main() {
   late FixHarness harness;
 
@@ -243,9 +240,11 @@ class _MyWidgetState extends State<MyWidget> {
       expect(fixed, isNot(contains('setState')));
     });
 
-    test('removes an empty setState call entirely', () async {
-      final fixed = await harness.applyFix(
-        r'''
+    test(
+      'removes an empty setState call, leaving its indented blank line',
+      () async {
+        final fixed = await harness.applyFix(
+          r'''
 import 'package:flutter/flutter.dart';
 
 class MyWidget extends StatefulWidget {
@@ -264,15 +263,14 @@ class _MyWidgetState extends State<MyWidget> {
   Widget build(BuildContext context) => const Widget();
 }
 ''',
-        'avoid_unnecessary_setstate',
-        packages: {'flutter': setStateWidgets},
-      );
+          'avoid_unnecessary_setstate',
+          packages: {'flutter': setStateWidgets},
+        );
 
-      expect(fixed, isNot(contains('setState')));
-      // The fix removes the setState(() {}) call but leaves the blank
-      // line it occupied — assert on the real produced whitespace.
-      expect(fixed, contains('super.initState();\n    \n  }'));
-    });
+        expect(fixed, isNot(contains('setState')));
+        expect(fixed, contains('super.initState();\n    \n  }'));
+      },
+    );
 
     test('inlines an expression-body setState call in build', () async {
       final fixed = await harness.applyFix(
