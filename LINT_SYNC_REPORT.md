@@ -15,15 +15,18 @@ still only enables SDK rules.
 
 ## What changed in the SDK since the last report
 
-Between the 2026-08-18 source and the 3.14.0 tag:
+Diffing `rules.json` at the 2026-08-18 source (`a51710497d`) against the
+3.14.0 tag, only one rule changed state. The other rows below were already in
+that state at `a51710497d` but the last report did not cover them, so they are
+listed here for the first time.
 
 | SDK rule | Change | Effect on many_lints |
 |---|---|---|
-| `future_sync_value` | new, `stable` since 3.14, `nonPerformant`, has fix | No counterpart in many_lints. It flags `Future.value(x)` for a plain value and suggests `Future.syncValue`. |
-| `unnecessary_this_alias` | new, `experimental` since 3.14 | No counterpart. Only reports with the `this-promotion` experiment enabled (it stayed silent on a plain 3.14.0 run). |
 | `migrate_design_widgets` | `experimental` → `stable` (since 3.13, `flutter` category) | No counterpart; listed under Gaps. It drives the Flutter 3.50 `material_ui` / `cupertino_ui` migration. |
-| `unnecessary_await_in_return` | `stable` → `deprecated` | Enabling it now reports `deprecated_lint`. It advised the opposite of `prefer_return_await` inside a `try`; that conflict is gone. The rule page no longer links it. |
-| `use_primary_constructors` | `experimental` (3.13.0 file) → internal `testing` state, so it is missing from the 3.14.0 file | Still runs when named in `analysis_options.yaml` on 3.14.0 (checked). See Watch. |
+| `future_sync_value` | previously unreported; `stable` since 3.14, `nonPerformant`, has fix | No counterpart in many_lints. It flags `Future.value(x)` for a plain value and suggests `Future.syncValue`. |
+| `unnecessary_this_alias` | previously unreported; `experimental` since 3.14 | No counterpart. Only reports with the `this-promotion` experiment enabled (it stayed silent on a plain 3.14.0 run). |
+| `unnecessary_await_in_return` | previously unreported; `deprecated` since 3.13 (`messages.yaml` at 3.13.0 and 3.14.0: `deprecated: "3.13"`; the 3.13.0 `rules.json` still said `stable`) | Enabling it reports `deprecated_lint`. It advised the opposite of `prefer_return_await` inside a `try`; that conflict is gone. The rule page no longer links it. |
+| `use_primary_constructors` | previously unreported; internal `testing` state since 3.13 (`messages.yaml` at 3.13.0 and 3.14.0: `testing: "3.13"`), so it is missing from `rules.json` at `a51710497d` and 3.14.0 (the 3.13.0 file still listed it as `experimental`) | Still runs when named in `analysis_options.yaml` on 3.14.0 (checked). See Watch. |
 
 No other SDK rule changed state between the two sources. The `sets` field is
 empty in every entry of the 3.11.0, 3.13.0 and 3.14.0 files, so set membership

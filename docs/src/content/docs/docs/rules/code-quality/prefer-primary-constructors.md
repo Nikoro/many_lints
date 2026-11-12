@@ -114,7 +114,7 @@ The quick fix works in the IDE. `dart fix --apply` does not apply fixes from ana
 
 ### Interaction with SDK lints
 
-Turn off the SDK's `use_primary_constructors` when you use this rule. It reports the same constructors, plus every type that has none. Dart 3.14 moved that lint to a testing state and dropped it from the published lint list, but an `analysis_options.yaml` that names it still runs it.
+Turn off the SDK's `use_primary_constructors` when you use this rule. It reports the same constructors, plus every type that has none. Since Dart 3.13 that lint is in the SDK's internal testing state, so the published lint list omits it, but an `analysis_options.yaml` that names it still runs it.
 
 `use_declaring_parameters`, `unnecessary_primary_constructor_body` and `empty_container_bodies` only look at code that already migrated, so they combine well with this rule. `unnecessary_type_name_in_constructor` suggests `new(this.x)` for the same constructor. Either fix leaves code this rule still converts.
 

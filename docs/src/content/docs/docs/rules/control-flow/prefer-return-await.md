@@ -109,8 +109,9 @@ enable the lint, turn this rule off. On Dart 3.11 and
 3.12 that lint does not exist, and this rule is the only check for the `catch`
 clause.
 
-The SDK's `unnecessary_await_in_return` gave the opposite advice. Dart 3.14
-deprecates it; remove it from `analysis_options.yaml` if you still enable it.
+The SDK's `unnecessary_await_in_return` gave the opposite advice. It is
+deprecated since Dart 3.13; remove it from `analysis_options.yaml` if you still
+enable it.
 
 ## Configuration
 

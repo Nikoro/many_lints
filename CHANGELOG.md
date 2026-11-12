@@ -80,8 +80,9 @@
   can change what is drawn) and `use_gap` (names the `opinionated` rule it
   contradicts).
 - Rule pages updated for Dart 3.14 and Flutter 3.50: `prefer_return_await`
-  links the SDK's `async_return_with_no_await` instead of the now deprecated
-  `unnecessary_await_in_return` and explains when to use which;
+  links the SDK's `async_return_with_no_await` instead of
+  `unnecessary_await_in_return`, deprecated since Dart 3.13, and explains when
+  to use which;
   `prefer_shorthands_with_constructors` no longer claims to ignore the
   parameter type; Flutter examples import `package:material_ui` or
   `package:flutter/widgets.dart`.

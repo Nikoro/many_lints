@@ -24,8 +24,10 @@ rules:
 
 [`lib/excluded/excluded_example.dart`](lib/excluded/excluded_example.dart) contains the
 same redundant catch clauses as [`lib/avoid_only_rethrow_example.dart`](lib/avoid_only_rethrow_example.dart),
-but reports nothing — that path is excluded for the rule. Delete `many_lints.yaml` and
-run `dart analyze` again to see the two diagnostics come back.
+but reports nothing — that path is excluded for the rule. Remove the `exclude:` entry
+under `avoid_only_rethrow` in `many_lints.yaml` and run `dart analyze` again to see the
+two diagnostics come back. Deleting the whole file would also drop its `preset:`, and
+with it every rule.
 
 Note that `avoid_commented_out_code` *does* still report in that file. Each `exclude`
 sits under one rule and affects only that rule — excluding a path from

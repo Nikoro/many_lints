@@ -60,7 +60,7 @@ for m in re.finditer(r"LintCode\(", src):
 **Tags:** `#tooling` `#reference`
 **Verified:** 2026-08-09
 
-`https://raw.githubusercontent.com/dart-lang/sdk/main/pkg/linter/tool/machine/rules.json` is the source `dart.dev/tools/linter-rules` is generated from — 262 rules, each with `name`, `description`, `categories`, `state`, `incompatible`, `sets`, `fixStatus`, `details` (full markdown with BAD/GOOD samples) and `sinceDartSdk`. Re-checked 2026-11-12: the `3.14.0` tag has 264 rules, `sets` is empty in every entry (also on the 3.11.0 and 3.13.0 tags), and a rule in the internal `testing` state (`use_primary_constructors` in 3.14.0) is missing from the file although the SDK still runs it. Use the release tag, not `main`, when the report backs a release.
+`https://raw.githubusercontent.com/dart-lang/sdk/main/pkg/linter/tool/machine/rules.json` is the source `dart.dev/tools/linter-rules` is generated from — 262 rules, each with `name`, `description`, `categories`, `state`, `incompatible`, `sets`, `fixStatus`, `details` (full markdown with BAD/GOOD samples) and `sinceDartSdk`. Re-checked 2026-11-12: the `3.14.0` tag has 264 rules, `sets` is empty in every entry (also on the 3.11.0 and 3.13.0 tags), and a rule in the internal `testing` state (`use_primary_constructors`, `testing` since 3.13 per `messages.yaml`) is missing from the file although the SDK still runs it. Use the release tag, not `main`, when the report backs a release.
 
 **Do not scrape the HTML page.** Its markup changes, and it exposes neither `state` nor `details` reliably — the fields that actually decide whether an SDK rule displaces one of ours.
 
