@@ -213,14 +213,16 @@ tasks.reduce((acc, t) => acc.flatMap((_) => t))
 becomes
 
 ```dart
-TaskEither.sequenceListSeq(tasks)
+TaskEither.sequenceListSeq(tasks).map((values) => values.last)
 ```
+
+Offered for `Task`, `TaskOption` and `TaskEither`, the fpdart types that declare `sequenceListSeq`. The `.map((values) => values.last)` keeps the result the `reduce` had, the last task's value; drop it when you want every value. An `Iterable` gets a `.toList()`, since `sequenceListSeq` takes a `List`.
 
 Always the `Seq` variant. `sequenceList` runs its tasks concurrently, and a `reduce` is inherently sequential — element two cannot start until element one finishes — so the concurrent version would change when effects run and in what order.
 
 **This one changes behaviour.** The `reduce` stops at the first failure: the tasks after it never run. fpdart's `sequenceListSeq` runs every task in order and only then collects the results, so the tasks after a failure still run, and the result is the first failure. For tasks without side effects the two agree; for writes they do not. The lightbulb entry says so — "Convert to 'sequenceListSeq' (runs every task after a failure)" — and sits below the exact conversions.
 
-Two smaller differences: `reduce` throws on an empty iterable, while `sequenceListSeq` succeeds with an empty list, and the result holds every value (`List<R>`) instead of the last one.
+One smaller difference: `reduce` throws on an empty iterable at once, while `sequenceListSeq` succeeds with an empty list, and `.last` then throws when the task runs.
 
 ### Convert to `chainFirst`
 

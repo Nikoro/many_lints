@@ -137,6 +137,13 @@
   the results, so the tasks after a failure still run. The lightbulb now reads
   "Convert to 'sequenceListSeq' (runs every task after a failure)" and ranks
   below the exact conversions, like the `chainFirst` assist.
+  It is offered only for `Task`, `TaskOption` and `TaskEither`, the fpdart
+  1.2.0 types that declare `sequenceListSeq`; on `IOEither` and the others it
+  produced a call that does not exist. It now writes
+  `TaskEither.sequenceListSeq(tasks).map((values) => values.last)`: the
+  `reduce` yields the last task's value, and the bare `sequenceListSeq` call
+  it wrote before yields a `List` and did not type-check where the `reduce`
+  stood. An `Iterable` receiver gets `.toList()`.
 - The "Expand 'tryCatch' into 'try'/'catch'" assist is no longer offered from
   inside an unrelated closure nested in its arguments.
 - The "Convert to collection-for" assist writes `for (` with a space, as

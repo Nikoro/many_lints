@@ -1586,8 +1586,93 @@ TaskEither<String, int> f(TaskEither<String, String> p) =>
   });
 
   group('convert_reduce_to_sequence_list', () {
-    test('converts a sequential reduce to sequenceListSeq', () async {
+    const reduceExtension = '''
+extension <E> on Iterable<E> {
+  E reduce(E Function(E value, E element) combine) => throw '';
+}
+''';
+
+    Future<String> convert(String declaration) async {
       final result = await harness.applyAssist(
+        "import 'package:fpdart/fpdart.dart';\n\n$reduceExtension\n"
+            '$declaration\n',
+        'many_lints.assist.convertReduceToSequenceList',
+        multiFilePackages: {'fpdart': fpdartStubFiles},
+      );
+      // The plugin reports no compile errors, so resolve the result too.
+      expect(await harness.compileErrors(result.source), isEmpty);
+      return result.source;
+    }
+
+    String converted(String declaration) =>
+        "import 'package:fpdart/fpdart.dart';\n\n$reduceExtension\n"
+        '$declaration\n';
+
+    test('converts a sequential reduce to sequenceListSeq', () async {
+      final source = await convert(r'''
+TaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>
+    tasks.reduce^((acc, t) => acc.flatMap((_) => t));''');
+
+      // Always the Seq variant: the reduce is inherently sequential. `.last`
+      // keeps the reduce's result: the last task's value.
+      expect(
+        source,
+        converted(r'''
+TaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>
+    TaskEither.sequenceListSeq(tasks).map((values) => values.last);'''),
+      );
+      expect(source, isNot(contains('sequenceList(')));
+    });
+
+    test('the type check sees a result without .last', () async {
+      await convert(r'''
+TaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>
+    tasks.reduce^((acc, t) => acc.flatMap((_) => t));''');
+
+      // A control for the check above: the shape the assist produced before
+      // returns a List where the reduce returned the last value.
+      expect(
+        await harness.compileErrors(
+          converted(r'''
+TaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>
+    TaskEither.sequenceListSeq(tasks);'''),
+        ),
+        [startsWith('return_of_invalid_type')],
+      );
+    });
+
+    test('converts a reduce over Task and TaskOption', () async {
+      expect(
+        await convert(r'''
+Task<int> f(List<Task<int>> tasks) =>
+    tasks.reduce^((acc, t) => acc.flatMap((_) => t));'''),
+        converted(r'''
+Task<int> f(List<Task<int>> tasks) =>
+    Task.sequenceListSeq(tasks).map((values) => values.last);'''),
+      );
+      expect(
+        await convert(r'''
+TaskOption<int> f(List<TaskOption<int>> tasks) =>
+    tasks.reduce^((acc, t) => acc.flatMap((_) => t));'''),
+        converted(r'''
+TaskOption<int> f(List<TaskOption<int>> tasks) =>
+    TaskOption.sequenceListSeq(tasks).map((values) => values.last);'''),
+      );
+    });
+
+    test('turns an Iterable into the List sequenceListSeq takes', () async {
+      expect(
+        await convert(r'''
+Task<int> f(Iterable<Task<int>> tasks) =>
+    tasks.reduce^((acc, t) => acc.flatMap((_) => t));'''),
+        converted(r'''
+Task<int> f(Iterable<Task<int>> tasks) =>
+    Task.sequenceListSeq(tasks.toList()).map((values) => values.last);'''),
+      );
+    });
+
+    test('is not offered for a wrapper without sequenceListSeq', () async {
+      final offered = await harness.assistIds(
         r'''
 import 'package:fpdart/fpdart.dart';
 
@@ -1595,25 +1680,16 @@ extension <E> on Iterable<E> {
   E reduce(E Function(E value, E element) combine) => throw '';
 }
 
-TaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>
+IOEither<String, int> f(List<IOEither<String, int>> tasks) =>
     tasks.reduce^((acc, t) => acc.flatMap((_) => t));
 ''',
-        'many_lints.assist.convertReduceToSequenceList',
         multiFilePackages: {'fpdart': fpdartStubFiles},
       );
 
-      // Always the Seq variant: the reduce is inherently sequential.
-      expect(result.source, r'''
-import 'package:fpdart/fpdart.dart';
-
-extension <E> on Iterable<E> {
-  E reduce(E Function(E value, E element) combine) => throw '';
-}
-
-TaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>
-    TaskEither.sequenceListSeq(tasks);
-''');
-      expect(result.source, isNot(contains('sequenceList(')));
+      expect(
+        offered,
+        isNot(contains('many_lints.assist.convertReduceToSequenceList')),
+      );
     });
 
     test('names the behaviour change in its label', () async {

@@ -74,7 +74,7 @@
     "assist": "many_lints.assist.convertReduceToSequenceList",
     "fpdart": true,
     "before": "import 'package:fpdart/fpdart.dart';\n\nextension <E> on Iterable<E> {\n  E reduce(E Function(E value, E element) combine) => throw '';\n}\n\nTaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>\n    tasks.red^uce((acc, t) => acc.flatMap((_) => t));\n",
-    "after": "import 'package:fpdart/fpdart.dart';\n\nextension <E> on Iterable<E> {\n  E reduce(E Function(E value, E element) combine) => throw '';\n}\n\nTaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>\n    TaskEither.sequenceListSeq(tasks);\n"
+    "after": "import 'package:fpdart/fpdart.dart';\n\nextension <E> on Iterable<E> {\n  E reduce(E Function(E value, E element) combine) => throw '';\n}\n\nTaskEither<String, int> f(List<TaskEither<String, int>> tasks) =>\n    TaskEither.sequenceListSeq(tasks).map((values) => values.last);\n"
   },
   {
     "section": "Convert to `chainFirst`",

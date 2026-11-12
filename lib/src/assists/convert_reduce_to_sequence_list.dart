@@ -19,8 +19,11 @@ import '../type_checker.dart';
 /// becomes
 ///
 /// ```dart
-/// TaskEither.sequenceListSeq(tasks)
+/// TaskEither.sequenceListSeq(tasks).map((values) => values.last)
 /// ```
+///
+/// Offered for `Task`, `TaskOption` and `TaskEither`, the fpdart 1.2.0 types
+/// that declare `sequenceListSeq`.
 ///
 /// ## This one changes behaviour, and says so
 ///
@@ -37,9 +40,9 @@ import '../type_checker.dart';
 /// difference instead of offering a plain "convert to", and the assist sits
 /// below the exact conversions, as the `chainFirst` one does.
 ///
-/// Two smaller differences: `reduce` throws on an empty iterable where
-/// `sequenceListSeq` succeeds with an empty list, and the result carries every
-/// value (`List<R>`) rather than the last one.
+/// One smaller difference: `reduce` throws on an empty iterable where
+/// `sequenceListSeq` succeeds with an empty list, whose `.last` then throws
+/// when the task runs.
 ///
 /// ## Always the `Seq` variant
 ///
@@ -58,6 +61,14 @@ class ConvertReduceToSequenceList extends ResolvedCorrectionProducer {
   );
 
   static const _iterableChecker = TypeChecker.fromUrl('dart:core#Iterable');
+  static const _listChecker = TypeChecker.fromUrl('dart:core#List');
+
+  /// The fpdart 1.2.0 types that declare a static `sequenceListSeq`.
+  static const _sequencedChecker = TypeChecker.any([
+    taskChecker,
+    taskOptionChecker,
+    taskEitherChecker,
+  ]);
 
   ConvertReduceToSequenceList({required super.context});
 
@@ -81,10 +92,17 @@ class ConvertReduceToSequenceList extends ResolvedCorrectionProducer {
 
     if (!_chainsAccumulator(reduce)) return;
 
+    // `sequenceListSeq` takes a `List`, and yields every value where the
+    // `reduce` yields the last one; `.last` keeps the result type.
+    final source = switch (list.staticType) {
+      final type? when _listChecker.isAssignableFromType(type) =>
+        list.toSource(),
+      _ => '${list.toSource()}.toList()',
+    };
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(
         SourceRange(reduce.offset, reduce.length),
-        '$wrapper.sequenceListSeq(${list.toSource()})',
+        '$wrapper.sequenceListSeq($source).map((values) => values.last)',
       );
     });
   }
@@ -114,7 +132,7 @@ class ConvertReduceToSequenceList extends ResolvedCorrectionProducer {
     // so a `List<TaskEither<..>>` resolves the same as a bare `Iterable`.
     final element = _elementTypeOf(type);
     if (element is! InterfaceType) return null;
-    if (!anyFpdartChecker.isAssignableFromType(element)) return null;
+    if (!_sequencedChecker.isExactlyType(element)) return null;
 
     return element.element.name;
   }

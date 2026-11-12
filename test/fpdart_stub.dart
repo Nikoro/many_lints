@@ -172,6 +172,7 @@ final class Task<A> {
   factory Task.Do(DoFunctionTask<A> f) => throw '';
   Task<B> map<B>(B Function(A a) f) => throw '';
   Task<B> flatMap<B>(Task<B> Function(A a) f) => throw '';
+  static Task<List<A>> sequenceListSeq<A>(List<Task<A>> list) => throw '';
   Future<A> run() => _run();
 }
 ''',
@@ -239,6 +240,8 @@ final class TaskOption<R> {
   factory TaskOption.of(R r) => throw '';
   TaskOption<B> map<B>(B Function(R r) f) => throw '';
   TaskOption<B> flatMap<B>(TaskOption<B> Function(R r) f) => throw '';
+  static TaskOption<List<A>> sequenceListSeq<A>(List<TaskOption<A>> list) =>
+      throw '';
   Future<Option<R>> run() => _run();
 }
 ''',

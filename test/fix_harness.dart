@@ -2,6 +2,9 @@
 import 'dart:async';
 
 import 'package:analysis_server_plugin/src/plugin_server.dart';
+import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
+import 'package:analyzer/dart/analysis/results.dart';
+import 'package:analyzer/diagnostic/diagnostic.dart';
 import 'package:analyzer/src/test_utilities/mock_sdk.dart';
 import 'package:analyzer_plugin/channel/channel.dart';
 import 'package:analyzer_plugin/protocol/protocol.dart' as protocol;
@@ -217,6 +220,35 @@ class FixHarness with ResourceProviderMixin {
       linkedGroups: change.linkedEditGroups,
       message: change.message,
     );
+  }
+
+  /// The errors the analyzer itself reports for [source], written over the
+  /// file of the previous [applyFix] or [applyAssist] in the same package.
+  ///
+  /// The plugin server reports only plugin diagnostics, so a produced edit
+  /// that does not compile looks fine to it. This resolves the file with a
+  /// plain [AnalysisContextCollection] over the same packages and mock SDK.
+  Future<List<String>> compileErrors(String source) async {
+    newFile(filePath, source);
+    final collection = AnalysisContextCollection(
+      includedPaths: [packagePath],
+      resourceProvider: resourceProvider,
+      sdkPath: sdkRoot,
+    );
+    try {
+      final result = await collection
+          .contextFor(filePath)
+          .currentSession
+          .getResolvedUnit(filePath);
+      if (result is! ResolvedUnitResult) return ['unresolved: $result'];
+      return [
+        for (final diagnostic in result.diagnostics)
+          if (diagnostic.severity == Severity.error)
+            '${diagnostic.diagnosticCode.lowerCaseName}: ${diagnostic.message}',
+      ];
+    } finally {
+      await collection.dispose();
+    }
   }
 
   /// The ids of every assist offered at the `^` cursor in [content].
