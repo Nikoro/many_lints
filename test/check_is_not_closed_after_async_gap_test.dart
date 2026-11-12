@@ -39,8 +39,6 @@ abstract class Cubit<S> extends BlocBase<S> {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_cubitEmitAfterAwait() async {
     await assertDiagnostics(
       r'''
@@ -100,8 +98,6 @@ class MyCubit extends Cubit<int> {
       [lint(261, 7)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_emitBeforeAwait() async {
     await assertNoDiagnostics(r'''

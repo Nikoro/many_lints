@@ -16,8 +16,6 @@ class AvoidDuplicateCollectionElementsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_duplicateInListLiteral() async {
     await assertDiagnostics(
       r'''
@@ -58,8 +56,6 @@ final values = [Status.active, Status.inactive, Status.active];
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_noDuplicates() async {
     await assertNoDiagnostics(r'''
 final values = [1, 2, 3];
@@ -86,7 +82,6 @@ final values = [next(), next()];
 ''');
   }
 
-  /// A spread no longer hides duplicates that follow it.
   Future<void> test_listWithSpreadStillFindsDuplicate() async {
     await assertDiagnostics(
       r'''
@@ -97,7 +92,6 @@ final values = [1, ...base, 1];
     );
   }
 
-  /// An `if` element no longer hides duplicates that follow it.
   Future<void> test_listWithIfElementStillFindsDuplicate() async {
     await assertDiagnostics(
       r'''
@@ -108,8 +102,6 @@ List<int> build(bool flag) {
       [lint(55, 1)],
     );
   }
-
-  // ---- Duplicate spreads and if elements ----
 
   Future<void> test_duplicateSpread() async {
     await assertDiagnostics(

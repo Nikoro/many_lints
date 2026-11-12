@@ -18,11 +18,7 @@ class AvoidDstUnsafeDateArithmeticTest extends ManyLintsRuleTest {
     _extendMockDateTime();
   }
 
-  /// analyzer_testing's trimmed `dart:core` declares a `DateTime` with only
-  /// `now`, `compareTo`, `isBefore` and `millisecondsSinceEpoch`. Extend that
-  /// mock rather than weakening the rule's resolved-type check — without the
-  /// members the rule matches on, every negative assertion here would pass
-  /// vacuously against an unresolved receiver.
+  // Edge case: the mock dart:core DateTime lacks the matched members, so negatives would pass vacuously
   void _extendMockDateTime() {
     final corePath = '$sdkRoot/lib/core/core.dart';
     final coreSource = getFile(corePath).readAsStringSync();
@@ -137,11 +133,6 @@ void f() {
     );
   }
 
-  /// The Duration need not be written at the call site. Hiding a
-  /// `Duration(days: 30)` behind a getter is the same defect, and is how it
-  /// escaped this rule in a real codebase: a notification lead time
-  /// subtracted from an event date shifted every reminder that straddled a
-  /// DST boundary by an hour.
   Future<void> test_subtractDays_fromGetter() async {
     await assertDiagnostics(
       r'''
@@ -184,9 +175,6 @@ void f(DateTime d) {
     );
   }
 
-  /// The counterweight to the three above: a named duration that is genuinely
-  /// absolute must stay silent, or every timeout and backoff in a codebase
-  /// reports and buries the calendar bug in noise.
   Future<void> test_subDayDurationBehindAName_isNotReported() async {
     await assertNoDiagnostics(r'''
 class Policy {
@@ -201,8 +189,6 @@ void f(DateTime d, Policy p) {
 ''');
   }
 
-  /// A duration this rule cannot resolve — a parameter, a computed value —
-  /// stays silent rather than guessing.
   Future<void> test_unresolvableDuration_isNotReported() async {
     await assertNoDiagnostics(r'''
 void f(DateTime d, Duration span) {

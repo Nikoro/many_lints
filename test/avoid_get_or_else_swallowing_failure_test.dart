@@ -49,7 +49,6 @@ int f(Either<String, int> result) =>
   }
 
   Future<void> test_optionGetOrElseIsFine() async {
-    // Option.getOrElse takes no parameter, so there is no failure to discard.
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
 

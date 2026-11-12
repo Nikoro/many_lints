@@ -58,8 +58,6 @@ class HookConsumerState<T extends HookConsumerStatefulWidget> extends State<T> {
   Widget build(BuildContext context) => Widget();
 }
 ''');
-    // package:provider reaches the same two operations through extensions on
-    // BuildContext, which is why the rule matches on the receiver's TYPE.
     newPackage('provider').addFile('lib/provider.dart', r'''
 import 'package:flutter/widgets.dart';
 export 'package:flutter/widgets.dart';
@@ -72,8 +70,6 @@ extension WatchContext on BuildContext {
 ''');
     super.setUp();
   }
-
-  // ---- package:provider ----
 
   Future<void> test_contextReadInWidgetBuild() async {
     await assertDiagnostics(
@@ -91,7 +87,6 @@ class MyWidget extends Widget {
     );
   }
 
-  // `context.watch` is the subscribing read, which is what belongs in build.
   Future<void> test_contextWatchInBuildIsFine() async {
     await assertNoDiagnostics(r'''
 import 'package:provider/provider.dart';
@@ -105,8 +100,6 @@ class MyWidget extends Widget {
 ''');
   }
 
-  // A BuildContext under any other name is the same call, which is what
-  // matching the receiver's type buys over matching its name.
   Future<void> test_contextReadThroughRenamedReceiver() async {
     await assertDiagnostics(
       r'''
@@ -122,8 +115,6 @@ class MyWidget extends Widget {
       [lint(127, 15)],
     );
   }
-
-  // ---- Positive cases (should trigger lint) ----
 
   Future<void> test_refReadInConsumerWidgetBuild() async {
     await assertDiagnostics(
@@ -210,8 +201,6 @@ class MyState extends HookConsumerState<HookConsumerStatefulWidget> {
       [lint(193, 18)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_refWatchInBuild() async {
     await assertNoDiagnostics(r'''

@@ -17,8 +17,6 @@ class AvoidUnnecessaryContinueTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_trailingContinueInForEach() async {
     await assertDiagnostics(
       r'''
@@ -61,8 +59,6 @@ void f(List<int> xs) {
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_continueGuardingLaterStatements() async {
     await assertNoDiagnostics(r'''
 void f(List<int> xs) {
@@ -89,7 +85,6 @@ void f(List<List<int>> rows) {
   }
 
   Future<void> test_continueAtEndOfThenBranch() async {
-    // Skips the `else`, so it is doing real work.
     await assertNoDiagnostics(r'''
 void f(List<int> xs) {
   for (final x in xs) {

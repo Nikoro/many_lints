@@ -17,8 +17,6 @@ class AvoidAccessingOtherClassesPrivateMembersTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // Dart scopes privacy to the LIBRARY, so this compiles — which is exactly
-  // the gap between what `_` reads as and what it means.
   Future<void> test_readingAnotherClassPrivateField() async {
     await assertDiagnostics(
       r'''
@@ -45,7 +43,6 @@ class Account {
 ''');
   }
 
-  // Another instance of the SAME class is the `==` / `copyWith` pattern.
   Future<void> test_sameClassOtherInstanceIsFine() async {
     await assertNoDiagnostics(r'''
 class Account {
@@ -68,7 +65,6 @@ class Report {
 ''');
   }
 
-  // `copyWith` exists precisely to read another instance's fields.
   Future<void> test_ignoredMemberIsExempt() async {
     await assertNoDiagnostics(r'''
 class Account {

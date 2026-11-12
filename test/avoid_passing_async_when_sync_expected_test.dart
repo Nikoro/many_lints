@@ -16,8 +16,6 @@ class AvoidPassingAsyncWhenSyncExpectedTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_asyncPassedWhereVoidExpected() async {
     await assertDiagnostics(
       r'''
@@ -67,8 +65,6 @@ void f() {
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_futureReturningParameter() async {
     await assertNoDiagnostics(r'''
 void schedule(Future<void> Function() task) {}
@@ -106,8 +102,6 @@ void f() {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_asyncGeneratorIsIgnored() async {
     await assertNoDiagnostics(r'''

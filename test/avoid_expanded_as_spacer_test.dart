@@ -73,8 +73,6 @@ class Text extends Widget {
     super.setUp();
   }
 
-  // --- Cases that SHOULD trigger the lint ---
-
   Future<void> test_expandedWithEmptySizedBox() async {
     await assertDiagnostics(
       r'''
@@ -135,8 +133,6 @@ final widget = Expanded(child: SizedBox(key: Key('k')));
     );
   }
 
-  // --- Cases that should NOT trigger the lint ---
-
   Future<void> test_expandedWithText() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -179,8 +175,6 @@ final widget = Spacer();
 ''');
   }
 
-  // --- MethodInvocation path (static factory) ---
-
   Future<void> test_methodInvocation_expandedWithEmptySizedBox() async {
     await assertDiagnostics(
       r'''
@@ -198,11 +192,7 @@ final widget = Expanded.create(child: Text('hi'));
 ''');
   }
 
-  // --- Cover MethodInvocation path in _isEmptyWidget (lines 111-112) ---
-
   Future<void> test_expandedWithEmptySizedBoxViaFactory() async {
-    // SizedBox() created via static method — exercises MethodInvocation
-    // path in _isEmptyWidget (lines 111-112)
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';
@@ -213,8 +203,6 @@ final widget = Expanded(child: SizedBox.shrink());
   }
 
   Future<void> test_expandedWithEmptySizedBoxViaStaticFactory() async {
-    // SizedBox.empty() is a static method returning SizedBox — parsed as
-    // MethodInvocation, exercises lines 111-112 in _isEmptyWidget
     await assertDiagnostics(
       r'''
 import 'package:flutter/widgets.dart';

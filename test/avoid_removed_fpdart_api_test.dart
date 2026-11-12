@@ -53,8 +53,6 @@ void f() {
   }
 
   Future<void> test_withoutFpdartImportIsFine() async {
-    // A project with its own Tuple2, or a plain typo, must not be reported —
-    // the removed name resolves to nothing either way.
     await assertDiagnostics(
       r'''
 void f() {

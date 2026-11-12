@@ -47,8 +47,6 @@ class Builder extends Widget {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_statelessWidgetBuildsItself() async {
     await assertDiagnostics(
       r'''
@@ -98,8 +96,6 @@ class MyState extends State<MyWidget> {
       [lint(184, 10)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_buildsDifferentWidget() async {
     await assertNoDiagnostics(r'''

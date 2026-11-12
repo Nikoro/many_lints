@@ -115,9 +115,6 @@ Option<String> f(Option<String> o) => Option.Do(($) {
   }
 
   Future<void> test_nestedDoBodyThrowNotAttributedToOuter() async {
-    // The outer block must not be blamed for the inner block's throw: the
-    // inner `Do` is its own frame, and `avoid_nested_do_notation` reports the
-    // nesting separately.
     await assertDiagnostics(
       r'''
 import 'package:fpdart/fpdart.dart';

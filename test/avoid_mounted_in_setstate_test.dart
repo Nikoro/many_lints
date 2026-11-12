@@ -38,8 +38,6 @@ abstract class State<T extends StatefulWidget> {
     super.setUp();
   }
 
-  // --- Positive cases: should trigger lint ---
-
   Future<void> test_bareMountedInSetState() async {
     await assertDiagnostics(
       r'''
@@ -178,8 +176,6 @@ class _MyWidgetState extends State<MyWidget> {
       [lint(245, 7), lint(267, 15)],
     );
   }
-
-  // --- Negative cases: should NOT trigger lint ---
 
   Future<void> test_mountedCheckBeforeSetState() async {
     await assertNoDiagnostics(r'''

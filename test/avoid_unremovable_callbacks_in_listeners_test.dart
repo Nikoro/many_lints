@@ -16,8 +16,6 @@ class AvoidUnremovableCallbacksInListenersTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_inlineClosure() async {
     await assertDiagnostics(
       r'''
@@ -50,8 +48,6 @@ void f(Controller controller) {
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_methodTearOff() async {
     await assertNoDiagnostics(r'''
 class Controller {
@@ -81,8 +77,6 @@ void f(Controller controller, void Function() listener) {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_unrelatedMethodIsIgnored() async {
     await assertNoDiagnostics(r'''

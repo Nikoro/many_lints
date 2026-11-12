@@ -17,8 +17,6 @@ class AvoidNegatedConditionsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_negatedIfElse() async {
     await assertDiagnostics(
       r'''
@@ -49,8 +47,6 @@ void f(int a, int b) {
     );
   }
 
-  // These two are the false positives a production run produced: `!= null` and
-  // `!= 0` read as positive assertions, so inverting them makes code worse.
   Future<void> test_notEqualNullIsAPositiveAssertion() async {
     await assertNoDiagnostics(r'''
 void f(int? a) {
@@ -77,8 +73,6 @@ int f(bool ok) => !ok ? 1 : 2;
       [lint(18, 3)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_guardWithoutElse() async {
     await assertNoDiagnostics(r'''
@@ -113,8 +107,6 @@ void f(int n) {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_patternIfBindsVariables() async {
     await assertNoDiagnostics(r'''

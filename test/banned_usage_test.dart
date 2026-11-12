@@ -8,16 +8,8 @@ void main() {
   defineReflectiveSuite(() => defineReflectiveTests(BannedUsageTest));
 }
 
-/// Member-level coverage for `banned_usage`: every syntactic way of referring
-/// to a banned member is reported exactly once, and nothing that merely shares
-/// its name is.
-///
-/// Config resolution and `in:` scoping run end-to-end through a real
-/// `PluginServer` in `banned_rules_config_test.dart`; this file pins the
-/// reported ranges.
 @reflectiveTest
 class BannedUsageTest extends ManyLintsRuleTest {
-  /// A library declaring one member of every kind, imported by each test.
   static const _clock = r'''
 class Clock {
   Clock();
@@ -61,7 +53,6 @@ rules:
 ''');
   }
 
-  /// Writes [banned] as the rule's `banned:` list, verbatim YAML.
   void _configure(String banned) {
     ConfigLoader.clearCache();
     newFile('$testPackageRootPath/${ConfigLoader.fileName}', '''
@@ -71,8 +62,6 @@ rules:
 $banned''');
   }
 
-  /// Asserts one diagnostic over each `(needle, occurrence)` in [code]: the
-  /// occurrence-th match of the needle, counting from zero.
   Future<void> _expectAt(String code, List<(String, int)> needles) {
     final expected = [
       for (final (needle, occurrence) in needles)
@@ -81,7 +70,6 @@ $banned''');
     return assertDiagnostics(code, expected);
   }
 
-  /// Asserts one diagnostic over the first match of each needle in [code].
   Future<void> _expect(String code, List<String> needles) =>
       _expectAt(code, [for (final needle in needles) (needle, 0)]);
 
@@ -94,8 +82,6 @@ $banned''');
     return offset;
   }
 
-  // ---- Silent until configured ----
-
   Future<void> test_silentWithoutConfiguration() async {
     await assertNoDiagnostics('''
 import 'clock.dart';
@@ -103,8 +89,6 @@ import 'clock.dart';
 Clock f() => Clock.now();
 ''');
   }
-
-  // ---- Invocations ----
 
   Future<void> test_staticMethodInvocation() async {
     _deny(['Clock.now']);
@@ -150,8 +134,6 @@ DateTime f() => DateTime.now();
       ['DateTime.now'],
     );
   }
-
-  // ---- Tear-offs ----
 
   Future<void> test_namedConstructorTearOff() async {
     _deny(['Clock.system']);
@@ -225,8 +207,6 @@ Clock f() => Clock.current;
     );
   }
 
-  // ---- Dot shorthands ----
-
   Future<void> test_shorthandStaticMethod() async {
     _deny(['Clock.now']);
     await _expect(
@@ -284,8 +264,6 @@ DateTime f() => .now();
       ['now'],
     );
   }
-
-  // ---- Import prefixes ----
 
   Future<void> test_prefixedStaticMethodInvocation() async {
     _deny(['Clock.now']);
@@ -348,8 +326,6 @@ final core.DateTime Function() f = core.DateTime.now;
     );
   }
 
-  // ---- Unqualified references inside the declaring class ----
-
   Future<void> test_unqualifiedStaticMembersInsideTheirClass() async {
     _deny(['Holder.now', 'Holder.current']);
     const code = '''
@@ -364,8 +340,6 @@ class Holder {
 ''';
     await _expectAt(code, [('now', 1), ('current', 1), ('now', 2)]);
   }
-
-  // ---- Constructor redirection ----
 
   Future<void> test_redirectingFactoryTarget() async {
     _deny(['Impl.create']);
@@ -425,8 +399,6 @@ class Fake extends Clock {
     );
   }
 
-  // ---- Top-level and extension members ----
-
   Future<void> test_topLevelVariableAndFunctionByBareName() async {
     _deny(['systemClock', 'makeClock']);
     const code = '''
@@ -484,8 +456,6 @@ Clock f() => ClockMaker.make();
     );
   }
 
-  // ---- Library-qualified entries ----
-
   Future<void> test_libraryQualifiedTopLevelDeclarations() async {
     _deny([
       'package:test/clock.dart#systemClock',
@@ -516,8 +486,6 @@ c.Clock a() => c.systemClock;
   }
 
   Future<void> test_libraryQualifiedEntryIgnoresAnotherLibrarysName() async {
-    // The point of the qualified form: a same-named declaration elsewhere,
-    // here a local top-level function and a static member, stays allowed.
     _deny([
       'package:test/clock.dart#makeClock',
       'package:test/other.dart#systemClock',
@@ -610,8 +578,6 @@ Clock f(FixedClock clock) => clock.tick();
   }
 
   Future<void> test_denyPatternIsNotTriedAgainstTheLibrarySpelling() async {
-    // A pattern written before library spellings existed must keep matching
-    // exactly what it matched then.
     _configure('''
       - deny_pattern: ['package:.*', '.*#.*']
 ''');
@@ -622,11 +588,7 @@ Clock f() => makeClock();
 ''');
   }
 
-  // ---- Per-entry exceptions ----
-
   Future<void> test_exceptLiftsOnlyItsOwnEntry() async {
-    // The test file is lib/test.dart: excepted from the first entry, still
-    // covered by the second.
     _configure('''
       - deny: ['Clock.now']
         in: ['lib/**']
@@ -658,8 +620,6 @@ Clock f() => systemClock;
       ['systemClock'],
     );
   }
-
-  // ---- Not banned ----
 
   Future<void> test_instanceMemberWithTheSameNameOnAnotherType() async {
     _deny(['Clock.now', 'DateTime.now']);

@@ -68,7 +68,6 @@ void f(Option<int> option) {
   }
 
   Future<void> test_taskEitherIsFine() async {
-    // TaskEither is the async wrapper: a Future belongs inside it.
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
 

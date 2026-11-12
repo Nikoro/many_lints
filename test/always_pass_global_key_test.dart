@@ -34,8 +34,6 @@ class FormState {}
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_globalKeyInBuild() async {
     await assertDiagnostics(
       r'''
@@ -69,8 +67,6 @@ class MyWidget extends StatelessWidget {
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_globalKeyAsStateField() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -100,8 +96,6 @@ class MyWidget extends StatelessWidget {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_globalKeyOutsideBuildIsIgnored() async {
     await assertNoDiagnostics(r'''

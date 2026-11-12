@@ -16,8 +16,6 @@ class AvoidShadowedExtensionMethodsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_shadowsCoreMethod() async {
     await assertDiagnostics(
       r'''
@@ -61,8 +59,6 @@ extension ModelExtension on Model {
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_uniqueMethodName() async {
     await assertNoDiagnostics(r'''
 extension StringExtension on String {
@@ -90,8 +86,6 @@ extension ModelExtension on Model {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_objectMembersAreIgnored() async {
     await assertNoDiagnostics(r'''

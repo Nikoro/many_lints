@@ -74,8 +74,6 @@ Option<Option<String>> f(Option<String> o) => Option.Do(($) {
   }
 
   Future<void> test_nestedDoDollarNotAttributedToOuter() async {
-    // The inner block's `$` belongs to the inner frame, so the outer block is
-    // not blamed for it. The nesting itself is `avoid_nested_do_notation`.
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
 

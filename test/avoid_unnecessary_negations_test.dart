@@ -16,8 +16,6 @@ class AvoidUnnecessaryNegationsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_doubleNegation() async {
     await assertDiagnostics(
       r'''
@@ -50,8 +48,6 @@ bool check(bool flag) {
       [lint(33, 8)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_singleNegation() async {
     await assertNoDiagnostics(r'''
@@ -93,8 +89,6 @@ bool check(List<int> items) {
 ''');
   }
 
-  // ---- Negated boolean literals ----
-
   Future<void> test_negatedTrue() async {
     await assertDiagnostics(
       r'''
@@ -116,8 +110,6 @@ bool check() {
       [lint(24, 6)],
     );
   }
-
-  // ---- Negations on both sides of a comparison ----
 
   Future<void> test_negationsAroundEquality() async {
     await assertDiagnostics(

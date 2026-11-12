@@ -16,8 +16,6 @@ class AvoidDuplicateCascadesTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // --- Positive cases: should trigger lint ---
-
   Future<void> test_duplicatePropertyAssignment() async {
     await assertDiagnostics(
       r'''
@@ -124,8 +122,6 @@ void f() {
       [lint(66, 7)],
     );
   }
-
-  // --- Negative cases: should NOT trigger lint ---
 
   Future<void> test_differentPropertyAssignments() async {
     await assertNoDiagnostics(r'''

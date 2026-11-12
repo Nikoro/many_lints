@@ -14,8 +14,6 @@ class AvoidCollapsibleIfTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_nestedIfInBlocks() async {
     await assertDiagnostics(
       r'''
@@ -57,8 +55,6 @@ void check(bool a, bool b) {
       [lint(31, 2)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_outerHasElse() async {
     await assertNoDiagnostics(r'''

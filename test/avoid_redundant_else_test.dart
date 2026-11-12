@@ -14,8 +14,6 @@ class AvoidRedundantElseTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_elseAfterReturn() async {
     await assertDiagnostics(
       r'''
@@ -74,8 +72,6 @@ void run(List<int> items) {
       [lint(103, 4)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_thenDoesNotExit() async {
     await assertNoDiagnostics(r'''

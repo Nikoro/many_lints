@@ -37,8 +37,6 @@ abstract class Cubit<S> extends BlocBase<S> {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_duplicateEventHandler() async {
     await assertDiagnostics(
       r'''
@@ -96,8 +94,6 @@ class MyBloc extends Bloc<MyEvent, int> {
       [lint(229, 2), lint(287, 2)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_distinctEventHandlers() async {
     await assertNoDiagnostics(r'''

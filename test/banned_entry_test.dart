@@ -2,7 +2,6 @@ import 'package:many_lints/src/banned_entry.dart';
 import 'package:many_lints/src/rule_config.dart';
 import 'package:test/test.dart';
 
-/// Parses [yaml] as a `many_lints.yaml` document and reads rule `r`'s entries.
 List<BannedEntry> entriesOf(String yaml) =>
     readBannedEntries(ManyLintsConfig.parse(yaml).forRule('r'));
 
@@ -25,8 +24,6 @@ rules:
     });
 
     test('accepts a bare scalar as a one-item list', () {
-      // A single value is the common case; requiring a list for it is a
-      // needless "why is my config ignored" trap.
       final entries = entriesOf('''
 rules:
   r:
@@ -38,8 +35,6 @@ rules:
     });
 
     test('drops an entry that denies nothing', () {
-      // An entry with only a message would match nothing, so it never
-      // reaches a rule.
       expect(
         entriesOf('''
 rules:
@@ -56,7 +51,6 @@ rules:
     });
 
     test('keeps well-formed entries alongside malformed ones', () {
-      // A bad entry must cost the user that entry and nothing else.
       final entries = entriesOf('''
 rules:
   r:
@@ -114,8 +108,6 @@ rules:
     BannedEntry entryOf(String yaml) => entriesOf(yaml).single;
 
     test('deny matches exactly, not as a substring', () {
-      // The headline choice here: regex matching would match substrings, so
-      // that banning `visibleForTesting` also hits `notVisibleForTesting`.
       final entry = entryOf('''
 rules:
   r:
@@ -141,8 +133,6 @@ rules:
     });
 
     test('an alternation pattern still anchors as a whole', () {
-      // Anchoring by wrapping the source in `^(?:...)$` would be fine here,
-      // but a naive `^...$` concatenation would rebind the alternation.
       final entry = entryOf('''
 rules:
   r:
@@ -253,8 +243,6 @@ rules:
 
       expect(entry.appliesTo('lib/feature/page.dart'), isTrue);
       expect(entry.appliesTo('lib/generated/nested/api.dart'), isFalse);
-      // A file outside the package cannot be named by a glob, so an entry
-      // that applies everywhere keeps applying there.
       expect(entry.appliesTo(null), isTrue);
     });
 
@@ -284,7 +272,6 @@ rules:
         message: second
 ''');
 
-      // The first entry is out of scope here, so the second one wins.
       final found = findBannedEntry(
         entries: entries,
         value: 'a',

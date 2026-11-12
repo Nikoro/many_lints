@@ -75,9 +75,6 @@ void f(dynamic json) {
   }
 
   Future<void> test_contextSuppliedTypeIsFine() async {
-    // The binding's type annotation constrains inference, so `R` is `int`
-    // rather than `dynamic` and the cast really can fail. Reporting here
-    // would be a false positive.
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
 

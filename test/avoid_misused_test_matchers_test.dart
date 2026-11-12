@@ -14,7 +14,7 @@ class AvoidMisusedTestMatchersTest extends ManyLintsRuleTest {
   void setUp() {
     rule = AvoidMisusedTestMatchers();
 
-    // Mock the test_api package (can't use 'test' — conflicts with dev dep)
+    // Edge case: a mock named test would clash with the real test dev dependency
     newPackage('test_api').addFile('lib/test_api.dart', r'''
 void expect(dynamic actual, dynamic matcher) {}
 
@@ -36,8 +36,6 @@ int hasLength(dynamic expected) => 0;
 
     super.setUp();
   }
-
-  // ── isNull on non-nullable type ─────────────────────────────────────
 
   Future<void> test_isNull_onNonNullableInt() async {
     await assertDiagnostics(
@@ -63,8 +61,6 @@ void f() {
 ''');
   }
 
-  // ── isNotNull on non-nullable type ──────────────────────────────────
-
   Future<void> test_isNotNull_onNonNullableInt() async {
     await assertDiagnostics(
       r'''
@@ -88,8 +84,6 @@ void f() {
 }
 ''');
   }
-
-  // ── isEmpty on type without isEmpty ─────────────────────────────────
 
   Future<void> test_isEmpty_onInt() async {
     await assertDiagnostics(
@@ -134,8 +128,6 @@ void f() {
 ''');
   }
 
-  // ── isNotEmpty on type without isNotEmpty ────────────────────────────
-
   Future<void> test_isNotEmpty_onInt() async {
     await assertDiagnostics(
       r'''
@@ -158,8 +150,6 @@ void f() {
 }
 ''');
   }
-
-  // ── isList on non-List type ─────────────────────────────────────────
 
   Future<void> test_isList_onSet() async {
     await assertDiagnostics(
@@ -197,8 +187,6 @@ void f() {
 ''');
   }
 
-  // ── isMap on non-Map type ───────────────────────────────────────────
-
   Future<void> test_isMap_onList() async {
     await assertDiagnostics(
       r'''
@@ -221,8 +209,6 @@ void f() {
 }
 ''');
   }
-
-  // ── hasLength on type without length ────────────────────────────────
 
   Future<void> test_hasLength_onInt() async {
     await assertDiagnostics(
@@ -257,8 +243,6 @@ void f() {
 ''');
   }
 
-  // ── isZero on non-num type ──────────────────────────────────────────
-
   Future<void> test_isZero_onString() async {
     await assertDiagnostics(
       r'''
@@ -292,8 +276,6 @@ void f() {
 ''');
   }
 
-  // ── isNaN on non-num type ───────────────────────────────────────────
-
   Future<void> test_isNaN_onString() async {
     await assertDiagnostics(
       r'''
@@ -316,8 +298,6 @@ void f() {
 }
 ''');
   }
-
-  // ── isPositive on non-num type ──────────────────────────────────────
 
   Future<void> test_isPositive_onString() async {
     await assertDiagnostics(
@@ -342,8 +322,6 @@ void f() {
 ''');
   }
 
-  // ── isNegative on non-num type ──────────────────────────────────────
-
   Future<void> test_isNegative_onBool() async {
     await assertDiagnostics(
       r'''
@@ -366,8 +344,6 @@ void f() {
 }
 ''');
   }
-
-  // ── isTrue on non-bool type ─────────────────────────────────────────
 
   Future<void> test_isTrue_onInt() async {
     await assertDiagnostics(
@@ -392,8 +368,6 @@ void f() {
 ''');
   }
 
-  // ── isFalse on non-bool type ────────────────────────────────────────
-
   Future<void> test_isFalse_onString() async {
     await assertDiagnostics(
       r'''
@@ -416,8 +390,6 @@ void f() {
 }
 ''');
   }
-
-  // ── Edge cases ──────────────────────────────────────────────────────
 
   Future<void> test_dynamic_actual_noLint() async {
     await assertNoDiagnostics(r'''

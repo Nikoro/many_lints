@@ -16,8 +16,6 @@ class AvoidSingleFieldDestructuringTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void> test_objectPattern_singleField_triggers() async {
     await assertDiagnostics(
       r'''
@@ -76,8 +74,6 @@ void f(Foo input) {
       [lint(75, 23)],
     );
   }
-
-  // --- Negative cases (should NOT trigger lint) ---
 
   Future<void> test_objectPattern_multipleFields_noLint() async {
     await assertNoDiagnostics(r'''

@@ -55,8 +55,6 @@ class Stack extends Widget {
     super.setUp();
   }
 
-  // --- Cases that SHOULD trigger the lint ---
-
   Future<void> test_expandedInsideContainer() async {
     await assertDiagnostics(
       r'''
@@ -140,8 +138,6 @@ Widget f() {
       [lint(61, 8)],
     );
   }
-
-  // --- Cases that should NOT trigger the lint ---
 
   Future<void> test_expandedDirectChildOfRow() async {
     await assertNoDiagnostics(r'''

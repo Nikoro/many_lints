@@ -76,9 +76,6 @@ Widget f() {
     );
   }
 
-  /// `ListView` takes its `padding` as a super-parameter forwarded to
-  /// `BoxScrollView`, which is still a named formal parameter on its own
-  /// constructor. This mirrors the real Flutter signature.
   Future<void> test_paddingWrappingListViewWithInheritedPaddingParam() async {
     await assertDiagnostics(
       r'''
@@ -166,8 +163,6 @@ Widget f() {
 ''');
   }
 
-  // --- Cover MethodInvocation visitor (lines 60-64) ---
-
   Future<void> test_paddingViaMethodInvocation() async {
     await assertDiagnostics(
       r'''
@@ -186,8 +181,6 @@ Widget f() {
       [lint(179, 13)],
     );
   }
-
-  // --- Cover MethodInvocation child info (lines 100-101) ---
 
   Future<void> test_paddingWrappingChildViaMethodInvocation() async {
     await assertDiagnostics(

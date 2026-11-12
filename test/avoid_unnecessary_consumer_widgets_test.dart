@@ -134,7 +134,6 @@ class _MyWidgetState extends ConsumerState<MyWidget> {
 ''');
   }
 
-  /// `ref` is a getter on the State, so a use outside `build` counts too.
   Future<void> test_consumerStatefulWidget_refOutsideBuild_noLint() async {
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
@@ -180,7 +179,6 @@ class _MyWidgetState extends ConsumerState<MyWidget> with AnalyticsMixin {
 ''');
   }
 
-  /// A mixin that carries no `ref` usage must not mask the diagnostic.
   Future<void> test_consumerStatefulWidget_localMixinWithoutRef_lint() async {
     await assertDiagnostics(
       r'''

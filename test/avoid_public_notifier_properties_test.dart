@@ -32,12 +32,8 @@ abstract class AsyncNotifier<State> {
     super.setUp();
   }
 
-  /// Resolves `package:meta/meta.dart` so `@protected` and friends carry their
-  /// real element metadata.
   @override
   bool get addMetaPackageDep => true;
-
-  // --- Positive cases: should trigger lint ---
 
   Future<void> test_publicGetter() async {
     await assertDiagnostics(
@@ -88,7 +84,6 @@ class MyNotifier extends Notifier<int> {
   }
 
   Future<void> test_publicFinalFieldNotFlagged() async {
-    // A `final` field cannot be reassigned, so it is not leaked mutable state.
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 
@@ -133,8 +128,6 @@ class MyNotifier extends Notifier<int> {
       [lint(89, 6), lint(107, 6)],
     );
   }
-
-  // --- Negative cases: should NOT trigger lint ---
 
   Future<void> test_privateGetter() async {
     await assertNoDiagnostics(r'''
@@ -263,8 +256,6 @@ class RegularClass {
 ''');
   }
 
-  // --- Members deliberately exposed to a narrower audience ---
-
   Future<void> test_protectedGetterNotFlagged() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
@@ -311,8 +302,6 @@ class MyNotifier extends Notifier<int> {
   }
 
   Future<void> test_publicStateFieldNotFlagged() async {
-    // `state` is the notifier's own surface, whether declared as a field or a
-    // getter, so it must be skipped in both forms.
     await assertNoDiagnostics(r'''
 import 'package:riverpod/riverpod.dart';
 

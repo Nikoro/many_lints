@@ -17,8 +17,6 @@ class AvoidInconsistentDigitSeparatorsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_irregularGroups() async {
     await assertDiagnostics(
       r'''
@@ -46,8 +44,6 @@ final x = 0xFF_FFF_FFF;
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_regularThousands() async {
     await assertNoDiagnostics(r'''
 final x = 1_000_000;
@@ -71,8 +67,6 @@ final x = 1000000;
 final x = 0xFFFF_FFFF;
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_doubleLiteralWithGroupedWholePart() async {
     await assertNoDiagnostics(r'''

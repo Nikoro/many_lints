@@ -17,8 +17,6 @@ class AvoidComplexConditionsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_fourOperands() async {
     await assertDiagnostics(
       r'''
@@ -36,8 +34,6 @@ bool f(bool a, bool b, bool c, bool d) => a && b || c && d;
       [lint(42, 16)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_threeOperandsIsWithinBudget() async {
     await assertNoDiagnostics(r'''
@@ -57,10 +53,7 @@ int f(int a, int b, int c, int d) => a + b + c + d;
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_reportedOnceAtTheRoot() async {
-    // A five-operand chain is one diagnostic, not three nested ones.
     await assertDiagnostics(
       r'''
 bool f(bool a, bool b, bool c, bool d, bool e) =>
@@ -71,8 +64,6 @@ bool f(bool a, bool b, bool c, bool d, bool e) =>
   }
 
   Future<void> test_equalityOperatorIsOneChainByConstruction() async {
-    // A hand-written `operator ==` is one `&&` per field; splitting it would
-    // scatter an equality check that reads as a unit.
     await assertNoDiagnostics(r'''
 class Point {
   const Point(this.x, this.y, this.z, this.w);

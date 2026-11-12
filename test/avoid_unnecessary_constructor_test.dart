@@ -17,8 +17,6 @@ class AvoidUnnecessaryConstructorTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_emptyUnnamedConstructor() async {
     await assertDiagnostics(
       r'''
@@ -40,8 +38,6 @@ class A {
       [lint(12, 6)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_constConstructorEnablesConstCallSites() async {
     await assertNoDiagnostics(r'''
@@ -74,11 +70,7 @@ class A {}
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_secondConstructorKeepsTheUnnamedOneNecessary() async {
-    // Dart only supplies the unnamed constructor when none is declared, so
-    // with `A.named()` present the empty `A()` is what keeps `A()` legal.
     await assertNoDiagnostics(r'''
 class A {
   A();

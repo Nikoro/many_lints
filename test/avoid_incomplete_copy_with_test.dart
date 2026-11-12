@@ -16,8 +16,6 @@ class AvoidIncompleteCopyWithTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // --- Positive cases (should trigger lint) ---
-
   Future<void> test_missingSingleParameter() async {
     await assertDiagnostics(
       r'''
@@ -103,8 +101,6 @@ class Point {
       [lint(85, 8)],
     );
   }
-
-  // --- Negative cases (should NOT trigger lint) ---
 
   Future<void> test_allParametersPresent() async {
     await assertNoDiagnostics(r'''

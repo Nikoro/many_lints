@@ -16,8 +16,6 @@ class AvoidUnmodifiedLoopConditionTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_counterNeverAdvanced() async {
     await assertDiagnostics(
       r'''
@@ -60,8 +58,6 @@ void f(int limit) {
       [lint(65, 9)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_counterAdvanced() async {
     await assertNoDiagnostics(r'''
@@ -106,8 +102,6 @@ void f(int limit) {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_methodCallConditionIsOpaque() async {
     await assertNoDiagnostics(r'''

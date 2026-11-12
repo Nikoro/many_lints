@@ -155,7 +155,6 @@ void f(bool value) {
   }
 
   Future<void> test_nullAssertPatternIsNotReported() async {
-    // A `!` in a pattern is a `NullAssertPattern`, not a `PostfixExpression`.
     await assertNoDiagnostics(r'''
 void f((int?,) record) {
   var (x!,) = record;
@@ -164,8 +163,6 @@ void f((int?,) record) {
 ''');
   }
 
-  /// The default reports a bang even where an enclosing `if` checked the field:
-  /// promotion does not apply to fields, so the bang is load-bearing.
   Future<void> test_checkedFieldReportedByDefault() async {
     await assertDiagnostics(
       r'''

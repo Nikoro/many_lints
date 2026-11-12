@@ -15,8 +15,6 @@ class AvoidSelfCompareTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_compareToSelf() async {
     await assertDiagnostics(
       r'''
@@ -54,8 +52,6 @@ class A {
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_compareToDifferentValue() async {
     await assertNoDiagnostics(r'''
 int f(String a, String b) => a.compareTo(b);
@@ -73,25 +69,18 @@ class A {
   }
 
   Future<void> test_equalOperatorIsAnotherRule() async {
-    // `a == a` belongs to avoid_equal_expressions; reporting it here too
-    // would put two diagnostics on one line.
     await assertNoDiagnostics(r'''
 bool f(int a) => a == a;
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_methodCallOperandsMayDiffer() async {
-    // `next()` is called twice and can return different values.
     await assertNoDiagnostics(r'''
 int g(String Function() next) => next().compareTo(next());
 ''');
   }
 
   Future<void> test_getterMayReportAMovingValue() async {
-    // A getter runs a body, so two reads need not agree. Only a field-backed
-    // read is treated as stable.
     await assertNoDiagnostics(r'''
 class Cursor {
   int _position = 0;

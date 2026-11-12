@@ -24,8 +24,6 @@ class RenderBox extends RenderObject {}
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_setterWithoutEqualityCheck() async {
     await assertDiagnostics(
       r'''
@@ -61,8 +59,6 @@ class MyRender extends RenderBox {
       [lint(105, 5)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_setterWithEarlyReturnGuard() async {
     await assertNoDiagnostics(r'''
@@ -110,8 +106,6 @@ class MyRender extends RenderBox {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_nonRenderObjectIsIgnored() async {
     await assertNoDiagnostics(r'''

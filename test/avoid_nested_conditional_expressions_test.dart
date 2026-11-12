@@ -17,8 +17,6 @@ class AvoidNestedConditionalExpressionsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_nestedInElseBranch() async {
     await assertDiagnostics(
       r'''
@@ -37,8 +35,6 @@ String f(int x) => x > 0 ? (x > 10 ? 'big' : 'small') : 'neg';
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_singleConditional() async {
     await assertNoDiagnostics(r'''
 String f(int x) => x > 0 ? 'pos' : 'neg';
@@ -55,10 +51,7 @@ String f(int x, int y) {
 ''');
   }
 
-  // ---- Edge cases ----
-
   Future<void> test_reportedOnceAtTheOutermost() async {
-    // Three levels deep still produces a single diagnostic.
     await assertDiagnostics(
       r'''
 String f(int x) =>

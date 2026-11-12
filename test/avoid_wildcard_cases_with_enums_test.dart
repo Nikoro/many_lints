@@ -16,8 +16,6 @@ class AvoidWildcardCasesWithEnumsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_wildcardInSwitchExpression() async {
     await assertDiagnostics(
       r'''
@@ -67,8 +65,6 @@ void describe(Status status) {
       [lint(145, 7)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_exhaustiveSwitchExpression() async {
     await assertNoDiagnostics(r'''

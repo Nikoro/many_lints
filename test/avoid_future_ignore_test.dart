@@ -14,8 +14,7 @@ class AvoidFutureIgnoreTest extends ManyLintsRuleTest {
     rule = AvoidFutureIgnore();
     super.setUp();
 
-    // analyzer_testing's trimmed dart:async predates Future.ignore(). Extend
-    // that mock rather than weakening the rule's resolved-element check.
+    // Edge case: the mock dart:async predates Future.ignore()
     final asyncPath = '$sdkRoot/lib/async/async.dart';
     final asyncSource = getFile(asyncPath).readAsStringSync();
     newFile(

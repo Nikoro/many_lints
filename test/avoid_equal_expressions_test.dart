@@ -14,8 +14,6 @@ class AvoidEqualExpressionsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_identicalEquality() async {
     await assertDiagnostics(
       r'''
@@ -76,8 +74,6 @@ bool check(Point p) {
       [lint(109, 10)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_differentOperands() async {
     await assertNoDiagnostics(r'''

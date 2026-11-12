@@ -15,11 +15,7 @@ import 'package:many_lints/many_lints.dart';
 import 'package:many_lints/src/rule_config.dart';
 import 'package:test/test.dart';
 
-/// A file importing `dart:async`, which resolves under `createMockSdk`.
-///
-/// Deliberately pure Dart: rules keyed on a pub package do not resolve in the
-/// mock SDK, and a rule that never fires makes every "silenced" assertion pass
-/// vacuously.
+// Edge case: rules keyed on a pub package do not resolve in the mock SDK, so this stays pure Dart
 const _importCode = '''
 import 'dart:async';
 
@@ -61,7 +57,7 @@ void main() {
   late _Harness harness;
 
   setUp(() async {
-    // The loader cache is static and survives across tests.
+    // Edge case: the loader cache is static and survives across tests
     ConfigLoader.clearCache();
     harness = _Harness();
     await harness.setUp();
@@ -71,8 +67,6 @@ void main() {
 
   group('avoid_banned_imports', () {
     test('reports nothing when unconfigured', () async {
-      // The whole family is config-driven: installing the package must not
-      // ban anything on its own.
       final codes = await harness.codesFor(_importCode);
 
       expect(codes, isNot(contains('avoid_banned_imports')));
@@ -122,8 +116,6 @@ rules:
     });
 
     test('an out-of-scope path restriction does not report', () async {
-      // Asymmetric to the test above: same entry, different glob, so silence
-      // here proves the scoping worked rather than that nothing ran.
       final codes = await harness.codesFor(
         _importCode,
         config: '''
@@ -155,8 +147,6 @@ rules:
     });
 
     test('except naming another file leaves the entry reporting', () async {
-      // Asymmetric to the test above, so silence there proves the exception
-      // matched rather than that nothing ran.
       final codes = await harness.codesFor(
         _importCode,
         config: '''
@@ -306,8 +296,6 @@ rules:
     });
 
     test('an import config does not drive the export rule', () async {
-      // The two rules read their own config, so banning an import must not
-      // silently ban the matching export.
       final codes = await harness.codesFor(
         _exportCode,
         config: '''
@@ -390,8 +378,6 @@ rules:
     });
 
     test('a wrong-library qualification does not match', () async {
-      // Asymmetric to the test above: the bare name would match, so silence
-      // here proves the qualification is actually being checked.
       final codes = await harness.codesFor(
         _importCode,
         config: '''
@@ -456,8 +442,6 @@ rules:
     });
 
     test('reports each declaration once, not each reference', () async {
-      // The rule deliberately checks declarations only: a reference is not
-      // separately fixable, and reporting both buries the actionable line.
       final errors = await harness.analyze(
         '''
 void f() {
@@ -607,8 +591,6 @@ rules:
     });
 
     test('matches a member declared on a supertype', () async {
-      // `first` is declared on Iterable, so a List receiver must still match
-      // an `Iterable.first` entry.
       final codes = await harness.codesFor(
         '''
 int f(List<int> xs) => xs.first;
@@ -706,7 +688,6 @@ rules:
 
   group('config precedence', () {
     test('many_lints.yaml wins outright over the options section', () async {
-      // A merge would ban both URIs; the dedicated file must be used alone.
       final codes = await harness.codesFor(
         _importCode,
         config: '''
@@ -740,7 +721,6 @@ class _Harness with ResourceProviderMixin {
 
   String get sdkRoot => convertPath('/sdk');
 
-  /// The diagnostic codes reported for [content].
   Future<Iterable<String>> codesFor(
     String content, {
     String? config,
@@ -803,8 +783,7 @@ ${optionsSection ?? ''}''');
   }
 
   Future<void> tearDown() async {
-    // Analysis is async through the driver scheduler; closing the channel
-    // first makes background analysis report to a closed channel.
+    // Edge case: closing first lets background analysis report to a closed channel
     await pluginServer.waitForIdle();
     channel.close();
   }

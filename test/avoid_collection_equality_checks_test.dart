@@ -16,8 +16,6 @@ class AvoidCollectionEqualityChecksTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ── Positive cases (should trigger lint) ──────────────────────────
-
   Future<void> test_listEquality() async {
     await assertDiagnostics(
       r'''
@@ -74,7 +72,6 @@ void f(Iterable<int> a, Iterable<int> b) {
   }
 
   Future<void> test_listComparedToNull_noLint() async {
-    // Comparing to null is fine — null check, not collection equality.
     await assertNoDiagnostics(r'''
 void f(List<int>? a) {
   a == null;
@@ -83,7 +80,6 @@ void f(List<int>? a) {
   }
 
   Future<void> test_mutableAndConst() async {
-    // One side is mutable — should trigger.
     await assertDiagnostics(
       r'''
 void f(List<int> a) {
@@ -93,8 +89,6 @@ void f(List<int> a) {
       [lint(24, 17)],
     );
   }
-
-  // ── Negative cases (should NOT trigger lint) ──────────────────────
 
   Future<void> test_bothConst() async {
     await assertNoDiagnostics(r'''

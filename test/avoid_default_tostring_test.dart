@@ -14,8 +14,6 @@ class AvoidDefaultTostringTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_interpolatedClassWithoutToString() async {
     await assertDiagnostics(
       r'''
@@ -43,8 +41,6 @@ String describe(User user) => 'user: ${user}';
       [lint(97, 4)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_classWithToStringOverride() async {
     await assertNoDiagnostics(r'''

@@ -39,7 +39,6 @@ class Repository {
     );
   }
 
-  /// `TaskOption` is the point of the rule, so it must never be reported.
   Future<void> test_taskOptionIsFine() async {
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
@@ -48,7 +47,6 @@ TaskOption<int> f() => throw '';
 ''');
   }
 
-  /// A synchronous `Either` is a different shape entirely.
   Future<void> test_plainOptionIsFine() async {
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
@@ -57,7 +55,6 @@ Option<int> f() => throw '';
 ''');
   }
 
-  /// `Future<Either>` is `avoid_future_of_either`'s job.
   Future<void> test_futureOfEitherIsNotThisRule() async {
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
@@ -66,15 +63,12 @@ Future<Either<String, int>> f() async => throw '';
 ''');
   }
 
-  /// A `Future` of anything else is ordinary Dart.
   Future<void> test_futureOfNonFpdartTypeIsFine() async {
     await assertNoDiagnostics(r'''
 Future<int> f() async => 1;
 ''');
   }
 
-  /// `Option<Future<T>>` is the reverse nesting, and is a genuine bug that
-  /// `avoid_either_of_future` reports instead. This rule must not double up.
   Future<void> test_optionOfFutureIsNotThisRule() async {
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
@@ -83,7 +77,6 @@ Option<Future<int>> f() => throw '';
 ''');
   }
 
-  /// A generator yields many values; one `TaskOption` cannot replace a stream.
   Future<void> test_generatorIsFine() async {
     await assertNoDiagnostics(r'''
 import 'package:fpdart/fpdart.dart';
@@ -94,7 +87,6 @@ Stream<Option<int>> f() async* {
 ''');
   }
 
-  /// `FutureOr` may complete synchronously, so it is not the same shape.
   Future<void> test_futureOrIsFine() async {
     await assertNoDiagnostics(r'''
 import 'dart:async';

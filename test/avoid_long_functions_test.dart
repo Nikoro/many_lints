@@ -15,12 +15,6 @@ class AvoidLongFunctionsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-  //
-  // The default budget is 50 lines, which no hand-written fixture here
-  // reaches; the threshold itself is exercised by the config tests in
-  // rule_options_test.dart, which can set `max_lines`.
-
   Future<void> test_shortFunction() async {
     await assertNoDiagnostics(r'''
 void f() {

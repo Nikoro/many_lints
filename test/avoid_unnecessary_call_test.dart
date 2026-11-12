@@ -15,8 +15,6 @@ class AvoidUnnecessaryCallTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_explicitCallOnParameter() async {
     await assertDiagnostics(
       r'''
@@ -39,8 +37,6 @@ void f(void Function(int) callback) {
     );
   }
 
-  // ---- Negative cases (should NOT trigger lint) ----
-
   Future<void> test_directInvocation() async {
     await assertNoDiagnostics(r'''
 void f(void Function() callback) {
@@ -50,7 +46,6 @@ void f(void Function() callback) {
   }
 
   Future<void> test_nullAwareCallHasNoShorthand() async {
-    // `callback?()` does not parse, so `.call` is required here.
     await assertNoDiagnostics(r'''
 void f(void Function()? callback) {
   callback?.call();
@@ -59,7 +54,6 @@ void f(void Function()? callback) {
   }
 
   Future<void> test_callMethodOnACallableClass() async {
-    // `Counter` defines `call` as a real method, so `.call` is its name.
     await assertNoDiagnostics(r'''
 class Counter {
   int call() => 1;
@@ -70,8 +64,6 @@ void f(Counter counter) {
 }
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_unrelatedMethodNamedCall() async {
     await assertNoDiagnostics(r'''

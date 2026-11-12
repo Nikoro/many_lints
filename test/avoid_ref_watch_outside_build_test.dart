@@ -59,8 +59,6 @@ class HookConsumerState<T extends HookConsumerStatefulWidget> extends State<T> {
   Widget build(BuildContext context) => Widget();
 }
 ''');
-    // package:provider reaches the same two operations through extensions on
-    // BuildContext, which is why the rule matches on the receiver's TYPE.
     newPackage('provider').addFile('lib/provider.dart', r'''
 import 'package:flutter/widgets.dart';
 export 'package:flutter/widgets.dart';
@@ -74,10 +72,6 @@ extension WatchContext on BuildContext {
     super.setUp();
   }
 
-  // ---- package:provider ----
-
-  // Worse than Riverpod's version of this mistake: provider's `watch` throws
-  // outright when called from initState, so this catches a crash.
   Future<void> test_contextWatchInInitState() async {
     await assertDiagnostics(
       r'''
@@ -109,7 +103,6 @@ class MyWidget extends Widget {
 ''');
   }
 
-  // `context.read` is the one-off read, which is what callbacks should use.
   Future<void> test_contextReadOutsideBuildIsFine() async {
     await assertNoDiagnostics(r'''
 import 'package:provider/provider.dart';
@@ -124,8 +117,6 @@ class MyState extends State<StatefulWidget> {
 }
 ''');
   }
-
-  // ---- Positive cases (should trigger lint) ----
 
   Future<void> test_refWatchInInitState() async {
     await assertDiagnostics(
@@ -202,8 +193,6 @@ class MyState extends HookConsumerState<HookConsumerStatefulWidget> {
       [lint(147, 19)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_refWatchInBuild() async {
     await assertNoDiagnostics(r'''

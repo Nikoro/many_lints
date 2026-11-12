@@ -16,8 +16,6 @@ class AvoidUnrelatedTypeCastsTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_castBetweenUnrelatedCoreTypes() async {
     await assertDiagnostics(
       r'''
@@ -48,8 +46,6 @@ Size f(Color value) => value as Size;
       [lint(62, 13)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_downcastInHierarchy() async {
     await assertNoDiagnostics(r'''
@@ -88,8 +84,6 @@ int f(Object value) => value as int;
 String f(String? value) => value as String;
 ''');
   }
-
-  // ---- Edge cases ----
 
   Future<void> test_openClassesCouldShareSubtype() async {
     await assertNoDiagnostics(r'''

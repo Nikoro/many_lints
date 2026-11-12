@@ -35,8 +35,6 @@ class Ref {}
     super.setUp();
   }
 
-  // --- Positive cases: should trigger lint ---
-
   Future<void> test_functionalProviderWithBuildContext() async {
     await assertDiagnostics(
       r'''
@@ -65,8 +63,6 @@ class Example {
     );
   }
 
-  // --- Negative cases: should not trigger lint ---
-
   Future<void> test_functionalProviderWithoutBuildContext() async {
     await assertNoDiagnostics(r'''
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -77,7 +73,6 @@ int example(Ref ref) => 0;
   }
 
   Future<void> test_unannotatedFunctionWithBuildContext() async {
-    // An ordinary function is free to take a BuildContext.
     await assertNoDiagnostics(r'''
 import 'package:flutter/widgets.dart';
 

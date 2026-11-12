@@ -14,8 +14,6 @@ class AvoidNestedFuturesTest extends ManyLintsRuleTest {
     super.setUp();
   }
 
-  // ---- Positive cases (should trigger lint) ----
-
   Future<void> test_nestedFutureReturnType() async {
     await assertDiagnostics(
       r'''
@@ -44,8 +42,6 @@ void accept(Future<Future<int>> value) {}
       [lint(12, 19)],
     );
   }
-
-  // ---- Negative cases (should NOT trigger lint) ----
 
   Future<void> test_plainFuture() async {
     await assertNoDiagnostics(r'''
