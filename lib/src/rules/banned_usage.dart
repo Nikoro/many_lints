@@ -243,9 +243,11 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   /// Every `Type.member` spelling that should match [element].
   ///
-  /// The declaring type comes first, then its supertypes, so banning
-  /// `Iterable.first` also catches a `List` receiver — the member is one
-  /// declaration however it is reached. An extension member is qualified by
+  /// The declaring type comes first, then, for an instance member, its
+  /// supertypes, so banning `Iterable.first` also catches a `List` receiver —
+  /// the member is one declaration however it is reached. Constructors and
+  /// static members are not inherited, so `Random.new` never matches a
+  /// subtype's constructor. An extension member is qualified by
   /// the extension's name.
   List<String> _qualifiedNamesOf(Element element, String memberName) {
     final enclosing = element.enclosingElement;
@@ -256,7 +258,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (ownName != null && ownName.isNotEmpty) {
       names.add('$ownName.$memberName');
     }
-    if (enclosing is! InterfaceElement) return names;
+    if (enclosing is! InterfaceElement || !_isInherited(element)) return names;
 
     for (final supertype in enclosing.allSupertypes) {
       final name = supertype.element.name;
@@ -266,6 +268,15 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     return names;
   }
+
+  /// Whether [element] is an instance member, the only kind a subtype
+  /// inherits: a constructor or static member belongs to its own type alone.
+  bool _isInherited(Element element) => switch (element) {
+    ConstructorElement() => false,
+    ExecutableElement(:final isStatic) => !isStatic,
+    PropertyInducingElement(:final isStatic) => !isStatic,
+    _ => false,
+  };
 
   /// Every `uri#name` spelling that should match [element]: the declaring
   /// library's URI before a top-level name, or before each `Type.member` of
@@ -285,7 +296,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (ownName != null && ownName.isNotEmpty) {
       names.add('${enclosing.library.identifier}#$ownName.$memberName');
     }
-    if (enclosing is! InterfaceElement) return names;
+    if (enclosing is! InterfaceElement || !_isInherited(element)) return names;
 
     for (final supertype in enclosing.allSupertypes) {
       final type = supertype.element;

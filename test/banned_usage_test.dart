@@ -558,6 +558,45 @@ int f(List<int> values) => values.first;
     );
   }
 
+  Future<void> test_subtypeConstructorsAndStaticsAreNotTheBannedMember() async {
+    _deny(['Clock.new', 'Clock.now', 'Clock.fixed']);
+    await assertNoDiagnostics('''
+import 'clock.dart';
+
+class FixedClock implements Clock {
+  FixedClock();
+  static Clock now() => Clock.system();
+  @override
+  Clock tick() => this;
+}
+
+class FakeClock extends Clock {
+  FakeClock.now() : super.system();
+  factory FakeClock.fixed() = FakeClock.now;
+}
+
+Object f() => FixedClock();
+Object g() => FixedClock.now();
+Object h() => FixedClock.new;
+Object i() => FakeClock.now();
+Object j() => FakeClock.fixed();
+''');
+  }
+
+  Future<void> test_subtypeInheritsBannedInstanceMember() async {
+    _deny(['Clock.tick']);
+    await _expect(
+      '''
+import 'clock.dart';
+
+class FixedClock extends Clock {}
+
+Clock f(FixedClock clock) => clock.tick();
+''',
+      ['tick'],
+    );
+  }
+
   Future<void> test_denyPatternIsNotTriedAgainstTheLibrarySpelling() async {
     // A pattern written before library spellings existed must keep matching
     // exactly what it matched then.

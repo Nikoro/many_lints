@@ -178,6 +178,11 @@ int? firstScore(List<int> scores) => scores.firstOrNull;
 Writing `List.first` instead would report nothing here: `first` is declared on
 `Iterable`, not on `List`.
 
+Only instance members reach subtypes this way. Constructors and static members
+are not inherited, so `deny: ['Random.new', 'DateTime.now']` does not report
+`FixedRandom(4)` for `class FixedRandom implements Random`, or a subclass's own
+`FakeTime.now()` constructor.
+
 ### Ban a member on every type
 
 A bare `member` name, with no `Type.` prefix, bans it wherever it appears:

@@ -138,6 +138,10 @@
   inside an unrelated closure nested in its arguments.
 - The "Convert to collection-for" assist writes `for (` with a space, as
   `dart format` does.
+- `banned_usage` matches only instance members through supertypes.
+  Constructors and static members are not inherited, but `deny: ['Random.new',
+  'DateTime.now']` reported `FixedRandom(4)` for `class FixedRandom implements
+  Random` and a subclass's own `FakeTime.now()` constructor.
 - `prefer_module_barrel_imports` allows an import of any of a package's
   `package_entry_points`; with `package:ext/ext.dart` and
   `package:ext/testing.dart` configured, `package:ext/testing.dart` was
