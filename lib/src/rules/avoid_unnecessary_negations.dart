@@ -6,18 +6,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a negation can be removed without changing the meaning.
-///
-/// Four shapes are reported:
-///
-/// * `!!flag` — a negation cancelling another negation.
-/// * `!(a != b)` — a negation cancelling an inequality.
-/// * `!true` — negating a boolean literal, which is just the other literal.
-/// * `!a == !b` and `!a != !b` — negating both sides of a comparison, which
-///   leaves the result unchanged.
-///
-/// They usually appear after a condition is inverted and the inner
-/// expression is left as it was.
 class AvoidUnnecessaryNegations extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_negations',
@@ -63,7 +51,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final isRemovable =
         (operand is PrefixExpression && operand.operator.lexeme == '!') ||
         (operand is BinaryExpression && operand.operator.lexeme == '!=') ||
-        // `!true` is just `false`; the negation carries no information.
         operand is BooleanLiteral;
 
     if (isRemovable) {
@@ -71,10 +58,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Reports `!a == !b` and `!a != !b`.
-  ///
-  /// Negating both operands of an equality check cancels out, so both `!`
-  /// can go. The comparison itself is left as it is.
   @override
   void visitBinaryExpression(BinaryExpression node) {
     final operator = node.operator.lexeme;

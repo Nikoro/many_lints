@@ -7,8 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../type_checker.dart';
 
-/// Warns when a `GestureDetector` widget is created without any event handler
-/// callbacks, making it functionally useless.
 class AvoidUnnecessaryGestureDetector extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_gesture_detector',

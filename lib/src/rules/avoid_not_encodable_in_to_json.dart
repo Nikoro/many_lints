@@ -7,30 +7,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a `toJson` method puts a value into the returned map that
-/// `jsonEncode` cannot serialize.
-///
-/// `jsonEncode` only accepts `num`, `String`, `bool`, `null`, `List` and `Map`.
-/// Anything else — a `DateTime`, an enum, a nested model — throws
-/// `JsonUnsupportedObjectError` at runtime unless it is converted first.
-///
-/// The failure only appears when the object is actually encoded, which is
-/// often far from where the map was built, so it tends to escape review and
-/// surface in production.
-///
-/// **Bad:**
-/// ```dart
-/// Map<String, dynamic> toJson() => {
-///   'createdAt': createdAt, // DateTime is not encodable
-/// };
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// Map<String, dynamic> toJson() => {
-///   'createdAt': createdAt.toIso8601String(),
-/// };
-/// ```
 class AvoidNotEncodableInToJson extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_not_encodable_in_to_json',
@@ -70,8 +46,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitMethodDeclaration(MethodDeclaration node) {
     if (node.name.lexeme != 'toJson') return;
 
-    // Types the project treats as encodable because a converter handles them
-    // elsewhere, e.g. a `json_serializable` `JsonConverter`.
     final allowed = rule.config.stringListOption('allowed_types').toSet();
 
     for (final literal in _returnedMapLiterals(node.body)) {
@@ -88,8 +62,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// The map literals this body returns, for both `=> { ... }` and
-  /// `{ return { ... }; }` shapes.
   Iterable<SetOrMapLiteral> _returnedMapLiterals(FunctionBody body) sync* {
     switch (body) {
       case ExpressionFunctionBody(:final expression):
@@ -103,10 +75,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Whether [type] is something `jsonEncode` accepts directly.
   bool _isEncodable(DartType type, Set<String> allowed) {
-    // `dynamic` and `Object` carry no information — the real value may well be
-    // encodable, so reporting would be guesswork.
     if (type is DynamicType || type is InvalidType) return true;
     if (type.isDartCoreObject) return true;
     if (type is TypeParameterType) return true;
@@ -127,7 +96,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (type is! InterfaceType) return false;
 
-    // A collection is encodable exactly when its contents are.
     if (type.isDartCoreList || type.isDartCoreSet) {
       final argument = type.typeArguments.firstOrNull;
 
@@ -140,8 +108,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       return values == null || _isEncodable(values, allowed);
     }
 
-    // A type that declares its own `toJson` is meant to be converted by the
-    // caller — `jsonEncode` calls it through its `toEncodable` hook.
+    // Edge case: the default toEncodable of jsonEncode calls toJson
     return _declaresToJson(type);
   }
 
@@ -154,8 +121,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Collects map literals returned from a block body, stopping at nested
-/// functions so an inner closure's return is not attributed to `toJson`.
 class _ReturnedMapFinder extends RecursiveAstVisitor<void> {
   final List<SetOrMapLiteral> found = [];
 
@@ -165,5 +130,5 @@ class _ReturnedMapFinder extends RecursiveAstVisitor<void> {
   }
 
   @override
-  void visitFunctionExpression(FunctionExpression node) {}
+  void visitFunctionExpression(FunctionExpression node) {} // Edge case: a closure's return is not ours
 }

@@ -172,6 +172,11 @@ rules:
     ignore_checked_fields: true
 ```
 
+The option only accepts a guard in the condition of an enclosing `if`, with the
+bang in the branch it proves non-null: `then` for `!=`, `else` for `==`. A guard
+outside a closure does not count for a bang inside it, since the closure may run
+long after the check.
+
 ## Relationship to the official Dart lints
 
 The SDK linter has no equivalent rule — a request for one ([sdk#59476](https://github.com/dart-lang/sdk/issues/59476)) was closed without shipping. Two official rules cover strict subsets of what this rule reports, so enabling both means those cases are reported twice:

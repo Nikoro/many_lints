@@ -9,13 +9,6 @@ import 'package:analyzer/error/error.dart';
 
 import '../many_lints_rule.dart';
 
-/// Warns when a switch over an enum uses a wildcard or `default` case.
-///
-/// Switching over an enum without a catch-all gives you an exhaustiveness
-/// check for free: add a constant to the enum and the compiler points at
-/// every switch that must handle it. A `_` or `default` case silences that
-/// check permanently — new constants fall into the catch-all and take
-/// whatever behaviour was written for the cases nobody thought about.
 class AvoidWildcardCasesWithEnums extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_wildcard_cases_with_enums',
@@ -62,8 +55,6 @@ class _Visitor extends SimpleAstVisitor<void> {
         case SwitchDefault():
           rule.reportAtToken(member.keyword, arguments: [enumName]);
         case SwitchPatternCase(:final guardedPattern):
-          // A guarded case is conditional, so it does not make the switch
-          // exhaustive and the compiler still checks the rest.
           if (guardedPattern.whenClause != null) continue;
           if (guardedPattern.pattern is WildcardPattern) {
             rule.reportAtNode(guardedPattern.pattern, arguments: [enumName]);
@@ -88,13 +79,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Returns the enum's name when [expression] switches over an enum.
   String? _enumName(Expression expression) {
     final type = expression.staticType;
     if (type is! InterfaceType) return null;
 
-    // A nullable enum genuinely needs a null case, and `_` is a reasonable
-    // way to write it.
+    // Edge case: a nullable enum needs a null case, and `_` is a fair way to write it
     if (type.nullabilitySuffix != NullabilitySuffix.none) return null;
 
     final element = type.element;

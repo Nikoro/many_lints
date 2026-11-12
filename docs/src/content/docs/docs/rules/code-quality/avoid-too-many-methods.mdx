@@ -20,6 +20,8 @@ Method count is the cheapest measure of whether a class still has one responsibi
 
 **Constructors are never counted.** A class with several named constructors is offering ways to build one thing, not doing several things.
 
+**Unnamed extensions are never reported.** There is no name to point at, and their members are scoped to the extended type rather than to a name a reader can act on.
+
 This rule is in the **`pedantic`** preset.
 
 ## Don't

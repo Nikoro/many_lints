@@ -10,7 +10,6 @@ import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
 import '../state_class_pairing.dart';
 
-/// Warns when a ConsumerWidget does not use WidgetRef.
 class AvoidUnnecessaryConsumerWidgets extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_unnecessary_consumer_widgets',
@@ -44,12 +43,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // `ConsumerStatefulWidget` keeps its `ref` in the companion `ConsumerState`,
-    // so the two declarations have to be correlated before deciding.
     final consumerStatefulWidgets = <ClassDeclaration>[];
     final consumerStates = <ClassDeclaration>[];
-    // Mixin declarations in this unit, so a `ref` usage hidden in one of them
-    // can be found; mixins from other files are covered by their elements.
     final localMixins = <String, MixinDeclaration>{};
 
     for (final declaration in node.declarations) {
@@ -77,8 +72,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       final stateClass = findStateClassFor(consumerStates, widgetName);
       if (stateClass == null) continue;
 
-      // `ref` is a getter on `ConsumerState`, usable from every member, so the
-      // whole class body counts — not just `build`.
       if (_isIdentifierUsed(stateClass.body, 'ref')) continue;
       if (_mixesInRefUsage(stateClass, localMixins)) continue;
 
@@ -86,7 +79,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
   }
 
-  /// Reports a `ConsumerWidget` whose `build` never touches its `ref`.
   void _checkConsumerWidget(
     ClassDeclaration cls,
     Map<String, MixinDeclaration> localMixins,
@@ -113,22 +105,11 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (_isIdentifierUsed(buildMethod.body, 'ref')) return;
 
-    // A mixin applied to the widget can consume the `ref` that `build` forwards
-    // to it, which leaves `build` itself looking ref-free.
     if (_mixesInRefUsage(cls, localMixins)) return;
 
     rule.reportAtToken(cls.namePart.typeName);
   }
 
-  /// Whether a mixin applied to the class uses the `ref` on its behalf.
-  ///
-  /// Sharing provider access through a mixin `on ConsumerState<T>` is a normal
-  /// pattern: the mixin holds the `ref.watch`/`ref.read` calls, which leaves
-  /// the class body looking ref-free while the widget genuinely needs the
-  /// Riverpod container. Only the declaration carries the method bodies, so a
-  /// local mixin is inspected via the AST; a mixin from another file is
-  /// recognised by it being constrained to a Riverpod state class, since its
-  /// superclass constraint is the reason it can reach a `ref` at all.
   static bool _mixesInRefUsage(
     ClassDeclaration cls,
     Map<String, MixinDeclaration> localMixins,
@@ -143,18 +124,18 @@ class _Visitor extends SimpleAstVisitor<void> {
         continue;
       }
 
-      // Out-of-file mixin: its bodies are gone, but a superclass constraint on
-      // a Riverpod state class means it exists to work with `ref`.
       final element = mixin.element;
-      if (element is! MixinElement) continue;
-
-      for (final constraint in element.superclassConstraints) {
-        if (consumerStateChecker.isAssignableFromType(constraint)) return true;
+      if (element is MixinElement && _isConstrainedToConsumerState(element)) {
+        return true;
       }
     }
 
     return false;
   }
+
+  static bool _isConstrainedToConsumerState(MixinElement mixin) => mixin
+      .superclassConstraints
+      .any(consumerStateChecker.isAssignableFromType);
 
   static bool _isIdentifierUsed(AstNode? node, String name) {
     if (node == null) return false;

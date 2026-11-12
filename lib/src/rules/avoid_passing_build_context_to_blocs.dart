@@ -8,12 +8,6 @@ import '../bloc_type_checkers.dart';
 import '../flutter_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// Warns when a Bloc/Cubit class accepts a `BuildContext` parameter in its
-/// constructor or methods.
-///
-/// Passing `BuildContext` creates unnecessary coupling between Blocs and
-/// widgets. It can also introduce bugs when the context is no longer mounted.
-/// Business logic in Blocs/Cubits should remain independent of the UI layer.
 class AvoidPassingBuildContextToBlocs extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_passing_build_context_to_blocs',
@@ -53,10 +47,8 @@ class _Visitor extends SimpleAstVisitor<void> {
     final element = node.declaredFragment?.element;
     if (element == null) return;
 
-    // Only check classes that extend BlocBase (Bloc or Cubit)
     if (!blocBaseChecker.isSuperOf(element)) return;
 
-    // Skip the BlocBase/Bloc/Cubit classes themselves
     if (blocBaseChecker.isExactly(element)) return;
 
     final body = node.body;

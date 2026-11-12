@@ -7,34 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../test_invocation.dart';
 
-/// Warns when a test, group or whole library is switched off in place.
-///
-/// A skipped test still counts as a test. `dart test` reports it as skipped
-/// and exits zero, so every gate downstream stays green: CI passes, a
-/// mirror-test presence check is satisfied because the file exists, and a
-/// coverage gate sees the file counted but never executed. The suite grows
-/// while the evidence it provides shrinks, and nothing in the output says so.
-///
-/// A reason string does not change that. `skip: 'flaky on CI'` makes the skip
-/// readable, not acceptable — the test still proves nothing. Projects that
-/// disagree can set `allow_reason: true`, which then reports only the bare
-/// `skip: true` form.
-///
-/// `skip: false` is never reported: it is a no-op that occasionally appears as
-/// a deliberate placeholder.
-///
-/// **BAD:**
-/// ```dart
-/// test('parses a malformed manifest', () { ... }, skip: true);  // LINT
-///
-/// @Skip('needs a real device')
-/// library;                                                      // LINT
-/// ```
-///
-/// **GOOD:**
-/// ```dart
-/// test('parses a malformed manifest', () { ... });
-/// ```
 class AvoidSkippedTests extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_skipped_tests',
@@ -78,15 +50,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (skip == null) return;
 
     final value = skip.argumentExpression;
-    // `skip: false` is a no-op, and so is anything that provably evaluates to
-    // it. Only a literal `false` can be read without evaluating, which is
-    // enough: the shape people actually write is `skip: true`.
-    if (value is BooleanLiteral && !value.value) return;
+    final isExplicitlyNotSkipped = value is BooleanLiteral && !value.value;
+    if (isExplicitlyNotSkipped) return;
 
-    // With `allow_reason` the documented form is permitted and the bare
-    // switch is not, so a project that wants an audit trail gets one without
-    // the rule going silent.
-    if (value is! BooleanLiteral &&
+    final hasReason = value is! BooleanLiteral;
+    if (hasReason &&
         rule.config.boolOption('allow_reason', defaultValue: false)) {
       return;
     }
@@ -96,8 +64,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitAnnotation(Annotation node) {
-    // `@Skip(...)` on a library directive disables every test in the file, so
-    // it is the highest-leverage form of the same defect.
     if (node.name.name != 'Skip') return;
     if (node.parent is! LibraryDirective) return;
 

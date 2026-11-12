@@ -7,12 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../state_base_classes.dart';
 
-/// Warns when a `State` subclass declares a constructor with a non-empty body
-/// or initializer list.
-///
-/// Constructors in `State` objects should not contain initialization logic.
-/// All setup should go into `State.initState` instead, which is the proper
-/// lifecycle method for initialization.
 class AvoidStateConstructors extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_state_constructors',

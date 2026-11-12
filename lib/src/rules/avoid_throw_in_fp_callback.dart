@@ -8,8 +8,6 @@ import '../fpdart_do_notation.dart';
 import '../fpdart_type_checkers.dart';
 import '../many_lints_rule.dart';
 
-/// The chaining methods whose callbacks must route failures through the error
-/// channel rather than throwing.
 const _chainingMethods = {
   'map',
   'flatMap',
@@ -20,11 +18,6 @@ const _chainingMethods = {
   'orElse',
 };
 
-/// Errors that signal a programmer mistake rather than a domain outcome.
-///
-/// These are exempt by default: they mark a branch that should never run, so
-/// routing them through the error channel would give a caller a `Left` it can
-/// neither handle nor meaningfully report.
 const _programmerErrors = {
   'UnimplementedError',
   'UnsupportedError',
@@ -32,40 +25,6 @@ const _programmerErrors = {
   'AssertionError',
 };
 
-/// Warns when a `throw` appears inside an fpdart callback or `Do` block.
-///
-/// fpdart's whole premise is that failure travels in the value — the `Left` of
-/// an `Either`, the `None` of an `Option`. A `throw` inside `map`, `flatMap`
-/// or a `Do` body leaves that channel entirely: it escapes the pipeline as an
-/// ordinary exception, so a caller that carefully folds every failure still
-/// crashes. This is the first of the four pitfalls fpdart documents in its own
-/// `do_constructor_pitfalls` example.
-///
-/// **Bad:**
-/// ```dart
-/// Option.Do(($) {
-///   if ($(testOption) == 'test') {
-///     throw Exception('Error');
-///   }
-///   return 'success';
-/// });
-/// ```
-///
-/// **Good:**
-/// ```dart
-/// Option.Do(($) {
-///   final value = $(testOption);
-///   return $(value == 'test' ? Option<String>.none() : Option.of('success'));
-/// });
-/// ```
-///
-/// ## Options
-///
-/// - `ignore_unimplemented`: when `true` (the default), a thrown
-///   `UnimplementedError`, `UnsupportedError`, `StateError` or `AssertionError`
-///   is allowed — those mark unreachable branches, not domain failures.
-/// - `additional_methods`: extra callback-taking method names to check, for
-///   projects that wrap fpdart's combinators in their own.
 class AvoidThrowInFpCallback extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_throw_in_fp_callback',
@@ -119,8 +78,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     );
     if (!methods.contains(methodName)) return;
 
-    // Only fpdart's own combinators: a `map` on an Iterable is unrelated, and
-    // throwing there is ordinary Dart.
     final targetType = node.realTarget?.staticType;
     if (targetType == null) return;
     if (!anyFpdartChecker.isAssignableFromType(targetType)) return;
@@ -133,7 +90,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 }
 
-/// Reports `throw`s directly inside a `Do` body.
 class _ThrowFinder extends DoBodyVisitor {
   final AvoidThrowInFpCallback rule;
 
@@ -141,12 +97,11 @@ class _ThrowFinder extends DoBodyVisitor {
 
   @override
   void visitThrowExpression(ThrowExpression node) {
-    if (_isExempt(rule, node)) return;
+    if (_isAllowedProgrammerError(rule, node)) return;
     rule.reportAtNode(node);
   }
 }
 
-/// Reports `throw`s inside a combinator callback.
 class _CallbackThrowFinder extends RecursiveAstVisitor<void> {
   final AvoidThrowInFpCallback rule;
 
@@ -154,13 +109,15 @@ class _CallbackThrowFinder extends RecursiveAstVisitor<void> {
 
   @override
   void visitThrowExpression(ThrowExpression node) {
-    if (_isExempt(rule, node)) return;
+    if (_isAllowedProgrammerError(rule, node)) return;
     rule.reportAtNode(node);
   }
 }
 
-/// Whether [node] throws an error that marks a programmer mistake.
-bool _isExempt(AvoidThrowInFpCallback rule, ThrowExpression node) {
+bool _isAllowedProgrammerError(
+  AvoidThrowInFpCallback rule,
+  ThrowExpression node,
+) {
   if (!rule.config.boolOption('ignore_unimplemented', defaultValue: true)) {
     return false;
   }

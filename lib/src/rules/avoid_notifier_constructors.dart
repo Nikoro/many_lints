@@ -7,12 +7,6 @@ import 'package:analyzer/error/error.dart';
 import '../many_lints_rule.dart';
 import '../riverpod_type_checkers.dart';
 
-/// Warns when a `Notifier` or `AsyncNotifier` subclass declares a constructor
-/// with a non-empty body or initializer list.
-///
-/// Constructors in Notifier classes should not contain initialization logic.
-/// All setup should go into the `build()` method instead, which is the proper
-/// lifecycle method for initialization in Riverpod.
 class AvoidNotifierConstructors extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_notifier_constructors',

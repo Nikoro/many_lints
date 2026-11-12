@@ -9,7 +9,6 @@ import '../ast_node_analysis.dart';
 import '../flutter_type_checkers.dart';
 import '../type_checker.dart';
 
-/// Warns when multi-child widgets have only a single child.
 class AvoidSingleChildInMultiChildWidgets extends ManyLintsRule {
   static const LintCode code = LintCode(
     'avoid_single_child_in_multi_child_widgets',
@@ -42,7 +41,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   _Visitor(this.rule);
 
-  static const _complain = [
+  static const _positionalParameter = '';
+
+  static const _childListParameters = [
     ('children', columnChecker),
     ('children', rowChecker),
     ('children', wrapChecker),
@@ -61,7 +62,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       TypeChecker.fromName('MultiSliver', packageName: 'sliver_tools'),
     ),
     (
-      '',
+      _positionalParameter,
       TypeChecker.fromName('SliverChildListDelegate', packageName: 'flutter'),
     ),
   ];
@@ -70,35 +71,35 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     final constructorName = node.constructorName.type;
     if (constructorName.element case final typeElement?) {
-      // is it something we want to complain about?
-      final match = _complain.firstWhereOrNull(
+      final match = _childListParameters.firstWhereOrNull(
         (e) => e.$2.isExactly(typeElement),
       );
       if (match == null) return;
 
-      // does it have a children argument?
-      Expression? children;
-
-      if (match.$1.isEmpty) {
-        // handle positional (first argument)
-        if (node.argumentList.arguments.firstOrNull
-            case final Expression first) {
-          children = first;
-        }
-      } else {
-        // handle named argument
-        for (final arg in node.argumentList.arguments) {
-          if (arg is NamedArgument && arg.name.lexeme == match.$1) {
-            children = arg.argumentExpression;
-            break;
-          }
-        }
-      }
-
+      final children = _childListArgument(node.argumentList, match.$1);
       if (children == null) return;
 
       _checkInstanceCreation(constructorName, children);
     }
+  }
+
+  Expression? _childListArgument(
+    ArgumentList argumentList,
+    String parameterName,
+  ) {
+    final arguments = argumentList.arguments;
+    if (parameterName == _positionalParameter) {
+      return switch (arguments.firstOrNull) {
+        final Expression first => first,
+        _ => null,
+      };
+    }
+    for (final arg in arguments) {
+      if (arg is NamedArgument && arg.name.lexeme == parameterName) {
+        return arg.argumentExpression;
+      }
+    }
+    return null;
   }
 
   void _checkInstanceCreation(NamedType constructorName, Expression children) {
