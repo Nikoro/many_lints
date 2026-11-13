@@ -38,6 +38,8 @@ enum BadCurrency {
   const BadCurrency(this.symbol);
 
   final String symbol;
+
+  String format(num amount) => '$amount $symbol';
 }
 
 // ✅ Good: primary constructors.
@@ -55,7 +57,9 @@ class GoodSeeded(final int id, int seed) {
 
 enum GoodCurrency(final String symbol) {
   pln('zł'),
-  eur('€'),
+  eur('€');
+
+  String format(num amount) => '$amount $symbol';
 }
 
 // ✅ Good: no constructor, so there is nothing to move. An empty `()` in the
