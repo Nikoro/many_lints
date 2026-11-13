@@ -7,17 +7,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from repository_environment import isolated_environment
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 GATE_SCRIPT = "tool/commit_gate.sh"
 HOOKS = ".githooks"
 INSTALLER = "tool/setup.sh"
 TEST_DIRECTORY = "tool/tests"
-
-
-def isolated_environment(inherited):
-    return {
-        name: value for name, value in inherited.items() if not name.startswith("GIT_")
-    }
 
 
 class HookRepositoryTestCase(unittest.TestCase):
@@ -46,6 +42,12 @@ class HookRepositoryTestCase(unittest.TestCase):
                 shutil.copy2(source, self.root / folder / source.name)
         for name in ("pre-commit", "commit-msg"):
             shutil.copy2(PROJECT_ROOT / HOOKS / name, self.root / HOOKS / name)
+        duplicate_check = self.root / "scripts/quality/check_duplicates.py"
+        duplicate_check.parent.mkdir(parents=True, exist_ok=True)
+        duplicate_check.write_text(
+            "import os\nraise SystemExit(int(os.environ.get('DUPLICATE_FIXTURE_FAILURE', '0')))\n",
+            encoding="utf-8",
+        )
         self.source = self.base / "source"
         self.source.mkdir()
         self.git("init", "-q", "-b", "main", cwd=self.source)
@@ -242,6 +244,13 @@ class CommitGateHooksTest(HookRepositoryTestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(result.stdout, "two words\n")
 
+    def test_duplicate_failure_stops_precommit_before_other_checks(self):
+        self.install_fake_gate()
+        self.environment["DUPLICATE_FIXTURE_FAILURE"] = "1"
+        result = self.run_script(f"{HOOKS}/pre-commit")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(self.log(), "['staged', '--no-review']\n")
+
     def test_successful_precommit_checks_review_last(self):
         self.install_fake_gate()
         self.prepare_existing_checks()
@@ -280,6 +289,12 @@ class CommitGateInstallerTest(HookRepositoryTestCase):
             self.git("config", "--get", "core.hooksPath").stdout.strip(), HOOKS
         )
         self.assertEqual(index.read_bytes(), before)
+
+    def test_duplicate_tool_failure_preserves_previous_hooks(self):
+        self.environment["DUPLICATE_FIXTURE_FAILURE"] = "2"
+        result = self.run_script(INSTALLER)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assert_failed_installation(result)
 
     def test_installer_rejects_a_nonclone_without_activating_hooks(self):
         checkout = self.root / ".tools/commit_gate"
@@ -374,11 +389,16 @@ class OptionalDeveloperToolsTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     @unittest.skipUnless(shutil.which("ruff"), "Ruff is not installed")
-    def test_hook_tests_pass_ruff(self):
+    def test_quality_python_passes_ruff(self):
+        paths = [
+            PROJECT_ROOT / "scripts/quality/check_duplicates.py",
+            PROJECT_ROOT / "tool/tests/repository_environment.py",
+            *sorted((PROJECT_ROOT / "tool/tests").glob("test_*.py")),
+        ]
         for command in (["check"], ["format", "--check"]):
             with self.subTest(command=command):
                 result = subprocess.run(
-                    ["ruff", *command, "--no-cache", str(Path(__file__))],
+                    ["ruff", *command, "--no-cache", *map(str, paths)],
                     capture_output=True,
                     encoding="utf-8",
                     timeout=30,

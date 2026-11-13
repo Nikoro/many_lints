@@ -1,0 +1,7 @@
+{
+  "name": "many-lints-quality",
+  "private": true,
+  "devDependencies": {
+    "jscpd": "^5.4.2"
+  }
+}

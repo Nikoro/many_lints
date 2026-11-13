@@ -11,11 +11,17 @@ git clone https://github.com/Nikoro/many_lints.git
 cd many_lints
 ```
 
-2. Install dependencies:
+2. Install Dart dependencies and the repository developer tools. Node 24 and npm
+must be available for the locked duplicate detector installation:
 
 ```sh
 dart pub get
+npm --prefix scripts/quality/js ci --ignore-scripts --no-audit --no-fund
+scripts/quality/js/node_modules/.bin/jscpd --version
 ```
+
+See [quality gates](docs/quality-gates.md) for source selection, baseline policy
+and the separate shared-gate access prerequisite.
 
 3. Install the git hooks and shared quality gates:
 

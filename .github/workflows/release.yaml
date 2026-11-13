@@ -23,6 +23,14 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
+      - name: Install duplicate detector
+        run: npm --prefix scripts/quality/js ci --ignore-scripts --no-audit --no-fund
+      - name: Verify duplicate detector installation
+        run: scripts/quality/js/node_modules/.bin/jscpd --version
+      - name: Verify quality tooling
+        run: tool/python.sh -m unittest discover -s tool/tests
+      - name: Check duplicate code
+        run: tool/python.sh scripts/quality/check_duplicates.py
       - uses: oven-sh/setup-bun@v2
       # Must come after flutter-action: this action performs the OIDC exchange
       # that authenticates `dart pub publish`, and its Dart must win in PATH.

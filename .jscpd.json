@@ -1,0 +1,28 @@
+{
+  "path": [
+    "lib"
+  ],
+  "format": [
+    "dart"
+  ],
+  "minLines": 10,
+  "minTokens": 100,
+  "mode": "mild",
+  "ignore": [
+    "**/generated/**",
+    "**/*.g.dart",
+    "**/*.freezed.dart",
+    "**/*.drift.dart",
+    "**/*.gr.dart",
+    "**/zz_analyze_canary_*.dart"
+  ],
+  "noGitignore": true,
+  "reporters": [
+    "console",
+    "json"
+  ],
+  "baseline": ".jscpd-baseline.json",
+  "failOnNewClones": 0,
+  "failOnEmpty": true,
+  "output": "build/quality/duplicates"
+}

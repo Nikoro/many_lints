@@ -27,3 +27,6 @@ docs/
 test/
 tool/
 example/.dart_tool/
+scripts/quality/
+.jscpd.json
+.jscpd-baseline.json

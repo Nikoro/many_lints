@@ -16,6 +16,17 @@ jobs:
     steps:
       - name: Checkout the code
         uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Install duplicate detector
+        run: npm --prefix scripts/quality/js ci --ignore-scripts --no-audit --no-fund
+      - name: Verify duplicate detector installation
+        run: scripts/quality/js/node_modules/.bin/jscpd --version
+      - name: Verify quality tooling
+        run: tool/python.sh -m unittest discover -s tool/tests
+      - name: Check duplicate code
+        run: tool/python.sh scripts/quality/check_duplicates.py
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:

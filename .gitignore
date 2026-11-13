@@ -41,3 +41,7 @@ docs/.astro/
 
 # Contributor tool checkouts (tool/setup.sh)
 .tools/
+
+/scripts/quality/js/node_modules/
+
+/build/quality/duplicates/
