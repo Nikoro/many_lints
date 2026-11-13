@@ -202,5 +202,5 @@ if (enclosing is! InterfaceElement) return const [];
 
 therefore declines for extension members exactly as it does for top-level functions — silently, and for a reason that is easy to misread as "top-level functions are unmatchable".
 
-The user-visible consequence in `banned_usage`: with `deny: ['unawaited']` configured, both `unawaited(f())` **and** a project's own `f.unawaited()` extension member are reported, because only the bare-name lookup can reach either and by bare name they are indistinguishable. Reaching `ExtensionElement.extendedType` would allow `Future.unawaited` to be denied precisely; a library-qualified deny form (`dart:async/unawaited`) would separate the SDK function from a same-named local declaration. Neither is implemented — see `TODO/banned-usage-misses-top-level-functions.md`.
+The user-visible consequence in `banned_usage`: a bare `unawaited` matches both the SDK function and a same-named extension member. The implemented qualified forms distinguish them: `Extension.member` selects an extension declaration, while `dart:async#unawaited` selects the SDK declaration by library URI. The extended type's name is not the extension qualifier. See [the current regression boundary](../docs/development/regression-boundaries.md#qualified-bans-and-configurable-rewrites).
 

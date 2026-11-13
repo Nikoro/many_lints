@@ -37,7 +37,7 @@ When updating, add:
 2. Add your pattern following existing format
 3. Include file references with line numbers
 4. Update the Pattern Index if adding new sections
-5. Also update the lean quick reference at `lib/src/fixes/AGENTS.md` with a brief mention when discovering new patterns
+5. Also update the lean quick reference at `docs/development/fixes-guide.md` with a brief mention when discovering new patterns
 
 ---
 

@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
-gate="$(git rev-parse --show-toplevel)/tool/commit_gate.sh"
-bash "$gate" staged
-exec bash "$gate" check
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+tool/commit_gate.sh staged --no-review
+tool/python.sh -m unittest discover -s tool/tests
+tool/commit_gate.sh check
+exec tool/commit_gate.sh review --check

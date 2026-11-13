@@ -118,7 +118,7 @@ void main() {
     late int totalRules;
     late int totalFixes;
     late String readme;
-    late String claudeMd;
+    late String pluginGuide;
 
     setUp(() {
       plugin.register(registry);
@@ -131,7 +131,7 @@ void main() {
         (sum, codes) => sum + codes.length,
       );
       readme = File('README.md').readAsStringSync();
-      claudeMd = File('CLAUDE.md').readAsStringSync();
+      pluginGuide = File('docs/development/plugin-guide.md').readAsStringSync();
     });
 
     test('preset tables list the real preset sizes', () {
@@ -149,7 +149,7 @@ void main() {
 
       for (final (file, content) in [
         ('README.md', readme),
-        ('CLAUDE.md', claudeMd),
+        ('docs/development/plugin-guide.md', pluginGuide),
         ('configuration.mdx', configurationPage),
       ]) {
         expect(

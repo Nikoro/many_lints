@@ -1,2 +1,4 @@
 #!/usr/bin/env bash
-exec bash "$(git rev-parse --show-toplevel)/tool/commit_gate.sh" commit-msg "$1"
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+exec tool/commit_gate.sh commit-msg "$1"

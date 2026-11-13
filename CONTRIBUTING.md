@@ -17,7 +17,7 @@ cd many_lints
 dart pub get
 ```
 
-3. Install the git hooks (and the comment checker, when you have access to it):
+3. Install the git hooks and shared quality gates:
 
 ```sh
 tool/setup.sh
@@ -42,8 +42,9 @@ directives, `///` docs in `lib/many_lints.dart` and one-line `// Edge case: <why
 about a rule belongs on its documentation page.
 
 Maintainers check this with `commit_gate`, a private tool. `tool/setup.sh` installs it
-together with the git hooks. Without access to it the hooks print a notice and skip
-the check, and a maintainer runs it before merging.
+together with the git hooks. A missing or dirty installation blocks commits; obtain repository access and run
+`tool/setup.sh` to repair it. All five gates and the independent review workflow
+are described in [quality gates](docs/quality-gates.md).
 
 ## Testing a Local Checkout in Another Project
 

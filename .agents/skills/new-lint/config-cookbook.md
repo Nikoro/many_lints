@@ -37,7 +37,7 @@ This cookbook covers **making a lint rule configurable** in the `many_lints` pac
 2. Add your pattern following the existing format
 3. Include file references
 4. Update the Pattern Index if adding sections
-5. Also add a brief mention to `lib/src/rules/AGENTS.md`
+5. Also add a brief mention to `docs/development/rules-guide.md`
 
 ---
 
@@ -892,7 +892,7 @@ A broken `many_lints.yaml` must not take down analysis of the whole package, and
 
 ### Do not claim a rule "cannot be silenced"
 
-Plugin diagnostics **do** respect `// ignore: many_lints/<rule>` and `// ignore_for_file: many_lints/<rule>` (the plugin-name prefix is required). Never justify a config option — or a rule change — with the claim that a pattern cannot be suppressed. Justify it by the pattern being legitimate and common enough that users should not have to annotate it. See the project `AGENTS.md` "Diagnostic Suppression" table.
+Plugin diagnostics **do** respect `// ignore: many_lints/<rule>` and `// ignore_for_file: many_lints/<rule>` (the plugin-name prefix is required). Never justify a config option — or a rule change — with the claim that a pattern cannot be suppressed. Justify it by the pattern being legitimate and common enough that users should not have to annotate it. See the plugin guide at `docs/development/plugin-guide.md`, "Diagnostic Suppression" table.
 
 ### When *not* to add configuration
 

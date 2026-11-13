@@ -145,7 +145,7 @@ Key conventions:
   `static const _checker = TypeChecker.fromName('WidgetName', packageName: 'flutter');`
   and `package:many_lints/src/ast_node_analysis.dart` for the shared AST helpers when needed.
 - No doc comments on the rule class or its members, and practically no comments:
-  follow the comment policy (root `AGENTS.md` `## Comments`, `CONTRIBUTING.md`
+  follow the comment policy (`docs/development/plugin-guide.md` `## Comments`, `CONTRIBUTING.md`
   "Comment policy"). What a rule reports and why belongs in the `LintCode`
   `problemMessage` / `correctionMessage` and on the rule's page under
   `docs/src/content/docs/docs/rules/`.
@@ -479,7 +479,7 @@ You must update if you:
    - [config-cookbook.md](config-cookbook.md) for configuration patterns, and whenever an analyzer upgrade changes what `AnalysisOptionsFileKeys.pluginsOptions` or `RuleConfig` support
    - Follow the format in each file's Meta-Instructions section
 
-2. **Brief mention** — Add a short entry to the lean quick reference at `lib/src/rules/AGENTS.md` (or `lib/src/fixes/AGENTS.md` for fix patterns)
+2. **Brief mention** — Add a short entry to the lean quick reference at `docs/development/rules-guide.md` (or `docs/development/fixes-guide.md` for fix patterns)
 
 This keeps the cookbooks as **living documents** that improve with each new rule!
 
@@ -689,7 +689,7 @@ Run the following commands from the project root to ensure everything works:
    | `docs/.../configuration.mdx` | the preset table, the configurable-rule catalog row, and the "**N rules** accept options" sentence |
    | `example/README.md` | the rule catalog row (with its "has fix" column) |
    | `example/many_lints.yaml` | a config block if the rule is config-only, scoped with `include:` to its own example file |
-   | `AGENTS.md` (= `CLAUDE.md`, a symlink) | the preset size table and any new shared helper under Key Helpers |
+   | `docs/development/plugin-guide.md` | the preset size table and any new shared helper under Key Helpers |
 
    Two traps: a rule page's **introduction version badge may not exceed the
    current `pubspec.yaml` version** (use the current version; bumping is
